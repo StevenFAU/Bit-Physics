@@ -28,7 +28,6 @@ evidence_paths:
   - docs/testkit/golden-values.md
   - docs/testkit/overview.md
 head_sha: 52f66e8905904156b60935a3aa2bd9b904d3bf92
-upstream_sha: 6bff55a6eaf14083d34650f22a268ce156b62b54
 deferred_items:
   - { item: "Exercise CubicKernel from references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.h at runtime against the golden table", target_phase: 1,
       rationale: "Phase 0 ships the golden-value pipeline without a C++ toolchain; the vendored source is the test target for Cat 3 against a real SPH sim, which lands in Phase 1+ per spec § 11.2." }
