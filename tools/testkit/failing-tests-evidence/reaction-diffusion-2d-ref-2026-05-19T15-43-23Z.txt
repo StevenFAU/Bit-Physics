@@ -1,0 +1,126 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d
+configfile: pyproject.toml
+testpaths: tests
+plugins: hypothesis-6.152.8, cov-7.1.0
+collecting ... collected 14 items
+
+tests/test_code_verification.py::test_canonical_capture_exists FAILED    [  7%]
+tests/test_code_verification.py::test_canonical_capture_matches_numpy_reference FAILED [ 14%]
+tests/test_code_verification.py::test_canonical_descriptor_matches_filename PASSED [ 21%]
+tests/test_determinism.py::test_numpy_reference_is_bit_deterministic FAILED [ 28%]
+tests/test_determinism.py::test_different_seeds_diverge FAILED           [ 35%]
+tests/test_diagnostics.py::test_canonical_capture_is_healthy FAILED      [ 42%]
+tests/test_diagnostics.py::test_canonical_capture_U_in_unit_interval FAILED [ 50%]
+tests/test_diagnostics.py::test_canonical_capture_V_in_unit_interval FAILED [ 57%]
+tests/test_pbt_invariants.py::test_pbt_monotone_bounds FAILED            [ 64%]
+tests/test_pbt_invariants.py::test_pbt_mass_approximately_conserved FAILED [ 71%]
+tests/test_pbt_invariants.py::test_pbt_periodic_bc_satisfied FAILED      [ 78%]
+tests/test_reference_sanity.py::test_uniform_field_stays_uniform PASSED  [ 85%]
+tests/test_reference_sanity.py::test_canonical_params_lock_lambda_pattern PASSED [ 92%]
+tests/test_reference_sanity.py::test_evolve_yields_initial_and_final PASSED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_canonical_capture_exists _________________________
+tests/test_code_verification.py:26: in test_canonical_capture_exists
+    assert canonical_manifest_path.exists(), (
+E   AssertionError: canonical capture manifest missing at /home/otacon/Projects/Bit-Physics/captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json
+E   assert False
+E    +  where False = exists()
+E    +    where exists = PosixPath('/home/otacon/Projects/Bit-Physics/captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json').exists
+________________ test_canonical_capture_matches_numpy_reference ________________
+tests/test_code_verification.py:35: in test_canonical_capture_matches_numpy_reference
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_code_verification.py:20: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+__________________ test_numpy_reference_is_bit_deterministic ___________________
+tests/test_determinism.py:24: in test_numpy_reference_is_bit_deterministic
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_determinism.py:18: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+_________________________ test_different_seeds_diverge _________________________
+tests/test_determinism.py:32: in test_different_seeds_diverge
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_determinism.py:18: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+______________________ test_canonical_capture_is_healthy _______________________
+tests/test_diagnostics.py:17: in test_canonical_capture_is_healthy
+    capture = load_capture(canonical_manifest_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json'
+__________________ test_canonical_capture_U_in_unit_interval ___________________
+tests/test_diagnostics.py:27: in test_canonical_capture_U_in_unit_interval
+    capture = load_capture(canonical_manifest_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json'
+__________________ test_canonical_capture_V_in_unit_interval ___________________
+tests/test_diagnostics.py:33: in test_canonical_capture_V_in_unit_interval
+    capture = load_capture(canonical_manifest_path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json'
+___________________________ test_pbt_monotone_bounds ___________________________
+tests/test_pbt_invariants.py:149: in test_pbt_monotone_bounds
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_pbt_invariants.py:23: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+____________________ test_pbt_mass_approximately_conserved _____________________
+tests/test_pbt_invariants.py:161: in test_pbt_mass_approximately_conserved
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_pbt_invariants.py:23: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+________________________ test_pbt_periodic_bc_satisfied ________________________
+tests/test_pbt_invariants.py:177: in test_pbt_periodic_bc_satisfied
+    sim = _load_sim()
+          ^^^^^^^^^^^
+tests/test_pbt_invariants.py:23: in _load_sim
+    from reaction_diffusion_2d import sim  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ImportError: cannot import name 'sim' from 'reaction_diffusion_2d' (/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d/reaction_diffusion_2d/__init__.py)
+=========================== short test summary info ============================
+FAILED tests/test_code_verification.py::test_canonical_capture_exists - Asser...
+FAILED tests/test_code_verification.py::test_canonical_capture_matches_numpy_reference
+FAILED tests/test_determinism.py::test_numpy_reference_is_bit_deterministic
+FAILED tests/test_determinism.py::test_different_seeds_diverge - ImportError:...
+FAILED tests/test_diagnostics.py::test_canonical_capture_is_healthy - FileNot...
+FAILED tests/test_diagnostics.py::test_canonical_capture_U_in_unit_interval
+FAILED tests/test_diagnostics.py::test_canonical_capture_V_in_unit_interval
+FAILED tests/test_pbt_invariants.py::test_pbt_monotone_bounds - ImportError: ...
+FAILED tests/test_pbt_invariants.py::test_pbt_mass_approximately_conserved - ...
+FAILED tests/test_pbt_invariants.py::test_pbt_periodic_bc_satisfied - ImportE...
+========================= 10 failed, 4 passed in 0.52s =========================

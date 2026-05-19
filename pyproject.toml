@@ -15,6 +15,7 @@ members = [
   "tools/testkit",
   "tools/integrity",
   "tools/diagnostics",
+  "packages/reaction-diffusion-2d",
 ]
 exclude = []
 
