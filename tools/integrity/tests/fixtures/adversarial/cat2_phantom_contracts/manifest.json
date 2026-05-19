@@ -1,0 +1,6 @@
+{
+  "check": "cat2.python-exports",
+  "fixture_files": ["phantom_pkg/__init__.py", "phantom_pkg/real_mod.py"],
+  "expected_findings_min": 1,
+  "severity": "HARD_FAIL"
+}

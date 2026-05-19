@@ -1,0 +1,6 @@
+{
+  "check": "catx.tolerance-budget",
+  "expected_findings_min": 1,
+  "severity": "HARD_FAIL",
+  "notes": "uses temporary tolerance/budget files materialized by the meta-test"
+}

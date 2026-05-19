@@ -1,0 +1,197 @@
+"""Cross-phase audit replay (spec § 7.5, Appendix G.7).
+
+CLI:
+    python -m integrity.scripts.replay_prior_phase \\
+        --prior-phase <name> --audit <path> --gates <comma-list>
+
+Behavior:
+    1. Checks out the prior-phase tag in a worktree.
+    2. Re-runs every gate listed in --gates (default:
+       integrity,pytest,equivalence,determinism,perf-ledger).
+    3. Compares actual gate results to the verdicts asserted in the
+       prior-phase landing audit's front-matter.
+    4. Exits 0 if all replayed gates match; 1 otherwise.
+
+Phase 0 has no prior phase to replay; the script ships fully wired and
+ready for Phase 1's first action.
+
+The gate runners are configurable via the ``GATE_COMMANDS`` mapping
+below; each entry is a list of argv tokens executed under the worktree
+root. A gate "passes" if its exit code is 0.
+"""
+
+from __future__ import annotations
+
+import argparse
+import re
+import shutil
+import subprocess
+import sys
+from dataclasses import dataclass, field
+from pathlib import Path
+
+import yaml
+
+from ..common.repo import find_repo_root
+
+_FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
+
+GATE_COMMANDS: dict[str, list[str]] = {
+    "integrity": ["python", "-m", "integrity", "--all", "--mode", "strict"],
+    "pytest": ["pytest", "-W", "error"],
+    "equivalence": ["pytest", "-W", "error", "tools/testkit/equivalence/tests"],
+    "determinism": ["pytest", "-W", "error", "tools/testkit/determinism/tests"],
+    "perf-ledger": ["python", "-c", "print('perf-ledger gate is a phase-1+ placeholder')"],
+}
+
+
+@dataclass
+class GateResult:
+    name: str
+    passed: bool
+    audit_verdict: str | None
+    discrepancy: str | None = None
+
+
+@dataclass
+class ReplayResult:
+    prior_phase: str
+    audit_path: Path
+    worktree: Path
+    gates: list[GateResult] = field(default_factory=list)
+
+    @property
+    def ok(self) -> bool:
+        return all(g.passed and g.discrepancy is None for g in self.gates)
+
+
+def _read_front_matter(audit_path: Path) -> dict[str, object]:
+    text = audit_path.read_text(encoding="utf-8")
+    m = _FRONT_MATTER.match(text)
+    if m is None:
+        raise ValueError(f"audit {audit_path} has no YAML front-matter")
+    data = yaml.safe_load(m.group(1))
+    if not isinstance(data, dict):
+        raise ValueError(f"audit {audit_path} front-matter is not a mapping")
+    return data
+
+
+def _audit_verdict_for_gate(fm: dict[str, object], gate: str) -> str | None:
+    """Look up the audit's claimed verdict for a given gate.
+
+    Honors two shapes:
+        - `verdict: CONFIRMED` (whole-audit verdict; applied to every gate)
+        - `gates: { integrity: PASS, pytest: PASS, ... }` (per-gate map)
+    """
+    gates = fm.get("gates")
+    if isinstance(gates, dict):
+        v = gates.get(gate)
+        if isinstance(v, str):
+            return v
+    verdict = fm.get("verdict")
+    return verdict if isinstance(verdict, str) else None
+
+
+def _checkout_worktree(repo_root: Path, tag: str) -> Path:
+    """Materialize a worktree at ``tag`` under a temp path; caller cleans up."""
+    target = repo_root / f".replay-{tag}"
+    if target.exists():
+        shutil.rmtree(target)
+    subprocess.run(
+        ["git", "worktree", "add", "--detach", str(target), tag],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return target
+
+
+def _remove_worktree(repo_root: Path, target: Path) -> None:
+    subprocess.run(
+        ["git", "worktree", "remove", "--force", str(target)],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if target.exists():
+        shutil.rmtree(target, ignore_errors=True)
+
+
+def replay(
+    prior_phase: str,
+    audit_path: Path,
+    gates: list[str],
+    repo_root: Path | None = None,
+) -> ReplayResult:
+    root = repo_root or find_repo_root()
+    fm = _read_front_matter(audit_path)
+    worktree = _checkout_worktree(root, prior_phase)
+    result = ReplayResult(prior_phase=prior_phase, audit_path=audit_path, worktree=worktree)
+    try:
+        for gate in gates:
+            cmd = GATE_COMMANDS.get(gate)
+            audit_verdict = _audit_verdict_for_gate(fm, gate)
+            if cmd is None:
+                result.gates.append(
+                    GateResult(
+                        name=gate,
+                        passed=False,
+                        audit_verdict=audit_verdict,
+                        discrepancy=f"unknown gate {gate!r}",
+                    )
+                )
+                continue
+            proc = subprocess.run(cmd, cwd=worktree, capture_output=True, text=True, check=False)
+            passed = proc.returncode == 0
+            discrepancy = None
+            if (
+                audit_verdict
+                and audit_verdict.upper() in {"CONFIRMED", "PASS", "OK"}
+                and not passed
+            ):
+                discrepancy = (
+                    f"audit claimed {audit_verdict} but replay failed "
+                    f"(rc={proc.returncode}); stderr={proc.stderr[:200]!r}"
+                )
+            result.gates.append(
+                GateResult(
+                    name=gate,
+                    passed=passed,
+                    audit_verdict=audit_verdict,
+                    discrepancy=discrepancy,
+                )
+            )
+    finally:
+        _remove_worktree(root, worktree)
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(prog="python -m integrity.scripts.replay_prior_phase")
+    parser.add_argument("--prior-phase", required=True, help="Tag to check out.")
+    parser.add_argument("--audit", required=True, type=Path)
+    parser.add_argument(
+        "--gates",
+        default="integrity,pytest,equivalence,determinism,perf-ledger",
+        help="Comma-separated gate names.",
+    )
+    args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+    gate_list = [g.strip() for g in args.gates.split(",") if g.strip()]
+    try:
+        result = replay(args.prior_phase, args.audit, gate_list)
+    except (subprocess.CalledProcessError, ValueError) as exc:
+        print(f"replay_prior_phase: {exc}", file=sys.stderr)
+        return 1
+    for g in result.gates:
+        status = "PASS" if g.passed else "FAIL"
+        print(f"  {status}  gate={g.name} audit_verdict={g.audit_verdict}")
+        if g.discrepancy:
+            print(f"        discrepancy: {g.discrepancy}", file=sys.stderr)
+    print(f"summary: prior_phase={result.prior_phase} ok={result.ok}")
+    return 0 if result.ok else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

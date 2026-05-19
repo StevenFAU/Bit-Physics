@@ -1,0 +1,10 @@
+# Adversarial fixture: an override whose `relative` exceeds the budget.
+
+[defaults.reaction-diffusion]
+relative = 1e-4
+absolute = 0.0
+
+[overrides.naughty-sim]
+category = "reaction-diffusion"
+relative = 1e-1
+absolute = 0.0

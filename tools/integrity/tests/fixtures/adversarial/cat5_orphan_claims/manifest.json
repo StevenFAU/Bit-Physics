@@ -1,0 +1,6 @@
+{
+  "check": "cat5.audit-links",
+  "fixture_files": ["docs/_audits/orphan-block.md"],
+  "expected_findings_min": 1,
+  "severity": "SOFT_WARN"
+}

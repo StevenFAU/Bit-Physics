@@ -1,0 +1,6 @@
+{
+  "check": "cat4.path-line-assertions",
+  "fixture_files": ["docs/draft.md"],
+  "expected_findings_min": 2,
+  "severity": "HARD_FAIL"
+}

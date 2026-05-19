@@ -29,6 +29,15 @@ repos:
       - id: conventional-pre-commit
         stages: [commit-msg]
 
-# Block 5 (INTEGRITY) appends the Cat 4 (draft-time spec verification) hook
-# below, calling `python -m integrity --cat 4 --staged-only` at the
-# commit-msg stage.
+  - repo: local
+    hooks:
+      - id: cat4-path-line-assertions
+        name: integrity Cat 4 (draft-time path:line assertions)
+        # Scans staged docs/audits/spec prose for backtick-fenced
+        # `path:line` and `path:start-end` citations; HARD_FAILs on
+        # unresolved targets. Implementation:
+        # tools/integrity/integrity/cat4_draft_time/path_line_assertions.py.
+        entry: bash -c 'cd tools/integrity && uv run --no-sync python -m integrity --cat 4 --staged-only --mode strict'
+        language: system
+        stages: [pre-commit]
+        pass_filenames: false

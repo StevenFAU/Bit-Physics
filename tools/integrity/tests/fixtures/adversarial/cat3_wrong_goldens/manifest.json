@@ -1,0 +1,6 @@
+{
+  "check": "cat3.golden-values",
+  "fixture_files": ["wrong-cubic-spline.json"],
+  "expected_findings_min": 1,
+  "severity": "SOFT_WARN_or_HARD_FAIL"
+}

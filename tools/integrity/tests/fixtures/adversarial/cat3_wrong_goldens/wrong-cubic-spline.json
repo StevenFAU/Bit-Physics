@@ -1,0 +1,37 @@
+{
+  "algorithm": "cubic-spline-kernel-3d-monaghan",
+  "category": "sph-kernel",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/cubic-spline-kernel.md",
+    "upstream": "SPlisHSPlasH",
+    "upstream_path": "references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.h",
+    "upstream_sha": "6bff55a6eaf14083d34650f22a268ce156b62b54"
+  },
+  "schema_version": "1.0.0",
+  "test_points": [
+    {
+      "expected": {
+        "W": 999.999,
+        "grad_W_magnitude": 999.999
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 0.0
+      }
+    },
+    {
+      "expected": {
+        "W": 0.0,
+        "grad_W_magnitude": 0.0
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 1.0
+      }
+    }
+  ],
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-12
+  }
+}

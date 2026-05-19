@@ -1,0 +1,7 @@
+[phase]
+phase = "phase-0"
+opened_at = "2026-05-19T00:00:00Z"
+
+[budgets.reaction-diffusion.cross_stack]
+relative = 1e-4
+absolute = 0.0

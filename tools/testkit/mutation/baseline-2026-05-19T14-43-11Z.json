@@ -1,0 +1,15 @@
+{
+  "schema_version": "1.0.0",
+  "produced_utc": "2026-05-19T14-43-11Z",
+  "status": "framework-only",
+  "rationale": "Phase 0 Block 5 ships the mutation-testing framework + per-target thresholds. Per spec § 2.13 the SOFT_WARN-in-CI / HARD_FAIL-at-landing posture activates Phase 1+; the first real baseline numbers are produced when Block 9 LANDING flips `.github/workflows/mutation-testing.yml`'s `if: false` gate to `true` and the workflow runs end-to-end. Until that run completes, this file declares the framework and target inventory with zeroed score fields.",
+  "targets": [
+    {"target": "capture", "path": "tools/testkit/capture", "threshold": 0.90, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "code_verification_mms", "path": "tools/testkit/code_verification/mms", "threshold": 0.80, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "golden", "path": "tools/testkit/golden", "threshold": 0.80, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "determinism", "path": "tools/testkit/determinism", "threshold": 0.90, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "equivalence", "path": "tools/testkit/equivalence", "threshold": 0.85, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "property", "path": "tools/testkit/property", "threshold": 0.80, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"},
+    {"target": "cat4_draft_time", "path": "tools/integrity/integrity/cat4_draft_time", "threshold": 0.90, "score": 0.0, "killed": 0, "survived": 0, "status": "deferred-to-block-9"}
+  ]
+}

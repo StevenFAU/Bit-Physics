@@ -1,0 +1,35 @@
+# Mutation-testing configuration (spec § 2.13).
+#
+# Per-target thresholds match phase-0-plan.md § 7.5 deliverable 13.
+# `run-mutation.sh` reads this file and orchestrates per-target mutmut
+# invocations. The Phase 0 run produces the baseline at
+# `baseline-<UTC>.json`; CI activation lives in
+# `.github/workflows/mutation-testing.yml` (gated until Block 9).
+
+[targets.capture]
+path      = "tools/testkit/capture"
+threshold = 0.90
+
+[targets.code_verification_mms]
+path      = "tools/testkit/code_verification/mms"
+threshold = 0.80
+
+[targets.golden]
+path      = "tools/testkit/golden"
+threshold = 0.80
+
+[targets.determinism]
+path      = "tools/testkit/determinism"
+threshold = 0.90
+
+[targets.equivalence]
+path      = "tools/testkit/equivalence"
+threshold = 0.85
+
+[targets.property]
+path      = "tools/testkit/property"
+threshold = 0.80
+
+[targets.cat4_draft_time]
+path      = "tools/integrity/integrity/cat4_draft_time"
+threshold = 0.90

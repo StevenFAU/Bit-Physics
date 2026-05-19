@@ -1,0 +1,6 @@
+{
+  "check": "cat1.intra-repo",
+  "fixture_files": ["broken.md"],
+  "expected_findings_min": 3,
+  "severity": "HARD_FAIL"
+}

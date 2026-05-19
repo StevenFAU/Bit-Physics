@@ -13,6 +13,7 @@ package = false
 [tool.uv.workspace]
 members = [
   "tools/testkit",
+  "tools/integrity",
 ]
 exclude = []
 
