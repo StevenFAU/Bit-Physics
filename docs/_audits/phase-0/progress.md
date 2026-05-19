@@ -5,5 +5,5 @@ block 4 vendoring CONFIRMED 52f66e8905904156b60935a3aa2bd9b904d3bf92 docs/_audit
 block 5 integrity CONFIRMED 280fcd027d0c4ae3bca02fd2f83af6717453fb8a docs/_audits/phase-0/block-5-integrity-2026-05-19T14-47-53Z.md
 block 6 diagnostics CONFIRMED 112117855690f07212d1f3c420e353b3ea9ab531 docs/_audits/phase-0/block-6-diagnostics-2026-05-19T15-03-05Z.md
 block 7 common-ts CONFIRMED 4f97e6beb153173a1ecb90e312800c078425aa3d docs/_audits/phase-0/block-7-common-ts-2026-05-19T15-25-28Z.md
-block 8 rd-2d IN-PROGRESS-TDD-COMMIT-A ec7045e6efc728845f5728ab975b6f88d8d5e8d3 (failing-tests commit; implementation deferred to next session)
-CONTINUE_FROM: block 8 implementation; last_sha ec7045e; failing-tests-hash sha256:ee9f2d3de9bc1ddf1a0826d672c6d6994abc270b9bc515db6ff32096b27b2988; evidence_path tools/testkit/failing-tests-evidence/reaction-diffusion-2d-ref-2026-05-19T15-43-23Z.txt
+block 8 rd-2d CONFIRMED aa76defc798a985fb9f29780d7269cf77fbc0c1a docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
+CONTINUE_FROM: block 9; last_sha 6c51f16
