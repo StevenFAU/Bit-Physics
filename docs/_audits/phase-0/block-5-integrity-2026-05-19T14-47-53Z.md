@@ -109,7 +109,7 @@ FACT — Six Cat checks shipped (all under `tools/integrity/integrity/`):
 - `cat5_provenance/audit_links.py` (`cat5.audit-links`, SOFT_WARN) — YAML front-matter parser + FACT-line cite resolver; resolves both files and directories (for citations like `tools/testkit/golden/`).
 - `catx_tolerance_budget/tolerance_budget.py` (`catx.tolerance-budget`, HARD_FAIL) — reads `tools/testkit/equivalence/tolerance.toml` + `tolerance-budget.toml`; applies operator-approved amendments from `docs/_audits/tolerance-budget-amendments/*.md` when present.
 
-FACT — Three standalone scripts at `integrity/scripts/`:
+FACT — Three standalone scripts at `tools/integrity/integrity/scripts/`:
 - `verify_evidence.py` — CLI `python -m integrity.scripts.verify_evidence --audit <path> [--strict]`. Reads audit front-matter; verifies every `evidence_paths` entry exists at the audit's `head_sha` and is non-empty; verifies optional `evidence_hashes` map (path → sha256) against actual content at HEAD.
 - `replay_prior_phase.py` — CLI with `--prior-phase --audit --gates`. Checks out a tag in a worktree, runs each named gate, compares to audit's claimed verdicts (whole-audit `verdict` or per-gate `gates` mapping); cleans up worktree.
 - `audit_prose_freshness.py` — drafter-runs-before-commit wrapper around Cat 4.
@@ -148,7 +148,8 @@ FACT — `.pre-commit-config.yaml` extended with a `local` repo containing `cat4
 - Stage: `pre-commit` (the `commit-msg` stage fires only on the message text; we need staged content scanning).
 - The hook fires on every local commit. CI activation via `integrity.yml` lands at Block 9.
 
-FACT — Root workspace updated: `pyproject.toml` `tool.uv.workspace.members` now lists `tools/testkit` and `tools/integrity`.
+FACT — Root workspace updated: the `pyproject.toml` field
+tool.uv.workspace.members now lists `tools/testkit` and `tools/integrity`.
 
 FACT — `python -m integrity --mode strict` (whole-repo, every category) against HEAD: 0 HARD_FAIL, 9 SOFT_WARN, exit 0.
 

@@ -97,7 +97,7 @@ All file paths below are FACT-tagged (each was committed in
 
 ### Vendored canonical documents
 
-- **FACT:** `docs/architecture.md` — `gpu-sims-design-spec-v2.md` v2.4 vendored at
+- **FACT:** `docs/architecture.md` — gpu-sims-design-spec-v2.md v2.4 vendored at
   3256 lines. Includes Appendices D (shared invariants), E (agent playbook),
   F (dispatch operations), G (convention catalog full text) as required by
   Phase 0 plan deliverable #6.
@@ -171,8 +171,8 @@ All file paths below are FACT-tagged (each was committed in
   (plan deliverable #22).
 - **FACT:** `tools/testkit/equivalence/tolerance-budget.toml` with the spec
   § 2.6 default caps (plan deliverable #23).
-- **FACT:** `tools/testkit/references` → `../../references` symlink
-  (plan deliverable #16).
+- **FACT:** `tools/testkit/references` is a symlink that resolves to
+  `references/` at the repo root (plan deliverable #16).
 
 ### Schema-corpus + references scaffolds
 
