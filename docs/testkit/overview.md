@@ -35,4 +35,4 @@ blocks ship the rest.
 - [`determinism.md`](determinism.md) — determinism harness (Block 3).
 - [`equivalence.md`](equivalence.md) — cross-stack equivalence (Block 3).
 - [`property.md`](property.md) — property-based testing (Block 3).
-- `golden-values.md` — golden-value tables (Block 4, pending).
+- [`golden-values.md`](golden-values.md) — golden-value tables (Block 4).

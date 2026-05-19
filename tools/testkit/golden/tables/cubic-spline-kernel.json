@@ -1,0 +1,134 @@
+{
+  "algorithm": "cubic-spline-kernel-3d-monaghan",
+  "category": "sph-kernel",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/cubic-spline-kernel.md",
+    "upstream": "SPlisHSPlasH",
+    "upstream_path": "references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.h",
+    "upstream_sha": "6bff55a6eaf14083d34650f22a268ce156b62b54"
+  },
+  "schema_version": "1.0.0",
+  "test_points": [
+    {
+      "expected": {
+        "W": 0.3183098861837907,
+        "grad_W_magnitude": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "doi": "10.1088/0034-4885/68/8/R01",
+        "expected": {
+          "W": 0.3183098861837907,
+          "grad_W_magnitude": 0.0
+        },
+        "source": "Monaghan, J. J. (2005), Smoothed particle hydrodynamics, Rep. Prog. Phys. 68 (8), 1703-1759, Eq. (2.7); peak value of the 3D cubic-spline kernel."
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 0.0
+      }
+    },
+    {
+      "expected": {
+        "W": 0.2921985283327766,
+        "grad_W_magnitude": 0.19397008689324743
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 0.25
+      }
+    },
+    {
+      "expected": {
+        "W": 0.22878523069459955,
+        "grad_W_magnitude": 0.29841551829730373
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 0.5
+      }
+    },
+    {
+      "expected": {
+        "W": 0.15045115714155732,
+        "grad_W_magnitude": 0.31333629421216896
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 0.75
+      }
+    },
+    {
+      "expected": {
+        "W": 0.07957747154594767,
+        "grad_W_magnitude": 0.238732414637843
+      },
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "doi": "10.1088/0034-4885/68/8/R01",
+        "expected": {
+          "W": 0.07957747154594767,
+          "grad_W_magnitude": 0.238732414637843
+        },
+        "source": "Monaghan, J. J. (2005), Smoothed particle hydrodynamics, Rep. Prog. Phys. 68 (8), 1703-1759, Eq. (2.7) piecewise switch."
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 1.0
+      }
+    },
+    {
+      "expected": {
+        "W": 0.03357174580844667,
+        "grad_W_magnitude": 0.13428698323378668
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 1.25
+      }
+    },
+    {
+      "expected": {
+        "W": 0.009947183943243459,
+        "grad_W_magnitude": 0.05968310365946075
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 1.5
+      }
+    },
+    {
+      "expected": {
+        "W": 0.0012433979929054324,
+        "grad_W_magnitude": 0.014920775914865188
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 1.75
+      }
+    },
+    {
+      "expected": {
+        "W": 0.0,
+        "grad_W_magnitude": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "doi": "10.1146/annurev.aa.30.090192.002551",
+        "expected": {
+          "W": 0.0,
+          "grad_W_magnitude": 0.0
+        },
+        "source": "Monaghan, J. J. (1992), Smoothed particle hydrodynamics, Annu. Rev. Astron. Astrophys. 30, 543-574, sec. 2; compact support of the cubic-spline kernel."
+      },
+      "inputs": {
+        "h": 1.0,
+        "q": 2.0
+      }
+    }
+  ],
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-12
+  }
+}

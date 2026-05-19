@@ -1,0 +1,17 @@
+[upstream]
+name         = "SPlisHSPlasH"
+version      = "2.16.1"
+sha          = "6bff55a6eaf14083d34650f22a268ce156b62b54"
+url          = "https://github.com/InteractiveComputerGraphics/SPlisHSPlasH"
+license      = "MIT"
+license_file = "LICENSE"
+
+[scope]
+purpose         = "Reference for SPH kernel implementations (cubic-spline 3D) and DFSPH algorithm. Phase 0 Block 4 cites SPHKernels.h as the upstream-citation anchor for the cubic-spline golden table; the Python reference implementation is derived independently from Monaghan 1992/2005 to guard against symmetric upstream bugs (spec § 2.4)."
+used_by_sims    = []
+used_by_checks  = ["cat1.upstream-citation", "cat3.cubic-kernel"]
+
+[vendoring]
+fetched_utc   = "2026-05-19T13-45-15Z"
+fetched_by    = "phase-0-block-4-agent"
+fetch_command = "git clone --no-checkout --filter=blob:none https://github.com/InteractiveComputerGraphics/SPlisHSPlasH && git -C SPlisHSPlasH sparse-checkout init --cone && git -C SPlisHSPlasH sparse-checkout set SPlisHSPlasH && git -C SPlisHSPlasH checkout 6bff55a6eaf14083d34650f22a268ce156b62b54; then copied LICENSE, README.md (→ UPSTREAM_README.md), SPlisHSPlasH/SPHKernels.{h,cpp} into references/SPlisHSPlasH/."
