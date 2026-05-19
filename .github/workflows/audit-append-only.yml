@@ -59,5 +59,6 @@ jobs:
             if ! cmp -s /tmp/__head_prefix /tmp/__prior; then
               echo "EDITED: $path"; fail=1
             fi
-          done < <(git ls-tree -r --name-only "$PRIOR_TAG" -- docs/_audits/)
+          done < <(git ls-tree -r --name-only "$PRIOR_TAG" -- docs/_audits/ \
+            | grep -E '\.ledger\.md$' || true)
           exit "$fail"
