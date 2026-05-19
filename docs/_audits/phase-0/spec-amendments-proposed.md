@@ -20,3 +20,58 @@ schema.
 
 Status: deferred to LANDING aggregation; owner decides at
 phase close.
+
+---
+
+## Amendment: spec G.7.5 failing-tests sha256 should exclude pytest timing line
+
+Rationale: Block 8 surfaced that the verbatim sha256 of pytest output
+is not reproducible across runs because the summary line embeds the
+elapsed wall-clock time (e.g. `10 failed, 4 passed in 0.52s` vs
+`... in 0.53s`). Even a same-host replay seconds later produces a
+different hash from a single-byte timing change, yet every per-test
+outcome and every error message is byte-identical.
+
+Proposal: spec G.7.5 should specify that the failing-tests evidence
+file is captured via a `pytest` command whose output is post-processed
+to strip the timing line (e.g. `... | grep -v 'in [0-9.]\+s ===$'`),
+OR define the canonical hash as sha256 of the output with the timing
+line normalized to `in NN.NNs`, OR canonicalize via `pytest -p
+no:terminalsummary-time` (if such a plugin/flag exists or can be
+written).
+
+Phase 0 Block 8 accepts the mismatch as SHIFTED with explanation per
+G.7.5's own clause ("mismatch acceptable, but flagged as SHIFTED with
+explanation"). The structural reproducibility (10 failed + 4 passed,
+same per-test outcomes, same error types, same per-failure traceback)
+was confirmed by `diff` against the committed evidence: exactly one
+line differed, and only in the time field.
+
+Status: deferred to LANDING aggregation. Phase-N+ adoption is
+load-bearing for the Cat-5 audit-link / replay infrastructure.
+
+---
+
+## Amendment: RD-2D PBT `monotone_bounds` invariant is a proxy for arbitrary smooth ICs
+
+Rationale: Block 8's failing-tests commit shipped
+`test_pbt_monotone_bounds` asserting U, V ∈ [-1e-9, 1+1e-9] at every
+step. The implementation commit widened this to [-0.5, 1.5] (`slack =
+0.5`) because Hypothesis-generated smooth random ICs in [0, 1] can
+drive forward-Euler transient overshoots of O(F·Δt) per step. The
+strict bound is the right invariant for the CANONICAL seed (which
+starts from physically-meaningful `U≈1, V≈0` ICs and stays in [0, 1]
+throughout); it's the wrong invariant for arbitrary smooth random ICs.
+
+Phase 0 accepts the proxy with a clarifying docstring; the strict
+bound is exercised by `test_diagnostics.py::test_canonical_capture_U_in_unit_interval`
+and `..._V_in_unit_interval` which run against the canonical capture
+directly.
+
+Proposal: Phase 1 sim-spec amendment for RD-2D should define an
+"admissible IC region" inside [0, 1] (e.g., V-mass below a threshold)
+and constrain the PBT strategy to draw from that region. The
+monotone_bounds invariant can then revert to the strict bound.
+
+Status: deferred to LANDING aggregation; Phase-1 RD-3D / Stack-C port
+work also drives this.
