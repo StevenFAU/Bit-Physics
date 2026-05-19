@@ -75,3 +75,50 @@ monotone_bounds invariant can then revert to the strict bound.
 
 Status: deferred to LANDING aggregation; Phase-1 RD-3D / Stack-C port
 work also drives this.
+
+---
+
+## audit-append-only-ledger-vs-cue-split (LANDED out-of-phase)
+
+### Status
+
+IMPLEMENTED in commits 7b8b2c1, 08579c2, 8776791 on main between
+Phase 0 close and Phase 1 dispatch. This is a between-phases operator
+action, not Phase 1 work; Phase 1 dispatches against the post-amendment
+spec.
+
+### Defect
+
+Block 9 close-record commit 44af51f edited (rather than appended-to)
+the CONTINUE_FROM cue line in docs/_audits/phase-0/progress.md,
+triggering audit-append-only HARD_FAIL against v0.0.0-phase-0
+baseline. The violation persists on every push until
+v0.1.0-phase-1 rebaselines.
+
+### Root cause
+
+progress.md mixed two distinct semantic kinds: append-only ledger
+state (block close lines) and transient cue state (CONTINUE_FROM
+marker). Spec § 7.5 / Appendix G.7 treated all bytes under
+docs/_audits/ as immutable, which is correct for ledger content
+but wrong for cue content.
+
+### Fix
+
+Spec amendment to § 7.5 / Appendix G.7 partitions audit files
+into ledger (*.ledger.md, append-only) and cue (no extension or
+*.cue.md, mutable). Audit-append-only workflow scoped to
+*.ledger.md only.
+
+Going forward: Phase 1 and beyond use docs/_audits/phase-<N>/ledger.md
+and docs/_audits/phase-<N>/cue. Phase 0's progress.md remains as
+historical record.
+
+### audit-append-only residual
+
+v0.0.0-phase-0 baseline still sees progress.md as edited (real
+defect, accurate gate signal). With the workflow patch (commit
+7b8b2c1) scoping to *.ledger.md only and progress.md retained as
+historical (not renamed to *.ledger.md), the gate no longer
+applies to progress.md. CI returns to green from commit 7b8b2c1
+onward.
