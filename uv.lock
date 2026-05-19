@@ -11,6 +11,7 @@ resolution-markers = [
 [manifest]
 members = [
     "bit-physics",
+    "bit-physics-diagnostics",
     "bit-physics-integrity",
     "bit-physics-testkit",
 ]
@@ -68,6 +69,36 @@ wheels = [
 name = "bit-physics"
 version = "0.0.0"
 source = { virtual = "." }
+
+[[package]]
+name = "bit-physics-diagnostics"
+version = "0.0.0"
+source = { editable = "tools/diagnostics" }
+dependencies = [
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "bit-physics-integrity"
