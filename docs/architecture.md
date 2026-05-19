@@ -1443,6 +1443,8 @@ The phase plan is not dispatched until the pre-dispatch review verdict is CONFIR
 
 **Append-only CI enforcement.** The append-only invariant is enforced not just by convention but by a CI check at `.github/workflows/audit-append-only.yml`. On every PR (or every push, given trunk-based development), the check computes the content hash of every file under `docs/_audits/` at the prior phase tag and confirms that for each file present at the prior tag, the prior-tag content is a prefix of the HEAD content. Files may grow (append-only); they may not be edited or shortened. Net-new audit files are allowed. The check is HARD_FAIL. This converts the append-only rule from "honor system" to "mechanical."
 
+**Ledger files vs cue files.** Audit-trail files under `docs/_audits/` partition into two semantic classes. **Ledger files** (`*.ledger.md`) are append-only: each line records a fact (block close, stage verdict, phase close) that does not change once committed. **Cue files** (no extension, or `*.cue.md`) are mutable transient state — resumption hints, `CONTINUE_FROM` markers, in-flight progress notes — that legitimately get overwritten as the work advances. The append-only CI gate enforces immutability on ledger files only; cue files are explicitly out of scope. Phase progress tracking lives in `docs/_audits/phase-<N>/ledger.md` (the append-only record) and `docs/_audits/phase-<N>/cue` (the mutable single-line continuation marker). This convention applies starting Phase 1; Phase 0's `progress.md` is a historical artifact retained verbatim, and its residual append-only-gate failure against `v0.0.0-phase-0` is documented in `docs/_audits/phase-0/spec-amendments-proposed.md`.
+
 **Evidence-path verification.** Every audit report's front-matter `evidence_paths` field cites repo-relative paths to artifacts that substantiate the report's claims (test outputs, capture files, integrity check outputs, golden tables, CI run URLs). `tools/integrity/scripts/verify_evidence.py` reads an audit report and confirms:
 1. Every cited path exists at the audit's `head_sha`.
 2. Every cited path is non-empty.
@@ -3104,6 +3106,20 @@ The append-only invariant is mechanically enforced by `.github/workflows/audit-a
 4. HARD_FAIL on any file whose prior-tag content has been edited or shortened.
 
 This converts the append-only rule from honor system to git mechanics. The check ships in Phase 0 Block 5 (INTEGRITY) and is activated at Phase 0 Block 9 (LANDING).
+
+### Ledger files vs cue files
+
+Files under `docs/_audits/` partition into two classes:
+
+- **Ledger files (`*.ledger.md`)** — append-only, immutable once committed. Each line records an outcome (block close, stage verdict, phase close) that the project refers back to indefinitely. The `audit-append-only.yml` workflow enforces the prefix-equality invariant on these files only.
+- **Cue files (no extension, or `*.cue.md`)** — mutable transient state. Resumption hints, `CONTINUE_FROM` markers, in-flight progress notes. The workflow explicitly skips these files via a `grep -E '\.ledger\.md$'` filter on the `git ls-tree` output.
+
+Phase progress tracking uses both:
+
+- `docs/_audits/phase-<N>/ledger.md` — block / stage / phase close one-liners (append-only).
+- `docs/_audits/phase-<N>/cue` — single-line continuation marker, overwritten as the agent advances through the phase.
+
+Phase 0 used a single `progress.md` that mixed both kinds; the resulting `EDITED` HARD_FAIL against `v0.0.0-phase-0` is documented in `docs/_audits/phase-0/spec-amendments-proposed.md`. The convention applies from Phase 1 forward; `progress.md` is preserved as a historical record.
 
 ### Evidence-path verification (mechanical)
 
