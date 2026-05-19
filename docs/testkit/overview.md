@@ -32,7 +32,7 @@ blocks ship the rest.
 - [`capture-format.md`](capture-format.md) — capture manifest + HDF5 payload (Block 1).
 - [`references.md`](references.md) — vendoring discipline (Block 1).
 - [`mms.md`](mms.md) — Method of Manufactured Solutions (Block 2).
-- `determinism.md` — determinism harness (Block 3, pending).
-- `equivalence.md` — cross-stack equivalence (Block 3, pending).
-- `property.md` — property-based testing (Block 3, pending).
+- [`determinism.md`](determinism.md) — determinism harness (Block 3).
+- [`equivalence.md`](equivalence.md) — cross-stack equivalence (Block 3).
+- [`property.md`](property.md) — property-based testing (Block 3).
 - `golden-values.md` — golden-value tables (Block 4, pending).

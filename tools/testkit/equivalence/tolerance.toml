@@ -1,0 +1,43 @@
+# Cross-stack equivalence tolerance table (spec § 2.6).
+#
+# Per-category default tolerances; per-sim overrides may tighten or loosen
+# these values. Overrides must remain inside `tolerance-budget.toml`'s caps
+# (Cat-X HARD_FAIL otherwise; Block-5 INTEGRITY enforces).
+#
+# Schema (validated by `equivalence.harness.load_tolerance_table`):
+#   [defaults.<category>]
+#     relative = <float>
+#     absolute = <float>
+#   [overrides.<sim-name>]
+#     category = <string>     # required
+#     relative = <float>      # optional; falls back to defaults.<category>.relative
+#     absolute = <float>      # optional; falls back to defaults.<category>.absolute
+#
+# Category names mirror spec § 2.6 default tolerance table.
+
+[defaults.closed_form]
+relative = 1e-5
+absolute = 0.0
+
+[defaults.reaction-diffusion]
+relative = 1e-4
+absolute = 0.0
+
+[defaults.sph]
+relative = 1e-4
+absolute = 0.0
+
+[defaults.mpm]
+relative = 1e-4
+absolute = 0.0
+
+[defaults.smoke]
+relative = 1e-4
+absolute = 0.0
+
+[defaults.lbm]
+relative = 1e-5
+absolute = 0.0
+
+# No per-sim overrides at Phase 0 close. Block 8 (RD-2D) and Phase 1+ sims
+# may add entries here; each addition is gated by tolerance-budget.toml.

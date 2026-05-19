@@ -8,6 +8,7 @@ authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
 dependencies = [
   "h5py>=3.10",
+  "hypothesis>=6.0",
   "jsonschema>=4.20",
   "numpy>=2.0",
   "sympy>=1.13",
@@ -26,7 +27,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["capture", "code_verification"]
+packages = ["capture", "code_verification", "determinism", "equivalence", "property"]
 
 [tool.ruff]
 line-length = 100
@@ -38,16 +39,27 @@ select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
 [tool.mypy]
 strict = true
 python_version = "3.12"
-files = ["capture", "code_verification"]
+files = ["capture", "code_verification", "determinism", "equivalence", "property"]
 mypy_path = "."
 
 [[tool.mypy.overrides]]
-module = ["h5py", "h5py.*", "jsonschema", "jsonschema.*", "sympy", "sympy.*"]
+module = [
+  "h5py", "h5py.*",
+  "jsonschema", "jsonschema.*",
+  "sympy", "sympy.*",
+  "hypothesis", "hypothesis.*",
+]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 filterwarnings = ["error"]
-testpaths = ["capture/tests", "code_verification/mms/tests"]
+testpaths = [
+  "capture/tests",
+  "code_verification/mms/tests",
+  "determinism/tests",
+  "equivalence/tests",
+  "property/tests",
+]
 
 [tool.uv.sources]
 # Workspace member; root pyproject lists this under [tool.uv.workspace].
