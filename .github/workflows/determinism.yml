@@ -1,0 +1,25 @@
+name: determinism
+# Runs Block 3's determinism harness against stub sims and (post-Block-8)
+# the RD-2D sim. Gated until Block 3 lands; Block 9 activates.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  determinism:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync testkit deps
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+      - name: Run determinism harness
+        working-directory: tools/testkit
+        run: uv run pytest -W error determinism/tests/

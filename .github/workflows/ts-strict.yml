@@ -1,0 +1,43 @@
+name: ts-strict
+# TypeScript / WebGPU strict-mode CI. Gated until Block 7 lands
+# common/common-ts/. Block 9 (LANDING) flips `if: ${{ false }}` to true.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ts-strict:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: common/common-ts/pnpm-lock.yaml
+
+      - name: Install
+        working-directory: common/common-ts
+        run: pnpm install --frozen-lockfile
+
+      - name: tsc --noEmit
+        working-directory: common/common-ts
+        run: pnpm tsc --noEmit
+
+      - name: eslint
+        working-directory: common/common-ts
+        run: pnpm eslint .
+
+      - name: vitest (skip-in-CI tests excluded per spec § 7.8)
+        working-directory: common/common-ts
+        run: pnpm vitest run

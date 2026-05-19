@@ -1,0 +1,34 @@
+# Pre-commit configuration for Bit-Physics.
+#
+# Tag versions verified at Phase 0 Block 1 (2026-05-18) per Convention-8.
+# Re-verify at re-install with: gh release view -R <repo>
+# See docs/dependencies.md.
+
+default_install_hook_types: [pre-commit, commit-msg]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-toml
+      - id: check-yaml
+      - id: check-json
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.13
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+# Block 5 (INTEGRITY) appends the Cat 4 (draft-time spec verification) hook
+# below, calling `python -m integrity --cat 4 --staged-only` at the
+# commit-msg stage.

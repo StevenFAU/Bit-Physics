@@ -1,0 +1,25 @@
+name: integrity
+# `python -m integrity --all` runs every Cat 1–5 + Cat-X check across the
+# whole repo. Gated until Block 5 lands the toolkit; Block 9 activates.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  integrity:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync integrity deps
+        working-directory: tools/integrity
+        run: uv sync --extra dev
+      - name: Run integrity --all
+        working-directory: tools/integrity
+        run: uv run python -m integrity --all

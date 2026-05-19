@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Bit-Physics"
+abstract: >
+  A GPU-accelerated physics and emergence simulation portfolio with a
+  coherent verification, build, documentation, and shipping discipline.
+authors:
+  - family-names: Cohen
+    given-names: Steven
+repository-code: "https://github.com/StevenFAU/Bit-Physics"
+license: MIT
+version: 0.0.0
+date-released: 2026-05-18

@@ -1,0 +1,35 @@
+name: tolerance-budget-check
+# Per docs/architecture.md § 2.6. On any PR (or push) modifying
+# tools/testkit/equivalence/tolerance.toml, assert that no per-sim override
+# exceeds the corresponding cap in
+# tools/testkit/equivalence/tolerance-budget.toml. HARD_FAIL on
+# over-budget overrides.
+#
+# Gated until Block 5 ships the Cat-X check and Block 9 activates the
+# workflow. The implementation lives in
+# tools/integrity/integrity/catx_tolerance_budget/ (Block 5).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "tools/testkit/equivalence/tolerance.toml"
+      - "tools/testkit/equivalence/tolerance-budget.toml"
+
+jobs:
+  tolerance-budget-check:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync integrity deps
+        working-directory: tools/integrity
+        run: uv sync --extra dev
+      - name: Cat-X tolerance budget
+        working-directory: tools/integrity
+        run: uv run python -m integrity --cat tolerance-budget

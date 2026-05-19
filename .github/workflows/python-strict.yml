@@ -1,0 +1,36 @@
+name: python-strict
+# Lint, type-check, and test the Python workspace members in strict mode
+# per docs/architecture.md § 7.7 and Appendix G § G.9.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  python-strict:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync testkit workspace deps
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+
+      - name: ruff (testkit)
+        working-directory: tools/testkit
+        run: uv run ruff check capture/
+
+      - name: mypy --strict (testkit)
+        working-directory: tools/testkit
+        run: uv run mypy --strict capture/
+
+      - name: pytest -W error + coverage (advisory)
+        working-directory: tools/testkit
+        run: uv run pytest -W error --cov=capture --cov-report=term --cov-report=xml capture/tests/

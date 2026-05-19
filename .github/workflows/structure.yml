@@ -1,0 +1,63 @@
+name: structure
+# Verifies required top-level files and the Phase 0 directory layout per
+# docs/phases/phase-0-plan.md § 3.4.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Required top-level files
+        run: |
+          set -e
+          for f in README.md LICENSE CHANGELOG.md CITATION.cff \
+                   CONTRIBUTING.md CODE_OF_CONDUCT.md SECURITY.md \
+                   .gitignore .gitattributes .editorconfig \
+                   .pre-commit-config.yaml pyproject.toml justfile; do
+            [ -f "$f" ] || { echo "MISSING: $f"; exit 1; }
+          done
+      - name: Required directories
+        run: |
+          set -e
+          for d in docs docs/phases docs/_audits/phase-0 docs/testkit \
+                   docs/integrity docs/diagnostics docs/sim-specs docs/ops \
+                   tools tools/testkit tools/testkit/capture \
+                   tools/testkit/schemas tools/testkit/probes \
+                   tools/testkit/solution_verification \
+                   tools/testkit/failing-tests-evidence \
+                   tools/testkit/equivalence \
+                   tools/dispatch \
+                   tests/fixtures/legacy-captures \
+                   references references/papers; do
+            [ -d "$d" ] || { echo "MISSING DIR: $d"; exit 1; }
+          done
+      - name: Required canonical files
+        run: |
+          set -e
+          for f in docs/architecture.md docs/glossary.md \
+                   docs/dependencies.md docs/perf-ledger.md \
+                   docs/ops/branch-protection.md \
+                   docs/sim-specs/_template.md \
+                   docs/testkit/overview.md docs/testkit/capture-format.md \
+                   docs/testkit/references.md \
+                   docs/integrity/strict-mode.md \
+                   docs/phases/phase-0-plan.md \
+                   tools/dispatch/preflight-phase.py \
+                   tools/testkit/pyproject.toml \
+                   tools/testkit/schemas/capture-v1.json \
+                   tools/testkit/schemas/golden-v1.json \
+                   tools/testkit/schemas/reference-manifest-v1.json \
+                   tools/testkit/capture/__init__.py \
+                   tools/testkit/capture/manifest.py \
+                   tools/testkit/capture/reader.py \
+                   tools/testkit/capture/writer.py \
+                   tools/testkit/capture/diff.py \
+                   tools/testkit/probes/template.md \
+                   tools/testkit/equivalence/tolerance-budget.toml; do
+            [ -f "$f" ] || { echo "MISSING FILE: $f"; exit 1; }
+          done

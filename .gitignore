@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.uv-cache/
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Local secrets / env
+.env
+.env.local
+
+# Mutation-testing artifacts
+.mutmut-cache

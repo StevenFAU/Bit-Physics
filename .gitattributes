@@ -1,0 +1,38 @@
+# Text normalization (LF for tracked text)
+* text=auto eol=lf
+
+# Explicit binaries — do not normalize, do not diff as text
+*.h5     binary
+*.hdf5   binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.pdf    binary
+*.ico    binary
+*.zip    binary
+*.tar    binary
+*.tgz    binary
+*.gz     binary
+*.bin    binary
+*.npy    binary
+*.npz    binary
+
+# Source / data file types
+*.py     text diff=python
+*.md     text
+*.toml   text
+*.yaml   text
+*.yml    text
+*.json   text
+*.cff    text
+*.ts     text
+*.tsx    text
+*.js     text
+*.mjs    text
+*.cjs    text
+*.cpp    text
+*.hpp    text
+*.h      text
+*.glsl   text
+*.wgsl   text
+*.sh     text eol=lf

@@ -1,0 +1,26 @@
+name: equivalence
+# Runs Block 3's cross-stack equivalence harness against stub stacks and
+# (post-Phase-2) cross-stack ports. Gated until Block 3 lands;
+# Block 9 activates.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  equivalence:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync testkit deps
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+      - name: Run equivalence harness
+        working-directory: tools/testkit
+        run: uv run pytest -W error equivalence/tests/

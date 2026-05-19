@@ -1,0 +1,36 @@
+# Tolerance budget for the current phase.
+# Per-category caps on cross-stack tolerance.
+# Per-sim overrides in tolerance.toml that exceed these caps trigger
+# Cat-X HARD_FAIL.
+# Amendments require a separate operator-approved commit per
+# docs/architecture.md § 2.6.
+
+[phase]
+phase = "phase-0"
+opened_at = "2026-05-18T00:00:00Z"
+
+# Defaults from spec § 2.6 default tolerance table.
+
+[budgets.closed_form.cross_stack]
+relative = 1e-5
+absolute = 0.0
+
+[budgets.reaction-diffusion.cross_stack]
+relative = 1e-4
+absolute = 0.0
+
+[budgets.sph.cross_stack]
+relative = 1e-4
+absolute = 0.0
+
+[budgets.mpm.cross_stack]
+relative = 1e-4
+absolute = 0.0
+
+[budgets.smoke.cross_stack]
+relative = 1e-4
+absolute = 0.0
+
+[budgets.lbm.cross_stack]
+relative = 1e-5
+absolute = 0.0

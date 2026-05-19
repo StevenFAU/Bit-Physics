@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bit-physics.local/schemas/reference-manifest-v1.json",
+  "title": "Bit-Physics Vendored Reference Manifest",
+  "description": "Schema for references/<UpstreamName>/MANIFEST.toml content (loaded via tomllib.loads → jsonschema.validate). Spec § 2.8.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["upstream", "scope", "vendoring"],
+  "properties": {
+    "upstream": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "sha", "url", "license", "license_file"],
+      "properties": {
+        "name":         { "type": "string", "minLength": 1 },
+        "version":      { "type": "string", "minLength": 1 },
+        "sha":          { "type": "string", "minLength": 1 },
+        "url":          { "type": "string", "minLength": 1, "format": "uri" },
+        "license":      { "type": "string", "minLength": 1 },
+        "license_file": { "type": "string", "minLength": 1 }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["purpose", "used_by_sims", "used_by_checks"],
+      "properties": {
+        "purpose":        { "type": "string", "minLength": 1 },
+        "used_by_sims":   { "type": "array", "items": { "type": "string" } },
+        "used_by_checks": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "vendoring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fetched_utc", "fetched_by", "fetch_command"],
+      "properties": {
+        "fetched_utc":   { "type": "string", "minLength": 1 },
+        "fetched_by":    { "type": "string", "minLength": 1 },
+        "fetch_command": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

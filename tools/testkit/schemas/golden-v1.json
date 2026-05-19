@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bit-physics.local/schemas/golden-v1.json",
+  "title": "Bit-Physics Golden-Value Table",
+  "description": "Canonical golden-value schema (spec § 2.4). Each test_points entry MAY carry an independent_reference field; per § 2.4 + § 3.2, Cat 3 HARD_FAILs tables with fewer than three independent_reference anchors.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "algorithm",
+    "category",
+    "derivation",
+    "test_points",
+    "tolerance"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "algorithm": { "type": "string", "minLength": 1 },
+    "category":  { "type": "string", "minLength": 1 },
+    "derivation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["doc", "upstream", "upstream_sha", "upstream_path"],
+      "properties": {
+        "doc":           { "type": "string", "minLength": 1 },
+        "upstream":      { "type": "string", "minLength": 1 },
+        "upstream_sha":  { "type": "string", "minLength": 1 },
+        "upstream_path": { "type": "string", "minLength": 1 }
+      }
+    },
+    "test_points": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["inputs", "expected"],
+        "properties": {
+          "inputs":   { "type": "object" },
+          "expected": { "type": "object" },
+          "independent_reference": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["source", "derived_by"],
+            "properties": {
+              "source":     { "type": "string", "minLength": 1 },
+              "doi":        { "type": "string" },
+              "derived_by": { "type": "string", "minLength": 1 },
+              "expected":   { "type": "object" }
+            }
+          }
+        }
+      }
+    },
+    "tolerance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["absolute", "relative"],
+      "properties": {
+        "absolute": { "type": "number", "minimum": 0 },
+        "relative": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

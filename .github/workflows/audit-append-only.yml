@@ -1,0 +1,63 @@
+name: audit-append-only
+# Enforces the append-only invariant on docs/_audits/ per
+# docs/architecture.md § 7.5 + Appendix G § G.7.
+#
+# On every push, for every file under docs/_audits/ that was already
+# present at the most recent phase tag, asserts that the prior-tag content
+# is a *prefix* of the HEAD content. Net-new files are allowed.
+#
+# HARD_FAIL on any prior-tag content that has been edited or shortened.
+#
+# Gated until Block 9; the workflow first goes live for Phase 1 onward
+# (no prior phase tag exists during Phase 0 itself).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  audit-append-only:
+    if: ${{ false }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Identify most recent phase tag
+        id: tag
+        run: |
+          set -e
+          tag=$(git tag --list 'v*-phase-*' | sort -V | tail -n1)
+          if [ -z "$tag" ]; then
+            echo "no prior phase tag; skipping check (first phase)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+      - name: Verify append-only invariant
+        if: steps.tag.outputs.skip == 'false'
+        env:
+          PRIOR_TAG: ${{ steps.tag.outputs.tag }}
+        run: |
+          set -e
+          fail=0
+          while IFS= read -r path; do
+            # File must still exist (deletion forbidden).
+            if [ ! -f "$path" ]; then
+              echo "DELETED: $path"; fail=1; continue
+            fi
+            prior_len=$(git show "$PRIOR_TAG:$path" | wc -c)
+            head_len=$(wc -c < "$path")
+            if [ "$head_len" -lt "$prior_len" ]; then
+              echo "SHORTENED: $path"; fail=1; continue
+            fi
+            # Compare the prior-tag content against the HEAD prefix.
+            head -c "$prior_len" "$path" > /tmp/__head_prefix
+            git show "$PRIOR_TAG:$path" > /tmp/__prior
+            if ! cmp -s /tmp/__head_prefix /tmp/__prior; then
+              echo "EDITED: $path"; fail=1
+            fi
+          done < <(git ls-tree -r --name-only "$PRIOR_TAG" -- docs/_audits/)
+          exit "$fail"
