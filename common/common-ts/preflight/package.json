@@ -1,0 +1,10 @@
+{
+  "name": "common-ts-preflight",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "dependencies": {
+    "h5wasm": "0.10.1"
+  }
+}

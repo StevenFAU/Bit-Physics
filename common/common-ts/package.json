@@ -1,0 +1,33 @@
+{
+  "name": "@bit-physics/common-ts",
+  "version": "0.0.0",
+  "description": "Bit-Physics Stack-B common module — WebGPU primitives, h5wasm-backed capture I/O, IndexedDB persistence.",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22" },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:cross-stack": "vitest run --reporter=default cross-stack",
+    "lint": "eslint src examples preflight"
+  },
+  "dependencies": {
+    "h5wasm": "0.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.5",
+    "@webgpu/types": "0.1.70",
+    "eslint": "10.4.0",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.59.4",
+    "vitest": "4.1.6"
+  }
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+preflight/node_modules/
+preflight/out/
+*.tsbuildinfo
+.vitest-cache/
+examples/hello-physics/captures/

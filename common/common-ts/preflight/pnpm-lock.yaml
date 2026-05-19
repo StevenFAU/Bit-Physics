@@ -1,0 +1,22 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      h5wasm:
+        specifier: 0.10.1
+        version: 0.10.1
+
+packages:
+
+  h5wasm@0.10.1:
+    resolution: {integrity: sha512-VxKLoNcPmn/4j6wWuf81gRGzcNjW1aHKtNgRp6ZBeYd6RoWmN3tk5HB6E3nPYsc3YhGT+o07xz1tK6wdMuPMiw==}
+
+snapshots:
+
+  h5wasm@0.10.1: {}
