@@ -9,7 +9,7 @@ on:
 
 jobs:
   determinism:
-    if: ${{ false }}
+    if: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

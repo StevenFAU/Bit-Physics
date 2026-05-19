@@ -19,7 +19,7 @@ on:
 
 jobs:
   tolerance-budget-check:
-    if: ${{ false }}
+    if: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
