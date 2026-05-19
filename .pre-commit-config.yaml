@@ -16,6 +16,13 @@ repos:
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: check-added-large-files
+        # 10 MB ceiling. Per spec § 2.7, canonical capture HDF5 payloads
+        # are committed (Phase 0 Block 8's RD-2D capture is ~3 MB at
+        # 128² × 11 snapshots × 2 fields × float64). The default 500 KB
+        # would fail every sim's first-landing commit. Raise the
+        # ceiling but keep the hook active so accidental tens-of-megs
+        # binary commits still trip the gate.
+        args: ["--maxkb=10240"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.13
