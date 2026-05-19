@@ -14,7 +14,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "mutmut>=3.0",
+  # mutmut pinned to 2.x: see tools/testkit/pyproject.toml's rationale —
+  # Block-5's run-mutation.sh uses `--paths-to-mutate` removed in 3.x.
+  "mutmut>=2.5,<3.0",
   "mypy>=1.10",
   "pytest>=8.0",
   "pytest-cov>=5.0",

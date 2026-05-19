@@ -2,34 +2,45 @@
 #
 # Per-target thresholds match phase-0-plan.md § 7.5 deliverable 13.
 # `run-mutation.sh` reads this file and orchestrates per-target mutmut
-# invocations. The Phase 0 run produces the baseline at
-# `baseline-<UTC>.json`; CI activation lives in
-# `.github/workflows/mutation-testing.yml` (gated until Block 9).
+# invocations. Phase 0 produces the baseline; CI activation lives in
+# `.github/workflows/mutation-testing.yml`.
+#
+# `runner` is the pytest command passed to `mutmut --runner`. It must
+# target only the relevant tests for the target — without it mutmut
+# tries to discover the entire repo's tests at the root, which fails on
+# workspace-member path resolution. Surfaced at Block 9 LANDING.
 
 [targets.capture]
 path      = "tools/testkit/capture"
 threshold = 0.90
+runner    = "python -m pytest tools/testkit/capture/tests/ -x -q --tb=no"
 
 [targets.code_verification_mms]
 path      = "tools/testkit/code_verification/mms"
 threshold = 0.80
+runner    = "python -m pytest tools/testkit/code_verification/mms/tests/ -x -q --tb=no"
 
 [targets.golden]
 path      = "tools/testkit/golden"
 threshold = 0.80
+runner    = "python -m pytest tools/testkit/golden/tests/ -x -q --tb=no"
 
 [targets.determinism]
 path      = "tools/testkit/determinism"
 threshold = 0.90
+runner    = "python -m pytest tools/testkit/determinism/tests/ -x -q --tb=no"
 
 [targets.equivalence]
 path      = "tools/testkit/equivalence"
 threshold = 0.85
+runner    = "python -m pytest tools/testkit/equivalence/tests/ -x -q --tb=no"
 
 [targets.property]
 path      = "tools/testkit/property"
 threshold = 0.80
+runner    = "python -m pytest tools/testkit/property/tests/ -x -q --tb=no"
 
 [targets.cat4_draft_time]
 path      = "tools/integrity/integrity/cat4_draft_time"
 threshold = 0.90
+runner    = "python -m pytest tools/integrity/tests/test_adversarial_coverage.py::test_cat4_unverified_assertions_detected -x -q --tb=no"
