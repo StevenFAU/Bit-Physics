@@ -38,9 +38,13 @@ _FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
 GATE_COMMANDS: dict[str, list[str]] = {
     "integrity": ["python", "-m", "integrity", "--all", "--mode", "strict"],
-    "pytest": ["pytest", "-W", "error"],
-    "equivalence": ["pytest", "-W", "error", "tools/testkit/equivalence/tests"],
-    "determinism": ["pytest", "-W", "error", "tools/testkit/determinism/tests"],
+    # pytest, equivalence, determinism — invoked through `uv run` so the gate
+    # resolves the workspace's venv (and brings pytest with it) without
+    # relying on the caller pre-activating .venv. Matches the canonical
+    # justfile invocation (`uv run pytest -W error tools/testkit/`).
+    "pytest": ["uv", "run", "pytest", "-W", "error", "tools/testkit/"],
+    "equivalence": ["uv", "run", "pytest", "-W", "error", "tools/testkit/equivalence/tests"],
+    "determinism": ["uv", "run", "pytest", "-W", "error", "tools/testkit/determinism/tests"],
     "perf-ledger": ["python", "-c", "print('perf-ledger gate is a phase-1+ placeholder')"],
 }
 
