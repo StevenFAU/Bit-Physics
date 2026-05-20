@@ -6,8 +6,8 @@ artifact_id: particle-fluids-sph-water-stage-0
 stage: 0-preflight
 subject: "Particle-fluids sph-water sub-phase Stage 0 (pre-flight) checkpoint"
 verdict-state: complete
-head_sha: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
-head_sha_at_checkpoint: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
+head_sha: 53343fccea75393acc080bbd4a5fdbad27d69c31
+head_sha_at_checkpoint: 53343fccea75393acc080bbd4a5fdbad27d69c31
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -233,5 +233,5 @@ prompt. The agent does NOT proceed into Stage 1 in this session.
 
 Convention #12 SHA back-fill at close per charter § 4.1 / § 10
 discipline: a NEW commit (never `--amend`) will replace the
-`PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE` placeholders in this
+`53343fccea75393acc080bbd4a5fdbad27d69c31` placeholders in this
 audit's front-matter after the closing commit lands.
