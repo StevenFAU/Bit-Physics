@@ -6,8 +6,8 @@ artifact_id: agent-based-stage-1
 stage: 1-per-sim-implementation
 subject: "Agent-based sub-phase Stage 1 (per-sim implementation) checkpoint"
 verdict-state: complete
-head_sha: 5a20795-PLACEHOLDER-BACKFILL-CONVENTION-12
-head_sha_at_checkpoint: 5a20795-PLACEHOLDER-BACKFILL-CONVENTION-12
+head_sha: 005bf3b72c62bb22c0c6cf3a6b617b24a4dc4133
+head_sha_at_checkpoint: 005bf3b72c62bb22c0c6cf3a6b617b24a4dc4133
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
