@@ -10,3 +10,4 @@ block 9 landing SHIFTED 85da2fc8911230dcd0706cfe08d6ae67c2a5c311 docs/_audits/ph
 phase-0 closed SHIFTED 727ffb9b513f77a9a38442b256db3a416547d3c8 v0.0.0-phase-0 tag-signed:yes tag-pushed:by-operator
 hotfix preflight-phase-1 SHIFTED b4bb7d4 docs/_audits/phase-0/hotfix-preflight-phase-1-2026-05-20T01-34-58Z.md
 reconciliation-sweep bare-module-names SHIFTED fc793a9 docs/_audits/phase-0/reconciliation-sweep-2026-05-20T02-18-17Z.md
+pre-phase-1-cleanup multi-task SHIFTED 5127920 docs/_audits/phase-0/pre-phase-1-cleanup-2026-05-20T02-45-40Z.md
