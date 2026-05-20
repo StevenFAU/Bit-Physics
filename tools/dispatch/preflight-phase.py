@@ -220,7 +220,7 @@ def phase_1_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "integrity", "--all"],
+            [sys.executable, "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -287,7 +287,7 @@ def phase_2_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "integrity", "--all"],
+            [sys.executable, "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -314,7 +314,7 @@ def phase_3_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "integrity", "--all"],
+            [sys.executable, "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -364,7 +364,7 @@ def phase_4_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "integrity", "--all"],
+            [sys.executable, "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -387,7 +387,7 @@ def phase_5_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "integrity", "--all"],
+            [sys.executable, "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )

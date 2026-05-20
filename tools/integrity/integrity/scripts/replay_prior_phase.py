@@ -38,8 +38,14 @@ from ..common.repo import find_repo_root
 
 _FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
+# sys.executable is the absolute path to the interpreter running this
+# script. Using it directly in subprocess argv avoids the "python not on
+# PATH" failure mode the old hardcoded `"python"` token triggered on
+# systems where only `python3` lives on PATH (and `python` resolves only
+# inside an activated venv). `uv` argv entries stay as-is since `uv` is a
+# separate executable, not a Python interpreter substitution.
 GATE_COMMANDS: dict[str, list[str]] = {
-    "integrity": ["python", "-m", "integrity", "--all", "--mode", "strict"],
+    "integrity": [sys.executable, "-m", "integrity", "--all", "--mode", "strict"],
     # pytest, equivalence, determinism — invoked through `uv run` so the gate
     # resolves the workspace's venv (and brings pytest with it) without
     # relying on the caller pre-activating .venv. Matches the canonical
@@ -47,7 +53,11 @@ GATE_COMMANDS: dict[str, list[str]] = {
     "pytest": ["uv", "run", "pytest", "-W", "error", "tools/testkit/"],
     "equivalence": ["uv", "run", "pytest", "-W", "error", "tools/testkit/equivalence/tests"],
     "determinism": ["uv", "run", "pytest", "-W", "error", "tools/testkit/determinism/tests"],
-    "perf-ledger": ["python", "-c", "print('perf-ledger gate is a phase-1+ placeholder')"],
+    "perf-ledger": [
+        sys.executable,
+        "-c",
+        "print('perf-ledger gate is a phase-1+ placeholder')",
+    ],
     # property — Phase 0 ships a property-based test harness under
     # tools/testkit/property/tests. Per the Phase 1 R9 amendment the gate
     # is a scoped pytest run, mirroring the equivalence/determinism shape.
@@ -58,7 +68,7 @@ GATE_COMMANDS: dict[str, list[str]] = {
     # kill-rate runs are out of replay scope (heavy + deferred per spec
     # § 2.13). See integrity.scripts.gate_helpers for the assertions.
     "mutation": [
-        "python",
+        sys.executable,
         "-m",
         "integrity.scripts.gate_helpers",
         "mutation-baseline-present",
@@ -69,7 +79,7 @@ GATE_COMMANDS: dict[str, list[str]] = {
     # has the [phase] block, and carries no per-sim overrides (which
     # belong in tolerance.toml). See gate_helpers for assertions.
     "tolerance-budget": [
-        "python",
+        sys.executable,
         "-m",
         "integrity.scripts.gate_helpers",
         "tolerance-budget-trivial",
