@@ -1,0 +1,162 @@
+=== Stage 1 R12 STOP-AND-SURFACE: canonical-capture-size estimate ===
+
+Date: 2026-05-20
+HEAD: 49e980c (Stage 0 close; Stage 1 implementation not yet committed)
+Scope: sub-phase plan § 4.2 step 5 / § 9 R12 / § 11.5 Item 5
+
+Per operator Item 5 routing: estimate capture size BEFORE generating.
+If estimate exceeds 64 MB pre-commit ceiling, STOP and surface to
+operator with three remediation paths. Do NOT pre-emptively raise the
+ceiling.
+
+--- Estimate (Python NumPy reference at 1M particles × 1000 steps) ---
+
+Per-particle per-frame state (from sph_water.sim.py
+_trajectory_to_step_states): position (3 × f64 = 24 B) + velocity
+(3 × f64 = 24 B) + density (1 × f64 = 8 B) = 56 B/particle/frame.
+
+Frames at various capture-interval choices:
+
+  capture_interval=1   (every step → 1001 frames):
+    payload =  56,056,000,000 bytes ≈  53,459 MB ≈ 52.2 GiB → EXCEEDS 64 MB ceiling.
+
+  capture_interval=100 (every 100 steps → 11 frames):
+    payload =     616,000,000 bytes ≈    587 MB → EXCEEDS 64 MB ceiling.
+
+  capture_interval=500 (every 500 → 3 frames):
+    payload =     168,000,000 bytes ≈    160 MB → EXCEEDS 64 MB ceiling.
+
+  capture_interval=1000 (final-only → 2 frames: IC + final):
+    payload =     112,000,000 bytes ≈    107 MB → EXCEEDS 64 MB ceiling.
+
+  capture_interval=1000 + no IC (1 frame, final only):
+    payload =      56,000,000 bytes ≈     53 MB → fits (with ≤ ~5% H5 overhead).
+
+  At 1 frame the file is on the edge — adding the 5% H5 metadata
+  overhead estimate pushes the total to ≈ 56.1 MB; still under 64 MB
+  but with no margin.
+
+Max frames at 1M particles to stay under 64 MB ceiling: 1.141.
+
+Maximum N at multi-frame configs:
+  - 2 frames: max N ≈ 570,654 particles
+  - 3 frames: max N ≈ 380,436 particles
+  - 11 frames: max N ≈ 103,755 particles
+
+--- Verdict: R12 STOP-AND-SURFACE triggered ---
+
+The canonical descriptor `dam-break-1M-particles-seed42-step1000`
+cannot be produced at sensible multi-frame capture cadence without
+exceeding the 64 MB pre-commit ceiling raised at RD-3D Stage 1 N4.
+Even the most aggressive cadence (final-frame-only, 2-frame H5)
+produces a ~107 MB capture, almost 2× the ceiling. Only a single-
+frame (final state, no IC) capture fits, marginally, at ~56 MB
+payload + ~3 MB H5 overhead = ~59 MB total.
+
+--- Three remediation paths (per sub-phase plan § 9 R12 / Item 5) ---
+
+(a) **Raise .pre-commit-config.yaml maxkb ceiling** (e.g., 256 MB or
+    larger). Lets the canonical capture ship as-is at a sensible
+    multi-frame cadence. Trade-off: future captures of similar order
+    (MPM/LBM/eulerian-smoke 3D) inherit the higher ceiling; CI
+    storage cost rises proportionally. Consistent with RD-3D Stage 1
+    N4 precedent (10 MB → 64 MB raise to absorb the RD-3D 46-MB H5);
+    the precedent supports periodic ceiling lifts when new sims
+    demand it. Default-likely choice for this sub-phase to land
+    cleanly.
+
+(b) **Downsample the canonical descriptor's capture cadence**
+    (capture_interval=1000 + no IC → 1 final-frame only; or even
+    fewer per-particle fields per frame, e.g., position-only at
+    24 B/particle → 24 MB payload). Trade-off: per-frame fidelity
+    is reduced; the descriptor's name still claims `step1000` but
+    the H5 only contains the final state. Acceptable per spec
+    Appendix D § D.2.3 implicit semantics (the descriptor names the
+    sim configuration, not the per-frame capture cadence); the
+    capture-writer cadence is a per-sub-phase implementation
+    decision documented in the manifest.
+
+(c) **Amend Appendix D § D.2.3 for a smaller canonical N**
+    (e.g., 100k or 200k particles instead of 1M). Trade-off: a
+    Phase-1-retroactive amendment; touches an append-only-protected
+    document; requires a separate Phase-1-amendment sub-phase OR
+    operator override. Most invasive; least preferred.
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (a) — raise .pre-commit-config.yaml maxkb ceiling to 256 MB.
+Reasoning:
+  - Consistent with RD-3D Stage 1 N4 precedent: when a new sim's
+    canonical capture exceeds the current ceiling, the ceiling is
+    raised additively rather than the capture downsampled.
+  - Preserves the canonical descriptor's full capture cadence (e.g.,
+    capture_interval=100 → 11 frames → ~620 MB total). Note: 256 MB
+    ceiling absorbs the final-only (107 MB) and 3-frame (168 MB)
+    cadences, but NOT the 11-frame (587 MB) cadence; the operator
+    may want 512 MB if the goal is to preserve every-100-step
+    cadence.
+  - Avoids touching Appendix D (option c) which is Phase-1-
+    protected.
+
+If the operator routes (a), this sub-phase's Stage 1 continuation
+session will:
+  1. Edit .pre-commit-config.yaml (additively) to raise maxkb.
+  2. Generate the canonical capture at the routed cadence (the
+     operator may also tune capture_interval here; the
+     sim_runner_seeded default is currently capture_interval=
+     CANONICAL_STEP_COUNT = 1000 → 2 frames = ~107 MB, fitting
+     under a 256-MB ceiling with margin).
+  3. Capture-twice-and-diff (gate 11 already GREEN via
+     diagnostic-runner; the canonical-runner determinism is a
+     bonus confirmation if it's also bit-exact, but not gate-
+     load-bearing).
+  4. Append perf-ledger row with the canonical-capture wall-clock.
+  5. Commit the Stage 1 continuation bundle.
+
+--- Stage 1 partial-needs-continuation status ---
+
+Per sub-phase plan § 4.2 closing discipline: Stage 1 stops at a
+clean cut-point. The natural cut-point chosen here is the operator-
+routable R12 boundary (per plan § 4.2 step 5 / Item 5 routing).
+
+GREEN at the partial-checkpoint (gates 4–9, 11, 12, 13-anchor):
+  - Gate 4 reads through to gate 5 (golden-based per spec-ref § 7).
+  - Gate 5 (golden): cubic-spline-kernel (Phase 0; 5 fixture points
+    at abs=1e-12 tolerance) + DFSPH density-evolution (Phase 1;
+    two-particle fixture at abs=1e-15 tolerance) — both GREEN.
+  - Gate 6 (Tier 1 NaN/Inf): GREEN (diagnostic trajectory).
+  - Gate 7 (Tier 2 particle / IC-5): GREEN (count-invariance,
+    no-overlap, neighbor-list-integrity; momentum-conservation as
+    advisory).
+  - Gate 8 (Cat 1 citations): GREEN (Bender-Koschier 2015 +
+    Monaghan 1992/2005 cited by name; vendored SPlisHSPlasH not
+    imported).
+  - Gate 9 (Cat 2 public API): GREEN (probe § 5 surface resolves).
+  - Gate 11 (determinism): GREEN via sim_runner_diagnostic
+    (bit-exact at 64 particles × 8 steps; over-achieves the
+    epsilon-claim per § 1.5).
+  - Gate 12 (PBT): GREEN (2 Hypothesis-decorated invariants).
+  - Gate 13 anchor (failing-tests replay verifiable): GREEN
+    (worktree at cd20faa reproduces 5 ModuleNotFoundError
+    collection errors; HEAD GREEN evidence sha256 captured).
+
+PENDING-R12-ROUTE (gates 10, 13 perf-ledger):
+  - Gate 10 (canonical capture): pending operator routing of R12.
+  - Gate 13 (perf-ledger first-landing row): depends on
+    canonical-capture wall-clock from gate 10.
+
+Sibling-regression sweep at the partial-checkpoint:
+  - reaction-diffusion-3d: 8/8 PASS
+  - boids-3d: 10/10 PASS
+  - physarum: 10/10 PASS
+  - strange-attractors: 11/11 PASS
+  - mandelbulb-explorer: 10/10 PASS
+  - reaction-diffusion-2d: 14/14 PASS
+  - tools/integrity: 48/48 PASS
+  - tools/diagnostics: 22/22 PASS
+  - tools/testkit: 47/47 PASS
+
+No regressions; partial bundle is internally consistent + cleanly
+committable.
+
+=== End surface ===
