@@ -16,6 +16,17 @@ members = [
   "tools/integrity",
   "tools/diagnostics",
   "packages/reaction-diffusion-2d",
+  # Phase 1 Stage 2 TDD-bootstrap sims (registered in Stage 3 per
+  # convergence-file discipline; resolves banked items B7, B13, B15).
+  "packages/strange-attractors",
+  "packages/mandelbulb-explorer",
+  "packages/boids-3d",
+  "packages/physarum",
+  "packages/reaction-diffusion-3d",
+  "packages/sph-water",
+  "packages/eulerian-smoke",
+  "packages/lattice-boltzmann-d3q19",
+  "packages/mpm-multimaterial",
 ]
 exclude = []
 

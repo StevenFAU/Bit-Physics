@@ -14,7 +14,16 @@ members = [
     "bit-physics-diagnostics",
     "bit-physics-integrity",
     "bit-physics-testkit",
+    "boids-3d",
+    "eulerian-smoke",
+    "lattice-boltzmann-d3q19",
+    "mandelbulb-explorer",
+    "mpm-multimaterial",
+    "physarum",
     "reaction-diffusion-2d",
+    "reaction-diffusion-3d",
+    "sph-water",
+    "strange-attractors",
 ]
 
 [[package]]
@@ -170,6 +179,20 @@ requires-dist = [
 provides-extras = ["dev"]
 
 [[package]]
+name = "boids-3d"
+version = "0.0.0"
+source = { editable = "packages/boids-3d" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
 name = "click"
 version = "8.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -273,6 +296,20 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/93/3d/6ab5d2dd8325d838737c6f8d83d62eb6230e0d70b87b51b57bbfd08fa767/coverage-7.14.0-cp314-cp314t-win_arm64.whl", hash = "sha256:742a73ea621953b012f2c4c2219b512180dd84489acf5b1596b0aafc55b9100b", size = 222703, upload-time = "2026-05-10T18:02:27.822Z" },
     { url = "https://files.pythonhosted.org/packages/61/e8/cb8e80d6f9f55b99588625062822bf946cf03ed06315df4bd8397f5632a1/coverage-7.14.0-py3-none-any.whl", hash = "sha256:8de5b61163aee3d05c8a2beab6f47913df7981dad1baf82c414d99158c286ab1", size = 211764, upload-time = "2026-05-10T18:02:29.538Z" },
 ]
+
+[[package]]
+name = "eulerian-smoke"
+version = "0.0.0"
+source = { editable = "packages/eulerian-smoke" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
 
 [[package]]
 name = "glob2"
@@ -384,6 +421,20 @@ wheels = [
 ]
 
 [[package]]
+name = "lattice-boltzmann-d3q19"
+version = "0.0.0"
+source = { editable = "packages/lattice-boltzmann-d3q19" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
 name = "librt"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -442,6 +493,34 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/62/4a/7d1415567027286a75ba1093ec4aca11f073e0f559c530cf3e0a757ad55c/librt-0.11.0-cp314-cp314t-win_amd64.whl", hash = "sha256:28edb433edde181112a908c78907af28f964eabc15f4dd16c9d66c834302677c", size = 124327, upload-time = "2026-05-10T18:17:05.465Z" },
     { url = "https://files.pythonhosted.org/packages/ce/62/b40b382fa0c66fee1478073eb8db352a4a6beda4a1adccf1df911d8c289c/librt-0.11.0-cp314-cp314t-win_arm64.whl", hash = "sha256:dee008f20b542e3cd162ba338a7f9ec0f6d23d395f66fe8aeeec3c9d067ea253", size = 102572, upload-time = "2026-05-10T18:17:06.809Z" },
 ]
+
+[[package]]
+name = "mandelbulb-explorer"
+version = "0.0.0"
+source = { editable = "packages/mandelbulb-explorer" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
+name = "mpm-multimaterial"
+version = "0.0.0"
+source = { editable = "packages/mpm-multimaterial" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
 
 [[package]]
 name = "mpmath"
@@ -608,6 +687,20 @@ wheels = [
 ]
 
 [[package]]
+name = "physarum"
+version = "0.0.0"
+source = { editable = "packages/physarum" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
 name = "pluggy"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -742,6 +835,20 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
 ]
+provides-extras = ["dev"]
+
+[[package]]
+name = "reaction-diffusion-3d"
+version = "0.0.0"
+source = { editable = "packages/reaction-diffusion-3d" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
 provides-extras = ["dev"]
 
 [[package]]
@@ -881,6 +988,34 @@ sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f233
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
 ]
+
+[[package]]
+name = "sph-water"
+version = "0.0.0"
+source = { editable = "packages/sph-water" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
+name = "strange-attractors"
+version = "0.0.0"
+source = { editable = "packages/strange-attractors" }
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
 
 [[package]]
 name = "sympy"
