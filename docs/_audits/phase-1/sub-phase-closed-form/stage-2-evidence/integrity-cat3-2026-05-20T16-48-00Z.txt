@@ -1,0 +1,1 @@
+summary: 0 HARD_FAIL, 0 SOFT_WARN

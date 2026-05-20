@@ -1,0 +1,442 @@
+=== boids-3d ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/boids-3d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+_________________ ERROR collecting tests/test_3agent_golden.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/boids-3d/tests/test_3agent_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/boids-3d/tests/test_3agent_golden.py:10: in <module>
+    from boids_3d.reference import step_one  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'boids_3d.reference'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/boids-3d/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/boids-3d/tests/test_determinism.py:5: in <module>
+    from boids_3d.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'boids_3d.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/boids-3d/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/boids-3d/tests/test_diagnostics.py:5: in <module>
+    from boids_3d.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'boids_3d.sim'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/boids-3d/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/boids-3d/tests/test_pbt_invariants.py:5: in <module>
+    from boids_3d.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'boids_3d.invariants'
+=========================== short test summary info ============================
+ERROR packages/boids-3d/tests/test_3agent_golden.py
+ERROR packages/boids-3d/tests/test_determinism.py
+ERROR packages/boids-3d/tests/test_diagnostics.py
+ERROR packages/boids-3d/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.11s ===============================
+
+=== eulerian-smoke ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/eulerian-smoke
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/eulerian-smoke/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_determinism.py:5: in <module>
+    from eulerian_smoke.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/eulerian-smoke/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_diagnostics.py:5: in <module>
+    from eulerian_smoke.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.sim'
+________________ ERROR collecting tests/test_mms_convergence.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/eulerian-smoke/tests/test_mms_convergence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_mms_convergence.py:5: in <module>
+    from eulerian_smoke.reference import stable_fluids_step  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/eulerian-smoke/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_pbt_invariants.py:5: in <module>
+    from eulerian_smoke.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'eulerian_smoke.invariants'
+=========================== short test summary info ============================
+ERROR packages/eulerian-smoke/tests/test_determinism.py
+ERROR packages/eulerian-smoke/tests/test_diagnostics.py
+ERROR packages/eulerian-smoke/tests/test_mms_convergence.py
+ERROR packages/eulerian-smoke/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.11s ===============================
+
+=== lattice-boltzmann-d3q19 ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 5 errors
+
+==================================== ERRORS ====================================
+___________ ERROR collecting tests/test_d3q19_equilibrium_golden.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19/tests/test_d3q19_equilibrium_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19/tests/test_d3q19_equilibrium_golden.py:10: in <module>
+    from lattice_boltzmann_d3q19.reference import equilibrium  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.reference'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19/tests/test_determinism.py:5: in <module>
+    from lattice_boltzmann_d3q19.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19/tests/test_diagnostics.py:5: in <module>
+    from lattice_boltzmann_d3q19.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.sim'
+________________ ERROR collecting tests/test_mms_convergence.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19/tests/test_mms_convergence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19/tests/test_mms_convergence.py:5: in <module>
+    from lattice_boltzmann_d3q19.reference import bgk_step  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19/tests/test_pbt_invariants.py:5: in <module>
+    from lattice_boltzmann_d3q19.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.invariants'
+=========================== short test summary info ============================
+ERROR packages/lattice-boltzmann-d3q19/tests/test_d3q19_equilibrium_golden.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_determinism.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_diagnostics.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_mms_convergence.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.12s ===============================
+
+=== mpm-multimaterial ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial/tests/test_determinism.py:5: in <module>
+    from mpm_multimaterial.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial/tests/test_diagnostics.py:5: in <module>
+    from mpm_multimaterial.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.sim'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial/tests/test_pbt_invariants.py:5: in <module>
+    from mpm_multimaterial.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.invariants'
+___________ ERROR collecting tests/test_quadratic_bspline_golden.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py:10: in <module>
+    from mpm_multimaterial.reference import shape_functions  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.reference'
+=========================== short test summary info ============================
+ERROR packages/mpm-multimaterial/tests/test_determinism.py
+ERROR packages/mpm-multimaterial/tests/test_diagnostics.py
+ERROR packages/mpm-multimaterial/tests/test_pbt_invariants.py
+ERROR packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.11s ===============================
+
+=== physarum ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/physarum
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+________________ ERROR collecting tests/test_deposit_golden.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/physarum/tests/test_deposit_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/physarum/tests/test_deposit_golden.py:10: in <module>
+    from physarum.reference import step_to_deposit  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'physarum.reference'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/physarum/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/physarum/tests/test_determinism.py:5: in <module>
+    from physarum.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'physarum.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/physarum/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/physarum/tests/test_diagnostics.py:5: in <module>
+    from physarum.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'physarum.sim'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/physarum/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/physarum/tests/test_pbt_invariants.py:5: in <module>
+    from physarum.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'physarum.invariants'
+=========================== short test summary info ============================
+ERROR packages/physarum/tests/test_deposit_golden.py
+ERROR packages/physarum/tests/test_determinism.py
+ERROR packages/physarum/tests/test_diagnostics.py
+ERROR packages/physarum/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.12s ===============================
+
+=== reaction-diffusion-3d ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/reaction-diffusion-3d/tests/test_determinism.py:5: in <module>
+    from reaction_diffusion_3d.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'reaction_diffusion_3d.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/reaction-diffusion-3d/tests/test_diagnostics.py:5: in <module>
+    from reaction_diffusion_3d.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'reaction_diffusion_3d.sim'
+________________ ERROR collecting tests/test_mms_convergence.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d/tests/test_mms_convergence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/reaction-diffusion-3d/tests/test_mms_convergence.py:14: in <module>
+    from reaction_diffusion_3d.reference import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'reaction_diffusion_3d.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/reaction-diffusion-3d/tests/test_pbt_invariants.py:5: in <module>
+    from reaction_diffusion_3d.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'reaction_diffusion_3d.invariants'
+=========================== short test summary info ============================
+ERROR packages/reaction-diffusion-3d/tests/test_determinism.py
+ERROR packages/reaction-diffusion-3d/tests/test_diagnostics.py
+ERROR packages/reaction-diffusion-3d/tests/test_mms_convergence.py
+ERROR packages/reaction-diffusion-3d/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.12s ===============================
+
+=== sph-water ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/sph-water
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collected 0 items / 5 errors
+
+==================================== ERRORS ====================================
+__________ ERROR collecting tests/test_cubic_spline_kernel_golden.py ___________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/sph-water/tests/test_cubic_spline_kernel_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/sph-water/tests/test_cubic_spline_kernel_golden.py:15: in <module>
+    from sph_water.reference import dfsph  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'sph_water.reference'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/sph-water/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/sph-water/tests/test_determinism.py:5: in <module>
+    from sph_water.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'sph_water.sim'
+_____________ ERROR collecting tests/test_dfsph_density_golden.py ______________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/sph-water/tests/test_dfsph_density_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/sph-water/tests/test_dfsph_density_golden.py:10: in <module>
+    from sph_water.reference import dfsph  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'sph_water.reference'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/sph-water/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/sph-water/tests/test_diagnostics.py:5: in <module>
+    from sph_water.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'sph_water.sim'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/sph-water/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/sph-water/tests/test_pbt_invariants.py:5: in <module>
+    from sph_water.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'sph_water.invariants'
+=========================== short test summary info ============================
+ERROR packages/sph-water/tests/test_cubic_spline_kernel_golden.py
+ERROR packages/sph-water/tests/test_determinism.py
+ERROR packages/sph-water/tests/test_dfsph_density_golden.py
+ERROR packages/sph-water/tests/test_diagnostics.py
+ERROR packages/sph-water/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.12s ===============================

@@ -1,0 +1,43 @@
+=== CI-semantics check (grep -E '\.ledger\.md$') ===
+Files matching pattern that existed at v0.1.0-phase-1:
+(none)
+
+=== git diff v0.1.0-phase-1..HEAD -- docs/_audits/ (any audit-file edits?) ===
+Modified files (M):
+(none — all changes are Adds)
+
+Added files (A):
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-checkpoint-2026-05-20T15-10-49Z.md
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md
+
+=== Strict-mode: any file present at v0.1.0-phase-1 whose content differs at HEAD? ===
+(no output above means strict-mode PASS)
+
+=== Non-audit modifications since v0.1.0-phase-1 (Convention A audit) ===
+M	docs/perf-ledger.md
+M	packages/mandelbulb-explorer/mandelbulb_explorer/__init__.py
+M	packages/mandelbulb-explorer/pyproject.toml
+M	packages/mandelbulb-explorer/tests/test_determinism.py
+M	packages/mandelbulb-explorer/tests/test_diagnostics.py
+M	packages/mandelbulb-explorer/tests/test_pbt_invariants.py
+M	packages/strange-attractors/pyproject.toml
+M	packages/strange-attractors/strange_attractors/__init__.py
+M	packages/strange-attractors/tests/test_determinism.py
+M	packages/strange-attractors/tests/test_diagnostics.py
+M	packages/strange-attractors/tests/test_pbt_invariants.py
+M	tools/integrity/integrity/cat3_numerical/golden_values.py
+M	tools/integrity/integrity/scripts/verify_evidence.py
+M	tools/integrity/tests/test_verify_evidence.py
+M	tools/testkit/equivalence/tolerance-budget.toml
+M	uv.lock
+
+All M entries are additive code/data edits per Convention A:
+  - perf-ledger.md: rows appended (Stage 1 gate 12)
+  - packages/<sim>/...: Stage 1 implementations (test-stub bodies replaced — documented as Stage 1 shift S1)
+  - tools/integrity/integrity/cat3_numerical/golden_values.py: Stage 2 Step 2.3 (additive _SUBDIRS_PICKED_UP)
+  - tools/integrity/integrity/scripts/verify_evidence.py + test_verify_evidence.py: Stage 2 Step 2.4 (sha256: prefix tolerance + new test)
+  - tools/testkit/equivalence/tolerance-budget.toml: Stage 0 carryover (additive [phase] block edit)
+  - uv.lock: incidental lock churn
+None are audits/goldens/specs/probes — Convention A holds.

@@ -1,0 +1,15 @@
+Verification that Stage 0 checkpoint evidence files exist and hash
+correctly at the Stage 0 closing commit 3537651 (the commit that ADDED
+those files). The Stage 0 audit front-matter's head_sha: was set to
+6d5ac0e (the pre-checkpoint tolerance-budget commit) instead of the
+closing-checkpoint commit 3537651 — a Convention #12 SHA-back-fill
+omission at Stage 0 close. Surfaced as a new SHIFTED entry in the
+Stage 2 landing audit; load-bearing existence + hash assertions hold.
+
+=== git show 3537651:.../stage-0-replay-2026-05-20T15-10-49Z.txt | sha256sum ===
+9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34  -
+(claimed in Stage 0 audit: sha256:9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34)
+
+=== git show 3537651:.../stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt | sha256sum ===
+77bd5270cf6ed9513670667062de1a787916b15be164a1a538814a37c9733760  -
+(claimed in Stage 0 audit: sha256:77bd5270cf6ed9513670667062de1a787916b15be164a1a538814a37c9733760)

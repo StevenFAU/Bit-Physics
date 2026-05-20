@@ -1,0 +1,29 @@
+=== docs/_audits/phase-1/sub-phase-closed-form/stage-0-checkpoint-2026-05-20T15-10-49Z.md ===
+  FAIL  evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  hashed evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  hashed evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  PASS  tools/testkit/equivalence/tolerance-budget.toml
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt (sha256 OK)
+summary: 5 pass / 4 fail at head_sha 6d5ac0e2b60d
+=== docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md ===
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-implemented-2026-05-20T16-34-40Z.txt
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-implemented-2026-05-20T16-41-25Z.txt
+  PASS  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5
+  PASS  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.json
+  PASS  captures/mandelbulb-explorer-ref/de-probe-points-seed42.h5
+  PASS  captures/mandelbulb-explorer-ref/de-probe-points-seed42.json
+  PASS  docs/perf-ledger.md
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/strange-attractors-implemented-2026-05-20T16-34-40Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/mandelbulb-explorer-implemented-2026-05-20T16-41-25Z.txt (sha256 OK)
+  PASS  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5 (sha256 OK)
+  PASS  captures/mandelbulb-explorer-ref/de-probe-points-seed42.h5 (sha256 OK)
+summary: 15 pass / 0 fail at head_sha 65ae4a0f05d4
+FINAL_EXIT=1
