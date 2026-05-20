@@ -1,0 +1,32 @@
+===== tools/integrity =====
+tools/integrity/tests/test_verify_evidence.py .....                      [100%]
+
+============================== 48 passed in 0.69s ==============================
+===== tools/testkit =====
+tools/testkit/property/tests/test_harness.py ..                          [100%]
+
+============================== 47 passed in 1.94s ==============================
+===== tools/diagnostics =====
+.....                                                                    [100%]
+
+============================== 93 passed in 0.31s ==============================
+===== packages/reaction-diffusion-2d =====
+packages/reaction-diffusion-2d/tests/test_reference_sanity.py ...        [100%]
+
+============================== 14 passed in 2.41s ==============================
+===== packages/strange-attractors =====
+packages/strange-attractors/tests/test_pbt_invariants.py ..              [100%]
+
+============================== 11 passed in 0.74s ==============================
+===== packages/mandelbulb-explorer =====
+packages/mandelbulb-explorer/tests/test_pbt_invariants.py ..             [100%]
+
+============================== 10 passed in 0.25s ==============================
+===== packages/boids-3d =====
+packages/boids-3d/tests/test_pbt_invariants.py ..                        [100%]
+
+============================= 10 passed in 40.13s ==============================
+===== packages/physarum =====
+packages/physarum/tests/test_pbt_invariants.py ..                        [100%]
+
+============================= 10 passed in 10.69s ==============================
