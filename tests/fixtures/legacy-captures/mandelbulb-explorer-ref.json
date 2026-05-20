@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0.0",
+  "sim": {
+    "name": "mandelbulb-explorer",
+    "category": "closed-form",
+    "variant": "quilez-p8"
+  },
+  "stack": {
+    "name": "numpy-reference",
+    "version": "0.0.0",
+    "build_id": "phase-1-stage-2-placeholder"
+  },
+  "config": {
+    "tier": "test",
+    "dims": [256, 256],
+    "dtype": "f32",
+    "seed": 42,
+    "params": {
+      "p": 8,
+      "escape_radius": 2.0,
+      "n_max": 16,
+      "camera_origin": [3.0, 0.0, 0.0],
+      "camera_target": [0.0, 0.0, 0.0],
+      "camera_fov_deg": 45.0
+    }
+  },
+  "run": {
+    "step_count": 1,
+    "capture_interval": 1,
+    "wall_clock_seconds": 0.0,
+    "start_utc": "2026-05-20T00:00:00Z"
+  },
+  "payload": {
+    "format": "hdf5",
+    "path": "mandelbulb-explorer-ref.h5",
+    "checksum": "sha256:placeholder-no-payload-at-phase-1-stage-2"
+  },
+  "determinism": {
+    "claimed": "bit-exact-same-hw",
+    "atomic_ops": false,
+    "subgroup_ops": false
+  },
+  "_phase_1_stage_2_note": "Placeholder sidecar manifest declaring the canonical capture descriptor 'mandelbulb-quilez-p8-256x256-seed42-frame1' per charter § 2.2 and § 7.4. The .h5 payload is a stub; the per-sim implementation phase populates."
+}

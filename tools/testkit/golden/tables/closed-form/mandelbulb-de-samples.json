@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "mandelbulb-distance-estimator-p8-quilez-2009",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/mandelbulb-de-samples.md",
+    "upstream": "Quilez-2009",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-13
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "origin",
+        "c": [0.0, 0.0, 0.0],
+        "p": 8,
+        "escape_radius": 2.0,
+        "n_max": 16
+      },
+      "expected": {
+        "DE": 0.0,
+        "in_set": true
+      },
+      "independent_reference": {
+        "source": "Quilez, I. (2009), 'Mandelbulb (distance estimation)', https://iquilezles.org/articles/mandelbulb/, the 'Distance estimation' section explicitly states the in-set sentinel value (0.0 by convention). Also Hart, J. C., Sandin, D. J. & Kauffman, L. H. (1989), 'Ray tracing deterministic 3-D fractals', SIGGRAPH '89, DOI 10.1145/74334.74363, § 4 — Hubbard-Douady DE returns 0 inside the set. Also hand-derivation: z_0 = 0 implies z_n = 0 for all n, the iteration never escapes, the in-set sentinel applies.",
+        "derived_by": "trivial; three independent published references for the convention",
+        "expected": {
+          "DE": 0.0,
+          "in_set": true
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "bounding-sphere-x-axis",
+        "c": [1.0, 0.0, 0.0],
+        "p": 8,
+        "escape_radius": 2.0,
+        "n_max": 16
+      },
+      "expected": {
+        "DE": 0.027268230020419913,
+        "escaped_at_iteration": 2,
+        "z_at_escape": [1.0, 0.0, 16.0],
+        "z_mag_at_escape": 16.0312195418814,
+        "dz_mag_at_escape": 815.5870119269028
+      },
+      "independent_reference": {
+        "source": "Hand-derivation in tools/testkit/golden/derivations/mandelbulb-de-samples.md § 2: z_0=(1,0,0), z_1=(1,0,1) with |z_1|=sqrt(2), z_2=(1,0,16) with |z_2|=sqrt(257); dz_0=1, dz_1=9, dz_2=576*sqrt(2)+1. DE = 0.5 * sqrt(257)/(576*sqrt(2)+1) * log(sqrt(257)). The integers (1, 257) and the surd (576*sqrt(2)+1) make this point robust against floating-point drift. Also Quilez 2009 derives the chain-rule dz update used to produce |dz| at escape. Also re-derived symbolically by tools/testkit/golden/generator/mandelbulb_de_samples.py.",
+        "derived_by": "hand-derivation cross-checked against Quilez 2009 chain-rule formula and SymPy generator",
+        "expected": {
+          "DE": 0.027268230020419913
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "far-field-x-axis-10",
+        "c": [10.0, 0.0, 0.0],
+        "p": 8,
+        "escape_radius": 2.0,
+        "n_max": 16
+      },
+      "expected": {
+        "DE": 11.512925464970229,
+        "escaped_at_iteration": 1,
+        "z_at_escape": [10.0, 0.0, 100000000.0],
+        "z_mag_at_escape_squared": 1.0000000000000001e16,
+        "dz_mag_at_escape": 80000001
+      },
+      "independent_reference": {
+        "source": "Hand-derivation in tools/testkit/golden/derivations/mandelbulb-de-samples.md § 3: z_0=(10,0,0) maps to z_0^p=(0,0,10^8), giving z_1=(10, 0, 10^8) with |z_1|^2 = 10^16 + 100 (exact). dz_1 = 8*10^7 + 1 (exact). DE = (1/2)*sqrt(10^16+100)/(8*10^7+1) * log(sqrt(10^16+100)); SymPy evaluates this to 30 digits then rounds to f64 = 11.512925464970229. Also Quilez 2009 'the far field' remark gives the leading-order asymptotic DE ~ (|c|/2)*log|c| = 5*log(10) ≈ 11.5129 in this limit, cross-checking the order of magnitude. Also re-derived symbolically by tools/testkit/golden/generator/mandelbulb_de_samples.py.",
+        "derived_by": "SymPy 30-digit precision evaluation + asymptotic order-of-magnitude cross-check + hand-derivation of the integer/surd-exact intermediate quantities",
+        "expected": {
+          "DE": 11.512925464970229
+        }
+      }
+    }
+  ]
+}

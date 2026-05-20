@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lorenz-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/lorenz-structural.md",
+    "upstream": "Lorenz-1963",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "fixed_points",
+        "sigma": 10,
+        "rho": 28,
+        "beta": 2.6666666666666665
+      },
+      "expected": {
+        "P0": [0.0, 0.0, 0.0],
+        "C_plus": [8.48528137423857, 8.48528137423857, 27.0],
+        "C_minus": [-8.48528137423857, -8.48528137423857, 27.0]
+      },
+      "independent_reference": {
+        "source": "Lorenz, E. N. (1963), 'Deterministic Nonperiodic Flow', J. Atmos. Sci. 20 (2), 130-141 (eqs. 25-27 plus immediately-following fixed-point algebra). Also Sparrow, C. (1982), 'The Lorenz Equations', § 1.2 ('steady states'), p. 7 (ISBN 0-387-90775-0). Also Strogatz, S. H. (1994), 'Nonlinear Dynamics and Chaos', § 9.2.1 ('fixed points'), ISBN 0-201-54344-3. Three independent published derivations of the same closed-form fixed-point coordinates at canonical (sigma, rho, beta) = (10, 28, 8/3); plus a hand-derivation in the derivation .md § 1.",
+        "doi": "10.1175/1520-0469(1963)020<0130:DNF>2.0.CO;2",
+        "derived_by": "hand-derivation cross-checked against Sparrow 1982 § 1.2 and Strogatz 1994 § 9.2.1; SymPy generator re-verifies symbolically",
+        "expected": {
+          "P0": [0.0, 0.0, 0.0],
+          "C_plus": [8.48528137423857, 8.48528137423857, 27.0],
+          "C_minus": [-8.48528137423857, -8.48528137423857, 27.0]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "origin_jacobian_eigenvalues",
+        "sigma": 10,
+        "rho": 28,
+        "beta": 2.6666666666666665
+      },
+      "expected": {
+        "eigenvalues": [
+          11.827723451163457,
+          -22.827723451163457,
+          -2.6666666666666665
+        ],
+        "discriminant": 1201,
+        "characteristic_polynomial_quadratic_block": "lambda^2 + (sigma+1)*lambda + sigma*(1-rho) = 0"
+      },
+      "independent_reference": {
+        "source": "Sparrow, C. (1982), 'The Lorenz Equations', § 1.2 ('linearization at origin'), p. 8 (ISBN 0-387-90775-0). Also Strogatz, S. H. (1994), 'Nonlinear Dynamics and Chaos', § 9.2.2 ('linear stability of the origin'), ISBN 0-201-54344-3. Also hand-derivation in derivation .md § 2 from the Jacobian's block-triangular structure (one eigenvalue is immediately -beta; the 2x2 block's characteristic polynomial gives the quadratic formula above). Three independent derivations agree on lambda_{1,2} = (-(sigma+1) +/- sqrt((sigma+1)^2 + 4*sigma*(rho-1)))/2 and lambda_3 = -beta.",
+        "derived_by": "hand-derivation of block-triangular characteristic polynomial; SymPy generator re-evaluates and cross-checks",
+        "expected": {
+          "eigenvalues_sorted_ascending": [
+            -22.827723451163457,
+            -2.6666666666666665,
+            11.827723451163457
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence",
+        "sigma": 10,
+        "rho": 28,
+        "beta": 2.6666666666666665
+      },
+      "expected": {
+        "divergence": -13.666666666666666,
+        "form": "tr(J) = -sigma - 1 - beta (constant in x)"
+      },
+      "independent_reference": {
+        "source": "Lorenz, E. N. (1963), 'Deterministic Nonperiodic Flow', J. Atmos. Sci. 20 (2), 130-141, § 'Some general considerations' (p. 137): the divergence is stated explicitly. Also Sparrow, C. (1982), 'The Lorenz Equations', § 1.1 ('dissipation rate'), p. 6. Also hand-derivation from trace of the 3x3 Jacobian (derivation .md § 3) — note tr(J) is independent of x because the only x- and y-dependent entries of J live off the diagonal.",
+        "doi": "10.1175/1520-0469(1963)020<0130:DNF>2.0.CO;2",
+        "derived_by": "trace of the Jacobian matrix; cross-checked against Lorenz 1963 p. 137 and Sparrow 1982 § 1.1",
+        "expected": {
+          "divergence": -13.666666666666666
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,197 @@
+# strange-attractors — Reference Spec
+
+> 13-section template per `docs/architecture.md` § 8.2. § 6 follows
+> charter IC-10 (Roy 2005). FACT/INFERENCE-tagged per IC-9 discipline.
+
+## 1. Scope
+
+Family of 3D dynamical-system attractors (Lorenz, Rössler, Aizawa,
+Sprott-A, Pickover). Category `closed-form` (spec § 5.1). Variant per
+attractor name. Stack A → B (Phase 1: Stack B target only). Non-goals:
+2D variants, neural surrogate flows, Lyapunov-spectrum estimation
+(Phase 4+).
+
+## 2. Upstream and reference anchors
+
+No vendored code at Phase 1; references are textual.
+
+- **Lorenz 1963.** DOI 10.1175/1520-0469(1963)020\<0130:DNF\>2.0.CO;2.
+- **Rössler 1976.** DOI 10.1016/0375-9601(76)90101-8.
+- **Aizawa 1982.** *Prog. Theor. Phys.* 68 (1), 64–84.
+- **Sprott 1994.** DOI 10.1103/PhysRevE.50.R647.
+- **Sprott 2003** (textbook). ISBN 978-0-19-850839-7.
+
+Algebraic anchor: [`algebraic.md`](./algebraic.md).
+
+## 3. Algorithm
+
+For each attractor: classical RK4 (Runge–Kutta 4th-order, fixed step)
+integration of $\dot{\mathbf{x}} = f(\mathbf{x};\boldsymbol{\theta})$
+from a fixed initial condition over a fixed integration horizon at a
+fixed seed (seed parametrizes only the initial condition jitter when
+the spec calls for a perturbed initial condition; for canonical runs
+it is unused and locked to 42).
+
+The sim has no time-stepped PDE structure; "step" semantics are the
+RK4 integrator advance.
+
+## 4. Algebraic form
+
+Per [`algebraic.md`](./algebraic.md) §§ 2–6. The canonical golden
+table (`tools/testkit/golden/tables/closed-form/lorenz-structural.json`)
+encodes **structural invariants of the Lorenz vector field**: the
+three fixed points $\{P_0, C_+, C_-\}$ and the three eigenvalues of
+$J(P_0)$ at canonical parameters $\sigma=10, \rho=28, \beta=8/3$.
+These are anchored independently of any numerical integrator.
+
+## 5. Implementation
+
+**Phase 1 deliverable:** package scaffold + failing tests only.
+**Phase 2+ implementation contract** (referenced by the IC-8 probe at
+[`tools/testkit/probes/reports/strange-attractors.md`](../../../../tools/testkit/probes/reports/strange-attractors.md)):
+
+- Python NumPy reference at
+  `packages/strange-attractors/strange_attractors/reference/`
+  with one submodule per attractor (`lorenz.py`, `rossler.py`, …).
+- Common ODE-system protocol declared in
+  `strange_attractors.system.System` (callable returning $f(x,t)$;
+  jacobian method optional).
+- RK4 integrator at `strange_attractors.integrator.rk4_evolve`.
+- Sim wrapper at `strange_attractors.sim.sim_runner_seeded` matching
+  the testkit `SimRunner` Protocol from `tools/testkit/determinism/`.
+- Stack B WebGPU compute path at `packages/strange-attractors/src/`,
+  consuming `@bit-physics/common-ts` (analogous to Phase 0 RD-2D's
+  `packages/reaction-diffusion-2d/src/`).
+
+## 6. Verification posture
+
+This sim exercises the following Roy 2005 V&V levels:
+
+### 6.1 Code verification
+**Method:** golden-value.
+**Fixture(s):**
+- `tools/testkit/golden/tables/closed-form/lorenz-structural.json`
+  (≥ 3 independent-reference anchors per spec § 2.4; verified by
+  `tools/testkit/golden/generator/lorenz_structural.py`).
+- Phase 2+ extends with Rössler / Aizawa / Sprott-A / Pickover
+  structural golden tables; Phase 1 ships Lorenz only.
+
+**Pass criterion:** numerical fixed-point coordinates and origin-Jacobian
+eigenvalues, evaluated by the sim's Python reference at canonical
+parameters, agree element-wise with golden-table values within the
+table's declared tolerance (`absolute = 1e-10`, `relative = 1e-12`).
+
+**Phase 1 state:** test committed and failing with module-not-found
+(`strange_attractors.reference` and `strange_attractors.sim` do not
+yet exist).
+
+### 6.2 Solution verification
+**Method:** none.
+**Status:** not applicable. The sim has no spatial discretization;
+RK4 step-size convergence is a sanity probe, not a Roy 2005 GCI run.
+
+### 6.3 Model validation
+**Status:** not applicable. Closed-form attractors are mathematical
+artifacts, not physical models. Sprott 1994 § 2 and Lorenz 1963 § 1
+discuss the abstract origins; no physical-system calibration is
+defined.
+
+### 6.4 Calculation validation
+**Status:** not applicable (same rationale as § 6.3).
+
+### 6.5 Gate status
+- Gates 1, 2, 3 of spec § 3.5 exercised in this phase.
+- Gates 4–10 deferred to the per-sim implementation phase per
+  spec § 2.5.
+
+### 6.6 PBT-covered invariants (≥ 2 per R9 amendment / spec § 2.14)
+The sim declares the following property-based invariants for Phase 2+
+implementation. Stage 2 ships the **declaration**; PBT implementation
+is deferred per the standing-order constraint.
+
+1. **`lorenz_origin_volume_contraction`** — the divergence
+   $\nabla\cdot f$ of the Lorenz vector field is the trace of $J$,
+   which evaluates to $-(\sigma + 1 + \beta) = -41/3$ at every point
+   (constant in $\mathbf{x}$). PBT: sample arbitrary IC and arbitrary
+   $t$, integrate over a small ball, verify volume contraction rate
+   equals $-41/3$ within FP tolerance.
+2. **`rk4_time_reversibility_modulo_dissipation`** — for a
+   volume-preserving Sprott-A trajectory at sufficiently small dt,
+   integrate forward $N$ steps then backward $N$ steps and recover the
+   initial state within $O(dt^5)$ error. PBT: sample arbitrary IC and
+   $dt \in (0, 0.05]$, verify $\|\mathbf{x}_0 - R(F(\mathbf{x}_0, dt, N), -dt, N)\| < C \cdot dt^4$.
+
+Implementation lives at
+`packages/strange-attractors/strange_attractors/invariants/`
+(deferred to Phase 2+; Stage 2 ships only the test stubs that fail
+with module-not-found).
+
+## 7. Golden values / Manufactured solutions
+
+Golden table:
+[`tools/testkit/golden/tables/closed-form/lorenz-structural.json`](../../../../tools/testkit/golden/tables/closed-form/lorenz-structural.json).
+Derivation:
+[`tools/testkit/golden/derivations/lorenz-structural.md`](../../../../tools/testkit/golden/derivations/lorenz-structural.md).
+Generator:
+[`tools/testkit/golden/generator/lorenz_structural.py`](../../../../tools/testkit/golden/generator/lorenz_structural.py).
+
+No MMS (no PDE).
+
+## 8. Determinism
+
+`bit-exact-same-hw`. See [`determinism.md`](./determinism.md).
+
+## 9. Equivalence
+
+Closed-form category default per
+[`tools/testkit/equivalence/tolerance.toml`](../../../../tools/testkit/equivalence/tolerance.toml):
+`relative = 1e-5`, `absolute = 0.0`. No per-sim override at Phase 1
+(within the tolerance-budget per spec § 2.6; no amendment needed).
+See [`equivalence.md`](./equivalence.md).
+
+## 10. Diagnostics
+
+- Tier 1: `diagnostics.tier1.health.check_health` (NaN/Inf scan over
+  the trajectory),
+  `diagnostics.tier1.performance.check_performance`,
+  `diagnostics.tier1.determinism.check_determinism` (re-runs
+  `run_twice_and_diff`).
+- Tier 2 closed_form (IC-7):
+  `diagnostics.tier2.closed_form.check_output_stability`,
+  `check_precision_sensitivity`, `check_bound_preservation`.
+- Tier 3: not in scope at Phase 1.
+
+## 11. Build and run
+
+Phase 1 — failing-tests only:
+
+```bash
+PYTHONPATH=packages/strange-attractors uv run pytest packages/strange-attractors/tests/ -v
+```
+
+Phase 2+ (implementation phase) adds the WebGPU local build per Phase
+0 RD-2D's pattern (`pnpm` + vitest + a live WebGPU adapter).
+
+## 12. References
+
+- Lorenz, E. N. (1963), op. cit.
+- Rössler, O. E. (1976), op. cit.
+- Aizawa, Y. (1982), op. cit.
+- Sprott, J. C. (1994), op. cit.
+- Sprott, J. C. (2003), *Chaos and Time-Series Analysis*, OUP.
+- Strogatz, S. H. (1994), *Nonlinear Dynamics and Chaos*, Westview.
+- Spec § 5.1, § 2.4 (R9 amendment golden anchors), § 2.5 (determinism),
+  § 2.6 (tolerance), § 2.14 (PBT), § 8.2 (spec template).
+- Charter § 2.2 (Stage 2 deliverables), § 3.8 (IC-8), § 3.10 (IC-10),
+  § 7.4 (closed-form pair).
+
+## 13. Productization status
+
+```yaml
+productization:
+  web: true      # 5.1 — Stack B WebGPU sim ships as a web demo
+  binary: false  # 5.2 — Stack B only; no C++ binary
+  pypi: false    # 5.3 — Stack B only; no PyPI package
+  render: true   # 5.4 — offline render of attractor point-cloud
+  preprint: false # 5.5 — not research-active per spec § 5.1
+```

@@ -1,0 +1,4 @@
+PHASE-1-STAGE-2 PLACEHOLDER — not an HDF5 file.
+See the sidecar manifest at mandelbulb-explorer-ref.json for the canonical
+capture descriptor. The per-sim implementation phase replaces this file with
+the real .h5 payload.

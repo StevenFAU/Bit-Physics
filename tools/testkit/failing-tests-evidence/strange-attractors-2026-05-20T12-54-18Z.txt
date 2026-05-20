@@ -1,0 +1,59 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /home/otacon/Projects/Bit-Physics/packages/strange-attractors
+configfile: pyproject.toml
+plugins: cov-5.0.0, anyio-4.13.0
+collecting ... collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/strange-attractors/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:9: in <module>
+    from strange_attractors.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'strange_attractors.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/strange-attractors/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_diagnostics.py:11: in <module>
+    from strange_attractors.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'strange_attractors.sim'
+___________ ERROR collecting tests/test_lorenz_structural_golden.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/strange-attractors/tests/test_lorenz_structural_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_lorenz_structural_golden.py:23: in <module>
+    from strange_attractors.reference import lorenz  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'strange_attractors.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/strange-attractors/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:12: in <module>
+    from strange_attractors.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'strange_attractors.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_lorenz_structural_golden.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
