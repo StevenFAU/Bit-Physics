@@ -1,0 +1,22 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/strange-attractors
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 11 items
+
+packages/strange-attractors/tests/test_determinism.py::test_run_twice_bit_exact PASSED [  9%]
+packages/strange-attractors/tests/test_determinism.py::test_cross_seed_distinct PASSED [ 18%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 27%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_bound_preservation PASSED [ 36%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_output_stability_parameter_sweep PASSED [ 45%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_precision_sensitivity_single_vs_double PASSED [ 54%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_fixed_points PASSED [ 63%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_origin_jacobian_eigenvalues PASSED [ 72%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_divergence_constant_in_x PASSED [ 81%]
+packages/strange-attractors/tests/test_pbt_invariants.py::test_lorenz_origin_volume_contraction PASSED [ 90%]
+packages/strange-attractors/tests/test_pbt_invariants.py::test_rk4_time_reversibility_sprott_a PASSED [100%]
+
+============================== 11 passed in 0.73s ==============================

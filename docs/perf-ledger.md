@@ -15,3 +15,4 @@ A row is appended:
 | sim | stack | descriptor | wall_clock_seconds | hardware_id | commit_sha | date | regression |
 |---|---|---|---|---|---|---|---|
 | reaction-diffusion-2d | numpy-reference | gray-scott-lambda-128sq-seed42-step2000 | 0.931 | i7-7700HQ-linux-6.17 | (this commit) | 2026-05-19 | baseline |
+| strange-attractors | numpy-reference | lorenz-trajectory-seed42-step10000 | 0.061 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |

@@ -1,0 +1,44 @@
+{
+  "config": {
+    "dims": [
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "beta": 2.6666666666666665,
+      "dt": 0.01,
+      "ic_jitter_scale": 1e-06,
+      "rho": 28.0,
+      "sigma": 10.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450",
+    "format": "hdf5",
+    "path": "lorenz-trajectory-seed42-step10000.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.06063359800464241
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "strange-attractors",
+    "variant": "lorenz"
+  },
+  "stack": {
+    "build_id": "sub-phase-closed-form",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

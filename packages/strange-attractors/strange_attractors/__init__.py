@@ -1,16 +1,38 @@
-"""strange-attractors — Phase 1 Stage 2 TDD bootstrap.
+"""strange-attractors — closed-form sub-phase implementation.
 
-Implementation is deferred to Phase 2+ per spec § 2.5 and charter
-§ 7.4. This package's public surface is **intentionally empty** in
-Phase 1 so the failing-tests suite at `tests/` exercises the Phase 2+
-contract via ``ModuleNotFoundError`` on the deferred submodules
-(``strange_attractors.reference``, ``strange_attractors.sim``,
-``strange_attractors.invariants``).
+Public surface per IC-8 probe report § 5 at
+``tools/testkit/probes/reports/strange-attractors.md``:
 
-See ``docs/sim-specs/closed-form/strange-attractors/spec-ref.md`` § 5
-for the Phase 2+ contract.
+- ``reference`` substack: per-attractor vector fields and Lorenz
+  structural invariants (``fixed_points``, ``origin_jacobian_eigenvalues``,
+  ``divergence``).
+- ``integrator.rk4_evolve``: classical fixed-step RK4.
+- ``sim.sim_runner_seeded``: testkit ``SimRunner`` Protocol.
+- ``invariants``: Hypothesis-decorated property tests for spec § 6.6.
 """
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from .integrator import rk4_evolve
+from .reference.aizawa import aizawa_field
+from .reference.lorenz import (
+    divergence,
+    fixed_points,
+    lorenz_field,
+    origin_jacobian_eigenvalues,
+)
+from .reference.rossler import rossler_field
+from .reference.sprott import sprott_a_field
+from .sim import sim_runner_seeded
+
+__all__ = [
+    "aizawa_field",
+    "divergence",
+    "fixed_points",
+    "lorenz_field",
+    "origin_jacobian_eigenvalues",
+    "rk4_evolve",
+    "rossler_field",
+    "sim_runner_seeded",
+    "sprott_a_field",
+]

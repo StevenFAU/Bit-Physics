@@ -1,16 +1,18 @@
 [project]
 name = "strange-attractors"
 version = "0.0.0"
-description = "Phase 1 Stage 2 — closed-form strange-attractors sim (TDD bootstrap; implementation deferred to Phase 2+)."
+description = "Closed-form sub-phase — strange-attractors sim (Lorenz/Rössler/Aizawa/Sprott-A; NumPy reference + WGSL Stack B)."
 readme = "README.md"
 license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
-
-# Phase 1 Stage 2 ships only the failing test suite. Phase 2+ implementation
-# will add concrete deps (numpy, h5py, hypothesis) — left unpinned here so
-# the bootstrap pyproject is install-light. Run tests via PYTHONPATH per
-# README.md.
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+]
 
 [project.optional-dependencies]
 dev = [
@@ -27,3 +29,7 @@ packages = ["strange_attractors"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
