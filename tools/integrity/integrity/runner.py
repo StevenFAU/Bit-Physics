@@ -15,6 +15,7 @@ from pathlib import Path
 from .cat1_citations.intra_repo import run_cat1_intra_repo
 from .cat2_contracts.python_module_exports import run_cat2_python_exports
 from .cat3_numerical.golden_values import run_cat3_golden_values
+from .cat4_draft_time.grammars import run_cat4_api_shape, run_cat4_phrase_in_file
 from .cat4_draft_time.path_line_assertions import run_cat4_path_line_assertions
 from .cat5_provenance.audit_links import run_cat5_audit_links
 from .catx_tolerance_budget.tolerance_budget import run_catx_tolerance_budget
@@ -29,6 +30,8 @@ _REGISTRY: dict[str, CheckFn] = {
     "cat2.python-exports": run_cat2_python_exports,
     "cat3.golden-values": run_cat3_golden_values,
     "cat4.path-line-assertions": run_cat4_path_line_assertions,
+    "cat4.phrase-in-file": run_cat4_phrase_in_file,
+    "cat4.api-shape": run_cat4_api_shape,
     "cat5.audit-links": run_cat5_audit_links,
     "catx.tolerance-budget": run_catx_tolerance_budget,
 }
@@ -37,7 +40,11 @@ _CATEGORY_ALIASES: dict[str, list[str]] = {
     "1": ["cat1.intra-repo"],
     "2": ["cat2.python-exports"],
     "3": ["cat3.golden-values"],
-    "4": ["cat4.path-line-assertions"],
+    "4": [
+        "cat4.path-line-assertions",
+        "cat4.phrase-in-file",
+        "cat4.api-shape",
+    ],
     "5": ["cat5.audit-links"],
     "tolerance-budget": ["catx.tolerance-budget"],
     "x": ["catx.tolerance-budget"],

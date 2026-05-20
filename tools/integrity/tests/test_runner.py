@@ -14,11 +14,18 @@ from integrity.runner import emit, resolve_checks, run
 def test_resolve_checks_aliases() -> None:
     assert resolve_checks("1") == ["cat1.intra-repo"]
     assert resolve_checks("tolerance-budget") == ["catx.tolerance-budget"]
+    assert resolve_checks("4") == [
+        "cat4.path-line-assertions",
+        "cat4.phrase-in-file",
+        "cat4.api-shape",
+    ]
     assert resolve_checks(None) == [
         "cat1.intra-repo",
         "cat2.python-exports",
         "cat3.golden-values",
         "cat4.path-line-assertions",
+        "cat4.phrase-in-file",
+        "cat4.api-shape",
         "cat5.audit-links",
         "catx.tolerance-budget",
     ]
