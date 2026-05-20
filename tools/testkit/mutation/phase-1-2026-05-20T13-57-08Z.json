@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-20T14-15-28Z",
+  "status": "framework-validated",
+  "mutmut_version": "mutmut version 2.5.1",
+  "rationale": "Phase 1 LANDING \u2014 framework-validated baseline carry-forward. Real per-target kill-rate production remains deferred from Phase 0 (block 9 LANDING note): mutmut-config.toml per-target runners still need rewriting to respect uv-workspace member-import resolution; Phase 1 Stage 1/2/3 added 9 sim packages and 3 Tier 2 substacks but did not rework the runner harness (out of scope for TDD bootstrap). Phase 1 banked item B17: per-target mutation runners + first real kill-rate baseline. Owner: first per-sim implementation phase that wants the mutation gate live (recommended: continuous-CA implementation phase, since RD-2D is the most GREEN target in the workspace).",
+  "targets": [
+    {
+      "target": "capture",
+      "path": "tools/testkit/capture",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "golden",
+      "path": "tools/testkit/golden",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "determinism",
+      "path": "tools/testkit/determinism",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "equivalence",
+      "path": "tools/testkit/equivalence",
+      "threshold": 0.85,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    },
+    {
+      "target": "cat4_draft_time",
+      "path": "tools/integrity/integrity/cat4_draft_time",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-per-sim-implementation-phase"
+    }
+  ],
+  "phase": 1,
+  "stage": 3
+}
