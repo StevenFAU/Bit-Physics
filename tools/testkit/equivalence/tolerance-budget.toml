@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "phase-1"
-opened_at = "2026-05-20T04:00:00Z"
+phase = "sub-phase-closed-form"
+opened_at = "2026-05-20T15:10:49Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
