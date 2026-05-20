@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-20T18-20-39Z",
+  "status": "framework-validated",
+  "mutmut_version": "mutmut version 2.5.1",
+  "provenance": "sub-phase-agent-based",
+  "rationale": "Agent-based sub-phase LANDING — B17 PATH-B (framework-validated carry-forward + re-bank). Stage 2 charter § 4.3 step 2.7 explicitly framed B17 as PATH-A (per-target mutmut targets for boids_3d + physarum + uv-workspace member-import runner rework + first real per-target kill-rate baseline) vs PATH-B (framework-validated carry-forward + re-bank again, owner-routable to continuous-CA). PATH-B chosen on the same two grounds as the closed-form sub-phase: (a) the existing mutmut-config.toml targets (capture, code_verification_mms, golden, determinism, equivalence, property, cat4_draft_time) are testkit / integrity infrastructure — none target the agent-based sim packages, so producing real per-target kill-rate numbers against the current target set yields no agent-based-specific signal. Meaningful B17 work for this sub-phase would have to ADD per-sim targets (boids_3d, physarum) and rework the runner harness for uv-workspace member-import resolution, both of which are precisely the infrastructure B17 names. (b) Per the agent-based sub-phase charter § 9 R4 + § 11.2, B17's recommended owner (per Phase 1 audit § 13 + closed-form audit § 7.6 continued) is the continuous-CA implementation sub-phase, where RD-2D is the most GREEN target in the workspace and the runner-rework effort amortizes over a larger Stack-C surface. The agent-based pair adds two more sims to the inventory but does not materially change the calculus — continuous-CA still amortizes better than agent-based for first per-target investment. The mutation-score gate remains advisory at this sub-phase (no HARD_FAIL); the per-sim gate-4 (golden, ≥ 3 anchors after Stage 2 Decision A), gate-10 (determinism via run_twice_and_diff against canonical captures), gate-11 (Hypothesis PBT for ≥ 2 invariants per sim), and gate-13 (failing-tests-evidence sha256 replay + worktree-replay failure-mode reproduction at 5dd919c) together provide the load-bearing correctness evidence at HEAD. B17 re-banked again to the continuous-CA implementation sub-phase (reaction-diffusion-3d + sph-water), explicitly owner-routable per Phase 1 audit § 13. Both Cat 3 sibling-subdir lift (agent-based subdir picked up additively) and the per-sim determinism-strategy declaration discipline (charter § 1.4) DID land this sub-phase; B17 (mutation) remains framework-validated as PATH-B.",
+  "targets": [
+    {
+      "target": "capture",
+      "path": "tools/testkit/capture",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "golden",
+      "path": "tools/testkit/golden",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "determinism",
+      "path": "tools/testkit/determinism",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "equivalence",
+      "path": "tools/testkit/equivalence",
+      "threshold": 0.85,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    },
+    {
+      "target": "cat4_draft_time",
+      "path": "tools/integrity/integrity/cat4_draft_time",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-continuous-CA-sub-phase"
+    }
+  ],
+  "phase": 1,
+  "sub_phase": "agent-based",
+  "stage": 2,
+  "banked_items": [
+    {
+      "id": "B17",
+      "title": "Per-target mutation runners + first real kill-rate baseline",
+      "status": "re-banked",
+      "previous_owner": "next per-sim implementation sub-phase (agent-based pair) per closed-form audit § 7.6",
+      "new_owner": "continuous-CA implementation sub-phase (reaction-diffusion-3d + sph-water) per Phase 1 audit § 13, with explicit operator re-route privilege at dispatch time",
+      "rationale_short": "Existing mutmut targets are testkit/integrity infrastructure, not sim packages. PATH-A entails per-sim target additions + uv-workspace runner rework. Continuous-CA's Stack-C surface is the larger amortization target; the agent-based pair's two new sims do not materially shift the calculus. Re-banked rather than landed."
+    }
+  ]
+}
