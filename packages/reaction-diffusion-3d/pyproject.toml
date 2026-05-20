@@ -1,0 +1,22 @@
+[project]
+name = "reaction-diffusion-3d"
+version = "0.0.0"
+description = "Phase 1 Stage 2 — 3D Gray-Scott RD sim (TDD bootstrap)."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["reaction_diffusion_3d"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
