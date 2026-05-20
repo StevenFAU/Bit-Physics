@@ -1,0 +1,334 @@
+### boids-3d ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/boids-3d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[A] PASSED [ 10%]
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[B] PASSED [ 20%]
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[C] PASSED [ 30%]
+packages/boids-3d/tests/test_determinism.py::test_run_twice_bit_exact PASSED [ 40%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 50%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED [ 60%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_no_overlap_optional PASSED [ 70%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_neighbor_list_integrity PASSED [ 80%]
+packages/boids-3d/tests/test_pbt_invariants.py::test_v_max_clamp_respected PASSED [ 90%]
+packages/boids-3d/tests/test_pbt_invariants.py::test_particle_count_invariant PASSED [100%]
+
+============================= 10 passed in 40.34s ==============================
+### physarum ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/physarum
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/physarum/tests/test_deposit_golden.py::test_deposit_cells_exact PASSED [ 10%]
+packages/physarum/tests/test_deposit_golden.py::test_total_mass_after_decay PASSED [ 20%]
+packages/physarum/tests/test_determinism.py::test_run_twice_bit_exact_zero_trail_limit PASSED [ 30%]
+packages/physarum/tests/test_determinism.py::test_run_twice_epsilon_chaotic_regime PASSED [ 40%]
+packages/physarum/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 50%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED [ 60%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_scalar_field_bounds_on_trail_map PASSED [ 70%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_scalar_field_conservation_advisory PASSED [ 80%]
+packages/physarum/tests/test_pbt_invariants.py::test_trail_mass_conserves_modulo_decay PASSED [ 90%]
+packages/physarum/tests/test_pbt_invariants.py::test_agent_count_invariant PASSED [100%]
+
+============================= 10 passed in 10.76s ==============================
+### strange-attractors ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/strange-attractors
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 11 items
+
+packages/strange-attractors/tests/test_determinism.py::test_run_twice_bit_exact PASSED [  9%]
+packages/strange-attractors/tests/test_determinism.py::test_cross_seed_distinct PASSED [ 18%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 27%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_bound_preservation PASSED [ 36%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_output_stability_parameter_sweep PASSED [ 45%]
+packages/strange-attractors/tests/test_diagnostics.py::test_tier2_closed_form_precision_sensitivity_single_vs_double PASSED [ 54%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_fixed_points PASSED [ 63%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_origin_jacobian_eigenvalues PASSED [ 72%]
+packages/strange-attractors/tests/test_lorenz_structural_golden.py::test_divergence_constant_in_x PASSED [ 81%]
+packages/strange-attractors/tests/test_pbt_invariants.py::test_lorenz_origin_volume_contraction PASSED [ 90%]
+packages/strange-attractors/tests/test_pbt_invariants.py::test_rk4_time_reversibility_sprott_a PASSED [100%]
+
+============================== 11 passed in 0.78s ==============================
+### mandelbulb-explorer ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mandelbulb-explorer
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/mandelbulb-explorer/tests/test_de_samples_golden.py::test_de_at_anchor[origin] PASSED [ 10%]
+packages/mandelbulb-explorer/tests/test_de_samples_golden.py::test_de_at_anchor[bounding-sphere-x-axis] PASSED [ 20%]
+packages/mandelbulb-explorer/tests/test_de_samples_golden.py::test_de_at_anchor[far-field-x-axis-10] PASSED [ 30%]
+packages/mandelbulb-explorer/tests/test_determinism.py::test_run_twice_bit_exact PASSED [ 40%]
+packages/mandelbulb-explorer/tests/test_diagnostics.py::test_tier1_health_no_nan_inf_on_de_sample_grid PASSED [ 50%]
+packages/mandelbulb-explorer/tests/test_diagnostics.py::test_tier2_closed_form_bound_preservation_de_nonneg PASSED [ 60%]
+packages/mandelbulb-explorer/tests/test_diagnostics.py::test_tier2_closed_form_output_stability_camera_sweep PASSED [ 70%]
+packages/mandelbulb-explorer/tests/test_diagnostics.py::test_tier2_closed_form_precision_sensitivity_f32_vs_f64 PASSED [ 80%]
+packages/mandelbulb-explorer/tests/test_pbt_invariants.py::test_de_lower_bound_property PASSED [ 90%]
+packages/mandelbulb-explorer/tests/test_pbt_invariants.py::test_map_p8_z_inversion_symmetry PASSED [100%]
+
+============================== 10 passed in 0.25s ==============================
+### reaction-diffusion-2d ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 14 items
+
+packages/reaction-diffusion-2d/tests/test_code_verification.py::test_canonical_capture_exists PASSED [  7%]
+packages/reaction-diffusion-2d/tests/test_code_verification.py::test_canonical_capture_matches_numpy_reference PASSED [ 14%]
+packages/reaction-diffusion-2d/tests/test_code_verification.py::test_canonical_descriptor_matches_filename PASSED [ 21%]
+packages/reaction-diffusion-2d/tests/test_determinism.py::test_numpy_reference_is_bit_deterministic PASSED [ 28%]
+packages/reaction-diffusion-2d/tests/test_determinism.py::test_different_seeds_diverge PASSED [ 35%]
+packages/reaction-diffusion-2d/tests/test_diagnostics.py::test_canonical_capture_is_healthy PASSED [ 42%]
+packages/reaction-diffusion-2d/tests/test_diagnostics.py::test_canonical_capture_U_in_unit_interval PASSED [ 50%]
+packages/reaction-diffusion-2d/tests/test_diagnostics.py::test_canonical_capture_V_in_unit_interval PASSED [ 57%]
+packages/reaction-diffusion-2d/tests/test_pbt_invariants.py::test_pbt_monotone_bounds PASSED [ 64%]
+packages/reaction-diffusion-2d/tests/test_pbt_invariants.py::test_pbt_mass_approximately_conserved PASSED [ 71%]
+packages/reaction-diffusion-2d/tests/test_pbt_invariants.py::test_pbt_periodic_bc_satisfied PASSED [ 78%]
+packages/reaction-diffusion-2d/tests/test_reference_sanity.py::test_uniform_field_stays_uniform PASSED [ 85%]
+packages/reaction-diffusion-2d/tests/test_reference_sanity.py::test_canonical_params_lock_lambda_pattern PASSED [ 92%]
+packages/reaction-diffusion-2d/tests/test_reference_sanity.py::test_evolve_yields_initial_and_final PASSED [100%]
+
+============================== 14 passed in 2.58s ==============================
+### tools/integrity ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/tools/integrity
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 43 items
+
+tools/integrity/tests/test_adversarial_coverage.py::test_cat1_broken_citations_detected PASSED [  2%]
+tools/integrity/tests/test_adversarial_coverage.py::test_cat2_phantom_exports_detected PASSED [  4%]
+tools/integrity/tests/test_adversarial_coverage.py::test_cat3_wrong_goldens_detected PASSED [  6%]
+tools/integrity/tests/test_adversarial_coverage.py::test_cat4_unverified_assertions_detected PASSED [  9%]
+tools/integrity/tests/test_adversarial_coverage.py::test_cat5_orphan_claims_detected PASSED [ 11%]
+tools/integrity/tests/test_adversarial_coverage.py::test_catx_over_budget_detected PASSED [ 13%]
+tools/integrity/tests/test_adversarial_coverage.py::test_meta_catches_a_disabled_check PASSED [ 16%]
+tools/integrity/tests/test_cat4_api_shape.py::test_positive_python_class_shape PASSED [ 18%]
+tools/integrity/tests/test_cat4_api_shape.py::test_positive_python_function_with_whitespace_variation PASSED [ 20%]
+tools/integrity/tests/test_cat4_api_shape.py::test_negative_python_symbol_absent PASSED [ 23%]
+tools/integrity/tests/test_cat4_api_shape.py::test_negative_python_signature_mismatch PASSED [ 25%]
+tools/integrity/tests/test_cat4_api_shape.py::test_positive_cpp_struct PASSED [ 27%]
+tools/integrity/tests/test_cat4_api_shape.py::test_positive_cpp_function PASSED [ 30%]
+tools/integrity/tests/test_cat4_api_shape.py::test_negative_cpp_signature_mismatch PASSED [ 32%]
+tools/integrity/tests/test_cat4_api_shape.py::test_negative_unqualified_symbol_rejected PASSED [ 34%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_positive_phrase_in_named_file PASSED [ 37%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_positive_phrase_in_glob PASSED [ 39%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_negative_phrase_missing PASSED [ 41%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_negative_target_does_not_resolve PASSED [ 44%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_negative_absolute_path_rejected PASSED [ 46%]
+tools/integrity/tests/test_cat4_phrase_in_file.py::test_glob_with_no_matches_hard_fails PASSED [ 48%]
+tools/integrity/tests/test_replay_failing_tests.py::test_strips_pytest_timing_field PASSED [ 51%]
+tools/integrity/tests/test_replay_failing_tests.py::test_normalization_is_idempotent PASSED [ 53%]
+tools/integrity/tests/test_replay_failing_tests.py::test_two_runs_at_different_timings_hash_identically PASSED [ 55%]
+tools/integrity/tests/test_replay_failing_tests.py::test_passes_through_lines_without_timing_summary PASSED [ 58%]
+tools/integrity/tests/test_replay_failing_tests.py::test_strips_interpreter_path_from_platform_line PASSED [ 60%]
+tools/integrity/tests/test_replay_failing_tests.py::test_canonicalizes_repo_paths PASSED [ 62%]
+tools/integrity/tests/test_replay_prior_phase.py::test_replay_passes_when_gates_pass_and_audit_confirmed PASSED [ 65%]
+tools/integrity/tests/test_replay_prior_phase.py::test_replay_fails_when_audit_claims_pass_but_gate_fails PASSED [ 67%]
+tools/integrity/tests/test_runner.py::test_resolve_checks_aliases PASSED [ 69%]
+tools/integrity/tests/test_runner.py::test_resolve_checks_unknown_raises PASSED [ 72%]
+tools/integrity/tests/test_runner.py::test_emit_strict_returns_one_on_hard_fail PASSED [ 74%]
+tools/integrity/tests/test_runner.py::test_emit_strict_returns_zero_on_only_soft_warn PASSED [ 76%]
+tools/integrity/tests/test_runner.py::test_emit_advisory_always_returns_zero PASSED [ 79%]
+tools/integrity/tests/test_runner.py::test_run_against_live_repo_has_no_hard_fail PASSED [ 81%]
+tools/integrity/tests/test_suppressions.py::test_parse_single_annotation PASSED [ 83%]
+tools/integrity/tests/test_suppressions.py::test_applies_matches_check PASSED [ 86%]
+tools/integrity/tests/test_suppressions.py::test_parse_no_match_returns_empty PASSED [ 88%]
+tools/integrity/tests/test_verify_evidence.py::test_verify_evidence_valid_paths_pass PASSED [ 90%]
+tools/integrity/tests/test_verify_evidence.py::test_verify_evidence_missing_path_fails PASSED [ 93%]
+tools/integrity/tests/test_verify_evidence.py::test_verify_evidence_hash_mismatch_fails PASSED [ 95%]
+tools/integrity/tests/test_verify_evidence.py::test_verify_evidence_accepts_sha256_prefix PASSED [ 97%]
+tools/integrity/tests/test_verify_evidence.py::test_verify_evidence_no_frontmatter_raises PASSED [100%]
+
+============================== 43 passed in 0.71s ==============================
+### tools/diagnostics ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/tools/diagnostics
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 93 items
+
+tools/diagnostics/diagnostics/tier1/tests/test_capture_io.py::test_supported_schema_passes PASSED [  1%]
+tools/diagnostics/diagnostics/tier1/tests/test_capture_io.py::test_unsupported_future_major_rejected PASSED [  2%]
+tools/diagnostics/diagnostics/tier1/tests/test_capture_io.py::test_supported_schema_major_constant_is_one PASSED [  3%]
+tools/diagnostics/diagnostics/tier1/tests/test_capture_io.py::test_iter_step_arrays_yields_in_order PASSED [  4%]
+tools/diagnostics/diagnostics/tier1/tests/test_capture_io.py::test_iter_step_arrays_skips_missing_field PASSED [  5%]
+tools/diagnostics/diagnostics/tier1/tests/test_determinism.py::test_deterministic_runner_passes PASSED [  6%]
+tools/diagnostics/diagnostics/tier1/tests/test_determinism.py::test_nondeterministic_runner_fails PASSED [  7%]
+tools/diagnostics/diagnostics/tier1/tests/test_health.py::test_healthy_capture_passes PASSED [  8%]
+tools/diagnostics/diagnostics/tier1/tests/test_health.py::test_nan_inf_capture_fails PASSED [  9%]
+tools/diagnostics/diagnostics/tier1/tests/test_performance.py::test_basic_aggregation PASSED [ 10%]
+tools/diagnostics/diagnostics/tier1/tests/test_performance.py::test_optional_metadata_extracted PASSED [ 11%]
+tools/diagnostics/diagnostics/tier1/tests/test_performance.py::test_missing_metadata_returns_none PASSED [ 12%]
+tools/diagnostics/diagnostics/tier1/tests/test_reports.py::test_add_and_serialize PASSED [ 13%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_within_both_bounds_passes PASSED [ 15%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_below_lower_fails PASSED [ 16%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_above_upper_fails PASSED [ 17%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_both_sides_violated PASSED [ 18%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_only_lower_bound PASSED [ 19%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_only_upper_bound PASSED [ 20%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_no_bounds_trivially_passes PASSED [ 21%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_bound_preservation.py::test_boundary_inclusive PASSED [ 22%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_smooth_sweep_passes_bounded_variation PASSED [ 23%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_smooth_sweep_passes_max_jump PASSED [ 24%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_step_discontinuity_fails_max_jump PASSED [ 25%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_step_discontinuity_fails_bounded_variation PASSED [ 26%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_unsorted_input_is_sorted_internally PASSED [ 27%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_singleton_sweep_passes PASSED [ 29%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_shape_mismatch_raises PASSED [ 30%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_invalid_metric_raises PASSED [ 31%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_output_stability.py::test_negative_threshold_raises PASSED [ 32%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_identical_inputs_pass PASSED [ 33%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_f32_truncation_within_tolerance_passes PASSED [ 34%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_large_disagreement_fails PASSED [ 35%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_zero_reference_uses_abs_diff PASSED [ 36%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_shape_mismatch_raises PASSED [ 37%]
+tools/diagnostics/diagnostics/tier2/closed_form/tests/test_precision_sensitivity.py::test_negative_tolerance_raises PASSED [ 38%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_count_invariance.py::test_equal_counts_pass PASSED [ 39%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_count_invariance.py::test_drop_one_fails PASSED [ 40%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_count_invariance.py::test_gain_one_fails PASSED [ 41%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_count_invariance.py::test_zero_counts_pass PASSED [ 43%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_unchanged_velocities_pass PASSED [ 44%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_internal_collision_preserves_momentum PASSED [ 45%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_drift_exceeds_tolerance_fails PASSED [ 46%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_shape_mismatch_raises PASSED [ 47%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_wrong_mass_shape_raises PASSED [ 48%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_momentum_conservation.py::test_negative_tolerance_raises PASSED [ 49%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_symmetric_in_cutoff_passes PASSED [ 50%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_self_inclusion_fails PASSED [ 51%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_out_of_cutoff_fails PASSED [ 52%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_asymmetric_fails PASSED [ 53%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_wrong_length_raises PASSED [ 54%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_out_of_range_neighbor_raises PASSED [ 55%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_neighbor_list_integrity.py::test_negative_cutoff_raises PASSED [ 56%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_well_separated_grid_passes PASSED [ 58%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_colocated_pair_fails PASSED [ 59%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_singleton_passes_trivially PASSED [ 60%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_empty_passes_trivially PASSED [ 61%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_3d_positions PASSED [ 62%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_invalid_shape_raises PASSED [ 63%]
+tools/diagnostics/diagnostics/tier2/particle/tests/test_no_overlap.py::test_negative_epsilon_raises PASSED [ 64%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_conservation.py::test_conserved_passes PASSED [ 65%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_conservation.py::test_leaky_fails PASSED [ 66%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_conservation.py::test_invalid_tolerance_raises PASSED [ 67%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_monotone_bounds.py::test_in_bounds_passes PASSED [ 68%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_monotone_bounds.py::test_violations_flagged PASSED [ 69%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_monotone_bounds.py::test_invalid_bound_order_raises PASSED [ 70%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_spectral_content.py::test_low_wavenumber_field_passes PASSED [ 72%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_spectral_content.py::test_white_noise_fails PASSED [ 73%]
+tools/diagnostics/diagnostics/tier2/scalar_field/tests/test_spectral_content.py::test_invalid_cutoff_raises PASSED [ 74%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_uniform_flow_around_closed_loop_is_zero PASSED [ 75%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_solid_body_rotation_circulation PASSED [ 76%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_no_expected_value_passes PASSED [ 77%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_loop_vertex_out_of_range_raises PASSED [ 78%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_wrong_vertex_dim_raises PASSED [ 79%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_circulation.py::test_too_few_vertices_raises PASSED [ 80%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_solid_body_rotation_2d_passes PASSED [ 81%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_solid_body_rotation_3d_passes PASSED [ 82%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_radial_outflow_fails PASSED [ 83%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_anisotropic_spacing PASSED [ 84%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_invalid_ndim_raises PASSED [ 86%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_wrong_component_axis_raises PASSED [ 87%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_grid_too_small_raises PASSED [ 88%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_divergence_free.py::test_negative_tolerance_raises PASSED [ 89%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_energy_spectrum.py::test_diagnostic_only_returns_spectrum PASSED [ 90%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_energy_spectrum.py::test_default_fit_range_returns_finite_slope PASSED [ 91%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_energy_spectrum.py::test_invalid_velocity_ndim_raises PASSED [ 92%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_energy_spectrum.py::test_negative_tolerance_raises PASSED [ 93%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_shear_field_helicity_zero PASSED [ 94%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_diagnostic_only_mode_passes PASSED [ 95%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_helicity_wrong_shape_raises PASSED [ 96%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_helicity_grid_too_small_raises PASSED [ 97%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_helicity_negative_tolerance_raises PASSED [ 98%]
+tools/diagnostics/diagnostics/tier2/vector_field/tests/test_helicity.py::test_helicity_anisotropic_spacing PASSED [100%]
+
+============================== 93 passed in 0.32s ==============================
+### tools/testkit ###
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/tools/testkit
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 47 items
+
+tools/testkit/capture/tests/test_capture.py::test_schema_validates_canonical_manifest PASSED [  2%]
+tools/testkit/capture/tests/test_capture.py::test_schema_rejects_bad_version PASSED [  4%]
+tools/testkit/capture/tests/test_capture.py::test_schema_rejects_unknown_field PASSED [  6%]
+tools/testkit/capture/tests/test_capture.py::test_write_then_read_round_trip PASSED [  8%]
+tools/testkit/capture/tests/test_capture.py::test_hdf5_layout_matches_spec PASSED [ 10%]
+tools/testkit/capture/tests/test_capture.py::test_diff_bit_exact_same PASSED [ 12%]
+tools/testkit/capture/tests/test_capture.py::test_diff_epsilon_equal PASSED [ 14%]
+tools/testkit/capture/tests/test_capture.py::test_diff_fails_on_mismatch PASSED [ 17%]
+tools/testkit/capture/tests/test_capture.py::test_diff_raises_on_dtype_mismatch PASSED [ 19%]
+tools/testkit/capture/tests/test_capture.py::test_load_reference_manifest_validates PASSED [ 21%]
+tools/testkit/capture/tests/test_capture.py::test_load_reference_manifest_rejects_missing_field PASSED [ 23%]
+tools/testkit/capture/tests/test_legacy_captures_corpus.py::test_legacy_capture_round_trips[phase-0-rd-2d-ref] PASSED [ 25%]
+tools/testkit/capture/tests/test_legacy_captures_corpus.py::test_legacy_capture_manifest_schema_valid[phase-0-rd-2d-ref] PASSED [ 27%]
+tools/testkit/capture/tests/test_legacy_captures_corpus.py::test_corpus_has_phase_0_seed PASSED [ 29%]
+tools/testkit/code_verification/mms/tests/test_broken_solver.py::test_broken_solver_observed_order_is_rejected PASSED [ 31%]
+tools/testkit/code_verification/mms/tests/test_convergence.py::test_ftcs_observed_order_is_within_tolerance PASSED [ 34%]
+tools/testkit/code_verification/mms/tests/test_convergence.py::test_per_resolution_errors_decrease_monotonically PASSED [ 36%]
+tools/testkit/code_verification/mms/tests/test_derive.py::test_derive_heat_1d_matches_expected_source PASSED [ 38%]
+tools/testkit/code_verification/mms/tests/test_derive.py::test_derive_heat_1d_solution_substituted_yields_residual_zero PASSED [ 40%]
+tools/testkit/code_verification/mms/tests/test_derive.py::test_render_markdown_is_deterministic PASSED [ 42%]
+tools/testkit/code_verification/mms/tests/test_derive.py::test_write_derivation_round_trip PASSED [ 44%]
+tools/testkit/code_verification/mms/tests/test_eigenfunction_decay.py::test_eigenfunction_decays_at_analytical_rate PASSED [ 46%]
+tools/testkit/determinism/tests/test_harness.py::test_deterministic_stub_passes_the_gate PASSED [ 48%]
+tools/testkit/determinism/tests/test_harness.py::test_nondeterministic_stub_fails_the_gate PASSED [ 51%]
+tools/testkit/determinism/tests/test_harness.py::test_harness_creates_two_independent_run_dirs PASSED [ 53%]
+tools/testkit/equivalence/tests/test_harness.py::test_stack_b_within_tolerance_of_stack_a PASSED [ 55%]
+tools/testkit/equivalence/tests/test_harness.py::test_stack_wrong_fails_the_gate PASSED [ 57%]
+tools/testkit/equivalence/tests/test_harness.py::test_load_tolerance_table_validates_against_schema PASSED [ 59%]
+tools/testkit/equivalence/tests/test_harness.py::test_load_tolerance_table_rejects_malformed_table PASSED [ 61%]
+tools/testkit/golden/tests/test_generator.py::test_committed_table_validates_against_schema PASSED [ 63%]
+tools/testkit/golden/tests/test_generator.py::test_generator_is_idempotent PASSED [ 65%]
+tools/testkit/golden/tests/test_generator.py::test_table_has_at_least_three_independent_anchors PASSED [ 68%]
+tools/testkit/golden/tests/test_generator.py::test_anchor_at_q0_is_peak PASSED [ 70%]
+tools/testkit/golden/tests/test_generator.py::test_anchor_at_q2_is_compact_support_zero PASSED [ 72%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_peak_at_q_zero PASSED [ 74%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_piecewise_boundary_at_q_one PASSED [ 76%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_compact_support_at_q_two PASSED [ 78%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_kernel_is_zero_beyond_support PASSED [ 80%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_kernel_scales_as_h_to_minus_three PASSED [ 82%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_negative_q_raises PASSED [ 85%]
+tools/testkit/golden/tests/test_reference_implementation.py::test_non_positive_h_raises PASSED [ 87%]
+tools/testkit/golden/tests/test_verifier.py::test_verifier_passes_reference_implementation PASSED [ 89%]
+tools/testkit/golden/tests/test_verifier.py::test_verifier_fails_deliberately_wrong_implementation PASSED [ 91%]
+tools/testkit/golden/tests/test_verifier.py::test_verifier_returns_result_type_for_trivial_evaluator PASSED [ 93%]
+tools/testkit/golden/tests/test_verifier.py::test_verifier_raises_on_missing_output_key PASSED [ 95%]
+tools/testkit/property/tests/test_harness.py::test_pbt_passes_on_mass_conserving_sim PASSED [ 97%]
+tools/testkit/property/tests/test_harness.py::test_pbt_fails_and_shrinks_on_drifting_sim PASSED [100%]
+
+============================== 47 passed in 3.07s ==============================

@@ -1,0 +1,60 @@
+### Files at v0.1.0-phase-1 (Phase 1 protected set) ###
+
+--- audits modified since v0.1.0-phase-1 ---
+docs/_audits/phase-1/sub-phase-agent-based/stage-0-checkpoint-2026-05-20T17-37-47Z.md
+docs/_audits/phase-1/sub-phase-agent-based/stage-0-evidence-reverify-2026-05-20T17-37-47Z.txt
+docs/_audits/phase-1/sub-phase-agent-based/stage-0-replay-2026-05-20T17-37-47Z.txt
+docs/_audits/phase-1/sub-phase-agent-based/stage-1-checkpoint-2026-05-20T18-14-45Z.md
+docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
+docs/_audits/phase-1/sub-phase-closed-form/stage-0-checkpoint-2026-05-20T15-10-49Z.md
+docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/append-only-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/gate13-replay-mandelbulb-explorer-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/gate13-replay-strange-attractors-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/integrity-cat3-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/integrity-cats-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/stage-0-evidence-at-closing-commit-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/test-sweep-negative-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/test-sweep-positive-2026-05-20T16-48-00Z.txt
+docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/verify-evidence-2026-05-20T16-48-00Z.txt
+
+--- Phase 1 audit files altered (should be empty) ---
+
+--- closed-form sub-phase audit chain altered (should be empty) ---
+
+--- all non-audit modifications since v0.1.0-phase-1 ---
+M	CHANGELOG.md
+M	docs/perf-ledger.md
+M	packages/boids-3d/boids_3d/__init__.py
+M	packages/boids-3d/pyproject.toml
+M	packages/boids-3d/tests/test_determinism.py
+M	packages/boids-3d/tests/test_diagnostics.py
+M	packages/boids-3d/tests/test_pbt_invariants.py
+M	packages/mandelbulb-explorer/mandelbulb_explorer/__init__.py
+M	packages/mandelbulb-explorer/pyproject.toml
+M	packages/mandelbulb-explorer/tests/test_determinism.py
+M	packages/mandelbulb-explorer/tests/test_diagnostics.py
+M	packages/mandelbulb-explorer/tests/test_pbt_invariants.py
+M	packages/physarum/physarum/__init__.py
+M	packages/physarum/pyproject.toml
+M	packages/physarum/tests/test_deposit_golden.py
+M	packages/physarum/tests/test_determinism.py
+M	packages/physarum/tests/test_diagnostics.py
+M	packages/physarum/tests/test_pbt_invariants.py
+M	packages/strange-attractors/pyproject.toml
+M	packages/strange-attractors/strange_attractors/__init__.py
+M	packages/strange-attractors/tests/test_determinism.py
+M	packages/strange-attractors/tests/test_diagnostics.py
+M	packages/strange-attractors/tests/test_pbt_invariants.py
+M	tools/integrity/integrity/cat3_numerical/golden_values.py
+M	tools/integrity/integrity/scripts/verify_evidence.py
+M	tools/integrity/tests/test_verify_evidence.py
+M	tools/testkit/equivalence/tolerance-budget.toml
+M	tools/testkit/golden/tables/agent-based/boids-3agent-step1.json
+M	tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json
+M	uv.lock
+
+### CI semantics: *.ledger.md ###
+(none)
