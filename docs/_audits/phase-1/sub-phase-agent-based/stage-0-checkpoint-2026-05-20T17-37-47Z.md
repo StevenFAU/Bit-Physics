@@ -6,8 +6,8 @@ artifact_id: agent-based-stage-0
 stage: 0-preflight
 subject: "Agent-based sub-phase Stage 0 (pre-flight) checkpoint"
 verdict-state: complete
-head_sha: <PLACEHOLDER-stage0-close-sha>
-head_sha_at_checkpoint: <PLACEHOLDER-stage0-close-sha>
+head_sha: 6e267a14dd3f9552dd0a10d64c2f456f55331719
+head_sha_at_checkpoint: 6e267a14dd3f9552dd0a10d64c2f456f55331719
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -49,7 +49,7 @@ phase handles).
 | SHA | Commit message | Sub-deliverable | Notes |
 |---|---|---|---|
 | `968b03f` | `chore(agent-based-stage0-tolerance-budget): sub-phase carryover from phase-1` | Task 0.1 — `[phase]` carryover | Only `[phase].phase` and `[phase].opened_at` changed; no `[budgets.*]` widening (spec § 2.6 prohibits widening without separate operator amendment). |
-| `<PLACEHOLDER-stage0-close-sha>` | `chore(agent-based-stage0-checkpoint): Stage 0 pre-flight complete` | Closing — this audit | Convention #12 SHA back-fill follows in a separate commit per charter § 4.1 closing + closed-form audit § 8.2 N2 (every-stage-close discipline). |
+| `6e267a14dd3f9552dd0a10d64c2f456f55331719` | `chore(agent-based-stage0-checkpoint): Stage 0 pre-flight complete` | Closing — this audit | Convention #12 SHA back-fill follows in a separate commit per charter § 4.1 closing + closed-form audit § 8.2 N2 (every-stage-close discipline). |
 | (next commit) | `chore(agent-based-stage0-sha-backfill): back-fill Stage 0 checkpoint SHA per Convention #12` | SHA back-fill | New commit; never `--amend`. |
 
 ## 3. Task 0.0 — Cross-phase audit replay (FACT)
@@ -200,7 +200,7 @@ commit, per § 9 below.)
 (FACT — charter § 4.1 closing + § 8; closed-form audit § 8.2 N2.)
 
 Front-matter `head_sha:` and `head_sha_at_checkpoint:` are set to
-literal placeholder strings `<PLACEHOLDER-stage0-close-sha>` rather
+literal placeholder strings `6e267a14dd3f9552dd0a10d64c2f456f55331719` rather
 than to a prior commit SHA. The closing commit
 `chore(agent-based-stage0-checkpoint): Stage 0 pre-flight complete`
 adds this file with the placeholders intact; the immediately-following
