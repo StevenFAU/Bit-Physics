@@ -101,6 +101,114 @@ non-phase point-release `v0.1.1` is a banked operator decision per
 | 12 | perf-ledger first row | GREEN | GREEN |
 | 13 | failing-tests replay verifiable | GREEN | GREEN |
 
+### sub-phase-agent-based
+
+Second per-sim implementation sub-phase under spec-Phase-1 per Phase
+1 audit § 15 / closed-form sub-phase audit § 10. Lands gates 4–13
+for the agent-based pair (`boids-3d`, `physarum`); the remaining
+five Phase 1 sims (eulerian-smoke, lattice-boltzmann-d3q19,
+mpm-multimaterial, reaction-diffusion-3d, sph-water) still ship
+Phase-1 RED with `ModuleNotFoundError` pending their own per-sim
+implementation sub-phases. No `-phase-N` tag pushed (spec § 7.12);
+optional non-phase point-release `v0.1.2` is a banked operator
+decision per `docs/phases/sub-phase-agent-based.md` § 5 + § 11.4.
+
+#### Added
+
+- `packages/boids-3d/boids_3d/` — public API exposing `reference`
+  (Reynolds 1987 / 1999 three-rule flocking step on the named-agent
+  fixture and on `(N, 3)` flock arrays; canonical Reynolds-1999
+  parameter set), `sim` (`sim_runner_seeded` producing the
+  1000-agent canonical capture; sibling `sim_runner_seeded_3agent`
+  producing the canonical-3-agent capture; both match the testkit
+  `SimRunner` Protocol — Stage 1 shift S3), `invariants`
+  (Hypothesis-decorated `v_max_clamp_respected` and
+  `particle_count_invariant`). The `sim` module's docstring is the
+  load-bearing determinism-strategy declaration per charter § 1.4
+  (sorted-by-index update order, BLAS-friendly mask-matmul reductions,
+  no per-step RNG, single-conditional clamp).
+- `packages/physarum/physarum/` — public API exposing `reference`
+  (Jones 2010 five-component step + named-agent `step_to_deposit`
+  for the gate-4 zero-trail golden + array-state `evolve`),
+  `sim` (`sim_runner_seeded` producing the canonical
+  `network-canonical-seed42-step5000` capture per spec Appendix D
+  § D.2.3 — Stage 1 shift S4 documents the probe-vs-spec descriptor
+  drift, Appendix D wins), `invariants` (Hypothesis-decorated
+  `trail_mass_conserves_modulo_decay` and `agent_count_invariant`).
+  The `sim` module's docstring is the load-bearing determinism-strategy
+  declaration per charter § 1.4 (sorted-by-input-index agent order,
+  deterministic sense reads, canonical tie-break, ordered
+  `numpy.add.at` deposit scatter, mass-preserving periodic 3×3 blur).
+- `captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.{h5,json}`
+  (spec Appendix D § D.2.3; H5 sha256
+  `a0f8757a4dd913149b01c043f4f705e6ec3001cbaf7f54db42a2fd76440903c3`).
+- `captures/boids-3d-ref/flock-1000agents-seed42-step1000.{h5,json}`
+  (spec Appendix D § D.2.3; H5 sha256
+  `7e9064aff95e3672b0ffa9385d21cdbefbb0dc2c250b99c25b33cceec5f13ec0`).
+- `captures/physarum-ref/network-canonical-seed42-step5000.{h5,json}`
+  (spec Appendix D § D.2.3; H5 sha256
+  `6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40`).
+- `docs/perf-ledger.md` — three first-landing baseline rows:
+  - `boids-3d / numpy-reference / flock-3agents-canonical-seed42-step1000 / 0.033s / i7-12700KF-linux-6.17`
+  - `boids-3d / numpy-reference / flock-1000agents-seed42-step1000 / 17.592s / i7-12700KF-linux-6.17`
+  - `physarum / numpy-reference / network-canonical-seed42-step5000 / 3.128s / i7-12700KF-linux-6.17`
+- `tools/testkit/failing-tests-evidence/boids-3d-implemented-2026-05-20T18-02-02Z.txt`
+  (sha256 `26032163d891ed4f648e9d0f4778d3ce4e10db2a336c9d4432fb950ade98b3a9`).
+- `tools/testkit/failing-tests-evidence/physarum-implemented-2026-05-20T18-12-01Z.txt`
+  (sha256 `991495b4ba1dcdb66faf2b23aff29121e87d0daf1fe6d2a0f55758fde6601427`).
+- `tools/testkit/mutation/sub-phase-agent-based-2026-05-20T18-20-39Z.json` —
+  framework-validated mutation baseline carry-forward; B17 re-banked
+  to the continuous-CA implementation sub-phase (PATH-B per Stage 2
+  step 2.7; default lean from closed-form audit § 7.6 continued).
+- Sub-phase audit chain under `docs/_audits/phase-1/sub-phase-agent-based/`:
+  Stage 0 / Stage 1 / Stage 2 checkpoints + landing audit + Stage 2
+  evidence directory.
+
+#### Changed (additive per Convention A)
+
+- `tools/integrity/integrity/cat3_numerical/golden_values.py` —
+  `_SUBDIRS_PICKED_UP` extended additively to include
+  `Path("agent-based")` alongside `Path("closed-form")` (commit
+  `agent-based-stage2-cat3-subdirs`). Picks up the agent-based
+  goldens for Cat 3 verification; the remaining sibling subdirs
+  (hybrid-pg, lattice, particle-fluids) remain non-recursed until
+  their per-sim implementation sub-phases extend the tuple. Same
+  additive shape as closed-form sub-phase Stage 2 N4.
+- `tools/testkit/golden/tables/agent-based/boids-3agent-step1.json`
+  and `physarum-deposit-step1.json` — each lifted from one
+  `test_point` (1 anchor under the Cat 3 counting semantics) to
+  three `test_points`, each carrying its own `independent_reference`
+  block (3 anchors per spec § 2.4). No numerical information loss
+  — the three pre-existing references that were packed into a
+  single `source` block each become their own discrete anchor
+  (commit `agent-based-stage2-cat3-anchors`).
+- `tools/testkit/equivalence/tolerance-budget.toml` — Stage 0
+  carryover: `[phase] phase = "sub-phase-agent-based"`. No
+  `[budgets.*]` widening (spec § 2.6 requires separate operator
+  amendment).
+- Phase 1 stub test bodies (`raise NotImplementedError`) at
+  `packages/{boids-3d,physarum}/tests/test_{determinism,diagnostics,pbt_invariants}.py`
+  + the physarum `test_deposit_golden.py::test_total_mass_after_decay`
+  stub replaced with their gate-fulfilling implementations (Stage
+  1 shift S1; parallels closed-form Stage 1 S1). Function signatures
+  + imports preserved; the failing-tests-evidence files committed
+  at `5dd919c` are UNTOUCHED and remain the gate-13 anchor.
+
+#### Gates flipped GREEN at HEAD (both sims)
+
+| # | Gate | boids-3d | physarum |
+|---|---|---|---|
+| 4 | code verification (golden-value) | GREEN | GREEN |
+| 5 | Tier 1 NaN/Inf | GREEN | GREEN |
+| 6 | Tier 2 particle (IC-5) + Phase-0 scalar_field | GREEN | GREEN |
+| 7 | Cat 1 citations | GREEN | GREEN |
+| 8 | Cat 2 public API | GREEN | GREEN |
+| 9 | canonical capture (TWO for boids, ONE for physarum) | GREEN | GREEN |
+| 10 | determinism (capture-twice-and-diff; advisory ε for physarum chaotic) | GREEN | GREEN |
+| 11 | PBT invariants (Hypothesis) | GREEN | GREEN |
+| 12 | perf-ledger first row(s) | GREEN | GREEN |
+| 13 | failing-tests replay verifiable | GREEN | GREEN |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
