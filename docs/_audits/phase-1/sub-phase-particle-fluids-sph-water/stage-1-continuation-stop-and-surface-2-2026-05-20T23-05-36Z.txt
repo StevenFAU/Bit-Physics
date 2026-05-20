@@ -1,0 +1,153 @@
+=== Stage 1 continuation: SECOND STOP-AND-SURFACE on canonical-runner Python-loop overhead ===
+
+Date: 2026-05-20
+HEAD: 2a48a32 (post-spatial-hash commit; pre-W2b capture generation)
+Scope: standing order #7 STOP-AND-SURFACE precondition
+
+--- What happened ---
+
+After 2a48a32 (R16 spatial-hash routing implementation) committed, W2b
+(canonical capture generation with use_spatial_hash=True, h_override=
+CANONICAL_H=0.012, capture_interval=100) was attempted via
+sim_runner_seeded(seed=42).
+
+The attempt was KILLED at ~78 seconds of wall-clock. The Python
+process was actively running at 100% CPU (PID 190323; RSS 406 MB);
+no stdout past the header print; no .h5 file landed at the output
+path. Based on profiling estimates the work was still inside the
+FIRST step's cell_list_neighbor_query / density_vectorized for the
+initial frame — the per-particle Python loop is the bottleneck.
+
+--- Root cause ---
+
+The cell_list_neighbor_query function at HEAD has the right
+ALGORITHMIC complexity (O(N + N·⟨neighbors⟩)) but the wrong
+IMPLEMENTATION shape for pure-Python NumPy at N=1M scale:
+
+  for i in range(n):  # 1M Python-loop iterations per step
+      ci = (int(cell_indices[i, 0]), ...)
+      candidates = []
+      for ox, oy, oz in offsets:  # 27 cells
+          key = (ci[0]+ox, ...)
+          bucket = buckets.get(key)
+          if bucket is None: continue
+          for j in bucket:  # ~14 particles per cell × 27 cells = ~378 candidates
+              if j == i: continue
+              r = p[i] - p[j]  # numpy 3-elem subtract
+              if float(...) < cutoff_sq:
+                  candidates.append(j)
+      candidates.sort()
+      lists.append(candidates)
+
+The Python-loop overhead per particle is ~10-50 μs (small NumPy
+operations, dict lookups, Python list operations). At N=1M this is
+10-50 seconds per step JUST for the neighbor-list build (before
+density / density_evolution / Euler integration). At 1000 steps the
+total exceeds 10⁴ s easily.
+
+Even vectorizing the inner candidate-distance-check (so each particle
+does 1 NumPy operation instead of ~378 Python iterations) only gets
+to ~5 seconds per step × 1000 = 5000s ≈ 1.4 hours; AND that approach
+still has the outer 1M-iteration Python loop which adds its own
+overhead (~50 s/step ≈ 14 hours total).
+
+--- What the R16 routing got right and what it missed ---
+
+The R16 routing correctly identified that the O(N²) pairwise tensor
+materialization is infeasible at N=1M (21.8 TiB allocation). The
+spatial-hash / cell-list algorithm is correct in concept. The
+implementation in pure-Python with a Python outer-loop over N
+particles has its own complexity issue (Python interpreter overhead
+× N) that becomes the new bottleneck.
+
+Standing order #7 anticipated this exactly: "If runtime substantially
+exceeds 10⁴ seconds (~3 hours), STOP-AND-SURFACE again — that would
+suggest the cell-list implementation has its own complexity issue
+worth investigating before letting it grind through."
+
+--- Three remediation paths (R-class addendum — call it R17) ---
+
+(I) **Add scipy as an sph-water dependency.** Use
+    scipy.spatial.cKDTree.query_ball_point for the neighbor query —
+    C-implemented, vectorized, well-tested. Expected wall-clock for
+    1M-particle all-pairs-within-radius query: 1-10 seconds per
+    snapshot; total simulation runtime estimated 10²–10³ s.
+
+    Pros: minimal LOC, drop-in replacement, deterministic (scipy
+    returns sorted neighbor lists; can be wrapped in a final sort to
+    lock in byte-equivalence with neighbor_lists at N where both
+    fit).
+
+    Cons: adds scipy to packages/sph-water/pyproject.toml (small
+    dep; ~80 MB installed; already standard in scientific Python).
+    Operator may want to discuss whether scipy is on the
+    project's allowed-deps list (the repo doesn't have it elsewhere
+    yet; sph-water would be the first consumer).
+
+(II) **Add numba as an sph-water dependency + JIT-compile the
+    cell-list inner loop.** Numba compiles a typed-Python loop
+    to native code; the per-iteration overhead drops from ~10μs to
+    ~10-50ns. Expected wall-clock comparable to (I) at 10²–10³ s.
+
+    Pros: keeps the cell-list algorithm explicit in Python source
+    (no algorithmic black-box like KDTree); preserves the
+    determinism discipline as written.
+
+    Cons: numba is a larger dep (~200 MB installed); compilation
+    overhead on first call (~5-10s); LLVM dependency. Determinism
+    of @njit code requires careful attention to fastmath flags
+    (must keep fastmath=False for IEEE-strict).
+
+(III) **Downsample canonical N at this sub-phase.** Use a smaller-N
+     descriptor (e.g., dam-break-10K-particles or
+     dam-break-100K-particles) that fits in the pure-Python cell-list
+     implementation's wall-clock budget. At N=100K with same h-tuning
+     ratio (h ≈ 0.026 for ~50 neighbors per particle): per-step Python
+     overhead ~5 seconds × 1000 = 5000 seconds ≈ 1.4 hours — under
+     the 10⁴ s threshold.
+
+     Requires either:
+     - Appendix D § D.2.3 amendment (Phase-1-retroactive); OR
+     - Per-sub-phase canonical-descriptor override (creates documented
+       gap between Appendix-D claim and committed capture).
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (I) — add scipy as an sph-water dependency. Reasoning:
+
+  - scipy is the standard scientific-Python neighbor-query toolkit;
+    using scipy.spatial.cKDTree.query_ball_point is the idiomatic
+    Python approach for this problem.
+  - Future particle-fluids / MPM sub-phases will likely also benefit
+    (MPM has similar grid-particle interactions). Amortizing the
+    scipy adoption now reduces future re-litigation.
+  - Determinism is preserved via a final neighbor-list sort by id
+    (locks in the byte-equivalence-with-neighbor_lists invariant).
+  - Minimal LOC change: replace the cell_list_neighbor_query body
+    with a scipy KDTree call + sort; the rest of the canonical-tier
+    path (density_evolution_vectorized + density_vectorized) is
+    unchanged.
+
+If the operator wants to avoid scipy:
+  LEAN-NOT (II) — numba has larger dep + LLVM transitive footprint;
+  fastmath determinism caveats are non-trivial.
+  LEAN-NOT (III) — downsamples lose Appendix D claim fidelity.
+
+--- Stage 1 continuation status ---
+
+W1 (ceiling raise to 1 GB) is committed at 8f99500 and stands.
+W2a (spatial-hash implementation per R16) is committed at 2a48a32
+and stands — the algorithm is correct; the Python-loop overhead is
+the new bottleneck.
+
+W2b STOPped-and-SURFACEd at Python-loop overhead. The canonical
+capture is not produced. Working tree is clean (the running process
+was killed; no partial outputs).
+
+W3-W7 pending operator routing.
+
+Stage 1 verdict-state remains partial-needs-continuation; this
+SECOND surface evidence file extends the R-class risk surface with
+R17 (canonical-runner Python-loop overhead).
+
+=== End surface ===
