@@ -1,0 +1,60 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "physarum-jones-2010-4agent-deposit-step1",
+  "category": "agent-based",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/physarum-deposit-step1.md",
+    "upstream": "Jones-2010",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "4-agent-zero-trail-cardinal-headings",
+        "grid_shape": [16, 16],
+        "initial_trail": "zero",
+        "agents": [
+          {"p": [4, 4], "h": [1, 0]},
+          {"p": [11, 4], "h": [-1, 0]},
+          {"p": [4, 11], "h": [0, 1]},
+          {"p": [11, 11], "h": [0, -1]}
+        ],
+        "params": {
+          "delta_phi_deg": 45,
+          "L_sense": 9,
+          "L_move": 1,
+          "deposit": 5.0,
+          "decay_alpha": 0.1
+        }
+      },
+      "expected": {
+        "deposits": [
+          {"x": 5, "y": 4, "value": 5.0},
+          {"x": 10, "y": 4, "value": 5.0},
+          {"x": 4, "y": 12, "value": 5.0},
+          {"x": 11, "y": 10, "value": 5.0}
+        ],
+        "total_mass_before_decay": 20.0,
+        "total_mass_after_decay": 18.0
+      },
+      "independent_reference": {
+        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/physarum-deposit-step1.md §§ 1-3: with a zero initial trail, the sense step returns identical zero readings, the rotate step is a tie (canonical tie-breaker: keep current heading), and each agent moves +1 along its cardinal heading and deposits 5.0. (2) Jones, J. (2010), 'Characteristics of pattern formation and evolution in approximations of Physarum transport networks', Artificial Life 16 (2), 127-153, DOI 10.1162/artl.2010.16.2.16202, § 3 Table 1 — canonical parameter set and the five-component update order. (3) Python independent re-derivation by tools/testkit/golden/generator/physarum_deposit_step1.py.",
+        "doi": "10.1162/artl.2010.16.2.16202",
+        "derived_by": "hand-derivation under the deterministic zero-trail limit + Jones 2010 parameter set + Python re-derivation.",
+        "expected": {
+          "deposits": [
+            {"x": 5, "y": 4, "value": 5.0},
+            {"x": 10, "y": 4, "value": 5.0},
+            {"x": 4, "y": 12, "value": 5.0},
+            {"x": 11, "y": 10, "value": 5.0}
+          ]
+        }
+      }
+    }
+  ]
+}

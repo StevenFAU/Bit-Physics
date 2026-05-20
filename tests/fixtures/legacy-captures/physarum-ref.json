@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0",
+  "sim": {"name": "physarum", "category": "agent-based", "variant": "jones-2010-canonical"},
+  "stack": {"name": "numpy-reference", "version": "0.0.0", "build_id": "phase-1-stage-2-placeholder"},
+  "config": {
+    "tier": "test",
+    "dims": [256, 256],
+    "dtype": "f32",
+    "seed": 42,
+    "params": {
+      "n_agents": 32768,
+      "grid_shape": [256, 256],
+      "delta_phi_deg": 45,
+      "L_sense": 9,
+      "L_move": 1,
+      "deposit": 5.0,
+      "decay_alpha": 0.1,
+      "n_steps": 10000
+    }
+  },
+  "run": {"step_count": 10000, "capture_interval": 1000, "wall_clock_seconds": 0.0, "start_utc": "2026-05-20T00:00:00Z"},
+  "payload": {"format": "hdf5", "path": "physarum-ref.h5", "checksum": "sha256:placeholder-no-payload-at-phase-1-stage-2"},
+  "determinism": {"claimed": "epsilon-same-stack-same-hw", "atomic_ops": true, "subgroup_ops": false},
+  "_phase_1_stage_2_note": "Placeholder for canonical capture descriptor 'physarum-jones-256x256-seed42-step10000'."
+}

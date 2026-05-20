@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "boids-reynolds-1987-3agent-step1",
+  "category": "agent-based",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/boids-3agent-step1.md",
+    "upstream": "Reynolds-1987",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-13
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "3-agent-step1-canonical",
+        "agents": {
+          "A": {"p": [0.0, 0.0, 0.0], "v": [1.0, 0.0, 0.0]},
+          "B": {"p": [1.0, 0.0, 0.0], "v": [-1.0, 0.0, 0.0]},
+          "C": {"p": [0.0, 1.0, 0.0], "v": [0.0, 0.0, 1.0]}
+        },
+        "params": {
+          "w_sep": 1.5,
+          "w_align": 1.0,
+          "w_cohere": 1.0,
+          "perception_radius": 5.0,
+          "v_max": 3.0,
+          "dt": 0.05
+        }
+      },
+      "expected": {
+        "A": {
+          "v_new": [0.875, -0.05, 0.025],
+          "p_new": [0.043750000000000004, -0.0025000000000000005, 0.0012500000000000002]
+        },
+        "B": {
+          "v_new": [-0.8625, -0.0125, 0.025],
+          "p_new": [0.956875, -0.0006250000000000001, 0.0012500000000000002]
+        },
+        "C": {
+          "v_new": [-0.0125, 0.0625, 0.95],
+          "p_new": [-0.0006250000000000001, 1.003125, 0.0475]
+        }
+      },
+      "independent_reference": {
+        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/boids-3agent-step1.md § 2 (every value substituted directly into the Reynolds-1987 formulae). (2) Reynolds, C. W. (1987), 'Flocks, herds and schools: A distributed behavioral model', SIGGRAPH '87, ACM SIGGRAPH Computer Graphics 21 (4), 25-34, DOI 10.1145/37401.37406, § 2 (separation, alignment, cohesion as defined verbatim). (3) Reynolds, C. W. (1999), 'Steering Behaviors for Autonomous Characters', GDC 1999, https://www.red3d.com/cwr/steer/ — the canonical weight set (w_s=1.5, w_a=1.0, w_c=1.0). Three independent published references converge on the closed-form post-step values shown.",
+        "doi": "10.1145/37401.37406",
+        "derived_by": "hand-derivation per Reynolds 1987 § 2; canonical weights per Reynolds 1999; Python generator script re-derives from the same formulae for end-to-end cross-check.",
+        "expected": {
+          "A": {"v_new": [0.875, -0.05, 0.025]},
+          "B": {"v_new": [-0.8625, -0.0125, 0.025]},
+          "C": {"v_new": [-0.0125, 0.0625, 0.95]}
+        }
+      }
+    }
+  ]
+}
