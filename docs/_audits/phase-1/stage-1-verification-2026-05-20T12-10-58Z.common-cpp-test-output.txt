@@ -1,0 +1,46 @@
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_capture.cpp:39:
+TEST CASE:  IC-1 capture round-trip preserves fields and diagnostics
+
+0.000790 s: IC-1 capture round-trip preserves fields and diagnostics
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_capture.cpp:91:
+TEST CASE:  IC-1 Reader::read_step out-of-range throws
+
+0.000513 s: IC-1 Reader::read_step out-of-range throws
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_capture.cpp:108:
+TEST CASE:  IC-1 Writer::finalize is idempotent and rejects post-finalize writes
+
+0.000303 s: IC-1 Writer::finalize is idempotent and rejects post-finalize writes
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_determinism.cpp:34:
+TEST CASE:  IC-3 default Config is non-deterministic
+
+0.000005 s: IC-3 default Config is non-deterministic
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_determinism.cpp:40:
+TEST CASE:  IC-3 from_args parses --deterministic and --seed
+
+0.000009 s: IC-3 from_args parses --deterministic and --seed
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_determinism.cpp:50:
+TEST CASE:  IC-3 from_args trims argv consistently with the resolved config
+
+0.000009 s: IC-3 from_args trims argv consistently with the resolved config
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_determinism.cpp:65:
+TEST CASE:  IC-3 from_args throws when --seed lacks a value
+
+0.000011 s: IC-3 from_args throws when --seed lacks a value
+===============================================================================
+/home/otacon/Projects/Bit-Physics/common/common-cpp/tests/test_determinism.cpp:72:
+TEST CASE:  IC-3 unrelated argv is left untouched
+
+0.000005 s: IC-3 unrelated argv is left untouched
+===============================================================================
+[doctest] test cases:  8 |  8 passed | 0 failed | 0 skipped
+[doctest] assertions: 35 | 35 passed | 0 failed |
+[doctest] Status: SUCCESS!
