@@ -40,7 +40,7 @@ Per `docs/phases/phase-0-plan.md` § 3.3.6. Top-level re-exports at
 
 - `HealthReport`, `check_health`
 - `PerformanceReport`, `check_performance`
-- `check_determinism` (composes `bit_physics_testkit.determinism.run_twice_and_diff`)
+- `check_determinism` (composes `determinism.run_twice_and_diff`)
 - `BoundsReport`, `check_bounds`
 - `SpectralReport`, `check_spectral_content`
 - `ConservationReport`, `check_conservation`

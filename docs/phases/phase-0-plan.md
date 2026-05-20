@@ -89,20 +89,20 @@ Block 2: MMS
    ▼
 Block 3: HARNESSES
    │  produces tools/testkit/determinism/, tools/testkit/equivalence/
-   │  imports from: bit_physics_testkit.capture (diff_captures, load_capture)
+   │  imports from: capture (diff_captures, load_capture)
    ▼
 Block 4: VENDORING
    │  produces references/SPlisHSPlasH/ + tools/testkit/golden/ (table, generator,
    │             verifier, reference_implementations/cubic_spline.py)
-   │  imports from: bit_physics_testkit.capture.manifest (load_reference_manifest)
+   │  imports from: capture.manifest (load_reference_manifest)
    ▼
 Block 5: INTEGRITY
    │  produces tools/integrity/ (Cat 1–5)
-   │  imports from: bit_physics_testkit.golden (verifier, reference_implementations/cubic_spline)
+   │  imports from: golden (verifier, reference_implementations/cubic_spline)
    ▼
 Block 6: DIAGNOSTICS
    │  produces tools/diagnostics/tier1/, tools/diagnostics/tier2/scalar_field/
-   │  imports from: bit_physics_testkit.capture, bit_physics_testkit.determinism
+   │  imports from: capture, determinism
    ▼
 Block 7: COMMON-TS
    │  produces common/common-ts/ (WebGPU + h5wasm) + hello-physics smoke sim
@@ -127,7 +127,7 @@ Three properties of this sequence:
 
 These signatures are contracts between blocks. The build agent codes against these when it owns the producing block, and consumes them as written when it owns a consuming block. If the agent finds a contract here that doesn't make sense once it starts implementing, Hard Rule 2 applies: pause, surface, the user (or this plan) adjusts.
 
-#### 3.3.1 `bit_physics_testkit.capture` — Block 1 ships; Blocks 3, 6, 7, 8 consume
+#### 3.3.1 `capture` (in PyPI dist `bit-physics-testkit`) — Block 1 ships; Blocks 3, 6, 7, 8 consume
 
 ```python
 # tools/testkit/capture/__init__.py — public exports
@@ -181,7 +181,7 @@ def load_reference_manifest(manifest_path: Path) -> dict: ...
 - `/steps/{N}/diagnostics/{check_name}` — scalar per Tier 1 diagnostic per step
 - `/metadata/` — replicated manifest fields
 
-#### 3.3.2 `bit_physics_testkit.determinism` — Block 3 ships; Blocks 6, 8 consume
+#### 3.3.2 `determinism` (in PyPI dist `bit-physics-testkit`) — Block 3 ships; Blocks 6, 8 consume
 
 ```python
 from pathlib import Path
@@ -202,7 +202,7 @@ def run_twice_and_diff(runner: SimRunner, seed: int = 42,
                        tmp_dir: Path | None = None) -> DeterminismVerdict: ...
 ```
 
-#### 3.3.3 `bit_physics_testkit.equivalence` — Block 3 ships
+#### 3.3.3 `equivalence` (in PyPI dist `bit-physics-testkit`) — Block 3 ships
 
 ```python
 from pathlib import Path
@@ -220,7 +220,7 @@ def compare_captures(left: Path, right: Path,
     ...
 ```
 
-#### 3.3.4 `bit_physics_testkit.golden` — Block 4 ships; Block 5 consumes
+#### 3.3.4 `golden` (in PyPI dist `bit-physics-testkit`) — Block 4 ships; Block 5 consumes
 
 ```python
 # tools/testkit/golden/verifier.py
@@ -284,7 +284,7 @@ class Finding:
 Cat 3 wiring (consumes Block 4's reference impl directly):
 ```python
 # tools/integrity/integrity/cat3_numerical/evaluators/cubic_spline.py
-from bit_physics_testkit.golden.reference_implementations.cubic_spline import evaluate
+from golden.reference_implementations.cubic_spline import evaluate
 ALGORITHM_NAME = "cubic-spline-kernel"
 ```
 
@@ -295,7 +295,7 @@ ALGORITHM_NAME = "cubic-spline-kernel"
 ```python
 # tools/diagnostics/tier1/health.py
 from dataclasses import dataclass
-from bit_physics_testkit.capture import Capture
+from capture import Capture
 
 @dataclass
 class HealthReport:
@@ -311,7 +311,7 @@ def check_health(capture: Capture) -> HealthReport: ...
 
 ```python
 # tools/diagnostics/tier1/determinism.py — composes Block 3's harness directly
-from bit_physics_testkit.determinism import run_twice_and_diff, DeterminismVerdict
+from determinism import run_twice_and_diff, DeterminismVerdict
 
 def check_determinism(runner, seed: int = 42) -> DeterminismVerdict:
     return run_twice_and_diff(runner, seed=seed)
@@ -320,7 +320,7 @@ def check_determinism(runner, seed: int = 42) -> DeterminismVerdict:
 ```python
 # tools/diagnostics/tier2/scalar_field/monotone_bounds.py
 from dataclasses import dataclass
-from bit_physics_testkit.capture import Capture
+from capture import Capture
 
 @dataclass
 class BoundsReport:
@@ -1294,7 +1294,7 @@ You are the Phase 0 build agent. This is Block 3 (HARNESSES) — the determinism
 
 **Also read:** `phase-0-plan.md` § 3.3.2 + § 3.3.3 (the public APIs you ship), § 5 (report schema).
 
-**Foundation you build on:** Block 1's `bit_physics_testkit.capture` (view it to confirm `diff_captures` signature).
+**Foundation you build on:** Block 1's `capture` (view it to confirm `diff_captures` signature).
 
 **Deliverables:**
 
@@ -1415,7 +1415,7 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
 
 **Also read:** `phase-0-plan.md` § 3.3.5 (your public API), § 3.3.4 (Block 4's API you consume).
 
-**Foundation you build on:** Block 1 (repo skeleton, capture, schemas, pre-commit base config). Block 4 (`bit_physics_testkit.golden` — your Cat 3 imports `reference_implementations.cubic_spline.evaluate` directly).
+**Foundation you build on:** Block 1 (repo skeleton, capture, schemas, pre-commit base config). Block 4 (`golden` — your Cat 3 imports `reference_implementations.cubic_spline.evaluate` directly).
 
 **Deliverables (under `tools/integrity/`):**
 
@@ -1434,9 +1434,9 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
    - Stub modules for Stack-C and Stack-B contract checks (TODO markers; not active in Phase 0).
 
 4. **Cat 3 — Numerical correctness** at `integrity/cat3_numerical/`:
-   - `golden_values.py` (`cat3.golden-values`): for every JSON file under `tools/testkit/golden/tables/`, calls `bit_physics_testkit.golden.verifier.verify_against_table(table_path, evaluator)`. Mode: SOFT_WARN (spec § 3.2 default).
+   - `golden_values.py` (`cat3.golden-values`): for every JSON file under `tools/testkit/golden/tables/`, calls `golden.verifier.verify_against_table(table_path, evaluator)`. Mode: SOFT_WARN (spec § 3.2 default).
    - **Independent-reference anchor enforcement** (per spec § 2.4): for each golden table, asserts at least three test points carry an `independent_reference` field. Tables without independent anchors HARD_FAIL.
-   - Per-algorithm registry at `evaluators/`. Phase 0 entry: `evaluators/cubic_spline.py` — a thin shim importing `bit_physics_testkit.golden.reference_implementations.cubic_spline.evaluate` and registering it under algorithm name `cubic-spline-kernel`. **Do not re-implement the kernel.**
+   - Per-algorithm registry at `evaluators/`. Phase 0 entry: `evaluators/cubic_spline.py` — a thin shim importing `golden.reference_implementations.cubic_spline.evaluate` and registering it under algorithm name `cubic-spline-kernel`. **Do not re-implement the kernel.**
    - Stub hook for MMS reports (placeholder; Block 2's MMS pipeline is consumed in Phase 1+).
 
 5. **Cat 4 — Draft-time spec verification** at `integrity/cat4_draft_time/`:
@@ -1534,15 +1534,15 @@ You are the Phase 0 build agent. This is Block 6 (DIAGNOSTICS) — the diagnosti
 
 **Also read:** `phase-0-plan.md` § 3.3.6 (your public APIs).
 
-**Foundation you build on:** Block 1 (capture). Block 3 (`bit_physics_testkit.determinism.run_twice_and_diff` — your `tier1/determinism.py` composes this directly; no Protocol/mock needed in sequential execution).
+**Foundation you build on:** Block 1 (capture). Block 3 (`determinism.run_twice_and_diff` — your `tier1/determinism.py` composes this directly; no Protocol/mock needed in sequential execution).
 
 **Deliverables (under `tools/diagnostics/`):**
 
 1. **Tier 1 — Universal** at `tier1/`:
-   - `capture_io.py` — thin layer over Block 1's `bit_physics_testkit.capture` for diagnostic use (iterate steps, extract per-step state arrays).
+   - `capture_io.py` — thin layer over Block 1's `capture` for diagnostic use (iterate steps, extract per-step state arrays).
    - `health.py` per § 3.3.6 — `check_health(capture) -> HealthReport`. CLI: `ok=True → exit 0`, `ok=False → exit 1`.
    - `performance.py` — wall-clock timing aggregation, GPU dispatch counts (when stack emits them), memory high-water marks. Reads `run.wall_clock_seconds` from manifest.
-   - `determinism.py` per § 3.3.6 — `check_determinism(runner, seed)` directly imports and calls `bit_physics_testkit.determinism.run_twice_and_diff`.
+   - `determinism.py` per § 3.3.6 — `check_determinism(runner, seed)` directly imports and calls `determinism.run_twice_and_diff`.
    - `reports.py` — common report types + serialization.
 
 2. **Tier 2 — Scalar-field** at `tier2/scalar_field/`:
@@ -1607,7 +1607,7 @@ You are the Phase 0 build agent. This is Block 7 (COMMON-TS) — the first commo
 
 8. **Tests** at `src/__tests__/` (Vitest):
    - WebGPU-device-requiring tests (smoke sim run) marked skip-in-CI (per spec § 7.8); local-only.
-   - **Cross-stack invariance test**: `package.json` script `test:cross-stack` — writes a capture via `CaptureWriter`, spawns `uv run python -c "from bit_physics_testkit.capture import load_capture; ..."`, asserts exit 0 + matching values. This script runs locally (Block 9 verifies it).
+   - **Cross-stack invariance test**: `package.json` script `test:cross-stack` — writes a capture via `CaptureWriter`, spawns `uv run python -c "from capture import load_capture; ..."`, asserts exit 0 + matching values. This script runs locally (Block 9 verifies it).
    - Hot-reload callback fires on shader update.
    - Hello-physics sim is bit-deterministic across two runs (same seed → byte-identical capture).
 
@@ -1619,7 +1619,7 @@ You are the Phase 0 build agent. This is Block 7 (COMMON-TS) — the first commo
 
 **Self-verification:** Preflight passes (deliverable 0). `pnpm tsc --noEmit`, `pnpm vitest run`, `pnpm eslint` green. `test:cross-stack` passes locally. Smoke sim bit-deterministic.
 
-**Cross-stack invariance gate:** Before reporting CONFIRMED, manually run `uv run python -c "from bit_physics_testkit.capture import load_capture; c = load_capture('common/common-ts/examples/hello-physics/captures/sample/manifest.json'); print(c.step(0).state)"`. Confirm load + values match what the TS sim wrote.
+**Cross-stack invariance gate:** Before reporting CONFIRMED, manually run `uv run python -c "from capture import load_capture; c = load_capture('common/common-ts/examples/hello-physics/captures/sample/manifest.json'); print(c.step(0).state)"`. Confirm load + values match what the TS sim wrote.
 
 **Report back:** `docs/_audits/phase-0/block-7-common-ts-<UTC>.md`. Front-matter `block: 7, name: common-ts`. `ci_activation` lists the lines to flip in `.github/workflows/ts-strict.yml`.
 
@@ -1768,10 +1768,10 @@ You are the Phase 0 build agent. This is Block 9 (LANDING) — the final block. 
 
 4. **Cross-component contract spot-check.** Read `phase-0-plan.md § 3.3` (the public APIs). Verify against the live repo:
    - § 3.3.1: capture format module exists with the documented signatures; HDF5 payload layout matches.
-   - § 3.3.2: `bit_physics_testkit.determinism` exports `run_twice_and_diff`.
-   - § 3.3.3: `bit_physics_testkit.equivalence` exports `compare_captures`.
-   - § 3.3.4: `bit_physics_testkit.golden` exports `verify_against_table` + `KernelEvaluator` Protocol + `reference_implementations.cubic_spline.evaluate`.
-   - § 3.3.5: `bit_physics_integrity` CLI works; `cat3_numerical/evaluators/cubic_spline.py` imports from `bit_physics_testkit.golden.reference_implementations.cubic_spline`. **Verify exactly one Python implementation of the cubic-spline kernel exists in the repo.**
+   - § 3.3.2: `determinism` exports `run_twice_and_diff`.
+   - § 3.3.3: `equivalence` exports `compare_captures`.
+   - § 3.3.4: `golden` exports `verify_against_table` + `KernelEvaluator` Protocol + `reference_implementations.cubic_spline.evaluate`.
+   - § 3.3.5: `integrity` CLI works; `cat3_numerical/evaluators/cubic_spline.py` imports from `golden.reference_implementations.cubic_spline`. **Verify exactly one Python implementation of the cubic-spline kernel exists in the repo.**
    - § 3.3.6: diagnostics tier1 + tier2 modules per spec.
    - § 3.3.7: `@bit-physics/common-ts` exports per the spec.
 

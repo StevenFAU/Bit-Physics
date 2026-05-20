@@ -688,7 +688,7 @@ tools/testkit/
 └── tests/                        # Testkit's own tests
 ```
 
-**Naming convention for testkit subdirs.** Directories below `tools/` that contain Python modules imported via `tools.testkit.X.Y` use underscores (because hyphens are not legal in Python identifiers). Module-root directories whose Python package is independently installed (e.g., `common/common-warp/` provides the `common_warp` import name via its `pyproject.toml`) can stay hyphenated because they are not import-path components — pip / uv translates the package name. The two cases are distinct and the convention is: hyphens for `common/common-<stack>/` module roots; underscores for `tools/testkit/<subdir>/` Python-imported subdirectories.
+**Naming convention for testkit subdirs.** Directories below `tools/testkit/` are Python import-path components — the testkit wheel ships them as bare top-level modules (`capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property`), not nested under a `tools.testkit` namespace. They use underscores (e.g., `code_verification/`, `solution_verification/`) because hyphens are not legal in Python identifiers. Module-root directories whose Python package is independently installed (e.g., `common/common-warp/` provides the `common_warp` import name via its `pyproject.toml`) can stay hyphenated because they are not import-path components — pip / uv translates the package name. The two cases are distinct and the convention is: hyphens for `common/common-<stack>/` module roots; underscores for `tools/testkit/<subdir>/` Python-imported subdirectories.
 
 **Components (detailed):**
 
@@ -1521,7 +1521,7 @@ Three principles drive these choices:
 2. **C++ namespaces mirror Python imports** for symmetry. A reader who sees `common_warp` Python knows the C++ side is `bit_physics::common_cpp`.
 3. **Common-module directories use kebab-case** because they sit at the filesystem level and are not Python import-path components. The Python package they install provides the underscored import name via its `pyproject.toml`.
 
-Testkit subdirectories below `tools/testkit/` use underscores (e.g., `code_verification/`, `solution_verification/`, `render_similarity/`) because they ARE Python import-path components (`tools.testkit.code_verification.gradient.harness`).
+Testkit subdirectories below `tools/testkit/` use underscores (e.g., `code_verification/`, `solution_verification/`, `render_similarity/`) because they ARE Python import-path components — the testkit wheel ships them as bare top-level modules, so the actual import path is `code_verification.gradient.harness` (not `tools.testkit.code_verification.gradient.harness`; the `tools/testkit/` filesystem prefix is not part of the Python import path).
 
 ## 7.12 Trunk-based development
 
@@ -2406,7 +2406,7 @@ This is the resolved naming map. Every `<ns>`, `<module>`, `<sim>`, etc. placeho
 | Python testkit package | (snake_case, PEP 8) | PyPI dist `bit-physics-testkit`; ships six flat import modules: `capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property` |
 | Python integrity package | (snake_case) | PyPI dist `bit-physics-integrity`; ships one flat import module: `integrity` |
 | Python diagnostics package | (snake_case) | PyPI dist `bit-physics-diagnostics`; ships one flat import module: `diagnostics` |
-| Python common-py module | (snake_case) | `bit_physics_common` (PyPI: `bit-physics-common-py`) |
+| Python common-py module | (snake_case) | `common_py` (PyPI: `bit-physics-common-py`) — forward-looking; common-py ships in Phase 2 |
 | Python common-warp module | (snake_case) | `common_warp` (PyPI: `bit-physics-common-warp`) |
 | Python common-3dgs module | (snake_case) | `common_3dgs` (PyPI: `bit-physics-common-3dgs`) |
 | C++ namespace root | (snake_case) | `bit_physics::` (e.g., `bit_physics::common_cpp`, `bit_physics::nanovdb`) |
@@ -2417,7 +2417,7 @@ This is the resolved naming map. Every `<ns>`, `<module>`, `<sim>`, etc. placeho
 | Audit directory | (kebab-case) | `docs/_audits/phase-<N>/<artifact>-<UTC>.md` |
 | Capture directory | (kebab-case) | `captures/<sim>-<variant-or-ref>/` at repo root |
 
-**Placeholder resolution.** When any phase plan uses `<ns>`, resolve to `bit_physics`. When any plan uses `<module>`, resolve to `bit_physics_common` (for common-py) or `common_warp` / `common_3dgs` (for those modules respectively).
+**Placeholder resolution.** When any phase plan uses `<ns>`, resolve to `bit_physics` (PyPI dist prefix; never used as a Python import). When any plan uses `<module>`, resolve to `common_py` (for common-py, Phase 2) or `common_warp` / `common_3dgs` (for those modules respectively).
 
 **Sim-name canonical list** (used as `<sim>` in paths):
 

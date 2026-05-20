@@ -24,7 +24,7 @@ The testkit is the portfolio's Layer 0 (spec § 3.1). It defines what
 ## Public APIs
 
 See `docs/phases/phase-0-plan.md` § 3.3 for the canonical surface of every
-testkit module. Phase 0 Block 1 ships `bit_physics_testkit.capture`; later
+testkit module. Phase 0 Block 1 ships `capture`; later
 blocks ship the rest.
 
 ## Documentation index

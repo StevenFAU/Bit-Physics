@@ -49,7 +49,7 @@ fetched_by    = "<author-or-agent-id>"
 fetch_command = "git clone ... && git checkout <SHA>"
 ```
 
-`bit_physics_testkit.capture.load_reference_manifest(path)` loads and
+`capture.load_reference_manifest(path)` loads and
 schema-validates this file.
 
 ## Read-only invariant

@@ -50,7 +50,7 @@ fields as `None`; the report surfaces whatever the stack supplied.
 
 ### `determinism` — `check_determinism(runner, seed=42) -> DeterminismVerdict`
 
-One-line composition of `bit_physics_testkit.determinism.run_twice_and_diff`.
+One-line composition of `determinism.run_twice_and_diff`.
 No re-implementation. Same `SimRunner` protocol as the testkit's
 harness.
 

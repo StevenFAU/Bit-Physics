@@ -83,7 +83,7 @@ def verify_against_table(table_path: Path,
    fails, API-contract test using a fake table.
 6. **Vendor upstream if any** at `references/<UpstreamName>/` with a
    MANIFEST.toml validated by
-   `bit_physics_testkit.capture.load_reference_manifest`.
+   `capture.load_reference_manifest`.
 
 ## Verifying
 

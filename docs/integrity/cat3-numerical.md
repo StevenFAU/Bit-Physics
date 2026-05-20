@@ -14,7 +14,7 @@ missing independent-reference anchors per spec § 2.4.
 3. Look up the algorithm name in
    `tools/integrity/integrity/cat3_numerical/evaluators/__init__.py:REGISTRY`.
 4. Call
-   `bit_physics_testkit.golden.verifier.verify_against_table(table, evaluator)`
+   `golden.verifier.verify_against_table(table, evaluator)`
    per phase-0-plan § 3.3.4 exactly.
 5. Emit one SOFT_WARN per point that diverges from the registered
    evaluator's output.
@@ -23,7 +23,7 @@ missing independent-reference anchors per spec § 2.4.
 
 | Algorithm name | Evaluator import | Reference impl |
 |---|---|---|
-| `cubic-spline-kernel-3d-monaghan` | `integrity.cat3_numerical.evaluators.cubic_spline.evaluate` | `bit_physics_testkit.golden.reference_implementations.cubic_spline.evaluate` (the **only** Python impl in the repo) |
+| `cubic-spline-kernel-3d-monaghan` | `integrity.cat3_numerical.evaluators.cubic_spline.evaluate` | `golden.reference_implementations.cubic_spline.evaluate` (the **only** Python impl in the repo) |
 
 Tables whose algorithm isn't registered are emitted as AUDIT_LOG (not a
 finding; just a note).
