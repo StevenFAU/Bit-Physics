@@ -188,7 +188,15 @@ def _resolve_phase_handle(handle: str, repo_root: Path) -> str:
 
 
 def _checkout_worktree(repo_root: Path, tag: str) -> Path:
-    """Materialize a worktree at ``tag`` under a temp path; caller cleans up."""
+    """Materialize a worktree at ``tag`` under a temp path; caller cleans up.
+
+    The worktree is also `uv sync`-prepared with `--all-packages
+    --all-extras` so every workspace member's dev extras (h5py,
+    hypothesis, pytest, mutmut, ruff, …) land in the worktree's local
+    `.venv`. Without this, `uv run pytest` from a freshly-checked-out
+    worktree fails to collect tests — testkit's pyproject lists pytest
+    as a dev extra, so a base-deps-only sync omits it.
+    """
     target = repo_root / f".replay-{tag}"
     if target.exists():
         shutil.rmtree(target)
@@ -199,6 +207,18 @@ def _checkout_worktree(repo_root: Path, tag: str) -> Path:
         text=True,
         check=True,
     )
+    # Best-effort: only sync if the worktree looks uv-managed. Stub
+    # fixtures (used by the unit tests under tools/integrity/tests/)
+    # ship a bare git repo with no pyproject.toml; for those, skip
+    # the sync so the stub-gate path remains exercisable.
+    if (target / "pyproject.toml").exists() and (target / "uv.lock").exists():
+        subprocess.run(
+            ["uv", "sync", "--frozen", "--all-packages", "--all-extras"],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
     return target
 
 
