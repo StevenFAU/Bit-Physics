@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-continuous-ca-rd3d"
-opened_at = "2026-05-20T19:14:51Z"
+phase = "sub-phase-particle-fluids-sph-water"
+opened_at = "2026-05-20T22:10:19Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
