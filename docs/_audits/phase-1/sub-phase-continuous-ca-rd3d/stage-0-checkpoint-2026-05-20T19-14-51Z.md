@@ -6,8 +6,8 @@ artifact_id: continuous-ca-rd3d-stage-0
 stage: 0-preflight
 subject: "Continuous-CA RD-3D sub-phase Stage 0 (pre-flight) checkpoint — re-dispatch post replay-tool hotfix"
 verdict-state: complete
-head_sha: HEAD_SHA_PLACEHOLDER
-head_sha_at_checkpoint: HEAD_SHA_PLACEHOLDER
+head_sha: 0bd4fe9c85614caa2bb4e11c5ebb69072b300621
+head_sha_at_checkpoint: 0bd4fe9c85614caa2bb4e11c5ebb69072b300621
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -75,7 +75,7 @@ unchanged by this checkpoint:
 | SHA | Commit message | Sub-deliverable | Notes |
 |---|---|---|---|
 | `8c0ef50` | `chore(continuous-ca-rd3d-stage0-tolerance-budget): sub-phase carryover from phase-1` | Task 0.1 — `[phase]` carryover | Only `[phase].phase` and `[phase].opened_at` changed; no `[budgets.*]` widening (spec § 2.6 prohibits widening without separate operator amendment). |
-| `HEAD_SHA_PLACEHOLDER` | `chore(continuous-ca-rd3d-stage0-checkpoint): Stage 0 pre-flight complete` | Closing — this audit | Convention #12 SHA back-fill follows in a separate commit per charter § 4.1 closing + closed-form audit § 8.2 N2 (every-stage-close discipline). |
+| `0bd4fe9c85614caa2bb4e11c5ebb69072b300621` | `chore(continuous-ca-rd3d-stage0-checkpoint): Stage 0 pre-flight complete` | Closing — this audit | Convention #12 SHA back-fill follows in a separate commit per charter § 4.1 closing + closed-form audit § 8.2 N2 (every-stage-close discipline). |
 | (next commit) | `chore(continuous-ca-rd3d-stage0-sha-backfill): back-fill Stage 0 checkpoint SHA per Convention #12` | SHA back-fill | New commit; never `--amend`. |
 
 ## 3. Task 0.0 — Cross-phase audit replay (FACT)
@@ -342,7 +342,7 @@ consume these decisions as given:
 agent-based stage-0 checkpoint § 9 inherited.)
 
 Front-matter `head_sha:` and `head_sha_at_checkpoint:` are set to
-literal placeholder strings `HEAD_SHA_PLACEHOLDER` rather than to a
+literal placeholder strings `0bd4fe9c85614caa2bb4e11c5ebb69072b300621` rather than to a
 prior commit SHA. The closing commit
 `chore(continuous-ca-rd3d-stage0-checkpoint): Stage 0 pre-flight
 complete` adds this file with the placeholders intact; the
