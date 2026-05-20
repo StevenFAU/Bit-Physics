@@ -1,0 +1,45 @@
+{
+  "config": {
+    "dims": [
+      16,
+      16
+    ],
+    "dtype": "f64",
+    "params": {
+      "box_half_extent": 1.5,
+      "escape_radius": 2.0,
+      "grid_jitter_scale": 1e-06,
+      "n_max": 16,
+      "p": 8
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:0e1a3fa1f199155ef9b5e0f1f1dbe85cc057694ab0bcb44ef5bdb018b0431084",
+    "format": "hdf5",
+    "path": "de-probe-points-seed42.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.006014380996930413
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "mandelbulb-explorer",
+    "variant": "quilez-p8"
+  },
+  "stack": {
+    "build_id": "sub-phase-closed-form",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

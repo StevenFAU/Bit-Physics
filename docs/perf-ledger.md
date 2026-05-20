@@ -16,3 +16,4 @@ A row is appended:
 |---|---|---|---|---|---|---|---|
 | reaction-diffusion-2d | numpy-reference | gray-scott-lambda-128sq-seed42-step2000 | 0.931 | i7-7700HQ-linux-6.17 | (this commit) | 2026-05-19 | baseline |
 | strange-attractors | numpy-reference | lorenz-trajectory-seed42-step10000 | 0.061 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
+| mandelbulb-explorer | numpy-reference | de-probe-points-seed42 | 0.006 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
