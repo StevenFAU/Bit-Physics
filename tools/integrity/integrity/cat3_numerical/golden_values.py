@@ -30,19 +30,26 @@ from .evaluators import REGISTRY
 CHECK_ID = "cat3.golden-values"
 
 _TABLES_DIR = Path("tools/testkit/golden/tables")
+_SUBDIRS_PICKED_UP: tuple[Path, ...] = (Path("closed-form"),)
 
 
 def _gather_tables(repo_root: Path, files: list[Path] | None) -> list[Path]:
+    accepted_parents = {_TABLES_DIR, *(_TABLES_DIR / sd for sd in _SUBDIRS_PICKED_UP)}
     if files is not None:
         return [
             (repo_root / p) if not p.is_absolute() else p
             for p in files
-            if p.parent == _TABLES_DIR and p.suffix == ".json"
+            if p.parent in accepted_parents and p.suffix == ".json"
         ]
     base = repo_root / _TABLES_DIR
     if not base.exists():
         return []
-    return sorted(base.glob("*.json"))
+    paths: list[Path] = list(base.glob("*.json"))
+    for sd in _SUBDIRS_PICKED_UP:
+        sub = base / sd
+        if sub.exists():
+            paths.extend(sub.glob("*.json"))
+    return sorted(paths)
 
 
 def _anchor_count(table: dict[str, object]) -> int:
