@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-20T16-48-00Z",
+  "status": "framework-validated",
+  "mutmut_version": "mutmut version 2.5.1",
+  "provenance": "sub-phase-closed-form",
+  "rationale": "Closed-form sub-phase LANDING — B17 PATH-B (framework-validated carry-forward + re-bank). Stage 2 charter § 4.3 step 2.7 explicitly framed B17 as PATH-A (rework per-target runners here + produce first real per-target kill-rate baseline) vs PATH-B (carry the framework-validated baseline forward + re-bank). PATH-B chosen on two grounds: (a) the existing mutmut-config.toml targets are testkit/integrity infrastructure (capture, code_verification_mms, golden, determinism, equivalence, property, cat4_draft_time) — none target the new closed-form sim packages, so producing real numbers against the current target set yields no closed-form-specific signal; meaningful B17 work for this sub-phase would have to ADD per-sim targets (strange_attractors, mandelbulb_explorer) AND rework the runner harness for uv-workspace member-import resolution, both of which are precisely the infrastructure B17 names. (b) Per the closed-form sub-phase charter § 9 R4 + § 11.2, B17's recommended owner (per Phase 1 audit § 13) is the continuous-CA implementation sub-phase, where RD-2D is the most GREEN target in the workspace and the runner-rework effort is amortized over a sim that has been GREEN since Phase 0. Closed-form ships only two sims and would amortize the same rework against a smaller benefit. The mutation-score gate remains advisory at this sub-phase (no HARD_FAIL). B17 re-banked to the next per-sim implementation sub-phase (agent-based pair: boids-3d + physarum), unless the operator re-routes ownership at dispatch time to continuous-CA per Phase 1 audit § 13's recommendation. Closed-form sub-phase Cat 3 (golden-values) DID go live this stage (commit chore(closed-form-stage2-cat3-recurse)); B17 (mutation) remains framework-validated.",
+  "targets": [
+    {
+      "target": "capture",
+      "path": "tools/testkit/capture",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "golden",
+      "path": "tools/testkit/golden",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "determinism",
+      "path": "tools/testkit/determinism",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "equivalence",
+      "path": "tools/testkit/equivalence",
+      "threshold": 0.85,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    },
+    {
+      "target": "cat4_draft_time",
+      "path": "tools/integrity/integrity/cat4_draft_time",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-deferred-to-next-per-sim-implementation-sub-phase"
+    }
+  ],
+  "phase": 1,
+  "sub_phase": "closed-form",
+  "stage": 2,
+  "banked_items": [
+    {
+      "id": "B17",
+      "title": "Per-target mutation runners + first real kill-rate baseline",
+      "status": "re-banked",
+      "previous_owner": "first per-sim implementation sub-phase that wants the mutation gate live",
+      "new_owner": "next per-sim implementation sub-phase (agent-based: boids-3d + physarum), or operator-re-routed to continuous-CA implementation sub-phase per Phase 1 audit § 13",
+      "rationale_short": "Existing mutmut targets are testkit/integrity infrastructure, not sim packages. Meaningful PATH-A entails per-sim target additions + uv-workspace runner rework — work that amortizes better over continuous-CA's larger, more GREEN surface."
+    }
+  ]
+}
