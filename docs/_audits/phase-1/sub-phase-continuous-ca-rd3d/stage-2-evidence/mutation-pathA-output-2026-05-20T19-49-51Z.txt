@@ -1,0 +1,57 @@
+=== B17 PATH-A — REAL mutation kill-rate baseline (Stage 2 Step 2.7) ===
+UTC=2026-05-20T19-49-51Z
+
+=== Target 1: reaction_diffusion_3d (RD-3D source) ===
+Path: packages/reaction-diffusion-3d/reaction_diffusion_3d
+Runner: uv run --no-sync pytest packages/reaction-diffusion-3d/tests/ -x -q --tb=no
+Flags: --disable-mutation-types string,fstring
+Threshold: 0.80 (advisory; spec § 2.13 carries no explicit sim-source floor at HEAD)
+
+Per-file breakdown:
+  packages/reaction-diffusion-3d/reaction_diffusion_3d/invariants.py: killed=51 survived=59 total=110 kill_rate=0.4636
+  packages/reaction-diffusion-3d/reaction_diffusion_3d/reference.py:  killed=93 survived=29 total=122 kill_rate=0.7623
+  packages/reaction-diffusion-3d/reaction_diffusion_3d/sim.py:        killed=19 survived=24 total=43  kill_rate=0.4419
+
+Aggregate target 1: killed=163 survived=112 total=275 kill_rate=0.5927
+  -> 0.5927 < 0.80 threshold (FAIL on advisory threshold; non-blocking per inherited rationale).
+  -> Coverage gaps surfaced (the load-bearing value of PATH-A's first real baseline).
+
+Final mutmut output:
+To apply a mutant on disk:
+    mutmut apply <id>
+
+To show a mutant:
+    mutmut show <id>
+
+
+Survived 🙁 (112)
+
+---- packages/reaction-diffusion-3d/reaction_diffusion_3d/invariants.py (59) ----
+
+44, 46, 48, 51-53, 56-58, 60, 65, 70-80, 82-85, 87, 90, 92-99, 101-102, 109, 117-130, 132-133, 139-140, 152-153
+
+---- packages/reaction-diffusion-3d/reaction_diffusion_3d/reference.py (29) ----
+
+154-156, 158-160, 162, 243, 245-247, 249-253, 257-258, 261, 263-265, 267, 270-275
+
+---- packages/reaction-diffusion-3d/reaction_diffusion_3d/sim.py (24) ----
+
+1, 6-8, 11-14, 16-20, 22, 26, 31, 35-37, 39-43
+
+=== Target 2: reaction_diffusion_3d_mms (MMS solution) ===
+Path: tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d
+Runner: uv run --no-sync pytest packages/reaction-diffusion-3d/tests/test_mms_convergence.py -x -q --tb=no
+Threshold: 0.80 (per spec § 2.13 code_verification_mms-derived)
+
+Aggregate target 2: killed=108 survived=22 total=130 kill_rate=0.8308
+  -> 0.8308 > 0.80 threshold (PASS).
+
+Target 2 survivor IDs: 1 2 3 4 6 8 10 12 14 15 16 29 42 56 84 124 125 126 127 128 129 130
+
+=== Target 3: SKIPPED (heat-1D scaffolding; per Stage 1 SHIFT S2) ===
+Path: tools/testkit/code_verification/mms/{runner.py,analyze.py}
+Rationale: RD-3D MMS test does NOT consume the heat-1D-specific scaffolding
+  (inline convergence study); the existing Phase-0 'code_verification_mms' target
+  ALREADY covers this surface against the heat-1D tests; adding a redundant
+  target would re-mutate the same surface with no additional signal.
+  Plan § 4.3 Step 2.7 authorizes skip-with-rationale for thin/orchestration-only targets.

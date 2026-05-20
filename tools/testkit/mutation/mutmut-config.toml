@@ -44,3 +44,46 @@ runner    = "python -m pytest tools/testkit/property/tests/ -x -q --tb=no"
 path      = "tools/integrity/integrity/cat4_draft_time"
 threshold = 0.90
 runner    = "python -m pytest tools/integrity/tests/test_adversarial_coverage.py::test_cat4_unverified_assertions_detected -x -q --tb=no"
+
+# Per-sim sub-phase additive targets (charter § 4.3 Step 2.7 / § 7.3
+# — sub-phase-continuous-ca-rd3d B17 PATH-A first real-baseline).
+# Existing testkit/integrity targets above are UNTOUCHED.
+#
+# Schema: per-target [targets.<id>] keeping the existing `path` /
+# `threshold` / `runner` triple. The runner uses `uv run --no-sync`
+# so mutmut's per-mutation subprocess resolves workspace members
+# (e.g. `reaction_diffusion_3d` at packages/reaction-diffusion-3d/)
+# through the already-built uv-workspace virtualenv. This is the
+# specific runner-rework that closed-form + agent-based sub-phases
+# deferred.
+#
+# Threshold rationale: spec § 2.13 prescribes per-target floors;
+# the published table at HEAD only enumerates the testkit/integrity
+# baseline (above). Sim-source modules carry no spec-pinned floor;
+# we adopt 0.80 advisory, consistent with the MMS solution target
+# floor for the existing `code_verification_mms` target. The
+# mutation gate remains non-blocking (advisory) at this sub-phase
+# per inherited closed-form / agent-based rationale; PATH-A's
+# contribution is the FIRST REAL BASELINE, not a gate-flip.
+
+[targets.reaction_diffusion_3d]
+path      = "packages/reaction-diffusion-3d/reaction_diffusion_3d"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/reaction-diffusion-3d/tests/ -x -q --tb=no"
+
+[targets.reaction_diffusion_3d_mms]
+path      = "tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/reaction-diffusion-3d/tests/test_mms_convergence.py -x -q --tb=no"
+
+# Optional third target — RD-3D MMS scaffolding (runner.py / analyze.py)
+# — DEFERRED per Stage 1 SHIFT S2: the RD-3D MMS test does NOT consume
+# the heat-1D-specific `runner.SchemeRunner` / `analyze` scaffolding
+# (it inlines its own 3D-grid convergence study), so mutating them
+# does not exercise gate-5 for RD-3D. The existing
+# `targets.code_verification_mms` block above ALREADY covers
+# `tools/testkit/code_verification/mms` (path) against the heat-1D
+# tests at `tools/testkit/code_verification/mms/tests/`; adding a
+# redundant target here would just re-mutate the same surface
+# against the same tests. Plan § 4.3 Step 2.7 authorizes the
+# skip-with-rationale; recorded in landing audit § 7.6.
