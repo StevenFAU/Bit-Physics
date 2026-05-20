@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "dfsph-density-evolution-2particle",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/dfsph-density-evolution.md",
+    "upstream": "SPlisHSPlasH",
+    "upstream_path": "references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.h",
+    "upstream_sha": "6bff55a6eaf14083d34650f22a268ce156b62b54"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "two-particle-h1-canonical",
+        "particles": [
+          {"p": [0.0, 0.0, 0.0], "v": [0.0, 0.0, 0.0], "m": 1.0},
+          {"p": [0.5, 0.0, 0.0], "v": [1.0, 0.0, 0.0], "m": 1.0}
+        ],
+        "h": 1.0,
+        "kernel": "cubic-spline-3d-monaghan",
+        "sigma_3d": 0.3183098861837907
+      },
+      "expected": {
+        "rho_0": 0.5470951168783902,
+        "drho_dt_0": -0.2984155182973038,
+        "kernel_W_at_0": 0.3183098861837907,
+        "kernel_W_at_q_0p5": 0.22878523069459955,
+        "kernel_fprime_at_q_0p5": -0.9375
+      },
+      "independent_reference": {
+        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/dfsph-density-evolution.md § 3: substitute the cubic-spline kernel formula at q=0 and q=0.5 to obtain rho_0 = (1 + 0.71875)/pi, and substitute the gradient formula at q=0.5 with f'(0.5)=-0.9375 to obtain drho_dt = -0.9375/pi. (2) Bender, J. & Koschier, D. (2015), 'Divergence-free smoothed particle hydrodynamics', SCA '15, 147-155, DOI 10.1145/2786784.2786796, § 3 eq. (5) for the continuity-equation form; Monaghan, J. J. (2005), 'Smoothed particle hydrodynamics', Rep. Prog. Phys. 68 (8), 1703-1759, DOI 10.1088/0034-4885/68/8/R01, § 2.2 for the SPH continuity formulation. (3) Phase 0's tools/testkit/golden/tables/cubic-spline-kernel.json independently pins W(q, h) at q in {0, 0.25, ...} including q=0 = sigma_3d (verified by Phase 0's cubic_spline.py generator).",
+        "doi": "10.1145/2786784.2786796",
+        "derived_by": "hand-derivation cross-checked against Phase 0 cubic-spline-kernel pin, Bender-Koschier 2015 eq. (5), Monaghan 2005 § 2.2, and a Python re-derivation by tools/testkit/golden/generator/dfsph_density_evolution.py.",
+        "expected": {
+          "rho_0": 0.5470951168783902,
+          "drho_dt_0": -0.2984155182973038
+        }
+      }
+    }
+  ]
+}
