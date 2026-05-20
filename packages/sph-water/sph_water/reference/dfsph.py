@@ -40,8 +40,11 @@ __all__ = [
     "grad_W_magnitude",
     "kernel_q",
     "neighbor_lists",
+    "cell_list_neighbor_query",
     "density",
+    "density_vectorized",
     "density_evolution",
+    "density_evolution_vectorized",
     "divergence_free_solve",
     "canonical_params",
 ]
@@ -198,6 +201,278 @@ def neighbor_lists(
         nbrs = np.where(mask[i])[0]
         lists.append([int(j) for j in nbrs])
     return lists
+
+
+def cell_list_neighbor_query(
+    positions: np.ndarray, h: float, *, support_factor: float = 2.0
+) -> list[list[int]]:
+    """Spatial-hash / cell-list neighbor query for canonical-tier scales.
+
+    Equivalent in output to :func:`neighbor_lists` (byte-identical
+    return value at any input where both representations fit in
+    memory), but with O(N + N⟨neighbors⟩) memory and runtime instead
+    of the O(N²) pairwise tensor materialization of the diagnostic-
+    tier builder. Sized for the canonical 1M-particle capture
+    descriptor where the diagnostic-tier builder would require
+    21.8 TiB for the (N, N, 3) displacement tensor.
+
+    Algorithm — standard cell-list approach in SPH (Liu & Liu 2003,
+    *Smoothed Particle Hydrodynamics: A Meshfree Particle Method*,
+    World Scientific, § 3.4; Hockney & Eastwood 1988, *Computer
+    Simulation Using Particles*, Adam Hilger, ch. 8). The
+    cubic-spline kernel's compact support is ``q < support_factor``
+    ⇒ ``r < support_factor·h``; cells are sized at the support
+    radius so that any neighbor within range lives in the same or
+    an adjacent cell.
+
+    Determinism discipline (sub-phase plan § 1.5 R16 amendment;
+    P24 causes #1, #2, #4 mitigation):
+
+    1. **Cell index** = ``floor(position / (support_factor · h))``
+       (integer-floor binning; deterministic for any fixed (h,
+       support_factor) regardless of particle ordering).
+    2. **Per-cell particle list** sorted ascending by particle id;
+       Python dict keyed by 3-tuple cell-index.
+    3. **27-cell stencil iteration** in fixed sorted (dz, dy, dx)
+       offset order (a -1, 0, +1 triple-product enumerated by
+       sorted tuple key).
+    4. **Within each cell**, candidate ids iterated in sorted-
+       ascending order (the per-cell list was sorted at build time).
+    5. **Final per-particle neighbor list** sorted ascending by id
+       (a final ``sort()`` over the accumulated candidates after the
+       cutoff filter — locks in the byte-identical-to-:func:`neighbor_lists`
+       output invariant regardless of cell-stencil traversal order).
+    6. **Self-exclusion** — particle ``i`` excluded from its own
+       list (consistent with :func:`neighbor_lists` contract).
+
+    Equivalence to :func:`neighbor_lists` is verified by
+    ``packages/sph-water/tests/test_spatial_hash_equivalence.py`` at
+    N ∈ {2, 64, 256} with the canonical h = 0.05 — both functions
+    produce byte-identical ``list[list[int]]`` output.
+    """
+    p = np.asarray(positions, dtype=np.float64)
+    if p.ndim != 2 or p.shape[1] != 3:
+        raise ValueError(f"positions must have shape (N, 3); got {p.shape}")
+    if h <= 0.0:
+        raise ValueError(f"h must be strictly positive; got {h!r}")
+    if support_factor <= 0.0:
+        raise ValueError(
+            f"support_factor must be strictly positive; got {support_factor!r}"
+        )
+    n = p.shape[0]
+    if n == 0:
+        return []
+    cell_size = support_factor * h
+    cutoff_sq = cell_size * cell_size
+
+    # Bucket particles by integer-floor cell index.
+    cell_indices = np.floor(p / cell_size).astype(np.int64)
+    buckets: dict[tuple[int, int, int], list[int]] = {}
+    for i in range(n):
+        key = (
+            int(cell_indices[i, 0]),
+            int(cell_indices[i, 1]),
+            int(cell_indices[i, 2]),
+        )
+        bucket = buckets.get(key)
+        if bucket is None:
+            buckets[key] = [i]
+        else:
+            bucket.append(i)
+    # Per-cell sort by id (insertion is already in ascending id order
+    # because we iterate i = 0..N-1, but make it explicit for posterity).
+    for key in buckets:
+        buckets[key].sort()
+
+    # Fixed sorted 27-cell stencil offsets (sorted lexicographically
+    # for deterministic traversal order).
+    offsets: list[tuple[int, int, int]] = sorted(
+        (dx, dy, dz) for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)
+    )
+
+    lists: list[list[int]] = []
+    for i in range(n):
+        ci = (int(cell_indices[i, 0]), int(cell_indices[i, 1]), int(cell_indices[i, 2]))
+        candidates: list[int] = []
+        for ox, oy, oz in offsets:
+            key = (ci[0] + ox, ci[1] + oy, ci[2] + oz)
+            bucket = buckets.get(key)
+            if bucket is None:
+                continue
+            for j in bucket:
+                if j == i:
+                    continue
+                r = p[i] - p[j]
+                if float(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]) < cutoff_sq:
+                    candidates.append(j)
+        # Final per-particle sort — locks in byte-identical-to-
+        # :func:`neighbor_lists` output invariant regardless of
+        # cell-traversal artifacts.
+        candidates.sort()
+        lists.append(candidates)
+    return lists
+
+
+def density_evolution_vectorized(
+    *,
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    nbr_lists: list[list[int]],
+) -> np.ndarray:
+    """Vectorized SPH continuity using pre-built neighbor lists.
+
+    Pair-iteration order mirrors :func:`density_evolution`: pairs are
+    flattened in (i, j) sorted order (i ascending; j ascending within
+    each i's neighbor list); per-pair contributions computed
+    vectorized; segment-sum via ``np.add.reduceat`` preserves
+    sequential left-to-right summation within each particle's
+    neighbor list (matches the Python-loop ``+=`` accumulator).
+
+    **FP-equivalence, NOT bit-equivalence** with :func:`density_evolution`:
+    the loop variant computes per-pair contributions through a sequence
+    of scalar-on-3-vec operations (``np.linalg.norm(r)`` on 1-D,
+    ``np.dot(v_rel, grad)`` on 3-elem); the vectorized variant
+    broadcasts the same algebra over (M, 3) arrays. Algebraically
+    equivalent; FP-wise the two diverge by ≲ ε × ⟨neighbors⟩ per
+    particle (typically ≲ 1e-12 at the canonical h × ⟨neighbors⟩ ≈ 50
+    regime; bit-equivalence at the per-pair scalar level is sacrificed
+    for vectorization efficiency). The two-particle fixture
+    (single-pair) IS bit-equivalent (verified by the equivalence test
+    ``test_density_evolution_vectorized_matches_loop_at_n2`` — gate-5
+    anchor preserved).
+
+    The vectorized variant IS bit-deterministic with ITSELF (run twice
+    on the same input = bit-identical output), which is what the
+    sub-phase determinism declaration requires for the canonical-tier
+    capture's gate-11 ``test_run_twice_epsilon_diff`` (and indeed
+    over-achieves epsilon at bit-exact for the canonical-tier path,
+    same as the diagnostic-tier path — sub-phase plan § 1.5
+    over-achievement note).
+
+    Sized for canonical-tier captures (e.g., 1M particles × 1000 steps)
+    where the per-pair work exceeds the inner-loop budget of pure-
+    Python iteration; the diagnostic-tier :func:`density_evolution`
+    remains the bit-pinning reference for gate-5 + PBT-invariants
+    tests at small N.
+    """
+    n = positions.shape[0]
+    if n == 0:
+        return np.zeros(0, dtype=np.float64)
+    # Flatten (i, j) pairs from sorted nbr_lists.
+    pair_i_list: list[int] = []
+    pair_j_list: list[int] = []
+    for i, nl in enumerate(nbr_lists):
+        if not nl:
+            continue
+        pair_i_list.extend([i] * len(nl))
+        pair_j_list.extend(nl)
+    if not pair_i_list:
+        return np.zeros(n, dtype=np.float64)
+    pair_i = np.asarray(pair_i_list, dtype=np.int64)
+    pair_j = np.asarray(pair_j_list, dtype=np.int64)
+
+    # Vectorized per-pair work. Operation ordering MUST mirror the loop
+    # :func:`density_evolution` per-pair sequence for bit-equivalence:
+    #     r_hat = r / mag           # 3 element-wise divisions
+    #     grad  = coeff * r_hat     # 3 element-wise multiplications
+    #     dot   = v_rel · grad      # 3 mults + 2 adds, left-to-right
+    #     contrib = m_j * dot
+    # The natural "scalar (1/mag) precomputed then multiplied through"
+    # vectorization is algebraically equivalent but FP-non-equivalent
+    # (different rounding pattern per division-then-sum order); we use
+    # the loop-matching division pattern instead so cross-tier
+    # determinism holds at FP-bit precision.
+    r_ij = positions[pair_i] - positions[pair_j]  # (M, 3)
+    v_rel = velocities[pair_i] - velocities[pair_j]  # (M, 3)
+    mag = np.linalg.norm(r_ij, axis=1)  # (M,)
+    q = mag / h
+    # Piecewise gradient factor f'(q) (matches :func:`_fprime`).
+    fp = np.where(
+        q < 1.0,
+        -3.0 * q + 2.25 * q * q,
+        np.where(q < 2.0, -0.75 * (2.0 - q) ** 2, 0.0),
+    )
+    # Element-wise division r / |r| (matches grad_W's r/mag).
+    # Guard mag = 0 via safe_mag; self-pairs are excluded by neighbor lists,
+    # so this branch is only exercised on FP-coincident-position edge cases.
+    safe_mag = np.where(mag > 0.0, mag, 1.0)
+    r_hat = r_ij / safe_mag[:, None]  # (M, 3) — 3 divisions per pair, broadcasted
+    # grad_W = (SIGMA_3D / h^4) * f'(q) * r_hat  (matches grad_W function).
+    coeff = (SIGMA_3D / (h**4)) * fp  # (M,)
+    grad = coeff[:, None] * r_hat  # (M, 3)
+    # contribution = m_j * (v_rel · grad). Sum on axis=1 is sequential
+    # left-to-right (matches np.dot's 3-element behavior in the loop).
+    v_dot_grad = np.sum(v_rel * grad, axis=1)  # (M,)
+    contrib = masses[pair_j] * v_dot_grad  # (M,)
+
+    # Segment-sum per i. pair_i is sorted-non-decreasing by construction.
+    unique_i, start_idx = np.unique(pair_i, return_index=True)
+    drho_dt = np.zeros(n, dtype=np.float64)
+    sums = np.add.reduceat(contrib, start_idx)
+    drho_dt[unique_i] = sums
+    return drho_dt
+
+
+def density_vectorized(
+    *,
+    positions: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    nbr_lists: list[list[int]],
+) -> np.ndarray:
+    """Vectorized SPH density using pre-built neighbor lists.
+
+    $\\rho_i = \\sum_j m_j W(r_i - r_j, h)$ — same continuum formula as
+    :func:`density`, vectorized over neighbor pairs. Includes the
+    self-contribution $m_i W(0, h) = m_i \\sigma_3 / h^3$ explicitly
+    (consistent with the two-particle golden derivation).
+
+    FP-equivalence with :func:`density` analogous to
+    :func:`density_evolution_vectorized` vs :func:`density_evolution`
+    (see that docstring). Bit-deterministic with itself.
+
+    Used by the canonical-tier capture path
+    (:func:`sph_water.sim.sim_runner_seeded`) to compute per-frame
+    SPH density at 1M-particle scale without materializing the
+    O(N²) pairwise tensor.
+    """
+    n = positions.shape[0]
+    if n == 0:
+        return np.zeros(0, dtype=np.float64)
+    # Self-contribution per particle.
+    W0 = SIGMA_3D / (h * h * h)  # W(q=0, h) = sigma_3 / h^3
+    rho = masses * W0
+
+    # Pair contributions.
+    pair_i_list: list[int] = []
+    pair_j_list: list[int] = []
+    for i, nl in enumerate(nbr_lists):
+        if not nl:
+            continue
+        pair_i_list.extend([i] * len(nl))
+        pair_j_list.extend(nl)
+    if not pair_i_list:
+        return rho
+    pair_i = np.asarray(pair_i_list, dtype=np.int64)
+    pair_j = np.asarray(pair_j_list, dtype=np.int64)
+
+    r_ij = positions[pair_i] - positions[pair_j]
+    mag = np.linalg.norm(r_ij, axis=1)
+    q = mag / h
+    # Piecewise f(q) (matches :func:`_f`).
+    fq = np.where(
+        q < 1.0,
+        1.0 - 1.5 * q * q + 0.75 * q * q * q,
+        np.where(q < 2.0, 0.25 * (2.0 - q) ** 3, 0.0),
+    )
+    contrib = masses[pair_j] * (SIGMA_3D / (h * h * h)) * fq
+
+    unique_i, start_idx = np.unique(pair_i, return_index=True)
+    sums = np.add.reduceat(contrib, start_idx)
+    rho[unique_i] = rho[unique_i] + sums
+    return rho
 
 
 def density(

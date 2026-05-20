@@ -12,10 +12,30 @@ priority order (sub-phase plan § 9.1):
 1. **Stable particle iteration order** (P24 cause #4 mitigation).
    :func:`sph_water.reference.dfsph._particles_to_arrays` preserves
    submission order; the Stage-1 ``sim_runner_seeded`` synthesises ICs
-   from a seeded ``numpy.random.default_rng(seed)`` and never re-sorts
-   particles by position, by spatial-hash bucket, or by Morton key at
-   this scale. Phase-2+ Stack-C work introduces Morton-key sorting
-   with stable secondary id-sort per ``determinism.md``.
+   from a seeded ``numpy.random.default_rng(seed)``.
+
+   **Diagnostic-tier path** (N ≤ ~1024; gate-5 + gate-7 + gate-11 +
+   gate-12 small-N fixtures): no spatial-hash bucketing, no Morton-key
+   sort. Particles are iterated in submission order; :func:`neighbor_lists`
+   produces sorted-by-id neighbor lists from the full O(N²) pairwise
+   tensor.
+
+   **Canonical-tier path** (N ≥ ~10⁴; the 1M-particle canonical
+   capture per sub-phase plan § 2 gate 10 + § 9 R12 + § 9 R16 routing):
+   spatial-hash bucketing IS used via :func:`cell_list_neighbor_query`.
+   Determinism preserved through three disciplines:
+   (i) cell-index = integer-floor of position / (support_factor · h)
+       (deterministic for any fixed h, support_factor; independent of
+       particle ordering);
+   (ii) per-cell particle list sorted ascending by id at build time;
+   (iii) fixed 27-cell stencil iteration in sorted (dx, dy, dz) offset
+        order + final per-particle list sorted ascending by id.
+   Bit-equivalent to the O(N²) diagnostic-tier builder at any input
+   where both fit; verified by
+   ``tests/test_spatial_hash_equivalence.py``.
+
+   Phase-2+ Stack-C extends this with the Morton-key bucket sort +
+   stable secondary id-sort per ``determinism.md``.
 
 2. **Sorted neighbor-iteration order** (P24 cause #1 mitigation).
    :func:`sph_water.reference.dfsph.neighbor_lists` returns each
@@ -80,13 +100,29 @@ from capture import CaptureManifest, StepState, write_capture
 
 from .reference.dfsph import (
     canonical_params,
+    cell_list_neighbor_query,
     density,
     density_evolution,
+    density_evolution_vectorized,
+    density_vectorized,
 )
 
 CANONICAL_DESCRIPTOR: Final[str] = "dam-break-1M-particles-seed42-step1000"
 CANONICAL_N_PARTICLES: Final[int] = 1_000_000
 CANONICAL_STEP_COUNT: Final[int] = 1000
+# Operator-routed at Stage 1 R12 boundary (sub-phase plan § 11.5 Item 5):
+# 11 frames at every-100-steps cadence (steps 0 / 100 / ... / 1000) at
+# the documented 56 B per-particle per-frame payload (~587 MB H5).
+CANONICAL_CAPTURE_INTERVAL: Final[int] = 100
+# Operator-routed at Stage 1 R16 boundary (canonical-tier runtime
+# memory cost — sub-phase plan § 9 R16 surface). Smoothing length
+# tuned for ~30–60 SPH neighbors per particle at the canonical
+# 1M-particle uniform-cube IC: particle spacing ≈ N^(-1/3) = 0.01;
+# h = 1.2 × spacing ≈ 0.012 yields ⟨neighbors⟩ ≈ 50 per the
+# (4/3)π(2h)³ × density estimate. The diagnostic-tier path keeps
+# h = canonical_params()["h"] = 0.05 (the small-N default unchanged
+# at 85f178f).
+CANONICAL_H: Final[float] = 0.012
 
 # Diagnostic-tier defaults — used by gate-11 determinism +
 # gate-7 diagnostics + gate-6 NaN/Inf scan to avoid re-running the
@@ -152,6 +188,47 @@ def _diagnostic_step(
     # scan downstream).
     _ = density_evolution(particles=particles_dict, h=h)
     # Explicit Euler with gravity along z.
+    velocities_next = velocities.copy()
+    velocities_next[:, 2] += g_z * dt
+    positions_next = positions + dt * velocities_next
+    return positions_next, velocities_next
+
+
+def _canonical_step(
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    masses: np.ndarray,
+    *,
+    h: float,
+    dt: float,
+    g_z: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    """One canonical-tier explicit Euler step (spatial-hash neighbor query).
+
+    Parallel to :func:`_diagnostic_step` but uses
+    :func:`cell_list_neighbor_query` + :func:`density_evolution_vectorized`
+    for O(N + N⟨neighbors⟩) memory + runtime instead of the diagnostic
+    tier's O(N²) pairwise tensor materialization. Sized for the
+    canonical 1M-particle capture (sub-phase plan § 9 R16 routing).
+
+    Same integrator semantics as the diagnostic step (explicit Euler +
+    gravity along z); same deterministic-summed continuity exercise
+    (side-effect via vectorized density_evolution); cross-tier
+    FP-equivalence within machine-epsilon × ⟨neighbors⟩ per particle
+    (the vectorized density-evolution is FP-equivalent, not
+    bit-equivalent, with the loop variant — see
+    :func:`density_evolution_vectorized` docstring).
+    """
+    nbr_lists = cell_list_neighbor_query(positions, h)
+    # Exercise the deterministic-summed continuity (side-effect).
+    _ = density_evolution_vectorized(
+        positions=positions,
+        velocities=velocities,
+        masses=masses,
+        h=h,
+        nbr_lists=nbr_lists,
+    )
+    # Explicit Euler with gravity along z (matches _diagnostic_step).
     velocities_next = velocities.copy()
     velocities_next[:, 2] += g_z * dt
     positions_next = positions + dt * velocities_next
@@ -281,27 +358,49 @@ def _trajectory_to_step_states(
     v_hist: np.ndarray,
     step_indices: list[int],
     masses: np.ndarray,
+    *,
+    use_spatial_hash: bool = False,
+    h: float | None = None,
 ) -> list[StepState]:
     """Lift a trajectory tuple into IC-1 ``StepState`` rows.
 
     Adds per-particle SPH density at each captured frame (exercising
     the deterministic-summed kernel on every snapshot — gate-7 IC-5
     diagnostics consume this).
+
+    Diagnostic-tier (``use_spatial_hash=False``) uses :func:`density`
+    via the O(N²) neighbor-list builder; canonical-tier
+    (``use_spatial_hash=True``) uses :func:`density_vectorized` with
+    :func:`cell_list_neighbor_query` per sub-phase plan § 9 R16
+    routing.
     """
-    h = float(canonical_params()["h"])
+    if h is None:
+        h = float(canonical_params()["h"])
     rows: list[StepState] = []
     for idx, step in enumerate(step_indices):
         positions = p_hist[idx]
         velocities = v_hist[idx]
-        particles_dict = [
-            {
-                "p": positions[i].tolist(),
-                "v": velocities[i].tolist(),
-                "m": float(masses[i]),
-            }
-            for i in range(positions.shape[0])
-        ]
-        rho = density(particles=particles_dict, h=h)
+        if use_spatial_hash:
+            nbrs = cell_list_neighbor_query(positions, h)
+            rho = density_vectorized(
+                positions=positions,
+                masses=masses,
+                h=h,
+                nbr_lists=nbrs,
+            )
+            mean_rho = float(np.mean(rho)) if rho.size else 0.0
+        else:
+            particles_dict = [
+                {
+                    "p": positions[i].tolist(),
+                    "v": velocities[i].tolist(),
+                    "m": float(masses[i]),
+                }
+                for i in range(positions.shape[0])
+            ]
+            rho_list = density(particles=particles_dict, h=h)
+            rho = np.asarray(rho_list, dtype=np.float64)
+            mean_rho = float(np.mean(rho)) if rho_list else 0.0
         speed = np.linalg.norm(velocities, axis=-1)
         rows.append(
             StepState(
@@ -309,11 +408,11 @@ def _trajectory_to_step_states(
                 state={
                     "position": np.asarray(positions, dtype=np.float64).copy(),
                     "velocity": np.asarray(velocities, dtype=np.float64).copy(),
-                    "density": np.asarray(rho, dtype=np.float64).copy(),
+                    "density": rho.copy(),
                 },
                 diagnostics={
                     "max_speed": float(speed.max()) if speed.size else 0.0,
-                    "mean_density": float(np.mean(rho)) if rho else 0.0,
+                    "mean_density": mean_rho,
                 },
             )
         )
@@ -328,9 +427,12 @@ def _write_capture(
     n_steps: int,
     capture_interval: int,
     out_dir: Path,
+    use_spatial_hash: bool = False,
+    h_override: float | None = None,
 ) -> Path:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+    h = float(h_override) if h_override is not None else float(canonical_params()["h"])
     t0 = time.perf_counter()
     positions, velocities, masses = _seeded_initial_state(seed, n_particles)
     p_hist, v_hist, step_indices = _evolve_to_frames(
@@ -339,9 +441,18 @@ def _write_capture(
         masses,
         n_steps=n_steps,
         capture_interval=capture_interval,
+        use_spatial_hash=use_spatial_hash,
+        h=h,
     )
     wall = time.perf_counter() - t0
-    rows = _trajectory_to_step_states(p_hist, v_hist, step_indices, masses)
+    rows = _trajectory_to_step_states(
+        p_hist,
+        v_hist,
+        step_indices,
+        masses,
+        use_spatial_hash=use_spatial_hash,
+        h=h,
+    )
     manifest = _build_manifest(
         descriptor=descriptor,
         n_particles=int(n_particles),
@@ -360,10 +471,20 @@ def _evolve_to_frames(
     *,
     n_steps: int,
     capture_interval: int,
+    use_spatial_hash: bool = False,
+    h: float | None = None,
 ) -> tuple[np.ndarray, np.ndarray, list[int]]:
-    """Compute the per-frame trajectory using the diagnostic step."""
+    """Compute the per-frame trajectory.
+
+    Diagnostic-tier (``use_spatial_hash=False``) uses
+    :func:`_diagnostic_step` (O(N²) full pairwise neighbor lookup);
+    canonical-tier (``use_spatial_hash=True``) uses
+    :func:`_canonical_step` (O(N + N⟨neighbors⟩) spatial-hash neighbor
+    query + vectorized continuity).
+    """
     params = canonical_params()
-    h = float(params["h"])
+    if h is None:
+        h = float(params["h"])
     dt = float(params["dt"])
     g_z = float(params["g_z"])
     p = positions.copy()
@@ -371,8 +492,9 @@ def _evolve_to_frames(
     p_frames: list[np.ndarray] = [p.copy()]
     v_frames: list[np.ndarray] = [v.copy()]
     step_indices: list[int] = [0]
+    step_fn = _canonical_step if use_spatial_hash else _diagnostic_step
     for step in range(1, int(n_steps) + 1):
-        p, v = _diagnostic_step(p, v, masses, h=h, dt=dt, g_z=g_z)
+        p, v = step_fn(p, v, masses, h=h, dt=dt, g_z=g_z)
         if step % int(capture_interval) == 0 or step == int(n_steps):
             p_frames.append(p.copy())
             v_frames.append(v.copy())
@@ -388,21 +510,32 @@ def sim_runner_seeded(seed: int, out_dir: Path) -> Path:
     Spec descriptor (Appendix D § D.2.3):
     ``dam-break-1M-particles-seed42-step1000``.
 
-    **R12 STOP-AND-SURFACE awareness:** the canonical capture is
-    materially heavy (1M particles × 1000 steps); the actual capture
-    size + wall-clock are operator-routable at Stage 1 step 5 (see
-    sub-phase plan § 9 R12 + § 11.5 Item 5). Callers should be aware
-    that invoking this against the canonical descriptor will produce
-    an HDF5 file in the 10²–10³ MB range depending on capture-interval
-    + per-particle field count.
+    **Operator-routed configuration** (sub-phase plan § 9 R12 + R16):
+
+    - Cadence: every-100-steps ⇒ 11 frames (steps 0, 100, 200, ...,
+      1000). Pre-commit ceiling raised to 1 GB at the R12 routing
+      step to absorb the ~587 MB H5 payload.
+    - Neighbor query: :func:`cell_list_neighbor_query` (spatial-hash
+      / cell-list) at the R16 routing step. The O(N²) diagnostic-
+      tier builder is infeasible at N = 1M (21.8 TiB pairwise
+      tensor allocation); the spatial-hash variant produces
+      bit-equivalent neighbor lists at any input where both fit.
+    - Smoothing length: ``CANONICAL_H = 0.012`` — tuned for ~50 SPH
+      neighbors per particle at the 1M-particle uniform-cube IC
+      (vs the diagnostic-tier ``canonical_params()["h"] = 0.05``,
+      which would give ~4200 neighbors at this scale).
+    - Determinism: bit-deterministic with itself (see sim.py module
+      docstring clause 1, R16 amendment).
     """
     return _write_capture(
         descriptor=CANONICAL_DESCRIPTOR,
         n_particles=CANONICAL_N_PARTICLES,
         seed=seed,
         n_steps=CANONICAL_STEP_COUNT,
-        capture_interval=CANONICAL_STEP_COUNT,  # single end-frame
+        capture_interval=CANONICAL_CAPTURE_INTERVAL,
         out_dir=out_dir,
+        use_spatial_hash=True,
+        h_override=CANONICAL_H,
     )
 
 

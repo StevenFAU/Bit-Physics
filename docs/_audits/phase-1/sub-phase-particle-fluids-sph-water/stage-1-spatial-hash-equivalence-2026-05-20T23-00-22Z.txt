@@ -1,0 +1,17 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/sph-water
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 6 items
+
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n2 PASSED [ 16%]
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n64 PASSED [ 33%]
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n256 PASSED [ 50%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_matches_loop_at_n2 PASSED [ 66%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_matches_loop_at_n64 PASSED [ 83%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_bit_deterministic_with_itself PASSED [100%]
+
+============================== 6 passed in 0.18s ===============================
