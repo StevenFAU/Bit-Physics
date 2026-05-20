@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "phase-0"
-opened_at = "2026-05-18T00:00:00Z"
+phase = "phase-1"
+opened_at = "2026-05-20T04:00:00Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
