@@ -2,7 +2,8 @@
 
 Layer 2 of the portfolio (spec § 3.3). Diagnostics consume the testkit's
 capture format + determinism harness and add runtime-inspection
-facilities. Three tiers; Phase 0 ships Tier 1 + Tier 2 scalar_field.
+facilities. Three tiers; Phase 0 ships Tier 1 + Tier 2 scalar_field;
+Phase 1 Stage 1 adds Tier 2 particle / vector_field / closed_form.
 
 ## Tiers
 
@@ -10,10 +11,10 @@ facilities. Three tiers; Phase 0 ships Tier 1 + Tier 2 scalar_field.
 |---|---|---|
 | Tier 1 — Universal | [`tier1-universal.md`](tier1-universal.md) | Stack-agnostic, sim-agnostic. Capture I/O, health (NaN/Inf), performance, determinism. |
 | Tier 2 — Scalar field | [`tier2-scalar-field.md`](tier2-scalar-field.md) | Monotone bounds, spectral content, conservation. |
-| Tier 2 — Particle | (Phase 1+) | No-overlap, neighbor-list integrity, momentum, particle-count invariance. |
-| Tier 2 — Vector field | (Phase 1+) | Divergence-free, circulation, helicity, energy spectrum. |
-| Tier 2 — Closed-form | (Phase 1+) | Output stability, sensitivity, bound preservation. |
-| Tier 3 — Per-sim | (Phase 1+) | Sim-specific shims composing Tier 1 + Tier 2 primitives. |
+| Tier 2 — Particle | [`tier2-particle.md`](tier2-particle.md) | No-overlap, neighbor-list integrity, momentum conservation, particle-count invariance. (IC-5; Phase 1 Stage 1 commit `5258f00`.) |
+| Tier 2 — Vector field | [`tier2-vector-field.md`](tier2-vector-field.md) | Divergence-free, circulation, helicity, energy spectrum. (IC-6; Phase 1 Stage 1 commit `39f2c97`.) |
+| Tier 2 — Closed-form | [`tier2-closed-form.md`](tier2-closed-form.md) | Output stability, precision sensitivity, bound preservation. (IC-7; Phase 1 Stage 1 commit `98e630d`.) |
+| Tier 3 — Per-sim | (Phase 2+) | Sim-specific shims composing Tier 1 + Tier 2 primitives. |
 
 ## Schema-version policy
 
