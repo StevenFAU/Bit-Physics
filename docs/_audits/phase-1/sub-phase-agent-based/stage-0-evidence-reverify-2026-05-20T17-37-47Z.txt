@@ -1,0 +1,8 @@
+Task 0.2 — Phase 1 failing-tests-evidence sha256 re-verify
+Expected (from docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md evidence_hashes:)
+  boids-3d:  sha256:7d59ffdbd96d96ac3bb33439a00102a36fd29015acd564aef544850cf6e39b7b
+  physarum:  sha256:8ee52dc7cff8a207fb8bed468b2e72cd84ea5196fafbdf646481ed328c043855
+
+Observed at HEAD (968b03fade362b0818a4bbaac5dd4bd963ccec16):
+7d59ffdbd96d96ac3bb33439a00102a36fd29015acd564aef544850cf6e39b7b  tools/testkit/failing-tests-evidence/boids-3d-2026-05-20T13-04-01Z.txt
+8ee52dc7cff8a207fb8bed468b2e72cd84ea5196fafbdf646481ed328c043855  tools/testkit/failing-tests-evidence/physarum-2026-05-20T13-04-01Z.txt
