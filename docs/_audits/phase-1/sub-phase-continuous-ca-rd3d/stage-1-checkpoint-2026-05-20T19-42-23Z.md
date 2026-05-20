@@ -6,8 +6,8 @@ artifact_id: continuous-ca-rd3d-stage-1
 stage: 1-per-sim-implementation
 subject: "Continuous-CA RD-3D sub-phase Stage 1 (per-sim implementation) checkpoint"
 verdict-state: complete
-head_sha: HEAD_SHA_PLACEHOLDER
-head_sha_at_checkpoint: HEAD_SHA_PLACEHOLDER
+head_sha: 8c36214b6bf46b5364f0f2e2afa07909f0e3a975
+head_sha_at_checkpoint: 8c36214b6bf46b5364f0f2e2afa07909f0e3a975
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -339,7 +339,7 @@ Stage 2 append-only check (Step 2.6) explicitly sees the change.
 closed-form audit § 8.2 N2 + agent-based stage-0 § 9.)
 
 Front-matter `head_sha:` and `head_sha_at_checkpoint:` are set to
-literal placeholder strings `HEAD_SHA_PLACEHOLDER`. The closing commit
+literal placeholder strings `8c36214b6bf46b5364f0f2e2afa07909f0e3a975`. The closing commit
 `chore(continuous-ca-rd3d-stage1-checkpoint): Stage 1 per-sim
 implementation complete` adds this file with the placeholders intact;
 the immediately-following commit
