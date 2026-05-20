@@ -209,6 +209,129 @@ decision per `docs/phases/sub-phase-agent-based.md` § 5 + § 11.4.
 | 12 | perf-ledger first row(s) | GREEN | GREEN |
 | 13 | failing-tests replay verifiable | GREEN | GREEN |
 
+### sub-phase-continuous-ca-rd3d
+
+Third per-sim implementation sub-phase under spec-Phase-1 per Phase 1
+audit § 15 / closed-form sub-phase audit § 10 / agent-based sub-phase
+audit § 10. Lands gates 4–13 for **reaction-diffusion-3d** (the third
+per-sim surface and the **first** to exercise MMS-based gate-5 with
+formal-order verification per spec § 2.4). Operator scope-decomposed
+the original "continuous-CA + sph-water" bundle into two sub-sub-phases;
+this sub-phase ships RD-3D only (sibling `sub-phase-particle-fluids-sph-water`
+drafts later in a separate session per the parent charter § 1.2). The
+remaining four Phase 1 sims (eulerian-smoke, lattice-boltzmann-d3q19,
+mpm-multimaterial, sph-water) still ship Phase-1 RED with
+`ModuleNotFoundError` pending their own per-sim implementation
+sub-phases. No `-phase-N` tag pushed (spec § 7.12); optional non-phase
+point-release `v0.1.3` is a banked operator decision per
+`docs/phases/sub-phase-continuous-ca-rd3d.md` § 5 + § 11.4.
+
+#### Added
+
+- `packages/reaction-diffusion-3d/reaction_diffusion_3d/` — public API
+  exposing `reference` (Gray-Scott Pearson-1993 λ-region step on a
+  7-point np.roll-based periodic Laplacian; `gray_scott_step_with_source`
+  accepts an optional manufactured source tuple for MMS consumption;
+  `canonical_params` / `evolve` / `initial_condition`), `sim`
+  (`sim_runner_seeded` matching the testkit `SimRunner` Protocol;
+  `compute_canonical_trajectory` produces the canonical 64³ ×
+  2000-step capture per Appendix D § D.2.3), `invariants`
+  (Hypothesis-decorated `monotone_bounds` and `periodic_bc_satisfied`
+  per RD-3D spec § 6.6). The `sim` module's docstring is the
+  load-bearing determinism-strategy declaration per charter § 1.5
+  (np.roll-based 7-point stencil writes from read-only neighbors, no
+  global reductions per step, no stochastic ops inside the step,
+  pointwise update, deterministic capture ordering; Stack-C C++/Vulkan
+  path deferred to Phase 2+).
+- `captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.{h5,json}`
+  (spec Appendix D § D.2.3; H5 sha256
+  `a970ea2919dedb40591d228f41b83bf7f27791c99e6f6de2698d2fb9d09ba1cc`).
+- `docs/perf-ledger.md` — one first-landing baseline row:
+  `reaction-diffusion-3d / numpy-reference / gray-scott-lambda-64cube-seed42-step2000 / 10.144s / i7-12700KF-linux-6.17`.
+- `tools/testkit/failing-tests-evidence/reaction-diffusion-3d-implemented-2026-05-20T19-36-54Z.txt`
+  (sha256 `29d0b8bb5ebec53284dbf3d9607ef42c5c87efdb628faf38c175740011a05820`).
+- `tools/testkit/mutation/sub-phase-continuous-ca-rd3d-2026-05-20T19-49-51Z.json`
+  (sha256 `1bab3b6d588379a2ee58859501c45be68ea26f0c8a4098341df8de3a4820a1ac`) —
+  **first REAL per-target kill-rate baseline** (B17 PATH-A; the
+  workspace's first non-framework-validated mutation artifact). Per-target
+  results: `reaction_diffusion_3d` source — `163 killed / 112 survived /
+  275 total → 0.5927` (below `0.80` advisory; surfaces real coverage
+  gaps in `sim.py` capture-orchestration + `invariants.py` PBT-decorator
+  + `reference.py` stencil edges); `reaction_diffusion_3d_mms` MMS
+  solution — `108 killed / 22 survived / 130 total → 0.8308` (above
+  `0.80` threshold). Optional third target (RD-3D MMS scaffolding
+  `runner.py`/`analyze.py`) was skipped with documented rationale per
+  Stage 1 SHIFT S2: the heat-1D-specific scaffolding is not exercised
+  by RD-3D's inline convergence study + is already covered by the
+  Phase-0 `code_verification_mms` target.
+- Sub-phase audit chain under `docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/`:
+  Stage 0 BLOCKED-replay (false start; resolved by sibling
+  `sub-phase-replay-tool-hotfix` at `1f5fa0c`) + Stage 0 / Stage 1 /
+  Stage 2 checkpoints + landing audit + Stage 2 evidence directory.
+- `docs/phases/sub-phase-continuous-ca-rd3d.md` — this sub-phase's
+  charter (committed at `90449f4`; introduces playbook entry P23 —
+  MMS observed-OOA convergence-failure debugging — first-of-kind).
+- `docs/_audits/phase-1/sub-phase-replay-tool-hotfix/` — sibling
+  hotfix sub-phase that unblocked Stage 0's cross-phase replay
+  (committed at `1f5fa0c`; landed B-hotfix-1 worktree-.venv-interpreter
+  + B-hotfix-2 `uv run python ...` invocation form).
+
+#### Changed (additive per Convention A)
+
+- `tools/testkit/mutation/mutmut-config.toml` — additive per-target
+  `[targets.reaction_diffusion_3d]` and `[targets.reaction_diffusion_3d_mms]`
+  blocks; existing Phase-0 testkit/integrity targets UNTOUCHED. The
+  per-target runner uses `uv run --no-sync pytest` so each mutmut
+  subprocess resolves workspace members through the already-built
+  uv-workspace virtualenv (the specific runner-rework that
+  closed-form + agent-based sub-phases deferred — landed at PATH-A
+  per charter § 4.3 Step 2.7).
+- `tools/testkit/equivalence/tolerance-budget.toml` — Stage 0
+  carryover: `[phase] phase = "sub-phase-continuous-ca-rd3d"`. No
+  `[budgets.*]` widening.
+- Phase 1 stub test bodies (`raise NotImplementedError`) at
+  `packages/reaction-diffusion-3d/tests/test_{determinism,diagnostics,mms_convergence,pbt_invariants}.py`
+  replaced with their gate-fulfilling implementations (Stage 1 SHIFT
+  N/A — parallels closed-form S1 + agent-based S1). Function
+  signatures + imports preserved; the failing-tests-evidence file
+  committed at Phase 1 (`a159086`) is UNTOUCHED and remains the
+  gate-13 anchor.
+- `.pre-commit-config.yaml` — `check-added-large-files` `maxkb`
+  raised from `10240` to `65536`. The prior 10-MB ceiling fails the
+  first 3D capture (RD-3D's `.h5` is ~46 MB); the new 64-MB ceiling
+  absorbs the RD-3D capture and the upcoming particle-fluids / MPM /
+  eulerian-smoke / LBM 3D captures of similar order. Tooling-config
+  edit (not substance); landed mid-Stage-1 per the in-line rationale
+  in the hook's comment block.
+
+#### Cat 3 disposition — NO-OP for `continuous-ca` subdir
+
+RD-3D ships **no golden table** — its gate 5 is MMS-based per RD-3D
+spec-ref § 7. `tools/testkit/golden/tables/continuous-ca/` is NOT
+created; `_SUBDIRS_PICKED_UP` at
+`tools/integrity/integrity/cat3_numerical/golden_values.py` is **NOT
+extended** (remains `(Path("closed-form"), Path("agent-based"))`).
+The operator-routable alternative (pre-create empty subdir as
+placeholder for future sims) was banked default-skip; the
+eulerian-smoke / LBM sub-phase will create the subdir when its first
+golden lands. Recorded as Stage 2 SHIFT N2.
+
+#### Gates flipped GREEN at HEAD (reaction-diffusion-3d)
+
+| # | Gate | reaction-diffusion-3d |
+|---|---|---|
+| 4 | code verification — golden N/A; reads through to MMS gate 5 | N/A |
+| 5 | **MMS-based code verification** — combined OOA = 2.0056 vs formal `p=2`, within ±0.5 (first-of-kind for the workspace) | **GREEN** |
+| 6 | Tier 1 NaN/Inf | GREEN |
+| 7 | Tier 2 scalar_field (Phase-0 substack) + advisory mass-balance recurrence | GREEN |
+| 8 | Cat 1 citations (Gray & Scott 1983, Pearson 1993, Roy 2005) | GREEN |
+| 9 | Cat 2 public API per probe § 5 | GREEN |
+| 10 | canonical capture | GREEN |
+| 11 | determinism (capture-twice-and-diff; bit-exact same-hw) | GREEN |
+| 12 | PBT invariants (Hypothesis-decorated `monotone_bounds`, `periodic_bc_satisfied`) | GREEN |
+| 13 | perf-ledger first row | GREEN |
+| 13 (anchor) | failing-tests replay verifiable (worktree at `a159086` → 4 ModuleNotFoundError) | GREEN |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
