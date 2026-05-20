@@ -1,0 +1,180 @@
+=== Stage 1 continuation: STOP-AND-SURFACE on canonical-capture RUNTIME cost ===
+
+Date: 2026-05-20
+HEAD: 8f99500 (post-W1 ceiling raise; pre-W2 capture generation)
+Scope: standing order #6 STOP-AND-SURFACE precondition
+
+--- What happened ---
+
+After W1 (ceiling raise from 64 MB → 1 GB) landed at 8f99500, W2
+(canonical capture generation at every-100-steps cadence) was
+attempted via `sim_runner_seeded(seed=42, out_dir=captures/sph-water-ref)`.
+
+The attempt FAILED with an immediate memory-allocation error at the
+first call to `density_evolution` inside `_diagnostic_step` at step 1:
+
+  numpy._core._exceptions._ArrayMemoryError: Unable to allocate
+  21.8 TiB for an array with shape (1000000, 1000000, 3) and data
+  type float64
+
+Total wall-clock from launch to OOM: 2 seconds (allocation-time
+failure, not iteration-time).
+
+--- Root cause ---
+
+The neighbor-list builder at
+`sph_water.reference.dfsph.neighbor_lists` materializes the full
+pairwise displacement tensor:
+
+  diff = p[:, None, :] - p[None, :, :]       # shape (N, N, 3)
+  d2 = np.einsum("ijk,ijk->ij", diff, diff)  # shape (N, N)
+
+At N = 1,000,000 the `diff` tensor is N × N × 3 × 8 B ≈ 21.8 TiB —
+infeasible on any single-node hardware. The diagnostic-tier scope
+(N = 64) consumes only ~100 KB for the same materialization, which
+is why the Phase-1-scope gates 5–9, 11, 12 are GREEN at HEAD.
+
+This is the EXACT failure mode standing order #6 anticipated:
+"unreasonably slow ... an O(N²) failure mode in the neighbor query
+that should have been caught by gate 7 Tier 2 neighbor-integrity
+check." The wrinkle is that gate 7 was exercised against the 64-
+particle diagnostic trajectory (where the O(N²) materialization is
+fine), so it did NOT surface the scale-incompatibility.
+
+--- What the Stage 1 partial checkpoint got right and what it missed ---
+
+The Stage 1 partial checkpoint § 3.6 R12 surface evidence file
+(`stage-1-r12-surface-2026-05-20T22-27-08Z.txt`) correctly estimated
+the OUTPUT capture SIZE:
+  - per-particle per-frame = 56 B (position + velocity + density)
+  - 11 frames × 1M particles × 56 B ≈ 587 MB H5 payload
+
+The Stage 1 partial checkpoint did NOT estimate:
+  - the RUNTIME MEMORY cost of producing the capture (21.8 TiB
+    pairwise tensor materialization);
+  - the RUNTIME WALL-CLOCK cost (at the dumb O(N²) algorithm, 1M
+    particles × 1000 steps × N² float ops ≈ 10^15 ops, ~10^6 s
+    = ~12 days on a single CPU core).
+
+The R12 routing was based on a partial risk surface. With the full
+runtime picture, neither (a)/(b)/(c) of R12 alone suffices — the
+ceiling raise lets a capture be COMMITTED, but the capture cannot
+be GENERATED at the current algorithm scale.
+
+--- Three remediation paths (R-class addendum — call it R16) ---
+
+(i) **Implement a spatial-hash / cell-list neighbor query** as an
+    ADDITIVE function in `sph_water.reference.dfsph` (alongside the
+    existing `neighbor_lists`, which is preserved for diagnostic
+    scope). The Phase-1-scope determinism declaration at sim.py
+    clause 1 currently says: "the Stage-1 sim_runner_seeded ... never
+    re-sorts particles by position, by spatial-hash bucket, or by
+    Morton key at this scale. Phase-2+ Stack-C work introduces
+    Morton-key sorting with stable secondary id-sort." Implementing
+    a spatial hash at this sub-phase REQUIRES amending the
+    determinism declaration — additive language for the canonical
+    runner's neighbor-query path; existing diagnostic-runner
+    determinism unchanged.
+
+    Cost: ~50–100 LOC for a deterministic spatial-hash implementation
+    (cell-index by integer-floor of position/(2h); per-cell sorted
+    particle id list; per-particle neighbor query iterates 3×3×3 = 27
+    cells in fixed order; secondary sort by id within each cell;
+    O(N) memory and O(N × ⟨neighbors⟩) per step). The cubic-spline-
+    kernel + density + density_evolution functions in dfsph.py
+    consume the neighbor list, so they work transparently with the
+    new builder. The two-particle golden (gate 5) still passes
+    against the O(N²) builder at N=2 — the spatial-hash builder
+    would also pass at N=2 + match the O(N²) results bit-exactly
+    (sorted neighbor lists identical regardless of source algorithm).
+
+    Wall-clock estimate at proper SPH ⟨neighbors⟩ ≈ 30–60 per
+    particle: 1M × 30 × 1000 = 3 × 10^10 float ops per per-step
+    density-evolution. In pure Python NumPy with vectorized
+    per-cell iteration, plausibly several minutes to ~1 hour for
+    the full canonical sim. Memory: O(N + N × avg-cell-size) ≈
+    O(N) — well-bounded.
+
+    Trade-off: expands the Phase-1-scope sim.py beyond the original
+    declaration. The expansion is forward-compatible — the spatial-
+    hash builder is the right structure for Phase-2+ Stack-C
+    consumption per existing determinism.md. Documenting this as a
+    Stage 1 SHIFT (canonical-runner neighbor-query upgraded to
+    spatial-hash with deterministic cell + sorted id ordering)
+    keeps the audit trail honest.
+
+(ii) **Downsample canonical N** to a scale where the O(N²) algorithm
+    fits in memory + completes in reasonable wall-clock. At N = 1024
+    the (1024, 1024, 3) tensor is 24 MB; the per-step pairwise sums
+    are ~10^6 ops; 1000 steps is ~10^9 ops ≈ a few seconds. At
+    N = 8192 the tensor is ~1.5 GB (large but feasible); the per-
+    step cost is ~6 × 10^7 ops; 1000 steps is ~6 × 10^10 ops, plausibly
+    in the 10²–10³ s range.
+
+    Requires either:
+    - **Appendix D § D.2.3 amendment** (Phase-1-retroactive; touches
+      an append-only-protected document; needs a separate Phase-1-
+      amendment sub-phase OR explicit operator override at this
+      session).
+    - **Per-sub-phase canonical-descriptor override** — this sub-
+      phase ships a smaller-N canonical capture under a different
+      descriptor (e.g., `dam-break-8K-particles-seed42-step1000`),
+      with the Appendix-D-declared 1M-particle descriptor explicitly
+      banked as "Phase-2+ Stack-C scope (requires spatial-hash for
+      runtime)." This is the least invasive option but creates a
+      semi-permanent gap between the Appendix-D descriptor and the
+      committed capture.
+
+(iii) **Capture only the seeded IC** (1 frame, gravity-free, no SPH
+    density). Skips the per-step neighbor-query entirely. The
+    capture becomes a pure-IC snapshot at N = 1M; size is ~48 MB
+    (position + velocity only, no density). Trade-off: the canonical
+    capture loses its "evolved over 1000 steps" semantics; the
+    descriptor name `step1000` becomes a label rather than a
+    runtime claim. Semantically weakest of the three.
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (i) — implement spatial-hash neighbor query as an additive
+expansion of dfsph.py + amend the determinism declaration. Reasoning:
+
+  - Preserves the canonical Appendix-D descriptor at full N + full
+    step count + full density semantics.
+  - The spatial-hash structure is forward-compatible with Phase-2+
+    Stack-C consumption per existing determinism.md (Morton-key
+    bucket sort with stable secondary id-sort is documented there).
+  - Avoids touching Appendix D (option ii's invasive path).
+  - The determinism-declaration amendment is the right kind of
+    SHIFTED entry — the canonical-runner's neighbor-query
+    upgraded from O(N²) materialization to O(N) cell-list with
+    deterministic ordering; the existing diagnostic-runner remains
+    on the O(N²) materialization unchanged; both paths produce
+    bit-exact-deterministic neighbor lists by sorted-by-id output.
+  - Wall-clock estimate (~10²–10³ s) is reasonable; capture size
+    estimate (~587 MB) is unchanged (W1's 1 GB ceiling raise is
+    still appropriate).
+
+LEAN-NOT (ii) — Appendix D amendment is invasive; per-sub-phase
+override creates a documented gap.
+
+LEAN-NOT (iii) — loses too much semantic content.
+
+--- Stage 1 continuation status ---
+
+W1 (ceiling raise to 1 GB) is committed at 8f99500 and stands
+regardless of routing — it provides headroom for any of (i)/(ii)/
+(iii) outputs.
+
+W2 (canonical capture) STOPped-and-SURFACEd at OOM. Working tree
+is clean (the uncommitted `CANONICAL_CAPTURE_INTERVAL = 100`
+constant + `sim_runner_seeded` re-routing has been reverted; will
+re-apply once operator routes).
+
+W3-W7 pending operator routing.
+
+Stage 1 verdict-state remains `partial-needs-continuation` per the
+existing bf6ca48 partial checkpoint; this surface evidence file
+extends the R-class risk surface with R16 (canonical-runner runtime
+memory cost) which was not in the Stage 1 partial checkpoint.
+
+=== End surface ===
