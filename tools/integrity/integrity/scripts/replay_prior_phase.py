@@ -7,7 +7,9 @@ CLI:
 Behavior:
     1. Checks out the prior-phase tag in a worktree.
     2. Re-runs every gate listed in --gates (default:
-       integrity,pytest,equivalence,determinism,perf-ledger).
+       integrity,pytest,equivalence,determinism,perf-ledger,
+       property,mutation,tolerance-budget — the eight gates the
+       Phase-1 plan R9 amendment names).
     3. Compares actual gate results to the verdicts asserted in the
        prior-phase landing audit's front-matter.
     4. Exits 0 if all replayed gates match; 1 otherwise.
@@ -46,6 +48,32 @@ GATE_COMMANDS: dict[str, list[str]] = {
     "equivalence": ["uv", "run", "pytest", "-W", "error", "tools/testkit/equivalence/tests"],
     "determinism": ["uv", "run", "pytest", "-W", "error", "tools/testkit/determinism/tests"],
     "perf-ledger": ["python", "-c", "print('perf-ledger gate is a phase-1+ placeholder')"],
+    # property — Phase 0 ships a property-based test harness under
+    # tools/testkit/property/tests. Per the Phase 1 R9 amendment the gate
+    # is a scoped pytest run, mirroring the equivalence/determinism shape.
+    "property": ["uv", "run", "pytest", "-W", "error", "tools/testkit/property/tests/"],
+    # mutation — Phase 0 LANDING § 4 declares the framework-validated
+    # baseline; this gate verifies that baseline is still on disk with
+    # the schema fields the landing audit attested to. Fresh per-target
+    # kill-rate runs are out of replay scope (heavy + deferred per spec
+    # § 2.13). See integrity.scripts.gate_helpers for the assertions.
+    "mutation": [
+        "python",
+        "-m",
+        "integrity.scripts.gate_helpers",
+        "mutation-baseline-present",
+    ],
+    # tolerance-budget — per the R9 amendment, "tolerance-budget.toml is
+    # committed but has no per-sim overrides — the tolerance-budget gate
+    # passes trivially". Gate verifies the budget file is on disk, parses,
+    # has the [phase] block, and carries no per-sim overrides (which
+    # belong in tolerance.toml). See gate_helpers for assertions.
+    "tolerance-budget": [
+        "python",
+        "-m",
+        "integrity.scripts.gate_helpers",
+        "tolerance-budget-trivial",
+    ],
 }
 
 
@@ -178,7 +206,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--audit", required=True, type=Path)
     parser.add_argument(
         "--gates",
-        default="integrity,pytest,equivalence,determinism,perf-ledger",
+        default=(
+            "integrity,pytest,equivalence,determinism,perf-ledger,"
+            "property,mutation,tolerance-budget"
+        ),
         help="Comma-separated gate names.",
     )
     args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
