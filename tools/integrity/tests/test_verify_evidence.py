@@ -199,6 +199,47 @@ def test_verify_evidence_hash_mismatch_fails(tmp_path: Path) -> None:
     )
 
 
+def test_verify_evidence_accepts_sha256_prefix(tmp_path: Path) -> None:
+    """Audits routinely store ``evidence_hashes`` as ``sha256:HEX``; the
+    verifier must accept that prefix (the de-facto convention used by the
+    Phase 1 landing audit and the closed-form sub-phase checkpoints)."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo(repo)
+    content = b"# content\n"
+    (repo / "real.py").write_bytes(content)
+    sha256_actual = hashlib.sha256(content).hexdigest()
+    audit = _write_audit(
+        repo,
+        "prefix-block",
+        ["real.py"],
+        "X",
+        evidence_hashes={"real.py": f"sha256:{sha256_actual}"},
+    )
+    _commit_all(repo)
+    head = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    audit.write_text(
+        audit.read_text(encoding="utf-8").replace("head_sha: X", f"head_sha: {head}"),
+        encoding="utf-8",
+    )
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "commit", "--amend", "--no-edit"], cwd=repo, capture_output=True, check=True
+    )
+    final = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, capture_output=True, text=True, check=True
+    ).stdout.strip()
+    audit.write_text(audit.read_text(encoding="utf-8").replace(head, final), encoding="utf-8")
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "commit", "--amend", "--no-edit"], cwd=repo, capture_output=True, check=True
+    )
+    result = verify_evidence(audit, repo_root=repo)
+    assert result.ok, f"expected pass with sha256: prefix; got failures={result.failures}"
+
+
 def test_verify_evidence_no_frontmatter_raises(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     repo.mkdir()

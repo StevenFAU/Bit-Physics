@@ -111,7 +111,8 @@ def verify_evidence(audit_path: Path, repo_root: Path | None = None) -> Evidence
             result.failures.append(f"hashed evidence path {path_str!r} not present at {head_sha}")
             continue
         actual = hashlib.sha256(blob).hexdigest()
-        if actual != claimed:
+        claimed_hex = claimed[len("sha256:") :] if claimed.startswith("sha256:") else claimed
+        if actual != claimed_hex:
             result.failures.append(
                 f"sha256 mismatch for {path_str!r}: claimed={claimed} actual={actual}"
             )
