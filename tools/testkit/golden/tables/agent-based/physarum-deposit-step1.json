@@ -15,7 +15,7 @@
   "test_points": [
     {
       "inputs": {
-        "name": "4-agent-zero-trail-cardinal-headings",
+        "name": "4-agent-zero-trail-cardinal-headings-hand-derivation-anchor",
         "grid_shape": [16, 16],
         "initial_trail": "zero",
         "agents": [
@@ -43,16 +43,105 @@
         "total_mass_after_decay": 18.0
       },
       "independent_reference": {
-        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/physarum-deposit-step1.md §§ 1-3: with a zero initial trail, the sense step returns identical zero readings, the rotate step is a tie (canonical tie-breaker: keep current heading), and each agent moves +1 along its cardinal heading and deposits 5.0. (2) Jones, J. (2010), 'Characteristics of pattern formation and evolution in approximations of Physarum transport networks', Artificial Life 16 (2), 127-153, DOI 10.1162/artl.2010.16.2.16202, § 3 Table 1 — canonical parameter set and the five-component update order. (3) Python independent re-derivation by tools/testkit/golden/generator/physarum_deposit_step1.py.",
-        "doi": "10.1162/artl.2010.16.2.16202",
-        "derived_by": "hand-derivation under the deterministic zero-trail limit + Jones 2010 parameter set + Python re-derivation.",
+        "source": "Hand-derivation in tools/testkit/golden/derivations/physarum-deposit-step1.md §§ 1-3. With a zero initial trail, the sense step returns identical zero readings at all three offsets; the rotate step is a tie at every agent; the canonical deterministic tie-breaker keeps the current heading. Each agent then moves +1 along its cardinal heading and writes the deposit constant (5.0) to the destination cell. Four deposits land at exact integer cells (5, 4), (10, 4), (4, 12), (11, 10); the total mass before the diffuse+decay step is 4 * 5.0 = 20.0; the multiplicative decay (1 - 0.1) then yields a post-decay total mass of 18.0. All steps shown by hand.",
+        "doi": "n/a (derivation document; agent-based sub-phase Stage 2 § 7.3 Decision A lift)",
+        "derived_by": "hand-derivation, every step shown",
         "expected": {
           "deposits": [
             {"x": 5, "y": 4, "value": 5.0},
             {"x": 10, "y": 4, "value": 5.0},
             {"x": 4, "y": 12, "value": 5.0},
             {"x": 11, "y": 10, "value": 5.0}
-          ]
+          ],
+          "total_mass_after_decay": 18.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "4-agent-zero-trail-cardinal-headings-jones-2010-anchor",
+        "grid_shape": [16, 16],
+        "initial_trail": "zero",
+        "agents": [
+          {"p": [4, 4], "h": [1, 0]},
+          {"p": [11, 4], "h": [-1, 0]},
+          {"p": [4, 11], "h": [0, 1]},
+          {"p": [11, 11], "h": [0, -1]}
+        ],
+        "params": {
+          "delta_phi_deg": 45,
+          "L_sense": 9,
+          "L_move": 1,
+          "deposit": 5.0,
+          "decay_alpha": 0.1
+        }
+      },
+      "expected": {
+        "deposits": [
+          {"x": 5, "y": 4, "value": 5.0},
+          {"x": 10, "y": 4, "value": 5.0},
+          {"x": 4, "y": 12, "value": 5.0},
+          {"x": 11, "y": 10, "value": 5.0}
+        ],
+        "total_mass_before_decay": 20.0,
+        "total_mass_after_decay": 18.0
+      },
+      "independent_reference": {
+        "source": "Jones, J. (2010), 'Characteristics of pattern formation and evolution in approximations of Physarum transport networks', Artificial Life 16 (2), 127-153. DOI 10.1162/artl.2010.16.2.16202. § 3 (Table 1) fixes the canonical parameter set (delta_phi = 45 deg, L_sense = 9, L_move = 1, deposit = 5.0, decay_alpha = 0.1) and § 3 prose fixes the five-component step order (sense -> rotate -> move -> deposit -> diffuse+decay). Applied to the zero-trail 4-agent fixture above, Jones-2010's update rule is closed-form: every sense read is zero (no trail); every rotate is a tie (no preference); every move advances one cell along the cardinal heading; every deposit writes 5.0 at the destination; total mass after diffuse (mass-preserving) + decay = 20.0 * (1 - 0.1) = 18.0.",
+        "doi": "10.1162/artl.2010.16.2.16202",
+        "derived_by": "Jones 2010 § 3 + Table 1 parameter set, applied to the 4-agent fixture",
+        "expected": {
+          "deposits": [
+            {"x": 5, "y": 4, "value": 5.0},
+            {"x": 10, "y": 4, "value": 5.0},
+            {"x": 4, "y": 12, "value": 5.0},
+            {"x": 11, "y": 10, "value": 5.0}
+          ],
+          "total_mass_after_decay": 18.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "4-agent-zero-trail-cardinal-headings-generator-anchor",
+        "grid_shape": [16, 16],
+        "initial_trail": "zero",
+        "agents": [
+          {"p": [4, 4], "h": [1, 0]},
+          {"p": [11, 4], "h": [-1, 0]},
+          {"p": [4, 11], "h": [0, 1]},
+          {"p": [11, 11], "h": [0, -1]}
+        ],
+        "params": {
+          "delta_phi_deg": 45,
+          "L_sense": 9,
+          "L_move": 1,
+          "deposit": 5.0,
+          "decay_alpha": 0.1
+        }
+      },
+      "expected": {
+        "deposits": [
+          {"x": 5, "y": 4, "value": 5.0},
+          {"x": 10, "y": 4, "value": 5.0},
+          {"x": 4, "y": 12, "value": 5.0},
+          {"x": 11, "y": 10, "value": 5.0}
+        ],
+        "total_mass_before_decay": 20.0,
+        "total_mass_after_decay": 18.0
+      },
+      "independent_reference": {
+        "source": "Python independent re-derivation by tools/testkit/golden/generator/physarum_deposit_step1.py (--verify mode confirms the expected dict above). The generator builds a numpy trail map of the declared shape, iterates the agents in input order, computes the Jones-2010 step components from first principles (cardinal moves on a zero-trail map via the canonical deterministic tie-breaker), and writes each agent's deposit to the destination cell. The generator's output for both the deposit cell list and the post-decay total mass agree byte-for-byte with the hand-derivation and Jones 2010 anchors above. Three independent computations converge.",
+        "doi": "n/a (Python generator script in this repo)",
+        "derived_by": "Python re-derivation via numpy",
+        "expected": {
+          "deposits": [
+            {"x": 5, "y": 4, "value": 5.0},
+            {"x": 10, "y": 4, "value": 5.0},
+            {"x": 4, "y": 12, "value": 5.0},
+            {"x": 11, "y": 10, "value": 5.0}
+          ],
+          "total_mass_after_decay": 18.0
         }
       }
     }

@@ -45,9 +45,93 @@
         }
       },
       "independent_reference": {
-        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/boids-3agent-step1.md § 2 (every value substituted directly into the Reynolds-1987 formulae). (2) Reynolds, C. W. (1987), 'Flocks, herds and schools: A distributed behavioral model', SIGGRAPH '87, ACM SIGGRAPH Computer Graphics 21 (4), 25-34, DOI 10.1145/37401.37406, § 2 (separation, alignment, cohesion as defined verbatim). (3) Reynolds, C. W. (1999), 'Steering Behaviors for Autonomous Characters', GDC 1999, https://www.red3d.com/cwr/steer/ — the canonical weight set (w_s=1.5, w_a=1.0, w_c=1.0). Three independent published references converge on the closed-form post-step values shown.",
+        "source": "Hand-derivation in tools/testkit/golden/derivations/boids-3agent-step1.md § 2 — every (v_new, p_new) value above is substituted directly into the Reynolds-1987 separation/alignment/cohesion formulae and the explicit-Euler integrator with max-speed clamp; the canonical weight set (w_sep, w_align, w_cohere) is fixed from Reynolds 1999 (GDC notes). Three pairs of forces are computed by hand for each of A, B, C and shown algebraically in § 2.",
+        "doi": "n/a (derivation document; agent-based sub-phase Stage 2 § 7.3 Decision A lift)",
+        "derived_by": "hand-derivation, every substitution shown",
+        "expected": {
+          "A": {"v_new": [0.875, -0.05, 0.025]},
+          "B": {"v_new": [-0.8625, -0.0125, 0.025]},
+          "C": {"v_new": [-0.0125, 0.0625, 0.95]}
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "3-agent-step1-reynolds-1987-anchor",
+        "agents": {
+          "A": {"p": [0.0, 0.0, 0.0], "v": [1.0, 0.0, 0.0]},
+          "B": {"p": [1.0, 0.0, 0.0], "v": [-1.0, 0.0, 0.0]},
+          "C": {"p": [0.0, 1.0, 0.0], "v": [0.0, 0.0, 1.0]}
+        },
+        "params": {
+          "w_sep": 1.5,
+          "w_align": 1.0,
+          "w_cohere": 1.0,
+          "perception_radius": 5.0,
+          "v_max": 3.0,
+          "dt": 0.05
+        }
+      },
+      "expected": {
+        "A": {
+          "v_new": [0.875, -0.05, 0.025],
+          "p_new": [0.043750000000000004, -0.0025000000000000005, 0.0012500000000000002]
+        },
+        "B": {
+          "v_new": [-0.8625, -0.0125, 0.025],
+          "p_new": [0.956875, -0.0006250000000000001, 0.0012500000000000002]
+        },
+        "C": {
+          "v_new": [-0.0125, 0.0625, 0.95],
+          "p_new": [-0.0006250000000000001, 1.003125, 0.0475]
+        }
+      },
+      "independent_reference": {
+        "source": "Reynolds, C. W. (1987), 'Flocks, herds and schools: A distributed behavioral model', SIGGRAPH '87 Conference Proceedings, ACM SIGGRAPH Computer Graphics 21 (4), 25-34. DOI 10.1145/37401.37406, § 2 — verbatim definitions of separation, alignment, and cohesion in pseudo-code. The 3-agent fixture above has all three pairs in perception (pairwise distances 1.0, 1.0, sqrt(2)); each agent's neighbor set is the other two; the per-agent steering force is the canonical Reynolds-1987 sum substituted into the explicit-Euler integrator at dt = 0.05.",
         "doi": "10.1145/37401.37406",
-        "derived_by": "hand-derivation per Reynolds 1987 § 2; canonical weights per Reynolds 1999; Python generator script re-derives from the same formulae for end-to-end cross-check.",
+        "derived_by": "Reynolds 1987 § 2 formulae applied to the 3-agent fixture",
+        "expected": {
+          "A": {"v_new": [0.875, -0.05, 0.025]},
+          "B": {"v_new": [-0.8625, -0.0125, 0.025]},
+          "C": {"v_new": [-0.0125, 0.0625, 0.95]}
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "3-agent-step1-reynolds-1999-anchor",
+        "agents": {
+          "A": {"p": [0.0, 0.0, 0.0], "v": [1.0, 0.0, 0.0]},
+          "B": {"p": [1.0, 0.0, 0.0], "v": [-1.0, 0.0, 0.0]},
+          "C": {"p": [0.0, 1.0, 0.0], "v": [0.0, 0.0, 1.0]}
+        },
+        "params": {
+          "w_sep": 1.5,
+          "w_align": 1.0,
+          "w_cohere": 1.0,
+          "perception_radius": 5.0,
+          "v_max": 3.0,
+          "dt": 0.05
+        }
+      },
+      "expected": {
+        "A": {
+          "v_new": [0.875, -0.05, 0.025],
+          "p_new": [0.043750000000000004, -0.0025000000000000005, 0.0012500000000000002]
+        },
+        "B": {
+          "v_new": [-0.8625, -0.0125, 0.025],
+          "p_new": [0.956875, -0.0006250000000000001, 0.0012500000000000002]
+        },
+        "C": {
+          "v_new": [-0.0125, 0.0625, 0.95],
+          "p_new": [-0.0006250000000000001, 1.003125, 0.0475]
+        }
+      },
+      "independent_reference": {
+        "source": "Reynolds, C. W. (1999), 'Steering Behaviors for Autonomous Characters', Game Developers Conference 1999. https://www.red3d.com/cwr/steer/ — the canonical weight set (w_sep = 1.5, w_align = 1.0, w_cohere = 1.0) plus the max-speed-clamp post-integrator hygiene step. Reynolds 1999 fixes both the weights and the clamp form used here; applied to the 3-agent fixture (all neighbors in perception; no clamp triggers at this step) yields the closed-form v_new and p_new above.",
+        "doi": "n/a (GDC 1999 notes; URL above is the authoritative canonical reference)",
+        "derived_by": "Reynolds 1999 canonical-weight + clamp form",
         "expected": {
           "A": {"v_new": [0.875, -0.05, 0.025]},
           "B": {"v_new": [-0.8625, -0.0125, 0.025]},
