@@ -1511,7 +1511,7 @@ The portfolio uses five orthogonal naming dimensions, each picked deliberately t
 |---|---|---|
 | Repository / GitHub | Pascal-Kebab | `Bit-Physics` |
 | PyPI distribution | Kebab, lowercase | `bit-physics-<category>-<sim>`, `bit-physics-common-warp` |
-| Python import | snake_case (lowercased + underscores; PEP 625 maps from PyPI hyphens) | `bit_physics_testkit`, `bit_physics_integrity`, `common_py`, `common_warp`, `common_3dgs` |
+| Python import | snake_case (lowercased + underscores; PEP 625 maps from PyPI hyphens) | `integrity`, `diagnostics`, the six testkit modules (`capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property`), `common_py`, `common_warp`, `common_3dgs` |
 | C++ namespace | snake_case (mirrors Python) | `bit_physics::nanovdb`, `bit_physics::common_cpp` |
 | Common-module directory | Kebab (filesystem-level; not import-path components) | `common/common-cpp/`, `common/common-warp/`, `common/common-3dgs/` |
 
@@ -1843,8 +1843,8 @@ Exit 0 → all preconditions met; agent proceeds with phase work. Exit 1 → at 
 
 1. Prior-phase tag exists (`v0.<N-1>.0-phase-<N-1>`); skipped for Phase 0.
 2. Every path required by this phase's preconditions exists.
-3. `python -m bit_physics_integrity --all` exits 0 (skipped for Phase 0).
-4. `pytest -W error tools/` exits 0 (skipped for Phase 0).
+3. `python -m integrity --all` exits 0 (skipped for Phase 0).
+4. Per-workspace-member `uv run --directory <member> pytest -W error` exits 0 for each of `tools/testkit`, `tools/integrity`, `tools/diagnostics`, `packages/reaction-diffusion-2d` (skipped for Phase 0). Mirrors the Phase 0 landing audit's evidence pattern.
 5. Required capture descriptors per Appendix D § D.2.3 are present.
 6. External dependencies probed (no actual install).
 7. Phase-specific gates (e.g., Phase 4: CUDA detection, frontier-paper vendoring).
@@ -2403,8 +2403,9 @@ This is the resolved naming map. Every `<ns>`, `<module>`, `<sim>`, etc. placeho
 | Repo | (kebab-case, GitHub) | `Bit-Physics` |
 | Web demo domain | (kebab-case subdomain) | `bit-physics.<domain>` (production domain TBD; staging `stevenfau.github.io/Bit-Physics/`) |
 | PyPI distribution prefix | (kebab-case, PEP 503/508/625) | `bit-physics-` |
-| Python testkit package | (snake_case, PEP 8) | `bit_physics_testkit` (PyPI: `bit-physics-testkit`) |
-| Python integrity package | (snake_case) | `bit_physics_integrity` (PyPI: `bit-physics-integrity`) |
+| Python testkit package | (snake_case, PEP 8) | PyPI dist `bit-physics-testkit`; ships six flat import modules: `capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property` |
+| Python integrity package | (snake_case) | PyPI dist `bit-physics-integrity`; ships one flat import module: `integrity` |
+| Python diagnostics package | (snake_case) | PyPI dist `bit-physics-diagnostics`; ships one flat import module: `diagnostics` |
 | Python common-py module | (snake_case) | `bit_physics_common` (PyPI: `bit-physics-common-py`) |
 | Python common-warp module | (snake_case) | `common_warp` (PyPI: `bit-physics-common-warp`) |
 | Python common-3dgs module | (snake_case) | `common_3dgs` (PyPI: `bit-physics-common-3dgs`) |

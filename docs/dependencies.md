@@ -33,3 +33,25 @@ Lightning, PhysicsNeMo, Warp, Taichi) in
 
 Append-only. Each later phase appends rows; existing rows are NOT modified
 without a separate operator-approved amendment commit.
+
+## Operator notes
+
+**Fresh-checkout sync.** The workspace root `pyproject.toml` declares
+`[tool.uv] package = false` with no dependencies, so bare `uv sync` at the
+repo root resolves the lockfile but installs no workspace members — the
+`.venv` ends up empty. The canonical fresh-checkout invocation, matching
+the per-job CI workflows (`.github/workflows/python-strict.yml`,
+`determinism.yml`, `equivalence.yml`, `integrity.yml`,
+`tolerance-budget-check.yml`), is per workspace member:
+
+```
+(cd tools/testkit               && uv sync --extra dev)
+(cd tools/integrity             && uv sync --extra dev)
+(cd tools/diagnostics           && uv sync --extra dev)
+(cd packages/reaction-diffusion-2d && uv sync --extra dev)
+```
+
+This populates `.venv` with each member's runtime + dev deps (pytest,
+ruff, mypy, mutmut, h5py, hypothesis, …). The Phase 1 preflight's
+per-member `uv run --directory <member> pytest -W error` checks then
+re-sync as needed and find the right `pytest` in `.venv/bin/`.

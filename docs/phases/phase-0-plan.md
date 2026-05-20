@@ -257,7 +257,7 @@ def evaluate(inputs: dict) -> dict:
 
 **Important:** there is exactly one Python implementation of the cubic-spline kernel in the repo. Block 5 (INTEGRITY) imports this; it does not re-implement.
 
-#### 3.3.5 `bit_physics_integrity` — Block 5 ships
+#### 3.3.5 `integrity` (PyPI dist `bit-physics-integrity`) — Block 5 ships
 
 ```python
 # CLI: python -m integrity [--cat N] [--mode strict|advisory] [--staged-only] [files...]
@@ -863,8 +863,8 @@ Exit 1  → at least one precondition failed; agent writes BLOCKED report
 Each phase's preflight checks:
   1. Prior-phase tag exists (skip for Phase 0).
   2. Required paths exist.
-  3. python -m bit_physics_integrity --all exits 0 (skip for Phase 0).
-  4. pytest -W error in tools/ exits 0 (skip for Phase 0).
+  3. python -m integrity --all exits 0 (skip for Phase 0).
+  4. Per-workspace-member pytest -W error exits 0 (skip for Phase 0).
   5. Required capture descriptors present (per shared-invariants § 2.3).
   6. External dependencies installable (probe-only; no install).
   7. Phase-specific gates.
@@ -1020,8 +1020,8 @@ def phase_1_preflight() -> PreflightReport:
         Path("tools/testkit/golden/tables"),
         Path("tools/testkit/probes/template.md"),
         Path("tools/integrity/integrity"),
-        Path("tools/diagnostics/tier1"),
-        Path("tools/diagnostics/tier2/scalar_field"),
+        Path("tools/diagnostics/diagnostics/tier1"),
+        Path("tools/diagnostics/diagnostics/tier2/scalar_field"),
         Path("common/common-ts"),
         Path("packages/reaction-diffusion-2d"),
         Path("references/SPlisHSPlasH"),
@@ -1034,14 +1034,26 @@ def phase_1_preflight() -> PreflightReport:
         _add_check(r, c)
     # Integrity green
     _add_check(r, check_command(
-        ["python", "-m", "bit_physics_integrity", "--all"],
+        ["python", "-m", "integrity", "--all"],
         name="integrity-all-green",
     ))
-    # Tests green
-    _add_check(r, check_command(
-        ["pytest", "-W", "error", "tools/"],
-        name="pytest-tools-green",
-    ))
+    # Tests green — per workspace member, mirroring Phase 0 landing's
+    # evidence pattern (`uv run --directory <member> pytest -W error`).
+    # Each `uv run --directory` re-syncs that member's dev deps into the
+    # shared `.venv`, so this both probes and reproduces the canonical
+    # Phase 0 invocation. Operator must have done at least one prior
+    # `uv sync --extra dev` per member for the venv to be primed; see
+    # docs/dependencies.md "Operator notes".
+    for member_dir, check_name in [
+        ("tools/testkit", "pytest-testkit-green"),
+        ("tools/integrity", "pytest-integrity-green"),
+        ("tools/diagnostics", "pytest-diagnostics-green"),
+        ("packages/reaction-diffusion-2d", "pytest-reaction-diffusion-2d-green"),
+    ]:
+        _add_check(r, check_command(
+            ["uv", "run", "--directory", member_dir, "pytest", "-W", "error"],
+            name=check_name,
+        ))
     return r
 
 
@@ -1080,7 +1092,7 @@ def phase_2_preflight() -> PreflightReport:
     for c in check_capture_descriptors(descriptors):
         _add_check(r, c)
     _add_check(r, check_command(
-        ["python", "-m", "bit_physics_integrity", "--all"],
+        ["python", "-m", "integrity", "--all"],
         name="integrity-all-green",
     ))
     return r
@@ -1104,7 +1116,7 @@ def phase_3_preflight() -> PreflightReport:
     ]:
         _add_check(r, check_path_exists(Path(port_dir)))
     _add_check(r, check_command(
-        ["python", "-m", "bit_physics_integrity", "--all"],
+        ["python", "-m", "integrity", "--all"],
         name="integrity-all-green",
     ))
     return r
@@ -1147,7 +1159,7 @@ def phase_4_preflight() -> PreflightReport:
     if not cuda_ok:
         r.checks[-1].passed = True  # don't block; fallback documented
     _add_check(r, check_command(
-        ["python", "-m", "bit_physics_integrity", "--all"],
+        ["python", "-m", "integrity", "--all"],
         name="integrity-all-green",
     ))
     return r
@@ -1167,7 +1179,7 @@ def phase_5_preflight() -> PreflightReport:
     ]:
         _add_check(r, check_path_exists(p))
     _add_check(r, check_command(
-        ["python", "-m", "bit_physics_integrity", "--all"],
+        ["python", "-m", "integrity", "--all"],
         name="integrity-all-green",
     ))
     return r
@@ -1408,7 +1420,7 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
 **Deliverables (under `tools/integrity/`):**
 
 1. **Package skeleton:**
-   - `pyproject.toml` (package `bit_physics_integrity`).
+   - `pyproject.toml` (PyPI dist `bit-physics-integrity`; ships flat import module `integrity` via `[tool.hatch.build.targets.wheel] packages = ["integrity"]`).
    - `integrity/__main__.py` — CLI: `python -m integrity [--cat N] [--mode strict|advisory] [--staged-only] [files...]`.
    - `integrity/runner.py` — orchestrates checks, aggregates findings.
    - `integrity/common/` — `types.py` (Finding, FailureMode per § 3.3.5), repo helpers (find_repo_root, git ls-files, head SHA), annotation parsing for `# integrity-allow: <check>; <reason>; <tracking-id>` suppressions.
@@ -1884,7 +1896,7 @@ Every decidable Phase 0 choice is locked here. If something needs to change, cha
 
 | # | Decision | Choice |
 |---|---|---|
-| 24 | Python package names | `bit_physics_testkit`, `bit_physics_integrity` (per spec § 7.11 naming convention: PyPI dist `bit-physics-testkit`, import `bit_physics_testkit`, mirrors repo `Bit-Physics`) |
+| 24 | Python package names | PyPI dists `bit-physics-testkit` / `bit-physics-integrity` / `bit-physics-diagnostics` per spec § 7.11; each ships flat import modules (`capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property` for testkit; `integrity`; `diagnostics`) rather than a single `bit_physics_<x>` namespace. Confirmed by Block 5/6/8 wheel configs (`[tool.hatch.build.targets.wheel] packages = [...]`). |
 | 25 | Node version | 22 LTS or later (Block 7 pins) |
 | 26 | pnpm version | 10.x or later (Block 7 pins) |
 | 27 | TypeScript config | strict: true, noImplicitAny: true, noUncheckedIndexedAccess: true |

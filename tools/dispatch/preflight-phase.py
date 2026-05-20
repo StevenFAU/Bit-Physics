@@ -16,8 +16,8 @@ Exit 1  → at least one precondition failed; agent writes BLOCKED report
 Each phase's preflight checks:
   1. Prior-phase tag exists (skip for Phase 0).
   2. Required paths exist.
-  3. python -m bit_physics_integrity --all exits 0 (skip for Phase 0).
-  4. pytest -W error in tools/ exits 0 (skip for Phase 0).
+  3. python -m integrity --all exits 0 (skip for Phase 0).
+  4. Per-workspace-member pytest -W error exits 0 (skip for Phase 0).
   5. Required capture descriptors present (per shared-invariants § 2.3).
   6. External dependencies installable (probe-only; no install).
   7. Phase-specific gates.
@@ -42,6 +42,18 @@ from pathlib import Path
 # but never uses it (ruff F401). Per Pattern N (Appendix E) the narrowest
 # correction is to drop the unused import. The functional behavior of the
 # script is unchanged. See the Block 1 report's "Design decisions" section.
+#
+# NOTE — Phase 0 post-landing hotfix (2026-05-19): the embedded source's
+# Phase 1 preflight referenced (a) the unnested diagnostics layout
+# `tools/diagnostics/tier1{,/...}`, (b) module name `bit_physics_integrity`,
+# and (c) a single repo-root `pytest -W error tools/` invocation. None of
+# these matched what Phase 0 actually shipped: Block 6 nested diagnostics
+# under `tools/diagnostics/diagnostics/`, Block 5's wheel exposes `integrity`
+# (not `bit_physics_integrity`), and the landing audit ran pytest per
+# workspace member via `uv run --directory <member> pytest -W error`.
+# Per Pattern N (Appendix E) the four corrections were applied to both
+# this script and the § 7.1 embed in lockstep. See the hotfix audit at
+# docs/_audits/phase-0/hotfix-preflight-phase-1-2026-05-19.md.
 
 
 @dataclass
@@ -190,8 +202,8 @@ def phase_1_preflight() -> PreflightReport:
         Path("tools/testkit/golden/tables"),
         Path("tools/testkit/probes/template.md"),
         Path("tools/integrity/integrity"),
-        Path("tools/diagnostics/tier1"),
-        Path("tools/diagnostics/tier2/scalar_field"),
+        Path("tools/diagnostics/diagnostics/tier1"),
+        Path("tools/diagnostics/diagnostics/tier2/scalar_field"),
         Path("common/common-ts"),
         Path("packages/reaction-diffusion-2d"),
         Path("references/SPlisHSPlasH"),
@@ -208,18 +220,30 @@ def phase_1_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "bit_physics_integrity", "--all"],
+            ["python", "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
-    # Tests green
-    _add_check(
-        r,
-        check_command(
-            ["pytest", "-W", "error", "tools/"],
-            name="pytest-tools-green",
-        ),
-    )
+    # Tests green — per workspace member, mirroring Phase 0 landing's
+    # evidence pattern (`uv run --directory <member> pytest -W error`).
+    # Each `uv run --directory` re-syncs that member's dev deps into the
+    # shared `.venv`, so this both probes and reproduces the canonical
+    # Phase 0 invocation. Operator must have done at least one prior
+    # `uv sync --extra dev` per member for the venv to be primed; see
+    # docs/dependencies.md "Operator notes".
+    for member_dir, check_name in [
+        ("tools/testkit", "pytest-testkit-green"),
+        ("tools/integrity", "pytest-integrity-green"),
+        ("tools/diagnostics", "pytest-diagnostics-green"),
+        ("packages/reaction-diffusion-2d", "pytest-reaction-diffusion-2d-green"),
+    ]:
+        _add_check(
+            r,
+            check_command(
+                ["uv", "run", "--directory", member_dir, "pytest", "-W", "error"],
+                name=check_name,
+            ),
+        )
     return r
 
 
@@ -263,7 +287,7 @@ def phase_2_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "bit_physics_integrity", "--all"],
+            ["python", "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -290,7 +314,7 @@ def phase_3_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "bit_physics_integrity", "--all"],
+            ["python", "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -340,7 +364,7 @@ def phase_4_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "bit_physics_integrity", "--all"],
+            ["python", "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
@@ -363,7 +387,7 @@ def phase_5_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            ["python", "-m", "bit_physics_integrity", "--all"],
+            ["python", "-m", "integrity", "--all"],
             name="integrity-all-green",
         ),
     )
