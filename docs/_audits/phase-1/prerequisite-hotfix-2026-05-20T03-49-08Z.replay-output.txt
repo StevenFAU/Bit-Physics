@@ -1,0 +1,9 @@
+  PASS  gate=integrity audit_verdict=SHIFTED
+  PASS  gate=pytest audit_verdict=SHIFTED
+  PASS  gate=equivalence audit_verdict=SHIFTED
+  PASS  gate=determinism audit_verdict=SHIFTED
+  PASS  gate=perf-ledger audit_verdict=SHIFTED
+  PASS  gate=property audit_verdict=SHIFTED
+  PASS  gate=mutation audit_verdict=SHIFTED
+  PASS  gate=tolerance-budget audit_verdict=SHIFTED
+summary: prior_phase=v0.0.0-phase-0 ok=True

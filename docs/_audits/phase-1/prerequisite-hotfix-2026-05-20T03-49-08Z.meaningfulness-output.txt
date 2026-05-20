@@ -1,0 +1,34 @@
+=== V3a: bad handle ===
+replay_prior_phase: no tag matches handle 'phase-99' (looked for tags shaped vX.Y.Z-phase-99)
+rc=1
+
+=== V3b: bad audit path ===
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/otacon/Projects/Bit-Physics/tools/integrity/integrity/scripts/replay_prior_phase.py", line 324, in <module>
+    raise SystemExit(main())
+                     ^^^^^^
+  File "/home/otacon/Projects/Bit-Physics/tools/integrity/integrity/scripts/replay_prior_phase.py", line 310, in main
+    result = replay(args.prior_phase, args.audit, gate_list)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/otacon/Projects/Bit-Physics/tools/integrity/integrity/scripts/replay_prior_phase.py", line 244, in replay
+    fm = _read_front_matter(audit_path)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/otacon/Projects/Bit-Physics/tools/integrity/integrity/scripts/replay_prior_phase.py", line 117, in _read_front_matter
+    text = audit_path.read_text(encoding="utf-8")
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1029, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/pathlib.py", line 1015, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'docs/_audits/phase-0/does-not-exist.md'
+rc=1
+
+=== V3c: bad gate name ===
+        discrepancy: unknown gate 'banana'
+  FAIL  gate=banana audit_verdict=SHIFTED
+summary: prior_phase=v0.0.0-phase-0 ok=False
+rc=1
