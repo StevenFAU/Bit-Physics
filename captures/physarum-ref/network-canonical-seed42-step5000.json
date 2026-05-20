@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      256,
+      256
+    ],
+    "dtype": "f64",
+    "params": {
+      "L_move": 1.0,
+      "L_sense": 9.0,
+      "decay_alpha": 0.1,
+      "delta_phi_deg": 45.0,
+      "deposit": 5.0,
+      "n_agents": 500
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40",
+    "format": "hdf5",
+    "path": "network-canonical-seed42-step5000.h5"
+  },
+  "run": {
+    "capture_interval": 500,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 5000,
+    "wall_clock_seconds": 3.114861262991326
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "agent-based",
+    "name": "physarum",
+    "variant": "jones-2010-canonical"
+  },
+  "stack": {
+    "build_id": "sub-phase-agent-based",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

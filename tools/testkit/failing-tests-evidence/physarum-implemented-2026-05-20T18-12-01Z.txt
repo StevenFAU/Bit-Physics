@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/physarum
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/physarum/tests/test_deposit_golden.py::test_deposit_cells_exact PASSED [ 10%]
+packages/physarum/tests/test_deposit_golden.py::test_total_mass_after_decay PASSED [ 20%]
+packages/physarum/tests/test_determinism.py::test_run_twice_bit_exact_zero_trail_limit PASSED [ 30%]
+packages/physarum/tests/test_determinism.py::test_run_twice_epsilon_chaotic_regime PASSED [ 40%]
+packages/physarum/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 50%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED [ 60%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_scalar_field_bounds_on_trail_map PASSED [ 70%]
+packages/physarum/tests/test_diagnostics.py::test_tier2_scalar_field_conservation_advisory PASSED [ 80%]
+packages/physarum/tests/test_pbt_invariants.py::test_trail_mass_conserves_modulo_decay PASSED [ 90%]
+packages/physarum/tests/test_pbt_invariants.py::test_agent_count_invariant PASSED [100%]
+
+============================= 10 passed in 10.77s ==============================
