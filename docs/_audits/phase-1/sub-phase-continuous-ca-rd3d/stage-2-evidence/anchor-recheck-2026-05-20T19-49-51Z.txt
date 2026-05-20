@@ -1,0 +1,47 @@
+=== Step 2.1 — Closing-commit anchor re-check (Convention 7.9) ===
+UTC=2026-05-20T19-49-51Z
+HEAD=509b3a4d11c8054381ee47f406a91ace42905344
+
+=== Phase 1 RED evidence (gate-13 anchor) ===
+b3165ab1cd0b69d816fce8ffcdb4436d619f01c5ecfa7942eb77c4aeb2514b96  tools/testkit/failing-tests-evidence/reaction-diffusion-3d-2026-05-20T13-26-32Z.txt
+expected b3165ab1cd0b69d816fce8ffcdb4436d619f01c5ecfa7942eb77c4aeb2514b96
+
+=== Stage 1 GREEN evidence ===
+29d0b8bb5ebec53284dbf3d9607ef42c5c87efdb628faf38c175740011a05820  tools/testkit/failing-tests-evidence/reaction-diffusion-3d-implemented-2026-05-20T19-36-54Z.txt
+expected 29d0b8bb5ebec53284dbf3d9607ef42c5c87efdb628faf38c175740011a05820
+
+=== Capture sha256 ===
+a970ea2919dedb40591d228f41b83bf7f27791c99e6f6de2698d2fb9d09ba1cc  captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.h5
+expected a970ea2919dedb40591d228f41b83bf7f27791c99e6f6de2698d2fb9d09ba1cc
+5c64375fb8be154f0de4df999ad9faa2777d969ab6f7e6e636b8b5e0bc3837b9  captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.json
+expected ccd0e4eabf36fba694a5c9bf3817cc470846c6aa2d59e52f7a2c987201475dcb
+
+=== Stage 1 gate-13 replay evidence ===
+4a2c224a0372c841ba9b59abb02c56bd67bd8335068219292443ec597731cac8  docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-1-gate13-replay-2026-05-20T19-36-54Z.txt
+expected 4a2c224a0372c841ba9b59abb02c56bd67bd8335068219292443ec597731cac8
+
+=== Sibling closed-form Stage 1 captures (regression) ===
+9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5
+expected 9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450
+0e1a3fa1f199155ef9b5e0f1f1dbe85cc057694ab0bcb44ef5bdb018b0431084  captures/mandelbulb-explorer-ref/de-probe-points-seed42.h5
+expected 0e1a3fa1f199155ef9b5e0f1f1dbe85cc057694ab0bcb44ef5bdb018b0431084
+
+=== Sibling agent-based captures (regression) ===
+a0f8757a4dd913149b01c043f4f705e6ec3001cbaf7f54db42a2fd76440903c3  captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.h5
+expected a0f8757a4dd913149b01c043f4f705e6ec3001cbaf7f54db42a2fd76440903c3
+7e9064aff95e3672b0ffa9385d21cdbefbb0dc2c250b99c25b33cceec5f13ec0  captures/boids-3d-ref/flock-1000agents-seed42-step1000.h5
+expected 7e9064aff95e3672b0ffa9385d21cdbefbb0dc2c250b99c25b33cceec5f13ec0
+6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40  captures/physarum-ref/network-canonical-seed42-step5000.h5
+expected 6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40
+
+=== Sibling Stage 0 replay output ===
+9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34  docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-replay-2026-05-20T19-14-51Z.txt
+
+=== Step 2.1 ANCHOR DRIFT FINDING ===
+captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.json
+  Stage 1 checkpoint front-matter recorded: ccd0e4eabf36fba694a5c9bf3817cc470846c6aa2d59e52f7a2c987201475dcb
+  Actual at HEAD:                            5c64375fb8be154f0de4df999ad9faa2777d969ab6f7e6e636b8b5e0bc3837b9
+  Single commit on file (no rewrite at any later commit): 29424075df98239186c83d95ff7fa91a9779593e
+  Disposition: SHIFT N1 — Stage 1 checkpoint JSON-sidecar sha256 mis-recorded;
+  Stage 1 checkpoint is sealed per Convention #12 + § 10 (no retroactive edits);
+  landing audit § 8 records the corrected anchor.

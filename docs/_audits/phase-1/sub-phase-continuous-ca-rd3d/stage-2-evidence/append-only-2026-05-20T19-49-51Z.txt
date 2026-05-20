@@ -1,0 +1,78 @@
+=== Step 2.6 — Append-only check ===
+
+--- CI semantics (.ledger.md must not exist) ---
+PASS — no *.ledger.md files exist
+
+--- Strict-mode protected set 1: files at v0.1.0-phase-1 ---
+PASS — no Phase-1-committed audit file was modified at HEAD
+
+--- Strict-mode protected set 2: closed-form audit chain at 2cc0f21 ---
+PASS — no closed-form audit file (at 2cc0f21) was modified
+
+--- Strict-mode protected set 3: agent-based audit chain at 739c93f ---
+PASS — no agent-based audit file (at 739c93f) was modified
+
+--- Strict-mode protected set 4: replay-tool-hotfix audit chain at 1f5fa0c ---
+PASS — no replay-tool-hotfix audit file (at 1f5fa0c) was modified
+
+--- Convention A — non-audit modifications since v0.1.0-phase-1 ---
+M	.pre-commit-config.yaml
+M	CHANGELOG.md
+A	captures/boids-3d-ref/flock-1000agents-seed42-step1000.h5
+A	captures/boids-3d-ref/flock-1000agents-seed42-step1000.json
+A	captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.h5
+A	captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.json
+A	captures/mandelbulb-explorer-ref/de-probe-points-seed42.h5
+A	captures/mandelbulb-explorer-ref/de-probe-points-seed42.json
+A	captures/physarum-ref/network-canonical-seed42-step5000.h5
+A	captures/physarum-ref/network-canonical-seed42-step5000.json
+A	captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.h5
+A	captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.json
+A	captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5
+A	captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.json
+A	docs/_audits/phase-1/sub-phase-agent-based/landing-2026-05-20T18-20-39Z.md
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-0-checkpoint-2026-05-20T17-37-47Z.md
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-0-evidence-reverify-2026-05-20T17-37-47Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-0-replay-2026-05-20T17-37-47Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-1-checkpoint-2026-05-20T18-14-45Z.md
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/append-only-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/gate13-replay-boids-3d-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/gate13-replay-physarum-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/integrity-cat3-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/integrity-cats-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/test-sweep-negative-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/test-sweep-positive-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-agent-based/stage-2-evidence/verify-evidence-2026-05-20T18-20-39Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-checkpoint-2026-05-20T15-10-49Z.md
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/append-only-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/gate13-replay-mandelbulb-explorer-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/gate13-replay-strange-attractors-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/integrity-cat3-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/integrity-cats-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/stage-0-evidence-at-closing-commit-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/test-sweep-negative-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/test-sweep-positive-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-closed-form/stage-2-evidence/verify-evidence-2026-05-20T16-48-00Z.txt
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-blocked-replay-2026-05-20T18-52-10Z.md
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-checkpoint-2026-05-20T19-14-51Z.md
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-evidence-reverify-2026-05-20T19-14-51Z.txt
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-replay-2026-05-20T18-52-10Z.txt
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-replay-2026-05-20T19-14-51Z.txt
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-1-checkpoint-2026-05-20T19-42-23Z.md
+A	docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-1-gate13-replay-2026-05-20T19-36-54Z.txt
+A	docs/_audits/phase-1/sub-phase-replay-tool-hotfix/post-repair-preflight-2026-05-20T19-06-35Z.txt
+A	docs/_audits/phase-1/sub-phase-replay-tool-hotfix/post-repair-regression-test-2026-05-20T19-06-35Z.txt
+A	docs/_audits/phase-1/sub-phase-replay-tool-hotfix/post-repair-replay-2026-05-20T19-06-35Z.txt
+A	docs/_audits/phase-1/sub-phase-replay-tool-hotfix/post-repair-sweep-2026-05-20T19-06-35Z.txt
+A	docs/_audits/phase-1/sub-phase-replay-tool-hotfix/repair-2026-05-20T19-06-35Z.md
+M	docs/perf-ledger.md
+A	docs/phases/sub-phase-agent-based.md
+A	docs/phases/sub-phase-closed-form.md
+A	docs/phases/sub-phase-continuous-ca-rd3d.md
+M	packages/boids-3d/boids_3d/__init__.py
+A	packages/boids-3d/boids_3d/invariants.py
+A	packages/boids-3d/boids_3d/reference.py

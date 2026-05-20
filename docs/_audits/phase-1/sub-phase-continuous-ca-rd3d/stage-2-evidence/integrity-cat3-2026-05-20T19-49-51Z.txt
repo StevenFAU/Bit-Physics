@@ -1,0 +1,16 @@
+=== Cat 3 NO-OP confirmation for continuous-ca subdir ===
+Does tools/testkit/golden/tables/continuous-ca/ exist?
+ls: cannot access 'tools/testkit/golden/tables/continuous-ca': No such file or directory
+(does not exist — confirmed)
+
+Current _SUBDIRS_PICKED_UP at HEAD:
+33:_SUBDIRS_PICKED_UP: tuple[Path, ...] = (Path("closed-form"), Path("agent-based"))
+37:    accepted_parents = {_TABLES_DIR, *(_TABLES_DIR / sd for sd in _SUBDIRS_PICKED_UP)}
+48:    for sd in _SUBDIRS_PICKED_UP:
+
+Cat 3 golden_values run alone:
+[AUDIT_LOG] cat3.golden-values tools/testkit/golden/tables/agent-based/boids-3agent-step1.json — no Python evaluator registered for algorithm 'boids-reynolds-1987-3agent-step1'; skipping numeric verification
+[AUDIT_LOG] cat3.golden-values tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json — no Python evaluator registered for algorithm 'physarum-jones-2010-4agent-deposit-step1'; skipping numeric verification
+[AUDIT_LOG] cat3.golden-values tools/testkit/golden/tables/closed-form/lorenz-structural.json — no Python evaluator registered for algorithm 'lorenz-structural-invariants'; skipping numeric verification
+[AUDIT_LOG] cat3.golden-values tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json — no Python evaluator registered for algorithm 'mandelbulb-distance-estimator-p8-quilez-2009'; skipping numeric verification
+summary: 0 HARD_FAIL, 0 SOFT_WARN
