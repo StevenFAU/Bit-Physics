@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      64,
+      64,
+      64
+    ],
+    "dtype": "f64",
+    "params": {
+      "Du": 0.16,
+      "Dv": 0.08,
+      "F": 0.0367,
+      "dt": 1.0,
+      "dx": 1.0,
+      "k": 0.0649,
+      "n": 64
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:a970ea2919dedb40591d228f41b83bf7f27791c99e6f6de2698d2fb9d09ba1cc",
+    "format": "hdf5",
+    "path": "gray-scott-lambda-64cube-seed42-step2000.h5"
+  },
+  "run": {
+    "capture_interval": 200,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 2000,
+    "wall_clock_seconds": 10.14398087200243
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "reaction-diffusion-3d",
+    "variant": "gray-scott-lambda"
+  },
+  "stack": {
+    "build_id": "sub-phase-continuous-ca-rd3d",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

@@ -1,0 +1,19 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-3d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 8 items
+
+tests/test_determinism.py::test_run_twice_bit_exact PASSED               [ 12%]
+tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED           [ 25%]
+tests/test_diagnostics.py::test_tier2_scalar_field_bounds_u_in_unit_interval PASSED [ 37%]
+tests/test_diagnostics.py::test_tier2_scalar_field_bounds_v_in_unit_interval PASSED [ 50%]
+tests/test_diagnostics.py::test_tier2_scalar_field_conservation_advisory PASSED [ 62%]
+tests/test_mms_convergence.py::test_mms_observed_ooa_matches_formal_within_half_an_order PASSED [ 75%]
+tests/test_pbt_invariants.py::test_monotone_bounds PASSED                [ 87%]
+tests/test_pbt_invariants.py::test_periodic_bc_satisfied PASSED          [100%]
+
+============================== 8 passed in 23.24s ==============================

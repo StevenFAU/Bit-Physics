@@ -20,3 +20,4 @@ A row is appended:
 | boids-3d | numpy-reference | flock-3agents-canonical-seed42-step1000 | 0.033 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
 | boids-3d | numpy-reference | flock-1000agents-seed42-step1000 | 17.592 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
 | physarum | numpy-reference | network-canonical-seed42-step5000 | 3.128 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
+| reaction-diffusion-3d | numpy-reference | gray-scott-lambda-64cube-seed42-step2000 | 10.144 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
