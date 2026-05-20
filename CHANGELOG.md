@@ -16,6 +16,91 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   scaffold, failing-tests-evidence scaffold, tolerance-budget stub,
   schema-corpus directory.
 
+### sub-phase-closed-form
+
+First per-sim implementation sub-phase under spec-Phase-1 per Phase 1
+audit § 15. Lands gates 4–13 for the closed-form pair
+(`strange-attractors`, `mandelbulb-explorer`); the remaining seven
+Phase 1 sims still ship Phase-1 RED with `ModuleNotFoundError` pending
+their own per-sim implementation sub-phases. No `-phase-N` tag pushed
+(spec § 7.12 reserves that form for spec-phase boundaries); optional
+non-phase point-release `v0.1.1` is a banked operator decision per
+`docs/phases/sub-phase-closed-form.md` § 11.4.
+
+#### Added
+
+- `packages/strange-attractors/strange_attractors/` — public API
+  exposing `reference` (Lorenz / Rössler / Aizawa / Sprott-A / Pickover
+  ODE families + RK4 integrator), `sim` (`sim_runner_seeded` matching
+  `tools/testkit/determinism/`'s `SimRunner` Protocol), `invariants`
+  (Hypothesis-decorated `volume_contraction_rate_constant` and
+  `rk4_time_reversibility_modulo_dissipation`). Spec-pinned PBT
+  invariants from `docs/sim-specs/closed-form/strange-attractors/`
+  § 6.6.
+- `packages/mandelbulb-explorer/mandelbulb_explorer/` — public API
+  exposing `reference` (Quilez 2009 distance-estimator + iterated map),
+  `sim` (`sim_runner_seeded`), `invariants` (`de_lower_bound_property`
+  and `map_p8_z_inversion_symmetry`).
+- `captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.{h5,json}`
+  (spec Appendix D § D.2.3 descriptor; sha256 of payload
+  `9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450`).
+- `captures/mandelbulb-explorer-ref/de-probe-points-seed42.{h5,json}`
+  (spec Appendix D § D.2.3 descriptor; sha256 of payload
+  `0e1a3fa1f199155ef9b5e0f1f1dbe85cc057694ab0bcb44ef5bdb018b0431084`).
+- `docs/perf-ledger.md` — two first-landing baseline rows:
+  - `strange-attractors / numpy-reference / lorenz-trajectory-seed42-step10000 / 0.061s / i7-12700KF-linux-6.17`
+  - `mandelbulb-explorer / numpy-reference / de-probe-points-seed42 / 0.006s / i7-12700KF-linux-6.17`
+- `tools/testkit/failing-tests-evidence/strange-attractors-implemented-2026-05-20T16-34-40Z.txt`
+  (sha256 `a19c38e9c7d7151607b07b1b773397dd4096f4f97bd3bc7d3a1d34a0f9db8a7c`).
+- `tools/testkit/failing-tests-evidence/mandelbulb-explorer-implemented-2026-05-20T16-41-25Z.txt`
+  (sha256 `2e73c3e347cc35356cfe05285416e9086f01efaf88abb7229a7e3a12afb18205`).
+- `tools/testkit/mutation/sub-phase-closed-form-2026-05-20T16-48-00Z.json` —
+  framework-validated mutation baseline carry-forward; B17 re-banked to
+  the next per-sim implementation sub-phase (PATH-B per Stage 2 step 2.7).
+- Sub-phase audit chain under `docs/_audits/phase-1/sub-phase-closed-form/`:
+  Stage 0 / Stage 1 / Stage 2 checkpoints + landing audit + Stage 2
+  evidence directory.
+
+#### Changed (additive per Convention A)
+
+- `tools/integrity/integrity/cat3_numerical/golden_values.py` —
+  `_gather_tables` now picks up `closed-form/*.json` in addition to root
+  (commit `closed-form-stage2-cat3-recurse`). Closes Phase 1 shift #16
+  for the closed-form subdir; other category subdirs (agent-based,
+  hybrid-pg, lattice, particle-fluids) remain non-recursed until their
+  per-sim implementation sub-phases extend `_SUBDIRS_PICKED_UP`.
+- `tools/integrity/integrity/scripts/verify_evidence.py` — now strips a
+  `sha256:` prefix from `claimed` before comparing against the
+  computed digest (commit `closed-form-stage2-verify-evidence-prefix`).
+  Restores the load-bearing assertion against audits using the
+  `sha256:HEX` convention (Phase 1 landing audit + both sub-phase
+  checkpoints). Existing bare-hex behavior unchanged.
+- `tools/testkit/equivalence/tolerance-budget.toml` — Stage 0
+  carryover: `[phase] phase = "sub-phase-closed-form"`. No
+  `[budgets.*]` widening (spec § 2.6 requires separate operator
+  amendment).
+- Phase 1 stub test bodies (`raise NotImplementedError`) at
+  `packages/{strange-attractors,mandelbulb-explorer}/tests/test_{determinism,diagnostics,pbt_invariants}.py`
+  replaced with their gate-fulfilling implementations (Stage 1 shift
+  S1). Function signatures + imports preserved; the
+  failing-tests-evidence files committed at `9766498` are UNTOUCHED
+  and remain the gate-13 anchor.
+
+#### Gates flipped GREEN at HEAD (both sims)
+
+| # | Gate | strange-attractors | mandelbulb-explorer |
+|---|---|---|---|
+| 4 | code verification (golden-value) | GREEN | GREEN |
+| 5 | Tier 1 NaN/Inf | GREEN | GREEN |
+| 6 | Tier 2 closed_form (IC-7) | GREEN | GREEN |
+| 7 | Cat 1 citations | GREEN | GREEN |
+| 8 | Cat 2 public API | GREEN | GREEN |
+| 9 | canonical capture | GREEN | GREEN |
+| 10 | determinism (capture-twice-and-diff) | GREEN | GREEN |
+| 11 | PBT invariants (Hypothesis) | GREEN | GREEN |
+| 12 | perf-ledger first row | GREEN | GREEN |
+| 13 | failing-tests replay verifiable | GREEN | GREEN |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
