@@ -6,7 +6,7 @@
 > **Date:** 2026-05-17 (v6); 2026-05-18 (v7 amendments)
 > **Status:** dispatch-ready (contingent on Phase 4 partial-or-full landing + § 0 preconditions).
 > **Repo:** `github.com/StevenFAU/Bit-Physics` (owner: Steven Cohen).
-> **Spec anchor:** `gpu-sims-design-spec-v2.md` v2.4 Part X (Shipping and distribution) and § 11.6 (Phase 5 roadmap entry) + spec § 3.8 v2.4 (bootstrap-style verification posture for productized artifacts) + spec Appendix D + spec Appendix G + spec Appendix E.
+> **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) Part X (Shipping and distribution) and § 11.6 (Phase 5 roadmap entry) + spec § 3.8 v2.4 (bootstrap-style verification posture for productized artifacts) + spec Appendix D + spec Appendix G + spec Appendix E.
 > **Execution model:** Sequential single-agent.
 
 > **v8 verification-hardening amendments (May 18 2026, post-design-spec v2.4):** Normative; supersedes conflicting text below.

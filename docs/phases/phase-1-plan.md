@@ -3,7 +3,7 @@
 > **Document type:** Phase charter — architecture, interface contracts, sequential dispatch plan
 > **Phase identity:** Phase 1 of the spec, scoped to the **TDD bootstrap** of the reference-sim program
 > **Repository:** `git@github.com:StevenFAU/Bit-Physics.git` (owner: Steven Cohen)
-> **Spec anchor:** `gpu-sims-design-spec-v2.md` v2.4 (2026-05-18) + spec Appendix D + spec Appendix G + spec Appendix E
+> **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) (2026-05-18) + spec Appendix D + spec Appendix G + spec Appendix E
 > **Pre-conditions:** Phase 0 (Foundation) has landed per spec § 11.1; this charter has been committed at `docs/phases/phase1.md`
 > **Date drafted:** 2026-05-17 (R6); 2026-05-18 (R7 single-agent amendments); 2026-05-18 (R8 dispatch-hardening amendments)
 > **Status:** dispatch-ready
@@ -24,7 +24,7 @@
 > **R8 dispatch-hardening amendments (May 18 2026):**
 >
 > - **Phase 1 scope locked to gates 1–3** (TDD bootstrap only): spec sheet, probe report, failing-tests commit per sim. Gates 4–10 (implementation, all numerical-pass + diagnostics-pass + capture + determinism) are explicitly deferred to subsequent per-sim implementation phases. § 1.2 reading "gates 1–10 per sim, full reference implementation" is REJECTED.
-> - **Placeholder resolution.** Per spec Appendix D § D.1: `bit_physics` resolves to `bit_physics` everywhere; `bit_physics_common` resolves to `bit_physics_common` for Python (common-py). All `bit_physics::common_cpp::` C++ namespaces resolve to `bit_physics::common_cpp::`. The agent does NOT re-pick names at dispatch time.
+> - **Placeholder resolution.** Per spec Appendix D § D.1 (post-2026-05-20 reconciliation sweep — see `docs/_audits/phase-0/reconciliation-sweep-2026-05-20T02-18-17Z.md`): `bit_physics` resolves to `bit_physics` only as the PyPI distribution prefix (never as a Python import); the common-py Python import module is `common_py` (forward-looking; common-py ships in this phase). All `bit_physics::common_cpp::` C++ namespaces resolve to `bit_physics::common_cpp::`. The agent does NOT re-pick names at dispatch time.
 > - **Action #1 in this phase's session:** `python tools/dispatch/preflight-phase.py 1`. Exit 0 → proceed. Exit 1 → BLOCKED.
 > - **RD-2D MMS as named deliverable.** Stage 2 § 7.6 (RD-3D sim card) ALSO produces the RD-2D MMS solution at `tools/testkit/code_verification/mms/solutions/reaction-diffusion-2d/` (extending Phase 0's heat-1d MMS pattern). This was implicit in earlier drafts; now explicit.
 > - **Cat 4 grammars (b) and (c)** ship as part of Stage 1's common-module work. The Cat 4 verifier extends from Phase 0's grammar (a) `<path>:<line>` to also handle (b) `<phrase "X" in Y>` and (c) `<API X has shape Y>` patterns. Phase 4's `cat2.api_imports` check depends on grammar (c) being functional.
@@ -55,7 +55,7 @@ The portfolio uses the five-dimensional naming convention in spec § 7.11 (added
 
 - Repo: `Bit-Physics`
 - PyPI distribution: `bit-physics-<scope>` (kebab-case, e.g., `bit-physics-testkit`, `bit-physics-mpm-multimaterial`)
-- Python import: `bit_physics_<scope>` (snake_case, e.g., `bit_physics_testkit`, `bit_physics_integrity`)
+- Python import: bare flat-module names shipped by each workspace member's `[tool.hatch.build.targets.wheel] packages = […]` declaration (e.g., the `bit-physics-testkit` PyPI dist ships `capture`, `code_verification`, `determinism`, `equivalence`, `golden`, `property`; the `bit-physics-integrity` PyPI dist ships `integrity`; the `bit-physics-diagnostics` PyPI dist ships `diagnostics`; common-py ships `common_py`). Per the 2026-05-20 reconciliation sweep, there is no `bit_physics_<scope>` import namespace — the snake_case identifier convention applies to module names internally (e.g., `code_verification`), not to a `bit_physics_` prefix.
 - C++ namespace: `bit_physics::<scope>` (mirrors Python)
 - Common-module directory: `common/common-<stack>/` (kebab-case at filesystem level)
 
@@ -139,7 +139,7 @@ This charter is drafted from the spec without re-anchoring against a live repo, 
 - Path for vendored upstreams: top-level `references/<UpstreamName>/` per § 2.8; § 3.4 mentions `common/references/`; same ambiguity.
 - Phase 0's CHANGELOG format, `docs/sim-specs/README.md` index file format, choice of Stack C test framework, choice of Stack D dependency manager (`uv` per § 9.1; verify).
 
-Per the spec § 7.11 naming convention, the `bit_physics` placeholder used throughout this charter resolves to `bit_physics` for Python imports (`bit_physics_*`) and `bit_physics::` for C++ namespaces, mirroring the `Bit-Physics` repo name. The Phase 0 agent commits `bit_physics_testkit` and `bit_physics_integrity` as the Python package names (Decision #24); Phase 1 inherits.
+Per the spec § 7.11 naming convention (as amended by the 2026-05-20 reconciliation sweep — see `docs/_audits/phase-0/reconciliation-sweep-2026-05-20T02-18-17Z.md`), the `bit_physics` placeholder used throughout this charter resolves to `bit_physics` only as the PyPI distribution prefix and the C++ namespace root (`bit_physics::`, mirroring the `Bit-Physics` repo name). Python imports use bare flat-module names declared in each workspace member's `[tool.hatch.build.targets.wheel] packages` — Phase 0 shipped `capture` / `code_verification` / `determinism` / `equivalence` / `golden` / `property` (testkit), `integrity`, and `diagnostics` per phase-0-plan Decision #24 (as amended). Phase 1 inherits this convention; common-py ships `common_py` in this phase.
 
 The agent's first action in Stage 1 is a comprehensive re-anchor against synced HEAD. Discrepancies between charter and HEAD are resolved in HEAD's favor (Hard Rule 2); the agent documents the shift in the running log and continues.
 
@@ -502,7 +502,7 @@ public:
 
 **Implemented in Stage 1; consumed by Stage 2 Python test code (MPM-MULTIMATERIAL) and by Tier 2 checks (IC-5, IC-6, IC-7 consume capture data).**
 
-**Location:** `common/common-py/src/bit_physics_common/capture.py`
+**Location:** `common/common-py/src/common_py/capture.py`
 
 ```python
 from dataclasses import dataclass
@@ -566,7 +566,7 @@ Config from_args(int& argc, char** argv);
 
 ### § 3.4 IC-4 — Determinism Config (Python)
 
-**Location:** `common/common-py/src/bit_physics_common/determinism.py`
+**Location:** `common/common-py/src/common_py/determinism.py`
 
 ```python
 import argparse
@@ -603,7 +603,7 @@ class CheckResult:
 
 ```python
 import numpy as np
-from bit_physics_common._types import CheckResult
+from common_py._types import CheckResult
 
 # checks/no_overlap.py
 def check_no_overlap(positions: np.ndarray, epsilon: float) -> CheckResult: ...
@@ -635,7 +635,7 @@ def check_count_invariance(count_t0: int, count_t1: int) -> CheckResult: ...
 
 ```python
 import numpy as np
-from bit_physics_common._types import CheckResult
+from common_py._types import CheckResult
 
 def check_divergence_free(velocity_field, grid_spacing, tolerance_abs=1e-6) -> CheckResult: ...
 def check_circulation(velocity_field, grid_spacing, loop_specification, expected_value=None, tolerance_rel=1e-3) -> CheckResult: ...
@@ -1313,6 +1313,17 @@ Compare against the Phase 0 baseline at `tools/testkit/mutation/baseline-<UTC>.j
 
 A new mutation-score JSON is committed at `tools/testkit/mutation/phase-1-<UTC>.json` regardless of pass/fail.
 
+STEP 5e — Next-phase preflight dry-run (per spec § 7.5 / Appendix G.7 — closes the LANDING coverage gap that caused the preflight-phase-1 post-landing hotfix; see `docs/_audits/phase-0/hotfix-preflight-phase-1-2026-05-20T01-34-58Z.md` and the addendum to the Phase 0 landing audit). Run:
+
+    python tools/dispatch/preflight-phase.py 2
+
+Expected outcome: every check PASSES except `prior-phase-tag:v0.1.0-phase-1`, which is expected to FAIL because the Phase 1 tag is operator-pushed in STEP 9 and is not present in the repo at audit-write time.
+
+- Only `[FAIL]` is `prior-phase-tag:v0.1.0-phase-1` and every other check is `[PASS]` → record verdict GREEN-PENDING-OPERATOR-TAG-PUSH; proceed to STEP 6.
+- Any other `[FAIL]` (missing path, integrity sub-check, capture descriptor, per-member pytest, etc.) → HALTED-ON-NEXT-PHASE-PRECONDITION. A real Phase 2 precondition is unmet at HEAD; the landing's CONFIRMED verdict cannot ship. Surface to operator with the verbatim preflight output and the specific failing check(s).
+
+Record the full preflight stdout verbatim in the landing audit (STEP 6) under a dedicated `## Next-phase preflight (preflight-phase 2)` subsection. The Phase 0 landing missed this gate and shipped four preflight-phase-1 bugs that the operator surfaced on Phase 1's first dispatch; this step prevents the same class of failure from re-occurring at Phase 2 dispatch time.
+
 STEP 6 — Phase audit. Write docs/_audits/phase-1/landing-<UTC>.md per IC-9 (charter § 3.9):
 
 Front-matter:
@@ -1338,6 +1349,7 @@ Body per IC-9 § 10 sections (charter § 3.9). Include:
 - Cat-X tolerance-budget pass (FACT).
 - Append-only check pass (FACT).
 - Cross-phase replay outcome from Stage 1 Task 1.0 (FACT, referencing Stage 1 checkpoint).
+- **Next-phase preflight (preflight-phase 2) dry-run outcome** (FACT; verbatim stdout per STEP 5e). Required for CONFIRMED verdict. If only the `prior-phase-tag` check failed, record GREEN-PENDING-OPERATOR-TAG-PUSH; any other failure precludes CONFIRMED.
 
 Commit: `phase1(stage3): phase audit`.
 

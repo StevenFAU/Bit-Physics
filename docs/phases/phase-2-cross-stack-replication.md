@@ -2,7 +2,7 @@
 
 > **Repo:** `Bit-Physics` (`git@github.com:StevenFAU/Bit-Physics.git`).
 > **Owner:** Steven Cohen (GitHub: `StevenFAU`).
-> **Spec anchor:** `gpu-sims-design-spec-v2.md` v2.4 (2026-05-18) + spec Appendix D + spec Appendix G + spec Appendix E.
+> **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) (2026-05-18) + spec Appendix D + spec Appendix G + spec Appendix E.
 > **Document type:** Phase plan with three concerns held equal — *architecture* (§1.9 — the socket-level interface specs each stage implements to), *coordination* (§1.4, §2.1 — sequential stage queue and coordinator queue-management), *logistics* (§§1.5–1.8, §2.2–2.12 — acceptance criteria, conventions, decision rules, per-stage prompt template + stage data blocks, landing prompt).
 > **Drafted:** 2026-05-17 (v1); 2026-05-18 (v4 amendments); 2026-05-18 (v5 dispatch-hardening pass).
 > **Authoring posture:** FACT statements are grep-verifiable against the spec (`/docs/architecture.md` once landed). INFERENCE statements are reasoning over FACTs and are tagged. Path-specific repo claims are *anchor sketches* per Convention-K — they must be re-verified against repo HEAD at each stage's start (Task X.1).

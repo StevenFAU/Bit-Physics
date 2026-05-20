@@ -5,7 +5,7 @@
 > **Project:** Bit-Physics portfolio
 > **Repo:** `git@github.com:StevenFAU/Bit-Physics.git`
 > **Owner / human-in-loop:** Steven Cohen
-> **Spec authority:** `gpu-sims-design-spec-v2.md` v2.4 + spec Appendix D + spec Appendix G + spec Appendix E
+> **Spec authority:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) + spec Appendix D + spec Appendix G + spec Appendix E
 > **Plan location:** `docs/phases/phase-3.md` (this file).
 > **Status:** dispatch-ready (contingent on Phase 2 landing CONFIRMED and owner preflight per § 9).
 > **Execution model:** Sequential single-agent. One Claude Code agent role at a time, working through all tasks; one claude.ai chat coordinator. Per Anthropic's long-running-agent guidance, sessions bridge via a progress file + git history.
@@ -326,7 +326,7 @@ Storage: Warp arrays for GPU-resident state. Conversion to NumPy / CPU available
 **Harness mode:** `tools/testkit/equivalence/harness.py` gains mode `"render-similarity"`. Invocation:
 
 ```bash
-python -m tools.testkit.equivalence.harness \
+python -m equivalence.harness \
   --mode render-similarity \
   --left <capture-dir-or-image-sequence> \
   --right <capture-dir-or-image-sequence> \

@@ -2,7 +2,7 @@
 
 > **Project:** Bit-Physics (`git@github.com:StevenFAU/Bit-Physics.git`; owner: Steven Cohen)
 > **Version:** 1.2 (verification-hardening alignment, May 18 2026)
-> **Spec anchor:** `gpu-sims-design-spec-v2.md` v2.4 § 11.7 (Ongoing) + § 11.0 (Pacing under single-agent AI dispatch) + spec Appendix D + spec Appendix G + spec Appendix E.
+> **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) § 11.7 (Ongoing) + § 11.0 (Pacing under single-agent AI dispatch) + spec Appendix D + spec Appendix G + spec Appendix E.
 > **Plan location:** `docs/phases/phase-6-charter.md` (this file).
 > **Status:** Draft charter. Lives as a long-running planning artifact, not a single executable phase.
 > **Execution model:** Multi-track. Each track inside Phase 6 is its own mini-phase with its own dispatch under spec § 7.13's single-agent model (one coordinator chat + one Claude Code agent role per track, running auto-accept, committing direct to `main`, tagged at track close).

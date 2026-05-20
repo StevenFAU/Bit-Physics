@@ -1424,7 +1424,7 @@ The review session:
 2. Probes every anchor sketch in the plan against synced repo HEAD; flags those that don't resolve.
 3. Reads every INFERENCE tag in the plan and assesses whether it follows from the FACTs it cites; flags weak inferences.
 4. Spot-checks plan section-numbering and cross-references for consistency.
-5. Reads the corresponding spec sections in `gpu-sims-design-spec-v2.md` and confirms the phase plan does not contradict the spec.
+5. Reads the corresponding sections in this spec (`docs/architecture.md`) and confirms the phase plan does not contradict the spec.
 6. Lands a `docs/_audits/phase-<N>/pre-dispatch-review-<UTC>.md` audit with verdict CONFIRMED / SHIFTED / REFUTED / BLOCKED.
 
 The phase plan is not dispatched until the pre-dispatch review verdict is CONFIRMED or SHIFTED-with-acceptable-deltas. This adds roughly 1–2 hours per phase open in human-attention cost; it is cheap relative to the cost of a phase that lands on a defective plan.

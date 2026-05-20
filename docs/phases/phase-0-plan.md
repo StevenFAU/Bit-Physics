@@ -1,7 +1,7 @@
 # Phase 0 — Foundation: Coordinator + Build-Agent Plan
 
 > **Version:** 0.10 (consolidation — May 18 2026)
-> **Subject spec:** `gpu-sims-design-spec-v2.md` v2.4 (the design spec; vendored into the repo at `docs/architecture.md` by Block 1, including its Appendices D/E/F/G as part of the same file)
+> **Subject spec:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4 and vendored by Block 1, including its Appendices D/E/F/G as part of the same file; the upstream draft was retired post-Phase 0 consolidation on 2026-05-20)
 > **Subject repo:** `git@github.com:StevenFAU/Bit-Physics.git`
 > **Drafted:** 2026-05-17 (v0.7); 2026-05-18 (v0.8 → v0.9 → v0.10 amendments)
 > **Posture:** This plan operationalizes spec § 11.1 for sequential single-agent execution. **One claude.ai chat (the coordinator) and one Claude Code agent role per phase.** The agent runs with **auto-accept on**, reads this whole plan plus the spec at `docs/architecture.md` (post-Block-1) or the planning-folder spec (pre-Block-1), and works through all nine blocks in sequence — committing directly to `main` (trunk-based per spec § 7.12), reporting at each block close and at phase landing. Context-spanning sessions are supported: if context fills per spec Appendix D § D.9, the agent writes a continuation cue to `docs/_audits/phase-0/progress.md` and the coordinator dispatches a continuation session.
@@ -49,7 +49,7 @@ The design spec is the contract; this plan is the implementation strategy.
 
 | Artifact | Path | Role |
 |---|---|---|
-| Design spec | `/mnt/project/gpu-sims-design-spec-v2.md` (vendored into repo at `docs/design-spec-v2.md` by Block 1) | Authoritative contract |
+| Design spec | `docs/architecture.md` (the sole canonical location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4 and consolidated into the repo by commit `156d90c` on 2026-05-20 — see `docs/_audits/phase-0/reconciliation-sweep-2026-05-20T02-18-17Z.md` § 4) | Authoritative contract |
 | This plan | `phase-0-plan.md` | Implementation strategy for Phase 0 |
 | Agent reports (output) | `docs/_audits/phase-0/block-<n>-<name>-report.md` | One per block |
 | Phase-0 retro (output) | `docs/_audits/phase-0/landing-<UTC>.md` | Block 9 (LANDING) writes |
@@ -410,7 +410,7 @@ Bit-Physics/
 │   ├── shared-invariants.md   # Block 1 (committed verbatim from planning folder)
 │   ├── agent-playbook.md      # Block 1 (committed verbatim from planning folder)
 │   ├── dependencies.md        # Block 1 (consolidates external-dep pins; per phase append)
-│   ├── design-spec-v2.md      # Block 1 (vendored)
+│   # `architecture.md` IS the spec (Block 1 vendored the upstream draft; post-2026-05-20 consolidation it is the sole canonical location)
 │   ├── common/ts.md           # Block 7
 │   ├── diagnostics/           # Block 6
 │   ├── integrity/             # Block 5
@@ -651,7 +651,7 @@ You are the Phase 0 build agent. This is Block 1 (FOUNDATION) — the first of n
 
 **Action #1 (the universal preflight):** Phase 0 is a special case — there's no prior phase tag and the repo is empty/near-empty. Block 1 establishes what preflight checks for. Skip the preflight script for Block 1 only; from Block 2 onward, run `python tools/dispatch/preflight-phase.py 0` to verify Block N-1's state (you'll commit the script in Block 1 deliverable #10).
 
-**Source of truth:** `gpu-sims-design-spec-v2.md` v2.4 (the design spec; vendored at `docs/architecture.md` by deliverable #6 of this block). Read in full: Front matter, Part I, Part II § 2.7 (capture format), Part II § 2.8 (reference vendoring), Part II § 2.12 (schema bump policy), Part II §§ 2.13/2.14/2.15 (mutation testing, PBT, perf-ledger — v2.4 additions), Part III § 3.1 (Layer 0 directory), Part III § 3.2 (integrity toolkit with adversarial fixtures — v2.4), Part VII (operating conventions; full text in Appendix G), Part VIII § 8.1 (documentation hierarchy), Appendix B (convention quick-lookup), Appendix C (glossary), Appendix D (shared invariants), Appendix E (agent playbook), Appendix F (dispatch operations), Appendix G (convention catalog full text — including G.7.5 TDD mechanical anchors, v2.4), § 11.0 (pacing), § 11.1 items 0.1–0.3.
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4 and vendored by Block 1). Read in full: Front matter, Part I, Part II § 2.7 (capture format), Part II § 2.8 (reference vendoring), Part II § 2.12 (schema bump policy), Part II §§ 2.13/2.14/2.15 (mutation testing, PBT, perf-ledger — v2.4 additions), Part III § 3.1 (Layer 0 directory), Part III § 3.2 (integrity toolkit with adversarial fixtures — v2.4), Part VII (operating conventions; full text in Appendix G), Part VIII § 8.1 (documentation hierarchy), Appendix B (convention quick-lookup), Appendix C (glossary), Appendix D (shared invariants), Appendix E (agent playbook), Appendix F (dispatch operations), Appendix G (convention catalog full text — including G.7.5 TDD mechanical anchors, v2.4), § 11.0 (pacing), § 11.1 items 0.1–0.3.
 
 **Also read (in the spec):** Appendix D (shared invariants), Appendix E (agent playbook), Appendix F (dispatch operations), Appendix G (convention catalog). These are part of the spec you vendor as deliverable #6; they ship to the repo at `docs/architecture.md` as Appendices D/E/F/G.
 
@@ -676,7 +676,7 @@ You are the Phase 0 build agent. This is Block 1 (FOUNDATION) — the first of n
 
 5. **Architecture pointer.** The spec lives at `docs/architecture.md` after deliverable #6 below. The repo-root `README.md` points to it.
 
-6. **Vendor the design spec.** Copy `gpu-sims-design-spec-v2.md` into the repo at `docs/architecture.md`. This brings the spec — including Appendices D (shared invariants), E (agent playbook), F (dispatch operations), G (convention catalog) — into the repo as the single canonical reference document. Phase plans reference it as `docs/architecture.md` plus the relevant appendix.
+6. **Vendor the design spec.** Copy the upstream draft (originally titled `gpu-sims-design-spec-v2.md` v2.4) into the repo at `docs/architecture.md`. This brings the spec — including Appendices D (shared invariants), E (agent playbook), F (dispatch operations), G (convention catalog) — into the repo as the single canonical reference document. Phase plans reference it as `docs/architecture.md` plus the relevant appendix. (Historical note added 2026-05-20: post-Phase 0 the upstream draft was retired as a separate artifact; `docs/architecture.md` IS the spec, with no source/vendor pair.)
 
 7. **(Removed in v0.10.)** Shared invariants are now Appendix D of `docs/architecture.md` per deliverable #6. No separate file.
 
@@ -1240,7 +1240,7 @@ End of embedded preflight script.
 
 You are the Phase 0 build agent. This is Block 2 (MMS) — the Method of Manufactured Solutions pipeline for the heat equation 1D.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part II § 2.2 (MMS methodology), § 2.10 (Layer 0 → Layer N gate); skim § 2.4 for context.
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part II § 2.2 (MMS methodology), § 2.10 (Layer 0 → Layer N gate); skim § 2.4 for context.
 
 **Also read:** `phase-0-plan.md` § 3.1 (your block's scope), § 5 (report schema).
 
@@ -1290,7 +1290,7 @@ You are the Phase 0 build agent. This is Block 2 (MMS) — the Method of Manufac
 
 You are the Phase 0 build agent. This is Block 3 (HARNESSES) — the determinism and cross-stack equivalence harnesses.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part II § 2.5 (determinism), § 2.6 (cross-stack equivalence + the tolerance table), § 2.7 (capture format).
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part II § 2.5 (determinism), § 2.6 (cross-stack equivalence + the tolerance table), § 2.7 (capture format).
 
 **Also read:** `phase-0-plan.md` § 3.3.2 + § 3.3.3 (the public APIs you ship), § 5 (report schema).
 
@@ -1341,7 +1341,7 @@ You are the Phase 0 build agent. This is Block 3 (HARNESSES) — the determinism
 
 You are the Phase 0 build agent. This is Block 4 (VENDORING) — vendoring the first upstream (SPlisHSPlasH) and the first golden-value table (cubic-spline kernel).
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part II § 2.4 (golden values), § 2.8 (reference vendoring); skim Appendix A for the SPlisHSPlasH citation.
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part II § 2.4 (golden values), § 2.8 (reference vendoring); skim Appendix A for the SPlisHSPlasH citation.
 
 **Also read:** `phase-0-plan.md` § 3.3.4 (the public APIs you ship — note that Block 5 will import your reference implementation directly).
 
@@ -1411,7 +1411,7 @@ You are the Phase 0 build agent. This is Block 4 (VENDORING) — vendoring the f
 
 You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity toolkit with all five categories of check.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part III § 3.2 (Layer 1 — integrity, categories, failure modes, directory, suppression). Skim Part VII (the conventions you enforce).
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part III § 3.2 (Layer 1 — integrity, categories, failure modes, directory, suppression). Skim Part VII (the conventions you enforce).
 
 **Also read:** `phase-0-plan.md` § 3.3.5 (your public API), § 3.3.4 (Block 4's API you consume).
 
@@ -1530,7 +1530,7 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
 
 You are the Phase 0 build agent. This is Block 6 (DIAGNOSTICS) — the diagnostic toolchain (Tier 1 universal + Tier 2 scalar-field).
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part III § 3.3 (Layer 2 — diagnostics, three tiers, directory). Skim Part II § 2.7 (capture format) and § 2.5 (determinism).
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part III § 3.3 (Layer 2 — diagnostics, three tiers, directory). Skim Part II § 2.7 (capture format) and § 2.5 (determinism).
 
 **Also read:** `phase-0-plan.md` § 3.3.6 (your public APIs).
 
@@ -1579,7 +1579,7 @@ You are the Phase 0 build agent. This is Block 6 (DIAGNOSTICS) — the diagnosti
 
 You are the Phase 0 build agent. This is Block 7 (COMMON-TS) — the first common module (TypeScript/WebGPU), plus the cross-stack capture invariance gate.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part III § 3.4 (Layer 3 — common infrastructure); Part IV § 4.2 (Stack B — TS/WebGPU). Skim § 7.8 (CI does not exercise display surfaces needing real GPUs).
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part III § 3.4 (Layer 3 — common infrastructure); Part IV § 4.2 (Stack B — TS/WebGPU). Skim § 7.8 (CI does not exercise display surfaces needing real GPUs).
 
 **Also read:** `phase-0-plan.md` § 3.3.7 (TS public API), § 3.5 (cross-language interop), § 4 (h5wasm is the verified HDF5 strategy).
 
@@ -1636,7 +1636,7 @@ You are the Phase 0 build agent. This is Block 7 (COMMON-TS) — the first commo
 
 You are the Phase 0 build agent. This is Block 8 (RD-2D) — the integration sim. Your job is to prove the foundation works by taking a single stub simulation (reaction-diffusion 2D on Stack B) through the full TDD cycle, exercising every gate Phase 0 established.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md`. Read in full: Part I § 1.3 (TDD as load-bearing; v2.4 step 4 failing-output capture), Part II (every section — your sim exercises code verification, determinism, diagnostics, PBT, perf-ledger), Part III § 3.5 (Layer 4 thirteen-gate acceptance per v2.4 expansion), Part IV § 4.2 (Stack B), Part V § 5.2.1 (reaction-diffusion-2d).
+**Source of truth:** `docs/architecture.md` (the sole canonical spec location; originally drafted as `gpu-sims-design-spec-v2.md` v2.4). Read in full: Part I § 1.3 (TDD as load-bearing; v2.4 step 4 failing-output capture), Part II (every section — your sim exercises code verification, determinism, diagnostics, PBT, perf-ledger), Part III § 3.5 (Layer 4 thirteen-gate acceptance per v2.4 expansion), Part IV § 4.2 (Stack B), Part V § 5.2.1 (reaction-diffusion-2d).
 
 **Also read:** `phase-0-plan.md` § 3 (the live state of everything you'll consume), § 5 (report schema).
 
@@ -1746,7 +1746,7 @@ You are the Phase 0 build agent. This is Block 8 (RD-2D) — the integration sim
 
 You are the Phase 0 build agent. This is Block 9 (LANDING) — the final block. No new sim code; your job is to (a) verify everything blocks 1–8 shipped, (b) activate the CI workflows that were gated, (c) merge top-level deps, (d) construct the final commit chain (preserving the TDD git history from Block 8), and (e) write the phase-0 retro.
 
-**Source of truth:** `gpu-sims-design-spec-v2.md` (vendored at `docs/design-spec-v2.md`).
+**Source of truth:** `docs/architecture.md` (originally drafted as `gpu-sims-design-spec-v2.md` v2.4; the sole canonical location post-2026-05-20 consolidation).
 
 **Also read:** All eight prior block reports at `docs/_audits/phase-0/block-{1..8}-*-report.md`. Read each report's YAML front-matter programmatically; that's how you know what to activate and merge.
 
@@ -1865,7 +1865,7 @@ Every decidable Phase 0 choice is locked here. If something needs to change, cha
 |---|---|---|
 | 1 | Repo URL | `git@github.com:StevenFAU/Bit-Physics.git` |
 | 2 | Owner name (CITATION.cff) | Steven Cohen |
-| 3 | Design spec in-repo location | `docs/design-spec-v2.md` |
+| 3 | Design spec in-repo location | `docs/architecture.md` (the sole canonical location; the `docs/design-spec-v2.md` form referenced in earlier plan drafts was never realized — Block 1 vendored as `architecture.md`) |
 | 4 | Execution model | **Sequential, one build-agent role, one coordinator chat** |
 
 ### From spec / established context

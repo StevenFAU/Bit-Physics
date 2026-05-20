@@ -2,7 +2,7 @@
 
 > **Project:** Bit-Physics (`git@github.com:StevenFAU/Bit-Physics.git`; owner: Steven Cohen)
 > **Version:** 8.0 (dispatch-hardening pass, May 18 2026)
-> **Spec anchor:** `gpu-sims-design-spec-v2.md` v2.4 Part XI § 11.5 items 4.0 + 4.1–4.27 + spec § 12.8 (hardware floor) + § 12.9 (paper vendoring) + spec § 2.13/2.14/2.15 (mutation testing, PBT, perf-ledger; v2.4 additions) + spec § 1.3 step 4 (failing-tests output hash) + spec § 2.7/§ 2.12 (schema-version + backward-compat corpus); also Part II (verification), Part III §§ 3.1–3.7 (layered architecture), Part VI (cross-cutting axes), Part VII (conventions), Part IX (build/CI). Plus spec Appendix D + spec Appendix G + spec Appendix E.
+> **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) Part XI § 11.5 items 4.0 + 4.1–4.27 + spec § 12.8 (hardware floor) + § 12.9 (paper vendoring) + spec § 2.13/2.14/2.15 (mutation testing, PBT, perf-ledger; v2.4 additions) + spec § 1.3 step 4 (failing-tests output hash) + spec § 2.7/§ 2.12 (schema-version + backward-compat corpus); also Part II (verification), Part III §§ 3.1–3.7 (layered architecture), Part VI (cross-cutting axes), Part VII (conventions), Part IX (build/CI). Plus spec Appendix D + spec Appendix G + spec Appendix E.
 > **Status:** dispatch-ready (contingent on Phase 3 landing + owner pre-flights per § 2).
 > **Audience:** Phase 4 coordinator (one claude.ai chat for the whole phase) and one Claude Code agent role (auto-accept; may span multiple sessions if context fills).
 > **Execution model:** **One coordinator chat. One Claude Code agent role. 35 stages dispatched sequentially within that role**. The agent reads this entire document, then works through Stage 1 → Stage 35 in order, committing directly to `main` (trunk-based, spec § 7.12), reporting back to the coordinator at each stage's close and at phase landing. Auto-accept means the human doesn't approve per-edit; agent self-validates per the stage's acceptance criteria.
@@ -2698,13 +2698,13 @@ Step 1 — Re-anchor:
    - `docs/common/3dgs.md` covers `common_3dgs.training`, `common_3dgs.splatting`,
      `common_3dgs.viewer`, `common_3dgs.coupling`
    - `docs/testkit/gradient-verification.md` covers
-     `tools.testkit.code_verification.gradient.harness`
-   - `docs/testkit/render-similarity.md` covers `tools.testkit.render_similarity`
+     `code_verification.gradient.harness`
+   - `docs/testkit/render-similarity.md` covers `render_similarity`
    - `docs/testkit/variant-equivalence.md` covers
-     `tools.testkit.equivalence.variant.harness`
+     `equivalence.variant.harness`
    - `docs/diagnostics/sparse-topology.md` covers
-     `tools.diagnostics.tier2.scalar_field.sparse_topology` and
-     `tools.diagnostics.tier2.vector_field.sparse_topology`
+     `diagnostics.tier2.scalar_field.sparse_topology` and
+     `diagnostics.tier2.vector_field.sparse_topology`
 
    Step 1.10b (one-shot import smoke). As a closing-audit safety net,
    the auditor runs once:
@@ -2728,16 +2728,16 @@ Step 1 — Re-anchor:
      CaptureLightningDataModule, default_trainer)
    from common_warp.learned import (warp_to_torch, torch_to_warp,
      PhysicsNeMoAdapter)
-   from tools.testkit.code_verification.gradient.harness import (
+   from code_verification.gradient.harness import (
      verify_sim_gradients, GradientVerificationReport)
-   from tools.testkit.render_similarity import (psnr, ssim, lpips,
+   from render_similarity import (psnr, ssim, lpips,
      ms_ssim, RenderSimilarityReport)
-   from tools.testkit.equivalence.variant.harness import (
+   from equivalence.variant.harness import (
      VariantToleranceSpec, compare_captures, EquivalenceReport)
-   from tools.diagnostics.tier2.scalar_field.sparse_topology import (
+   from diagnostics.tier2.scalar_field.sparse_topology import (
      active_cell_count, sparsity_ratio, topology_change_detected,
      mask_diff, MaskDiffReport)
-   from tools.diagnostics.tier2.vector_field.sparse_topology import (
+   from diagnostics.tier2.vector_field.sparse_topology import (
      active_cell_count, sparsity_ratio, topology_change_detected,
      mask_diff, MaskDiffReport)
    from lightning.pytorch import LightningModule, LightningDataModule, Trainer
@@ -2756,7 +2756,7 @@ Step 1 — Re-anchor:
    Plus schema-version compatibility smoke (per amendment 5 above):
 
    # WU-A's extension of common-* write_capture should accept 1.1.0:
-   import tools.testkit.schemas as schemas
+   import schemas as schemas
    from common_warp.capture import write_capture as warp_write
    from common_py.capture import write_capture as py_write
    # Each write_capture's docstring/signature documents accepting any
