@@ -234,6 +234,41 @@ def _remove_worktree(repo_root: Path, target: Path) -> None:
         shutil.rmtree(target, ignore_errors=True)
 
 
+def _resolve_cmd_for_worktree(cmd: list[str], worktree: Path) -> list[str]:
+    """Substitute the outer ``sys.executable`` token with the worktree's interpreter.
+
+    The cross-phase replay materializes a worktree at the prior-phase
+    tag, then runs each gate's argv with ``cwd=worktree``. Argvs that
+    use ``uv run`` resolve the worktree's local ``.venv`` correctly
+    because ``uv`` inspects the cwd. Argvs that use ``sys.executable``
+    directly do NOT: ``sys.executable`` is the OUTER repository's
+    interpreter, and ``python -m integrity`` (or
+    ``python -m integrity.scripts.gate_helpers …``) under that
+    interpreter imports the OUTER repository's integrity package
+    (editable-installed in the outer ``.venv``), not the worktree's
+    tagged source. That binding turns the cross-phase replay into a
+    HEAD-tool-against-tag-content category error — see
+    ``docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-blocked-replay-2026-05-20T18-52-10Z.md``
+    for the failure mode that surfaced this defect (HEAD's
+    ``_SUBDIRS_PICKED_UP`` extension landing post-tag caused the
+    integrity gate to false-FAIL on v0.1.0-phase-1).
+
+    The fix: when the worktree carries a uv-managed ``.venv`` (i.e.
+    ``_checkout_worktree`` ran ``uv sync`` successfully), every
+    ``sys.executable`` token in the argv is rewritten to the
+    worktree's ``.venv/bin/python``. ``-m integrity`` under that
+    interpreter then resolves to the worktree's tagged source via
+    the worktree's ``.venv/lib/.../site-packages``. Stub fixtures
+    (the unit tests under ``tools/integrity/tests/``) ship without a
+    ``.venv``; for those the original argv is returned unchanged so
+    the test path remains exercisable.
+    """
+    worktree_python = worktree / ".venv" / "bin" / "python"
+    if not worktree_python.exists():
+        return cmd
+    return [str(worktree_python) if tok == sys.executable else tok for tok in cmd]
+
+
 def replay(
     prior_phase: str,
     audit_path: Path,
@@ -259,7 +294,10 @@ def replay(
                     )
                 )
                 continue
-            proc = subprocess.run(cmd, cwd=worktree, capture_output=True, text=True, check=False)
+            resolved_cmd = _resolve_cmd_for_worktree(cmd, worktree)
+            proc = subprocess.run(
+                resolved_cmd, cwd=worktree, capture_output=True, text=True, check=False
+            )
             passed = proc.returncode == 0
             discrepancy = None
             if (
