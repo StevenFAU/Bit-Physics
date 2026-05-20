@@ -1,0 +1,12 @@
+        discrepancy: unknown gate 'property'
+        discrepancy: unknown gate 'mutation'
+        discrepancy: unknown gate 'tolerance-budget'
+  PASS  gate=integrity audit_verdict=SHIFTED
+  FAIL  gate=pytest audit_verdict=SHIFTED
+  PASS  gate=equivalence audit_verdict=SHIFTED
+  PASS  gate=determinism audit_verdict=SHIFTED
+  PASS  gate=perf-ledger audit_verdict=SHIFTED
+  FAIL  gate=property audit_verdict=SHIFTED
+  FAIL  gate=mutation audit_verdict=SHIFTED
+  FAIL  gate=tolerance-budget audit_verdict=SHIFTED
+summary: prior_phase=v0.0.0-phase-0 ok=False

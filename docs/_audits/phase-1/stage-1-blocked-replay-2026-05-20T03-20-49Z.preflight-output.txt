@@ -1,0 +1,27 @@
+=== Phase 1 preflight ===
+  [PASS] prior-phase-tag:v0.0.0-phase-0
+  [PASS] path-exists:docs/architecture.md
+  [PASS] path-exists:docs/glossary.md
+  [PASS] path-exists:tools/testkit/schemas/capture-v1.json
+  [PASS] path-exists:tools/testkit/capture/__init__.py
+  [PASS] path-exists:tools/testkit/determinism/harness.py
+  [PASS] path-exists:tools/testkit/equivalence/harness.py
+  [PASS] path-exists:tools/testkit/equivalence/tolerance.toml
+  [PASS] path-exists:tools/testkit/code_verification/mms
+  [PASS] path-exists:tools/testkit/golden/tables
+  [PASS] path-exists:tools/testkit/probes/template.md
+  [PASS] path-exists:tools/integrity/integrity
+  [PASS] path-exists:tools/diagnostics/diagnostics/tier1
+  [PASS] path-exists:tools/diagnostics/diagnostics/tier2/scalar_field
+  [PASS] path-exists:common/common-ts
+  [PASS] path-exists:packages/reaction-diffusion-2d
+  [PASS] path-exists:references/SPlisHSPlasH
+  [PASS] path-exists:captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json
+  [PASS] path-exists:captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5
+  [FAIL] integrity-all-green
+         command not found: python
+  [PASS] pytest-testkit-green
+  [PASS] pytest-integrity-green
+  [PASS] pytest-diagnostics-green
+  [PASS] pytest-reaction-diffusion-2d-green
+=== FAILED ===
