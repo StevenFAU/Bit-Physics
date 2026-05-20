@@ -1,11 +1,30 @@
-"""boids-3d — Phase 1 Stage 2 TDD bootstrap.
+"""boids-3d — agent-based sub-phase implementation.
 
-Implementation deferred to Phase 2+ per spec § 2.5 and charter § 7.5.
-The public surface is intentionally empty so the failing tests under
-``tests/`` exercise the Phase 2+ contract via ``ModuleNotFoundError``
-on the deferred submodules.
+Public surface per IC-8 probe report § 5 at
+``tools/testkit/probes/reports/boids-3d.md``:
+
+- ``reference``: Reynolds 1987/1999 per-step update on the named-agent
+  fixture (``step_one``) and on flock arrays (``evolve``); canonical
+  parameter set.
+- ``sim.sim_runner_seeded``: testkit ``SimRunner`` Protocol; produces
+  the 1000-agent canonical capture. ``sim.sim_runner_seeded_3agent``
+  produces the canonical 3-agent capture (the two Appendix D § D.2.3
+  descriptors).
+- ``invariants``: Hypothesis-decorated property tests for spec § 6.6.
 """
 
 from __future__ import annotations
 
-__all__: list[str] = []
+from .invariants import particle_count_invariant, v_max_clamp_respected
+from .reference import canonical_params, evolve, step_one
+from .sim import sim_runner_seeded, sim_runner_seeded_3agent
+
+__all__ = [
+    "canonical_params",
+    "evolve",
+    "particle_count_invariant",
+    "sim_runner_seeded",
+    "sim_runner_seeded_3agent",
+    "step_one",
+    "v_max_clamp_respected",
+]

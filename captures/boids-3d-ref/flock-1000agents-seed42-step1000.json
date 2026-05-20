@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      1000,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.05,
+      "ic_jitter_scale": 1e-06,
+      "n_agents": 1000,
+      "perception_radius": 5.0,
+      "v_max": 3.0,
+      "w_align": 1.0,
+      "w_cohere": 1.0,
+      "w_sep": 1.5
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:7e9064aff95e3672b0ffa9385d21cdbefbb0dc2c250b99c25b33cceec5f13ec0",
+    "format": "hdf5",
+    "path": "flock-1000agents-seed42-step1000.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 17.58545975900779
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "agent-based",
+    "name": "boids-3d",
+    "variant": "reynolds-1987-canonical"
+  },
+  "stack": {
+    "build_id": "sub-phase-agent-based",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

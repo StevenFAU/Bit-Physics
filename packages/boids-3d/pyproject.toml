@@ -1,11 +1,18 @@
 [project]
 name = "boids-3d"
 version = "0.0.0"
-description = "Phase 1 Stage 2 — agent-based boids-3d sim (TDD bootstrap)."
+description = "Agent-based sub-phase — boids-3d sim (Reynolds 1987; NumPy reference + WGSL Stack B)."
 readme = "README.md"
 license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -20,3 +27,7 @@ packages = ["boids_3d"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }

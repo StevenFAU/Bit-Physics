@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/boids-3d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[A] PASSED [ 10%]
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[B] PASSED [ 20%]
+packages/boids-3d/tests/test_3agent_golden.py::test_3agent_step1_velocity_position[C] PASSED [ 30%]
+packages/boids-3d/tests/test_determinism.py::test_run_twice_bit_exact PASSED [ 40%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 50%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED [ 60%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_no_overlap_optional PASSED [ 70%]
+packages/boids-3d/tests/test_diagnostics.py::test_tier2_particle_neighbor_list_integrity PASSED [ 80%]
+packages/boids-3d/tests/test_pbt_invariants.py::test_v_max_clamp_respected PASSED [ 90%]
+packages/boids-3d/tests/test_pbt_invariants.py::test_particle_count_invariant PASSED [100%]
+
+============================= 10 passed in 44.55s ==============================
