@@ -1,0 +1,29 @@
+=== Task 0.3 — SPlisHSPlasH vendored-manifest verification ===
+Date: 2026-05-20T22:11:36Z
+HEAD: 7ad45653c4ab480232e3f5edb5adb552cbdea053
+
+--- Verification checklist (charter § 1.6 / § 4.1) ---
+(a) [upstream].sha at HEAD:
+sha          = "6bff55a6eaf14083d34650f22a268ce156b62b54"
+    Expected: sha = "6bff55a6eaf14083d34650f22a268ce156b62b54"
+
+(b) [scope].used_by_sims at HEAD:
+used_by_sims    = ["sph-water"]  # Phase 1 Stage 2 TDD bootstrap (commit cd20faa); per-sim implementation phase adds the Vulkan/C++ implementation that consumes the vendored cubic-spline kernels.
+    Operator Item 2 routing: bare slug "sph-water" is functionally correct;
+    spec § 9.2 prefixed example "particle-fluid/sph-water" is illustrative not mandatory.
+    Format drift recorded as inherited-shift finding; no amendment.
+
+(c) [scope].used_by_checks at HEAD:
+used_by_checks  = ["cat1.upstream-citation", "cat3.cubic-kernel"]
+    Expected to contain: cat3.cubic-kernel
+
+(d) On-disk vendored tree:
+    PASS: references/SPlisHSPlasH/LICENSE exists (sha256=b2213790912208c7eb78d7a90279eed306160d3b3dcace89dd71dc65863cd54c)
+    PASS: references/SPlisHSPlasH/UPSTREAM_README.md exists (sha256=4990b5b07421365c192f42736d26405aa5bb71fae02fc67dc4242d1f7822dc25)
+    PASS: references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.h exists (sha256=898f89da732165bb46106e7c9b02946b400999254725982f5815666a7ef3d35f)
+    PASS: references/SPlisHSPlasH/SPlisHSPlasH/SPHKernels.cpp exists (sha256=82092c628d8791c6da221fd3b396ed9c5008285e051b1a7df67b71fd6115f5d2)
+
+--- Verdict ---
+PASS: All four fields (a)–(d) verified at HEAD.
+DRIFT: [scope].used_by_sims uses bare slug "sph-water" rather than spec § 9.2 prefixed form "particle-fluid/sph-water".
+      Per operator Item 2 routing: NOT amended; recorded as inherited-shift finding.
