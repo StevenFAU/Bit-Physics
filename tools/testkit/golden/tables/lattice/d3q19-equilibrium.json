@@ -1,0 +1,62 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lattice-boltzmann-d3q19-equilibrium-qian-1992",
+  "category": "lattice",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/d3q19.md",
+    "upstream": "Qian-d-Humieres-Lallemand-1992",
+    "upstream_sha": "n/a-no-vendored-code-per-R8-amendment",
+    "upstream_path": "n/a-no-vendored-code-per-R8-amendment"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "d3q19-equilibrium-rho1-ux0p1",
+        "rho": 1.0,
+        "u": [0.1, 0.0, 0.0],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..6=face neighbors (±1,0,0)(0,±1,0)(0,0,±1); 7..10=xy edges; 11..14=xz edges; 15..18=yz edges (see derivation.md § 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.3283333333333333,
+          0.07388888888888889,
+          0.04055555555555555,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.10000000000000002,
+        "momentum_y": 0.0,
+        "momentum_z": 0.0
+      },
+      "independent_reference": {
+        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/d3q19.md §§ 1-5: Gauss-Hermite quadrature on the D3Q19 sub-lattice gives weights {1/3, 1/18, 1/36}, sound speed c_s² = 1/3, and the second-order equilibrium f_i^eq = w_i ρ (1 + c·u/c_s² + (c·u)²/(2 c_s⁴) - u²/(2 c_s²)). (2) Qian, Y. H., d'Humières, D. & Lallemand, P. (1992), 'Lattice BGK Models for Navier-Stokes Equation', Europhysics Letters 17 (6), 479-484, DOI 10.1209/0295-5075/17/6/001, § 2 eq. (3a) plus Table 1 — original D3Q19 specification with weights and equilibrium identical. (3) Krüger et al. (2017), 'The Lattice Boltzmann Method: Principles and Practice', Springer, ISBN 978-3-319-44649-3, Ch. 3 Table 3.4 / Appendix A.2 — textbook reproduction with identical numerical values. (4) Python re-derivation by tools/testkit/golden/generator/d3q19_equilibrium.py.",
+        "doi": "10.1209/0295-5075/17/6/001",
+        "derived_by": "hand-derivation cross-checked against Qian 1992 § 2 eq. (3a), Krüger 2017 Ch. 3 Table 3.4, and Python re-derivation.",
+        "expected": {
+          "density_moment": 1.0,
+          "momentum_x_modulo_fp_eps": 0.1
+        }
+      }
+    }
+  ]
+}

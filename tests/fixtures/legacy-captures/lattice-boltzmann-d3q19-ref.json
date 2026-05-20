@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0.0",
+  "sim": {"name": "lattice-boltzmann-d3q19", "category": "lattice", "variant": "bgk-d3q19-qian-1992"},
+  "stack": {"name": "cpp-vulkan", "version": "0.0.0", "build_id": "phase-1-stage-2-placeholder"},
+  "config": {
+    "tier": "test",
+    "dims": [32, 32, 32],
+    "dtype": "f64",
+    "seed": 42,
+    "params": {"tau": 0.8, "n_steps": 5000, "boundary": "bounce-back", "scenario": "poiseuille-channel"}
+  },
+  "run": {"step_count": 5000, "capture_interval": 500, "wall_clock_seconds": 0.0, "start_utc": "2026-05-20T00:00:00Z"},
+  "payload": {"format": "raw-binary-v1", "path": "lattice-boltzmann-d3q19-ref.h5", "checksum": "sha256:placeholder-no-payload-at-phase-1-stage-2"},
+  "determinism": {"claimed": "bit-exact-effort-same-stack-same-hw", "atomic_ops": false, "subgroup_ops": false},
+  "_phase_1_stage_2_note": "Placeholder for canonical capture descriptor 'poiseuille-channel-32cube-seed42-step5000'. Not in R8 amendment list; structured-name convention."
+}
