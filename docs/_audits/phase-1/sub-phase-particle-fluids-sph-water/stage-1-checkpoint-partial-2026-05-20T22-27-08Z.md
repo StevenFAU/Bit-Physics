@@ -6,8 +6,8 @@ artifact_id: particle-fluids-sph-water-stage-1
 stage: 1-implementation
 subject: "Particle-fluids sph-water sub-phase Stage 1 partial-needs-continuation checkpoint (R12 STOP-AND-SURFACE on canonical-capture size)"
 verdict-state: partial-needs-continuation
-head_sha: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
-head_sha_at_checkpoint: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
+head_sha: bf6ca48791dfaf3b06a92a8f70f5968940c58454
+head_sha_at_checkpoint: bf6ca48791dfaf3b06a92a8f70f5968940c58454
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -315,6 +315,6 @@ continuation session.
 
 Convention #12 SHA back-fill at close per sub-phase plan § 4.2
 closing / § 10 discipline: a NEW commit (never `--amend`) will
-replace the `PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE`
+replace the `bf6ca48791dfaf3b06a92a8f70f5968940c58454`
 placeholders in this audit's front-matter after the closing commit
 lands.
