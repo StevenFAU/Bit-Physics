@@ -38,6 +38,12 @@ from ..common.repo import find_repo_root
 
 _FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
+# A conceptual phase handle such as "phase-0" or "phase-12". Resolved at
+# replay time to the highest-semver landed tag matching the same N.
+_PHASE_HANDLE_RE = re.compile(r"^phase-(\d+)$")
+# The Phase-0 plan's tag template: vX.Y.Z-phase-N (e.g. v0.0.0-phase-0).
+_SEMVER_PHASE_TAG_RE = re.compile(r"^v(\d+)\.(\d+)\.(\d+)-phase-(\d+)$")
+
 # sys.executable is the absolute path to the interpreter running this
 # script. Using it directly in subprocess argv avoids the "python not on
 # PATH" failure mode the old hardcoded `"python"` token triggered on
@@ -134,6 +140,53 @@ def _audit_verdict_for_gate(fm: dict[str, object], gate: str) -> str | None:
     return verdict if isinstance(verdict, str) else None
 
 
+def _resolve_phase_handle(handle: str, repo_root: Path) -> str:
+    """Resolve a ``--prior-phase`` value to a concrete git tag.
+
+    Two input shapes are accepted:
+
+    1. **Conceptual handle** — ``phase-N`` (where N is a non-negative
+       integer). The function lists ``git tag`` entries matching the
+       Phase-0-plan template ``vX.Y.Z-phase-N``, parses each as a
+       (major, minor, patch) tuple, and returns the literal tag with
+       the highest semver. Raises ``ValueError`` if no matching tag
+       exists, so callers do not silently fall back to a non-existent
+       ref.
+
+    2. **Literal git ref** — any string that does NOT match the
+       ``phase-N`` regex (including explicit landed tags such as
+       ``v0.0.0-phase-0`` or commit SHAs) is returned unchanged. This
+       preserves backward compatibility with callers that resolve the
+       tag themselves (per Hard-Rule-2 / Convention-M: HEAD wins).
+    """
+    m = _PHASE_HANDLE_RE.match(handle)
+    if m is None:
+        return handle
+    n = m.group(1)
+    proc = subprocess.run(
+        ["git", "tag", "--list", f"v*.*.*-phase-{n}"],
+        cwd=repo_root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    candidates: list[tuple[tuple[int, int, int], str]] = []
+    for raw in proc.stdout.splitlines():
+        line = raw.strip()
+        sm = _SEMVER_PHASE_TAG_RE.match(line)
+        if sm is None:
+            continue
+        if sm.group(4) != n:
+            continue
+        candidates.append(((int(sm.group(1)), int(sm.group(2)), int(sm.group(3))), line))
+    if not candidates:
+        raise ValueError(
+            f"no tag matches handle {handle!r} (looked for tags shaped vX.Y.Z-phase-{n})"
+        )
+    candidates.sort()
+    return candidates[-1][1]
+
+
 def _checkout_worktree(repo_root: Path, tag: str) -> Path:
     """Materialize a worktree at ``tag`` under a temp path; caller cleans up."""
     target = repo_root / f".replay-{tag}"
@@ -169,8 +222,9 @@ def replay(
 ) -> ReplayResult:
     root = repo_root or find_repo_root()
     fm = _read_front_matter(audit_path)
-    worktree = _checkout_worktree(root, prior_phase)
-    result = ReplayResult(prior_phase=prior_phase, audit_path=audit_path, worktree=worktree)
+    resolved_tag = _resolve_phase_handle(prior_phase, root)
+    worktree = _checkout_worktree(root, resolved_tag)
+    result = ReplayResult(prior_phase=resolved_tag, audit_path=audit_path, worktree=worktree)
     try:
         for gate in gates:
             cmd = GATE_COMMANDS.get(gate)
@@ -212,7 +266,15 @@ def replay(
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="python -m integrity.scripts.replay_prior_phase")
-    parser.add_argument("--prior-phase", required=True, help="Tag to check out.")
+    parser.add_argument(
+        "--prior-phase",
+        required=True,
+        help=(
+            "Phase handle (e.g. 'phase-0') or literal git ref. A handle "
+            "resolves to the highest-semver tag matching vX.Y.Z-phase-N; "
+            "anything else is treated as a literal ref."
+        ),
+    )
     parser.add_argument("--audit", required=True, type=Path)
     parser.add_argument(
         "--gates",
