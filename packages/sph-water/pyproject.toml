@@ -1,11 +1,26 @@
 [project]
 name = "sph-water"
 version = "0.0.0"
-description = "Phase 1 Stage 2 — DFSPH SPH-water sim (TDD bootstrap)."
+description = "Particle-fluids sub-phase — sph-water sim (DFSPH Bender-Koschier 2015; NumPy reference + WGSL/Vulkan Stack C)."
 readme = "README.md"
 license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+  # scipy: spatial.cKDTree for canonical-tier neighbor query at 1M-
+  # particle scale (sub-phase Stage 1 R17 routing). Pure-Python
+  # cell-list at this scale is bottlenecked by interpreter overhead;
+  # cKDTree is C-implemented and brings per-step wall-clock from
+  # 14h+ down to 10²-10³ s. Determinism wrap is a sort-by-id on each
+  # per-particle neighbor list (locks in byte-equivalence with
+  # neighbor_lists at any N where both fit).
+  "scipy>=1.10",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -20,3 +35,7 @@ packages = ["sph_water"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
