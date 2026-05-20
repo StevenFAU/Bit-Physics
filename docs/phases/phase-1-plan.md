@@ -4,7 +4,7 @@
 > **Phase identity:** Phase 1 of the spec, scoped to the **TDD bootstrap** of the reference-sim program
 > **Repository:** `git@github.com:StevenFAU/Bit-Physics.git` (owner: Steven Cohen)
 > **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) (2026-05-18) + spec Appendix D + spec Appendix G + spec Appendix E
-> **Pre-conditions:** Phase 0 (Foundation) has landed per spec § 11.1; this charter has been committed at `docs/phases/phase1.md`
+> **Pre-conditions:** Phase 0 (Foundation) has landed per spec § 11.1; this charter has been committed at `docs/phases/phase-1-plan.md`
 > **Date drafted:** 2026-05-17 (R6); 2026-05-18 (R7 single-agent amendments); 2026-05-18 (R8 dispatch-hardening amendments)
 > **Status:** dispatch-ready
 
@@ -832,7 +832,7 @@ No separate reviewer agent is needed; the agent reviews its own prior work at ea
 
 ### § 5.1 Pre-flight (one-time setup)
 
-1. Commit this charter at `docs/phases/phase1.md` in the Bit-Physics local clone. `git commit -m "phase1: charter (R6)"`.
+1. Commit this charter at `docs/phases/phase-1-plan.md` in the Bit-Physics local clone. `git commit -m "phase1: charter (R6)"`.
 2. Open a Claude.ai chat session. Paste the coordinator prompt from § 6. Attach this charter file. Leave the chat open for the duration of the phase.
 
 ### § 5.2 Stage 1 dispatch
@@ -965,7 +965,7 @@ Copy-paste block:
 ```
 You are the Phase 1 Claude Code agent for the Bit-Physics repository (git@github.com:StevenFAU/Bit-Physics.git, owner Steven Cohen).
 
-Read charter at docs/phases/phase1.md. Pay particular attention to:
+Read charter at docs/phases/phase-1-plan.md. Pay particular attention to:
   - § 1 (scoping, posture, architecture)
   - § 2 (deliverables)
   - § 3 (interface contracts IC-1..IC-7 you will implement this stage)
@@ -1100,7 +1100,7 @@ When stuck, consult charter § 9 problem-solving playbook.
 ```
 You are the Phase 1 Claude Code agent (Stage 2 dispatch) for the Bit-Physics repository.
 
-Read charter at docs/phases/phase1.md. Pay particular attention to:
+Read charter at docs/phases/phase-1-plan.md. Pay particular attention to:
   - § 2.2 (per-sim deliverables)
   - § 3 (IC contracts you CONSUME this stage; especially IC-8 probe structure and IC-10 spec § 6 format)
   - § 4.3 (sequencing within Stage 2)
@@ -1191,7 +1191,7 @@ When stuck, consult charter § 9 problem-solving playbook.
 ```
 You are the Phase 1 Claude Code agent (Stage 3 dispatch) for the Bit-Physics repository.
 
-Read charter at docs/phases/phase1.md. Pay particular attention to:
+Read charter at docs/phases/phase-1-plan.md. Pay particular attention to:
   - § 2.3 (Stage 3 deliverables)
   - § 2.4 (acceptance criteria)
   - § 2.5 (what this unblocks)
@@ -1217,7 +1217,7 @@ STEP 1 — Read both checkpoint logs. Tally:
   - Any "blocked" status in either checkpoint → halt, write a partial phase audit with verdict HALTED, surface to operator.
 
 STEP 2 — Closing-commit anchor re-check (Convention 7.9). Re-grep every concrete anchor in:
-  - The charter at docs/phases/phase1.md.
+  - The charter at docs/phases/phase-1-plan.md.
   - Both checkpoint logs.
   - Every new spec sheet, README, algebraic, determinism, equivalence, probe, derivation, MMS solution (paths from checkpoint logs).
 
@@ -1334,7 +1334,7 @@ Front-matter:
   evidence_paths:
     - Stage 1 checkpoint log
     - Stage 2 checkpoint log
-    - docs/phases/phase1.md
+    - docs/phases/phase-1-plan.md
     - tools/testkit/mutation/phase-1-<UTC>.json
     - tools/testkit/failing-tests-evidence/* (one entry per sim)
     - <PHASE_1_LANDING_SHA> (placeholder for SHA back-fill)
@@ -1704,7 +1704,7 @@ When the agent's session ends with `verdict-state: partial-needs-continuation`, 
 ```
 You are the Phase 1 Claude Code agent (continuation dispatch) for the Bit-Physics repository.
 
-Read charter at docs/phases/phase1.md. Read also:
+Read charter at docs/phases/phase-1-plan.md. Read also:
   - The prior checkpoint log at <CHECKPOINT_PATH>.
   - <PRIOR_STAGE_CHECKPOINT_PATH if applicable, e.g., Stage 1 checkpoint if you are continuing in Stage 2>.
 
@@ -1723,7 +1723,7 @@ Across Claude Code sessions, the agent's working memory resets. What survives:
 
 - Every commit on main (the actual artifacts).
 - Every checkpoint log entry (the human-readable summary).
-- The charter at `docs/phases/phase1.md`.
+- The charter at `docs/phases/phase-1-plan.md`.
 - The spec at `docs/architecture.md`.
 - Phase 0's audits and deliverables.
 

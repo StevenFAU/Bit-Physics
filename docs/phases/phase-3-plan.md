@@ -6,7 +6,7 @@
 > **Repo:** `git@github.com:StevenFAU/Bit-Physics.git`
 > **Owner / human-in-loop:** Steven Cohen
 > **Spec authority:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) + spec Appendix D + spec Appendix G + spec Appendix E
-> **Plan location:** `docs/phases/phase-3.md` (this file).
+> **Plan location:** `docs/phases/phase-3-plan.md` (this file).
 > **Status:** dispatch-ready (contingent on Phase 2 landing CONFIRMED and owner preflight per § 9).
 > **Execution model:** Sequential single-agent. One Claude Code agent role at a time, working through all tasks; one claude.ai chat coordinator. Per Anthropic's long-running-agent guidance, sessions bridge via a progress file + git history.
 > **Stance:** Two equal-weight halves:
@@ -717,12 +717,12 @@ This ordering respects all dependency edges and lets the owner pull the cord ear
 
 The coordinator is one claude.ai chat session opened in this project folder. Its job is narrow:
 
-1. Read `docs/phases/phase-3.md` in full at session start (including the v8 amendment block at top).
+1. Read `docs/phases/phase-3-plan.md` in full at session start (including the v8 amendment block at top).
 2. Confirm owner attestation that preflight (§9) is complete, including the v8 owner-actionable items (external SHAs pinned).
 3. **Dispatch the phase opener** by spawning one Claude Code session with auto-accept ON. Paste this prompt:
 
    ```
-   You are the Phase 3 agent for Bit-Physics. Auto-accept is on. Read docs/phases/phase-3.md in full (including the v8 amendment block). Work through tasks 1 → 3 → 3a → 4 → 5 → 6 → 7 → 8 → 9 → 10 sequentially per §4.1. The §6.1–§6.10 task prompts are sections you consult at each task boundary; treat branch/PR ceremony in those prompts as SUPERSEDED per the v8 trunk-based amendment — commit directly to main. At each task close, append a one-line summary to docs/_audits/phase-3/progress.md, write the task report at docs/_audits/phase-3/task-N-<name>-<UTC>.md, and report the one-liner back to me. Proceed to the next task unless context is near full.
+   You are the Phase 3 agent for Bit-Physics. Auto-accept is on. Read docs/phases/phase-3-plan.md in full (including the v8 amendment block). Work through tasks 1 → 3 → 3a → 4 → 5 → 6 → 7 → 8 → 9 → 10 sequentially per §4.1. The §6.1–§6.10 task prompts are sections you consult at each task boundary; treat branch/PR ceremony in those prompts as SUPERSEDED per the v8 trunk-based amendment — commit directly to main. At each task close, append a one-line summary to docs/_audits/phase-3/progress.md, write the task report at docs/_audits/phase-3/task-N-<name>-<UTC>.md, and report the one-liner back to me. Proceed to the next task unless context is near full.
    ```
 
 4. **Receive each task's one-line summary.** Format: `task <N> <name> <verdict> <head-sha> <audit-path>`. Apply escalation criteria (§8) on report contents.
@@ -736,7 +736,7 @@ The coordinator is one claude.ai chat session opened in this project folder. Its
 8. **If the agent ends a session with a CONTINUE_FROM cue** (context-fill), dispatch a continuation session:
 
    ```
-   You are the Phase 3 agent for Bit-Physics, continuing from a prior session's context-fill checkpoint. Auto-accept on. Read docs/phases/phase-3.md in full. Read docs/_audits/phase-3/progress.md for the CONTINUE_FROM cue. Resume at the named task and proceed per §4.1.
+   You are the Phase 3 agent for Bit-Physics, continuing from a prior session's context-fill checkpoint. Auto-accept on. Read docs/phases/phase-3-plan.md in full. Read docs/_audits/phase-3/progress.md for the CONTINUE_FROM cue. Resume at the named task and proceed per §4.1.
    ```
 
 9. **When task-10 (landing) reports CONFIRMED**, the phase-landing commit is on `main`. Tag it `v0.3.0-phase-3`. Surface phase-close to owner.
@@ -2415,7 +2415,7 @@ wait for owner-merge confirmations; track progress.
 Repo: git@github.com:StevenFAU/Bit-Physics.git
 Owner / human-in-loop: Steven Cohen
 Base branch: phase-3-integration (owner set up at preflight)
-Plan: docs/phases/phase-3.md (source of truth)
+Plan: docs/phases/phase-3-plan.md (source of truth)
 Merge model: PR-based per plan §4.3 — tasks push branches and open
 PRs; owner reviews and merges via GitHub UI.
 
@@ -2433,7 +2433,7 @@ YOU DO NOT:
 - Edit any repo file.
 
 YOU DO:
-- Read docs/phases/phase-3.md in full at session start.
+- Read docs/phases/phase-3-plan.md in full at session start.
 - Confirm owner attestation that preflight (plan §9) is complete.
 - Hand owner each task prompt from plan §6 in order. Verbatim.
 - Acknowledge each task report as owner pastes the PR link.
@@ -2485,7 +2485,7 @@ dispatch until owner decides proceed / re-dispatch / re-scope.
 
 Do not editorialize. Do not summarize away detail.
 
-Your first action: confirm you have read docs/phases/phase-3.md in
+Your first action: confirm you have read docs/phases/phase-3-plan.md in
 full. Then prompt owner to confirm preflight (plan §9) is complete
 AND that they understand the runbook (plan §9.5). After owner
 confirms, dispatch task-1.

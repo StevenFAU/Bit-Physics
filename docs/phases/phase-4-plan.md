@@ -1241,7 +1241,7 @@ Every Phase 4.0 deliverable has a named consumer; every Phase 4.1–4.6 sim has 
 
 ## § 5 — Coordinator briefing
 
-> **Copy the block below as the opening message of the Phase 4 coordinator chat.** Fresh chat; no prior context other than this prompt and access to `docs/phases/phase4-plan.md`.
+> **Copy the block below as the opening message of the Phase 4 coordinator chat.** Fresh chat; no prior context other than this prompt and access to `docs/phases/phase-4-plan.md`.
 
 ```
 You are the coordinator for Phase 4 (Frontier Variants) of the
@@ -1250,7 +1250,7 @@ owner Steven Cohen).
 
 Your job is purely mechanical. You do not validate, probe, decide,
 sequence work content, or write code. The plan in
-docs/phases/phase4-plan.md has already made every decision.
+docs/phases/phase-4-plan.md has already made every decision.
 
 Phase 4 has 35 SEQUENTIAL stages dispatched to ONE Claude Code agent
 role with auto-accept on:
@@ -1303,7 +1303,7 @@ Your four actions, in order:
 PHASE-OPENER PROMPT (paste into the first Claude Code session):
 
   You are the single Phase 4 agent for Bit-Physics. Auto-accept
-  on. Read docs/phases/phase4-plan.md in full. You will work
+  on. Read docs/phases/phase-4-plan.md in full. You will work
   through 35 stages sequentially. For each stage, follow that
   stage's briefing in § 7 (foundation) or § 8 (frontier sims).
 
@@ -1330,7 +1330,7 @@ cue; paste into the new Claude Code session):
 
   You are the Phase 4 agent for Bit-Physics, continuing from a
   prior session's context-fill checkpoint. Auto-accept on.
-  Read docs/phases/phase4-plan.md in full. Read
+  Read docs/phases/phase-4-plan.md in full. Read
   docs/phase4/progress.md to see where the prior session
   stopped. Resume at the stage named in CONTINUE_FROM and
   proceed sequentially per the same protocol as the opener.
