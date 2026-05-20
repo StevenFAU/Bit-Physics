@@ -8,7 +8,7 @@ license_file = "LICENSE"
 
 [scope]
 purpose         = "Reference for SPH kernel implementations (cubic-spline 3D) and DFSPH algorithm. Phase 0 Block 4 cites SPHKernels.h as the upstream-citation anchor for the cubic-spline golden table; the Python reference implementation is derived independently from Monaghan 1992/2005 to guard against symmetric upstream bugs (spec § 2.4)."
-used_by_sims    = []
+used_by_sims    = ["sph-water"]  # Phase 1 Stage 2 TDD bootstrap (commit cd20faa); per-sim implementation phase adds the Vulkan/C++ implementation that consumes the vendored cubic-spline kernels.
 used_by_checks  = ["cat1.upstream-citation", "cat3.cubic-kernel"]
 
 [vendoring]

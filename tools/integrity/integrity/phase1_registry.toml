@@ -1,0 +1,148 @@
+# Phase 1 testkit-artifact registry (Stage 3 deliverable per charter § 2.3).
+#
+# Lookup-only registry of every Phase 1 artifact the integrity toolkit
+# may reason about. Cat 3 itself discovers golden tables via filesystem
+# glob (tools/testkit/golden/tables/*.json — Phase 0 layout); Stage 2's
+# subdirectory goldens (per Stage 2 shift #16) are listed here for
+# operator-visible enumeration without changing Cat 3 semantics.
+#
+# Per-sim implementation phases register the Cat 3 evaluator shims
+# (tools/integrity/integrity/cat3_numerical/evaluators/<algorithm>.py)
+# when the sim's Python reference exists. At Phase 1 close those are
+# deferred; this file pins the algorithm names so Phase 2+ knows what
+# evaluator-shim filenames to add.
+
+[meta]
+phase = 1
+stage = 3
+landing_audit = "docs/_audits/phase-1/landing-<UTC>.md"
+golden_layout = "tools/testkit/golden/tables/<category>/<algorithm>.json"
+mms_layout    = "tools/testkit/code_verification/mms/solutions/<sim>/"
+
+# ---- Tier 2 substacks (Stage 1 deliverables) ------------------------
+
+[tier2.particle]
+path        = "tools/diagnostics/diagnostics/tier2/particle/"
+ic          = "IC-5"
+landed_at   = "5258f00"  # commit
+check_fns   = ["check_no_overlap", "check_neighbor_list_integrity", "check_momentum_conservation", "check_count_invariance"]
+
+[tier2.vector_field]
+path        = "tools/diagnostics/diagnostics/tier2/vector_field/"
+ic          = "IC-6"
+landed_at   = "39f2c97"
+check_fns   = ["check_divergence_free", "check_circulation", "check_helicity", "check_energy_spectrum"]
+
+[tier2.closed_form]
+path        = "tools/diagnostics/diagnostics/tier2/closed_form/"
+ic          = "IC-7"
+landed_at   = "98e630d"
+check_fns   = ["check_output_stability", "check_precision_sensitivity", "check_bound_preservation"]
+
+# ---- MMS solutions (Stage 2 deliverables) ---------------------------
+
+[mms.reaction_diffusion_2d]
+path        = "tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d/"
+landed_at   = "a159086"  # co-bundled with RD-3D per R8 amendment
+sims        = ["reaction-diffusion-2d"]  # Phase 0; Phase 2+ implementation
+formal_order = 2
+
+[mms.reaction_diffusion_3d]
+path        = "tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d/"
+landed_at   = "a159086"
+sims        = ["reaction-diffusion-3d"]
+formal_order = 2
+
+[mms.incompressible_ns_2d]
+path        = "tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/"
+landed_at   = "216021a"
+sims        = ["eulerian-smoke", "lattice-boltzmann-d3q19"]  # shared per Stage 2 shift #18
+formal_order = 2
+
+# ---- Golden tables (Phase 0 + Stage 2) ------------------------------
+
+[golden.cubic_spline_kernel]
+path        = "tools/testkit/golden/tables/cubic-spline-kernel.json"
+algorithm   = "cubic-spline-kernel-3d-monaghan"
+landed_at   = "phase-0"
+sims        = ["sph-water"]
+evaluator   = "tools/integrity/integrity/cat3_numerical/evaluators/cubic_spline.py"  # registered
+
+[golden.lorenz_structural]
+path        = "tools/testkit/golden/tables/closed-form/lorenz-structural.json"
+algorithm   = "lorenz-structural-invariants"
+landed_at   = "9766498"
+sims        = ["strange-attractors"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/lorenz_structural.py"
+
+[golden.mandelbulb_de_samples]
+path        = "tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json"
+algorithm   = "mandelbulb-distance-estimator-p8-quilez-2009"
+landed_at   = "9766498"
+sims        = ["mandelbulb-explorer"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/mandelbulb_de_samples.py"
+
+[golden.boids_3agent_step1]
+path        = "tools/testkit/golden/tables/agent-based/boids-3agent-step1.json"
+algorithm   = "boids-reynolds-1987-3agent-step1"
+landed_at   = "5dd919c"
+sims        = ["boids-3d"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/boids_3agent_step1.py"
+
+[golden.physarum_deposit_step1]
+path        = "tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json"
+algorithm   = "physarum-jones-2010-4agent-deposit-step1"
+landed_at   = "5dd919c"
+sims        = ["physarum"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/physarum_deposit_step1.py"
+
+[golden.dfsph_density_evolution]
+path        = "tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json"
+algorithm   = "dfsph-density-evolution-2particle"
+landed_at   = "cd20faa"
+sims        = ["sph-water"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/dfsph_density_evolution.py"
+
+[golden.d3q19_equilibrium]
+path        = "tools/testkit/golden/tables/lattice/d3q19-equilibrium.json"
+algorithm   = "lattice-boltzmann-d3q19-equilibrium-qian-1992"
+landed_at   = "b6abd7e"
+sims        = ["lattice-boltzmann-d3q19"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/d3q19_equilibrium.py"
+
+[golden.mls_mpm_shape_functions]
+path        = "tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json"
+algorithm   = "mls-mpm-quadratic-bspline-1d-hu-2018"
+landed_at   = "9de8048"
+sims        = ["mpm-multimaterial"]
+evaluator_status = "deferred-to-per-sim-implementation-phase"
+generator   = "tools/testkit/golden/generator/mls_mpm_quadratic_bspline.py"
+
+# ---- Cat 4 grammars (Stage 1 B1) ------------------------------------
+
+[grammars.cat4_path_line]
+implementation = "tools/integrity/integrity/cat4_draft_time/path_line_assertions.py"
+ic             = "Phase 0 baseline"
+
+[grammars.cat4_phrase_in_file]
+implementation = "tools/integrity/integrity/cat4_draft_time/grammars/phrase_in_file.py"
+ic             = "charter § 1.7 R8 amendment (b)"
+landed_at      = "71d4a9e"
+
+[grammars.cat4_api_shape]
+implementation = "tools/integrity/integrity/cat4_draft_time/grammars/api_shape.py"
+ic             = "charter § 1.7 R8 amendment (c)"
+landed_at      = "71d4a9e"
+
+# ---- Vendored references --------------------------------------------
+
+[vendored.splishsplash]
+manifest    = "references/SPlisHSPlasH/MANIFEST.toml"
+sha         = "6bff55a6eaf14083d34650f22a268ce156b62b54"
+used_by_sims = ["sph-water"]  # Stage 3 update — was [] at Phase 0; updated at this commit.
