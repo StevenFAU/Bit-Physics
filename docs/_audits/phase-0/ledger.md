@@ -8,3 +8,4 @@ block 7 common-ts CONFIRMED 4f97e6beb153173a1ecb90e312800c078425aa3d docs/_audit
 block 8 rd-2d CONFIRMED aa76defc798a985fb9f29780d7269cf77fbc0c1a docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
 block 9 landing SHIFTED 85da2fc8911230dcd0706cfe08d6ae67c2a5c311 docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
 phase-0 closed SHIFTED 727ffb9b513f77a9a38442b256db3a416547d3c8 v0.0.0-phase-0 tag-signed:yes tag-pushed:by-operator
+hotfix preflight-phase-1 SHIFTED b4bb7d4 docs/_audits/phase-0/hotfix-preflight-phase-1-2026-05-20T01-34-58Z.md
