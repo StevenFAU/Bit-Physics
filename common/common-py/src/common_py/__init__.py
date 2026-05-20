@@ -18,6 +18,8 @@ module at full surface).
 
 from __future__ import annotations
 
+from . import alembic, capture, determinism, ggui, hotreload, plotting, vdb
+
 __all__ = [
     "alembic",
     "capture",
