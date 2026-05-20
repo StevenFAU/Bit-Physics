@@ -1,0 +1,25 @@
+=== Phase 1 Stage 3 — Step 5c: append-only audit invariant ===
+UTC: 2026-05-20T13-57-08Z
+Prior tag: v0.0.0-phase-0
+HEAD: a65cab209037a17bfb3f93c14a5cbc0213afd1e3
+
+First pass (strict; all docs/_audits/ files from v0.0.0-phase-0):
+  EDITED: docs/_audits/phase-0/progress.md
+  strict-mode result: FAIL
+
+Second pass (CI semantics; filtered to *.ledger.md per
+  .github/workflows/audit-append-only.yml's grep -E '\.ledger\.md$' filter):
+  ci-mode result: PASS
+
+Note on strict-mode finding:
+  docs/_audits/phase-0/progress.md was intentionally split into
+  docs/_audits/phase-0/ledger.md + cue post-tag (commit 8776791:
+  'refactor(audit): split phase-0 progress.md into ledger.md + cue'),
+  with the original content preserved as historical record + a
+  superseded notice. This change pre-dates Phase 1 (it landed in the
+  Phase 0 close commit chain) and was the operator-approved supersedence
+  that motivated the CI workflow being filtered to .ledger.md only.
+  Phase 1 Stage 3 has NOT edited any docs/_audits/ file from
+  v0.0.0-phase-0 — the strict-mode flag is on pre-Phase-1 history.
+
+Phase 1 Stage 3 verdict: PASS (CI semantics) + DOCUMENTED-PRE-EXISTING (strict semantics).

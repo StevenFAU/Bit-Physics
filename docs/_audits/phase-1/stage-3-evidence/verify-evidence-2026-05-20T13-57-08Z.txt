@@ -1,0 +1,28 @@
+=== Phase 1 Stage 3 — verify_evidence.py across all phase-1 audits ===
+---- docs/_audits/phase-1/prerequisite-hotfix-2026-05-20T03-49-08Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/prerequisite-hotfix-2026-05-20T03-49-08Z.md front-matter missing valid head_sha
+
+---- docs/_audits/phase-1/stage-1-blocked-replay-2026-05-20T03-20-49Z.md ----
+  FAIL  evidence path 'docs/_audits/phase-1/stage-1-blocked-replay-2026-05-20T03-20-49Z.replay-output.txt' not present at 30d88877d64b66f136503c8e27c9cb9aaeefa049
+  FAIL  evidence path 'docs/_audits/phase-1/stage-1-blocked-replay-2026-05-20T03-20-49Z.preflight-output.txt' not present at 30d88877d64b66f136503c8e27c9cb9aaeefa049
+  PASS  docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
+  PASS  docs/phases/phase-1-plan.md
+  PASS  tools/integrity/integrity/scripts/replay_prior_phase.py
+  PASS  tools/dispatch/preflight-phase.py
+  PASS  justfile
+summary: 5 pass / 2 fail at head_sha 30d88877d64b
+
+---- docs/_audits/phase-1/stage-1-checkpoint-2026-05-20T04-22-10Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/stage-1-checkpoint-2026-05-20T04-22-10Z.md front-matter missing valid head_sha
+
+---- docs/_audits/phase-1/stage-1-checkpoint-final-2026-05-20T12-10-58Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/stage-1-checkpoint-final-2026-05-20T12-10-58Z.md front-matter missing valid head_sha
+
+---- docs/_audits/phase-1/stage-1-verification-2026-05-20T12-10-58Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/stage-1-verification-2026-05-20T12-10-58Z.md front-matter missing valid head_sha
+
+---- docs/_audits/phase-1/stage-2-checkpoint-2026-05-20T13-05-30Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/stage-2-checkpoint-2026-05-20T13-05-30Z.md front-matter missing valid head_sha
+
+---- docs/_audits/phase-1/stage-2-checkpoint-final-2026-05-20T13-48-37Z.md ----
+verify_evidence: audit /home/otacon/Projects/Bit-Physics/docs/_audits/phase-1/stage-2-checkpoint-final-2026-05-20T13-48-37Z.md front-matter missing valid head_sha

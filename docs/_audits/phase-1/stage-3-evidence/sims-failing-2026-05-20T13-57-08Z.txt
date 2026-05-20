@@ -1,0 +1,129 @@
+=== Phase 1 Stage 3 — failing-tests gate replay (all 9 sims) ===
+UTC: 2026-05-20T13-57-08Z
+HEAD: 33a2892ec7e5a4e1bcfab75f326f0aa3f1907241
+
+---- strange-attractors ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:12: in <module>
+    from strange_attractors.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'strange_attractors.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_lorenz_structural_golden.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- mandelbulb-explorer ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:8: in <module>
+    from mandelbulb_explorer.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'mandelbulb_explorer.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_de_samples_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- boids-3d ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from boids_3d.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'boids_3d.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_3agent_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- physarum ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from physarum.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'physarum.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_deposit_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- reaction-diffusion-3d ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from reaction_diffusion_3d.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'reaction_diffusion_3d.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_mms_convergence.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- sph-water ----
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from sph_water.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'sph_water.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_cubic_spline_kernel_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_dfsph_density_golden.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.05s ===============================
+
+---- eulerian-smoke ----
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from eulerian_smoke.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'eulerian_smoke.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_mms_convergence.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- lattice-boltzmann-d3q19 ----
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_pbt_invariants.py:5: in <module>
+    from lattice_boltzmann_d3q19.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_d3q19_equilibrium_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_mms_convergence.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.05s ===============================
+
+---- mpm-multimaterial ----
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_quadratic_bspline_golden.py:10: in <module>
+    from mpm_multimaterial.reference import shape_functions  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.reference'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+ERROR tests/test_quadratic_bspline_golden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================

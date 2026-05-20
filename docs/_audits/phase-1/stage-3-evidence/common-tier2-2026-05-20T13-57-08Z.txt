@@ -1,0 +1,26 @@
+=== Phase 1 Stage 3 — common-module + Tier 2 + Phase 0 regression tests ===
+UTC: 2026-05-20T13-57-08Z
+HEAD: 33a2892ec7e5a4e1bcfab75f326f0aa3f1907241
+
+---- common-cpp doctest ----
+0.000006 s: IC-3 unrelated argv is left untouched
+===============================================================================
+[doctest] test cases:  8 |  8 passed | 0 failed | 0 skipped
+[doctest] assertions: 35 | 35 passed | 0 failed |
+[doctest] Status: SUCCESS!
+
+---- diagnostics pytest (tier1 + tier2 substacks) ----
+......................                                                   [100%]
+22 passed in 0.16s
+
+---- testkit pytest ----
+...............................................                          [100%]
+47 passed in 1.92s
+
+---- integrity pytest ----
+..........................................                               [100%]
+42 passed in 0.62s
+
+---- Phase 0 RD-2D pytest ----
+..............                                                           [100%]
+14 passed in 2.38s

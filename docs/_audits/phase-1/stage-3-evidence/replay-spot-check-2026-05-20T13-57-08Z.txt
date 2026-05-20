@@ -1,0 +1,51 @@
+=== Phase 1 Stage 3 — Step 5b: failing-tests replay spot-check ===
+UTC: 2026-05-20T13-57-08Z
+HEAD: a65cab209037a17bfb3f93c14a5cbc0213afd1e3
+
+Randomly picked commits (seed=42, pool=7 Stage 2 sim commits):
+  b6abd7e (lattice-boltzmann-d3q19)
+  9766498 (closed-form pair: strange-attractors + mandelbulb-explorer)
+
+(a) On-disk evidence files at HEAD match committed sha256 footers verbatim:
+  - tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt: c4f72e2595bfe0702ac1d1721371e65ea985661be89c114e100da783104cac63
+  - tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt: d4a89d3e782e639c179238d7fc5f4c307a99cf0ec74d9ebb5d8db547b37e2ca0
+  - tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt: c78de8bee93a5cb06c0ccc78a843766b98c93685b344c63d772cf3374b6ef3cd
+
+(b) Re-run sims at HEAD; the test failure mode (ModuleNotFoundError on
+    deferred Phase 2+ submodules) must reproduce:
+
+---- replay: strange-attractors ----
+collecting ... collected 0 items / 4 errors
+E   ModuleNotFoundError: No module named 'strange_attractors.sim'
+E   ModuleNotFoundError: No module named 'strange_attractors.sim'
+E   ModuleNotFoundError: No module named 'strange_attractors.reference'
+E   ModuleNotFoundError: No module named 'strange_attractors.invariants'
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- replay: mandelbulb-explorer ----
+collecting ... collected 0 items / 4 errors
+E   ModuleNotFoundError: No module named 'mandelbulb_explorer.reference'
+E   ModuleNotFoundError: No module named 'mandelbulb_explorer.sim'
+E   ModuleNotFoundError: No module named 'mandelbulb_explorer.sim'
+E   ModuleNotFoundError: No module named 'mandelbulb_explorer.invariants'
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================
+
+---- replay: lattice-boltzmann-d3q19 ----
+collecting ... collected 0 items / 5 errors
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.reference'
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.sim'
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.sim'
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.reference'
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19.invariants'
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.05s ===============================
+
+(c) Note on bit-equality: a fresh replay produces test output containing
+    UTC timestamps in the pytest banner and a different runtime in the
+    summary; STRICT bit-equality to the original capture is therefore not
+    achievable across replay. The semantically-load-bearing assertion is
+    that the FAILURE MODE reproduces (ModuleNotFoundError on the deferred
+    Phase 2+ submodule), and that the on-disk evidence files at HEAD
+    match their committed sha256 byte-for-byte (verified in (a)).
