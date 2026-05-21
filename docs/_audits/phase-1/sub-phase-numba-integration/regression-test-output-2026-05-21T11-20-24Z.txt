@@ -1,0 +1,16 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/tools/testkit
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 5 items
+
+numba_harness/tests/test_numba_determinism.py::test_numba_jit_fp_equivalent_with_pure_numpy[64] PASSED [ 20%]
+numba_harness/tests/test_numba_determinism.py::test_numba_jit_fp_equivalent_with_pure_numpy[256] PASSED [ 40%]
+numba_harness/tests/test_numba_determinism.py::test_numba_jit_fp_equivalent_with_pure_numpy[1024] PASSED [ 60%]
+numba_harness/tests/test_numba_determinism.py::test_numba_jit_run_to_run_determinism PASSED [ 80%]
+numba_harness/tests/test_numba_determinism.py::test_numba_jit_cold_vs_warm_cache_identity PASSED [100%]
+
+============================== 5 passed in 0.82s ===============================

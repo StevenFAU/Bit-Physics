@@ -188,7 +188,9 @@ Load-bearing rules:
 ### Verification
 
 The determinism contract is verified by the regression test at
-[`tools/testkit/numba/tests/test_numba_determinism.py`](../tools/testkit/numba/tests/test_numba_determinism.py).
+[`tools/testkit/numba_harness/tests/test_numba_determinism.py`](../tools/testkit/numba_harness/tests/test_numba_determinism.py)
+(directory named `numba_harness/` rather than `numba/` to avoid
+shadowing the upstream `numba` package import in this workspace).
 The test runs a known-deterministic numerical computation (multi-
 particle force accumulation + density gradient — mirrors the kind of
 arithmetic SPH and other sims use) under both pure NumPy and numba

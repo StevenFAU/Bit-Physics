@@ -24,7 +24,7 @@ dependencies = [
   # determinism preservation. Pinned to a known-good range; bit-
   # exactness across numba versions is not formally guaranteed
   # upstream so the project verifies via the regression test at
-  # `tools/testkit/numba/tests/test_numba_determinism.py`.
+  # `tools/testkit/numba_harness/tests/test_numba_determinism.py`.
   "numba>=0.61,<0.66",
   "numpy>=2.0",
   "sympy>=1.13",

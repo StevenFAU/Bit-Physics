@@ -7,7 +7,7 @@
 > **Dep declaration:** `tools/testkit/pyproject.toml` (universal
 > workspace dep at HEAD — every sim + integrity + diagnostics
 > transitively gets numba).
-> **Verification surface:** `tools/testkit/numba/tests/test_numba_determinism.py`.
+> **Verification surface:** `tools/testkit/numba_harness/tests/test_numba_determinism.py`.
 
 ## 1. When to use numba in this project
 
@@ -143,7 +143,7 @@ The project's discipline:
 The contract is verified by:
 
 ```
-tools/testkit/numba/tests/test_numba_determinism.py
+tools/testkit/numba_harness/tests/test_numba_determinism.py
 ```
 
 The test runs a known-deterministic numerical computation (multi-
@@ -151,17 +151,26 @@ particle pair-force accumulation, mirroring the kind of arithmetic
 SPH and other sims use) under both pure NumPy and numba JIT, and
 asserts:
 
-1. **Bit-identical output between pure NumPy and numba JIT** at
-   N ∈ {64, 256, 1024}.
+1. **FP-equivalence between pure NumPy and numba JIT** at
+   N ∈ {64, 256, 1024} (max-abs-diff < 1e-9 absolute).
+   **FP-equivalence, NOT bit-equivalence** — NumPy's vectorized SIMD
+   code (AVX2 / AVX-512) and numba's lowered scalar inner loop use
+   different FP-accumulation patterns. The same algebraic formula
+   produces slightly different bit patterns at scale. The 1e-9
+   tolerance is set well below the spec's cross-stack 1e-4 relative;
+   any drift exceeding it indicates `fastmath=False` was violated or
+   another banned flag was used.
 2. **Run-to-run determinism** — two consecutive numba JIT runs with
-   the same input produce bit-identical output.
+   the same input produce **bit-identical** output. **This is the
+   load-bearing same-stack-same-hw contract** for the convention.
 3. **Cold-vs-warm cache identity** — clearing `__pycache__` between
-   runs does not change the numba JIT output.
+   runs does not change the numba JIT output (bit-identical). This
+   verifies the compiled-artifact's output is consumer-invariant.
 
 Invocation (Stack-D):
 
 ```
-uv run --no-sync pytest tools/testkit/numba/tests/test_numba_determinism.py -v
+uv run --no-sync pytest tools/testkit/numba_harness/tests/test_numba_determinism.py -v
 ```
 
 The test is the verification surface for this entire convention. If
