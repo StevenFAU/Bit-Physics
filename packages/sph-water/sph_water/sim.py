@@ -118,11 +118,11 @@ from capture import CaptureManifest, StepState, write_capture
 
 from .reference.dfsph import (
     canonical_params,
-    cell_list_neighbor_query,
     density,
     density_evolution,
     density_evolution_vectorized,
     density_vectorized,
+    pair_lists_from_positions,
 )
 
 CANONICAL_DESCRIPTOR: Final[str] = "dam-break-1M-particles-seed42-step1000"
@@ -221,13 +221,15 @@ def _canonical_step(
     dt: float,
     g_z: float,
 ) -> tuple[np.ndarray, np.ndarray]:
-    """One canonical-tier explicit Euler step (spatial-hash neighbor query).
+    """One canonical-tier explicit Euler step (KDTree-backed neighbor query).
 
     Parallel to :func:`_diagnostic_step` but uses
-    :func:`cell_list_neighbor_query` + :func:`density_evolution_vectorized`
-    for O(N + N⟨neighbors⟩) memory + runtime instead of the diagnostic
-    tier's O(N²) pairwise tensor materialization. Sized for the
-    canonical 1M-particle capture (sub-phase plan § 9 R16 routing).
+    :func:`pair_lists_from_positions` (scipy cKDTree.query_pairs +
+    symmetrize + lexsort) + :func:`density_evolution_vectorized` (in
+    its pair-array fast-path mode) for O(N log N) + O(N·⟨neighbors⟩)
+    runtime instead of the diagnostic tier's O(N²) pairwise tensor
+    materialization. Sized for the canonical 1M-particle capture
+    (sub-phase plan § 9 R16 + R17 routing arc).
 
     Same integrator semantics as the diagnostic step (explicit Euler +
     gravity along z); same deterministic-summed continuity exercise
@@ -237,14 +239,15 @@ def _canonical_step(
     bit-equivalent, with the loop variant — see
     :func:`density_evolution_vectorized` docstring).
     """
-    nbr_lists = cell_list_neighbor_query(positions, h)
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
     # Exercise the deterministic-summed continuity (side-effect).
     _ = density_evolution_vectorized(
         positions=positions,
         velocities=velocities,
         masses=masses,
         h=h,
-        nbr_lists=nbr_lists,
+        pair_i=pair_i,
+        pair_j=pair_j,
     )
     # Explicit Euler with gravity along z (matches _diagnostic_step).
     velocities_next = velocities.copy()
@@ -399,12 +402,13 @@ def _trajectory_to_step_states(
         positions = p_hist[idx]
         velocities = v_hist[idx]
         if use_spatial_hash:
-            nbrs = cell_list_neighbor_query(positions, h)
+            pair_i, pair_j = pair_lists_from_positions(positions, h)
             rho = density_vectorized(
                 positions=positions,
                 masses=masses,
                 h=h,
-                nbr_lists=nbrs,
+                pair_i=pair_i,
+                pair_j=pair_j,
             )
             mean_rho = float(np.mean(rho)) if rho.size else 0.0
         else:

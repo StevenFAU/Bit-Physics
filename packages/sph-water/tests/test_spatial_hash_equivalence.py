@@ -27,6 +27,7 @@ from sph_water.reference.dfsph import (
     density_evolution,
     density_evolution_vectorized,
     neighbor_lists,
+    pair_lists_from_positions,
 )
 
 
@@ -130,6 +131,29 @@ def test_density_evolution_vectorized_matches_loop_at_n64() -> None:
     # FP-equivalence at 1e-10 absolute (NOT bit-equivalence; see docstring).
     assert max_abs_diff < 1e-10, (
         f"max_abs_diff={max_abs_diff:g} between loop and vectorized variants"
+    )
+
+
+def test_pair_lists_from_positions_matches_cell_list_at_n64() -> None:
+    """pair_lists_from_positions returns the same (i, j) set as cell_list.
+
+    The two representations differ in shape (list-of-lists vs flat
+    (pair_i, pair_j) ndarrays) but represent the same underlying
+    neighbor relation. Verify by reconstructing nbr_lists from
+    pair_i + pair_j and comparing list-equality to cell_list output.
+    """
+    positions, _, _ = _make_random_particles(seed=42, n=64, box=1.0)
+    h = float(canonical_params()["h"])
+    nbr_lists = cell_list_neighbor_query(positions, h)
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
+    # Reconstruct nbr_lists from (pair_i, pair_j)
+    reconstructed = [[] for _ in range(64)]
+    for i, j in zip(pair_i.tolist(), pair_j.tolist()):
+        reconstructed[i].append(int(j))
+    # Each particle's reconstructed list should already be sorted
+    # (pair_lists_from_positions emits lexsort-sorted output).
+    assert nbr_lists == reconstructed, (
+        f"first divergence at i={next(i for i, (a, b) in enumerate(zip(nbr_lists, reconstructed)) if a != b)}"
     )
 
 

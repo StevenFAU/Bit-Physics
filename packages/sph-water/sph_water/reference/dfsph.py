@@ -41,6 +41,7 @@ __all__ = [
     "kernel_q",
     "neighbor_lists",
     "cell_list_neighbor_query",
+    "pair_lists_from_positions",
     "density",
     "density_vectorized",
     "density_evolution",
@@ -309,13 +310,94 @@ def cell_list_neighbor_query(
     return lists
 
 
+def pair_lists_from_positions(
+    positions: np.ndarray, h: float, *, support_factor: float = 2.0
+) -> tuple[np.ndarray, np.ndarray]:
+    """Fully-vectorized canonical-tier pair-array builder for canonical scales.
+
+    Returns ``(pair_i, pair_j)`` as int64 ndarrays of shape ``(M,)``, where
+    ``M = sum(len(nbr) for nbr in cell_list_neighbor_query(positions, h))``:
+    one entry per directed pair (i, j) with ``j ≠ i`` and ``|r_i - r_j| <
+    support_factor·h``. Output is sorted by ``pair_i`` ascending; within each
+    ``i``-segment, ``pair_j`` is sorted ascending — matching the
+    iteration order :func:`density_evolution_vectorized` /
+    :func:`density_vectorized` consume directly via the optional
+    ``pair_i`` / ``pair_j`` keyword arguments (bypassing the slow
+    list-of-lists Python conversion at N=1M scale).
+
+    Algorithm — :meth:`scipy.spatial.cKDTree.query_pairs` (vectorized
+    C output of all ``(i, j)`` with ``i < j`` and distance ≤ radius;
+    inclusive-radius), then symmetrize + lexsort. No Python loops over
+    N; the entire build is C-vectorized end-to-end.
+
+    Boundary semantics: ``query_pairs(r=cutoff)`` is inclusive
+    (``d ≤ cutoff``); the diagnostic-tier :func:`neighbor_lists` uses
+    ``d² < cutoff²`` (strict less-than). Apply a strict-less-than
+    re-filter via vectorized distance recomputation so boundary points
+    match the diagnostic-tier contract bit-for-bit (zero-measure for
+    random FP positions; the filter is cheap insurance).
+
+    Equivalence with :func:`cell_list_neighbor_query` (and hence with
+    :func:`neighbor_lists` at any N where both fit) is verified by the
+    spatial-hash-equivalence test suite — the same 6 tests gate both
+    representations via the list-of-lists contract; this function
+    builds the equivalent (pair_i, pair_j) flat shape that the
+    vectorized density / density_evolution paths consume directly.
+    """
+    p = np.asarray(positions, dtype=np.float64)
+    if p.ndim != 2 or p.shape[1] != 3:
+        raise ValueError(f"positions must have shape (N, 3); got {p.shape}")
+    if h <= 0.0:
+        raise ValueError(f"h must be strictly positive; got {h!r}")
+    if support_factor <= 0.0:
+        raise ValueError(
+            f"support_factor must be strictly positive; got {support_factor!r}"
+        )
+    n = p.shape[0]
+    if n == 0:
+        return (
+            np.zeros(0, dtype=np.int64),
+            np.zeros(0, dtype=np.int64),
+        )
+    from scipy.spatial import cKDTree
+
+    cutoff = support_factor * h
+    cutoff_sq = cutoff * cutoff
+    tree = cKDTree(p)
+    pairs = tree.query_pairs(r=cutoff, output_type="ndarray")  # (M, 2), i<j
+    if pairs.size == 0:
+        return (
+            np.zeros(0, dtype=np.int64),
+            np.zeros(0, dtype=np.int64),
+        )
+    # Strict-less-than re-filter (vectorized): drop pairs exactly at cutoff.
+    diffs = p[pairs[:, 0]] - p[pairs[:, 1]]
+    d2 = np.einsum("ij,ij->i", diffs, diffs)
+    keep = d2 < cutoff_sq
+    pairs = pairs[keep]
+    if pairs.size == 0:
+        return (
+            np.zeros(0, dtype=np.int64),
+            np.zeros(0, dtype=np.int64),
+        )
+    # Symmetrize: (i, j) and (j, i) directed pairs.
+    pair_i = np.concatenate([pairs[:, 0], pairs[:, 1]]).astype(np.int64, copy=False)
+    pair_j = np.concatenate([pairs[:, 1], pairs[:, 0]]).astype(np.int64, copy=False)
+    # Sort by (pair_i, pair_j) lexicographically. lexsort sorts by the
+    # LAST key first, so primary key = pair_i, secondary = pair_j.
+    sort_idx = np.lexsort((pair_j, pair_i))
+    return pair_i[sort_idx], pair_j[sort_idx]
+
+
 def density_evolution_vectorized(
     *,
     positions: np.ndarray,
     velocities: np.ndarray,
     masses: np.ndarray,
     h: float,
-    nbr_lists: list[list[int]],
+    nbr_lists: list[list[int]] | None = None,
+    pair_i: np.ndarray | None = None,
+    pair_j: np.ndarray | None = None,
 ) -> np.ndarray:
     """Vectorized SPH continuity using pre-built neighbor lists.
 
@@ -356,18 +438,29 @@ def density_evolution_vectorized(
     n = positions.shape[0]
     if n == 0:
         return np.zeros(0, dtype=np.float64)
-    # Flatten (i, j) pairs from sorted nbr_lists.
-    pair_i_list: list[int] = []
-    pair_j_list: list[int] = []
-    for i, nl in enumerate(nbr_lists):
-        if not nl:
-            continue
-        pair_i_list.extend([i] * len(nl))
-        pair_j_list.extend(nl)
-    if not pair_i_list:
-        return np.zeros(n, dtype=np.float64)
-    pair_i = np.asarray(pair_i_list, dtype=np.int64)
-    pair_j = np.asarray(pair_j_list, dtype=np.int64)
+    # Two input forms: pre-built (pair_i, pair_j) ndarrays (canonical-tier
+    # fast path; bypasses the Python list-of-lists conversion) OR
+    # nbr_lists list-of-lists (diagnostic-tier compatibility path).
+    if pair_i is None or pair_j is None:
+        if nbr_lists is None:
+            raise ValueError("must provide either nbr_lists OR both pair_i and pair_j")
+        # Flatten (i, j) pairs from sorted nbr_lists (slow Python path).
+        pair_i_list: list[int] = []
+        pair_j_list: list[int] = []
+        for i, nl in enumerate(nbr_lists):
+            if not nl:
+                continue
+            pair_i_list.extend([i] * len(nl))
+            pair_j_list.extend(nl)
+        if not pair_i_list:
+            return np.zeros(n, dtype=np.float64)
+        pair_i = np.asarray(pair_i_list, dtype=np.int64)
+        pair_j = np.asarray(pair_j_list, dtype=np.int64)
+    else:
+        pair_i = np.asarray(pair_i, dtype=np.int64)
+        pair_j = np.asarray(pair_j, dtype=np.int64)
+        if pair_i.size == 0:
+            return np.zeros(n, dtype=np.float64)
 
     # Vectorized per-pair work. Operation ordering MUST mirror the loop
     # :func:`density_evolution` per-pair sequence for bit-equivalence:
@@ -416,9 +509,11 @@ def density_vectorized(
     positions: np.ndarray,
     masses: np.ndarray,
     h: float,
-    nbr_lists: list[list[int]],
+    nbr_lists: list[list[int]] | None = None,
+    pair_i: np.ndarray | None = None,
+    pair_j: np.ndarray | None = None,
 ) -> np.ndarray:
-    """Vectorized SPH density using pre-built neighbor lists.
+    """Vectorized SPH density using pre-built neighbor lists or pair arrays.
 
     $\\rho_i = \\sum_j m_j W(r_i - r_j, h)$ — same continuum formula as
     :func:`density`, vectorized over neighbor pairs. Includes the
@@ -428,6 +523,12 @@ def density_vectorized(
     FP-equivalence with :func:`density` analogous to
     :func:`density_evolution_vectorized` vs :func:`density_evolution`
     (see that docstring). Bit-deterministic with itself.
+
+    Two input forms: pre-built ``(pair_i, pair_j)`` ndarrays
+    (canonical-tier fast path; bypasses the Python list-of-lists
+    conversion) OR ``nbr_lists`` list-of-lists (diagnostic-tier
+    compatibility path). The two are mutually exclusive; the fast
+    path is the load-bearing one at canonical scale.
 
     Used by the canonical-tier capture path
     (:func:`sph_water.sim.sim_runner_seeded`) to compute per-frame
@@ -441,18 +542,26 @@ def density_vectorized(
     W0 = SIGMA_3D / (h * h * h)  # W(q=0, h) = sigma_3 / h^3
     rho = masses * W0
 
-    # Pair contributions.
-    pair_i_list: list[int] = []
-    pair_j_list: list[int] = []
-    for i, nl in enumerate(nbr_lists):
-        if not nl:
-            continue
-        pair_i_list.extend([i] * len(nl))
-        pair_j_list.extend(nl)
-    if not pair_i_list:
-        return rho
-    pair_i = np.asarray(pair_i_list, dtype=np.int64)
-    pair_j = np.asarray(pair_j_list, dtype=np.int64)
+    # Two input forms: (pair_i, pair_j) ndarrays OR nbr_lists list-of-lists.
+    if pair_i is None or pair_j is None:
+        if nbr_lists is None:
+            raise ValueError("must provide either nbr_lists OR both pair_i and pair_j")
+        pair_i_list: list[int] = []
+        pair_j_list: list[int] = []
+        for i, nl in enumerate(nbr_lists):
+            if not nl:
+                continue
+            pair_i_list.extend([i] * len(nl))
+            pair_j_list.extend(nl)
+        if not pair_i_list:
+            return rho
+        pair_i = np.asarray(pair_i_list, dtype=np.int64)
+        pair_j = np.asarray(pair_j_list, dtype=np.int64)
+    else:
+        pair_i = np.asarray(pair_i, dtype=np.int64)
+        pair_j = np.asarray(pair_j, dtype=np.int64)
+        if pair_i.size == 0:
+            return rho
 
     r_ij = positions[pair_i] - positions[pair_j]
     mag = np.linalg.norm(r_ij, axis=1)
