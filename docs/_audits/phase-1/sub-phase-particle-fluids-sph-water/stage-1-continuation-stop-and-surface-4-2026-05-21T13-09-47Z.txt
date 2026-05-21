@@ -1,0 +1,160 @@
+=== Stage 1 continuation: FOURTH STOP-AND-SURFACE on wall-clock 1.3x over operator threshold ===
+
+Date: 2026-05-21
+HEAD: a9f7cf2 (post W2e numba application; pre canonical-capture
+generation)
+Scope: operator standing order #5 — "STOP-AND-SURFACE if W2b retry
+wall_clock exceeds 1 hour".
+
+--- What happened ---
+
+After W2e landed (numba @njit applied to dfsph canonical-tier hot
+loops at a9f7cf2; 22/22 sph-water tests GREEN including 4 new JIT
+equivalence tests), W2b retry was attempted to generate the canonical
+capture at full 1M scale.
+
+The numba routing DID produce significant speedup vs the prior
+pure-Python pair-array attempt:
+
+  Pure-Python NumPy pair-arrays (R17 result, killed at 217 min):
+    per-step ~13 s/step; ETA ~225-250 min total.
+
+  Numba JIT (this W2b retry, killed at 78 min):
+    per-step ~4.7 s/step; ETA ~80-90 min total based on observed
+    progress at 78 min still-running state with RSS oscillating in
+    the 2-3 GB band (still in simulation loop).
+
+Numba speedup: ~13/4.7 ≈ 2.8×. Material improvement, but
+significantly less than the R18 routing's "10-30 minutes" projection
+(which expected ~10× speedup).
+
+Process killed at 1:18:47 wall-clock; no file written; working tree
+clean.
+
+--- Why the speedup was less than projected ---
+
+The R18 routing analysis assumed numba would compile the per-pair
+inner math to a near-native loop with negligible overhead. The
+observed 2.8× speedup vs the pure-NumPy vectorized path suggests:
+
+  1. The pure-NumPy variant was ALREADY using SIMD-vectorized
+     intrinsics (AVX2/AVX-512) for the per-pair arithmetic. The
+     gain from numba is "remove intermediate (M, 3) array
+     allocations" + "lower interpreter dispatch" — but NOT "convert
+     interpreted Python to compiled C", because the bottleneck
+     wasn't interpreted Python at the inner-math level.
+  2. The per-step cost is dominated NOT by the per-pair math but by
+     the cKDTree.query_pairs call + lexsort + symmetrize, which
+     numba does NOT accelerate (those run inside scipy/numpy C).
+  3. Memory-bandwidth-bound work for moving ~50M pairs of (i, j)
+     indices + ~25M unique (rx, ry, rz, v_x, v_y, v_z) bytes through
+     L3 cache per step. Numba can't speed this up.
+
+Per-step breakdown estimate (78 min / 1000 steps × 60 s/min):
+   ~4.7 s/step
+     ├─ pair_lists_from_positions (cKDTree + lexsort): ~3-4 s
+     │  (dominates; not numba-accelerated)
+     ├─ density_evolution_jit (numba inner): ~0.5-1 s (was ~5s in
+     │  pure-NumPy variant; numba speedup is in here)
+     ├─ velocity/position integrate + frame capture cadence: ~0.5 s
+
+The R18 optimism was concentrated on the wrong bottleneck. cKDTree
+itself is the per-step floor.
+
+--- Four remediation paths (R19) ---
+
+(A) **Accept the 80-90 min runtime as the canonical baseline.**
+    Per-step ~4.7s × 1000 steps = ~78 min for the simulation alone +
+    ~5-10 min post-loop _trajectory_to_step_states + ~30 s h5
+    write. Total ~85-100 min. Within the operator's "10-30 min was
+    optimistic; let it finish if substantially over 1hr is
+    acceptable" envelope IF the operator routes acceptance.
+
+    Pros: produces the canonical Appendix-D-declared descriptor at
+    full 1M scale; perf-ledger first-landing row records the
+    actual number; downstream Stack-C C++ implementation in
+    Phase-2+ has a real cross-stack target.
+    Cons: 90 min wall-clock per run is operationally painful;
+    regression cycle on this sim costs ~90 min each time.
+
+(B) **Implement a numba inner that absorbs the cKDTree call too**
+    via scipy's KDTree C-API direct invocation. Bypasses Python
+    overhead in the per-step orchestration loop.
+
+    Pros: removes the cKDTree-call-as-Python-function overhead;
+    potential 1.5-2× additional speedup.
+    Cons: invasive; couples numba to scipy internals; fragile to
+    scipy version changes.
+
+(C) **Downsample canonical N to 100K-particle** (the R18-original
+    Lean (β) routing). At 100K particles in unit cube + adjusted
+    h=0.025 for ~50 neighbors per particle: per-step ~0.2-0.5s ×
+    1000 = 200-500s total (~4-9 minutes). Tractable; matches the
+    sph-water spec-ref § 5 "Phase 2+ implementation contract"
+    declaration that the full 1M scale is Stack-C scope.
+
+    Per-sub-phase descriptor override per the established pattern:
+    canonical descriptor becomes dam-break-100K-particles-seed42-
+    step1000; Appendix D § D.2.3 unchanged (Phase-1-retroactive
+    amendment deferred).
+
+    Capture size: 100K × 56 B × 11 frames = ~59 MB (fits original
+    64 MB ceiling; 1 GB ceiling raise is forward-looking headroom).
+
+    Pros: tractable in pure-Python+numba; closes Stage 1 cleanly;
+    Stack-C Phase-2+ produces full-N 1M descriptor matching
+    Appendix D verbatim.
+    Cons: requires per-sub-phase descriptor override + documented
+    deferral.
+
+(D) **Hardware change** — run on a faster CPU / more cores via
+    numba parallel=True with explicit reduction ordering. Out-of-
+    scope for this single-machine session; banked.
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (A) — accept the 80-90 min runtime + let the capture finish.
+Reasoning:
+
+  - The numba routing DID work as routed; the wall-clock just
+    happens to be 80-90 min rather than 10-30 min because the
+    R18 routing's analysis underestimated the cKDTree call cost
+    relative to the per-pair math cost.
+  - 80-90 min is well under the 10⁴-s (167-min) threshold that
+    triggered the original R17 STOP-AND-SURFACE. It's also under
+    the prior R18 STOP-AND-SURFACE point of 217 min.
+  - Re-routing to (C) downsample would close Stage 1 faster but
+    documents a per-sub-phase descriptor deviation from Appendix D
+    that downstream consumers would have to honor. (A) avoids that.
+  - The perf-ledger row IS informative for a "this is the
+    pure-Python NumPy+scipy+numba reference's actual operating
+    envelope at canonical N" baseline — Stack-C Phase-2+ has a
+    real target to beat.
+
+LEAN-NOT (B) — invasive surgery; the diminishing return suggests
+the canonical baseline at (A) is already representative.
+
+LEAN-NOT (C) — per-sub-phase override creates a documented gap
+between Appendix D and the committed capture. If we wanted to
+downsample we should have routed (C) at R18 instead of (I).
+
+LEAN-NOT (D) — out of session scope.
+
+--- Stage 1 continuation status ---
+
+W1 (ceiling raise, 8f99500) + R16 cell-list (2a48a32, superseded
+by R17) + R17 cKDTree (eb81d48 + c120d91 pair-arrays) + numba-
+integration sub-phase (569c883) + W2e numba application (a9f7cf2):
+all stand. Cumulative 22/22 sph-water tests GREEN at HEAD.
+
+W2b retry STOPped-and-SURFACEd at 1:18:47 elapsed wall-clock.
+Working tree clean (process killed; no partial outputs).
+
+W3-W7 pending operator routing of R19.
+
+Stage 1 verdict-state remains partial-needs-continuation per
+the existing bf6ca48 partial checkpoint. This FOURTH surface
+evidence extends the R-class risk surface with R19 (wall-clock
+operator-threshold breach).
+
+=== End surface ===
