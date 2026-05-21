@@ -24,8 +24,11 @@ import numpy as np
 from sph_water.reference.dfsph import (
     canonical_params,
     cell_list_neighbor_query,
+    density,
     density_evolution,
+    density_evolution_jit,
     density_evolution_vectorized,
+    density_jit,
     neighbor_lists,
     pair_lists_from_positions,
 )
@@ -188,3 +191,130 @@ def test_density_evolution_vectorized_bit_deterministic_with_itself() -> None:
     assert np.array_equal(a, b), (
         "vectorized variant must be bit-deterministic with itself"
     )
+
+
+# ---------------------------------------------------------------------------
+# Numba JIT equivalence — R18 routing landings.
+#
+# The JIT inner (density_evolution_jit / density_jit) is consumed by
+# the canonical-tier sim path (sim._canonical_step + canonical-tier
+# _trajectory_to_step_states). Verify the JIT variants are
+# FP-equivalent (within 1e-9 per the project convention at
+# docs/common/numba.md) with the pure-NumPy loop variants at small N
+# where both are tractable, AND bit-deterministic with themselves.
+# Same framing as the existing density_evolution_vectorized tests.
+# ---------------------------------------------------------------------------
+
+
+def test_density_evolution_jit_fp_equivalent_with_loop_at_n64() -> None:
+    """64-particle random IC: JIT variant FP-equivalent with loop variant.
+
+    Per docs/common/numba.md § 6: numba's lowered scalar loop and
+    pure-NumPy's SIMD-vectorized code use different FP-accumulation
+    patterns; algebraic equivalence holds but bit-equality does not.
+    Tolerance 1e-9 is the convention's contract; tighter would flag
+    accidental fastmath drift.
+    """
+    positions, velocities, masses = _make_random_particles(seed=42, n=64, box=1.0)
+    h = float(canonical_params()["h"])
+    particles = [
+        {"p": positions[i].tolist(), "v": velocities[i].tolist(), "m": float(masses[i])}
+        for i in range(64)
+    ]
+    loop_result = np.asarray(density_evolution(particles=particles, h=h))
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
+    jit_result = density_evolution_jit(
+        positions=positions,
+        velocities=velocities,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    max_abs_diff = float(np.max(np.abs(loop_result - jit_result)))
+    assert max_abs_diff < 1e-9, (
+        f"max_abs_diff={max_abs_diff:g} between density_evolution loop and "
+        f"density_evolution_jit at N=64 exceeds 1e-9 FP-equivalence tolerance"
+    )
+
+
+def test_density_evolution_jit_bit_deterministic_with_itself() -> None:
+    """JIT variant produces bit-identical output across two consecutive runs.
+
+    Load-bearing same-stack-same-hw contract per docs/common/numba.md
+    § 6 contract (2): bit-identical run-to-run output. If this fails
+    the numba convention has been broken.
+    """
+    positions, velocities, masses = _make_random_particles(seed=42, n=64, box=1.0)
+    h = float(canonical_params()["h"])
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
+    a = density_evolution_jit(
+        positions=positions,
+        velocities=velocities,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    b = density_evolution_jit(
+        positions=positions,
+        velocities=velocities,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    assert np.array_equal(a, b), (
+        "density_evolution_jit must be bit-deterministic with itself"
+    )
+
+
+def test_density_jit_fp_equivalent_with_loop_at_n64() -> None:
+    """64-particle random IC: density_jit FP-equivalent with density loop.
+
+    Same FP-equivalence-within-1e-9 contract as
+    test_density_evolution_jit_fp_equivalent_with_loop_at_n64.
+    """
+    positions, _velocities, masses = _make_random_particles(seed=42, n=64, box=1.0)
+    h = float(canonical_params()["h"])
+    velocities = np.zeros((64, 3), dtype=np.float64)  # density does not need v
+    particles = [
+        {"p": positions[i].tolist(), "v": velocities[i].tolist(), "m": float(masses[i])}
+        for i in range(64)
+    ]
+    loop_result = np.asarray(density(particles=particles, h=h))
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
+    jit_result = density_jit(
+        positions=positions,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    max_abs_diff = float(np.max(np.abs(loop_result - jit_result)))
+    assert max_abs_diff < 1e-9, (
+        f"max_abs_diff={max_abs_diff:g} between density loop and density_jit "
+        f"at N=64 exceeds 1e-9 FP-equivalence tolerance"
+    )
+
+
+def test_density_jit_bit_deterministic_with_itself() -> None:
+    """density_jit produces bit-identical output across two consecutive runs."""
+    positions, _, masses = _make_random_particles(seed=42, n=64, box=1.0)
+    h = float(canonical_params()["h"])
+    pair_i, pair_j = pair_lists_from_positions(positions, h)
+    a = density_jit(
+        positions=positions,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    b = density_jit(
+        positions=positions,
+        masses=masses,
+        h=h,
+        pair_i=pair_i,
+        pair_j=pair_j,
+    )
+    assert np.array_equal(a, b), "density_jit must be bit-deterministic with itself"

@@ -22,20 +22,35 @@ priority order (sub-phase plan § 9.1):
 
    **Canonical-tier path** (N ≥ ~10⁴; the 1M-particle canonical
    capture per sub-phase plan § 2 gate 10 + § 9 R12 + § 9 R16 + § 9
-   R17 routing arc): ``scipy.spatial.cKDTree`` is used via
-   :func:`cell_list_neighbor_query` (function name retained from the
-   R16 cell-list intermediate hop; R17 routing replaced the body with
-   cKDTree to defeat the Python-interpreter-overhead bottleneck of the
-   pure-Python cell-list at 1M-particle scale). Determinism preserved
-   through two disciplines:
-   (i) cKDTree construction is a deterministic function of the input
-       positions array (fixed splitting strategy at the configured
-       leafsize; no randomization);
-   (ii) per-particle ``query_ball_point`` output is wrapped in a
-       sort-by-id (the cKDTree query order is not intrinsically
-       stable; the sort wrap locks in byte-equivalence with
-       :func:`neighbor_lists` regardless of internal tree-construction
-       or query order).
+   R17 + § 9 R18 routing arc): two C-implemented layers, both
+   bit-deterministic with themselves + FP-equivalent (1e-9) with the
+   pure-NumPy diagnostic-tier path.
+
+   Layer 1 — neighbor query (R17 routing):
+   :func:`pair_lists_from_positions` wraps
+   ``scipy.spatial.cKDTree.query_pairs`` + symmetrize + lexsort + a
+   strict-less-than re-filter. Determinism preserved through (i)
+   cKDTree construction is a deterministic function of the input
+   positions array (fixed splitting strategy; no randomization); and
+   (ii) the sort-by-(pair_i, pair_j) wrap locks in iteration-order
+   invariance regardless of internal tree-construction or query
+   traversal.
+
+   Layer 2 — per-pair math (R18 routing): :func:`density_evolution_jit`
+   and :func:`density_jit` (both ``@njit(fastmath=False, cache=True)``
+   per the project convention at ``docs/common/numba.md``) do
+   single-pass scalar-register accumulation over the sorted pair
+   arrays. No intermediate (M, 3) arrays — the pure-NumPy
+   :func:`density_evolution_vectorized` would materialize ~7 GB of
+   intermediate arrays per step at N=1M with M=25M pairs; the JIT
+   inner does the same algebraic computation in a single scalar pass.
+   Determinism preserved through the (fastmath=False, cache=True)
+   contract: bit-deterministic with itself (load-bearing same-stack-
+   same-hw guarantee) + FP-equivalent with pure-NumPy
+   :func:`density_evolution_vectorized` / :func:`density_vectorized`
+   within 1e-9 absolute (SIMD-vs-scalar gap; see
+   ``docs/common/numba.md`` § 6 + the JIT-equivalence tests at
+   ``packages/sph-water/tests/test_spatial_hash_equivalence.py``).
    Bit-equivalent to the O(N²) diagnostic-tier builder at any input
    where both fit; verified by
    ``tests/test_spatial_hash_equivalence.py`` (6 tests at N ∈ {2, 64,
@@ -120,8 +135,8 @@ from .reference.dfsph import (
     canonical_params,
     density,
     density_evolution,
-    density_evolution_vectorized,
-    density_vectorized,
+    density_evolution_jit,
+    density_jit,
     pair_lists_from_positions,
 )
 
@@ -240,8 +255,15 @@ def _canonical_step(
     :func:`density_evolution_vectorized` docstring).
     """
     pair_i, pair_j = pair_lists_from_positions(positions, h)
-    # Exercise the deterministic-summed continuity (side-effect).
-    _ = density_evolution_vectorized(
+    # Exercise the deterministic-summed continuity (side-effect) via
+    # the numba JIT inner — R18 routing. Replaces
+    # density_evolution_vectorized which materializes ~7 GB of
+    # intermediate (M, 3) arrays at N=1M; the JIT inner does the
+    # same algebraic computation in a single scalar-register pass
+    # with no allocations. Bit-deterministic with itself + FP-
+    # equivalent (1e-9) with the pure-NumPy variant per the project
+    # convention at docs/common/numba.md.
+    _ = density_evolution_jit(
         positions=positions,
         velocities=velocities,
         masses=masses,
@@ -403,7 +425,11 @@ def _trajectory_to_step_states(
         velocities = v_hist[idx]
         if use_spatial_hash:
             pair_i, pair_j = pair_lists_from_positions(positions, h)
-            rho = density_vectorized(
+            # R18 routing: density_jit (numba) replaces density_vectorized
+            # (pure-NumPy) at canonical-tier scale — same algebraic
+            # computation, scalar-register pass instead of multi-GB
+            # intermediate array materialization.
+            rho = density_jit(
                 positions=positions,
                 masses=masses,
                 h=h,

@@ -32,6 +32,7 @@ from __future__ import annotations
 from typing import Any, Sequence
 
 import numpy as np
+from numba import njit
 
 __all__ = [
     "SIGMA_3D",
@@ -43,8 +44,10 @@ __all__ = [
     "cell_list_neighbor_query",
     "pair_lists_from_positions",
     "density",
+    "density_jit",
     "density_vectorized",
     "density_evolution",
+    "density_evolution_jit",
     "density_evolution_vectorized",
     "divergence_free_solve",
     "canonical_params",
@@ -578,6 +581,202 @@ def density_vectorized(
     sums = np.add.reduceat(contrib, start_idx)
     rho[unique_i] = rho[unique_i] + sums
     return rho
+
+
+# ---------------------------------------------------------------------------
+# Numba JIT-compiled canonical-tier hot-loop inners + thin wrappers.
+#
+# Added per sub-phase-particle-fluids-sph-water Stage 1 R18 routing
+# (numba-integration sub-phase landing at 569c883). The vectorized
+# pure-NumPy variants above remain the reference for small-N
+# equivalence testing and for the diagnostic-tier path; the JIT
+# wrappers below are consumed only by the canonical-tier sim path
+# (:func:`sph_water.sim._canonical_step`).
+#
+# Decorator form is the project convention from `docs/common/numba.md`:
+# ``@njit(fastmath=False, cache=True)`` — both kwargs explicit.
+# - `fastmath=False`: forbids FP re-association (preserves determinism
+#   against the spec's bit-exact-same-stack-same-hw target).
+# - `cache=True`: writes compiled artifact to __pycache__ so cold-start
+#   cost amortizes across processes.
+#
+# Determinism contract (verified by the existing equivalence tests at
+# packages/sph-water/tests/test_spatial_hash_equivalence.py + the new
+# tests added in this sub-phase commit): bit-deterministic with itself
+# + FP-equivalent (within 1e-9) with the pure-NumPy variants above.
+# Same framing as docs/common/numba.md § 6.
+# ---------------------------------------------------------------------------
+
+
+@njit(fastmath=False, cache=True)
+def _density_evolution_jit_inner(
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    pair_i: np.ndarray,
+    pair_j: np.ndarray,
+) -> np.ndarray:
+    """Numba JIT inner loop for SPH continuity at canonical-tier scale.
+
+    Single pass over pairs; scalar-register accumulation; no
+    intermediate (M, 3) arrays. The pure-NumPy
+    :func:`density_evolution_vectorized` allocates ~7 GB of
+    intermediate (M, 3) arrays per step at N=1M with M=25M pairs;
+    this JIT inner does the same algebraic computation in a single
+    pass over O(M) work with scalar registers, no allocations.
+
+    Operation order matches the pure-NumPy reference's per-pair work:
+    ``r_hat = r / mag`` (3 divisions) → ``grad = (S/h^4)*fp*r_hat``
+    → ``dot = v_rel · grad`` → ``contrib = m_j * dot``. Self-zero
+    convention preserved (j == i excluded by neighbor lists).
+
+    Sum semantics: ``drho_dt[i] += contrib`` is sequential pair-order
+    accumulation. The pair_i array MUST be sorted ascending; within
+    each i-segment, pair_j MUST be sorted ascending (canonical
+    output shape of :func:`pair_lists_from_positions`).
+    """
+    sigma_3d = 1.0 / np.pi
+    inv_h4 = 1.0 / (h * h * h * h)
+    n = positions.shape[0]
+    drho_dt = np.zeros(n, dtype=np.float64)
+    m = pair_i.shape[0]
+    for k in range(m):
+        i = pair_i[k]
+        j = pair_j[k]
+        rx = positions[i, 0] - positions[j, 0]
+        ry = positions[i, 1] - positions[j, 1]
+        rz = positions[i, 2] - positions[j, 2]
+        mag = (rx * rx + ry * ry + rz * rz) ** 0.5
+        if mag == 0.0:
+            continue
+        q = mag / h
+        if q < 1.0:
+            fp = -3.0 * q + 2.25 * q * q
+        elif q < 2.0:
+            diff = 2.0 - q
+            fp = -0.75 * diff * diff
+        else:
+            continue
+        # r_hat = r / mag (3 element-wise divisions — matches grad_W).
+        inv_mag = 1.0 / mag
+        rhx = rx * inv_mag
+        rhy = ry * inv_mag
+        rhz = rz * inv_mag
+        # grad_W = (sigma_3d / h^4) * f'(q) * r_hat
+        coeff = sigma_3d * inv_h4 * fp
+        gx = coeff * rhx
+        gy = coeff * rhy
+        gz = coeff * rhz
+        # v_rel · grad_W (3 mults + 2 adds, left-to-right).
+        vx = velocities[i, 0] - velocities[j, 0]
+        vy = velocities[i, 1] - velocities[j, 1]
+        vz = velocities[i, 2] - velocities[j, 2]
+        v_dot_grad = vx * gx + vy * gy + vz * gz
+        # contribution = m_j * (v_rel · grad).
+        drho_dt[i] += masses[j] * v_dot_grad
+    return drho_dt
+
+
+def density_evolution_jit(
+    *,
+    positions: np.ndarray,
+    velocities: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    pair_i: np.ndarray,
+    pair_j: np.ndarray,
+) -> np.ndarray:
+    """Numba-JIT-backed SPH continuity for canonical-tier scale.
+
+    Thin wrapper around :func:`_density_evolution_jit_inner` that
+    coerces input arrays to the dtype/shape numba's compiled signature
+    expects (float64 positions/velocities/masses; int64 pair_i/pair_j).
+    Same kwarg shape as :func:`density_evolution_vectorized`'s pair-
+    array fast path.
+
+    Used by :func:`sph_water.sim._canonical_step` (R18 routing).
+    """
+    if pair_i.size == 0:
+        return np.zeros(positions.shape[0], dtype=np.float64)
+    return _density_evolution_jit_inner(
+        np.ascontiguousarray(positions, dtype=np.float64),
+        np.ascontiguousarray(velocities, dtype=np.float64),
+        np.ascontiguousarray(masses, dtype=np.float64),
+        float(h),
+        np.ascontiguousarray(pair_i, dtype=np.int64),
+        np.ascontiguousarray(pair_j, dtype=np.int64),
+    )
+
+
+@njit(fastmath=False, cache=True)
+def _density_jit_inner(
+    positions: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    pair_i: np.ndarray,
+    pair_j: np.ndarray,
+) -> np.ndarray:
+    """Numba JIT inner loop for SPH density at canonical-tier scale.
+
+    Same scalar-register / no-intermediate-allocation discipline as
+    :func:`_density_evolution_jit_inner`. Self-contribution per
+    particle is initialized first; pair contributions are accumulated
+    in sorted-pair order.
+
+    Operation order: self_i first (``rho[i] = m_i * sigma_3d / h^3``),
+    then ``rho[i] += m_j * sigma_3d / h^3 * f(q)`` for each pair.
+    """
+    sigma_3d = 1.0 / np.pi
+    h3 = h * h * h
+    inv_h3 = 1.0 / h3
+    n = positions.shape[0]
+    rho = np.empty(n, dtype=np.float64)
+    for i in range(n):
+        rho[i] = masses[i] * sigma_3d * inv_h3
+    m = pair_i.shape[0]
+    for k in range(m):
+        i = pair_i[k]
+        j = pair_j[k]
+        rx = positions[i, 0] - positions[j, 0]
+        ry = positions[i, 1] - positions[j, 1]
+        rz = positions[i, 2] - positions[j, 2]
+        mag = (rx * rx + ry * ry + rz * rz) ** 0.5
+        q = mag / h
+        if q < 1.0:
+            fq = 1.0 - 1.5 * q * q + 0.75 * q * q * q
+        elif q < 2.0:
+            diff = 2.0 - q
+            fq = 0.25 * diff * diff * diff
+        else:
+            continue
+        rho[i] += masses[j] * sigma_3d * inv_h3 * fq
+    return rho
+
+
+def density_jit(
+    *,
+    positions: np.ndarray,
+    masses: np.ndarray,
+    h: float,
+    pair_i: np.ndarray,
+    pair_j: np.ndarray,
+) -> np.ndarray:
+    """Numba-JIT-backed SPH density for canonical-tier scale.
+
+    Thin wrapper around :func:`_density_jit_inner`. Same kwarg shape
+    as :func:`density_vectorized`'s pair-array fast path.
+
+    Used by :func:`sph_water.sim._trajectory_to_step_states`
+    canonical-tier branch (R18 routing).
+    """
+    return _density_jit_inner(
+        np.ascontiguousarray(positions, dtype=np.float64),
+        np.ascontiguousarray(masses, dtype=np.float64),
+        float(h),
+        np.ascontiguousarray(pair_i, dtype=np.int64),
+        np.ascontiguousarray(pair_j, dtype=np.int64),
+    )
 
 
 def density(
