@@ -1,0 +1,28 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/sph-water
+configfile: pyproject.toml
+plugins: hypothesis-6.152.8
+collecting ... collected 17 items
+
+tests/test_cubic_spline_kernel_golden.py::test_W_matches_phase0_pin PASSED [  5%]
+tests/test_determinism.py::test_run_twice_epsilon_diff PASSED            [ 11%]
+tests/test_dfsph_density_golden.py::test_density_at_two_particle_fixture PASSED [ 17%]
+tests/test_dfsph_density_golden.py::test_density_evolution_at_two_particle_fixture PASSED [ 23%]
+tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED           [ 29%]
+tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED   [ 35%]
+tests/test_diagnostics.py::test_tier2_particle_no_overlap_at_half_spacing PASSED [ 41%]
+tests/test_diagnostics.py::test_tier2_particle_neighbor_list_integrity PASSED [ 47%]
+tests/test_diagnostics.py::test_tier2_particle_momentum_conservation_advisory PASSED [ 52%]
+tests/test_pbt_invariants.py::test_density_nonneg PASSED                 [ 58%]
+tests/test_pbt_invariants.py::test_kernel_normalization_unit_volume PASSED [ 64%]
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n2 PASSED [ 70%]
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n64 PASSED [ 76%]
+tests/test_spatial_hash_equivalence.py::test_cell_list_matches_neighbor_lists_at_n256 PASSED [ 82%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_matches_loop_at_n2 PASSED [ 88%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_matches_loop_at_n64 PASSED [ 94%]
+tests/test_spatial_hash_equivalence.py::test_density_evolution_vectorized_bit_deterministic_with_itself PASSED [100%]
+
+============================== 17 passed in 0.39s ==============================

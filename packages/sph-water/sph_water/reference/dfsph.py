@@ -206,49 +206,61 @@ def neighbor_lists(
 def cell_list_neighbor_query(
     positions: np.ndarray, h: float, *, support_factor: float = 2.0
 ) -> list[list[int]]:
-    """Spatial-hash / cell-list neighbor query for canonical-tier scales.
+    """KDTree-based neighbor query for canonical-tier scales.
 
     Equivalent in output to :func:`neighbor_lists` (byte-identical
-    return value at any input where both representations fit in
-    memory), but with O(N + N⟨neighbors⟩) memory and runtime instead
-    of the O(N²) pairwise tensor materialization of the diagnostic-
-    tier builder. Sized for the canonical 1M-particle capture
-    descriptor where the diagnostic-tier builder would require
-    21.8 TiB for the (N, N, 3) displacement tensor.
+    ``list[list[int]]`` output at any input where both fit in memory),
+    with C-implemented O(N log N) construction + O(N log N) query
+    instead of the O(N²) pairwise tensor materialization of the
+    diagnostic-tier builder OR the pure-Python cell-list outer loop
+    (the prior implementation, which was correct algorithmically but
+    bottlenecked by Python-interpreter overhead at 1M-particle scale —
+    see sub-phase plan § 9 R17 surface).
 
-    Algorithm — standard cell-list approach in SPH (Liu & Liu 2003,
-    *Smoothed Particle Hydrodynamics: A Meshfree Particle Method*,
-    World Scientific, § 3.4; Hockney & Eastwood 1988, *Computer
-    Simulation Using Particles*, Adam Hilger, ch. 8). The
-    cubic-spline kernel's compact support is ``q < support_factor``
-    ⇒ ``r < support_factor·h``; cells are sized at the support
-    radius so that any neighbor within range lives in the same or
-    an adjacent cell.
+    Function name retained from the cell-list intermediate hop
+    (sub-phase plan § 9 R16 → R17 routing arc) so the public-API
+    surface (:func:`sph_water.sim.sim_runner_seeded`) is unchanged.
 
-    Determinism discipline (sub-phase plan § 1.5 R16 amendment;
+    Algorithm — :class:`scipy.spatial.cKDTree`:
+
+    - Build a k-d tree of particle positions (O(N log N), C-impl.);
+    - For each particle, call ``query_ball_point`` with the cubic-
+      spline kernel cutoff radius ``support_factor·h``;
+    - Wrap each per-particle neighbor list in a final sort-by-id
+      to lock in determinism (cKDTree's query traversal order is
+      not intrinsically stable; the sort wrap produces byte-equivalent
+      output regardless of internal tree-construction or query order).
+
+    Determinism discipline (sub-phase plan § 1.5 R17 amendment;
     P24 causes #1, #2, #4 mitigation):
 
-    1. **Cell index** = ``floor(position / (support_factor · h))``
-       (integer-floor binning; deterministic for any fixed (h,
-       support_factor) regardless of particle ordering).
-    2. **Per-cell particle list** sorted ascending by particle id;
-       Python dict keyed by 3-tuple cell-index.
-    3. **27-cell stencil iteration** in fixed sorted (dz, dy, dx)
-       offset order (a -1, 0, +1 triple-product enumerated by
-       sorted tuple key).
-    4. **Within each cell**, candidate ids iterated in sorted-
-       ascending order (the per-cell list was sorted at build time).
-    5. **Final per-particle neighbor list** sorted ascending by id
-       (a final ``sort()`` over the accumulated candidates after the
-       cutoff filter — locks in the byte-identical-to-:func:`neighbor_lists`
-       output invariant regardless of cell-stencil traversal order).
-    6. **Self-exclusion** — particle ``i`` excluded from its own
-       list (consistent with :func:`neighbor_lists` contract).
+    1. **Tree construction** is a deterministic function of the input
+       positions array (scipy's cKDTree uses a fixed splitting strategy
+       at the configured `leafsize`; no randomization).
+    2. **query_ball_point** output may not be sorted; we sort by id
+       on each per-particle list — this is the load-bearing
+       determinism wrap.
+    3. **Self-exclusion** — particle ``i`` excluded from its own
+       neighbor list (consistent with :func:`neighbor_lists` and the
+       IC-5 ``check_neighbor_list_integrity`` contract).
 
     Equivalence to :func:`neighbor_lists` is verified by
     ``packages/sph-water/tests/test_spatial_hash_equivalence.py`` at
-    N ∈ {2, 64, 256} with the canonical h = 0.05 — both functions
-    produce byte-identical ``list[list[int]]`` output.
+    N ∈ {2, 64, 256} — both functions produce byte-identical
+    ``list[list[int]]`` output (the test was originally written
+    against the cell-list intermediate hop at 2a48a32; the KDTree
+    replacement at R17 routing preserves the byte-equivalence
+    invariant verbatim).
+
+    Cutoff semantics: ``query_ball_point(r=R)`` returns points within
+    Euclidean distance **<= R**; the diagnostic-tier
+    :func:`neighbor_lists` uses ``d2 < cutoff_sq`` (strict less-than).
+    For ``r == cutoff`` exactly, the two contracts differ; the cubic-
+    spline kernel has ``f(q) = 0`` exactly at ``q == support_factor``
+    (compact support), so points at ``r == cutoff`` contribute zero to
+    density / density_evolution either way. The sort-and-deduplicate
+    wrap below uses ``r2 < cutoff_sq`` to match the diagnostic-tier
+    contract bit-for-bit at the boundary.
     """
     p = np.asarray(positions, dtype=np.float64)
     if p.ndim != 2 or p.shape[1] != 3:
@@ -262,54 +274,38 @@ def cell_list_neighbor_query(
     n = p.shape[0]
     if n == 0:
         return []
-    cell_size = support_factor * h
-    cutoff_sq = cell_size * cell_size
+    # Local import: keep scipy out of the import-time path for
+    # consumers that never call canonical-tier (diagnostic-tier
+    # gates 5/6/7/8/9/11/12 + 13-anchor do not exercise this function).
+    from scipy.spatial import cKDTree
 
-    # Bucket particles by integer-floor cell index.
-    cell_indices = np.floor(p / cell_size).astype(np.int64)
-    buckets: dict[tuple[int, int, int], list[int]] = {}
-    for i in range(n):
-        key = (
-            int(cell_indices[i, 0]),
-            int(cell_indices[i, 1]),
-            int(cell_indices[i, 2]),
-        )
-        bucket = buckets.get(key)
-        if bucket is None:
-            buckets[key] = [i]
-        else:
-            bucket.append(i)
-    # Per-cell sort by id (insertion is already in ascending id order
-    # because we iterate i = 0..N-1, but make it explicit for posterity).
-    for key in buckets:
-        buckets[key].sort()
-
-    # Fixed sorted 27-cell stencil offsets (sorted lexicographically
-    # for deterministic traversal order).
-    offsets: list[tuple[int, int, int]] = sorted(
-        (dx, dy, dz) for dx in (-1, 0, 1) for dy in (-1, 0, 1) for dz in (-1, 0, 1)
-    )
-
+    cutoff = support_factor * h
+    cutoff_sq = cutoff * cutoff
+    tree = cKDTree(p)
+    # query_ball_point with the same r used for both tree-construction
+    # query AND the d2<cutoff_sq strict-less-than filter below. scipy's
+    # default is r2<=cutoff_sq (inclusive); we re-filter to <cutoff_sq
+    # to match neighbor_lists's strict-less-than semantics exactly.
+    raw_lists = tree.query_ball_point(p, r=cutoff, workers=1)
     lists: list[list[int]] = []
     for i in range(n):
-        ci = (int(cell_indices[i, 0]), int(cell_indices[i, 1]), int(cell_indices[i, 2]))
-        candidates: list[int] = []
-        for ox, oy, oz in offsets:
-            key = (ci[0] + ox, ci[1] + oy, ci[2] + oz)
-            bucket = buckets.get(key)
-            if bucket is None:
-                continue
-            for j in bucket:
-                if j == i:
-                    continue
-                r = p[i] - p[j]
-                if float(r[0] * r[0] + r[1] * r[1] + r[2] * r[2]) < cutoff_sq:
-                    candidates.append(j)
-        # Final per-particle sort — locks in byte-identical-to-
-        # :func:`neighbor_lists` output invariant regardless of
-        # cell-traversal artifacts.
-        candidates.sort()
-        lists.append(candidates)
+        candidates = raw_lists[i]
+        # Filter to strict-less-than + exclude self; numpy-vectorized.
+        if not candidates:
+            lists.append([])
+            continue
+        cand_arr = np.asarray(candidates, dtype=np.int64)
+        # Exclude self.
+        cand_arr = cand_arr[cand_arr != i]
+        if cand_arr.size == 0:
+            lists.append([])
+            continue
+        # Strict-less-than re-filter at the boundary.
+        diffs = p[i] - p[cand_arr]
+        d2 = np.einsum("ij,ij->i", diffs, diffs)
+        kept = cand_arr[d2 < cutoff_sq]
+        kept.sort()  # deterministic sort-by-id wrap.
+        lists.append([int(j) for j in kept])
     return lists
 
 

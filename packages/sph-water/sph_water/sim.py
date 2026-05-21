@@ -21,21 +21,39 @@ priority order (sub-phase plan § 9.1):
    tensor.
 
    **Canonical-tier path** (N ≥ ~10⁴; the 1M-particle canonical
-   capture per sub-phase plan § 2 gate 10 + § 9 R12 + § 9 R16 routing):
-   spatial-hash bucketing IS used via :func:`cell_list_neighbor_query`.
-   Determinism preserved through three disciplines:
-   (i) cell-index = integer-floor of position / (support_factor · h)
-       (deterministic for any fixed h, support_factor; independent of
-       particle ordering);
-   (ii) per-cell particle list sorted ascending by id at build time;
-   (iii) fixed 27-cell stencil iteration in sorted (dx, dy, dz) offset
-        order + final per-particle list sorted ascending by id.
+   capture per sub-phase plan § 2 gate 10 + § 9 R12 + § 9 R16 + § 9
+   R17 routing arc): ``scipy.spatial.cKDTree`` is used via
+   :func:`cell_list_neighbor_query` (function name retained from the
+   R16 cell-list intermediate hop; R17 routing replaced the body with
+   cKDTree to defeat the Python-interpreter-overhead bottleneck of the
+   pure-Python cell-list at 1M-particle scale). Determinism preserved
+   through two disciplines:
+   (i) cKDTree construction is a deterministic function of the input
+       positions array (fixed splitting strategy at the configured
+       leafsize; no randomization);
+   (ii) per-particle ``query_ball_point`` output is wrapped in a
+       sort-by-id (the cKDTree query order is not intrinsically
+       stable; the sort wrap locks in byte-equivalence with
+       :func:`neighbor_lists` regardless of internal tree-construction
+       or query order).
    Bit-equivalent to the O(N²) diagnostic-tier builder at any input
    where both fit; verified by
-   ``tests/test_spatial_hash_equivalence.py``.
+   ``tests/test_spatial_hash_equivalence.py`` (6 tests at N ∈ {2, 64,
+   256}; same tests that verified the cell-list intermediate hop, now
+   verifying the KDTree replacement — the function-name-stable
+   equivalence contract).
 
-   Phase-2+ Stack-C extends this with the Morton-key bucket sort +
-   stable secondary id-sort per ``determinism.md``.
+   Note: the R16 routing landed an intermediate pure-Python cell-list
+   implementation (commit ``2a48a32``); that implementation was correct
+   algorithmically and bit-equivalent at the equivalence-test scales,
+   but its Python outer loop over N=1M particles hit a Python-interpreter-
+   overhead bottleneck (~14 hours estimated wall-clock — sub-phase plan
+   § 9 R17 surface). R17 routing replaced the body with cKDTree; the
+   cell-list implementation no longer exists in the source tree
+   (intermediate hop superseded).
+
+   Phase-2+ Stack-C extends this with native cell-list / Morton-key
+   bucket sort + stable secondary id-sort per ``determinism.md``.
 
 2. **Sorted neighbor-iteration order** (P24 cause #1 mitigation).
    :func:`sph_water.reference.dfsph.neighbor_lists` returns each
