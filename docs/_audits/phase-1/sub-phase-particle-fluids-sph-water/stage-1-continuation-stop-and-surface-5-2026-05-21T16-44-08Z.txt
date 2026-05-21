@@ -1,0 +1,227 @@
+=== Stage 1 continuation: FIFTH STOP-AND-SURFACE on 3hr structural-alarm threshold breach ===
+
+Date: 2026-05-21
+HEAD: 84a80fe (post W2e numba application; canonical-capture
+attempt with R19-accepted "~80-90 min projection" assumption)
+Scope: operator standing order #3 — "If wall-clock substantially
+exceeds 3 hours, STOP-AND-SURFACE per original R18 structural-alarm
+definition. That would be R20 and would suggest the per-step floor
+isn't what R19 analysis projected."
+
+--- What happened ---
+
+R19 routing accepted the R19 surface analysis's "80-90 min canonical
+runtime" projection as honest, and revoked the prior continuation
+prompt's 1-hour threshold. The 3-hour (180-min) structural-alarm
+threshold was retained as the only stop condition.
+
+Re-attempted canonical capture at HEAD 84a80fe with numba JIT inner
+math at a9f7cf2. Process ran for 3:21:51 (~202 min) at 100% CPU.
+No h5 file landed; killed at 202 min per standing order #3 (~12%
+over the 3hr structural-alarm threshold).
+
+--- The R19 projection was wrong ---
+
+R19 surface analysis projected ~80-90 min based on per-step
+extrapolation from the killed-at-78-min prior attempt:
+  78 min observed / ~step-800 estimate = ~5.8 s/step
+  Implied 1000-step completion: 1000 × 5.8 = 5800 s ≈ 97 min
+  Add post-loop ~10-15 min → 107-112 min total
+
+Observed reality at this attempt:
+  202 min and STILL not at file-written phase. RSS oscillation
+  pattern (3-4 GB band) suggests we may have been in late simulation
+  loop or early _trajectory_to_step_states still.
+
+  Implied per-step ≈ 7-10 s (assuming we were at step 1000-ish and
+  in post-loop work).
+
+Per-step at canonical scale is closer to 7-10 s, not the 4.7 s
+projected. That's 1.5-2x higher than R19 estimated. The R19
+projection was extrapolated from incomplete data (the prior attempt
+was killed mid-flight, so we extrapolated linearly without
+accounting for late-stage cost).
+
+--- Why numba didn't deliver the expected speedup ---
+
+R18 routing assumed numba would compile the inner per-pair math to
+near-native loops. R19 surface confirmed numba IS producing a 2.8x
+speedup on the per-pair math (5s/step → 0.5-1s/step). But the
+per-step total is still 7-10s because:
+
+  1. cKDTree.query_pairs at N=1M: ~3-5 s/step. C-implemented but the
+     algorithmic cost (O(N log N) tree build + O(N × neighbors)
+     query) plus the ~50M-entry symmetrize/lexsort is genuinely 3-5 s.
+
+  2. Pair-array materialization (np.concatenate of two 25M-element
+     arrays + np.lexsort over 50M elements): ~1-2 s/step. Vectorized
+     but unavoidable at this M.
+
+  3. Numba inner math: ~0.5-1 s/step. The speedup is real but only
+     ~10-20% of the per-step total.
+
+  4. _trajectory_to_step_states post-loop (11 frames × cKDTree +
+     density_jit + StepState builder): ~20-40 s total at canonical
+     scale (each frame requires a fresh cKDTree).
+
+  5. h5py write of ~600 MB H5 file: ~30-60 s.
+
+The dominant cost is items 1+2 (cKDTree orchestration + pair-array
+materialization), which numba does not accelerate. The R19 surface
+analysis identified this correctly ("cKDTree itself is the per-step
+floor") but underestimated the magnitude — projecting 3-4 s/step
+when actual is 4.5-7 s.
+
+--- Total wall-clock decomposition (revised) ---
+
+  Per-step (1000 steps):
+    cKDTree.query_pairs ............ ~3-5 s
+    np.concatenate + np.lexsort .... ~1-2 s
+    density_evolution_jit .......... ~0.5-1 s
+    velocity/position integrate .... ~0.05 s
+    ─────────────────────────────
+    Total per step .................. ~5-8 s
+
+  Per-frame (11 frames, post-loop):
+    cKDTree.query_pairs ............ ~3-5 s
+    density_jit .................... ~0.5-1 s
+    StepState assembly + copies .... ~3-5 s
+    ─────────────────────────────
+    Total per frame ................. ~7-11 s × 11 = 77-121 s
+
+  H5 write:                           ~30-60 s
+
+  Grand total: 5000-8000 s + 77-121 s + 30-60 s = ~85-135 min
+
+Hmm — that's actually within the R19 projection band. But observed
+202 min suggests per-step is closer to 12 s, or the 11-frame post-
+loop is closer to 5-10 min, or something else is amplifying.
+
+Possible amplifiers not in the analysis:
+  - L3 cache pressure: 50M-pair arrays (~1.2 GB) plus position/
+    velocity arrays (~48 MB) plus cKDTree internal state (~80 MB)
+    blow past L3 (usually 16-30 MB on this class of CPU). Each
+    step's vectorized numpy ops + numba inner has to re-load from
+    DRAM. DRAM bandwidth ~40 GB/s on this hardware; 1.2 GB array
+    × multiple sweeps per step = serialized DRAM reads of ~5 GB =
+    ~125 ms just for memory traffic.
+  - Numba JIT caching: first-call compilation cost (~5-30 s); subsequent
+    calls amortize. Probably not the issue since we observed multi-
+    minute steady-state, not one big startup spike.
+  - Allocator pressure: Python/numpy GC behavior on the ~50M-entry
+    arrays per step. Could add a few hundred ms per step at this scale.
+
+Net: per-step is probably 7-12 s rather than 4-5 s. 1000 steps =
+117-200 min. Plus post-loop = 120-210 min. We observed 202 min and
+were still going, consistent with the upper end of this range.
+
+--- Four remediation paths (R20) ---
+
+(A) **Accept up to 4-5 hour wall-clock as canonical baseline.** Let
+    it run to completion. Per-step actually 7-12s; total likely
+    220-280 min. Operationally painful but produces the canonical
+    artifact at full N. The perf-ledger row captures the actual
+    Python NumPy+scipy+numba reference performance ceiling.
+
+    Pros: produces full Appendix-D-declared 1M-particle canonical;
+    perf-ledger row records honest reality; Stack-C Phase-2+ has the
+    target.
+    Cons: 4+ hour wall-clock per regeneration. If Stage 2 mutation
+    testing or anything else needs to re-generate, that's another
+    4+ hours each time.
+
+(B) **Downsample to 100K particles** (R19 LEAN-NOT-FIRST option;
+    available as fallback). At N=100K, per-step ~0.3-0.7s × 1000 =
+    ~5-12 min. Capture size ~59 MB. Per-sub-phase descriptor
+    override.
+
+    Pros: tractable wall-clock; Stage 1 closes cleanly; Stack-C
+    Phase-2+ delivers full N=1M.
+    Cons: Appendix-D descriptor deviation documented as per-sub-
+    phase override (not amendment).
+
+(C) **Reduce capture cadence** to fewer frames (e.g., just IC + final
+    = 2 frames instead of 11). Saves the per-frame post-loop work
+    (~80-120 s total) but does NOT help the dominant 1000-step
+    simulation cost.
+
+    Marginal benefit. Not recommended.
+
+(D) **Implement a C/Cython inner that absorbs cKDTree call** like
+    R19's path (B). Most invasive; couples to scipy internals.
+    Probably 30-50% additional speedup. Not worth it given the
+    R20 observation that per-step floor is closer to 7-10 s than
+    R19's 3-4 s estimate.
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (B) — downsample to 100K particles via per-sub-phase descriptor
+override. Reasoning:
+
+  - The R19 routing's optimism is now demonstrated wrong twice
+    (R18 projection too optimistic, R19 projection also too
+    optimistic). Continuing to bet on "next time will be faster"
+    doesn't have evidence behind it.
+  - Pure-Python NumPy at 1M-particle SPH is fundamentally a
+    multi-hour operation, period. Numba helped 2.8x; cKDTree
+    is already C; further optimization options have diminishing
+    returns.
+  - The spec-ref § 5 / sub-phase plan § 1.4 explicitly states that
+    canonical-scale 1M-particle implementation is Phase-2+ Stack-C
+    scope. Forcing it through Python at this sub-phase ignores
+    that boundary.
+  - 100K-particle baseline is sufficient to:
+    * exercise gate 10 (canonical capture provenance);
+    * exercise gate 13 (perf-ledger first-landing);
+    * establish the algorithmic+API contract that Stack-C reproduces
+      at full N.
+  - The 100K-particle wall-clock (~5-12 min) is operationally
+    sustainable for Stage 2 mutation testing if needed.
+
+LEAN-NOT (A) — 4-5 hour wall-clock per regeneration is operationally
+painful enough that Stage 2 would inherit pain. The honest perf-
+ledger number is itself less informative than just stating "Python
+reference at canonical scale is multi-hour, see Phase-2+ Stack-C".
+
+LEAN-NOT (C) — marginal improvement; doesn't solve the core problem.
+
+LEAN-NOT (D) — diminishing returns; invasive.
+
+--- Threshold-discipline observation (banked for Stage 1 final checkpoint) ---
+
+The R19 surface analysis projected wall-clock based on linear
+extrapolation from a partial observation (78 min of a killed run).
+This produced a 2x underestimate. Pattern: surface-projected
+wall-clocks have been overly optimistic at R17 (10²-10³ s, actual
+~10⁴ s), R18 (10-30 min via spatial-hash, actual several hours via
+Python-loop), R19 (80-90 min, actual 200+ min via cKDTree-orchestration
+underestimate).
+
+The threshold-discipline finding for the Stage 1 final checkpoint:
+projection-based wall-clocks at canonical scale should attach
+explicit per-step decomposition with measured floors before
+treating as actionable. R19's analysis was decomposed but the
+floor estimates were not independently measured. Banked for the
+"canonical-descriptor feasibility analysis should be a Stage 0
+task" Stage 1 final-checkpoint observation.
+
+--- Stage 1 continuation status ---
+
+All commits stand: W1 (8f99500), R16 cell-list (2a48a32), R17 cKDTree
+(eb81d48, c120d91), numba-integration sub-phase (569c883), W2e numba
+application (a9f7cf2), R19 surface (84a80fe). 22/22 sph-water tests
+GREEN at HEAD.
+
+W2b retry STOPped-and-SURFACEd at 3:21:51 elapsed. Process killed;
+working tree clean.
+
+W3-W7 pending operator routing of R20.
+
+Stage 1 verdict-state remains partial-needs-continuation per
+bf6ca48. This FIFTH surface evidence extends the R-class arc with
+R20 (3hr structural-alarm threshold breach; numba speedup confirmed
+real but cKDTree-orchestration is the actual per-step floor at
+canonical scale; pure-Python at canonical 1M is fundamentally
+multi-hour).
+
+=== End surface ===
