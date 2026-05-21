@@ -1,0 +1,208 @@
+=== Stage 1 continuation: THIRD STOP-AND-SURFACE on aggregate runtime exceeding 10⁴ s ===
+
+Date: 2026-05-21
+HEAD: c120d91 (post-pair-arrays fast path; pre-canonical-capture)
+Scope: standing order #7 STOP-AND-SURFACE precondition — "substantially
+exceeds 10⁴ seconds"
+
+--- What happened ---
+
+After the R17 routing landed (scipy + cKDTree + pair-array fast path):
+  - c120d91 added pair_lists_from_positions (fully-vectorized via
+    cKDTree.query_pairs + numpy lexsort) bypassing the Python
+    list-of-lists conversion bottleneck.
+  - All 18 sph-water tests GREEN (12 prior + 6 equivalence inc. the
+    new pair-array equivalence at N=64).
+  - Re-attempted canonical capture generation.
+
+The canonical-capture process ran continuously for 217 minutes (13,000+
+seconds) at 100% CPU. Memory oscillated 0.5-9.5 GB (each step's
+intermediate pair arrays allocated and freed). No HDF5 file was open
+at any sampled time; no capture file was written; process killed
+manually at 03:37:48 wall-clock.
+
+Standing order #7 trigger: "If runtime substantially exceeds 10⁴
+seconds (~3 hours), STOP-AND-SURFACE again — but at that point we'd
+be triple-routing in one sub-phase, which would be worth a more
+substantial conversation than a single message reply."
+
+We are at the triple-routing point. R12 (storage), R16 (algorithmic
+memory), R17 (Python-loop overhead) all routed. R18 (aggregate
+runtime) now surfacing.
+
+--- Root cause analysis ---
+
+The R17 surface's expected wall-clock estimate of 10²-10³ s assumed
+cKDTree-based neighbor query would dominate per-step time at ~1s and
+that vectorized density_evolution would add maybe ~1-2s. Per-step
+total expected ~3-5s. 1000 steps × 5s = 5000s = 83 min. Estimate was
+incorrect.
+
+Actual per-step cost (inferred from RSS oscillation timing and the
+217-min total wall-clock):
+
+  1. pair_lists_from_positions (cKDTree.query_pairs at N=1M with
+     cutoff=0.024 producing ~25M unique pairs + symmetrize +
+     lexsort): ~5-8 seconds.
+  2. density_evolution_vectorized (vectorized math on 50M
+     directed pairs — broadcasting (M, 3) arrays for r_ij, v_rel,
+     grad; aggregate intermediates ~7 GB at peak): ~5-8 seconds.
+  3. Total per step: ~10-15 seconds.
+
+Projected total: 1000 steps × 13s = 13,000 s = 217 min — matches
+observed elapsed.
+
+Plus post-loop work (_trajectory_to_step_states with 11 frames ×
+density_vectorized + StepState construction + h5 write): ~60-90s
+additional.
+
+Final projected wall-clock: ~225-250 min (~3.75-4.25 hours).
+
+The pure-Python NumPy SPH simulation at 1M particles fundamentally
+processes 25-50M pair operations per step × 1000 steps × FP math
+overhead in interpreted NumPy. Even with C-implemented cKDTree and
+vectorized inner math, the sheer scale of data movement and
+intermediate array allocation produces a ~hour-scale wall-clock.
+
+--- What the R17 routing got right and what it missed ---
+
+R17 correctly identified that the pure-Python cell-list outer loop
+was the immediate bottleneck and that scipy + cKDTree could fix it.
+The fix WAS effective for the immediate symptom: without cKDTree
+we'd be at 14+ hours; with cKDTree + pair-arrays we're at ~4 hours.
+
+But the 10²-10³ s expected wall-clock was an order-of-magnitude
+optimistic. Pure-Python NumPy at 1M-particle scale produces ~10⁴ s
+even with best-in-class scipy spatial primitives, because the inner
+vectorized math is moving 1-2 GB of intermediate arrays per step.
+
+--- Four remediation paths (R-class addendum — call it R18) ---
+
+(α) **Add numba as an sph-water dependency; JIT-compile the
+    density_evolution_vectorized inner math.** Numba lowers the
+    vectorized loop to native machine code without the 50M-pair
+    intermediate array allocations (each tensor operation becomes
+    a fused inner loop). Expected wall-clock improvement: 10-30×
+    over current pair-array approach. Projected total: 10-30 min.
+
+    Pros: keeps the canonical descriptor at full 1M scale;
+    incremental optimization; numba is mainstream and well-supported.
+    Cons: adds numba (~200 MB installed) + LLVM transitive footprint
+    + compilation overhead on first call (~5-10s) + determinism
+    requires fastmath=False discipline.
+
+(β) **Downsample canonical N.** Use a smaller-N descriptor (e.g.,
+    dam-break-100K-particles-seed42-step1000 — 100K particles ×
+    1000 steps). At N=100K the per-step cost drops by ~10× (5M pairs
+    instead of 50M); total 1000s × 1.3s/step = 1300s = ~22 min.
+
+    Capture size: 100K × 56 B × 11 frames = ~59 MB (within original
+    64 MB ceiling).
+
+    Pros: minimal change; pure-Python NumPy at smaller scale is
+    tractable; bypasses the entire R12-R18 sequence; the 1 GB
+    ceiling raise (W1) can stay as future-proofing.
+    Cons: requires Appendix D § D.2.3 amendment (Phase-1-retroactive)
+    OR per-sub-phase descriptor override (documented gap between
+    Appendix-D claim and committed capture).
+
+(γ) **Accept the long runtime as the canonical baseline.** Let the
+    capture run to completion (~225-250 min total). Perf-ledger
+    records the actual wall-clock. The descriptor matches Appendix D
+    verbatim; the Stack-C C++ implementation in Phase-2+ produces
+    the same capture at proper performance.
+
+    Pros: no further code changes; Appendix D fidelity preserved;
+    documents the Python-NumPy-reference's actual operating envelope
+    for downstream sims.
+    Cons: 4-hour single-shot wall-clock is uncomfortable for
+    iteration; if any Stage-2 work needs to regenerate, that's
+    another 4 hours; the perf-ledger row records a number that's
+    not informative for cross-stack comparison.
+
+(δ) **Defer the canonical capture to Phase-2+ Stack-C.** Land
+    Stage 1 with the diagnostic-tier capture only
+    (sim_runner_diagnostic at 64 particles × 8 steps); document the
+    canonical 1M descriptor as Phase-2+-deferred. Gate 10 and gate 13
+    are then "diagnostic-tier captured, canonical-tier banked."
+
+    Pros: cleanest deferral; matches the spec-ref § 5 framing that
+    Stack-C C++ is the canonical implementation; Python NumPy
+    reference is for small-N anchoring only.
+    Cons: most aggressive deferral; the descriptor in Appendix D
+    isn't produced this sub-phase; gate 10/13 are not closed in
+    full at HEAD.
+
+--- Recommendation (advisory; operator routes) ---
+
+LEAN (β) — downsample to dam-break-100K-particles-seed42-step1000
+via per-sub-phase descriptor override (NOT an Appendix D amendment).
+Reasoning:
+
+  - Tractable in pure-Python NumPy (~22 min wall-clock); enables
+    Stage 1 to close + Stage 2 to dispatch without further routing.
+  - Appendix D-amendment-via-override pattern is the least invasive
+    way to record the downsampling (sub-phase plan banks this as a
+    Phase-2+-when-Stack-C-lands resolution).
+  - 1 GB ceiling raise (W1) remains valuable headroom for future
+    captures.
+  - The 100K-particle SPH capture is sufficient to exercise gate 10
+    (capture provenance) + gate 13 (perf-ledger first-landing).
+    Stack-C Phase-2+ closes the full-N 1M descriptor.
+
+LEAN-NOT-FIRST (α) — numba is a sensible technical addition but adds
+a substantial dep + LLVM footprint for a one-time canonical-capture
+generation. The benefit is real but the cost-to-benefit at this
+sub-phase scope is debatable.
+
+LEAN-NOT-FIRST (γ) — 4-hour runtime is technically acceptable but
+operationally painful; the perf-ledger record won't be informative.
+
+LEAN-NOT-FIRST (δ) — most aggressive deferral; defers gate 10/13
+beyond Phase 1's plan. Operator may prefer this if Phase 2+ Stack-C
+is imminent + the canonical capture is genuinely a Stack-C
+deliverable.
+
+--- Sequential remediation history (R-class arc) ---
+
+R12 (capture-size vs 64 MB ceiling) → routed (a) raise to 1 GB
+  → c120d91 ancestor 8f99500 (precommit-ceiling)
+
+R16 (algorithmic memory: O(N²) tensor OOM at 1M)
+  → routed (i) implement spatial-hash cell-list
+  → 2a48a32 (cell-list spatial-hash)
+
+R17 (Python-loop overhead at 1M particles: cell-list outer loop
+  bottlenecked)
+  → routed (I) replace with scipy.spatial.cKDTree + sort wrap
+  → eb81d48 (KDTree replacement)
+  → c120d91 (pair-array fast path superseding the list-of-lists
+    Python conversion)
+
+R18 (this surface — aggregate runtime 10⁴+ s at 1M-particle
+  Python-NumPy-reference scale)
+  → pending operator routing.
+
+The pattern: each remediation hop opened the next bottleneck. R12
+exposed R16. R16 exposed R17. R17 exposed R18. This sequence is
+characteristic of bottom-up optimization without upfront feasibility
+analysis (banked observation in Stage 1 final checkpoint for future
+sub-phases — canonical-descriptor feasibility should be a Stage 0
+task).
+
+--- Stage 1 continuation status ---
+
+W1 (8f99500), R16 cell-list (2a48a32), R17 KDTree (eb81d48), pair-
+arrays (c120d91): all stand. scipy dep added at 220c26c. R16/R17/
+pair-array equivalence tests all GREEN at HEAD.
+
+W2b retry STOPped-and-SURFACEd at 217 min runtime. Working tree
+clean (process killed; no partial outputs).
+
+W3-W7 pending operator routing of R18.
+
+Stage 1 verdict-state remains partial-needs-continuation per
+bf6ca48 partial checkpoint. This THIRD surface evidence extends
+the R-class risk surface with R18 (aggregate runtime cost).
+
+=== End surface ===
