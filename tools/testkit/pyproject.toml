@@ -10,6 +10,22 @@ dependencies = [
   "h5py>=3.10",
   "hypothesis>=6.0",
   "jsonschema>=4.20",
+  # numba: JIT acceleration for reference-implementation hot inner
+  # loops at canonical scale. Added per sub-phase-particle-fluids-
+  # sph-water Stage 1 R18 routing: pure-Python NumPy at 1M-particle
+  # scale produces ~10⁴-s wall-clock even with scipy.cKDTree; numba
+  # JIT lowers the inner math to native code without intermediate
+  # array materialization. Declared in testkit (universal workspace
+  # dep at HEAD; every sim + integrity + diagnostics + every sub-
+  # phase consumer transitively gets numba). Project-wide convention
+  # documented at `docs/common/numba.md`: ``@njit(fastmath=False,
+  # cache=True)`` mandatory; ``fastmath=True``, unguarded
+  # ``parallel=True``, and ``error_model="numpy"`` are banned for
+  # determinism preservation. Pinned to a known-good range; bit-
+  # exactness across numba versions is not formally guaranteed
+  # upstream so the project verifies via the regression test at
+  # `tools/testkit/numba/tests/test_numba_determinism.py`.
+  "numba>=0.61,<0.66",
   "numpy>=2.0",
   "sympy>=1.13",
 ]

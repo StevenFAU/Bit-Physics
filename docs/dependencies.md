@@ -148,3 +148,50 @@ Phase 1 additions:
 common-cpp uses CMake / FetchContent, not uv; `cmake -S
 common/common-cpp -B build/common-cpp -G Ninja` resolves the
 `nlohmann/json` + `doctest` pins above.
+
+## Phase 1 sub-phase-numba-integration — numba JIT acceleration (added 2026-05-21)
+
+Source: sub-phase-numba-integration landing audit at
+`docs/_audits/phase-1/sub-phase-numba-integration/landing-<UTC>.md`.
+Motivated by the sub-phase-particle-fluids-sph-water Stage 1 R18
+STOP-AND-SURFACE: even with `scipy.cKDTree` + vectorized pair-array
+math, pure-Python NumPy at 1M-particle scale produced ~10⁴-s
+wall-clock (~3.6 hours). The same Python-interpreter-overhead
+bottleneck will recur at eulerian-smoke (grid sim), lattice-
+boltzmann-d3q19 (lattice), and mpm-multimaterial (particle-grid
+hybrid) canonical scales. Adding numba project-wide now amortizes
+the dependency landing.
+
+### Runtime
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| `numba` | `tools/testkit` (declared at the universal workspace dep so every sim + integrity + diagnostics + every sub-phase consumer transitively gets it) | `>= 0.61, < 0.66` (0.65.1 known-good at this commit; PyPI latest at 2026-05-21) | BSD-2-Clause | `pip index versions numba` |
+| `llvmlite` | numba transitive | per numba's pin | BSD-3-Clause | `pip index versions llvmlite` |
+
+### Project-wide convention
+
+The use convention is documented at [`docs/common/numba.md`](common/numba.md).
+Load-bearing rules:
+
+- `@njit(fastmath=False, cache=True)` is the **mandatory** decorator
+  form. Both kwargs MUST be specified explicitly (no relying on
+  defaults — audit clarity matters).
+- `fastmath=True` is **banned** (re-associates float ops; breaks
+  bit-exactness against the pure-NumPy reference).
+- `parallel=True` without explicit reduction ordering is **banned**
+  (numba's `prange` has nondeterministic reduction semantics by
+  default).
+- `error_model="numpy"` is **banned** if it affects determinism (it
+  doesn't at HEAD, but explicit ban keeps the surface tight).
+
+### Verification
+
+The determinism contract is verified by the regression test at
+[`tools/testkit/numba/tests/test_numba_determinism.py`](../tools/testkit/numba/tests/test_numba_determinism.py).
+The test runs a known-deterministic numerical computation (multi-
+particle force accumulation + density gradient — mirrors the kind of
+arithmetic SPH and other sims use) under both pure NumPy and numba
+JIT at N ∈ {64, 256, 1024} and asserts bit-identical output. If
+numba ever produces drift (across version updates, platform changes,
+etc.), this test catches it.
