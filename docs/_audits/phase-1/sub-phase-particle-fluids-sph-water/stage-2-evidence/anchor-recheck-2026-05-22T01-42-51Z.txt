@@ -1,0 +1,22 @@
+=== Step 2.1 — Closing-commit anchor re-check ===
+HEAD: 90fdbff5e1f8b4be205f5e8b364d6cd4fa7c1af9
+
+--- Stage 1 partial checkpoint sha256 anchors ---
+82fb91bcf19581cd9adc0eca4ba194de033d4a58aa9c5319d52dabc40cf12b1f  tools/testkit/failing-tests-evidence/sph-water-2026-05-20T13-32-02Z.txt
+   expected: 82fb91bcf19581cd9adc0eca4ba194de033d4a58aa9c5319d52dabc40cf12b1f (Phase 1 RED)
+5c3d9924c4713153376fbf42fbb729af48c229052fc4fe435e38f2ef0fcf7110  tools/testkit/failing-tests-evidence/sph-water-implemented-2026-05-20T22-27-08Z.txt
+   expected: 5c3d9924c4713153376fbf42fbb729af48c229052fc4fe435e38f2ef0fcf7110 (Stage 1 partial GREEN)
+
+--- Stage 1 final canonical capture ---
+7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.h5
+   expected: 7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f
+84dbc44892e6ab941ac9469f25ed18827b7a6db6e2611df0a63f95a392ff5865  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json
+   expected: 84dbc44892e6ab941ac9469f25ed18827b7a6db6e2611df0a63f95a392ff5865
+
+--- Sibling captures (closed-form + agent-based + RD-3D) ---
+9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5
+0e1a3fa1f199155ef9b5e0f1f1dbe85cc057694ab0bcb44ef5bdb018b0431084  captures/mandelbulb-explorer-ref/de-probe-points-seed42.h5
+a0f8757a4dd913149b01c043f4f705e6ec3001cbaf7f54db42a2fd76440903c3  captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.h5
+7e9064aff95e3672b0ffa9385d21cdbefbb0dc2c250b99c25b33cceec5f13ec0  captures/boids-3d-ref/flock-1000agents-seed42-step1000.h5
+6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40  captures/physarum-ref/network-canonical-seed42-step5000.h5
+a970ea2919dedb40591d228f41b83bf7f27791c99e6f6de2698d2fb9d09ba1cc  captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.h5

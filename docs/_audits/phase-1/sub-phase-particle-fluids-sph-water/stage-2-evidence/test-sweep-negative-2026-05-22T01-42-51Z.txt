@@ -1,0 +1,28 @@
+=== Step 2.2 — Negative test sweep (3 remaining Phase 1 RED sims) ===
+--- packages/eulerian-smoke ---
+E   ModuleNotFoundError: No module named 'eulerian_smoke.invariants'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_mms_convergence.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.12s ===============================
+--- packages/lattice-boltzmann-d3q19 ---
+=========================== short test summary info ============================
+ERROR tests/test_d3q19_equilibrium_golden.py
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_mms_convergence.py
+ERROR tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.13s ===============================
+--- packages/mpm-multimaterial ---
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.reference'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+ERROR tests/test_quadratic_bspline_golden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.12s ===============================

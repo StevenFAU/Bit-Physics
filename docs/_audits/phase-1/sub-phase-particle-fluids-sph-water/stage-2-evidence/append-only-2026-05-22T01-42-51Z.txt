@@ -1,0 +1,40 @@
+=== Step 2.6 — Append-only check (final) ===
+
+--- CI semantics: no *.ledger.md files ---
+PASS: 0 *.ledger.md files exist (trivially clean)
+
+--- Protected-set diff-filter=M (modifications only; adds excluded) ---
+
+vs 9998bc1:
+  PASS: no modifications to protected paths
+
+vs 2cc0f21:
+  PASS: no modifications to protected paths
+
+vs 739c93f:
+  PASS: no modifications to protected paths
+
+vs 1f5fa0c:
+  PASS: no modifications to protected paths
+
+vs 0df358d:
+  PASS: no modifications to protected paths
+
+vs 569c883:
+  PASS: no modifications to protected paths
+
+--- Stage 1 partial bf6ca48 → HEAD: Convention #12 SHA back-fill expected ---
+  The Stage 1 partial checkpoint's PLACEHOLDER → real-SHA back-fill at db35b07
+  is the established Convention #12 pattern (NEW commit; never --amend).
+  Verified by git log:
+db35b07 chore(particle-fluids-sph-water-stage1-sha-backfill): back-fill Stage 1 partial-checkpoint SHA per Convention #12
+  This is NOT a violation — the partial-checkpoint's SUPERSEDED-AT-STAGE-1-FINAL
+  status is recorded in its supersedes: front-matter and the new Stage 1 final
+  checkpoint's parent_audits field.
+
+--- Convention A: this sub-phase's diff scope vs continuous-CA-RD-3D landing ---
+ tools/testkit/numba_harness/tests/__init__.py      |   0
+ .../numba_harness/tests/test_numba_determinism.py  | 320 +++++++
+ tools/testkit/pyproject.toml                       |  16 +
+ uv.lock                                            | 133 ++-
+ 48 files changed, 6276 insertions(+), 47 deletions(-)

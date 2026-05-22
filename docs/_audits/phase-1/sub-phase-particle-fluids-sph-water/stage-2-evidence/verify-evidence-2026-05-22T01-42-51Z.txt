@@ -1,0 +1,19 @@
+=== Stage 0 checkpoint ===
+  PASS  docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-0-evidence/manifest-verify-2026-05-20T22-10-19Z.txt
+  PASS  tools/testkit/equivalence/tolerance-budget.toml
+  PASS  tools/testkit/failing-tests-evidence/sph-water-2026-05-20T13-32-02Z.txt
+  PASS  references/SPlisHSPlasH/MANIFEST.toml
+  PASS  docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-0-replay-2026-05-20T22-10-19Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-0-evidence/manifest-verify-2026-05-20T22-10-19Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/sph-water-2026-05-20T13-32-02Z.txt (sha256 OK)
+summary: 8 pass / 0 fail at head_sha 53343fccea75
+
+=== Stage 1 final checkpoint ===
+  PASS  tools/testkit/failing-tests-evidence/sph-water-implemented-2026-05-20T22-27-08Z.txt
+  PASS  docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-1-final-regression-2026-05-22T01-31-12Z.txt
+  PASS  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.h5 (sha256 OK)
+  PASS  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/sph-water-2026-05-20T13-32-02Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/sph-water-implemented-2026-05-20T22-27-08Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-1-final-regression-2026-05-22T01-31-12Z.txt (sha256 OK)
+summary: 14 pass / 0 fail at head_sha 31195d83173a
