@@ -30,7 +30,11 @@ from .evaluators import REGISTRY
 CHECK_ID = "cat3.golden-values"
 
 _TABLES_DIR = Path("tools/testkit/golden/tables")
-_SUBDIRS_PICKED_UP: tuple[Path, ...] = (Path("closed-form"), Path("agent-based"))
+_SUBDIRS_PICKED_UP: tuple[Path, ...] = (
+    Path("closed-form"),
+    Path("agent-based"),
+    Path("particle-fluids"),
+)
 
 
 def _gather_tables(repo_root: Path, files: list[Path] | None) -> list[Path]:
