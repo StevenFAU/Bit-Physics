@@ -21,3 +21,4 @@ A row is appended:
 | boids-3d | numpy-reference | flock-1000agents-seed42-step1000 | 17.592 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
 | physarum | numpy-reference | network-canonical-seed42-step5000 | 3.128 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
 | reaction-diffusion-3d | numpy-reference | gray-scott-lambda-64cube-seed42-step2000 | 10.144 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-20 | baseline |
+| sph-water | numpy-reference + scipy.cKDTree + numba-@njit(fastmath=False, cache=True) | dam-break-100K-particles-seed42-step1000 | 1291.854 | i7-12700KF-linux-6.17 | (this commit) | 2026-05-21 | baseline (100K-instance of Phase 1 R8 canonical 1M descriptor; full N=1M is Phase-2+ Stack-C scope per spec-ref § 5; R12+R16+R17+R18+R19+R20 routing arc) |

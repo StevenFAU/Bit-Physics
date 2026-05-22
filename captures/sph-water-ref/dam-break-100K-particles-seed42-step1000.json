@@ -1,0 +1,45 @@
+{
+  "config": {
+    "dims": [
+      100000,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.001,
+      "g_z": -9.81,
+      "h": 0.05,
+      "n_particles": 100000,
+      "rho_0": 1000.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f",
+    "format": "hdf5",
+    "path": "dam-break-100K-particles-seed42-step1000.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-20T00:00:00Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 1277.8699724519975
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "particle-fluids",
+    "name": "sph-water",
+    "variant": "dfsph-bender-koschier-2015"
+  },
+  "stack": {
+    "build_id": "sub-phase-particle-fluids-sph-water",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

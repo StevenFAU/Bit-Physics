@@ -20,11 +20,15 @@ priority order (sub-phase plan § 9.1):
    produces sorted-by-id neighbor lists from the full O(N²) pairwise
    tensor.
 
-   **Canonical-tier path** (N ≥ ~10⁴; the 1M-particle canonical
-   capture per sub-phase plan § 2 gate 10 + § 9 R12 + § 9 R16 + § 9
-   R17 + § 9 R18 routing arc): two C-implemented layers, both
-   bit-deterministic with themselves + FP-equivalent (1e-9) with the
-   pure-NumPy diagnostic-tier path.
+   **Canonical-tier path** (N = 100K at this sub-phase per the R20
+   routing — the Phase 1 R8 Appendix D 1M descriptor is contracted
+   forward to Stack-C Phase-2+ per spec-ref § 5; the Python NumPy
+   reference at this sub-phase produces the 100K-instance that
+   exercises gates 10 + 13 and establishes the algorithmic + API
+   contract Stack-C reproduces at full N). Sub-phase plan § 2 gate 10
+   + § 9 R12 + R16 + R17 + R18 + R19 + R20 routing arc; two C-
+   implemented layers, both bit-deterministic with themselves + FP-
+   equivalent (1e-9) with the pure-NumPy diagnostic-tier path.
 
    Layer 1 — neighbor query (R17 routing):
    :func:`pair_lists_from_positions` wraps
@@ -140,22 +144,32 @@ from .reference.dfsph import (
     pair_lists_from_positions,
 )
 
-CANONICAL_DESCRIPTOR: Final[str] = "dam-break-1M-particles-seed42-step1000"
-CANONICAL_N_PARTICLES: Final[int] = 1_000_000
+# R20 routing: this sub-phase ships the 100K-instance of the
+# canonical 1M descriptor. Per spec-ref § 5, full N=1M is Phase-2+
+# Stack-C scope; the Python NumPy reference at this sub-phase
+# produces the 100K instance that exercises the algorithmic + API
+# contract Stack-C reproduces at full N. The Phase 1 R8 Appendix D
+# descriptor (dam-break-1M-particles-seed42-step1000) remains the
+# canonical contract for Stack-C Phase-2+ — NOT amended retroactively.
+# The descriptor here is honest: it reflects what this sub-phase's
+# stack actually produces (100K particles), not what the canonical
+# contract names (1M particles).
+CANONICAL_DESCRIPTOR: Final[str] = "dam-break-100K-particles-seed42-step1000"
+CANONICAL_N_PARTICLES: Final[int] = 100_000
 CANONICAL_STEP_COUNT: Final[int] = 1000
 # Operator-routed at Stage 1 R12 boundary (sub-phase plan § 11.5 Item 5):
 # 11 frames at every-100-steps cadence (steps 0 / 100 / ... / 1000) at
-# the documented 56 B per-particle per-frame payload (~587 MB H5).
+# the documented 56 B per-particle per-frame payload (~58 MB H5 at
+# 100K particles; was ~587 MB at 1M).
 CANONICAL_CAPTURE_INTERVAL: Final[int] = 100
-# Operator-routed at Stage 1 R16 boundary (canonical-tier runtime
-# memory cost — sub-phase plan § 9 R16 surface). Smoothing length
-# tuned for ~30–60 SPH neighbors per particle at the canonical
-# 1M-particle uniform-cube IC: particle spacing ≈ N^(-1/3) = 0.01;
-# h = 1.2 × spacing ≈ 0.012 yields ⟨neighbors⟩ ≈ 50 per the
-# (4/3)π(2h)³ × density estimate. The diagnostic-tier path keeps
-# h = canonical_params()["h"] = 0.05 (the small-N default unchanged
-# at 85f178f).
-CANONICAL_H: Final[float] = 0.012
+# Smoothing length re-tuned for the 100K-particle uniform-cube IC
+# per R20 routing: particle spacing ≈ N^(-1/3) = 100K^(-1/3) ≈ 0.0215;
+# h = 1.2 × spacing ≈ 0.026 yields ⟨neighbors⟩ ≈ 50 per the
+# (4/3)π(2h)³ × density estimate. Was 0.012 at the 1M scale (R16
+# routing); R20 re-tuning preserves the ~50-neighbors target.
+# The diagnostic-tier path keeps h = canonical_params()["h"] = 0.05
+# (the small-N default unchanged at 85f178f).
+CANONICAL_H: Final[float] = 0.026
 
 # Diagnostic-tier defaults — used by gate-11 determinism +
 # gate-7 diagnostics + gate-6 NaN/Inf scan to avoid re-running the
