@@ -5,8 +5,8 @@ artifact: stage
 artifact_id: eulerian-smoke-stage-0
 stage: 0-preflight
 subject: "Eulerian-smoke sub-phase Stage 0 pre-flight (replay PASS bit-identity; NS-2D MMS reverify PASS; Task 0.4 scope-analysis FITS)"
-head_sha: <PLACEHOLDER>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: dcef17d235db92cc185edca4b9531383d6560dde
+head_sha_at_checkpoint: dcef17d235db92cc185edca4b9531383d6560dde
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-conventions-consolidation/landing-2026-05-22T03-25-55Z.md
