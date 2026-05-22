@@ -332,6 +332,138 @@ golden lands. Recorded as Stage 2 SHIFT N2.
 | 13 | perf-ledger first row | GREEN |
 | 13 (anchor) | failing-tests replay verifiable (worktree at `a159086` → 4 ModuleNotFoundError) | GREEN |
 
+### sub-phase-numba-integration
+
+Focused infrastructure hotfix sub-phase landed between
+`sub-phase-particle-fluids-sph-water` Stage 1's R18 STOP-AND-SURFACE
+and Stage 1's continuation. Adds `numba >= 0.61, < 0.66` (0.65.1
+known-good) as a project-wide runtime dependency at
+`tools/testkit/pyproject.toml` (the universal workspace dep at HEAD;
+every sim + integrity + diagnostics consumer transitively gets numba).
+Documents the project-wide JIT-acceleration convention at
+`docs/common/numba.md`: `@njit(fastmath=False, cache=True)` is the
+mandatory decorator form; `fastmath=True`, unguarded `parallel=True`,
+and `error_model="numpy"` are banned. Determinism contract verified
+by the regression test at `tools/testkit/numba_harness/tests/test_numba_determinism.py`
+(5/5 PASS): FP-equivalence with pure-NumPy reference (< 1e-9
+tolerance) + bit-deterministic-with-itself + cold-vs-warm cache
+identity. Cross-version bit-equality not formally guaranteed by
+numba upstream; project pins + verifies via regression test. No
+`-phase-N` tag pushed.
+
+### sub-phase-particle-fluids-sph-water
+
+Fourth per-sim implementation sub-phase under spec-Phase-1 (the
+sibling half of the originally-bundled "continuous-CA + sph-water"
+pair per `sub-phase-continuous-ca-rd3d.md` § 1.2). Lands gates 4–13
+for **sph-water** through SIX R-class remediation surfaces
+(R12 → R20) — the most extensively-routed sub-phase to date.
+Algorithmic stack arrived at:
+**scipy.spatial.cKDTree** for neighbor query (R17) +
+**numba @njit(fastmath=False, cache=True)** for the per-pair inner
+math (R18; consumes the project infrastructure landed at the
+interleaved `sub-phase-numba-integration` hotfix).
+Canonical capture lands at the **100K-instance** of the Phase 1 R8
+`dam-break-1M-particles-seed42-step1000` descriptor per R20 routing;
+full N=1M is contracted forward to Stack-C Phase-2+ per spec-ref
+§ 5. The three remaining Phase 1 sims (eulerian-smoke,
+lattice-boltzmann-d3q19, mpm-multimaterial) still ship Phase-1 RED
+pending their own per-sim implementation sub-phases. No `-phase-N`
+tag pushed; optional non-phase point-release `v0.1.4` is a banked
+operator decision per `docs/phases/sub-phase-particle-fluids-sph-water.md`
+§ 5 + § 11.4.
+
+#### Added
+
+- `packages/sph-water/sph_water/` — public API exposing `reference.dfsph`
+  (3D Monaghan cubic-spline kernel + neighbor query + density + density-
+  evolution + DFSPH solver scaffolding; cited by name to Bender &
+  Koschier 2015, Monaghan 1992/2005), `sim` (canonical 100K-particle
+  capture + diagnostic-tier helpers + 7-clause determinism declaration
+  docstring), `invariants` (Hypothesis-decorated `density_nonneg` +
+  `kernel_normalization_unit_volume`).
+- Algorithmic-evolution arc through six R-class surfaces:
+  - **R12** (storage > 64 MB ceiling) — operator routed (a): raised
+    pre-commit `check-added-large-files` ceiling from 64 MB → 1 GB
+    at `.pre-commit-config.yaml`. Headroom for future MPM / LBM /
+    eulerian-smoke 3D captures.
+  - **R16** (O(N²) tensor OOM at N=1M) — operator routed (i):
+    pure-Python cell-list spatial-hash (intermediate hop; superseded
+    by R17). Function name `cell_list_neighbor_query` retained for
+    public-API stability; body replaced.
+  - **R17** (Python-loop overhead at canonical scale) — operator
+    routed (I): scipy.spatial.cKDTree.query_pairs + symmetrize +
+    lexsort. Adds `scipy >= 1.10` to `tools/testkit/pyproject.toml`.
+    Determinism preserved via sort-by-(pair_i, pair_j) wrap.
+  - **R18** (aggregate runtime > 10⁴ s) — operator routed (α):
+    numba @njit(fastmath=False, cache=True) inner math via the
+    interleaved `sub-phase-numba-integration` hotfix.
+    `_density_evolution_jit_inner` + `_density_jit_inner` at
+    `sph_water.reference.dfsph`; thin wrappers `density_evolution_jit`
+    + `density_jit`. FP-equivalent (1e-9) with pure-NumPy variants;
+    bit-deterministic with themselves.
+  - **R19** (1-hour wall-clock threshold) — operator REVOKED. The
+    threshold was set without per-step decomposition rationale;
+    R20 routing accepted observed reality as honest baseline.
+  - **R20** (canonical N=1M wall-clock impractical for pure-Python
+    reference) — operator routed (B): per-sub-phase descriptor
+    override to **100K-instance**. Phase 1 R8 Appendix D 1M
+    descriptor stays as canonical contract for Stack-C Phase-2+
+    per spec-ref § 5. Capture descriptor reflects honest contents:
+    `dam-break-100K-particles-seed42-step1000`. Algorithmic + API
+    contract that Stack-C reproduces at full N is established.
+- 22 sph-water tests landed (11 prior gate tests + 6 spatial-hash-
+  equivalence tests at R16/R17 + 4 numba-JIT-equivalence tests at
+  R18 + 1 pair-array-equivalence test).
+- Canonical capture at
+  `captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.{h5,json}`;
+  H5 size 58.80 MB (sha256 `7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f`).
+- Perf-ledger first row appended for
+  `(sph-water, numpy-reference + scipy.cKDTree + numba-@njit(fastmath=False, cache=True), dam-break-100K-particles-seed42-step1000)`:
+  wall_clock 1291.854 s (~21.5 min; per-step ~1.29 s) on
+  `i7-12700KF-linux-6.17`. Documented as the Python NumPy reference
+  performance ceiling that Stack-C Phase-2+ compiled implementations
+  will be measured against per spec § 11.3.
+- Cat 3 _SUBDIRS_PICKED_UP extended additively with
+  `Path("particle-fluids")` after lifting the DFSPH density-evolution
+  golden from 1 anchor to 3 discrete `independent_reference` entries
+  (mirror of agent-based Decision A precedent at commits `3ce7809`
+  + `d156792`).
+- B17 PATH-A continued — second proof-point of the per-target
+  mutmut + uv-workspace runner infrastructure established at
+  `sub-phase-continuous-ca-rd3d`. Additive
+  `[targets.sph_water]` + `[targets.sph_water_dfsph_generator]`
+  blocks at `tools/testkit/mutation/mutmut-config.toml`; existing
+  RD-3D + testkit/integrity targets UNTOUCHED. Real per-target
+  kill-rate baseline:
+  - `sph_water`: 817 mutants, 0.5581 kill rate
+    (below 0.80 advisory threshold; banked as test-augmentation
+    candidate per RD-3D precedent).
+  - `sph_water_dfsph_generator`: 108 mutants, 0.0000 kill rate
+    (real test-coverage gap — runner verifies SIM vs TABLE but
+    never invokes the GENERATOR; banked as SHIFT N4 for sph-water
+    test-augmentation or testkit infrastructure work).
+  Numba mutation behavior verified: mutations propagate through
+  the JIT cache (the 600-mutant dfsph.py count + 0.6150 kill rate
+  confirms mutations ARE taking effect through numba JIT).
+
+#### Gates flipped GREEN at HEAD (sph-water)
+
+| # | Gate | sph-water |
+|---|---|---|
+| 4 | code verification — reads through to gate-5 (golden) | N/A |
+| 5a | cubic-spline-kernel golden (Phase 0; 9 fixture points; abs=1e-12) | **GREEN** |
+| 5b | DFSPH density-evolution golden (Phase 1; 3-anchor post-lift; abs=1e-15) | **GREEN** |
+| 6 | Tier 1 NaN/Inf | GREEN |
+| 7 | Tier 2 particle (IC-5) | GREEN |
+| 8 | Cat 1 citations (Bender-Koschier 2015 + Monaghan 1992/2005) | GREEN |
+| 9 | Cat 2 public API per probe § 5 | GREEN |
+| 10 | canonical capture (100K-instance per R20 routing) | GREEN |
+| 11 | determinism (`test_run_twice_epsilon_diff` via diagnostic-tier) | GREEN |
+| 12 | PBT invariants (`density_nonneg`, `kernel_normalization_unit_volume`) | GREEN |
+| 13 | perf-ledger first row (~21.5 min canonical at 100K) | GREEN |
+| 13 (anchor) | failing-tests replay verifiable (worktree at `cd20faa` → 5 ModuleNotFoundError) | GREEN |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
