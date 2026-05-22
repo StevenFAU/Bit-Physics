@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-particle-fluids-sph-water"
-opened_at = "2026-05-20T22:10:19Z"
+phase = "sub-phase-eulerian-smoke"
+opened_at = "2026-05-22T12:00:56Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
