@@ -464,6 +464,128 @@ operator decision per `docs/phases/sub-phase-particle-fluids-sph-water.md`
 | 13 | perf-ledger first row (~21.5 min canonical at 100K) | GREEN |
 | 13 (anchor) | failing-tests replay verifiable (worktree at `cd20faa` → 5 ModuleNotFoundError) | GREEN |
 
+### sub-phase-conventions-consolidation
+
+Operator-routed cross-sub-phase conventions doc consolidation per
+`sub-phase-particle-fluids-sph-water` landing § 9.3 row 7. New
+canonical reference at `docs/conventions/sub-phase-conventions.md`
+(696 lines, sha256 `004d7011…600a3e6`) consolidates the patterns
+shared across the four landed per-sim implementation sub-phases
+(closed-form, agent-based, continuous-CA-rd3d, particle-fluids-sph-water)
+plus three focused infrastructure-hotfix sub-phases (replay-tool-hotfix,
+numba-integration, mutation-script-hotfix). Future sub-phase plan-drafting
+reads this doc FIRST, then inherits sim-specific deltas from the
+most-recent prior sub-phase landing. Section N "PROPOSED: Stage 0
+canonical-descriptor scope-analysis" anticipates the load-bearing
+discipline that sub-phase-eulerian-smoke first practiced.
+
+#### Added
+
+- `docs/conventions/sub-phase-conventions.md` — 14-section reference
+  (A architecture, B audit chain, C commit conventions, D replay/tag,
+  E gate-13 worktree, F determinism, G numba, H vendored-upstream,
+  I Cat 3 subdir pattern, J B17 routing, K R-class STOP-AND-SURFACE,
+  L banked observations carry-forward, M 65-shift inventory,
+  N PROPOSED Stage 0 Task 0.4, O coherence note).
+- Audit chain at `docs/_audits/phase-1/sub-phase-conventions-consolidation/`.
+
+### sub-phase-eulerian-smoke
+
+Fifth per-sim implementation sub-phase under spec-Phase-1; **first
+volumetric-grid sim** in the project (spec § 5.6), **second MMS-using
+sub-phase** (after RD-3D); **first sub-phase plan drafted AGAINST the
+new conventions doc** rather than inheriting from the most-recent
+template; **first practical exercise of conventions doc § N PROPOSED
+Stage 0 Task 0.4 canonical-descriptor scope-analysis** (validated and
+recommended for graduation PROPOSED → established). Lands gates 4–13
+for **eulerian-smoke** at the Python NumPy reference stack;
+Stack-C C++/Vulkan port deferred to Phase-2+ per spec-ref § 5.
+Stam-Fedkiw stable-fluids pipeline: MacCormack-corrected semi-Lagrangian
+advection + Jacobi pressure-projection + vorticity-confinement
+skeleton + scalar smoke density advection. Two canonical captures
+per Appendix D § D.2.3:
+`taylor-green-128cube-seed42-step500` (3D, cadence-50, ~704 MB,
+~11.5 min wall) + `lid-driven-cavity-128sq-re100-seed42-step1000`
+(2D, full cadence, ~4 MB, ~5 s wall). MMS observed OOA = 1.99
+(advection) + 2.00 (projection), both within ±0.5 of formal p=2 per
+spec-ref § 6.1. B17 PATH-A third proof-point landed with per-target
+real baselines. The two remaining Phase 1 sims
+(`lattice-boltzmann-d3q19`, `mpm-multimaterial`) still ship Phase-1
+RED pending their own per-sim implementation sub-phases. No
+`-phase-N` tag pushed; optional non-phase point-release `v0.1.5`
+is a banked operator decision per
+`docs/phases/sub-phase-eulerian-smoke.md` § 5 + § 11.4 (default
+lean: no tag).
+
+#### Added
+
+- `packages/eulerian-smoke/eulerian_smoke/` — public API exposing
+  `reference.stable_fluids` (Stam/Fedkiw 2D + 3D pipeline:
+  semi-Lagrangian + MacCormack + Jacobi projection + vorticity
+  confinement + scalar smoke density advection; cited by name to
+  Stam 1999, Fedkiw 2001, Taylor-Green 1937), `sim`
+  (canonical 3D Taylor-Green capture + 2D lid-driven-cavity capture +
+  diagnostic-tier helpers + 8-clause determinism declaration
+  docstring), `invariants` (Hypothesis-decorated
+  `divergence_free_post_projection` + `smoke_density_nonneg`).
+- Two canonical captures landed at `captures/eulerian-smoke-ref/`
+  per Appendix D § D.2.3 (re-anchored against probe-vs-Appendix-D
+  drift inherited from Phase 1 Stage 2 shift #17). The 3D capture
+  uses cadence-50 routing per Stage 0 Task 0.4 finding to fit the
+  1 GB pre-commit ceiling.
+- Perf-ledger first-landing rows: 691.587 s @ 128³ × 500
+  (Taylor-Green); 5.099 s @ 128² × 1000 (lid-driven-cavity).
+- MMS inline convergence study at
+  `packages/eulerian-smoke/tests/test_mms_convergence.py` per
+  Path-Y operator routing (RD-3D Stage 1 S2 precedent); the
+  heat-1D-specialized `tools/testkit/code_verification/mms/runner.py`
+  remains UNTOUCHED.
+- B17 PATH-A third proof-point — additive
+  `[tool.mutmut.targets.eulerian_smoke]` +
+  `[tool.mutmut.targets.incompressible_ns_2d_mms]` blocks; existing
+  testkit/integrity/RD-3D/sph-water targets UNTOUCHED. Per-target
+  real baselines: 0.4879 (sim source) + 0.6962 (MMS solution),
+  both below the 0.80 advisory threshold; surviving mutant IDs
+  banked for future test-augmentation work.
+- Five Stage 1 SHIFTS surfaced + resolved: S1 axis-convention rewrite
+  (2D/3D mismatch surfaced via MMS OOA); S2 MacCormack-corrected SL
+  (spec-prescribed 2nd-order accuracy); S3 collocated-grid centered-
+  diff inconsistent-stencil residual divergence (Phase-2+ Stack-C
+  MAC-staggered port deferred per sim spec-ref § 5); S4 `np.mod`
+  FP-edge integer-modulus guard (`i0 % Nx`); S5 lid-driven-cavity
+  dt routing 0.005 → 0.001 for 1000-step stability.
+
+#### Sub-phase coherence
+
+- **First practical exercise of conventions doc § N PROPOSED.**
+  Stage 0 Task 0.4 canonical-descriptor scope-analysis estimated
+  3D Taylor-Green per-step floor at 0.93 s (n_jacobi=20); Stage 1
+  measured 1.348 s. The Stage 0 estimate was approximately correct
+  (within ~50%) — the production-correction factor (~1.5×) is now
+  measured-empirical for future MMS-style 3D smoke runs. The Stage 2
+  landing audit recommends conventions doc § N graduation from
+  PROPOSED → established.
+- **First sub-phase to land Stage 1 in a single session** (no R-class
+  STOP-AND-SURFACE arcs), contrast with sph-water's six-R-class arc
+  (R12-R20). Demonstrates the value of Stage 0 scope-analysis as a
+  pre-flight discipline.
+
+#### Gate-status (all GREEN at HEAD)
+
+| Gate | Status | Notes |
+|---|---|---|
+| 4 | GREEN | reads through to gate 5 |
+| 5 | GREEN | MMS inline (advection OOA 1.99, projection OOA 2.00; both within ±0.5 of formal p=2) |
+| 6 | GREEN | Tier 1 NaN/Inf at diagnostic-tier 32³ |
+| 7 | GREEN | Tier 2 vector_field (IC-6) — first IC-6 sim-test consumption |
+| 8 | GREEN | Cat 1 citations (Stam, Fedkiw, Taylor-Green) |
+| 9 | GREEN | Cat 2 public API per probe § 5 |
+| 10 | GREEN | TWO canonical captures per Appendix D § D.2.3 |
+| 11 | GREEN | determinism over-achieved bit-exact via `sim_runner_diagnostic` |
+| 12 | GREEN | 2 PBT invariants |
+| 13 | GREEN | perf-ledger rows (691.587 s + 5.099 s) |
+| 13 (anchor) | GREEN | worktree replay at `216021a` → 4 ModuleNotFoundError |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
