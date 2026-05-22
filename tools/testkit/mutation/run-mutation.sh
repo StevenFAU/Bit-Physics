@@ -68,7 +68,13 @@ PY
 
 for line in "${TARGETS[@]}"; do
   IFS='|' read -r name path threshold runner <<< "${line}"
-  if [[ ! -d "${path}" ]]; then
+  # Use ``-e`` (existence) rather than ``-d`` (directory-only) so the
+  # validator accepts both file and directory ``path`` shapes. mutmut's
+  # ``--paths-to-mutate`` accepts either; the wrapper's pre-check should
+  # match. Surfaced when sub-phase-particle-fluids-sph-water Stage 2
+  # added the first file-shaped target (sph_water_dfsph_generator,
+  # commit dae7040). See sub-phase-mutation-script-hotfix audit.
+  if [[ ! -e "${path}" ]]; then
     echo "FAIL: target ${name} path missing: ${path}" >&2
     exit 1
   fi
