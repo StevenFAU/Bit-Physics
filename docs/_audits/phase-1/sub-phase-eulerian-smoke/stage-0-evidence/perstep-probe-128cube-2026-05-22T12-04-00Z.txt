@@ -1,0 +1,4 @@
+N= 64 per-step floor: 0.0959s (5-run avg, n_jacobi=20)
+     -> 500 steps projected: 48.0s = 0.8min = 0.01h
+N=128 per-step floor: 0.9331s (3-run avg, n_jacobi=20)
+     -> 500 steps projected: 466.5s = 7.8min = 0.13h

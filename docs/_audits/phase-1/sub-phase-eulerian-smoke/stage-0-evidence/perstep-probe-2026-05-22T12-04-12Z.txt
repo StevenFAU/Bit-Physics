@@ -1,0 +1,9 @@
+N= 16 per-step floor: 0.0014s (5-run avg, n_jacobi=20)
+N= 32 per-step floor: 0.0094s (5-run avg, n_jacobi=20)
+
+Projection to canonical taylor-green-128cube:
+  per-step at N=32: T32 (measured)
+  N=128 scales as (128/32)^3 = 64x
+
+N=128 (2D, n_jacobi=50) per-step floor: 0.0056s
+Projection to lid-driven-cavity-128sq-step1000: 5.6s = 0.1min
