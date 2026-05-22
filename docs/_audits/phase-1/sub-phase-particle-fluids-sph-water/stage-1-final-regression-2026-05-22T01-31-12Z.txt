@@ -1,0 +1,41 @@
+=== sibling regression sweep ===
+--- packages/reaction-diffusion-3d ---
+tests/test_pbt_invariants.py ..                                          [100%]
+
+============================== 8 passed in 24.18s ==============================
+--- packages/boids-3d ---
+tests/test_pbt_invariants.py ..                                          [100%]
+
+============================= 10 passed in 45.04s ==============================
+--- packages/physarum ---
+tests/test_pbt_invariants.py ..                                          [100%]
+
+============================= 10 passed in 10.47s ==============================
+--- packages/strange-attractors ---
+tests/test_pbt_invariants.py ..                                          [100%]
+
+============================== 11 passed in 0.78s ==============================
+--- packages/mandelbulb-explorer ---
+tests/test_pbt_invariants.py ..                                          [100%]
+
+============================== 10 passed in 0.25s ==============================
+--- packages/reaction-diffusion-2d ---
+tests/test_reference_sanity.py ...                                       [100%]
+
+============================== 14 passed in 2.50s ==============================
+--- packages/sph-water ---
+tests/test_spatial_hash_equivalence.py ...........                       [100%]
+
+============================== 22 passed in 0.58s ==============================
+--- tools/integrity ---
+tests/test_verify_evidence.py .....                                      [100%]
+
+============================== 48 passed in 0.81s ==============================
+--- tools/diagnostics ---
+diagnostics/tier2/scalar_field/tests/test_spectral_content.py ...        [100%]
+
+============================== 22 passed in 0.17s ==============================
+--- tools/testkit ---
+property/tests/test_harness.py ..                                        [100%]
+
+============================== 47 passed in 2.01s ==============================
