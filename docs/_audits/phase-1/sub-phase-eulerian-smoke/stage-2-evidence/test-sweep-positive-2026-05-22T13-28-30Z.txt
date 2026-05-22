@@ -1,0 +1,44 @@
+=== eulerian-smoke ===
+packages/eulerian-smoke/tests/test_pbt_invariants.py ..                  [100%]
+
+============================== 10 passed in 3.42s ==============================
+=== reaction-diffusion-3d ===
+packages/reaction-diffusion-3d/tests/test_pbt_invariants.py ..           [100%]
+
+============================== 8 passed in 24.19s ==============================
+=== sph-water ===
+packages/sph-water/tests/test_spatial_hash_equivalence.py ...........    [100%]
+
+============================== 22 passed in 0.60s ==============================
+=== boids-3d ===
+packages/boids-3d/tests/test_pbt_invariants.py ..                        [100%]
+
+============================= 10 passed in 45.92s ==============================
+=== physarum ===
+packages/physarum/tests/test_pbt_invariants.py ..                        [100%]
+
+============================= 10 passed in 10.29s ==============================
+=== mandelbulb-explorer ===
+packages/mandelbulb-explorer/tests/test_pbt_invariants.py ..             [100%]
+
+============================== 10 passed in 0.25s ==============================
+=== strange-attractors ===
+packages/strange-attractors/tests/test_pbt_invariants.py ..              [100%]
+
+============================== 11 passed in 0.75s ==============================
+=== reaction-diffusion-2d ===
+packages/reaction-diffusion-2d/tests/test_reference_sanity.py ...        [100%]
+
+============================== 14 passed in 2.39s ==============================
+=== tools/integrity ===
+tools/integrity/tests/test_verify_evidence.py .....                      [100%]
+
+============================== 51 passed in 1.11s ==============================
+=== tools/diagnostics ===
+.....                                                                    [100%]
+
+============================== 93 passed in 0.31s ==============================
+=== tools/testkit ===
+tools/testkit/property/tests/test_harness.py ..                          [100%]
+
+============================== 52 passed in 2.71s ==============================

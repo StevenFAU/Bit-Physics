@@ -1,0 +1,21 @@
+=== Append-only check vs sealed back-fill SHAs (corrected) ===
+--- v0.1.0-phase-1 ---
+  OK (no drift)
+--- 2cc0f21 ---
+  OK (no drift)
+--- 739c93f ---
+  OK (no drift)
+--- 1f5fa0c ---
+  OK (no drift)
+--- 0df358d ---
+  OK (no drift)
+--- 569c883 ---
+  OK (no drift)
+--- 17850e2 ---
+  OK (no drift)
+--- 27304d0 ---
+  OK (no drift)
+--- 34c7d34 ---
+  OK (no drift)
+
+=== CI semantics: no *.ledger.md files ===

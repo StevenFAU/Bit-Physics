@@ -1,0 +1,7 @@
+=== docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-0-checkpoint-2026-05-22T12-05-00Z.md ===
+  PASS  docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-0-evidence/perstep-probe-128cube-2026-05-22T12-04-00Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-0-evidence/scope-analysis-2026-05-22T12-04-30Z.md (sha256 OK)
+summary: 21 pass / 0 fail at head_sha dcef17d235db
+=== docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-1-checkpoint-2026-05-22T13-20-00Z.md ===
+  FAIL  head_sha c20d24d6dd24c92b6d3ab44f6db9be8b48d50824 not present in repo
+summary: 0 pass / 1 fail at head_sha c20d24d6dd24

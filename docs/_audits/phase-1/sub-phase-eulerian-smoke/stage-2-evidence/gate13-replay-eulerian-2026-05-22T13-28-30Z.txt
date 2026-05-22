@@ -1,0 +1,61 @@
+Using CPython 3.12.3 interpreter at: /usr/bin/python3
+Creating virtual environment at: .venv
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python3
+cachedir: .pytest_cache
+rootdir: /tmp/bp-replay-216021a-eulerian-smoke-stage2/packages/eulerian-smoke
+configfile: pyproject.toml
+plugins: cov-5.0.0, anyio-4.13.0
+collecting ... collected 0 items / 4 errors
+
+==================================== ERRORS ====================================
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/tmp/bp-replay-216021a-eulerian-smoke-stage2/packages/eulerian-smoke/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_determinism.py:5: in <module>
+    from eulerian_smoke.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/tmp/bp-replay-216021a-eulerian-smoke-stage2/packages/eulerian-smoke/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_diagnostics.py:5: in <module>
+    from eulerian_smoke.sim import sim_runner_seeded  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.sim'
+________________ ERROR collecting tests/test_mms_convergence.py ________________
+ImportError while importing test module '/tmp/bp-replay-216021a-eulerian-smoke-stage2/packages/eulerian-smoke/tests/test_mms_convergence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_mms_convergence.py:5: in <module>
+    from eulerian_smoke.reference import stable_fluids_step  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'eulerian_smoke.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/tmp/bp-replay-216021a-eulerian-smoke-stage2/packages/eulerian-smoke/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/eulerian-smoke/tests/test_pbt_invariants.py:5: in <module>
+    from eulerian_smoke.invariants import (  # type: ignore[import-not-found]  # noqa: F401
+E   ModuleNotFoundError: No module named 'eulerian_smoke.invariants'
+=========================== short test summary info ============================
+ERROR packages/eulerian-smoke/tests/test_determinism.py
+ERROR packages/eulerian-smoke/tests/test_diagnostics.py
+ERROR packages/eulerian-smoke/tests/test_mms_convergence.py
+ERROR packages/eulerian-smoke/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.05s ===============================

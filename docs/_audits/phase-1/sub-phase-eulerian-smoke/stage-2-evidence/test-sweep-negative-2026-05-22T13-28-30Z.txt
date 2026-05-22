@@ -1,0 +1,19 @@
+=== lattice-boltzmann-d3q19 (expect RED) ===
+=========================== short test summary info ============================
+ERROR packages/lattice-boltzmann-d3q19/tests/test_d3q19_equilibrium_golden.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_determinism.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_diagnostics.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_mms_convergence.py
+ERROR packages/lattice-boltzmann-d3q19/tests/test_pbt_invariants.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 5 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 5 errors in 0.12s ===============================
+
+=== mpm-multimaterial (expect RED) ===
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.reference'
+=========================== short test summary info ============================
+ERROR packages/mpm-multimaterial/tests/test_determinism.py
+ERROR packages/mpm-multimaterial/tests/test_diagnostics.py
+ERROR packages/mpm-multimaterial/tests/test_pbt_invariants.py
+ERROR packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.12s ===============================

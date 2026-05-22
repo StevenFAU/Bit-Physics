@@ -1,0 +1,7 @@
+c961dd22c1ca6117af6d9f187d2c0d3aa4d546972496b0f38d11aa14879f23a1  tools/testkit/failing-tests-evidence/eulerian-smoke-2026-05-20T13-37-41Z.txt
+aa1a5b19948895ed286bdb058c7cf233fa27445191cb84ea8096ff899c7d53b7  tools/testkit/failing-tests-evidence/eulerian-smoke-implemented-2026-05-22T12-59-22Z.txt
+4604ebdc40b7fdf80c0354c4429f6fb0a12fd566c5bc301ad9ceed60dcd4e2ed  captures/eulerian-smoke-ref/taylor-green-128cube-seed42-step500.h5
+e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb  captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.h5
+30e490a736cbfac26a549180f97219388549465d9d9557de9061106561320d8e  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/solution.py
+30dfc29483435361881214581f53e026ffd0d856a3ac0657ece9587f4ac86e76  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/derivation.md
+f76077a39ce68b13e16d63388f113ef847a1d4f1a0f1bec1aa20d8488bb94f9a  docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-1-gate13-replay-2026-05-22T13-16-22Z.txt
