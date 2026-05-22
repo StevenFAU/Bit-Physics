@@ -16,7 +16,6 @@
 *.bin    binary
 *.npy    binary
 *.npz    binary
-
 # Source / data file types
 *.py     text diff=python
 *.md     text
@@ -36,3 +35,4 @@
 *.glsl   text
 *.wgsl   text
 *.sh     text eol=lf
+captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text
