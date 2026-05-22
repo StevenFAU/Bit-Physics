@@ -87,3 +87,39 @@ runner    = "uv run --no-sync pytest packages/reaction-diffusion-3d/tests/test_m
 # redundant target here would just re-mutate the same surface
 # against the same tests. Plan § 4.3 Step 2.7 authorizes the
 # skip-with-rationale; recorded in landing audit § 7.6.
+
+# Per-sim sub-phase additive targets — sub-phase-particle-fluids-sph-water
+# B17 PATH-A continue (second proof-point of the per-target runner
+# infrastructure established at sub-phase-continuous-ca-rd3d). The
+# RD-3D targets above are UNTOUCHED.
+#
+# Numba-mutation note: sph_water.reference.dfsph contains @njit-
+# decorated inner functions (_density_evolution_jit_inner,
+# _density_jit_inner) introduced at R18 routing (commit a9f7cf2).
+# mutmut mutates Python source; numba JIT-compiles on the next call.
+# numba's cache should invalidate when the source bytecode changes
+# (cache=True keys off source-hash); mutations should therefore
+# propagate through the JIT compile path. Banked as SHIFT N3 in the
+# Stage 2 landing audit for posterity (the project's first mutation-
+# testing run against @njit-decorated code).
+#
+# Per-target runner uses the same `uv run --no-sync pytest` shape
+# established at RD-3D PATH-A. The runner targets sph-water's
+# equivalence + golden + diagnostics tests but EXCLUDES the
+# canonical-capture generation (sim_runner_seeded at 100K particles
+# is ~21 min; running it ~500x per mutation target would be
+# infeasible). The full test suite at packages/sph-water/tests/
+# excludes the canonical capture by design — gate-11 determinism uses
+# sim_runner_diagnostic (64 particles); the canonical descriptor is
+# only exercised by the explicit capture-generation invocation, not
+# by pytest.
+
+[targets.sph_water]
+path      = "packages/sph-water/sph_water"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/sph-water/tests/ -x -q --tb=no"
+
+[targets.sph_water_dfsph_generator]
+path      = "tools/testkit/golden/generator/dfsph_density_evolution.py"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/sph-water/tests/test_dfsph_density_golden.py -x -q --tb=no"

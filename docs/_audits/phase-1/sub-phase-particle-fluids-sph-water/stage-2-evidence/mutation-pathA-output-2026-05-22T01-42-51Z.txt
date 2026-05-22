@@ -1,0 +1,24 @@
+=== mutmut results (sub-phase-particle-fluids-sph-water B17 PATH-A) ===
+
+--- sph_water target ---
+Total: 817; Killed: 456; Survived: 361; kill_rate: 0.5581
+
+Per-file:
+  packages/sph-water/sph_water/reference/dfsph.py: 600 mutants, 369 killed, 231 survived, kill_rate 0.6150
+  packages/sph-water/sph_water/sim.py: 159 mutants, 63 killed, 96 survived, kill_rate 0.3962
+  packages/sph-water/sph_water/invariants.py: 58 mutants, 24 killed, 34 survived, kill_rate 0.4138
+
+--- sph_water_dfsph_generator target ---
+Total: 108; Killed: 0; Survived: 108; kill_rate: 0.0000
+
+Per-file:
+  tools/testkit/golden/generator/dfsph_density_evolution.py: 108 mutants, 0 killed, 108 survived, kill_rate 0.0000
+
+--- Note: real-baseline-test-coverage-gap-flagged ---
+  The runner 'pytest test_dfsph_density_golden.py' verifies SIM vs TABLE,
+  never invokes the generator. Generator mutations escape detection.
+  This is a TEST-COVERAGE GAP, NOT an implementation defect.
+  See artifact JSON 'notes' field + Stage 2 landing audit SHIFT N4.
+
+--- RD-3D cached baseline (unchanged from continuous-CA-RD-3D PATH-A) ---
+  reaction_diffusion_3d: 275 mutants, 163 killed, 112 survived, kill_rate 0.5927
