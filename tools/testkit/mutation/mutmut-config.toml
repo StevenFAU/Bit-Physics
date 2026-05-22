@@ -123,3 +123,45 @@ runner    = "uv run --no-sync pytest packages/sph-water/tests/ -x -q --tb=no"
 path      = "tools/testkit/golden/generator/dfsph_density_evolution.py"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/sph-water/tests/test_dfsph_density_golden.py -x -q --tb=no"
+
+# Per-sim sub-phase additive targets — sub-phase-eulerian-smoke B17
+# PATH-A continue (third proof-point of the per-target runner
+# infrastructure established at sub-phase-continuous-ca-rd3d). The
+# RD-3D and sph-water targets above are UNTOUCHED.
+#
+# Eulerian-smoke source target covers the Stam-Fedkiw stable-fluids
+# kernel + sim runner + invariants (semi-Lagrangian advection,
+# MacCormack corrector, Jacobi pressure projection, 3D smoke pipeline,
+# 2D lid-driven cavity, PBT invariants). The runner targets the full
+# test suite at packages/eulerian-smoke/tests/ — gate-11 determinism
+# uses sim_runner_diagnostic (32³ × 10 steps; ~1-2 s per call), so
+# pytest invocation per mutation is fast and gate-11 acts as the
+# kill-signal for any kernel mutation that breaks bit-exact behaviour.
+# MMS convergence study (~3 s) acts as the gate-5 kill-signal for
+# any mutation breaking 2nd-order accuracy.
+#
+# Numba-mutation note: eulerian_smoke.reference.stable_fluids does
+# NOT use @njit at this sub-phase (pure NumPy + np.roll suffices per
+# Stage 0 Task 0.4 wall-clock budget). The numba-cache propagation
+# concern documented at sph-water Stage 2 N3 therefore does NOT apply
+# to eulerian-smoke; if a Phase-2+ optimisation introduces @njit, the
+# cache-invalidation discipline carries forward via conventions doc § G.
+#
+# Optional third target — NS-2D MMS scaffolding — SKIPPED per Path-Y
+# operator routing (plan § 1.2 + § 4.2 step 3): the eulerian-smoke
+# MMS convergence study is INLINED at packages/eulerian-smoke/tests/
+# test_mms_convergence.py, not via `tools/testkit/code_verification/
+# mms/runner.py`. There is no NS-2D MMS scaffolding-specific to
+# mutate; the existing `targets.code_verification_mms` covers the
+# heat-1D runner surface against the heat-1D tests. Mirrors RD-3D
+# PATH-A's identical-rationale third-target skip.
+
+[targets.eulerian_smoke]
+path      = "packages/eulerian-smoke/eulerian_smoke"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/eulerian-smoke/tests/ -x -q --tb=no"
+
+[targets.incompressible_ns_2d_mms]
+path      = "tools/testkit/code_verification/mms/solutions/incompressible_ns_2d"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/eulerian-smoke/tests/test_mms_convergence.py -x -q --tb=no"
