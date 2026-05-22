@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      32,
+      16,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "boundary": "bounce-back-y-walls-with-moving-top-plate-periodic-xz",
+      "descriptor": "couette-32x16-seed42-step500",
+      "nz_convention": "depth-3-z-periodic-slab",
+      "tau": 0.7,
+      "wall_velocity_top_lattice": 0.05
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:7a94843457e44c8747a6514fe6bc56548f637e09a3bd5ee2631d9ddfae15b65b",
+    "format": "hdf5",
+    "path": "couette-32x16-seed42-step500.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-22T00:00:00Z",
+    "step_count": 500,
+    "wall_clock_seconds": 0.6035574160050601
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "lattice",
+    "name": "lattice-boltzmann-d3q19",
+    "variant": "bgk-d3q19-qian-1992"
+  },
+  "stack": {
+    "build_id": "sub-phase-lattice-boltzmann-d3q19",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

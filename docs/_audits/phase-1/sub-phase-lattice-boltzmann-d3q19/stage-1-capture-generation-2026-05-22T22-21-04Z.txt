@@ -1,0 +1,20 @@
+=== Poiseuille canonical (64x32x3 × 1000 steps; full cadence) ===
+  manifest: captures/lbm-ref/poiseuille-64x32-seed42-step1000.json
+  total wall-clock: 3.784 s
+  per-step: 3.784 ms  (Stage 0 estimate: 1.43 ms; 3x guard: 4.29 ms)
+  Regression-guard PASS (per-step 3.784 ms ≤ 3× Stage 0 4.290 ms)
+
+=== Couette canonical (32x16x3 × 500 steps; full cadence) ===
+  manifest: captures/lbm-ref/couette-32x16-seed42-step500.json
+  total wall-clock: 0.604 s
+  per-step: 1.207 ms  (Stage 0 estimate: 0.47 ms; 3x guard: 1.41 ms)
+  Regression-guard PASS (per-step 1.207 ms ≤ 3× Stage 0 1.410 ms)
+
+=== Capture artifacts ===
+  poiseuille-64x32-seed42-step1000.h5: 202,350,128 bytes (202.35 MB)  sha256=0e0843aa8707e5f07f2e12fae81c764fccdbe91b408833bbc67450f1b5e16f68
+  couette-32x16-seed42-step500.h5: 27,405,152 bytes (27.41 MB)  sha256=7a94843457e44c8747a6514fe6bc56548f637e09a3bd5ee2631d9ddfae15b65b
+
+=== Stage 1 retrospective: ~1.5× production-correction factor ===
+  Poiseuille:  Stage 0 skeletal floor = 1.43 ms,  Stage 1 measured = 3.784 ms,  ratio = 2.646x
+  Couette:     Stage 0 skeletal floor = 0.47 ms,  Stage 1 measured = 1.207 ms,  ratio = 2.569x
+  eulerian-smoke retrospective: 0.93s → 1.348s = 1.450x (45% overhead).
