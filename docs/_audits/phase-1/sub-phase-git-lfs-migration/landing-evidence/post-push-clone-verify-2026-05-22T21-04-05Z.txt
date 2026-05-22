@@ -1,0 +1,8 @@
+=== Fresh-clone verification (cf13d1c) ===
+=== git ls-remote origin main ===
+cf13d1cce0a4941562fed37444517bee86318728	refs/heads/main
+
+=== sha256 of clone working tree captures ===
+7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.h5
+4604ebdc40b7fdf80c0354c4429f6fb0a12fd566c5bc301ad9ceed60dcd4e2ed  captures/eulerian-smoke-ref/taylor-green-128cube-seed42-step500.h5
+e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb  captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.h5
