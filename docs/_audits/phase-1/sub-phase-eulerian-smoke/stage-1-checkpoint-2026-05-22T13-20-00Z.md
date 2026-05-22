@@ -5,8 +5,8 @@ artifact: stage
 artifact_id: eulerian-smoke-stage-1
 stage: 1-per-sim
 subject: "Eulerian-smoke sub-phase Stage 1 per-sim implementation (gates 4-13 GREEN; first volumetric-grid sim; first NS-2D MMS exercise)"
-head_sha: <PLACEHOLDER>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: c20d24d6dd24c92b6d3ab44f6db9be8b48d50824
+head_sha_at_checkpoint: c20d24d6dd24c92b6d3ab44f6db9be8b48d50824
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-conventions-consolidation/landing-2026-05-22T03-25-55Z.md
