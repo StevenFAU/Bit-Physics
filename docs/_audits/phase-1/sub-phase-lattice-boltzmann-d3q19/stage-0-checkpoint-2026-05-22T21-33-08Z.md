@@ -6,8 +6,8 @@ artifact_id: lattice-boltzmann-d3q19-stage-0
 stage: 0-preflight
 subject: "LBM sub-phase Stage 0 pre-flight checkpoint (replay PASS bit-identity; NS-2D MMS + D3Q19 golden reverify; Task 0.4 canonical-descriptor scope-analysis FITS both descriptors at full cadence)"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-CONVENTION-12-BACKFILL>
-head_sha_at_checkpoint: <PLACEHOLDER-CONVENTION-12-BACKFILL>
+head_sha: f46eb78654f278db7b49861ecee43b29abf0b7e0
+head_sha_at_checkpoint: f46eb78654f278db7b49861ecee43b29abf0b7e0
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
