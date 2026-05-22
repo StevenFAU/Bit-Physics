@@ -34,6 +34,7 @@ _SUBDIRS_PICKED_UP: tuple[Path, ...] = (
     Path("closed-form"),
     Path("agent-based"),
     Path("particle-fluids"),
+    Path("lattice"),
 )
 
 
