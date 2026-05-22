@@ -49,9 +49,144 @@
         "momentum_z": 0.0
       },
       "independent_reference": {
-        "source": "(1) Hand-derivation in tools/testkit/golden/derivations/d3q19.md §§ 1-5: Gauss-Hermite quadrature on the D3Q19 sub-lattice gives weights {1/3, 1/18, 1/36}, sound speed c_s² = 1/3, and the second-order equilibrium f_i^eq = w_i ρ (1 + c·u/c_s² + (c·u)²/(2 c_s⁴) - u²/(2 c_s²)). (2) Qian, Y. H., d'Humières, D. & Lallemand, P. (1992), 'Lattice BGK Models for Navier-Stokes Equation', Europhysics Letters 17 (6), 479-484, DOI 10.1209/0295-5075/17/6/001, § 2 eq. (3a) plus Table 1 — original D3Q19 specification with weights and equilibrium identical. (3) Krüger et al. (2017), 'The Lattice Boltzmann Method: Principles and Practice', Springer, ISBN 978-3-319-44649-3, Ch. 3 Table 3.4 / Appendix A.2 — textbook reproduction with identical numerical values. (4) Python re-derivation by tools/testkit/golden/generator/d3q19_equilibrium.py.",
+        "source": "Hand-derivation in tools/testkit/golden/derivations/d3q19.md §§ 1-5: Gauss-Hermite quadrature on the D3Q19 sub-lattice gives weights {1/3, 1/18, 1/36}, sound speed c_s² = 1/3, and the second-order equilibrium f_i^eq = w_i ρ (1 + c·u/c_s² + (c·u)²/(2 c_s⁴) - u²/(2 c_s²)). Every weight and velocity vector substituted directly from first principles; no upstream code consulted. Establishes the algebraic ground truth from which all subsequent anchors are cross-checked.",
+        "doi": "n/a (in-repo hand-derivation; LBM sub-phase Stage 2 § 4.3 Step 2.3 Decision A lift)",
+        "derived_by": "hand-derivation from Gauss-Hermite quadrature on D3Q19 sub-lattice; every substitution shown algebraically.",
+        "expected": {
+          "density_moment": 1.0,
+          "momentum_x_modulo_fp_eps": 0.1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "d3q19-equilibrium-rho1-ux0p1-qian-1992-anchor",
+        "rho": 1.0,
+        "u": [0.1, 0.0, 0.0],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..6=face neighbors (±1,0,0)(0,±1,0)(0,0,±1); 7..10=xy edges; 11..14=xz edges; 15..18=yz edges (see derivation.md § 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.3283333333333333,
+          0.07388888888888889,
+          0.04055555555555555,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.10000000000000002,
+        "momentum_y": 0.0,
+        "momentum_z": 0.0
+      },
+      "independent_reference": {
+        "source": "Qian, Y. H., d'Humières, D. & Lallemand, P. (1992), 'Lattice BGK Models for Navier-Stokes Equation', Europhysics Letters 17 (6), 479-484, DOI 10.1209/0295-5075/17/6/001, § 2 eq. (3a) plus Table 1 — the original D3Q19 specification. Weights w_i ∈ {1/3, 1/18, 1/36} per Table 1 row 3; equilibrium formula in eq. (3a) is the second-order Maxwell-Boltzmann truncation identical to this golden's algebraic form. Substituting (ρ=1, u=(0.1,0,0)) into eq. (3a) at each of the 19 velocity vectors reproduces the f_eq array above; the formula is published verbatim in the paper.",
         "doi": "10.1209/0295-5075/17/6/001",
-        "derived_by": "hand-derivation cross-checked against Qian 1992 § 2 eq. (3a), Krüger 2017 Ch. 3 Table 3.4, and Python re-derivation.",
+        "derived_by": "Qian-d'Humières-Lallemand 1992 § 2 eq. (3a) + Table 1 — substituted at the test point.",
+        "expected": {
+          "density_moment": 1.0,
+          "momentum_x_modulo_fp_eps": 0.1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "d3q19-equilibrium-rho1-ux0p1-kruger-2017-anchor",
+        "rho": 1.0,
+        "u": [0.1, 0.0, 0.0],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..6=face neighbors (±1,0,0)(0,±1,0)(0,0,±1); 7..10=xy edges; 11..14=xz edges; 15..18=yz edges (see derivation.md § 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.3283333333333333,
+          0.07388888888888889,
+          0.04055555555555555,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.10000000000000002,
+        "momentum_y": 0.0,
+        "momentum_z": 0.0
+      },
+      "independent_reference": {
+        "source": "Krüger, T., Kusumaatmaja, H., Kuzmin, A., Shardt, O., Silva, G., & Viggen, E. M. (2017), 'The Lattice Boltzmann Method: Principles and Practice', Springer, ISBN 978-3-319-44649-3, Ch. 3 Table 3.4 / Appendix A.2 — textbook reproduction with identical numerical values for the D3Q19 weights and second-order equilibrium formula. The companion code (D2Q9 only) is NOT vendored at this Phase per R8 amendment; the textbook tables alone are the citation surface. The 19 f_i^eq values above match the Ch. 3 worked example formula substituted at (ρ=1, u=(0.1,0,0)).",
+        "doi": "n/a (ISBN 978-3-319-44649-3; citation-only per R8 amendment — companion code NOT vendored)",
+        "derived_by": "Krüger 2017 Ch. 3 Table 3.4 + Appendix A.2 — substituted at the test point.",
+        "expected": {
+          "density_moment": 1.0,
+          "momentum_x_modulo_fp_eps": 0.1
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "d3q19-equilibrium-rho1-ux0p1-python-regenerator-anchor",
+        "rho": 1.0,
+        "u": [0.1, 0.0, 0.0],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..6=face neighbors (±1,0,0)(0,±1,0)(0,0,±1); 7..10=xy edges; 11..14=xz edges; 15..18=yz edges (see derivation.md § 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.3283333333333333,
+          0.07388888888888889,
+          0.04055555555555555,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.05472222222222222,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111,
+          0.02736111111111111
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.10000000000000002,
+        "momentum_y": 0.0,
+        "momentum_z": 0.0
+      },
+      "independent_reference": {
+        "source": "Python re-derivation by tools/testkit/golden/generator/d3q19_equilibrium.py — independent NumPy-free implementation of the equilibrium formula whose --verify subcommand reproduces all 19 f_i^eq values + density + momentum moments at absolute 1e-15 tolerance. Establishes a separate-from-the-sim implementation anchor (the sim's reference at packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19/reference/equilibrium.py uses NumPy-vectorized arithmetic; the generator uses pure Python arithmetic; both reproduce the table values bit-identically — cross-stack-style independence within the Python reference).",
+        "doi": "n/a (in-repo Python regenerator; cross-implementation anchor)",
+        "derived_by": "tools/testkit/golden/generator/d3q19_equilibrium.py --verify (pure-Python arithmetic; no NumPy).",
         "expected": {
           "density_moment": 1.0,
           "momentum_x_modulo_fp_eps": 0.1
