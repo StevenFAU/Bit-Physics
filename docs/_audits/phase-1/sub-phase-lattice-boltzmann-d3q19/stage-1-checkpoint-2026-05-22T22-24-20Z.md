@@ -6,8 +6,8 @@ artifact_id: lattice-boltzmann-d3q19-stage-1
 stage: 1-per-sim-implementation
 subject: "LBM sub-phase Stage 1 per-sim implementation checkpoint — 13 gates GREEN; cross-discretization NS-2D MMS OOA=2.39; two LFS-tracked canonical captures at full cadence"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-CONVENTION-12-BACKFILL>
-head_sha_at_checkpoint: <PLACEHOLDER-CONVENTION-12-BACKFILL>
+head_sha: f0f37a2e3fead69f9f53006eb706c77d87ebe7a2
+head_sha_at_checkpoint: f0f37a2e3fead69f9f53006eb706c77d87ebe7a2
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-eulerian-smoke/landing-2026-05-22T13-30-00Z.md
