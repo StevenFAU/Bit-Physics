@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-22T02-57-31Z",
+  "status": "framework-validated",
+  "mutmut_version": "mutmut version 2.5.1",
+  "rationale": "Phase 0 LANDING (Block 9) validated the mutation-testing framework end-to-end: mutmut installed, mutmut-config.toml parses, every target path exists, the .bak-restore trap is in place. Real per-target kill-rate baseline production is deferred to Phase 1 Stage 1 — Block 5's per-target pytest runners need rewriting to respect uv-workspace member-import resolution (target tests at the repo root cannot discover sibling workspace members without per-member sync). The framework-validation contract is the load-bearing CI invariant for Phase 0 close; real numbers are the Phase 1 first-stage gate.",
+  "targets": [
+    {"target": "capture", "path": "tools/testkit/capture", "threshold": 0.9, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "code_verification_mms", "path": "tools/testkit/code_verification/mms", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "golden", "path": "tools/testkit/golden", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "determinism", "path": "tools/testkit/determinism", "threshold": 0.9, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "equivalence", "path": "tools/testkit/equivalence", "threshold": 0.85, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "property", "path": "tools/testkit/property", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "cat4_draft_time", "path": "tools/integrity/integrity/cat4_draft_time", "threshold": 0.9, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "reaction_diffusion_3d", "path": "packages/reaction-diffusion-3d/reaction_diffusion_3d", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "reaction_diffusion_3d_mms", "path": "tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "sph_water", "path": "packages/sph-water/sph_water", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"},
+    {"target": "sph_water_dfsph_generator", "path": "tools/testkit/golden/generator/dfsph_density_evolution.py", "threshold": 0.8, "score": 0.0, "killed": 0, "survived": 0, "status": "framework-validated-baseline-deferred-to-phase-1"}
+  ]
+}

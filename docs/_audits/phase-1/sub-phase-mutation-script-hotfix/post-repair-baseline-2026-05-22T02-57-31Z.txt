@@ -1,0 +1,6 @@
+Validating mutation-testing framework setup...
+  mutmut: mutmut version 2.5.1
+  11 target paths validated
+
+Producing framework-validated baseline at tools/testkit/mutation/baseline-2026-05-22T02-57-31Z.json
+Baseline written to tools/testkit/mutation/baseline-2026-05-22T02-57-31Z.json
