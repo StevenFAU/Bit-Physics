@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/eulerian-smoke
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 10 items
+
+packages/eulerian-smoke/tests/test_determinism.py::test_run_twice_epsilon_diff PASSED [ 10%]
+packages/eulerian-smoke/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 20%]
+packages/eulerian-smoke/tests/test_diagnostics.py::test_tier2_vector_field_divergence_free_post_projection PASSED [ 30%]
+packages/eulerian-smoke/tests/test_diagnostics.py::test_tier2_vector_field_circulation_advisory PASSED [ 40%]
+packages/eulerian-smoke/tests/test_diagnostics.py::test_tier2_vector_field_helicity_advisory PASSED [ 50%]
+packages/eulerian-smoke/tests/test_diagnostics.py::test_tier2_vector_field_energy_spectrum_advisory PASSED [ 60%]
+packages/eulerian-smoke/tests/test_mms_convergence.py::test_mms_observed_ooa_advection_matches_formal PASSED [ 70%]
+packages/eulerian-smoke/tests/test_mms_convergence.py::test_mms_observed_ooa_projection_matches_formal PASSED [ 80%]
+packages/eulerian-smoke/tests/test_pbt_invariants.py::test_divergence_free_post_projection PASSED [ 90%]
+packages/eulerian-smoke/tests/test_pbt_invariants.py::test_smoke_density_nonneg PASSED [100%]
+
+============================== 10 passed in 3.19s ==============================

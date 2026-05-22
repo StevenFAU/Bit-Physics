@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.005,
+      "dx": 0.0078125,
+      "n": 128,
+      "n_jacobi": 20,
+      "nu": 0.01,
+      "rho": 1.0,
+      "vorticity_eps": 0.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:4604ebdc40b7fdf80c0354c4429f6fb0a12fd566c5bc301ad9ceed60dcd4e2ed",
+    "format": "hdf5",
+    "path": "taylor-green-128cube-seed42-step500.h5"
+  },
+  "run": {
+    "capture_interval": 50,
+    "start_utc": "2026-05-22T00:00:00Z",
+    "step_count": 500,
+    "wall_clock_seconds": 691.0469640130177
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "volumetric-grid",
+    "name": "eulerian-smoke",
+    "variant": "stam-fedkiw-stable-fluids"
+  },
+  "stack": {
+    "build_id": "sub-phase-eulerian-smoke",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}
