@@ -1,0 +1,25 @@
+=== Poiseuille  64x32x3, 1000 steps: (64, 32, 3) x 19 dirs, 1000 steps ===
+  per-step floor (NumPy, skeletal): 1.431 ms
+  full runtime (1000 steps):    1.431 s
+  ~1.5x production-corrected:       2.147 s
+  per-frame f-distribution bytes:      933,888  (0.93 MB)
+  full-cadence storage:             933,888,000  (933.89 MB) / 1024 MB ceiling
+  cadence-10 storage:               93,388,800  (93.39 MB)
+  peak working set (rough):          2,949,120  (2.95 MB)
+  fits storage (full cadence):      True
+  fits storage (cadence-10):        True
+  fits wall-clock (< 1h):           True
+  fits memory (< 16 GB):            True
+
+=== Couette     32x16x3,  500 steps: (32, 16, 3) x 19 dirs, 500 steps ===
+  per-step floor (NumPy, skeletal): 0.470 ms
+  full runtime (500 steps):    0.235 s
+  ~1.5x production-corrected:       0.353 s
+  per-frame f-distribution bytes:      233,472  (0.23 MB)
+  full-cadence storage:             116,736,000  (116.74 MB) / 1024 MB ceiling
+  cadence-10 storage:               11,673,600  (11.67 MB)
+  peak working set (rough):            737,280  (0.74 MB)
+  fits storage (full cadence):      True
+  fits storage (cadence-10):        True
+  fits wall-clock (< 1h):           True
+  fits memory (< 16 GB):            True
