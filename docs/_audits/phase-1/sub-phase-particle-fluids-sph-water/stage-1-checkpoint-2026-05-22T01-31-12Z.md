@@ -7,8 +7,8 @@ stage: 1-implementation
 subject: "Particle-fluids sph-water sub-phase Stage 1 final checkpoint — implementation complete (six R-class surfaces resolved)"
 verdict-state: complete
 supersedes: docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-1-checkpoint-partial-2026-05-20T22-27-08Z.md
-head_sha: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
-head_sha_at_checkpoint: PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE
+head_sha: 31195d83173aa49b92854c58f3f3eedbe4bd138b
+head_sha_at_checkpoint: 31195d83173aa49b92854c58f3f3eedbe4bd138b
 parent_audits:
   - docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-0-checkpoint-2026-05-20T22-10-19Z.md
   - docs/_audits/phase-1/sub-phase-particle-fluids-sph-water/stage-1-checkpoint-partial-2026-05-20T22-27-08Z.md
@@ -345,5 +345,5 @@ reproduce at full N=1M per spec-ref § 5.
 
 Convention #12 SHA back-fill at close per sub-phase plan § 4.2
 closing / § 10 discipline: a NEW commit will replace the
-`PLACEHOLDER-BACKFILL-AT-CONVENTION-12-CLOSE` placeholders in this
+`31195d83173aa49b92854c58f3f3eedbe4bd138b` placeholders in this
 audit's front-matter after the closing commit lands.
