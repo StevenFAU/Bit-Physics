@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: audit-chain-correctness-stage-1b
 subject: "Stage 1b CLOSE — portfolio-wide phantom-sha audit + §B.6 Mode-3 + spec § 7.5/G.7 D3-positive clarification. Phantom-sha audit report landed (14-capture: 5 MATCH / 7 NO-RECORD / 2 PHANTOM-DRIFT; both trailing-newline-confirmed, both pre-caught + sealed). §B.6 Mode-3 added (additive); rd-3d-ref RE-CLASSIFIED Mode 1 → Mode 3. Spec § 7.5 + Appendix G.7 gained additive LFS-content-OID (IC-16) clarification. Conventions doc sha256 ladder: 167fe349 → 2638dd28 (Stage 1a) → 69aa39fc (Stage 1b, new canonical baseline). architecture.md sha256 → e82b7b8e. Non-corrective per Convention A + #12 + D5. Verdict CONFIRMED; 0 new shifts; cumulative 122. Stage 2 dispatch-ready."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: 568bef44310d59045d9dd7c1d962c5e43c3cac76
+head_sha_at_checkpoint: 568bef44310d59045d9dd7c1d962c5e43c3cac76
 parent_audits:
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
   - docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/landing-2026-05-20T19-49-51Z.md
@@ -129,7 +129,7 @@ documented reason). Stage 2 reads the conventions doc at the new baseline
 
 ---
 
-This checkpoint lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 +
+This checkpoint lands at HEAD `568bef44310d59045d9dd7c1d962c5e43c3cac76` (back-filled per Convention #12 +
 § B.2 in a separate `chore(audit-chain-correctness-stage1b-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
