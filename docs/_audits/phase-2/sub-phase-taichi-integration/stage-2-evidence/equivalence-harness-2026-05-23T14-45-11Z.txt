@@ -1,0 +1,11 @@
+=== Equivalence harness diff report ===
+left:  common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.json
+right: common/common-py/smoke/captures/advection-1d-seed42-step100.json
+within_tolerance: False
+tolerance_table_used: {'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+per_field_diff entries: 1
+  - sim:category-mismatch: {'max_abs_err': inf, 'max_rel_err': inf}
+--- Acceptance note ---
+Harness loaded both captures cleanly + emitted a diff report without crashing.
+within_tolerance=False is EXPECTED (two different sims: hello-taichi-smoke vs advection-1d-smoke).
+Acceptance criterion per Step 2.9 dispatch: harness LOAD + emit — PASS.

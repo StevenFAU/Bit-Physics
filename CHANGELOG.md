@@ -757,6 +757,104 @@ dispatchable at `v0.2.0-phase-2`.
 | 13 | GREEN | perf-ledger row (158.052 s) |
 | 13 (anchor) | GREEN | worktree replay at `9de8048` → 4 ModuleNotFoundError |
 
+### sub-phase-taichi-integration
+
+**FIRST spec-Phase-2 sub-phase**; focused-infrastructure shape mirroring
+`sub-phase-numba-integration` per `docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md`
+§ 10.5 item 4. Establishes Stack-D (Python / Taichi) workspace surface
+before subsequent spec-Phase-2 per-sim Stack-D port sub-phases consume
+it. Resolves the **common-py adoption decision** banked since the
+numba-integration § 2 re-anchor finding. Operator-routed D1=SUPERSEDE
+(existing `docs/phases/phase-2-cross-stack-replication.md` 10-stage
+monolithic plan is NOT the dispatch vehicle; per-sub-phase decomposition
+matching Phase-1 pattern carries forward); D2 row 2 transitions
+SCOPED IN → RESOLVED at this sub-phase close; D3=v0.1.0-phase-1 replay
+anchor for all spec-Phase-2 sub-phases until `v0.2.0-phase-2` lands.
+
+#### Added
+
+- **`common/common-py/` workspace registration** in root
+  `pyproject.toml` `[tool.uv.workspace].members` (14th member;
+  resolves "infrastructure shipped, not yet wired" state surfaced at
+  numba-integration § 2).
+- **Taichi as workspace-accessible dependency** —
+  `taichi>=1.7,<2.0` promoted from `common/common-py/pyproject.toml`
+  `[project.optional-dependencies].taichi` to `[project].dependencies`
+  per Task 0.3 routing (a): Stack-D-only scoping (Stack-B/C developers
+  omit common-py from their workspace install). Upper bound tightened
+  per re-pin policy convention (`docs/conventions/sub-phase-conventions.md`
+  § H.4).
+- **`docs/common/taichi.md` convention doc** (361 lines including
+  Stage-2 § 4.6 addendum) — sister to `docs/common/numba.md`; documents
+  required `ti.init` form (`arch=ti.cpu, random_seed=<seed>,
+  cpu_max_num_threads=1, offline_cache=True`), banned flags
+  (`fast_math=True`, `default_fp=ti.f32` mismatch, unguarded parallel
+  reductions), the 4 spec § 4.4 known limitations + workarounds + the
+  Taichi-locale-DeprecationWarning workaround (§ 4.5) + the
+  `@ti.kernel` `-> None` annotation TypeError surface (§ 4.6).
+- **`common_py.determinism.set_taichi_deterministic` extended** with
+  `arch: str = "cpu"` parameter (`SUPPORTED_TAICHI_ARCHS = cpu / cuda
+  / vulkan / metal`); raises `ValueError` on unrecognised arch;
+  backward-compatible default preserves existing callers; uses the
+  correct Taichi 1.7.4 determinism mechanism. **Latent-bug fix
+  (SHIFTED N2):** charter § 1.4.1 prescribed `deterministic_mode=True`
+  is NOT a valid Taichi 1.7.4 `ti.init` kwarg (verified by signature
+  inspection); the pre-Stage-1 implementation would have always raised
+  at runtime if any caller had invoked it with taichi installed.
+- **12 unit tests** at `common/common-py/tests/test_determinism.py`
+  covering all 4 backends + ValueError path + backward-compat path +
+  monkeypatched missing-taichi path (rewritten from the pre-Stage-1
+  Stage-1-pre-assumption test); +7 net new tests.
+- **Hello-physics Taichi smoke sim** at
+  `common/common-py/smoke/hello_taichi.py` (1D explicit diffusion;
+  Taichi backend; sibling to `advection_1d.py`). Exercises
+  `set_taichi_deterministic` + `Capture.write_capture` + `FKeyDispatcher`
+  (CI-skipped) + `watch_and_reexec` (CI-skipped). Smoke-tier capture at
+  `common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.{h5,json}`
+  (47 KB; NOT LFS-tracked at this path; smoke-tier only — not a
+  canonical-corpus capture per Appendix D § D.2.3). Kernel module
+  deliberately omits `from __future__ import annotations` per spec
+  § 4.4 limitation #2 and `-> None` return annotations per the
+  Taichi-1.7.4 AST-transformer limitation discovered at Stage 1
+  (SHIFTED N3).
+- **`tools/testkit/taichi_harness/`** regression-test subpackage —
+  non-shadowing name per numba § 8 N2 lesson. 5 tests at
+  `tests/test_taichi_determinism.py`: FP-equivalence vs pure-NumPy at
+  N ∈ {64, 256, 1024}; run-to-run bit-determinism; cold-vs-warm
+  offline-cache identity. All 5 use `pytest.importorskip("taichi")`
+  for R-T1 CI-without-Taichi mitigation per charter § 9.
+- **filterwarnings amendment** at `common/common-py/pyproject.toml`
+  `[tool.pytest.ini_options]`: filters
+  `DeprecationWarning:taichi.*` + `locale\\.getdefaultlocale` to
+  preserve strict-warnings posture against Taichi 1.7.4's internal
+  Python-3.12 locale-deprecation call (SHIFTED N4; documented at
+  `docs/common/taichi.md` § 4.5).
+- **`docs/dependencies.md` additive entry** for Taichi pin +
+  `bit-physics-common-py` as workspace member.
+- This audit chain (9 commits): plan-drafting probe (`7b21ee2`);
+  charter (`9f5c80f`); plan-drafting landing audit (`185401b`); plan-
+  drafting SHA back-fill (`75fb99a`); Stage 0 tolerance-budget
+  carryover (`81b1475`); Stage 0 checkpoint (`0eed3d7`); Stage 0 SHA
+  back-fill (`ae3b834`); Stage 1 sub-bundle feat (`c2900c3`); Stage 1
+  checkpoint (`fece9a8`); Stage 1 SHA back-fill (`9502824`); Stage 2
+  landing audit + back-fill (final SHAs).
+
+#### Verified
+
+| Deliverable | Status | Notes |
+|---|---|---|
+| Workspace registration | GREEN | `common/common-py` in `[tool.uv.workspace].members` at commit `c2900c3` |
+| Taichi declared as workspace dep | GREEN | `taichi>=1.7,<2.0` at `common/common-py/pyproject.toml` |
+| `docs/common/taichi.md` | GREEN | 361 lines; sister to `docs/common/numba.md`; ≥3 anchors at § 2.1 |
+| `set_taichi_deterministic` arch param + API fix | GREEN | 12 unit tests; 4 backends + ValueError + backward-compat + monkeypatch |
+| Hello-physics smoke + capture | GREEN | 47 KB `.h5`; sha256 `347d6568…05cfd` |
+| `taichi_harness` regression | GREEN | 5 tests; locally validated; CI-skip on missing-Taichi |
+| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (third byte-identical sweep in a row) |
+| Cross-package regression sweep | GREEN | 325 GREEN (+30 vs 295 baseline); zero Phase-1 sim regressions |
+| Equivalence-harness compatibility | GREEN | hello-taichi vs advection_1d diff emitted cleanly (within_tolerance=False expected; different sims) — W-Gate 5 analogue |
+| `docs/dependencies.md` entry | GREEN | Taichi pin + common-py workspace member |
+| CHANGELOG entry | GREEN | this entry |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation

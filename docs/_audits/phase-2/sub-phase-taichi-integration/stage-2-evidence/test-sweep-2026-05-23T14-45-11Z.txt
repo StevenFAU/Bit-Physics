@@ -1,0 +1,56 @@
+=== Bit-Physics cross-package test sweep — sub-phase-taichi-integration Stage 2 ===
+
+--- packages/strange-attractors ---
+...........                                                              [100%]
+11 passed in 0.74s
+
+--- packages/mandelbulb-explorer ---
+..........                                                               [100%]
+10 passed in 0.24s
+
+--- packages/boids-3d ---
+..........                                                               [100%]
+10 passed in 38.57s
+
+--- packages/physarum ---
+..........                                                               [100%]
+10 passed in 10.68s
+
+--- packages/reaction-diffusion-3d ---
+........                                                                 [100%]
+8 passed in 23.70s
+
+--- packages/sph-water ---
+......................                                                   [100%]
+22 passed in 0.57s
+
+--- packages/eulerian-smoke ---
+..........                                                               [100%]
+10 passed in 3.13s
+
+--- packages/lattice-boltzmann-d3q19 ---
+.........                                                                [100%]
+9 passed in 3.95s
+
+--- packages/mpm-multimaterial ---
+.........                                                                [100%]
+9 passed in 0.81s
+
+--- tools/integrity/tests ---
+...................................................                      [100%]
+51 passed in 1.29s
+
+--- tools/diagnostics/diagnostics ---
+........................................................................ [ 77%]
+.....................                                                    [100%]
+93 passed in 0.30s
+
+--- tools/testkit (full incl numba_harness + taichi_harness) ---
+.........................................................                [100%]
+57 passed in 3.90s
+
+--- common/common-py ---
+.........................                                                [100%]
+25 passed in 0.51s
+
+=== END sweep ===

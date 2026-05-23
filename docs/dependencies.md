@@ -197,3 +197,74 @@ arithmetic SPH and other sims use) under both pure NumPy and numba
 JIT at N ∈ {64, 256, 1024} and asserts bit-identical output. If
 numba ever produces drift (across version updates, platform changes,
 etc.), this test catches it.
+
+## spec-Phase-2 sub-phase-taichi-integration — Taichi DSL + common-py workspace adoption (added 2026-05-23)
+
+Per `docs/_audits/phase-2/sub-phase-taichi-integration/landing-2026-05-23T14-45-11Z.md`.
+Establishes Stack D (Python / Taichi) infrastructure for subsequent
+spec-Phase-2 per-sim Stack-D port sub-phases. Resolves the common-py
+adoption decision banked since sub-phase-numba-integration § 2 re-anchor
+finding (D2 row 2 transition: SCOPED IN → RESOLVED).
+
+### Runtime — new workspace member
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| **`bit-physics-common-py`** | `common/common-py/` workspace member; Stack-D sims | (workspace; tracks repo HEAD) | (per repo LICENSE) | `uv tree --workspace common-py` |
+| **`taichi`** | `common/common-py/pyproject.toml` `[project].dependencies` | `>=1.7,<2.0` (1.7.4 known-good 2026-05-23) | Apache-2.0 | `pip index versions taichi` |
+| **`llvmlite`** | taichi transitive (LLVM 15.0.4 bundled) | per taichi's bundle | BSD-3-Clause | (transitively pinned by taichi) |
+
+### Project-wide convention
+
+The use convention is documented at [`docs/common/taichi.md`](common/taichi.md).
+Load-bearing rules per the convention doc:
+
+- `ti.init(arch=ti.cpu, random_seed=<seed>, cpu_max_num_threads=1, offline_cache=True)`
+  is the **mandatory** initialization form for the
+  `bit-exact-same-stack-same-hw` declaration. **Note:** the
+  `deterministic_mode=True` kwarg cited in spec § 4.4 is NOT a valid
+  Taichi 1.7.4 `ti.init` parameter — the actual mechanism is the
+  four-kwarg combination above (verified by signature inspection at
+  sub-phase-taichi-integration Stage 1).
+- `fast_math=True` is **banned** (re-associates float ops; breaks
+  bit-exactness; same family as numba's `fastmath=True` ban).
+- `default_fp=ti.f32` is **banned** when the sim uses `f64` (silent
+  precision downgrade).
+- Unguarded `cpu_max_num_threads > 1` is **banned** (nondeterministic
+  parallel reductions; same family as numba's `parallel=True` ban).
+- Module-scope `from __future__ import annotations` is **banned** in
+  any module containing `@ti.kernel`-decorated functions (spec § 4.4
+  limitation #2; Taichi resolves annotations at decoration time).
+- `-> None` return annotations are **banned** on void `@ti.kernel`
+  functions (Taichi-1.7.4 AST-transformer limitation; documented at
+  `docs/common/taichi.md` § 4.6).
+- Stack-B/C developers can install workspace members WITHOUT pulling
+  common-py + Taichi by omitting common-py from their consumed
+  workspace-member set (Taichi is Stack-D-only per Task 0.3 routing
+  (a)).
+
+### Verification
+
+The determinism contract is verified by the regression test at
+[`tools/testkit/taichi_harness/tests/test_taichi_determinism.py`](../tools/testkit/taichi_harness/tests/test_taichi_determinism.py)
+(directory named `taichi_harness/` rather than `taichi/` to avoid
+shadowing the upstream `taichi` package import in this workspace).
+The test runs a known-deterministic 1D explicit-diffusion sim under
+both pure NumPy and Taichi JIT at N ∈ {64, 256, 1024} and asserts
+FP-equivalence within 1e-9 absolute (well below spec's cross-stack
+1e-4 relative tolerance). Plus two bit-determinism contracts:
+run-to-run identity + cold-vs-warm `offline_cache` identity.
+
+All 5 tests use `pytest.importorskip("taichi")` at module top so they
+skip cleanly when Taichi is unavailable in CI (R-T1 mitigation per
+`docs/phases/sub-phase-taichi-integration.md` § 9; locally validated
+during sub-phase-taichi-integration Stage 1).
+
+### Re-pin policy
+
+Raising the upper bound of `taichi>=1.7,<2.0` (e.g., to allow
+Taichi 2.x) is a **separate operator-approved commit + audit entry +
+regression-test re-verify** per
+[`docs/conventions/sub-phase-conventions.md`](conventions/sub-phase-conventions.md)
+§ H.4. Same discipline as numba § 5 + spec § 9.2 vendored-upstream
+amendments.

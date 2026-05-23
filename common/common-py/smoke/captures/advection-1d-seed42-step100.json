@@ -1,0 +1,42 @@
+{
+  "config": {
+    "dims": [
+      64
+    ],
+    "dtype": "f64",
+    "params": {
+      "c": 1.0,
+      "dt": 0.0078125,
+      "dx": 0.015625
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:4592d42be778bf7ed4d3c239edc8a80df617d085c080a9bc6269917171106d2f",
+    "format": "hdf5",
+    "path": "advection-1d-seed42-step100.h5"
+  },
+  "run": {
+    "capture_interval": 10,
+    "start_utc": "2026-05-23T14:50:20.654341+00:00",
+    "step_count": 100,
+    "wall_clock_seconds": 0.0005881430115550756
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "smoke",
+    "name": "advection-1d-smoke",
+    "variant": "common-py"
+  },
+  "stack": {
+    "build_id": "phase1-stage1",
+    "name": "common-py",
+    "version": "0.0.0"
+  }
+}

@@ -239,6 +239,51 @@ posture without coupling to Taichi-upstream's release cadence. See
 When Taichi 1.8+ ships (assumed to fix the locale call), revisit the
 filter; if obsolete, remove via a separate operator-approved commit.
 
+### 4.6 `@ti.kernel` `-> None` return annotation triggers TypeError (added at Stage 2)
+
+(FACT — observed at sub-phase-taichi-integration Stage 1 STEP 5
+hello-physics smoke first-run; banked at Stage 1 close as
+`docs/common/taichi.md` § 4.6 addendum candidate per
+stage-1-checkpoint § 6 N3; landed at Stage 2 STEP 2.10.)
+
+Taichi 1.7.4's `@ti.kernel` AST transformer (`transform_as_kernel` in
+the upstream `taichi/lang/ast/ast_transformer.py` module; upstream
+Taichi internal, not part of this repo) iterates `ctx.func.return_type`,
+which is `None` when the kernel function is annotated `-> None`.
+Iterating `None` raises `TypeError: 'NoneType' object is not iterable`
+at decoration time, before the kernel ever runs.
+
+**Discipline:** any `@ti.kernel`-decorated function with no return
+value MUST omit the return annotation. Use:
+
+```python
+@ti.kernel
+def initial_condition():
+    """No -> None annotation per Taichi 1.7.4 AST-transformer limitation."""
+    for i in range(GRID_N):
+        u[i] = 0.0
+```
+
+NOT:
+
+```python
+@ti.kernel
+def initial_condition() -> None:  # TypeError at decoration time
+    ...
+```
+
+This is in the same family as § 4.2 (`from __future__ import
+annotations` breakage): both surface gaps in Taichi's
+Python-typing-annotation introspection at decoration time. The
+workaround is mechanical (omit the annotation) and documented per
+kernel-module convention.
+
+The hello-physics smoke at
+`common/common-py/smoke/hello_taichi.py` follows this restriction;
+both `initial_condition()` and `step_diffuse()` omit `-> None`.
+Future Stack-D sub-phases inherit the same restriction; document at
+kernel-module docstrings + cite this section.
+
 ## 5. Cross-version bit-equality is not formally guaranteed
 
 (FACT — Taichi upstream does not publish a bit-equality guarantee

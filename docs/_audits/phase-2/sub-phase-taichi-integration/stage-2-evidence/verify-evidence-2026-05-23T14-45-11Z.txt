@@ -1,0 +1,64 @@
+=== docs/_audits/phase-2/sub-phase-taichi-integration/plan-drafting-probe-2026-05-23T13-41-01Z.md ===
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/architecture.md
+  PASS  docs/phases/sub-phase-agent-based.md
+  PASS  docs/phases/sub-phase-closed-form.md
+  PASS  docs/phases/sub-phase-conventions-refactor-post-phase-1.md
+  PASS  docs/phases/phase-2-cross-stack-replication.md
+  PASS  common/common-py/pyproject.toml
+  PASS  common/common-py/src/common_py/__init__.py
+  PASS  common/common-py/src/common_py/determinism.py
+  PASS  common/common-py/src/common_py/ggui.py
+  PASS  common/common-py/src/common_py/hotreload.py
+  PASS  common/common-py/src/common_py/capture.py
+  PASS  tools/integrity/integrity/scripts/replay_prior_phase.py
+  PASS  pyproject.toml
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+summary: 15 pass / 0 fail at head_sha e2d6cb5b0a28
+
+=== docs/_audits/phase-2/sub-phase-taichi-integration/plan-drafting-landing-2026-05-23T13-41-01Z.md ===
+  PASS  docs/phases/sub-phase-taichi-integration.md
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/plan-drafting-probe-2026-05-23T13-41-01Z.md
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+summary: 4 pass / 0 fail at head_sha 185401bf9709
+
+=== docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-checkpoint-2026-05-23T14-06-40Z.md ===
+  PASS  docs/phases/sub-phase-taichi-integration.md
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  tools/testkit/equivalence/tolerance-budget.toml
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-replay-2026-05-23T14-06-40Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-red-evidence-reverify-2026-05-23T14-06-40Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-baseline-2026-05-23T14-06-40Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-altinvocation-baseline-2026-05-23T14-06-40Z.txt
+  PASS  common/common-py/pyproject.toml
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-replay-2026-05-23T14-06-40Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-red-evidence-reverify-2026-05-23T14-06-40Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-baseline-2026-05-23T14-06-40Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-altinvocation-baseline-2026-05-23T14-06-40Z.txt (sha256 OK)
+summary: 13 pass / 0 fail at head_sha 0eed3d72081d
+
+=== docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-checkpoint-2026-05-23T14-20-17Z.md ===
+  FAIL  evidence path 'tools/testkit/taichi_harness/tests/__init__.py' is empty at fece9a890171998eb05b006d47f0c3cc0545bf75
+  PASS  docs/phases/sub-phase-taichi-integration.md
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/common/taichi.md
+  PASS  pyproject.toml
+  PASS  common/common-py/pyproject.toml
+  PASS  common/common-py/src/common_py/determinism.py
+  PASS  common/common-py/tests/test_determinism.py
+  PASS  common/common-py/smoke/hello_taichi.py
+  PASS  common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.h5
+  PASS  common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.json
+  PASS  tools/testkit/taichi_harness/__init__.py
+  PASS  tools/testkit/taichi_harness/tests/test_taichi_determinism.py
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-step1-acceptance-check-2026-05-23T14-20-17Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-pytest-output-2026-05-23T14-20-17Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-cross-package-sweep-2026-05-23T14-20-17Z.txt
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-step1-acceptance-check-2026-05-23T14-20-17Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-pytest-output-2026-05-23T14-20-17Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-cross-package-sweep-2026-05-23T14-20-17Z.txt (sha256 OK)
+  PASS  common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.h5 (sha256 OK)
+summary: 20 pass / 1 fail at head_sha fece9a890171

@@ -1,0 +1,39 @@
+=== Append-only check — sub-phase-taichi-integration Stage 2 ===
+
+--- CI semantics (grep \.ledger\.md$): edits to *.ledger.md files since start of sub-phase ---
+(none — CI trivially clean)
+
+--- Strict-mode: all sub-phase modifications ---
+common/common-py/pyproject.toml
+common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.h5
+common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.json
+common/common-py/smoke/hello_taichi.py
+common/common-py/src/common_py/determinism.py
+common/common-py/tests/test_determinism.py
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-checkpoint-2026-05-23T14-06-40Z.md
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-altinvocation-baseline-2026-05-23T14-06-40Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-common-py-baseline-2026-05-23T14-06-40Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-red-evidence-reverify-2026-05-23T14-06-40Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-0-replay-2026-05-23T14-06-40Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-checkpoint-2026-05-23T14-20-17Z.md
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-cross-package-sweep-2026-05-23T14-20-17Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-pytest-output-2026-05-23T14-20-17Z.txt
+docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-step1-acceptance-check-2026-05-23T14-20-17Z.txt
+docs/common/taichi.md
+pyproject.toml
+tools/testkit/equivalence/tolerance-budget.toml
+tools/testkit/taichi_harness/__init__.py
+tools/testkit/taichi_harness/tests/__init__.py
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py
+uv.lock
+
+--- 14 protected sets verification (Phase-0 + Phase-1 + 13 prior sub-phase landings) ---
+Checking that none of the modified files were present at prior protected SHAs...
+(if no STRICT-MODE FLAG lines above, strict-mode is clean)
+
+--- common-py/* files present at any prior protected SHA (informational — common-py existed pre-Stage-1 but wasn't workspace-registered) ---
+common-py file present at Phase-1 landing (9998bc1): common/common-py/pyproject.toml — additive edit per Convention A
+common-py file present at Phase-1 landing (9998bc1): common/common-py/src/common_py/determinism.py — additive edit per Convention A
+common-py file present at Phase-1 landing (9998bc1): common/common-py/tests/test_determinism.py — additive edit per Convention A
+
+=== END append-only check ===
