@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-conventions-refactor-post-phase-1"
-opened_at = "2026-05-23T12:27:48Z"
+phase = "sub-phase-taichi-integration"
+opened_at = "2026-05-23T14:06:40Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
