@@ -1,0 +1,29 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/common/common-py
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 18 items
+
+common/common-py/tests/test_capture_roundtrip.py::test_capture_writer_then_reader_roundtrips_step_arrays PASSED [  5%]
+common/common-py/tests/test_capture_roundtrip.py::test_reader_out_of_range_raises PASSED [ 11%]
+common/common-py/tests/test_capture_roundtrip.py::test_writer_finalize_is_idempotent PASSED [ 16%]
+common/common-py/tests/test_determinism.py::test_default_config_is_non_deterministic PASSED [ 22%]
+common/common-py/tests/test_determinism.py::test_add_args_then_from_args_parses_flags PASSED [ 27%]
+common/common-py/tests/test_determinism.py::test_add_args_defaults PASSED [ 33%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_noop_when_not_enabled PASSED [ 38%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_silent_when_taichi_missing PASSED [ 44%]
+common/common-py/tests/test_module_surfaces.py::test_alembic_export_raises_until_implementation PASSED [ 50%]
+common/common-py/tests/test_module_surfaces.py::test_vdb_export_raises_until_implementation PASSED [ 55%]
+common/common-py/tests/test_module_surfaces.py::test_fkey_dispatcher_rejects_non_fkey PASSED [ 61%]
+common/common-py/tests/test_module_surfaces.py::test_fkey_dispatcher_edges_only PASSED [ 66%]
+common/common-py/tests/test_module_surfaces.py::test_keys_trapped_constant_lists_all_fkeys PASSED [ 72%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_1d_writes_file SKIPPED [ 77%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_2d_writes_file SKIPPED [ 83%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_1d_rejects_2d_input SKIPPED [ 88%]
+common/common-py/tests/test_smoke_advection.py::test_smoke_advection_runs_and_captures PASSED [ 94%]
+common/common-py/tests/test_smoke_advection.py::test_smoke_advection_is_deterministic PASSED [100%]
+
+======================== 15 passed, 3 skipped in 0.22s =========================
