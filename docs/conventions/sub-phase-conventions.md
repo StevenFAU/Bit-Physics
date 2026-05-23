@@ -2,9 +2,9 @@
 
 > **Document type:** Project convention reference (consolidation of cross-cutting patterns from four landed per-sim implementation sub-phases — closed-form, agent-based, continuous-CA-rd3d, particle-fluids-sph-water — plus three focused infrastructure-hotfix sub-phases — replay-tool, numba-integration, mutation-script).
 > **Landed at:** sub-phase-conventions-consolidation (per `sub-phase-particle-fluids-sph-water` landing audit § 9.3 row 7 banked observation; operator decision to consolidate at cumulative shift count 65).
-> **Status:** referenceable. Every convention in §§ A–M is something that has actually happened across the audit chain (FACT or INFERENCE-from-multiple-audits, tagged at the convention level). § N is explicitly forward-looking (PROPOSED), per the load-bearing banked observation calling for canonical-descriptor scope-analysis at Stage 0.
+> **Status:** referenceable. Every convention in §§ A–P is something that has actually happened across the audit chain (FACT or INFERENCE-from-multiple-audits, tagged at the convention level). § N graduated from PROPOSED to established at `sub-phase-conventions-refactor-post-phase-1` per three single-session-ready Stage 1s (eulerian-smoke / LBM / MPM); § P (capture cadence routing) was added at the same refactor.
 > **Read order:** future sub-phase plan-drafting agents read this document FIRST, then inherit specifics from the most-recent prior sub-phase landing audit. Per-sub-phase plans at `docs/phases/sub-phase-*.md` remain self-contained inheritance-by-most-recent-template artifacts and are NOT retroactively rewritten to point at this document.
-> **Reading by topic:** §§ A B C D E K L M are universally load-bearing for any sub-phase. §§ F G are load-bearing for per-sim implementation sub-phases (not for infrastructure hotfixes). § H is load-bearing only for sub-phases consuming vendored upstream. §§ I J are load-bearing only at Stage 2. § N is load-bearing at Stage 0 for sub-phases whose canonical descriptors might mismatch the implementation stack.
+> **Reading by topic:** §§ A B C D E K L M are universally load-bearing for any sub-phase. §§ F G are load-bearing for per-sim implementation sub-phases (not for infrastructure hotfixes). § H is load-bearing only for sub-phases consuming vendored upstream. §§ I J are load-bearing only at Stage 2. §§ N P are load-bearing at Stage 0 for sub-phases producing a canonical capture (Task 0.4 + capture cadence routing).
 
 ---
 
@@ -77,7 +77,7 @@ Audit files are **sealed at the boundary where they land**:
 
 1. Author the audit with `head_sha:` set to a placeholder (e.g., the prior commit SHA, or `<PLACEHOLDER>`).
 2. Commit the audit (the closing commit).
-3. `git rev-parse HEAD` to capture the actual closing-commit SHA.
+3. `git rev-parse HEAD` to capture the actual closing-commit SHA. **The full 40-hex SHA MUST be captured via `git rev-parse HEAD` at summary-composition time, NOT transcribed from earlier conversation context.** Same-short-SHA-prefix collisions are routine: the first 8 hex characters cover ~4 billion possibilities, and per-sub-phase activity routinely produces multiple SHAs sharing a short prefix. Eulerian-smoke Stage 2 N1 and MPM Stage 2 closing summary both surfaced transcription drift on the closing-summary SHA — same short prefix, different full hex. This is a **belt-and-suspenders discipline**: even when documented, the transcription failure mode persists when agents carry SHAs through context rather than regenerating; the corrective is always-regenerate at summary-composition time. The same discipline applies to every closing-summary SHA an audit body cites (Stage 0 / Stage 1 / Stage 2 closing-commit SHAs; per-sim sub-bundle commit SHAs; etc.) — regenerate via `git rev-parse HEAD` or `git log -1 --format='%H'`, do not transcribe.
 4. Edit the audit's `head_sha:` field to the actual SHA.
 5. Commit AGAIN as `chore(<slug>-sha-backfill): back-fill landing audit SHA per Convention #12`.
 
@@ -101,7 +101,7 @@ Audit files are **sealed at the boundary where they land**:
 | `parent_audits:` | every checkpoint + landing audit | List the prior-stage / prior-sub-phase landings the current audit inherits from. |
 | `supersedes:` | continuations only | Used at Stage 1 final-checkpoint to supersede a Stage 1 partial-checkpoint (FACT — `sub-phase-particle-fluids-sph-water/stage-1-checkpoint-2026-05-22T01-31-12Z.md` supersedes `…/stage-1-checkpoint-partial-2026-05-20T22-27-08Z.md`). |
 | `evidence_paths:` | always | Files cited as evidence. `verify_evidence --strict` resolves each. |
-| `evidence_hashes:` | always | sha256 of each evidence path. Use the `sha256:HEX` prefix form (tool-accepted after closed-form Stage 2 N3). |
+| `evidence_hashes:` | always | sha256 of each evidence path. Use the `sha256:HEX` prefix form (tool-accepted after closed-form Stage 2 N3). For LFS-tracked entries the recorded hash is the **actual content sha256** (matching `git lfs ls-files` OID and direct `sha256sum` on the smudged file), NOT the LFS pointer-text sha256. See § B.6. |
 
 ### B.4 Audit directory structure
 
@@ -136,6 +136,25 @@ docs/_audits/phase-1/sub-phase-<slug>/
 ### B.5 Audit-internal cross-references
 
 Use `[[<audit-name>]]` (without the `.md` extension) to link related audits inside an audit body (FACT — pattern visible across landing audits' "Stage 2 convergence commits" tables). At HEAD this is a documentation convention; no machine-readable index resolves it, but the consistency aids grep-based navigation.
+
+### B.6 Evidence-paths strict-verify discipline
+
+(FACT — recurring drift pattern across RD-3D Stage 2 N1, eulerian-smoke Stage 2 N1, LBM Stage 2 N2, MPM Stage 2 N2 — **4 of 7 per-sim sub-phases**.)
+
+**Authoritative rule.** The audit-recorded `evidence_hashes` value is the **sealed-at-commit-time** sha256 of the evidence-path file. Per § B.1's append-only invariant, the sealed value is the load-bearing artifact identity; any divergence reported by `verify_evidence` against HEAD is interpreted relative to the sealed value, NOT the other way around.
+
+**Recurring drift modes.**
+
+- **Mode 1: file content evolved between audit-time and HEAD** (RD-3D N1, eulerian-smoke N1, LBM N2). The `verify_evidence` strict-mode comparison flags a mismatch when an evidence file is touched by a later commit. Per § B.1 the sealed sha256 is load-bearing; the divergence is informational, not corrective.
+- **Mode 2: LFS-tracked evidence pointer-vs-content** (MPM N2; first surface of this mode). `verify_evidence`'s `tools/integrity/integrity/common/repo.py:62-72::file_at_sha()` uses `git show <sha>:<path>` to read evidence at the recorded SHA. For LFS-tracked files, `git show` returns the LFS **pointer-text stub** (the `version https://git-lfs.github.com/spec/v1\noid sha256:<actual-content-sha>...` payload), NOT the smudged actual content. The audit's claimed sha256 is the **actual on-disk content sha256** (matching `git lfs ls-files` OID + direct `sha256sum` on the smudged file). `verify_evidence` therefore compares the audit's content-sha256 against the pointer-stub's sha256 and structurally cannot match.
+
+**Concrete remediation options (operator-routable; this convention documents the discipline, does NOT pick an option).**
+
+1. **Teach `verify_evidence` about LFS smudging.** Extend `file_at_sha()` to detect LFS pointer files and invoke `git lfs smudge` (or equivalent) before hashing. Single-tool change; preserves the existing `evidence_hashes:` schema. Risk: requires LFS to be installed and configured everywhere `verify_evidence` runs.
+2. **Split `evidence_hashes` into `pointer_sha256` vs `content_sha256` for LFS entries.** Schema extension carrying both hashes for LFS-tracked evidence; `verify_evidence` checks either against the on-disk artifact based on file type. Risk: schema churn in landing audits; back-fill on prior audits would be append-only-invariant-breaking.
+3. **Accept the recurring pattern with explicit annotation.** Document in landing audits (per the MPM landing § 7.3 pattern) that LFS-tracked evidence_paths trigger an expected-shape `verify_evidence` mismatch; the sealed `evidence_hashes` content sha256 remains load-bearing per § B.1; no tool change. Risk: ongoing audit-time annotation burden across every sub-phase shipping LFS-tracked evidence.
+
+**Lean for spec-Phase-2 entry.** Option 1 (teach `verify_evidence` about LFS) is the principled fix; landing it under a focused infrastructure hotfix sub-phase (mirroring `sub-phase-mutation-script-hotfix` shape) would close the recurring drift cleanly. Operator decision at next available routing point. Cross-reference: `docs/_audits/phase-1/sub-phase-git-lfs-migration/landing-2026-05-22T21-04-05Z.md` for the LFS infrastructure context.
 
 ---
 
@@ -387,6 +406,14 @@ Drift on (1) / (4) → BLOCK with surface. Drift on (2) / (3) → proceed but su
 
 (FACT — `tools/integrity/integrity/cat3_numerical/golden_values.py:_anchor_count`; SPH-water Stage 2 N1.) Anchor count is determined by counting **discrete `independent_reference` entries**, not by counting citations within a single block. Multiple citations packed into one `independent_reference.source` block count as ONE anchor. The lift in Decision A restructures one block-with-N-citations into N discrete entries, preserving every citation verbatim — mechanical restructuring, not new evidence.
 
+**Empirical observation across five PATH-A proof-points (RD-3D, sph-water, eulerian-smoke, LBM, MPM partial):** per-source-file mutation kill rates above the 0.80 advisory threshold consistently correlate with ≥ 4 discrete `independent_reference` anchors in the consuming golden table, not with general test richness:
+
+- LBM `reference/constants.py` (0.8547) + `reference/equilibrium.py` (0.8469) — both anchored to `d3q19-equilibrium.json` (4 anchors post-lift).
+- sph-water `kernel.py` (0.8456) — anchored to `cubic-spline-kernel.json` (3 anchors).
+- MPM `reference/shape_functions.py` (0.8846) — anchored to `mls-mpm-shape-functions.json` (4 anchors post-lift).
+
+Per-sim source-tier mutation kill-rate baseline across all five proof-points: mean **0.5466**, range **[0.4879, 0.5927]**, ±10% of mean (RD-3D 0.5927, sph-water 0.5581, eulerian-smoke 0.4879, LBM 0.5354, MPM 0.5591 partial — see MPM landing § 7.6 for the trend table). **Per-file kill rates above 0.80 reflect anchor density, NOT richer behavioural tests.** Implication for spec-Phase-2+ test-augmentation routing: lifting a given source file's kill rate above the 0.80 threshold is more reliably achieved by lifting the consuming golden's anchor count to ≥ 4 discrete entries (Decision A lift; see § I.2) than by augmenting behavioural tests around the source file. Cross-reference: § J.5 mutation gate advisory posture.
+
 ### I.4 Current state of `_SUBDIRS_PICKED_UP`
 
 At HEAD (post-sph-water landing):
@@ -436,6 +463,20 @@ uv run --no-sync mutmut run \
 
 The `--disable-mutation-types string,fstring` flag (added mid-stage at RD-3D Stage 2; recorded as a convention from N3) skips docstring mutations that don't probe sim behavior — sub-phase determinism-strategy docstrings would otherwise dominate the mutant count.
 
+**Per-test wall-clock timeout for numba-using PATH-A targets (REQUIRED).** PATH-A targets exercising @njit-decorated modules with potentially-unbounded mutations (e.g., MPM `mls_mpm.py` 1257 mutants; sph-water `dfsph.py` 600 mutants) MUST include a per-test wall-clock timeout in the runner spec. The MPM Stage 2 R15 STOP-AND-SURFACE precedent (MPM landing § 8.2 N5): `mls_mpm.py` mutation could not complete across 5 mutmut restart attempts due to a `timeout × numba × infinite-loop-mutation × systemd-userspace orphan-pytest` interaction. Pathological mutations either looped indefinitely (e.g., mutations to rejection-sampler bounds) or allocated extreme memory (29 GB on some @njit kernel mutations); orphan pytest grandchildren reparented to systemd PID 2643 past the outer `timeout` command's reach.
+
+Two complementary mechanisms:
+
+1. **Shell-level `timeout` wrapper** around the pytest invocation:
+   ```
+   --runner "timeout --kill-after=10 60 prlimit --as=4G .venv/bin/python -m pytest ..."
+   ```
+   Worked at MPM Stage 2 recovery run at scope-restricted ~1m45s for 98 mutants across `invariants.py`, `reference/__init__.py`, `reference/shape_functions.py` (4 of the 5 MPM source files completed; `mls_mpm.py` banked). The `timeout --kill-after=10 60` chain wraps pytest with a 60-s wall-clock + 10-s SIGKILL grace; `prlimit --as=4G` caps virtual memory; dropping `uv run` and `setsid` eliminates the extra subprocess layer and preserves the parent-child relationship the kernel needs to reap stuck pytest processes.
+
+2. **`pytest-timeout` plugin** with per-test default timeouts (e.g., 30 s unit / 300 s capture-generation). Bypasses the OS-level orphan-reparenting issue entirely — pytest's own signal handlers can terminate the offending test before the orphan accumulates.
+
+**This convention documents the requirement; adopting `pytest-timeout` is the testing-improvements sub-phase's responsibility, NOT a per-sim sub-phase or this conventions refactor's deliverable.** Until `pytest-timeout` lands at `tools/testkit/pyproject.toml`, the shell-`timeout` form (mechanism 1) is the documented minimum for numba-using PATH-A targets. MPM `mls_mpm.py` mutation completion is banked for the testing-improvements work.
+
 ### J.4 Per-target exclusions
 
 (FACT — sph-water Stage 2 R15 routing precedent.) When a per-target runner would exclude certain test files (e.g., canonical-capture-generation tests that take minutes per mutant), the per-target runner spec is the right place for the exclusion. The exclusion + rationale is recorded in the sub-phase plan § 4.3 Step 2.7 and in the landing audit § 7.6.
@@ -443,6 +484,38 @@ The `--disable-mutation-types string,fstring` flag (added mid-stage at RD-3D Sta
 ### J.5 Mutation gate advisory posture
 
 (FACT — across all four landings.) The mutation gate is advisory (non-blocking) at sub-phase scope. Real per-target kill-rate baselines are surfaced + carried forward; sub-source coverage gaps are banked as test-augmentation candidates (RD-3D `0.5927 < 0.80`; sph-water `0.5581 < 0.80`). Spec § 2.13 threshold compliance becomes gating at a later phase per the spec's per-target threshold table; sub-phase work establishes the baseline, not the gate-flip.
+
+### J.6 Mutmut data extraction
+
+(FACT — LBM Stage 2 N2 banked precedent.) Mutmut writes per-mutant detailed results to a SQLite database at `.mutmut-cache` (project root; gitignored). The Phase-0 framework artifacts at `tools/testkit/mutation/baseline-*.json` and the per-sub-phase artifact JSONs at `tools/testkit/mutation/sub-phase-<slug>-<UTC>.json` are **summary stubs** (Phase-0 framework-validated structure carrying summary counts: tested / killed / survived / timeouts / suspicious / kill rate). **Per-target detailed mutant-by-mutant results live in `.mutmut-cache` SQLite, NOT in the JSON stubs.**
+
+Future PATH-A sub-phases querying per-mutant kill/survive/timeout breakdowns SHOULD query the SQLite cache directly via targeted Python extraction. Example shape:
+
+```python
+import sqlite3
+con = sqlite3.connect(".mutmut-cache")
+rows = con.execute(
+    "SELECT filename, status FROM mutants WHERE filename LIKE '%mpm_multimaterial/%'"
+).fetchall()
+```
+
+**Warn against full-file reads of the summary JSONs at audit time.** LBM Stage 2 N2 demonstrated the failure mode: a multi-megabyte baseline JSON full-file read can trigger API tool output limits during audit reconciliation. The summary JSON's role is to be a small, citable artifact (≤ 3 KB) recording the summary counts; per-mutant detail lives in the SQLite cache and is queried as needed.
+
+### J.7 Manifest-builder low-kill-rate pattern
+
+(FACT — eulerian-smoke landing § 7.6 `sim.py` 0.1707 + LBM landing § 7.6 `sim.py` 0.2287 + MPM landing § 7.6 `sim.py` 0.5862 partial.) Across the five PATH-A proof-points, `sim.py` modules — the manifest-builder / runner-glue layer at every per-sim package — have consistently produced **low** mutation kill rates relative to the `reference/` modules at the same sub-phase:
+
+| Sub-phase | `sim.py` kill rate | `reference/<core>.py` kill rate |
+|---|---:|---:|
+| eulerian-smoke | 0.1707 | (reference modules higher; see eulerian-smoke landing § 7.6) |
+| LBM | 0.2287 | 0.8547 (`constants.py`), 0.8469 (`equilibrium.py`) |
+| MPM (partial) | 0.5862 (highest; multi-test coverage) | 0.8846 (`shape_functions.py`) |
+
+**Root cause: the manifest-field-equality pattern.** `sim.py` is the manifest-builder / runner-glue layer; it composes the per-sim manifest dict (e.g., `'algorithm': 'mls-mpm-quadratic-bspline-1d-hu-2018'`, capture metadata, perf-ledger row inputs) and dispatches the canonical runner. Mutations to literal field values in the manifest dict DO change the manifest output, but downstream tests rarely equality-test every field — most mutations are unkilled. Mutations to runner glue (e.g., arg-parsing) similarly tend to slip past the diagnostic-tier test surface.
+
+**This is expected at the sub-phase scope, NOT a coverage gap requiring augmentation at per-sim sub-phase landing.** The manifest-builder kill-rate floor (~0.20 across the five proof-points, with MPM's 0.59 driven by unusually broad multi-gate coverage of `sim.py` paths via `sim_runner_diagnostic`) is a project-wide structural property of the runner-glue layer.
+
+**Test-augmentation candidate for the testing-improvements sub-phase** (separate scope from per-sim sub-phases): adding a manifest-equality test invoking `<sim>.sim.build_manifest()` and equality-asserting the full dict structure would lift this surface mechanically. Banked alongside the other test-augmentation candidates per § L.
 
 ---
 
@@ -527,6 +600,46 @@ The carry-forward chain is visible by reading the audits in order. The conventio
 | DFSPH generator test-coverage gap (0/108 kill rate) | Add a test invoking the generator's `--verify` entry. | Operator-routable; banked for sph-water test-augmentation OR testkit infra. |
 | B2 / B3 / B4 / B5 / B6 / B11 / B16 (Phase 1 open) | Per their original Phase 1 audit § 13 owners. | Out of any current sub-phase's scope. |
 | B-hotfix-1 / B-hotfix-2 (replay-tool-hotfix) | Phase-2+ Stack-C effort. | Banked. |
+
+---
+
+## § P. Capture cadence routing
+
+(FACT — eulerian-smoke / LBM / MPM Stage 0 Task 0.4 routings + `sub-phase-particle-fluids-sph-water` W1 1 GB raise + `sub-phase-lattice-boltzmann-d3q19` W1 2 GB raise precedents. Section letter P chosen to avoid disturbing existing § A–O numbering.)
+
+### P.1 Default: full cadence when feasible
+
+When full-cadence capture (one frame per step) at the canonical descriptor fits the W1 storage ceiling — possibly after operator-routed W1 ceiling raise — full cadence is the **default routing**. Cadence-N (e.g., every-50, every-100) is the **fallback** when full-cadence storage is genuinely infeasible at the W1 ceiling after raise consideration.
+
+Decision rule at Stage 0 Task 0.4:
+
+1. Compute full-cadence storage: `per-frame payload × step count`.
+2. Compare against the W1 ceiling (`tools/testkit/golden/W1.toml`; post-sph-water R12 raise + post-LBM raise).
+3. If full-cadence ≤ W1 ceiling — or ≤ ~1.5× W1 with raise feasible — route **full cadence** + W1 raise if needed.
+4. If full-cadence > ~1.5× W1 ceiling after raise consideration: route **cadence-N** as fallback. Cadence-N selection: choose the smallest cadence whose product fits under ~70% of W1 ceiling (~30% headroom for future descriptor refinements).
+
+### P.2 Existing committed captures stay as committed
+
+(FACT — eulerian-smoke landing § 3 + 4; sph-water + RD-3D + MPM committed cadences.) Phase 1 committed captures remain at their committed cadences for the audit chain:
+
+| Sim | Capture | Cadence | Reason at landing-time |
+|---|---|---|---|
+| RD-3D | Gray-Scott | every-100 | analogy to RD-2D (legacy) |
+| sph-water | dam-break | every-100 | analogy to RD-3D |
+| eulerian-smoke | lid-driven-cavity | every-100 | **analogy to RD-3D / sph-water — full cadence was actually feasible at W1 2 GB; suboptimal but acceptable historically. Documented as the historical instance pre-dating this discipline.** |
+| eulerian-smoke | Taylor-Green | every-50 | matches the longer step-count; ~64% of W1 2 GB |
+| MPM | drop-impact | every-50 | full cadence infeasible at 79.6 GiB raw; cadence-50 lands at 1.13 GB ≈ 56% W1 2 GB |
+
+Stack-C / Stack-D Phase-2+ regeneration may revisit cadence at the full-feasibility witness per § P.1 — this discipline is **forward-looking**, not a retroactive recadence of committed Phase 1 work.
+
+### P.3 W1 ceiling-raise routing
+
+(FACT — sph-water R12 surface — `tools/testkit/golden/W1.toml` raise from 64 MB → 1 GB; LBM W1 raise from 1 GB → 2 GB.) W1 ceiling raises are operator-routable per sub-phase, in concert with cadence routing:
+
+- **Raise W1** when raising would let the sub-phase commit at full cadence (or a higher cadence) that better serves downstream cross-stack verification.
+- **Cadence down** when raise would imbalance the W1 budget against other-sim allocations or push committed storage beyond proportionate scope.
+
+Cite the W1 raise + cadence decision in the sub-phase plan § 4.1 Task 0.4 and the Stage 0 checkpoint per the established Task 0.4 discipline (see § N).
 
 ---
 
@@ -628,17 +741,17 @@ Hotfix sub-phases (replay-tool, numba-integration, mutation-script) are audit-ch
 
 ---
 
-## § N. PROPOSED: Stage 0 canonical-descriptor scope-analysis
+## § N. Stage 0 canonical-descriptor scope-analysis
 
-(PROPOSED — explicitly forward-looking; per `sub-phase-particle-fluids-sph-water/landing-2026-05-22T01-42-51Z.md` § 9.3 row 1 banked observation. NOT yet exercised in practice; the next sub-phase plan-drafting decides whether to land it.)
+(Established discipline — graduated from PROPOSED at `sub-phase-conventions-refactor-post-phase-1` per three consecutive single-session-ready Stage 1s anchoring the empirical baseline: eulerian-smoke landing `cf13d1c`, LBM landing `4f79e19`, MPM landing `bd89e78`. See § N.4 for the anchoring evidence and § N.5 for the production-correction factor range.)
 
 ### N.1 Motivation
 
 The R12 → R20 arc in sph-water demonstrated a Stage-0-vs-Stage-1 gap: the canonical descriptor's N (1M particles × 1000 steps) was incompatible with the Python NumPy reference stack at the sub-phase's wall-clock + memory + storage budget, but this incompatibility surfaced only mid-Stage-1, after substantial implementation work. A pre-flight scope-analysis task would catch the mismatch BEFORE Stage 1 dispatch.
 
-### N.2 Proposed Task 0.4
+### N.2 Task 0.4
 
-Add a new task to Stage 0 of each per-sim sub-phase plan whose canonical descriptor might mismatch the implementation stack:
+Add Task 0.4 to Stage 0 of each per-sim sub-phase plan whose canonical descriptor might mismatch the implementation stack:
 
 ```
 Task 0.4 — Canonical-descriptor scope-analysis.
@@ -666,13 +779,32 @@ Decision recorded in Stage 0 checkpoint.
 
 ### N.3 Sub-phases that should apply N.2
 
-(INFERENCE from canonical-descriptor scales at Appendix D § D.2.3.) eulerian-smoke (large grid N), lattice-boltzmann-d3q19 (large grid N + larger per-step compute), mpm-multimaterial (1M particle scatter, denser than DFSPH).
+(FACT — eulerian-smoke / LBM / MPM Stage 0 Task 0.4 routings.) eulerian-smoke (large grid N), lattice-boltzmann-d3q19 (large grid N + larger per-step compute), mpm-multimaterial (1M particle scatter, denser than DFSPH). **All three exercised Task 0.4 at Stage 0 with clean signal and closed Stage 1 in a single session** — see § N.4 for the anchoring evidence.
 
 closed-form, agent-based, RD-3D, sph-water-class diagnostic-tier sub-phases: scope-analysis is likely under all ceilings and the Task 0.4 surfaces an explicit "fits within ceilings" finding.
 
-### N.4 Why this is PROPOSED, not established
+### N.4 Empirical baseline — three single-session-ready Stage 1s
 
-(FACT — banked observation explicitly recommends it for next-sub-phase adoption.) No landed sub-phase has run this task. The R20 routing pattern documents how the same arc resolves at Stage 1; adopting Task 0.4 amortizes the resolution at Stage 0 across future sub-phases. The next sub-phase plan-drafting decides whether to land it.
+(FACT — eulerian-smoke landing `cf13d1c` / LBM landing `4f79e19` / MPM landing `bd89e78`.) Task 0.4 was exercised at three consecutive per-sim sub-phases. All three closed Stage 1 in a single Claude Code session — the strongest signal the discipline structurally amortizes the R-class arc that originally motivated it (sph-water R12 → R20). The graduation from PROPOSED to established was routed at `sub-phase-conventions-refactor-post-phase-1`.
+
+### N.5 Production-correction factor range
+
+(FACT — eulerian-smoke landing § 3 + LBM landing § 8 N3 + MPM landing § 8.2 N4.) Stage 0 Task 0.4 estimates are **conservative upper bounds, not point estimates**. Production-correction factors observed across the three anchoring sub-phases:
+
+| Sub-phase | Stage 1 vs Stage 0 projection | Factor |
+|---|---|---|
+| eulerian-smoke | over Stage-0 projection (Stage 0 measured at slightly-under-canonical grid; Stage 1 ran canonical) | 1.45× over |
+| LBM | under Stage-0 projection (Stage 0 measured raw-f payload; Stage 1 committed macroscopic moments — 4× narrower) | 0.5× under |
+| MPM | under Stage-0 projection (Stage 0 measured 2M-particle bench; Stage 1 committed 1M-particle) | 0.6× under |
+
+Empirical range across three sub-phases: **[0.5×, 1.45×]**. Framing as **[0.5×, 3×] sim-shape-dependent** accommodates Phase-2+ variance — small n (=3); safety margin on the upper bound matters more than a tight observed band for the rule-of-thumb routing purpose this convention serves.
+
+Direction of bias correlates with **sim-shape**:
+
+- **NumPy-vectorized sims** where Stage 0 measurement closely matches Stage 1 implementation trend toward the **over-shoot direction** (eulerian-smoke 1.45× over).
+- **Python-loop-heavy or Stage-0-scope-wider-than-Stage-1-scope sims** trend toward the **under-shoot direction** (LBM 0.5×, MPM 0.6× under). Under-shoot is characteristic of sub-phases where Stage 0 measurement is wider than Stage 1 commits: LBM Stage 0 measured raw-f payload but Stage 1 committed macroscopic moments (4× narrower); MPM Stage 0 measured a 2M-particle bench but Stage 1 committed 1M-particle (0.5× scaling).
+
+**Operational consequence.** When Task 0.4 surfaces a Stage 0 estimate at the W1-ceiling boundary, route on whether the sim's likely production-correction band trends over (NumPy-vectorized; Stage-0-matches-Stage-1 shape) or under (Python-loop-heavy; Stage-0-wider-than-Stage-1 shape). Plan downstream W1 raises or cadence routing (see § P) accordingly.
 
 ---
 
