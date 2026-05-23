@@ -1,0 +1,41 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 30 items
+
+common/common-py/tests/test_capture_roundtrip.py::test_capture_writer_then_reader_roundtrips_step_arrays PASSED [  3%]
+common/common-py/tests/test_capture_roundtrip.py::test_reader_out_of_range_raises PASSED [  6%]
+common/common-py/tests/test_capture_roundtrip.py::test_writer_finalize_is_idempotent PASSED [ 10%]
+common/common-py/tests/test_determinism.py::test_default_config_is_non_deterministic PASSED [ 13%]
+common/common-py/tests/test_determinism.py::test_add_args_then_from_args_parses_flags PASSED [ 16%]
+common/common-py/tests/test_determinism.py::test_add_args_defaults PASSED [ 20%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_noop_when_not_enabled PASSED [ 23%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_silent_when_taichi_missing PASSED [ 26%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_rejects_unrecognised_arch PASSED [ 30%]
+common/common-py/tests/test_determinism.py::test_supported_taichi_archs_is_exactly_four_backends PASSED [ 33%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_dispatches_each_arch[cpu] PASSED [ 36%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_dispatches_each_arch[cuda] PASSED [ 40%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_dispatches_each_arch[vulkan] PASSED [ 43%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_dispatches_each_arch[metal] PASSED [ 46%]
+common/common-py/tests/test_determinism.py::test_set_taichi_deterministic_backward_compat_no_arch_kwarg PASSED [ 50%]
+common/common-py/tests/test_module_surfaces.py::test_alembic_export_raises_until_implementation PASSED [ 53%]
+common/common-py/tests/test_module_surfaces.py::test_vdb_export_raises_until_implementation PASSED [ 56%]
+common/common-py/tests/test_module_surfaces.py::test_fkey_dispatcher_rejects_non_fkey PASSED [ 60%]
+common/common-py/tests/test_module_surfaces.py::test_fkey_dispatcher_edges_only PASSED [ 63%]
+common/common-py/tests/test_module_surfaces.py::test_keys_trapped_constant_lists_all_fkeys PASSED [ 66%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_1d_writes_file PASSED [ 70%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_2d_writes_file PASSED [ 73%]
+common/common-py/tests/test_module_surfaces.py::test_plot_field_1d_rejects_2d_input PASSED [ 76%]
+common/common-py/tests/test_smoke_advection.py::test_smoke_advection_runs_and_captures PASSED [ 80%]
+common/common-py/tests/test_smoke_advection.py::test_smoke_advection_is_deterministic PASSED [ 83%]
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py::test_taichi_jit_fp_equivalent_with_pure_numpy[64] PASSED [ 86%]
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py::test_taichi_jit_fp_equivalent_with_pure_numpy[256] PASSED [ 90%]
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py::test_taichi_jit_fp_equivalent_with_pure_numpy[1024] PASSED [ 93%]
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py::test_taichi_jit_run_to_run_determinism PASSED [ 96%]
+tools/testkit/taichi_harness/tests/test_taichi_determinism.py::test_taichi_jit_cold_vs_warm_cache_identity PASSED [100%]
+
+============================== 30 passed in 1.55s ==============================

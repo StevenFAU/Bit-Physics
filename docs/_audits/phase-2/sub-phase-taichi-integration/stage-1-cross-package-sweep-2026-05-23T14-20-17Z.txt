@@ -1,0 +1,77 @@
+=== Bit-Physics cross-package regression sweep — sub-phase-taichi-integration Stage 1 ===
+
+--- packages/strange-attractors ---
+...........                                                              [100%]
+11 passed in 0.79s
+
+--- packages/mandelbulb-explorer ---
+..........                                                               [100%]
+10 passed in 0.24s
+
+--- packages/boids-3d ---
+..........                                                               [100%]
+10 passed in 39.46s
+
+--- packages/physarum ---
+..........                                                               [100%]
+10 passed in 10.35s
+
+--- packages/reaction-diffusion-3d ---
+........                                                                 [100%]
+8 passed in 23.64s
+
+--- packages/sph-water ---
+......................                                                   [100%]
+22 passed in 1.42s
+
+--- packages/eulerian-smoke ---
+..........                                                               [100%]
+10 passed in 3.23s
+
+--- packages/lattice-boltzmann-d3q19 ---
+.........                                                                [100%]
+9 passed in 3.96s
+
+--- packages/mpm-multimaterial ---
+.........                                                                [100%]
+9 passed in 0.86s
+
+--- tools/integrity ---
+...................................................                      [100%]
+51 passed in 1.46s
+
+--- tools/diagnostics ---
+
+
+no tests ran in 0.06s
+
+--- tools/testkit ---
+
+
+no tests ran in 0.06s
+
+--- common/common-py ---
+.........................                                                [100%]
+25 passed in 0.53s
+
+
+=== Re-run for tools (correct paths) ===
+--- tools/diagnostics/diagnostics ---
+........................................................................ [ 77%]
+.....................                                                    [100%]
+93 passed in 0.32s
+
+--- tools/testkit/numba_harness ---
+.....                                                                    [100%]
+5 passed in 0.83s
+
+--- tools/testkit/taichi_harness ---
+.....                                                                    [100%]
+5 passed in 1.16s
+
+
+=== tools/testkit (full — capture/equivalence/property/golden/determinism + numba_harness + taichi_harness) ===
+.........................................................                [100%]
+57 passed in 4.84s
+
+=== END sweep ===

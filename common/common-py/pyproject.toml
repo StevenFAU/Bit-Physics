@@ -11,16 +11,13 @@ dependencies = [
   "h5py>=3.10",
   "numpy>=2.0",
   "watchfiles>=0.21",
+  # Stack-D Taichi runtime — promoted from optional extra to required
+  # at sub-phase-taichi-integration per Task 0.3 routing (a). Upper bound
+  # tightened per re-pin policy convention (conventions doc § H.4).
+  "taichi>=1.7,<2.0",
 ]
 
 [project.optional-dependencies]
-# Taichi is only required by `set_taichi_deterministic` and the
-# hot-reload workflow; the rest of `common_py` works without it. Kept
-# optional so Stack B/C developers can install common-py without
-# pulling Taichi's CUDA/Vulkan binaries.
-taichi = [
-  "taichi>=1.7",
-]
 plotting = [
   "matplotlib>=3.8",
 ]
@@ -63,7 +60,16 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  # Taichi 1.7.4 internally calls `locale.getdefaultlocale()` during
+  # `ti.init()`, which Python 3.12 deprecates (slated for removal in
+  # 3.15). Filter it here so common-py's strict-warnings posture is
+  # preserved without coupling to Taichi-upstream's release cadence.
+  # Tracked alongside the spec § 4.4 known limitations for Stack D.
+  "ignore::DeprecationWarning:taichi.*",
+  "ignore:.*locale\\.getdefaultlocale.*:DeprecationWarning",
+]
 testpaths = ["tests"]
 
 [tool.uv.sources]

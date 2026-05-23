@@ -27,6 +27,9 @@ members = [
   "packages/eulerian-smoke",
   "packages/lattice-boltzmann-d3q19",
   "packages/mpm-multimaterial",
+  # Common module — Stack D / Python (Taichi-backed sims). Registered
+  # at sub-phase-taichi-integration per D2 row 2 ratification.
+  "common/common-py",
 ]
 exclude = []
 
