@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-taichi-integration"
-opened_at = "2026-05-23T14:06:40Z"
+phase = "sub-phase-capture-determinism-contract"
+opened_at = "2026-05-23T16:04:12Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 

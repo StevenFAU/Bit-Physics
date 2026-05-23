@@ -1,0 +1,9 @@
+  PASS  gate=integrity audit_verdict=None
+  PASS  gate=pytest audit_verdict=None
+  PASS  gate=equivalence audit_verdict=None
+  PASS  gate=determinism audit_verdict=None
+  PASS  gate=perf-ledger audit_verdict=None
+  PASS  gate=property audit_verdict=None
+  PASS  gate=mutation audit_verdict=None
+  PASS  gate=tolerance-budget audit_verdict=None
+summary: prior_phase=v0.1.0-phase-1 ok=True
