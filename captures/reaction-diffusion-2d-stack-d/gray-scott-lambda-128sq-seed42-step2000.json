@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "Du": 0.16,
+      "Dv": 0.08,
+      "F": 0.0367,
+      "dt": 1.0,
+      "dx": 1.0,
+      "k": 0.0649
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:2e93a75164bafdf104b0b247fffdeb5e3d8be0806b5fa42f17b6d5741041b13d",
+    "format": "hdf5",
+    "path": "gray-scott-lambda-128sq-seed42-step2000.h5"
+  },
+  "run": {
+    "capture_interval": 200,
+    "start_utc": "2026-05-23T00:00:00Z",
+    "step_count": 2000,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "reaction-diffusion-2d",
+    "variant": "gray-scott"
+  },
+  "stack": {
+    "build_id": "stack-d",
+    "name": "taichi-cpu",
+    "version": "0.0.0"
+  }
+}

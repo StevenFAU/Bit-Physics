@@ -59,7 +59,17 @@ module = [
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]
-filterwarnings = ["error"]
+filterwarnings = [
+  "error",
+  # Taichi 1.7.4 internally calls `locale.getdefaultlocale()` during
+  # `ti.init()`; Python 3.12 deprecates that API (slated for removal in
+  # 3.15). Filter the resulting DeprecationWarning so the strict-warnings
+  # posture is preserved without coupling to Taichi-upstream's release
+  # cadence (sister convention: `common/common-py/pyproject.toml` per
+  # docs/common/taichi.md § 4.5).
+  "ignore::DeprecationWarning:taichi.*",
+  "ignore:.*locale\\.getdefaultlocale.*:DeprecationWarning",
+]
 testpaths = ["tests"]
 
 [tool.uv.sources]

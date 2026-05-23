@@ -18,9 +18,20 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from equivalence.harness import compare_captures  # type: ignore[import-not-found]
+
 from reaction_diffusion_2d_stack_d.sim import (
     sim_runner_seeded,  # type: ignore[import-not-found]  # noqa: F401
+)
+
+pytestmark = pytest.mark.skip(
+    reason=(
+        "Gate-14 cross-stack equivalence is Stage-1c scope per charter § 4.2.3. "
+        "Stage 1b ships the Stack-D canonical capture; Stage 1c authors "
+        "docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md + "
+        "removes this skip + activates the harness invocation."
+    )
 )
 
 
