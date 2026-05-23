@@ -1,0 +1,23 @@
+[Taichi] version 1.7.4, llvm 15.0.4, commit b4b956fd, linux, python 3.12.3
+[Taichi] Starting on arch=x64
+  GrayScott2DSolution params: D_u=0.16, D_v=0.08, F=0.0367, k=0.0649, L=1.0
+  formal_spatial_order:       2
+  boundary_conditions:        {'x': 'periodic', 'y': 'periodic', 'period': '1.0'}
+
+Acceptance criteria:
+  [PASS] u is np.ndarray
+  [PASS] v is np.ndarray
+  [PASS] S_u is np.ndarray
+  [PASS] S_v is np.ndarray
+  [PASS] u.shape == (16, 16)
+  [PASS] v.shape == (16, 16)
+  [PASS] u.dtype == float64
+  [PASS] v.dtype == float64
+  [PASS] u in [0.25, 0.75]
+  [PASS] v in [0.25, 0.75]
+  [PASS] u has no NaN
+  [PASS] v has no NaN
+  [PASS] S_u has no NaN
+  [PASS] S_v has no NaN
+  [PASS] Taichi field.from_numpy/to_numpy S_u round-trip exact
+  [PASS] Taichi field.from_numpy/to_numpy S_v round-trip exact

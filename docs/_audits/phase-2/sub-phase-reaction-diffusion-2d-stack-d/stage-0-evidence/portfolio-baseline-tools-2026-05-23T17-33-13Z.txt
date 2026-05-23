@@ -1,0 +1,12 @@
+=== tools/integrity ===
+...................................................                      [100%]
+=== tools/diagnostics ===
+
+=== tools/testkit ===
+
+=== common/common-py ===
+.........................                                                [100%]
+
+--- full sweep (extended; matches capture-determinism-contract § 5.1 baseline) ---
+tools/diagnostics (diagnostics/): 93 PASS
+tools/testkit (all 8 testpath subdirs): 58 PASS

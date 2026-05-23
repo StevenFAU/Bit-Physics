@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/tmp/stage0_ic_smoke.py", line 63, in <module>
+    print(test_ic14_run_twice_and_diff())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/stage0_ic_smoke.py", line 39, in test_ic14_run_twice_and_diff
+    verdict = run_twice_and_diff(hello_taichi.sim_runner_seeded, seed=42, tmp_dir=Path(tmp))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'hello_taichi' has no attribute 'sim_runner_seeded'
+[Taichi] version 1.7.4, llvm 15.0.4, commit b4b956fd, linux, python 3.12.3
+[Taichi] Starting on arch=x64
+IC-11 OK: set_taichi_deterministic(cfg, arch='cpu') + smoke kernel ran.
+IC-14 FAIL: AttributeError: module 'hello_taichi' has no attribute 'sim_runner_seeded'

@@ -1,0 +1,14 @@
+  import time: 0.102s
+  parse time:  0.001s
+  RSS pre:     48.2 MB
+  RSS post:    49.6 MB (delta 1.4 MB)
+  n_frames:    11
+  state keys:  ['U', 'V']
+  - U: shape=(128, 128) dtype=float64
+  - V: shape=(128, 128) dtype=float64
+
+Acceptance criteria:
+  [PASS] parse_time < 30s
+  [PASS] n_frames == 11
+  [PASS] U shape == (128, 128)
+  [PASS] V shape == (128, 128)

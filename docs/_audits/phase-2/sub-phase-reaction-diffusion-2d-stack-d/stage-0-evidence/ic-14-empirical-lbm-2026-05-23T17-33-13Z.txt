@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 2 items
+
+tests/test_determinism.py::test_run_twice_bit_exact_canonical PASSED     [ 50%]
+tests/test_determinism.py::test_content_equivalent_gate_catches_drift PASSED [100%]
+
+============================== 2 passed in 0.27s ===============================
