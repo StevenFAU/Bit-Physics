@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/tools/integrity
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 10 items
+
+tests/test_verify_evidence.py::test_verify_evidence_valid_paths_pass PASSED [ 10%]
+tests/test_verify_evidence.py::test_verify_evidence_missing_path_fails PASSED [ 20%]
+tests/test_verify_evidence.py::test_verify_evidence_hash_mismatch_fails PASSED [ 30%]
+tests/test_verify_evidence.py::test_verify_evidence_accepts_sha256_prefix PASSED [ 40%]
+tests/test_verify_evidence.py::test_verify_evidence_no_frontmatter_raises PASSED [ 50%]
+tests/test_verify_evidence.py::test_lfs_pointer_oid_parses_pointer_stub PASSED [ 60%]
+tests/test_verify_evidence.py::test_lfs_pointer_oid_returns_none_for_non_pointer PASSED [ 70%]
+tests/test_verify_evidence.py::test_verify_evidence_lfs_pointer_resolves_content_oid PASSED [ 80%]
+tests/test_verify_evidence.py::test_verify_evidence_lfs_pointer_wrong_oid_fails PASSED [ 90%]
+tests/test_verify_evidence.py::test_verify_evidence_non_lfs_blob_hashes_normally PASSED [100%]
+
+============================== 10 passed in 0.28s ==============================

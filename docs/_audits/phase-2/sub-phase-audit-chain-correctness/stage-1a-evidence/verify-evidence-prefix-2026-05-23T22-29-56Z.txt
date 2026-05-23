@@ -1,0 +1,32 @@
+  FAIL  sha256 mismatch for 'captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.h5': claimed=sha256:2e93a75164bafdf104b0b247fffdeb5e3d8be0806b5fa42f17b6d5741041b13d actual=38b9ce05f075c355122bb2e58bb9c38c19b83a7e793e7fa96c8c8abe5b0a5eb7
+  FAIL  sha256 mismatch for 'captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5': claimed=sha256:bcae544ae58ceb1fb06f9b8be2441f9116eebd8ea5d21dd616f2daf6f92148f0 actual=8910f1114eb1a3e68467c5641553ba348cd749d1f751e3563522cc978947358c
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/phases/sub-phase-reaction-diffusion-2d-stack-d.md
+  PASS  docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref-stack-d.md
+  PASS  docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md
+  PASS  tools/testkit/probes/reports/reaction-diffusion-2d-stack-d-probe.md
+  PASS  tools/testkit/equivalence/tolerance.toml
+  PASS  tools/testkit/equivalence/tolerance-budget.toml
+  PASS  tools/testkit/mutation/sub-phase-reaction-diffusion-2d-stack-d-2026-05-23T21-22-23Z.json
+  PASS  docs/perf-ledger.md
+  PASS  CHANGELOG.md
+  PASS  docs/dependencies.md
+  PASS  captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5
+  PASS  captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json
+  PASS  captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.h5
+  PASS  captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.json
+  PASS  tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.h5
+  PASS  tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.json
+  PASS  tools/testkit/failing-tests-evidence/reaction-diffusion-2d-stack-d-2026-05-23T18-30-50Z.txt
+  PASS  tools/testkit/failing-tests-evidence/reaction-diffusion-2d-stack-d-implemented-2026-05-23T20-34-08Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-evidence/gate-14-cross-stack-harness-2026-05-23T20-53-53Z.txt
+  PASS  docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-evidence/gate-14-pytest-post-skip-removal-2026-05-23T20-53-53Z.txt
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+  PASS  docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md (sha256 OK)
+  PASS  tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.json (sha256 OK)
+  PASS  captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.json (sha256 OK)
+  PASS  captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json (sha256 OK)
+  PASS  tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.h5 (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-evidence/gate-14-cross-stack-harness-2026-05-23T20-53-53Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-evidence/gate-14-pytest-post-skip-removal-2026-05-23T20-53-53Z.txt (sha256 OK)
+summary: 29 pass / 2 fail at head_sha 7747d68fba9a
