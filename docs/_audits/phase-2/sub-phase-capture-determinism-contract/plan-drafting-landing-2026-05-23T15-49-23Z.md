@@ -6,8 +6,8 @@ artifact: sub-phase
 artifact_id: sub-phase-capture-determinism-contract-plan-drafting
 subject: "Capture-determinism-contract sub-phase plan-drafting landing — probe ratified + charter ratified + D1-D5 surfaced for operator routing; SECOND spec-Phase-2 sub-phase plan-drafting deliverable; portfolio-wide contract-redesign shape; cumulative shift count 99 entering, +3 plan-drafting → 102 entering Stage 0"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
+head_sha: 5cf19038dae5637c4d9d0fc2862070e4cf9c61fc
+head_sha_at_checkpoint: 5cf19038dae5637c4d9d0fc2862070e4cf9c61fc
 parent_audits:
   - docs/_audits/phase-2/sub-phase-taichi-integration/landing-2026-05-23T14-45-11Z.md
   - docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/landing-2026-05-23T13-04-05Z.md
@@ -204,6 +204,6 @@ The capture-determinism-contract sub-phase plan-drafting exercises the portfolio
 
 ---
 
-This audit lands at HEAD `<PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
+This audit lands at HEAD `5cf19038dae5637c4d9d0fc2862070e4cf9c61fc` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
 
 Verdict: **CONFIRMED**. Stage 0 dispatchable after operator routing of D1-D5 per § 5.
