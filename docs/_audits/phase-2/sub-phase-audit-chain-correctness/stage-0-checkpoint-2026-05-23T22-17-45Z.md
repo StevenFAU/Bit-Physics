@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: audit-chain-correctness-stage-0
 subject: "Stage 0 pre-flight CLOSE for the audit-chain-correctness sub-phase. All 4 tasks PASS. Task 0.0 cross-phase replay against v0.1.0-phase-1 GREEN (8/8 gates); replay-output sha256 9399fc33…909f34 byte-identical to the bit-identity invariant (20th invocation). Task 0.1 tolerance-budget carryover committed (no budget widening; [overrides.reaction-diffusion-2d] untouched). Task 0.2 R-A1 dissolution EMPIRICALLY CONFIRMED at HEAD: RD-2D Stack-D .h5 pointer stub embeds oid sha256:2e93a751… == landing-recorded content OID; OID-parse design path holds. verify_evidence surface unchanged (verify_evidence.py:113 hash site; repo.py:62-72 file_at_sha); exactly 1 LFS pattern (captures/**/*.h5); both phantom trailing-newline signatures hold. Task 0.3 14-capture survey: 5 MATCH / 7 NO-RECORD / 2 PHANTOM-DRIFT — incidence exactly 2 (≤2 → CONTINUE; no D2 trigger). Conventions doc sha256 167fe349…f2c58c2e verified at HEAD. Verdict CONFIRMED. 0 new Stage-0 shifts; cumulative 122."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: 048f0ea8d0f3ffa50f39316d51551c84ed0ea9b0
+head_sha_at_checkpoint: 048f0ea8d0f3ffa50f39316d51551c84ed0ea9b0
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
@@ -98,7 +98,7 @@ memory).
 
 ---
 
-This checkpoint lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 +
+This checkpoint lands at HEAD `048f0ea8d0f3ffa50f39316d51551c84ed0ea9b0` (back-filled per Convention #12 +
 § B.2 in a separate `chore(audit-chain-correctness-stage0-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
