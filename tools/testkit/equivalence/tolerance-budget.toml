@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-audit-chain-correctness"
-opened_at = "2026-05-23T22:17:07Z"
+phase = "sub-phase-sph-water-stack-d"
+opened_at = "2026-05-23T23:40:26Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
