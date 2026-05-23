@@ -6,8 +6,8 @@ artifact: plan-drafting-landing
 artifact_id: sub-phase-sph-water-stack-d
 subject: "Plan-drafting landing — SECOND spec-Phase-2 cross-stack port (sph-water → Stack-D Taichi). Charter + anchor-probe authored and committed. Three dispatch-anchor falsifications surfaced + corrected in-charter (Stack-B-WGSL → NumPy-reference source; spec §11.3 item 2.1.X → 2.2; R12-R20 scaling-not-atomic-scatter). D1-D8 surfaced with leans. golden-table gate-4 (no MMS); pre-existing equivalence.md extend-not-create; 100K descriptor; mandatory [overrides.sph-water]; first IC-16 production consumer; IC-15-candidate second validation pair (D5 formalization operative). 4 plan-drafting shifts (125 → 129). No blocking conditions."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-CONVENTION-12>
+head_sha: 67c405b7d810219ae18d9f8d304e7090cb2df61d
+head_sha_at_checkpoint: 67c405b7d810219ae18d9f8d304e7090cb2df61d
 parent_audits:
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/plan-drafting-probe-2026-05-23T23-20-09Z.md
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
@@ -167,7 +167,7 @@ No `-phase-N` tag. Optional `v0.1.13` non-phase point-release banked for operato
 
 ---
 
-This landing audit lands at HEAD `<PLACEHOLDER-BACKFILL-CONVENTION-12>` (back-filled
+This landing audit lands at HEAD `67c405b7d810219ae18d9f8d304e7090cb2df61d` (back-filled
 per Convention #12 + § B.2 in a separate `chore(sph-water-stack-d-plan-drafting-sha-backfill)`
 commit; full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
