@@ -6,8 +6,8 @@ artifact_id: sub-phase-conventions-refactor-post-phase-1-stage-0
 stage: 0-pre-flight
 subject: "Conventions Refactor (Post-Phase-1) sub-phase Stage 0 pre-flight — doc-only refactor; Task 0.4 SKIPPED with rationale; conventions doc stabilises for spec-Phase-2 entry"
 verdict-state: PASS
-head_sha: <PLACEHOLDER — Convention #12 back-fill follows>
-head_sha_at_checkpoint: <PLACEHOLDER — Convention #12 back-fill follows>
+head_sha: af3a5aec0185a1abff007435da4eef4f4ef8325e
+head_sha_at_checkpoint: af3a5aec0185a1abff007435da4eef4f4ef8325e
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
