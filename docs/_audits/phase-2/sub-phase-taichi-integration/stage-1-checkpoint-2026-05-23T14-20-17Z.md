@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: taichi-integration-stage-1
 subject: "Stage 1 implementation checkpoint — 9-step sequence complete; all 11 charter § 2 deliverables landed in single sub-bundle commit c2900c3; SHIFTED N1 retroactively resolved; SHIFTED N2 surfaced for Taichi-1.7.4 API discrepancy in charter; 30 new tests GREEN; 325 total cross-package GREEN; zero Phase-1 regressions"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
+head_sha: fece9a890171998eb05b006d47f0c3cc0545bf75
+head_sha_at_checkpoint: fece9a890171998eb05b006d47f0c3cc0545bf75
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -210,6 +210,6 @@ The Taichi-integration Stage 1 exercises the three-stage cadence's implementatio
 
 Stage 1 verdict: **CONFIRMED — Stage 2 dispatchable.** No structurally-wrong findings requiring operator pause before Stage 2; all surfaces are reportable but additively-resolved.
 
-This audit lands at HEAD `<PLACEHOLDER-BACKFILL-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-stage1-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
+This audit lands at HEAD `fece9a890171998eb05b006d47f0c3cc0545bf75` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-stage1-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
 
 Verdict: **CONFIRMED**.
