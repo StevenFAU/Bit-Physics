@@ -30,6 +30,11 @@ members = [
   # Common module — Stack D / Python (Taichi-backed sims). Registered
   # at sub-phase-taichi-integration per D2 row 2 ratification.
   "common/common-py",
+  # Spec-Phase-2 Stack-D port of reaction-diffusion-2d. Sibling
+  # workspace member per D6 ratification at sub-phase-reaction-
+  # diffusion-2d-stack-d plan-drafting close; consumes common-py +
+  # taichi for the Taichi-DSL Gray-Scott implementation.
+  "packages/reaction-diffusion-2d-stack-d",
 ]
 exclude = []
 
