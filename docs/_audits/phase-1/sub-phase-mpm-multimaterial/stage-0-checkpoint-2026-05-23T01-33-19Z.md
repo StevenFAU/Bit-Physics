@@ -5,8 +5,8 @@ artifact: stage
 artifact_id: mpm-multimaterial-stage-0
 stage: 0-preflight
 subject: "MPM-Multimaterial sub-phase Stage 0 pre-flight (replay + tolerance carryover + MLS-MPM golden re-anchor + Task 0.4 canonical-descriptor scope-analysis)"
-head_sha: 399d32ee358938988be6b7218f6a3eab6bf20148
-head_sha_at_checkpoint: 399d32ee358938988be6b7218f6a3eab6bf20148
+head_sha: 8a4ba56a4d85249b15617000b69da00901158854
+head_sha_at_checkpoint: 8a4ba56a4d85249b15617000b69da00901158854
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-closed-form/landing-2026-05-20T16-48-00Z.md
@@ -378,6 +378,6 @@ Stage 1 dispatch is **READY**:
 Stage 1 prompt is at `docs/phases/sub-phase-mpm-multimaterial.md` § 7.2.
 Operator dispatches in a fresh session.
 
-This Stage 0 checkpoint lands at HEAD `399d32ee358938988be6b7218f6a3eab6bf20148`
+This Stage 0 checkpoint lands at HEAD `8a4ba56a4d85249b15617000b69da00901158854`
 (prior commit; the closing-commit SHA back-fills per Convention #12 in a
 separate commit captured via `git rev-parse HEAD`).
