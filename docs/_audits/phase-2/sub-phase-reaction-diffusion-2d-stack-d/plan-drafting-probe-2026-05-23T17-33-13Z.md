@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-plan-drafting-probe
 subject: "FIRST cross-stack port sub-phase plan-drafting probe — RD-2D Stack-B → Stack-D. Conventions doc sha256 167fe349…f2c58c2e verified at HEAD. Exhaustive Phase-0 Stack-B inventory + Taichi-integration infrastructure inventory + IC-13/14 surface inventory + MMS pipeline state + cross-stack equivalence harness state. Three load-bearing drifts surfaced vs phase-2-plan § 2.5 anchor sketches (canonical descriptor 128sq-step2000 not 512sq-step1000; cross-stack tolerance 1e-4 not 1e-5; portfolio directory shape post-Phase-1 places sim packages under packages/ not continuous-ca/<sim>/). D1-D6 surface preview."
 verdict-state: CONFIRMED
-head_sha: c4be56b1300ef5bb212b31a0fba4cb2ee1adff87
-head_sha_at_checkpoint: c4be56b1300ef5bb212b31a0fba4cb2ee1adff87
+head_sha: d72b80b47cfd4ddce8ef19883d6cbb0ba0dc0ebe
+head_sha_at_checkpoint: d72b80b47cfd4ddce8ef19883d6cbb0ba0dc0ebe
 parent_audits:
   - docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md

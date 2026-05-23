@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-plan-drafting-landing
 subject: "FIRST cross-stack port sub-phase plan-drafting CLOSE — THIRD spec-Phase-2 sub-phase plan-drafting complete. Charter at docs/phases/sub-phase-reaction-diffusion-2d-stack-d.md authored; structurally inherits sub-phase-agent-based.md with cross-stack-port deltas. Three load-bearing drifts vs phase-2-plan § 2.5 surfaced + dispositioned. D1-D6 surface preview with leans + alternatives; D6 NEW (port directory shape) surfaced by drift analysis. Conventions doc sha256 167fe349…f2c58c2e verified at HEAD. Cumulative shifts at plan-drafting close: 110 (107 inherited + 3 plan-drafting N1/N2/N3). No blocking dependencies for Stage 0 dispatch."
 verdict-state: CONFIRMED
-head_sha: 09faeb7826b36ab21360a35b55cddc07c734f958
-head_sha_at_checkpoint: 09faeb7826b36ab21360a35b55cddc07c734f958
+head_sha: bb10a7521ccf86aad51e1d629a3a5a734980f4bc
+head_sha_at_checkpoint: bb10a7521ccf86aad51e1d629a3a5a734980f4bc
 parent_audits:
   - docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
@@ -205,6 +205,6 @@ The reaction-diffusion-2d → Stack-D port sub-phase plan-drafting exercises the
 
 ---
 
-This audit lands at HEAD `09faeb7826b36ab21360a35b55cddc07c734f958` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
+This audit lands at HEAD `bb10a7521ccf86aad51e1d629a3a5a734980f4bc` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
 
 Verdict: **CONFIRMED**.
