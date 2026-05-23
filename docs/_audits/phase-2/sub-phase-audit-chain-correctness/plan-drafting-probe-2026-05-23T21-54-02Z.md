@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: audit-chain-correctness-plan-drafting-probe
 subject: "Plan-drafting anchor-probe for the spec-Phase-2 audit-chain-correctness sub-phase (focused-infrastructure shape; bundles §B.6 Option-1 verify_evidence LFS-content-OID fix + portfolio-wide capture .json phantom-sha audit, both N5 banked items from RD-2D Stack-D landing § 10). Conventions doc sha256 167fe349…f2c58c2e verified at HEAD (854 lines; not BLOCKED). Empirical phantom-sha survey: 14 capture .json enumerated; exactly 2 phantom drifts (rd-2d-stack-d a7780645, rd-3d-ref ccd0e4ea), both trailing-newline-signature-confirmed, both ALREADY caught at their respective landings; 5 MATCH; 7 with no recorded sidecar sha. verify_evidence fix surface located at common/repo.py file_at_sha; LFS pointer stub embeds the content OID directly (no smudge/network/auth required — R-A1 defused). Two plan-drafting shifts surfaced: S1 dispatch §7.6 anchor falsified (verify_evidence semantics live at architecture.md §7.5; §7.6 is Sandbox-probe-before-assert); S2 §B.6 Mode-1 mis-classifies the rd-3d-ref phantom-sha as content-evolution (candidate §B.6 Mode-3). D1-D6 surface preview with leans. 120 shifts inherited → 122 at plan-drafting close."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: 9120675a6dc2699462c562d3dba6aa1deded1178
+head_sha_at_checkpoint: 9120675a6dc2699462c562d3dba6aa1deded1178
 parent_audits:
   - docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
@@ -276,7 +276,7 @@ Stage-0-dispatchable pending operator routing of D1–D6.
 
 ---
 
-This probe lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 + § B.2
+This probe lands at HEAD `9120675a6dc2699462c562d3dba6aa1deded1178` (back-filled per Convention #12 + § B.2
 in a separate `chore(audit-chain-correctness-plan-drafting-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 

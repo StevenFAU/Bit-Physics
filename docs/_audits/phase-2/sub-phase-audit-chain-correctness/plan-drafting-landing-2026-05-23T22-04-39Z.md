@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: audit-chain-correctness-plan-drafting-landing
 subject: "Plan-drafting CLOSE for the spec-Phase-2 audit-chain-correctness sub-phase (focused-infrastructure; bundles §B.6 Option-1 verify_evidence LFS-content-OID fix + portfolio-wide capture .json phantom-sha audit — RD-2D Stack-D N5a/N5b). Charter at docs/phases/sub-phase-audit-chain-correctness.md authored; structurally inherits sub-phase-taichi-integration (focused-infra) + sub-phase-capture-determinism-contract (amendment pattern). Conventions doc sha256 167fe349…f2c58c2e verified at HEAD (not BLOCKED). Empirical phantom-sha survey landed: exactly 2 confirmed drifts (rd-2d-stack-d, rd-3d-ref), both trailing-newline-confirmed, both already landing-caught; R-A3 decomposition trigger NOT hit. verify_evidence fix has a clean OID-parse path (R-A1 defused). D1-D6 surfaced with leans + alternatives + downstream; NOT pre-committed. Two plan-drafting shifts (S1 §7.6 anchor falsified→§7.5; S2 §B.6 Mode-1 mis-classifies the rd-3d phantom→candidate Mode-3). Cumulative shifts: 120 inherited + 2 = 122 entering Stage 0. No blocking dependencies."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: cc9a6863c7a3f09c5a6b3a9ad7ef1403e8dee540
+head_sha_at_checkpoint: cc9a6863c7a3f09c5a6b3a9ad7ef1403e8dee540
 parent_audits:
   - docs/_audits/phase-0/landing-2026-05-19T17-28-32Z.md
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
@@ -210,7 +210,7 @@ charter § 4 / § 7 prompts adjust accordingly.
 
 ---
 
-This audit lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 + § B.2
+This audit lands at HEAD `cc9a6863c7a3f09c5a6b3a9ad7ef1403e8dee540` (back-filled per Convention #12 + § B.2
 in a separate `chore(audit-chain-correctness-plan-drafting-sha-backfill)` commit
 per the two-commit pattern; full 40-hex via `git rev-parse HEAD` at
 summary-composition time).
