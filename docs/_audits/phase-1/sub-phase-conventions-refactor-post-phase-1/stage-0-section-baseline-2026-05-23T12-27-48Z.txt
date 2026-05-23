@@ -1,0 +1,62 @@
+# Task 0.3 — Conventions doc affected-section baseline sha256s
+# Captured at HEAD=402e5c4f1c4da16711ae863676eece82e77cf9fa (plan-drafting commit)
+# Conventions doc: docs/conventions/sub-phase-conventions.md
+# Full-doc sha256: 004d70117e01b3824a8b54e4c34963969ad0a4188b87f7acbca01dea9600a3e6
+# (byte-identical to conventions-consolidation landing audit evidence_hashes verbatim)
+
+# Per-section content sha256 (extracted via `sed -n '<lo>,<hi>p' | sha256sum`):
+
+[B.2 lines 72-87]
+content_sha256: b5b5911ddcb0339c5af8ded4f772e24af94d58b3f8ce4c75eaa0474f1177d6eb
+target_for: Item F (Convention #12 SHA-transcription discipline tightening)
+
+[B.3 lines 88-105]
+content_sha256: 9536504468ddfb24bc85451ac267a806c48795f9802051c8e8a29d38ef808226
+target_for: Item E (front-matter evidence_hashes row footnote; new § B.6 follows)
+
+[I.3 lines 386-389]
+content_sha256: 9e4514aec748ae46e44d054536123d104254c08b543fe3b214328d915101fc1e
+target_for: Item C (anchor-density-predicts-kill-rate empirical note; inline extension per operator routing)
+
+[J.3 lines 424-438]
+content_sha256: b5605797050101729b06b304e8d219c6efc449eee490e70d0743483cdf30fb4c
+target_for: Item D (PATH-A × numba per-mutant timeout wrapper requirement)
+
+[N lines 631-678]
+content_sha256: 248b510da514668efd4e19d9c036471d71f9030b566180d6db6c4456e49058b2
+target_for: Item A (PROPOSED → established graduation + production-correction factor range [0.5×, 3×])
+
+[L lines 495-532]
+content_sha256: 37f8bd9351041778680f1bab57c6f0ffd030078423d758322b381623d91d6966
+target_for: anchor for new § P placement (item B; new § P lands between § L and § M)
+
+[M lines 533-628]
+content_sha256: 80032f2b49ba401d0213e4c293ef00d892f8ed999543261d3672deaffb95ceb3
+target_for: anchor for new § P placement (M shifts down by ~N lines after § P insertion)
+
+# Item G + H target § J (line 402) — new sub-sections § J.6 and § J.7 land
+# after existing § J.5 (line 443); no existing-section content displaced.
+
+# Capture-cadence-section absence confirmed by grep:
+#   `grep -n -i "cadence\|capture cadence\|every-50\|every-100"` returns
+#   only § A.2 "Three-stage cadence" (sub-phase cadence, not capture
+#   cadence) and § N example mention "capture downsampling cadence" as
+#   routing-option enumeration. No dedicated capture-cadence section
+#   exists. Item B is confirmed ADD, not edit.
+
+# Section index at HEAD (line numbers of `## §` and `### §` anchors):
+A   line 11  | A.1 13  | A.2 24  | A.3 38  | A.4 42
+B   line 55  | B.1 57  | B.2 72  | B.3 88  | B.4 106 | B.5 136
+C   line 142 | C.1 144 | C.2 164 | C.3 168
+D   line 186 | D.1 188 | D.2 198 | D.3 204 | D.4 219 | D.5 225
+E   line 240
+F   line 263 | F.1 265 | F.2 279 | F.3 294 | F.4 307
+G   line 313
+H   line 331 | H.1 335 | H.2 346 | H.3 350 | H.4 358
+I   line 364 | I.1 366 | I.2 372 | I.3 386 | I.4 390
+J   line 402 | J.1 404 | J.2 408 | J.3 424 | J.4 439 | J.5 443
+K   line 449 | K.1 451 | K.2 461 | K.3 472 | K.4 478
+L   line 495 | L.1 497 | L.2 506 | L.3 520
+M   line 533 | M.1 537 | M.2 561 | M.3 580 | M.4 598 | M.5 612 | M.6 623
+N   line 631 | N.1 635 | N.2 639 | N.3 667 | N.4 673
+O   line 679
