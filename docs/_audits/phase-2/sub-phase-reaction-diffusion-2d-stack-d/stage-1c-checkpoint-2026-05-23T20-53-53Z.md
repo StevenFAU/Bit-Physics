@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-stage-1c
 subject: "Stage 1c cross-stack equivalence + gate-14 GREEN — SHIFTED (N1 + N2). The FIRST true matching-sim cross-stack invocation surfaced a sim.category/tolerance-category taxonomy resolution gap: compare_captures raised KeyError because sim.category='continuous-ca' (physics-family) does not key any tolerance.toml [defaults.*] (numerical-method-family) and no per-sim override existed. Operator routed Option 1 (at-budget per-sim override, NOT a widening). With [overrides.reaction-diffusion-2d] category='reaction-diffusion' the harness resolves relative=1e-4 and gate-14 is within_tolerance=True: step-0 bit-identical, PEAK max_abs_err=1.898481e-14 @ step:1600:U, PEAK max_rel_err=1.246518e-13 @ step:1600:V, margin ~5.27e9x; diff stays at FP-round-off scale through step-2000. R-P2 chaotic-divergence hypothesis EMPIRICALLY FALSIFIED for this pair. equivalence.md authored (IC-15 candidate). Schema-corpus entry seeded. SKIP removed; 16 package tests GREEN. All 14 gates GREEN. Single monolithic commit 2b5353a."
 verdict-state: SHIFTED
-head_sha: PENDING-CONVENTION-12-BACKFILL
-head_sha_at_checkpoint: PENDING-CONVENTION-12-BACKFILL
+head_sha: f863f663cdbded2cbc3cb983aa9897117bdae7f7
+head_sha_at_checkpoint: f863f663cdbded2cbc3cb983aa9897117bdae7f7
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
@@ -167,6 +167,6 @@ All 14 gates GREEN; landing-prep complete. Stage 2 (landing) is dispatchable ver
 
 ---
 
-This checkpoint lands at HEAD `PENDING-CONVENTION-12-BACKFILL` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage1c-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time). The Stage 1c implementation commit is `2b5353aee4971823ddec6e5678df90bd9e3b80b8`.
+This checkpoint lands at HEAD `f863f663cdbded2cbc3cb983aa9897117bdae7f7` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage1c-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time). The Stage 1c implementation commit is `2b5353aee4971823ddec6e5678df90bd9e3b80b8`.
 
 Verdict: **SHIFTED (N1 + N2)** — gate-14 GREEN; all 14 gates GREEN; sub-phase landing-prep complete.
