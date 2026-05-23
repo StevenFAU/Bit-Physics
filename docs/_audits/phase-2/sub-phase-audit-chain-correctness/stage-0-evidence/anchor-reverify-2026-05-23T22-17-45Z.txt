@@ -1,0 +1,15 @@
+# Task 0.2 anchor re-verify @ HEAD 178534cdfc3d3c5861c4a3bb0f1be0badbadc875
+## (a) verify_evidence hash site + file_at_sha
+verify_evidence.py:113 ->         actual = hashlib.sha256(blob).hexdigest()
+repo.py file_at_sha uses: git show {sha}:{path} (repo.py:62-72) [confirmed]
+## (b) .gitattributes LFS-filtered patterns (expect exactly 1)
+38:captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text
+count=1
+## (c) RD-2D Stack-D .h5 pointer stub
+version https://git-lfs.github.com/spec/v1
+oid sha256:2e93a75164bafdf104b0b247fffdeb5e3d8be0806b5fa42f17b6d5741041b13d
+size 2940664
+expected-OID=2e93a75164bafdf104b0b247fffdeb5e3d8be0806b5fa42f17b6d5741041b13d (RD-2D Stack-D landing recorded content OID) -> MATCH
+## (d) trailing-newline signature (both phantoms)
+rd-2d-stack-d committed=e1752ceb0e1847bc3c9a82a7eda2486a4418eec0908876ad016c61e5da27e104 minus_nl=a7780645d2159208e281a49c95b9d43c66ffd8b7e6ca3524345be19c468abd68
+rd-3d-ref     committed=5c64375fb8be154f0de4df999ad9faa2777d969ab6f7e6e636b8b5e0bc3837b9 minus_nl=ccd0e4eabf36fba694a5c9bf3817cc470846c6aa2d59e52f7a2c987201475dcb

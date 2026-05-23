@@ -1,0 +1,16 @@
+# Task 0.3 14-capture phantom-sha survey @ HEAD 178534cdfc3d3c5861c4a3bb0f1be0badbadc875
+7e39a750690fbfd664403d5ace184a447ca84c1ba82efc6a2e4e0f6dfb578069  NO-RECORD  captures/boids-3d-ref/flock-1000agents-seed42-step1000.json
+3eabebd140c165f4d865876b70d305e8553270797483e79f22a12e0a82f8f742  NO-RECORD  captures/boids-3d-ref/flock-3agents-canonical-seed42-step1000.json
+52e89e957ab87b9ca7df0da008a4ce92c260eb287c8119ed7ec5a1f478084a75  MATCH  captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.json
+9d6a78ed9a481bd0ea18af66dc49bc44dce95bee248b53956e01e3c499416517  MATCH  captures/eulerian-smoke-ref/taylor-green-128cube-seed42-step500.json
+d9fbcafbc52b0c0be20c83a875ea67f2b8b56704cdb0157c5c7ad2eff54c480f  NO-RECORD  captures/lbm-ref/couette-32x16-seed42-step500.json
+8347922d10f048abcb778af2674c4e1f0ef4c49f4f27eca2ddc4736cef611b8f  NO-RECORD  captures/lbm-ref/poiseuille-64x32-seed42-step1000.json
+3ad25d645c927db21b428c1559c24dbfab74e844ddd20de56ce518ded996d49d  NO-RECORD  captures/mandelbulb-explorer-ref/de-probe-points-seed42.json
+ea3531e032c4658bd5c06a7bf5c0b76e18b50515d67bd932efaa4a5cd28d1a2f  MATCH  captures/mpm-ref/drop-impact-128cube-seed42-step500.json
+0c67b04d2fc2adff604e11ed40965332f1a74f7692a55a80b8f52d3ec04a0241  NO-RECORD  captures/physarum-ref/network-canonical-seed42-step5000.json
+585d7d8ab2db7db7b64b498b5436f414835e1e67ffb6a7ad962f3d4803d3a7bc  MATCH  captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json
+e1752ceb0e1847bc3c9a82a7eda2486a4418eec0908876ad016c61e5da27e104  MATCH DRIFT(a7780645d2159208e281a49c95b9d43c66ffd8b7e6ca3524345be19c468abd68)  captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.json
+5c64375fb8be154f0de4df999ad9faa2777d969ab6f7e6e636b8b5e0bc3837b9  MATCH DRIFT(ccd0e4eabf36fba694a5c9bf3817cc470846c6aa2d59e52f7a2c987201475dcb)  captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.json
+84dbc44892e6ab941ac9469f25ed18827b7a6db6e2611df0a63f95a392ff5865  MATCH  captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json
+dbb7b77d78852e025e4c48508504b5f90cd734af7bb0fe4b63ba25677e2b8962  NO-RECORD  captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.json
+incidence: 2 confirmed phantom drifts (rd-2d-stack-d, rd-3d-ref); 5 MATCH; 7 NO-RECORD
