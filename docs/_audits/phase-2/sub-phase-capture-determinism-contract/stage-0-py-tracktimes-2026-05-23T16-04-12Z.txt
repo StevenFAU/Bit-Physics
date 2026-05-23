@@ -1,0 +1,4 @@
+file size A: 12856 bytes
+file size B: 12856 bytes
+shallow filecmp.cmp(A, B): True
+RESULT: byte-identical across 1.5s wall-clock separation. PASS.

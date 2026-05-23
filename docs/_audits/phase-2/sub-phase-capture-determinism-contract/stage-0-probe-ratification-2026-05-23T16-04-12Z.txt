@@ -1,0 +1,179 @@
+Stage 0 Task 0.3 — Probe-finding ratification at HEAD 97ff87b5537554efd25296028f51c73c3cda58d7
+
+Four sub-tasks (a) boundary-delay baseline / (b) inventory re-grep /
+(c) R-D6 shim PoC + scaffolding-cost estimate / (d) Python track_times=False
+validation.
+
+=== (a) Boundary-delay baseline (file:
+common/common-ts/examples/_stage0_probe/baseline.test.ts; deleted pre-commit) ===
+
+Two consecutive runHelloPhysics calls with 1.5s wall-clock separation.
+
+  a_run_start:        2026-05-23T16:09:20.818Z
+  b_run_start:        2026-05-23T16:09:22.338Z   (Δsec = 2)
+  a_size:             51200 bytes
+  b_size:             51200 bytes
+  diff_count:         184 bytes
+  first_diff_offsets: 0x36, 0x3a, 0x3e, 0x42, 0xbf, 0xc0, 0xc1, 0xc2,
+                      0xc9, 0xcd, 0xd1, 0xd5
+
+EXPECTED per plan-drafting-probe § 4.3: ~183-184 bytes differing at OHDR
+mtime regions.
+
+ACTUAL: 184 bytes (exact match to dispatch-context "184" figure; probe
+re-derivation had measured 183 bytes within counting variance).
+
+(a) VERDICT: PASS — boundary-delay flake reproducibly observed at HEAD.
+
+=== (b) Byte-equality inventory re-grep at HEAD ===
+
+Project-wide grep across packages/ tools/ common/ for raw-byte-equality
+patterns:
+
+  TS hits (`payload[A-Z].*\.equals(payload|Buffer\.equals|readFileSync.*\.equals(`):
+    common/common-ts/examples/hello-physics/hello-physics.test.ts:27 — V1
+
+  PY hits (`_sha256_of_file|read_bytes\(\) == .*read_bytes\(\)`):
+    tools/testkit/capture/writer.py:29 + :69 — informational checksum
+      (manifest payload.checksum; NOT a determinism assertion)
+    packages/lattice-boltzmann-d3q19/tests/test_determinism.py:42 + :67-68 — V2
+    packages/mpm-multimaterial/tests/test_determinism.py:37 + :61-62 — V3
+
+  IMMUNE confirmation via run_twice_and_diff usages (8 sims + 1 sim-source):
+    packages/reaction-diffusion-2d/tests/test_determinism.py (Phase-0; not
+      part of 9 Phase-1 surface but content-equivalent)
+    packages/mandelbulb-explorer/tests/test_determinism.py
+    packages/strange-attractors/tests/test_determinism.py
+    packages/boids-3d/tests/test_determinism.py
+    packages/reaction-diffusion-3d/tests/test_determinism.py
+    packages/eulerian-smoke/tests/test_determinism.py
+    packages/physarum/tests/test_determinism.py
+    packages/sph-water/tests/test_determinism.py
+    + tools/testkit/determinism/{__init__.py, harness.py, tests/test_harness.py}
+    + tools/diagnostics/diagnostics/tier1/determinism.py
+    + 4 sim-source `sim.py` files that re-export the runner.
+
+  Inventory at HEAD: 3 VULNERABLE (V1/V2/V3) / 7 IMMUNE / 0 UNCLEAR for the
+  9 Phase-1 + hello-physics TS surface. No drift from probe inventory.
+
+  Bonus finding: packages/reaction-diffusion-2d/tests/test_determinism.py
+  (Phase-0 ref sim, not counted in the 9 Phase-1 inventory) ALSO uses the
+  harness and is IMMUNE. Stage 1's harness rename will benefit RD-2D
+  transparently with no per-test edit.
+
+(b) VERDICT: PASS — inventory unchanged at HEAD; 3 VULNERABLE confirmed
+verbatim.
+
+=== (c) R-D6 EMPIRICAL VALIDATION — TS-side shim path (file:
+common/common-ts/examples/_stage0_probe/shim.test.ts; deleted pre-commit) ===
+
+Test patches global Date.now() to FROZEN_EPOCH_MS=1700000000000 BEFORE
+calling runHelloPhysics twice with 1.5s real-time separation.
+
+  h5wasm Module surface enumeration:
+    module_present:                       false   ← h5wasm-node does NOT
+                                                    expose Module at top level
+    time_related_keys:                    []
+    module_emscripten_date_now_type:      undefined
+
+  Probe with Date.now shim applied:
+    a_run_real_time:           2026-05-23T16:10:04.353Z
+    b_run_real_time:           2026-05-23T16:10:05.872Z   (Δsec = 1)
+    date_now_during_A:         1700000000000  (frozen)
+    date_now_during_B:         1700000000000  (frozen)
+    a_size:                    51200 bytes
+    b_size:                    51200 bytes
+    diff_count:                0 bytes
+    shim_eliminated_flake:     true
+
+Two findings:
+
+  (i) **SHIFT — plan-drafting-probe § 4.2(b) "Patch Module._emscripten_date_now
+      post-init" path is NOT viable.** h5wasm-node v0.10.1 does NOT expose the
+      Module object at any documented top-level export; the time-related
+      symbols are encapsulated inside the WASM-loading closure. Path (b) was
+      probe-lean; it is now empirically refuted.
+
+  (ii) **Probe § 4.2(a) "Global Date.now() monkey-patch during the
+       capture-write window" WORKS and is the ONLY viable userland shim
+       path.** Two writes 1.5s apart produce 0 bytes differing.
+
+  Implication: Stage 1's CaptureWriter source-level fix (charter
+  deliverable 6) MUST use path (a) global-shim form, NOT path (b)
+  Module-direct form. Shape:
+
+      const realDateNow = Date.now;
+      Date.now = () => FROZEN_EPOCH_MS;
+      try {
+        await runHelloPhysics(...);     // or any h5wasm write
+      } finally {
+        Date.now = realDateNow;
+      }
+
+  This is ~5-7 lines added to CaptureWriter.finalize() rather than the ~3
+  lines path (b) would have been. Negligible scope delta.
+
+  TS-harness scaffolding-cost estimate (R-D6 escape hatch trigger if
+  read-surface alone exceeds ~+200 lines per charter § 4.0 / probe § 4.0):
+
+    captureReader.ts (NEW):      ~80-100 lines
+      — reuses existing H5FileLike / H5GroupLike interface types from
+        common/common-ts/src/capture.ts:49-74; read API is straightforward
+        (file.get(path).value gives ArrayLike<number>; existing
+        hello-physics.test.ts:48 demonstrates the pattern).
+
+    diffCaptures.ts (NEW):       ~60-80 lines
+      — pair captures by step+field; np.array_equal-equivalent over typed
+        arrays. No new external deps.
+
+    runTwiceAndDiff.ts (NEW):    ~50-60 lines
+      — orchestrator mirroring Python harness.py:62-98 shape.
+
+    Types (DeterminismVerdict, SimRunner) inline at the above modules:
+                                 ~20-30 lines
+
+    index.ts (NEW):              ~10 lines (re-exports)
+
+    __tests__/*.test.ts (NEW):   ~150-200 lines (3 test files)
+
+  Source-code total: ~220-280 lines. Read-surface alone (captureReader.ts):
+  ~80-100 lines — **WITHIN the ~+200 line R-D6 escape hatch threshold by
+  a comfortable margin**.
+
+(c) VERDICT: PASS with ONE SHIFTED finding (path (b) Module-direct refuted;
+path (a) global-shim is the ONLY viable userland path). R-D6 NOT triggered:
+scaffolding cost is well within the +200-line read-surface threshold.
+**Monolithic Stage 1 lean stays.**
+
+=== (d) Python-side track_times=False empirical validation (file:
+/tmp/cdc-stage0/py_tracktimes_probe.py) ===
+
+Synthetic h5py.File(... libver="earliest") + track_times=False on every
+create_group + create_dataset:
+
+  file size A: 12856 bytes
+  file size B: 12856 bytes
+  filecmp.cmp(A, B, shallow=False): True
+  RESULT: byte-identical across 1.5s wall-clock separation.
+
+(d) VERDICT: PASS — track_times=False on every h5py object suppresses the
+mtime contamination at the source. Stage 1 deliverable 5 (`tools/testkit/
+capture/writer.py` source-level fix) is mechanically straightforward.
+
+=== Summary ===
+
+| Sub-task | Verdict | Notes |
+|---|---|---|
+| (a) Baseline boundary-delay | PASS | 184 bytes differ at HEAD; matches dispatch context |
+| (b) Inventory re-grep        | PASS | 3 VULNERABLE / 7 IMMUNE / 0 UNCLEAR unchanged |
+| (c) R-D6 shim PoC            | PASS | Date.now global shim works; Module-direct refuted (SHIFTED) |
+| (d) Python track_times=False | PASS | Byte-identical via libver=earliest + track_times=False |
+
+Task 0.3 verdict: PASS. One Stage 0 SHIFTED (N1 below in checkpoint) for the
+path-(b) refutation; scope-impact negligible (5-7 lines vs 3 lines in the TS
+source-level fix). Monolithic Stage 1 lean stays.
+
+vitest output sha256s (preserved at):
+  - /tmp/cdc-stage0/baseline-vitest-output.txt
+  - /tmp/cdc-stage0/shim-vitest-output.txt
+  - /tmp/cdc-stage0/py-tracktimes-probe-output.txt

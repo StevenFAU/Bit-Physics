@@ -1,0 +1,62 @@
+ImportError while loading conftest '/home/otacon/Projects/Bit-Physics/packages/mandelbulb-explorer/tests/conftest.py'.
+_pytest.pathlib.ImportPathMismatchError: ('tests.conftest', '/home/otacon/Projects/Bit-Physics/packages/strange-attractors/tests/conftest.py', PosixPath('/home/otacon/Projects/Bit-Physics/packages/mandelbulb-explorer/tests/conftest.py'))
+=== strange-attractors ===
+============================= test session starts ==============================
+collecting ... collected 2 items
+
+tests/test_determinism.py::test_run_twice_bit_exact PASSED               [ 50%]
+tests/test_determinism.py::test_cross_seed_distinct PASSED               [100%]
+
+============================== 2 passed in 0.47s ===============================
+=== mandelbulb-explorer ===
+============================= test session starts ==============================
+collecting ... collected 1 item
+
+tests/test_determinism.py::test_run_twice_bit_exact PASSED               [100%]
+
+============================== 1 passed in 0.18s ===============================
+=== boids-3d ===
+============================= test session starts ==============================
+collecting ... collected 1 item
+
+tests/test_determinism.py::test_run_twice_bit_exact PASSED               [100%]
+
+============================== 1 passed in 41.79s ==============================
+=== physarum ===
+============================= test session starts ==============================
+collecting ... collected 2 items
+
+tests/test_determinism.py::test_run_twice_bit_exact_zero_trail_limit PASSED [ 50%]
+tests/test_determinism.py::test_run_twice_epsilon_chaotic_regime PASSED  [100%]
+
+============================== 2 passed in 10.24s ==============================
+=== reaction-diffusion-3d ===
+============================= test session starts ==============================
+collecting ... collected 1 item
+
+tests/test_determinism.py::test_run_twice_bit_exact PASSED               [100%]
+
+============================== 1 passed in 20.74s ==============================
+=== sph-water ===
+============================= test session starts ==============================
+collecting ... collected 1 item
+
+tests/test_determinism.py::test_run_twice_epsilon_diff PASSED            [100%]
+
+============================== 1 passed in 0.31s ===============================
+=== eulerian-smoke ===
+============================= test session starts ==============================
+collecting ... collected 1 item
+
+tests/test_determinism.py::test_run_twice_epsilon_diff PASSED            [100%]
+
+============================== 1 passed in 0.48s ===============================
+=== tools/testkit/determinism/tests ===
+============================= test session starts ==============================
+collecting ... collected 3 items
+
+determinism/tests/test_harness.py::test_deterministic_stub_passes_the_gate PASSED [ 33%]
+determinism/tests/test_harness.py::test_nondeterministic_stub_fails_the_gate PASSED [ 66%]
+determinism/tests/test_harness.py::test_harness_creates_two_independent_run_dirs PASSED [100%]
+
+============================== 3 passed in 0.21s ===============================

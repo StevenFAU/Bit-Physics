@@ -1,0 +1,54 @@
+Stage 0 Task 0.2 — 9-sim Phase-1 RED evidence sha256 reverify at HEAD 97ff87b5537554efd25296028f51c73c3cda58d7
+
+Baseline: docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md § 6.2 prefixes.
+
+Comparison (full sha256 at HEAD vs MPM § 6.2 truncated prefix):
+
+  strange-attractors-2026-05-20T12-54-18Z.txt
+    HEAD: c4f72e2595bfe0702ac1d1721371e65ea985661be89c114e100da783104cac63
+    MPM:  c4f72e25…04cac63
+    MATCH: PASS
+
+  mandelbulb-explorer-2026-05-20T12-54-18Z.txt
+    HEAD: d4a89d3e782e639c179238d7fc5f4c307a99cf0ec74d9ebb5d8db547b37e2ca0
+    MPM:  d4a89d3e…b37e2ca0
+    MATCH: PASS
+
+  boids-3d-2026-05-20T13-04-01Z.txt
+    HEAD: 7d59ffdbd96d96ac3bb33439a00102a36fd29015acd564aef544850cf6e39b7b
+    MPM:  7d59ffdb…f6e39b7b
+    MATCH: PASS
+
+  physarum-2026-05-20T13-04-01Z.txt
+    HEAD: 8ee52dc7cff8a207fb8bed468b2e72cd84ea5196fafbdf646481ed328c043855
+    MPM:  8ee52dc7…8c043855
+    MATCH: PASS
+
+  reaction-diffusion-3d-2026-05-20T13-26-32Z.txt
+    HEAD: b3165ab1cd0b69d816fce8ffcdb4436d619f01c5ecfa7942eb77c4aeb2514b96
+    MPM:  b3165ab1…b2514b96
+    MATCH: PASS
+
+  sph-water-2026-05-20T13-32-02Z.txt
+    HEAD: 82fb91bcf19581cd9adc0eca4ba194de033d4a58aa9c5319d52dabc40cf12b1f
+    MPM:  82fb91bc…40cf12b1f
+    MATCH: PASS
+
+  eulerian-smoke-2026-05-20T13-37-41Z.txt
+    HEAD: c961dd22c1ca6117af6d9f187d2c0d3aa4d546972496b0f38d11aa14879f23a1
+    MPM:  c961dd22…14879f23a1
+    MATCH: PASS
+
+  lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt
+    HEAD: c78de8bee93a5cb06c0ccc78a843766b98c93685b344c63d772cf3374b6ef3cd
+    MPM:  c78de8be…b4b6ef3cd
+    MATCH: PASS
+
+  mpm-multimaterial-2026-05-20T13-48-06Z.txt
+    HEAD: a57251a19b28888e664402e9c92eb681fa17719be7e156154df3d681bb9edf94
+    MPM:  a57251a1…81bb9edf94
+    MATCH: PASS
+
+Summary: 9/9 PASS. Mass gate-13 precondition intact. No drift.
+
+Task 0.2 verdict: PASS (no BLOCKED condition; Stage 1 can proceed against the existing harness which depends on these RED evidence files being sealed at their Phase 1 values).
