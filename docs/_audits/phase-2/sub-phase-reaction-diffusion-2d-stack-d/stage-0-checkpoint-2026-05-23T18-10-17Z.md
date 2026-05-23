@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-stage-0
 subject: "Stage 0 pre-flight CONFIRMED. 19th invocation of bit-identity replay invariant byte-identical. Tolerance-budget [phase] carried over. Stack-B canonical capture sha256s MATCH Block-8 baseline at both .h5 and .json. All 10 sim packages' RED failing-tests-evidence sha256s match Phase-1 landing audit. ICs 11/12/13/14 empirically verified. R-P1 cross-stack equivalence harness scales trivially to RD-2D full Capture (parse 0.001s, 1.4 MB delta). R-P5 MMS Stack-D-callable; Taichi field.from_numpy round-trip bit-exact. Portfolio baseline holds (342 Python PASS + 22 TS PASS). No blocking dependencies. Stage 1a dispatchable."
 verdict-state: CONFIRMED
-head_sha: 375653845b58df894e09c0b3dfeca402710f716d
-head_sha_at_checkpoint: 375653845b58df894e09c0b3dfeca402710f716d
+head_sha: efbdfbf4e8bfc44e8a6d88cfe8cfb5604b257a40
+head_sha_at_checkpoint: efbdfbf4e8bfc44e8a6d88cfe8cfb5604b257a40
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
@@ -230,6 +230,6 @@ Stage 1a dispatchable verbatim per charter § 7.2.
 
 ---
 
-This checkpoint lands at HEAD `375653845b58df894e09c0b3dfeca402710f716d` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage0-sha-backfill)` per the two-commit pattern).
+This checkpoint lands at HEAD `efbdfbf4e8bfc44e8a6d88cfe8cfb5604b257a40` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage0-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
 
 Verdict: **CONFIRMED**.
