@@ -1052,6 +1052,57 @@ that it is informational and the contract lives at the harness.
 | Integrity sweep | GREEN | bit-identical to `810cd6e3…23411f98` (**FIFTH byte-identical integrity sweep in a row**, despite a new sim package + spec sheet + probe + capture + perf row + Cat-X additive override) |
 | Mutation (B17) | PATH-B re-bank | framework-validated artifact; per-sim Taichi-DSL mutmut target deferred (cross-stack port) |
 
+### sub-phase-audit-chain-correctness
+
+Focused-infrastructure sub-phase resolving the two banked-for-operator
+audit-chain hash-correctness items surfaced at the RD-2D Stack-D landing
+(§ 8 N5a / N5b). Mirrors the `sub-phase-taichi-integration` (focused-infra)
++ `sub-phase-capture-determinism-contract` (portfolio-wide amendment) shapes.
+No `-phase-N` tag (spec § 7.12); optional non-phase point-release `v0.1.12`
+is a banked operator decision.
+
+#### Added / Changed
+
+- **`verify_evidence` LFS-content-OID fix (Stage 1a).** New
+  `lfs_pointer_oid()` helper in `tools/integrity/integrity/common/repo.py`
+  (pointer-stub sniff + `oid sha256:` parse) and an OID-aware comparison
+  branch in `tools/integrity/integrity/scripts/verify_evidence.py`:
+  LFS-tracked artifacts (`captures/**/*.h5`) now verify against the content
+  OID embedded in the git-lfs pointer stub — offline, no `git lfs smudge` /
+  network / auth. Non-LFS artifacts hash the git blob unchanged;
+  mismatch→error preserved (R-A4). `--strict` untouched.
+- **IC-16 formalized (Stage 1a).** `verify_evidence` LFS-content-OID
+  verification semantics; cited at spec § 7.5 + Appendix G.7 (Stage 1b,
+  D3-positive) and recorded in `docs/dependencies.md`.
+- **§ B.6 amended in two steps.** Mode 2 (LFS pointer-vs-content) **RESOLVED**
+  at Stage 1a — subsequent landings need no Option-3 annotation. Mode 3
+  (phantom-sha / pre-commit-hook trailing-newline) **ADDED** at Stage 1b,
+  covering 2 retroactively-classified portfolio-wide drifts.
+- **Portfolio-wide phantom-sha audit (Stage 1b).** New report at
+  `docs/_audits/phase-2/sub-phase-audit-chain-correctness/phantom-sha-audit-2026-05-23T22-39-45Z.md`
+  (HEAD sha256 `9a1167dc…a40d085b` post-back-fill). 14-capture survey: 5 MATCH /
+  7 NO-RECORD / 2 PHANTOM-DRIFT (rd-2d-stack-d, rd-3d-ref) — both trailing-newline
+  phantoms, both pre-caught at landings, both in sealed checkpoints only.
+  rd-3d-ref re-classified § B.6 Mode 1 → Mode 3. Non-corrective of prior audits
+  (Convention A + § 12 + D5).
+- **Spec amendments (Stage 1b, D3-positive, additive).** `docs/architecture.md`
+  § 7.5 + Appendix G.7 gain an LFS-content-OID clarification (IC-16). Existing
+  wording unchanged.
+- **Test surface.** `tools/integrity/tests/test_verify_evidence.py` +5 tests
+  (LFS pointer OID resolution; wrong-OID negative path; non-LFS regression);
+  10/10 GREEN; portfolio Python sweep 365 PASS (= 360 + 5; zero regressions).
+
+#### Banked methodology-precedents
+
+- **Commit-first-then-sha256.** Record the sha256 of the committed blob, never
+  in-memory pre-hook content (the pre-commit `end-of-file-fixer` appends a
+  trailing newline → phantom shas). Exemplified across this sub-phase's audit
+  chain. The hook is not modified (out of scope); the discipline is the
+  working mitigation.
+- **SHA back-fill must enumerate EVERY placeholder-bearing audit committed in a
+  stage**, not just the checkpoint (Stage 1b N1; the now-fixed `verify_evidence`
+  is the mechanical self-check that catches placeholder leakage).
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation

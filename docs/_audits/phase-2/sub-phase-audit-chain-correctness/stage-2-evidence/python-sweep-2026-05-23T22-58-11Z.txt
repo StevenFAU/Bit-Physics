@@ -1,0 +1,19 @@
+# Stage 2 Python cross-package regression sweep @ HEAD 87bfe0e361ea462ef6d6a84c337d30cae5e88eb9
+# canonical full-tree discovery; per RD-2D Stack-D § 5 invocation
+packages/boids-3d                           10 passed in 46.46s
+packages/eulerian-smoke                     10 passed in 3.39s
+packages/lattice-boltzmann-d3q19            10 passed in 4.02s
+packages/mandelbulb-explorer                10 passed in 0.24s
+packages/mpm-multimaterial                  10 passed in 0.86s
+packages/physarum                           10 passed in 10.08s
+packages/reaction-diffusion-2d              14 passed in 2.53s
+packages/reaction-diffusion-2d-stack-d      16 passed in 4.24s
+packages/reaction-diffusion-3d              8 passed in 24.21s
+packages/sph-water                          22 passed in 0.58s
+packages/strange-attractors                 11 passed in 0.77s
+tools/integrity                           56 passed in 1.47s
+tools/diagnostics                         93 passed in 0.31s
+tools/testkit                             60 passed in 5.64s
+common/common-py                          25 passed in 0.54s
+TOTAL: 131 sims + 209 tools (integrity 56 + diagnostics 93 + testkit 60) + 25 common-py = 365 PASS
+vs RD-2D Stack-D § 5 baseline 360 → +5 (Stage 1a verify_evidence LFS tests); zero regressions

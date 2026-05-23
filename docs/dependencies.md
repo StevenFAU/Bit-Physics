@@ -394,3 +394,37 @@ No external pins introduced. Subsequent Stack-D / Stack-E cross-stack port
 sub-phases consume the same `taichi` pin + per-sim tolerance-override pattern
 per `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § 7
 (IC-15 candidate methodology template).
+
+## spec-Phase-2 sub-phase-audit-chain-correctness — verify_evidence LFS-content-OID semantics (IC-16) (added 2026-05-23)
+
+Focused-infrastructure sub-phase; no new external pins. Records the new
+interface contract established by the `verify_evidence` LFS-content-OID fix.
+
+### New interface contract
+
+| IC | Surface | Established | Load-bearing for |
+|---|---|---|---|
+| **IC-16 — `verify_evidence` LFS-content-OID semantics** | For an `evidence_hashes` entry whose path is LFS-tracked, `verify_evidence` compares the claimed sha256 against the **content OID** parsed from the git-lfs pointer stub's `oid sha256:` line (offline; no smudge/network/auth); non-LFS paths compare the git-blob sha256 unchanged; mismatch→error preserved. | `sub-phase-audit-chain-correctness` Stage 1a (`tools/integrity/integrity/common/repo.py` `lfs_pointer_oid()` + the OID-aware comparison in `tools/integrity/integrity/scripts/verify_evidence.py`). Cited at spec `docs/architecture.md` § 7.5 + Appendix G.7 (Stage 1b, D3-positive). | Every subsequent sub-phase's gate-5 evidence check that cites LFS-tracked `.h5` evidence (every cross-stack port ships 2 capture `.h5`). |
+
+### Cross-references
+
+- **IC-2 (capture I/O)** — the `captures/**/*.h5` artifacts whose hashing IC-16
+  corrects are IC-2 outputs (not modified; the hashing of them is).
+- **Conventions doc § B.1** — content-OID-load-bearing posture (the recorded
+  value IS the content OID; IC-16 makes `verify_evidence` honor it for LFS paths).
+- **Conventions doc § B.6** — LFS-pointer-vs-content drift modes: **Mode 2
+  RESOLVED** by IC-16 (Stage 1a); **Mode 3** (phantom-sha / trailing-newline)
+  added Stage 1b. Subsequent landings need no § B.6 Option-3 annotation for
+  LFS-tracked evidence.
+
+### Verification
+
+`verify_evidence` on the RD-2D Stack-D landing audit: pre-fix **29 pass / 2 fail**
+(the two `captures/**/*.h5` pointer-vs-content shape-mismatches) → post-fix
+**31 pass / 0 fail**. Test suite `tools/integrity/tests/test_verify_evidence.py`
+10/10 GREEN (5 new LFS tests + 5 existing).
+
+### Re-pin policy
+
+No external pins introduced. IC-16 is consumed by reference (no per-sub-phase
+re-declaration) by every subsequent sub-phase's gate-5 evidence verification.
