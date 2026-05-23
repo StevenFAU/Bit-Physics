@@ -8,7 +8,11 @@ Behavior:
     - For each ``evidence_paths`` entry, asserts the file exists at the
       audit's ``head_sha`` (via ``git show <sha>:<path>``) and is non-empty.
     - For each ``evidence_hashes`` entry (mapping path → sha256), computes
-      the sha256 of the file content at ``head_sha`` and compares.
+      the sha256 of the file content at ``head_sha`` and compares. For
+      LFS-tracked artifacts (``git show`` returns a pointer stub, not smudged
+      content) the comparison uses the content OID parsed from the pointer's
+      ``oid sha256:`` line — the content-addressed sha256 the audit records
+      per conventions doc § B.1 / § B.6 (IC-16). No git-lfs smudge needed.
     - Exit 0 on all-pass; exit 1 on any failure.
 
 Used by:
@@ -30,7 +34,7 @@ from pathlib import Path
 
 import yaml
 
-from ..common.repo import file_at_sha, find_repo_root
+from ..common.repo import file_at_sha, find_repo_root, lfs_pointer_oid
 
 _FRONT_MATTER = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
 
@@ -110,7 +114,11 @@ def verify_evidence(audit_path: Path, repo_root: Path | None = None) -> Evidence
         if blob is None:
             result.failures.append(f"hashed evidence path {path_str!r} not present at {head_sha}")
             continue
-        actual = hashlib.sha256(blob).hexdigest()
+        # LFS-tracked evidence: ``git show`` returns the pointer stub, whose
+        # embedded ``oid sha256:`` IS the content OID the audit records (§ B.6
+        # Mode 2 RESOLVED). Non-LFS blobs hash normally (oid is None).
+        oid = lfs_pointer_oid(blob)
+        actual = oid if oid is not None else hashlib.sha256(blob).hexdigest()
         claimed_hex = claimed[len("sha256:") :] if claimed.startswith("sha256:") else claimed
         if actual != claimed_hex:
             result.failures.append(
