@@ -1,0 +1,7 @@
+  PASS  docs/phases/sub-phase-conventions-refactor-post-phase-1.md
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-checkpoint-2026-05-23T12-27-48Z.md
+  PASS  docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-section-baseline-2026-05-23T12-27-48Z.txt
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-section-baseline-2026-05-23T12-27-48Z.txt (sha256 OK)
+summary: 6 pass / 0 fail at head_sha 5782e21baf2b

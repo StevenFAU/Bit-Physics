@@ -1,0 +1,21 @@
+=== Append-only check at HEAD d2966e9 ===
+Date: 2026-05-23T13-04-05Z
+
+Files modified across this sub-phase (Stage 0 + Stage 1):
+docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-checkpoint-2026-05-23T12-27-48Z.md
+docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-evidence-reverify-2026-05-23T12-27-48Z.txt
+docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-replay-2026-05-23T12-27-48Z.txt
+docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-section-baseline-2026-05-23T12-27-48Z.txt
+docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-1-checkpoint-2026-05-23T12-54-35Z.md
+docs/conventions/sub-phase-conventions.md
+tools/testkit/equivalence/tolerance-budget.toml
+
+Files matching CI grep filter (*.ledger.md):
+  (none)
+
+CI semantics: trivially clean (no *.ledger.md modifications).
+
+Strict-mode advisory: docs/conventions/sub-phase-conventions.md WAS present at conventions-consolidation landing 34c7d34 (the file was created there). This sub-phase modifies it additively per the established conventions-doc-is-editable posture (precedent: conventions-consolidation Stage 2 acceptance and Phase-1-plan-allows-doc-extensions discipline). tools/testkit/equivalence/tolerance-budget.toml is the Task 0.1 phase carryover; precedent set by every per-sim sub-phase Stage 0.
+
+13 protected sets at Stage 2 close:
+  Phase 0 + Phase 1 + 12 prior sub-phase landings (closed-form / agent-based / replay-tool-hotfix / continuous-ca-rd3d / numba-integration / particle-fluids-sph-water / mutation-script-hotfix / conventions-consolidation / eulerian-smoke / git-lfs-migration / lattice-boltzmann-d3q19 / mpm-multimaterial).

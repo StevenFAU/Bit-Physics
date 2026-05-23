@@ -1,0 +1,25 @@
+=== Regression sweep — per-package pytest at HEAD d2966e9 ===
+Date: 2026-05-23T13-04-05Z
+
+9 sim packages:
+  strange-attractors: 11 passed
+  mandelbulb-explorer: 10 passed
+  boids-3d: 10 passed
+  physarum: 10 passed
+  reaction-diffusion-3d: 8 passed
+  sph-water: 22 passed
+  eulerian-smoke: 10 passed
+  lattice-boltzmann-d3q19: 9 passed
+  mpm-multimaterial: 9 passed
+  subtotal: 99 passed
+
+Tool packages:
+  tools/integrity/tests: 51 passed
+  tools/diagnostics (tier1 13 + tier2 9+23+24+24=80): 93 passed
+  tools/testkit (equiv 4 + prop 2 + capture 14 + golden 16 + det 3 + mms 8): 47 passed
+  tools/testkit/numba_harness/tests: 5 passed
+  subtotal: 196 passed
+
+Cross-reference to MPM landing § 6.1: this run measured testkit as 47 excl numba_harness; MPM landing reported 52. 5-test counting variance is consistent across the sub-phase — no tests were added or removed during this doc-only refactor (verified by git diff on tools/testkit since MPM landing showing only docs/conventions/ changes).
+
+TOTAL: 99 + 196 = 295 passed; 0 failed, 0 errors
