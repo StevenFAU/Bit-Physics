@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-capture-determinism-contract"
-opened_at = "2026-05-23T16:04:12Z"
+phase = "sub-phase-reaction-diffusion-2d-stack-d"
+opened_at = "2026-05-23T17:55:00Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
