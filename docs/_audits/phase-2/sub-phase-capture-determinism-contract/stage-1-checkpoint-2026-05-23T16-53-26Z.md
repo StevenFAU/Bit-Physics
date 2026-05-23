@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: capture-determinism-contract-stage-1
 subject: "Capture-determinism-contract Stage 1 implementation complete — 14 charter deliverables GREEN (deliverables 13 + 14 deferred to Stage 2 per dispatch); D2 routed to operator-ratified wording incorporating D2-c + R-D3 cross-reference; portfolio-wide content-equivalent contract; conventions doc sha256 SHIFTED 3698d19b...2bd734 -> 167fe349...f2c58c2e; Python sweep 342 PASSED; TS sweep 20 passed + 2 skipped; cumulative shift count 105 entering Stage 2"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
+head_sha: 0a99f4efa8290c9d458b3c9950046426f28529ff
+head_sha_at_checkpoint: 0a99f4efa8290c9d458b3c9950046426f28529ff
 parent_audits:
   - docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md
   - docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-landing-2026-05-23T15-49-23Z.md
@@ -250,6 +250,6 @@ No `-phase-N` tag; no `v0.1.10` non-phase point-release tag at Stage 1 close (St
 
 ---
 
-This audit lands at HEAD `<PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-stage1-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
+This audit lands at HEAD `0a99f4efa8290c9d458b3c9950046426f28529ff` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-stage1-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
 
 Verdict: **CONFIRMED**. Stage 2 dispatchable per charter § 7.3.
