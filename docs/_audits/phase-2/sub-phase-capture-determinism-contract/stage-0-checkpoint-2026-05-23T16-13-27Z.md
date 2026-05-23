@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: capture-determinism-contract-stage-0
 subject: "Capture-determinism-contract Stage 0 pre-flight CONFIRMED — 18th invocation of bit-identity replay invariant; 9-sim RED evidence sha256 byte-identical to MPM § 6.2 baseline; probe inventory ratified at HEAD (3 VULNERABLE / 7 IMMUNE / 0 UNCLEAR); R-D6 empirical-validation passed (Date.now() global shim eliminates flake; Module-direct path REFUTED, SHIFTED); no blocking dependencies surfaced; Stage 1 monolithic lean preserved"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>
+head_sha: ffc7c2419461bb157b7258bda8368e23d9c84731
+head_sha_at_checkpoint: ffc7c2419461bb157b7258bda8368e23d9c84731
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -160,6 +160,6 @@ No `-phase-N` tag; no `v0.1.10` non-phase point-release tag at Stage 0 close (St
 
 ---
 
-This audit lands at HEAD `<PLACEHOLDER-BACK-FILLED-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-stage0-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
+This audit lands at HEAD `ffc7c2419461bb157b7258bda8368e23d9c84731` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(capture-determinism-contract-stage0-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
 
 Verdict: **CONFIRMED**. Stage 1 dispatchable per charter § 7.2.
