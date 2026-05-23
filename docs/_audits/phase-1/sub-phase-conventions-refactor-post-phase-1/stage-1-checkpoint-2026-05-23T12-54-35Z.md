@@ -6,8 +6,8 @@ artifact_id: sub-phase-conventions-refactor-post-phase-1-stage-1
 stage: 1-implementation
 subject: "Conventions Refactor (Post-Phase-1) sub-phase Stage 1 — 8 refactor items A-H applied in a single sub-bundle commit; conventions doc grows 696 → 828 lines (+132 net); per-section sha256s captured for Stage 2 verification"
 verdict-state: PASS
-head_sha: <PLACEHOLDER — Convention #12 back-fill follows>
-head_sha_at_checkpoint: <PLACEHOLDER — Convention #12 back-fill follows>
+head_sha: 5782e21baf2b349f752214b6436969e338b250b2
+head_sha_at_checkpoint: 5782e21baf2b349f752214b6436969e338b250b2
 parent_audits:
   - docs/_audits/phase-1/sub-phase-conventions-refactor-post-phase-1/stage-0-checkpoint-2026-05-23T12-27-48Z.md
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
