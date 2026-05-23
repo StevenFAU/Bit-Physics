@@ -671,6 +671,92 @@ point-release `v0.1.6` is a banked operator decision per
 | 13 | GREEN | perf-ledger rows (3.784 s + 0.604 s) |
 | 13 (anchor) | GREEN | worktree replay at `b6abd7e` → 5 ModuleNotFoundError |
 
+### sub-phase-mpm-multimaterial
+
+**LAST per-sim implementation sub-phase under spec-Phase-1**; closes
+the 9-sim gates-4-13 implementation arc through Stack-D Python NumPy
+reference. Lands gates 4-13 for `mpm-multimaterial` (MLS-MPM Hu-2018
+quadratic-B-spline kernel; multimaterial constitutive surface declared,
+single neo-Hookean material populated at this sub-phase per
+algebraic.md § 3 "Phase 2+ populates the constitutive-model table").
+**First hybrid-pg category sim in the project + first sub-phase
+consuming BOTH IC-5 (particle) AND IC-6 (vector_field) Tier 2
+diagnostics + second numba-using sub-phase (after sph-water; LBM did
+not use @njit) + third consecutive single-session Stage 1 anchoring
+the conventions doc § N graduation recommendation.** Operator-pushed
+`v0.1.9` non-phase point-release tag marks the structural milestone
+(no `-phase-N` suffix per spec § 7.12; tag is operator action). After
+MPM lands CONFIRMED, spec-Phase-2 (cross-stack replication) becomes
+dispatchable at `v0.2.0-phase-2`.
+
+#### Added
+
+- **ONE LFS-tracked canonical capture** at `captures/mpm-ref/` per
+  Appendix D § D.2.3:
+  `drop-impact-128cube-seed42-step500.{h5,json}` (1.13 GB; 1M
+  particles × 128³ grid × 500 steps; cadence-50 — 11 frames
+  committed; wall-clock 158.052 s; soft neo-Hookean elastic E=4kPa,
+  ν=0.3; sticky floor at z-index 4; payload sha256
+  `73e00d09…b5ebae`).
+- MPM source modules at
+  `packages/mpm-multimaterial/mpm_multimaterial/`:
+  `reference.shape_functions` (pure Python N(x) + partition-of-unity,
+  no numba — small kernel),
+  `reference.mls_mpm` (numba @njit P2G + p2g_with_stress + G2P +
+  grid_update + deformation_update + compute_particle_stresses +
+  advect_particles),
+  `sim` (sim_runner_seeded + sim_runner_diagnostic; 10-clause
+  determinism docstring per conventions doc § F.1),
+  `invariants` (mass_conservation_p2g_g2p + partition_of_unity_b_spline
+  Hypothesis-decorated callables).
+- One perf-ledger first-landing row
+  (`hardware_id = i7-12700KF-linux-6.17`; 158.052 s; algorithmic stack
+  `numpy-numba-reference`).
+- Phase 1 GREEN evidence at
+  `tools/testkit/failing-tests-evidence/mpm-multimaterial-implemented-2026-05-23T02-13-16Z.txt`
+  (sha256 `d0bd6f9c…d2ce34e7`).
+- MLS-MPM quadratic-B-spline golden table at
+  `tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json`
+  lifted from 1 packed anchor to **4 discrete
+  `independent_reference` entries** (hand-derivation + Hu 2018 +
+  Steffen-Kirby-Berzins 2008 + Python re-derivation); preserves
+  every citation verbatim per conventions doc § I.3. Post-lift
+  sha256 `9ccab888…378997`.
+- `_SUBDIRS_PICKED_UP` at
+  `tools/integrity/integrity/cat3_numerical/golden_values.py`
+  extended additively with `Path("hybrid-pg")`. Final state at
+  Stage 2 close: `(closed-form, agent-based, particle-fluids,
+  lattice, hybrid-pg)` — **five entries closing the per-sim Phase 1
+  Cat 3 additive-pickup arc across all sim categories with goldens**.
+- B17 PATH-A continue — **fifth-and-final proof-point**: additive
+  `[tool.mutmut.targets.mpm_multimaterial]` block in
+  `tools/testkit/mutation/mutmut-config.toml`; existing testkit/
+  integrity/RD-3D/sph-water/eulerian-smoke/LBM +
+  incompressible-ns-2d-mms targets UNCHANGED. Second numba-using
+  PATH-A target after sph-water `dfsph.py`.
+- This audit chain (10 closing commits): plan draft (`4f64d78`);
+  Stage 0 tolerance-budget + checkpoint + back-fill (`399d32e`,
+  `8a4ba56`, `0c71bab`); Stage 1 implementation feat (`9bd770e`),
+  checkpoint (`53349c1`), back-fill (`e38223d`); Stage 2 Cat 3 lift
+  + pickup (`4724284`, `9b19c26`) + mutation-PathA (TBD) + landing
+  audit + back-fill (final SHAs).
+
+#### Verified
+
+| Gate | Status | Notes |
+|---|---|---|
+| 4 | GREEN | reads-through to gate 5 |
+| 5 | GREEN | MLS-MPM quadratic-B-spline golden at absolute 1e-15 (2 tests × 13 sample/PoU values); no MMS arm at this sub-phase (linear-elasticity MMS deferred per sim-spec-ref § 6.1) |
+| 6 | GREEN | Tier 1 NaN/Inf scan over canonical-trajectory diagnostics |
+| 7 | GREEN | Tier 2 **hybrid surface — FIRST sub-phase consuming BOTH IC-5 AND IC-6**: particle count_invariance + momentum_conservation_drift advisory + vector_field grid-momentum L1 |
+| 8 | GREEN | Cat 1 citations (Hu 2018 DOI; 88-line reference citation-only per R8; Steffen-Kirby-Berzins 2008 DOI) |
+| 9 | GREEN | Cat 2 public API per probe § 5 |
+| 10 | GREEN | ONE LFS-tracked canonical capture at cadence-50 (1.13 GB committed; within 2 GB W1 ceiling at ~55%) |
+| 11 | GREEN | determinism over-achieved bit-exact via `sim_runner_diagnostic` (16³ × 5K particles × 50 steps) — spec declared `epsilon-same-stack-same-hw`; Stack-D Python NumPy + numba reference achieves bit-exact cleanly per conventions doc § F.4 |
+| 12 | GREEN | 2 PBT invariants (mass_conservation_p2g_g2p + partition_of_unity_b_spline); Hypothesis 50 examples each |
+| 13 | GREEN | perf-ledger row (158.052 s) |
+| 13 (anchor) | GREEN | worktree replay at `9de8048` → 4 ModuleNotFoundError |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
