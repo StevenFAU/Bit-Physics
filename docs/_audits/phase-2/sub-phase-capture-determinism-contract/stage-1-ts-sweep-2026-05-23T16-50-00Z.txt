@@ -1,0 +1,12 @@
+Already up to date
+Done in 213ms using pnpm v11.1.3
+Already up to date
+Done in 215ms using pnpm v11.1.3
+
+ RUN  v4.1.6 /home/otacon/Projects/Bit-Physics/common/common-ts
+
+
+ Test Files  8 passed (8)
+      Tests  20 passed | 2 skipped (22)
+   Start at  12:49:50
+   Duration  1.74s (transform 300ms, setup 0ms, import 731ms, tests 1.94s, environment 0ms)

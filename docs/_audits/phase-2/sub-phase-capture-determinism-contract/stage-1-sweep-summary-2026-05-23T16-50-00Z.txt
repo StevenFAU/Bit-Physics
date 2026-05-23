@@ -1,0 +1,42 @@
+Stage 1 cross-package regression sweep — sub-phase-capture-determinism-contract
+Date: 2026-05-23T16-50Z
+HEAD: (pre-commit; working tree at end of STEPS 1-10)
+
+PYTHON FAN-OUT (per-package per § M.4 N1):
+  packages/strange-attractors                 11 PASSED
+  packages/mandelbulb-explorer                10 PASSED
+  packages/boids-3d                           10 PASSED
+  packages/physarum                           10 PASSED
+  packages/reaction-diffusion-2d              14 PASSED  (Phase-0 sim; not counted in Taichi-integration's 9-sim sweep)
+  packages/reaction-diffusion-3d               8 PASSED
+  packages/sph-water                          22 PASSED
+  packages/eulerian-smoke                     10 PASSED
+  packages/lattice-boltzmann-d3q19            10 PASSED  (+1 vs baseline: new R-D2 spot-check test)
+  packages/mpm-multimaterial                  10 PASSED  (+1 vs baseline: new R-D2 spot-check test)
+  9 Phase-1 sim subtotal                     101 PASSED  (was 99 at Taichi-integration; +2 R-D2)
+  tools/integrity/tests                       51 PASSED
+  tools/diagnostics/diagnostics               93 PASSED
+  tools/testkit (incl. numba_harness +        58 PASSED  (+1 vs Taichi-integration's 57: new
+    taichi_harness via explicit                          test_writer_determinism::test_write_capture_byte_identical_across_seconds)
+    invocation)
+  common/common-py                            25 PASSED
+  PYTHON TOTAL                               342 PASSED, 0 FAILED, 0 ERRORS
+
+TYPESCRIPT FAN-OUT (cd common/common-ts && pnpm vitest run):
+  Test files                                   8 passed
+  Tests                                       20 passed, 2 skipped (interactive/CI-skipped surfaces)
+  TS TOTAL                                    20 passed, 0 failed
+
+VERDICT: ALL GREEN, ZERO REGRESSIONS.
+
+Counting-variance notes (per conventions-refactor § 6.1 N1 reporting-mode discipline):
+  - RD-2D not counted in Taichi-integration's 9-sim sweep; counted here for completeness.
+  - tools/testkit count requires explicit numba_harness + taichi_harness inclusion to reach 58;
+    pyproject.toml's [tool.pytest.ini_options].testpaths excludes them by default → 48 + 10 = 58.
+  - Net new tests vs Taichi-integration baseline (325):
+      +14 RD-2D (counted now)
+      +1 LBM R-D2 spot-check
+      +1 MPM R-D2 spot-check
+      +1 capture/test_writer_determinism
+      Total: +17 → 342 Python.
+  - TypeScript was not measured at Taichi-integration (TS surface was minimal); new baseline 20+2-skipped established here.
