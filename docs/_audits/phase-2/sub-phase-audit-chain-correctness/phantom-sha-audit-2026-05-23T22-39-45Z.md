@@ -6,8 +6,8 @@ artifact: task
 artifact_id: audit-chain-correctness-phantom-sha-audit
 subject: "Portfolio-wide capture-.json phantom-sha audit (RD-2D Stack-D N5b). 14 tracked captures/**/*.json enumerated at HEAD: 5 MATCH / 7 NO-RECORD / 2 PHANTOM-DRIFT. The 2 drifts (rd-2d-stack-d a7780645…, rd-3d-ref ccd0e4ea…) both satisfy the trailing-newline signature sha256(content − \\n), confirming the pre-commit end-of-file-fixer root cause. Both already caught at their respective landings (both landings record correct committed values); phantoms survive only in sealed checkpoints. rd-3d-ref drift RE-CLASSIFIED from §B.6 Mode 1 (content evolved) to Mode 3 (phantom-sha) — the blob never changed. Non-corrective per Convention A + #12 + D5: NO edits/annotations to the phantom-bearing prior audits; this report is the canonical going-forward record. Incidence bounded at 2 (R-A3 >30 trigger far off)."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: 7bf36dc445b858fe22afadd186e0a4497987b8c0
+head_sha_at_checkpoint: 7bf36dc445b858fe22afadd186e0a4497987b8c0
 parent_audits:
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
   - docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/landing-2026-05-20T19-49-51Z.md
@@ -189,7 +189,7 @@ this report). Mode 3 = phantom-sha / pre-commit-hook trailing-newline. See
 
 ---
 
-This report lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 + § B.2
+This report lands at HEAD `7bf36dc445b858fe22afadd186e0a4497987b8c0` (back-filled per Convention #12 + § B.2
 in the Stage 1b SHA back-fill commit; full 40-hex via `git rev-parse HEAD` at
 summary-composition time).
 
