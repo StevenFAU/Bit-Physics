@@ -586,6 +586,91 @@ lean: no tag).
 | 13 | GREEN | perf-ledger rows (691.587 s + 5.099 s) |
 | 13 (anchor) | GREEN | worktree replay at `216021a` → 4 ModuleNotFoundError |
 
+### sub-phase-git-lfs-migration
+
+Focused infrastructure-hotfix sub-phase landed CONFIRMED at
+`0672554`. Adopts Git LFS for `captures/**/*.h5` to absorb the
+704 MB eulerian-smoke Taylor-Green capture that exceeded GitHub's
+100 MB per-file hard limit. 11-commit history rewrite from
+`34c7d34` to `cf13d1c` via fast-forward; bit-identity replay
+invariant `9399fc33…909f34` held byte-identically at pre-push +
+post-push runs (12th + 13th invocations). All 10 LFS-tracked
+captures verified bit-identical to canonical sha256s.
+
+### sub-phase-lattice-boltzmann-d3q19
+
+Sixth per-sim implementation sub-phase under spec-Phase-1 per Phase
+1 audit § 15. Lands gates 4–13 for `lattice-boltzmann-d3q19`
+(D3Q19 BGK lattice-Boltzmann; Qian-d'Humières-Lallemand 1992); MPM
+is the LAST remaining bootstrapped sim. **First lattice-category
+sim in the project + first cross-discretization NS-2D MMS exercise
++ second sub-phase exercising conventions doc § N Task 0.4 as
+established discipline + first sub-phase under Git LFS
+infrastructure.** No `-phase-N` tag pushed; optional non-phase
+point-release `v0.1.6` is a banked operator decision per
+`docs/phases/sub-phase-lattice-boltzmann-d3q19.md` § 11.4.
+
+#### Added
+
+- **Two LFS-tracked canonical captures** at `captures/lbm-ref/` per
+  Appendix D § D.2.3 (full cadence; N_z=3 z-periodic depth-3 slab):
+  `poiseuille-64x32-seed42-step1000.h5` (202.35 MB; bounce-back
+  walls + body-force in x) and `couette-32x16-seed42-step500.h5`
+  (27.41 MB; bounce-back + moving top-plate at u_wall=0.05).
+- LBM source modules at `packages/lattice-boltzmann-d3q19/
+  lattice_boltzmann_d3q19/`: `reference.{equilibrium, bgk, constants}`
+  (feq, density/momentum moments, bgk_step+Guo forcing, stream,
+  bounce-back, 19-direction lattice constants), `sim` (sim_runner_seeded
+  + sim_runner_seeded_couette + sim_runner_diagnostic), `invariants`
+  (equilibrium_density + equilibrium_momentum Hypothesis-decorated
+  callables).
+- Two perf-ledger first-landing rows
+  (`hardware_id = i7-12700KF-linux-6.17`; 3.784 s Poiseuille +
+  0.604 s Couette).
+- Phase 1 GREEN evidence at
+  `tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-implemented-2026-05-22T22-20-01Z.txt`
+  (sha256 `95be800a…45b89002`).
+- D3Q19 equilibrium golden table at `tools/testkit/golden/tables/
+  lattice/d3q19-equilibrium.json` lifted from 1 packed anchor to
+  **4 discrete `independent_reference` entries** (hand-derivation +
+  Qian 1992 + Krüger 2017 + Python regenerator); preserves every
+  citation verbatim per conventions doc § I.3.
+- `_SUBDIRS_PICKED_UP` at `tools/integrity/integrity/cat3_numerical/
+  golden_values.py` extended additively with `Path("lattice")`.
+  Sibling subdirs `hybrid-pg` + `continuous-ca` + `volumetric-grid`
+  remain non-recursed pending future per-sim sub-phases
+  (`continuous-ca` + `volumetric-grid` are NO-OP MMS-only precedent;
+  `hybrid-pg` awaits MPM Decision A or NO-OP routing).
+- B17 PATH-A continue — fourth proof-point: additive
+  `[tool.mutmut.targets.lattice_boltzmann_d3q19]` block in
+  `tools/testkit/mutation/mutmut-config.toml`; existing testkit/
+  integrity/RD-3D/sph-water/eulerian-smoke targets UNCHANGED.
+- W1 pre-commit ceiling raise: `args: ["--maxkb=2097152"]` (2 GB)
+  at `.pre-commit-config.yaml` — convergence-file inventory entry.
+- This audit chain (8 closing commits): Stage 0 tolerance-budget +
+  checkpoint + back-fill (`c463df0`, `f46eb78`, `040f5cf`); Stage 1
+  ceiling-raise (`2edc163`), implementation feat (`5095185`),
+  checkpoint (`f0f37a2`), back-fill (`8fe564f`); Stage 2 Cat 3
+  lift + pickup (`0f8ddde`, `d080463`) + landing audit + back-fill
+  (final SHAs).
+
+#### Verified
+
+| Gate | Status | Notes |
+|---|---|---|
+| 4 | GREEN | reads-through to gate 5 |
+| 5 (a) | GREEN | D3Q19 equilibrium golden at absolute 1e-15 |
+| 5 (b) | GREEN | NS-2D MMS observed OOA = **2.39** (formal p=2, ±0.5); first cross-discretization comparison vs eulerian-smoke 1.99/2.00 on shared MMS surface |
+| 6 | GREEN | Tier 1 NaN/Inf scan |
+| 7 | GREEN | Tier 2 vector_field (IC-6) on macroscopic moments — `check_divergence_free` advisory + `check_circulation` |
+| 8 | GREEN | Cat 1 citations (Qian 1992 DOI; Krüger 2017 ISBN citation-only) |
+| 9 | GREEN | Cat 2 public API per probe § 5 |
+| 10 | GREEN | TWO canonical captures via LFS at full cadence; N_z=3 z-periodic depth-3 slab |
+| 11 | GREEN | determinism over-achieved bit-exact via `sim_runner_diagnostic` (16x8x3 × 50 steps) — spec declared `bit-exact-effort`; Stack-D NumPy reference achieves bit-exact cleanly per conventions doc § F.4 |
+| 12 | GREEN | 2 PBT invariants (equilibrium_density + equilibrium_momentum) in Ma < 0.1 band |
+| 13 | GREEN | perf-ledger rows (3.784 s + 0.604 s) |
+| 13 (anchor) | GREEN | worktree replay at `b6abd7e` → 5 ModuleNotFoundError |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
