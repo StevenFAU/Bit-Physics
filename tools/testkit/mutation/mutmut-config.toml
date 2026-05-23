@@ -165,3 +165,38 @@ runner    = "uv run --no-sync pytest packages/eulerian-smoke/tests/ -x -q --tb=n
 path      = "tools/testkit/code_verification/mms/solutions/incompressible_ns_2d"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/eulerian-smoke/tests/test_mms_convergence.py -x -q --tb=no"
+
+# Per-sim sub-phase additive targets — sub-phase-lattice-boltzmann-d3q19
+# B17 PATH-A continue (fourth proof-point of the per-target runner
+# infrastructure established at sub-phase-continuous-ca-rd3d). The
+# RD-3D / sph-water / eulerian-smoke targets above are UNTOUCHED.
+#
+# LBM source target covers the D3Q19 BGK kernel + sim runner +
+# invariants (streaming via np.roll over 19 directions; BGK collision
+# with optional Guo 2002 body forcing; bounce-back walls; equilibrium
+# distribution; macroscopic-moment recovery; equilibrium-density +
+# equilibrium-momentum invariants). The runner targets the full test
+# suite at packages/lattice-boltzmann-d3q19/tests/ — all 9 tests run
+# in ~4 s, so pytest invocation per mutation is fast.
+#
+# Cross-discretization-MMS gate-5(b) test (~3.6 s of the 4 s total)
+# acts as the kill-signal for any mutation that breaks 2nd-order
+# observed OOA on the shared NS-2D MMS surface. Gate-11 bit-exact
+# determinism uses sim_runner_diagnostic (16x8x3 × 50 steps; ~50 ms
+# per call) acting as the kill-signal for any mutation breaking
+# bit-exact behaviour.
+#
+# Numba-mutation note: lattice_boltzmann_d3q19 does NOT use @njit at
+# this sub-phase (pure NumPy + np.roll suffices per Stage 0 Task 0.4
+# wall-clock budget). Numba-cache propagation does NOT apply.
+#
+# Optional NS-2D MMS solution target — SKIPPED per eulerian-smoke
+# Stage 2 § 7.6 precedent: the `incompressible_ns_2d_mms` target
+# above (defined at eulerian-smoke Stage 2; 0.6962 kill rate) already
+# covers that surface. Re-mutating the same solution.py against the
+# LBM tests would be redundant work.
+
+[targets.lattice_boltzmann_d3q19]
+path      = "packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/lattice-boltzmann-d3q19/tests/ -x -q --tb=no"
