@@ -1,0 +1,20 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 9 items
+
+packages/mpm-multimaterial/tests/test_determinism.py::test_run_twice_epsilon_diff PASSED [ 11%]
+packages/mpm-multimaterial/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 22%]
+packages/mpm-multimaterial/tests/test_diagnostics.py::test_tier2_particle_count_invariance PASSED [ 33%]
+packages/mpm-multimaterial/tests/test_diagnostics.py::test_tier2_particle_momentum_conservation PASSED [ 44%]
+packages/mpm-multimaterial/tests/test_diagnostics.py::test_tier2_vector_field_grid_momentum PASSED [ 55%]
+packages/mpm-multimaterial/tests/test_pbt_invariants.py::test_mass_conservation_p2g_g2p PASSED [ 66%]
+packages/mpm-multimaterial/tests/test_pbt_invariants.py::test_partition_of_unity_b_spline PASSED [ 77%]
+packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py::test_sample_values_match_golden PASSED [ 88%]
+packages/mpm-multimaterial/tests/test_quadratic_bspline_golden.py::test_partition_of_unity_match_golden PASSED [100%]
+
+============================== 9 passed in 0.84s ===============================
