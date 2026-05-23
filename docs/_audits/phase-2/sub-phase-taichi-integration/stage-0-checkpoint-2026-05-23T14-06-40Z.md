@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: taichi-integration-stage-0
 subject: "Stage 0 pre-flight checkpoint — Tasks 0.0/0.1/0.2/0.3 PASS; Task 0.4 baseline PASS with charter-prescribed-invocation drift surfaced (SHIFTED N1); FIRST spec-Phase-2 Stage 0 close"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
+head_sha: 0eed3d72081d53749382ffc472564f00bde4c57c
+head_sha_at_checkpoint: 0eed3d72081d53749382ffc472564f00bde4c57c
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -286,6 +286,6 @@ The Taichi-integration Stage 0 exercises the three-stage cadence's pre-flight di
 
 Stage 0 verdict: **CONFIRMED — Stage 1 dispatchable.** SHIFTED N1 surfaced for operator at closing summary; not a Stage 0 blocker because the surface IS Stage 1's deliverable.
 
-This audit lands at HEAD `<PLACEHOLDER-BACKFILL-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-stage0-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
+This audit lands at HEAD `0eed3d72081d53749382ffc472564f00bde4c57c` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-stage0-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
 
 Verdict: **CONFIRMED**.
