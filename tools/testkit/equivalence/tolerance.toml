@@ -41,3 +41,11 @@ absolute = 0.0
 
 # No per-sim overrides at Phase 0 close. Block 8 (RD-2D) and Phase 1+ sims
 # may add entries here; each addition is gated by tolerance-budget.toml.
+
+[overrides.reaction-diffusion-2d]
+category = "reaction-diffusion"
+# Resolves sim.category='continuous-ca' (physics-family taxonomy)
+# to tolerance-category='reaction-diffusion' (numerical-method taxonomy).
+# AT-BUDGET per [defaults.reaction-diffusion]: relative=1e-4, absolute=0.0.
+# NOT a tolerance widening per spec § 2.6 — resolution wiring only.
+# Established by sub-phase-reaction-diffusion-2d-stack-d Stage 1c.

@@ -1,0 +1,12 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d-stack-d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 1 item
+
+packages/reaction-diffusion-2d-stack-d/tests/test_cross_stack_equivalence.py::test_stack_d_capture_within_tolerance_of_stack_b PASSED [100%]
+
+============================== 1 passed in 0.28s ===============================

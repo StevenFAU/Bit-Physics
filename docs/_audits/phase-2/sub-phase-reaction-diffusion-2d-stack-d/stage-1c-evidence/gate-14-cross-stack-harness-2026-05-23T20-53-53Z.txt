@@ -1,0 +1,38 @@
+### Stage 1c Step 2 — gate-14 cross-stack equivalence harness invocation
+### compare_captures(Stack-B.json, Stack-D.json) at HEAD tolerance.toml (with [overrides.reaction-diffusion-2d])
+### Date (UTC): 2026-05-23T20-53-53Z
+
+--- repr(EquivalenceVerdict) ---
+EquivalenceVerdict(within_tolerance=True, per_field_diff={'step:0:U': {'max_abs_err': 0.0, 'max_rel_err': 0.0}, 'step:0:V': {'max_abs_err': 0.0, 'max_rel_err': 0.0}, 'step:200:U': {'max_abs_err': 6.661338147750939e-16, 'max_rel_err': 1.2976902610183683e-15}, 'step:200:V': {'max_abs_err': 5.273559366969494e-16, 'max_rel_err': 5.423364906016228e-15}, 'step:400:U': {'max_abs_err': 8.881784197001252e-16, 'max_rel_err': 1.7862741705204275e-15}, 'step:400:V': {'max_abs_err': 6.938893903907228e-16, 'max_rel_err': 5.638412686083399e-15}, 'step:600:U': {'max_abs_err': 1.7763568394002505e-15, 'max_rel_err': 3.159543162680308e-15}, 'step:600:V': {'max_abs_err': 1.3600232051658168e-15, 'max_rel_err': 1.1034271184758135e-14}, 'step:800:U': {'max_abs_err': 2.3314683517128287e-15, 'max_rel_err': 4.488091813195829e-15}, 'step:800:V': {'max_abs_err': 1.887379141862766e-15, 'max_rel_err': 1.5153135806142084e-14}, 'step:1000:U': {'max_abs_err': 2.6645352591003757e-15, 'max_rel_err': 5.279403044946383e-15}, 'step:1000:V': {'max_abs_err': 2.1094237467877974e-15, 'max_rel_err': 1.6934364856944836e-14}, 'step:1200:U': {'max_abs_err': 6.106226635438361e-15, 'max_rel_err': 1.1875230074025617e-14}, 'step:1200:V': {'max_abs_err': 5.10702591327572e-15, 'max_rel_err': 3.5850357232575436e-14}, 'step:1400:U': {'max_abs_err': 1.4654943925052066e-14, 'max_rel_err': 2.998018189172363e-14}, 'step:1400:V': {'max_abs_err': 1.1823875212257917e-14, 'max_rel_err': 8.994185483200372e-14}, 'step:1600:U': {'max_abs_err': 1.8984813721090177e-14, 'max_rel_err': 3.051905773037425e-14}, 'step:1600:V': {'max_abs_err': 1.2212453270876722e-14, 'max_rel_err': 1.2465176813646263e-13}, 'step:1800:U': {'max_abs_err': 1.1435297153639112e-14, 'max_rel_err': 2.2701255387161167e-14}, 'step:1800:V': {'max_abs_err': 8.93729534823251e-15, 'max_rel_err': 7.105501388264988e-14}, 'step:2000:U': {'max_abs_err': 1.1324274851176597e-14, 'max_rel_err': 2.0985389220153706e-14}, 'step:2000:V': {'max_abs_err': 8.798517470154366e-15, 'max_rel_err': 7.176377629726823e-14}}, tolerance_table_used={'category': 'reaction-diffusion', 'relative': 0.0001, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'})
+
+--- decoded verdict + per-frame per-field diff (U,V x 11 frames) ---
+within_tolerance = True
+tolerance_table_used = {'category': 'reaction-diffusion', 'relative': 0.0001, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+
+ step  field     max_abs_err     max_rel_err
+    0  U        0.000000e+00    0.000000e+00
+    0  V        0.000000e+00    0.000000e+00
+  200  U        6.661338e-16    1.297690e-15
+  200  V        5.273559e-16    5.423365e-15
+  400  U        8.881784e-16    1.786274e-15
+  400  V        6.938894e-16    5.638413e-15
+  600  U        1.776357e-15    3.159543e-15
+  600  V        1.360023e-15    1.103427e-14
+  800  U        2.331468e-15    4.488092e-15
+  800  V        1.887379e-15    1.515314e-14
+ 1000  U        2.664535e-15    5.279403e-15
+ 1000  V        2.109424e-15    1.693436e-14
+ 1200  U        6.106227e-15    1.187523e-14
+ 1200  V        5.107026e-15    3.585036e-14
+ 1400  U        1.465494e-14    2.998018e-14
+ 1400  V        1.182388e-14    8.994185e-14
+ 1600  U        1.898481e-14    3.051906e-14
+ 1600  V        1.221245e-14    1.246518e-13
+ 1800  U        1.143530e-14    2.270126e-14
+ 1800  V        8.937295e-15    7.105501e-14
+ 2000  U        1.132427e-14    2.098539e-14
+ 2000  V        8.798517e-15    7.176378e-14
+
+PEAK max_abs_err = 1.898481e-14 at step:1600:U
+PEAK max_rel_err = 1.246518e-13 at step:1600:V
+tolerance(relative) = 1.0e-04  -> margin (abs vs rel-tol) ~ 5.27e+09x
