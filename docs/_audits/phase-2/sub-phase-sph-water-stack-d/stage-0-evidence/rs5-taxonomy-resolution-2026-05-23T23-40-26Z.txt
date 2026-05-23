@@ -1,0 +1,16 @@
+=== Task 0.4 / R-S5 compare_captures taxonomy-resolution probe ===
+tolerance.toml = tools/testkit/equivalence/tolerance.toml  (HEAD)
+synthetic LEFT  sim={name=sph-water, category=particle-fluids} stack=numpy-reference
+synthetic RIGHT sim={name=sph-water, category=particle-fluids} stack=taichi-stack-d
+
+[RESULT] KeyError raised as EXPECTED:
+   "tolerance.toml has no defaults for category 'particle-fluids'; add `[defaults.particle-fluids]` or an override for sim 'sph-water'"
+
+=> Confirms D6-MANDATORY: [overrides.sph-water] category="sph" must
+   be added at Stage 1c (no [defaults.particle-fluids]; no override yet).
+   Taxonomy-resolution gap caught at Stage 0 (pre-empts RD-2D Stack-D's
+   mid-Stage-1c KeyError per RD-2D N1 banked precedent).
+
+[positive] simulated [overrides.sph-water] category="sph" resolves to:
+   {'category': 'sph', 'relative': 0.0001, 'absolute': 0.0}
+[positive] resolves at-budget relative=1e-4 absolute=0.0: True

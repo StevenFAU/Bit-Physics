@@ -1,0 +1,15 @@
+# Task 0.6 condition #3 — per-package pytest functional run at HEAD d439fd8 (precondition)
+
+  boids-3d: 10 passed in 39.69s
+  eulerian-smoke: 10 passed in 3.28s
+  lattice-boltzmann-d3q19: 10 passed in 3.93s
+  mandelbulb-explorer: 10 passed in 0.23s
+  mpm-multimaterial: 10 passed in 0.82s
+  physarum: 10 passed in 10.55s
+  reaction-diffusion-2d: 14 passed in 2.42s
+  reaction-diffusion-2d-stack-d: 16 passed in 4.11s
+  reaction-diffusion-3d: 8 passed in 23.63s
+  sph-water: 22 passed in 0.56s
+  strange-attractors: 11 passed in 0.74s
+
+ALL_GREEN=1
