@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: audit-chain-correctness-stage-1a
 subject: "Stage 1a CLOSE — verify_evidence LFS-content-OID fix landed. Mechanism A (pointer-stub-sniff) in tools/integrity/integrity/common/repo.py lfs_pointer_oid(); verify_evidence.py:113 hash site compares parsed content OID for LFS pointers, git-blob sha256 otherwise. Pure/offline OID-parse — no git-lfs-smudge/network/auth (R-A1 dissolution path). mismatch→error preserved (R-A4); --strict untouched. +5 tests (10 passed; 5 existing GREEN); full integrity package 56 passed; ruff clean. Pre-fix verify_evidence on RD-2D Stack-D landing 29/2 → post-fix 31/0 (§B.6 Mode 2 RESOLVED on real data). §B.6 amendment additive; NEW conventions doc baseline sha256 2638dd2854c2841b4c1a56449183afe7091f48d90a9e28694841f8a72d9cf7c1 (was 167fe349…f2c58c2e). IC-16 formalized. Verdict CONFIRMED; 0 new shifts; cumulative 122."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
-head_sha_at_checkpoint: <PLACEHOLDER>
+head_sha: 5c90bc92abdfd533ec9121503bdaa3dd49f1995a
+head_sha_at_checkpoint: 5c90bc92abdfd533ec9121503bdaa3dd49f1995a
 parent_audits:
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -158,7 +158,7 @@ of prior audits (R-A2; D5 = NO annotations).
 
 ---
 
-This checkpoint lands at HEAD `<PLACEHOLDER>` (back-filled per Convention #12 +
+This checkpoint lands at HEAD `5c90bc92abdfd533ec9121503bdaa3dd49f1995a` (back-filled per Convention #12 +
 § B.2 in a separate `chore(audit-chain-correctness-stage1a-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
