@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-stage-1a
 subject: "Stage 1a failing-tests RED-state anchored. CONFIRMED. 8 new test files at packages/reaction-diffusion-2d-stack-d/tests/ + minimal package skeleton (pyproject.toml + README.md + parent __init__) + root pyproject.toml additive workspace-members extension. RED state is structurally clean: 6 test files fail at collection with ModuleNotFoundError on exactly the 3 Stage 1b submodule targets (reference, sim, invariants). Failing-tests evidence sha256 685e5cc0…23ad6446 — the load-bearing TDD anchor per IC-8 + phase-2-plan § 1.5.1 Gate 3 footer-hash discipline. Stage 1b dispatchable."
 verdict-state: CONFIRMED
-head_sha: ca9bc0b66099f8e4721b7054ff5f3fc449fe8e74
-head_sha_at_checkpoint: ca9bc0b66099f8e4721b7054ff5f3fc449fe8e74
+head_sha: ea6153c5729cd46828110fe3718fc22667a35c61
+head_sha_at_checkpoint: ea6153c5729cd46828110fe3718fc22667a35c61
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
@@ -121,6 +121,6 @@ Stage 1b implements the three missing submodules + canonical Stack-D capture + s
 
 ---
 
-This checkpoint lands at HEAD `ca9bc0b66099f8e4721b7054ff5f3fc449fe8e74` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage1a-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
+This checkpoint lands at HEAD `ea6153c5729cd46828110fe3718fc22667a35c61` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage1a-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time).
 
 Verdict: **CONFIRMED**.
