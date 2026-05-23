@@ -5,8 +5,8 @@ artifact: stage
 artifact_id: mpm-multimaterial-stage-1
 stage: 1-per-sim-implementation
 subject: "MPM-Multimaterial sub-phase Stage 1 per-sim implementation — gates 4-13 GREEN; LAST per-sim Phase 1 sub-phase"
-head_sha: 9bd770e1d74886e697ad8cc5c90f36dc41649496
-head_sha_at_checkpoint: 9bd770e1d74886e697ad8cc5c90f36dc41649496
+head_sha: 53349c1acc337c309fad2ccd0a119d79caf6a9c8
+head_sha_at_checkpoint: 53349c1acc337c309fad2ccd0a119d79caf6a9c8
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/landing-2026-05-23T00-41-15Z.md
@@ -186,7 +186,7 @@ Stage 0 deltas.) **83 cumulative shifts entering Stage 2.**
 
 Stage 2 dispatch is READY. Stage 2 prompt at `docs/phases/sub-phase-mpm-multimaterial.md` § 7.3.
 
-This Stage 1 checkpoint lands at HEAD `9bd770e1d74886e697ad8cc5c90f36dc41649496`
+This Stage 1 checkpoint lands at HEAD `53349c1acc337c309fad2ccd0a119d79caf6a9c8`
 (this commit; closing-commit SHA back-fills per Convention #12 in a
 separate commit captured via `git rev-parse HEAD` per LBM landing
 § 9.3 row 5 lesson — NEVER transcribe short-SHA, NEVER `--amend`).
