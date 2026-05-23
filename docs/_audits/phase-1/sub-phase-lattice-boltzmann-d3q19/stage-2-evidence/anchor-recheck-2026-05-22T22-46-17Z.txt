@@ -1,0 +1,8 @@
+c78de8bee93a5cb06c0ccc78a843766b98c93685b344c63d772cf3374b6ef3cd  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt
+95be800a852ddfbd5a6588cd7f36d803b73f11e03421f8deddfa28ff45b89002  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-implemented-2026-05-22T22-20-01Z.txt
+0e0843aa8707e5f07f2e12fae81c764fccdbe91b408833bbc67450f1b5e16f68  captures/lbm-ref/poiseuille-64x32-seed42-step1000.h5
+7a94843457e44c8747a6514fe6bc56548f637e09a3bd5ee2631d9ddfae15b65b  captures/lbm-ref/couette-32x16-seed42-step500.h5
+30e490a736cbfac26a549180f97219388549465d9d9557de9061106561320d8e  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/solution.py
+30dfc29483435361881214581f53e026ffd0d856a3ac0657ece9587f4ac86e76  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/derivation.md
+47bd1237a5bfcd5e072ae309eb3bf2f3d1313fa442361036aac84605ede93d5c  tools/testkit/golden/tables/lattice/d3q19-equilibrium.json
+10b730a4f40ad6d7ce3eb91313c1f73643752ae55048ae51fa85a2f22abac954  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-1-gate13-replay-2026-05-22T22-21-25Z.txt

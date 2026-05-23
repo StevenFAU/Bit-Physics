@@ -1,0 +1,22 @@
+=== Stage 0 checkpoint ===
+  PASS  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/derivation.md
+  PASS  tools/testkit/golden/tables/lattice/d3q19-equilibrium.json
+  PASS  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-0-evidence/replay-2026-05-22T21-29-20Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-0-evidence/mms-spot-check-2026-05-22T21-31-11Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-0-evidence/scope-analysis-microbench-2026-05-22T21-32-38Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt (sha256 OK)
+  PASS  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/solution.py (sha256 OK)
+  PASS  tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/derivation.md (sha256 OK)
+  PASS  tools/testkit/golden/tables/lattice/d3q19-equilibrium.json (sha256 OK)
+summary: 17 pass / 0 fail at head_sha f46eb78654f2
+=== Stage 1 checkpoint ===
+  PASS  packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19/reference/bgk.py
+  PASS  packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19/reference/constants.py
+  PASS  packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19/invariants.py
+  PASS  .pre-commit-config.yaml
+  PASS  docs/perf-ledger.md
+  PASS  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-1-capture-generation-2026-05-22T22-21-04Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-1/sub-phase-lattice-boltzmann-d3q19/stage-1-gate13-replay-2026-05-22T22-21-25Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-implemented-2026-05-22T22-20-01Z.txt (sha256 OK)
+summary: 23 pass / 2 fail at head_sha f0f37a2e3fea

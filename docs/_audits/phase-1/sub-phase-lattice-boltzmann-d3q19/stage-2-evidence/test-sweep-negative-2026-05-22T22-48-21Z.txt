@@ -1,0 +1,10 @@
+=== NEGATIVE SWEEP (still RED with ModuleNotFoundError) ===
+--- packages/mpm-multimaterial/tests ---
+E   ModuleNotFoundError: No module named 'mpm_multimaterial.reference'
+=========================== short test summary info ============================
+ERROR tests/test_determinism.py
+ERROR tests/test_diagnostics.py
+ERROR tests/test_pbt_invariants.py
+ERROR tests/test_quadratic_bspline_golden.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 4 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 4 errors in 0.11s ===============================

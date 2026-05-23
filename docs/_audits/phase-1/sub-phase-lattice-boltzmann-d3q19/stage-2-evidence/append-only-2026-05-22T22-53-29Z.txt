@@ -1,0 +1,33 @@
+=== Append-only check ===
+
+--- CI semantics: *.ledger.md files ---
+(expected: empty)
+
+--- Protected sets: any diff to files committed at prior sub-phase landing SHAs ---
+--- Protected SHA: v0.1.0-phase-1 ---
+  Total modified-since: 61  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 2cc0f21 ---
+  Total modified-since: 51  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 739c93f ---
+  Total modified-since: 41  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 1f5fa0c ---
+  Total modified-since: 39  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 0df358d ---
+  Total modified-since: 35  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 569c883 ---
+  Total modified-since: 29  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 281c74f ---
+  Total modified-since: 27  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 17850e2 ---
+  Total modified-since: 26  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 27304d0 ---
+  Total modified-since: 25  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 34c7d34 ---
+  Total modified-since: 25  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: cf13d1c ---
+  Total modified-since: 9  (audit-append-only.yml filter to *.ledger.md: 0)
+--- Protected SHA: 0672554 ---
+  Total modified-since: 9  (audit-append-only.yml filter to *.ledger.md: 0)
+
+--- LBM-specific (post-Stage-0/1 closes) ---
+Stage 0 close 040f5cf -> HEAD modified docs in LBM audit chain:
