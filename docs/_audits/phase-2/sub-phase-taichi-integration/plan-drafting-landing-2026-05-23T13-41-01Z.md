@@ -6,8 +6,8 @@ artifact: sub-phase
 artifact_id: sub-phase-taichi-integration-plan-drafting
 subject: "Plan-drafting landing audit for Taichi-integration sub-phase — FIRST spec-Phase-2 deliverable; charter at docs/phases/sub-phase-taichi-integration.md; D1/D2/D3 operator routings surfaced; subsequent stages dispatchable separately"
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-PER-CONVENTION-12>
+head_sha: 185401bf9709106957cb1078010c556c0c4f8510
+head_sha_at_checkpoint: 185401bf9709106957cb1078010c556c0c4f8510
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -230,6 +230,6 @@ Per-area coherence:
 - **Conventions doc append-only protected** at sha256 `3698d19b…2bd734`; this sub-phase introduces no edits to it.
 - **Reference materials.** Charter § 11.5 surfaces D1 routing of existing `docs/phases/phase-2-cross-stack-replication.md`; the plan's § 1.5.2 + § 1.9.1 + § 1.9.3 + § 1.9.4 (W-Gates + common-warp public API spec + capture-naming + harness-invocation contract) remain useful as reference material for subsequent per-sub-phase plan-drafting regardless of D1 disposition.
 
-This audit lands at HEAD `<PLACEHOLDER-BACKFILL-PER-CONVENTION-12>` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
+This audit lands at HEAD `185401bf9709106957cb1078010c556c0c4f8510` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(taichi-integration-plan-drafting-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per the tightened § B.2 step 3 discipline).
 
 Verdict: **CONFIRMED**.
