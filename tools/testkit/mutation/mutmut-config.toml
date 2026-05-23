@@ -200,3 +200,29 @@ runner    = "uv run --no-sync pytest packages/eulerian-smoke/tests/test_mms_conv
 path      = "packages/lattice-boltzmann-d3q19/lattice_boltzmann_d3q19"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/lattice-boltzmann-d3q19/tests/ -x -q --tb=no"
+
+# Per-sim sub-phase additive target — sub-phase-mpm-multimaterial Stage 2
+# § 4.3 Step 2.7 PATH-A continue (FIFTH-AND-FINAL per-sim Phase 1
+# mutation proof-point; closes the B17 PATH-A arc).
+# Existing testkit/integrity/RD-3D/sph-water/eulerian-smoke/LBM +
+# incompressible-ns-2d-mms targets UNCHANGED.
+#
+# Runner: invokes the MPM test suite (9 tests at ~3 s total — gate-11
+# determinism test uses sim_runner_diagnostic (16³ × 5K particles × 50
+# steps) acting as kill-signal for any mutation breaking bit-exact
+# behaviour; gate-12 PBT tests cover invariants; gate-5 golden tests
+# cover shape-function values).
+#
+# Numba-mutation note: MPM is the SECOND project sim consumer of numba
+# after sph-water (LBM did NOT use @njit). Mutations on the @njit-
+# decorated kernels in mpm_multimaterial.reference.mls_mpm propagate
+# through numba's cache=True via source-hash invalidation, per
+# sub-phase-particle-fluids-sph-water Stage 2 N3 verification — mutmut
+# mutates source.py, numba's cache keys off source-hash, cache
+# invalidates per-mutant. Cache-propagation verified at first mutmut
+# invocation.
+
+[targets.mpm_multimaterial]
+path      = "packages/mpm-multimaterial/mpm_multimaterial"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/mpm-multimaterial/tests/ -x -q --tb=no"
