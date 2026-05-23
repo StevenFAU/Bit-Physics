@@ -48,17 +48,27 @@ def write_capture(
     payload_path = out_dir / Path(payload_rel).name
     manifest_path = payload_path.with_suffix(".json")
 
-    with h5py.File(payload_path, "w") as h:
-        steps_group = h.create_group("steps")
+    # Defense-in-depth determinism (sub-phase-capture-determinism-contract):
+    # ``libver="earliest"`` + ``track_order=False`` on every create_group +
+    # ``track_times=False`` on every create_dataset suppress the wall-clock-
+    # influenced metadata (HDF5 H5O_MTIME_NEW object-header messages) that
+    # would otherwise vary across writes at different Unix instants. The
+    # harness-based determinism contract makes this non-load-bearing — the
+    # harness compares parsed Capture arrays, not raw file bytes — but
+    # suppressing the variance at the source eliminates the latent flake
+    # mechanically for any downstream consumer that does compare bytes
+    # (e.g., `payload.checksum` round-tripping for forensic purposes).
+    with h5py.File(payload_path, "w", libver="earliest") as h:
+        steps_group = h.create_group("steps", track_order=False)
         for step_state in state_iter:
-            sg = steps_group.create_group(str(step_state.step))
-            state_g = sg.create_group("state")
+            sg = steps_group.create_group(str(step_state.step), track_order=False)
+            state_g = sg.create_group("state", track_order=False)
             for fname, arr in step_state.state.items():
-                state_g.create_dataset(fname, data=np.asarray(arr))
-            diag_g = sg.create_group("diagnostics")
+                state_g.create_dataset(fname, data=np.asarray(arr), track_times=False)
+            diag_g = sg.create_group("diagnostics", track_order=False)
             for cname, value in step_state.diagnostics.items():
-                diag_g.create_dataset(cname, data=np.asarray(value))
-        meta_g = h.create_group("metadata")
+                diag_g.create_dataset(cname, data=np.asarray(value), track_times=False)
+        meta_g = h.create_group("metadata", track_order=False)
         meta_g.attrs["schema_version"] = manifest_meta.schema_version
         meta_g.attrs["sim_name"] = manifest_meta.sim.get("name", "")
         meta_g.attrs["sim_category"] = manifest_meta.sim.get("category", "")

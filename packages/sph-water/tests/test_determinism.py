@@ -44,5 +44,5 @@ def test_run_twice_epsilon_diff(tmp_path: Path) -> None:
     verdict = run_twice_and_diff(sim_runner_diagnostic, seed=42, tmp_dir=out_dir)
     # Spec declaration is epsilon for Stack C; the Python NumPy
     # reference here over-achieves bit-exact (sub-phase plan § 1.5).
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"

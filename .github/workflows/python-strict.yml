@@ -23,14 +23,26 @@ jobs:
         working-directory: tools/testkit
         run: uv sync --extra dev
 
-      - name: ruff (testkit)
+      - name: ruff (testkit capture + determinism)
         working-directory: tools/testkit
-        run: uv run ruff check capture/
+        run: |
+          uv run ruff check capture/
+          uv run ruff check determinism/
 
-      - name: mypy --strict (testkit)
+      - name: mypy --strict (testkit capture + determinism)
         working-directory: tools/testkit
-        run: uv run mypy --strict capture/
+        run: |
+          uv run mypy --strict capture/
+          uv run mypy --strict determinism/
 
       - name: pytest -W error + coverage (advisory)
         working-directory: tools/testkit
         run: uv run pytest -W error --cov=capture --cov-report=term --cov-report=xml capture/tests/
+
+      # Discrete determinism-gate step for visibility (sub-phase-capture-
+      # determinism-contract STEP 10 / D4 strict-fanout). Runs the
+      # content-equivalent contract surface's own test suite under -W error
+      # so CI failures point at the gate by name.
+      - name: Determinism gate (content-equivalent contract)
+        working-directory: tools/testkit
+        run: uv run pytest -W error determinism/tests/

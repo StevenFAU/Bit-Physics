@@ -78,7 +78,8 @@
         "path":     { "type": "string", "minLength": 1 },
         "checksum": {
           "type": "string",
-          "pattern": "^sha256:[0-9a-f]{64}$"
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Raw-file sha256 of the HDF5 payload as written by the producer. INFORMATIONAL only — the canonical determinism contract lives at the spec § 2.5 harness, not at this field. Storage-format metadata (HDF5 object-header timestamps, etc.) may vary across writes at different Unix instants even when the underlying state is identical; consumers MUST NOT use payload.checksum byte-equality as the determinism gate. Use tools/testkit/determinism::run_twice_and_diff (Python) or @bit-physics/common-ts::runTwiceAndDiff (TypeScript) instead."
         }
       }
     },
@@ -89,7 +90,8 @@
       "properties": {
         "claimed": {
           "type": "string",
-          "enum": ["bit-exact-same-hw", "epsilon", "non-deterministic"]
+          "enum": ["bit-exact-same-hw", "epsilon", "non-deterministic"],
+          "description": "Per-sim determinism posture per spec § 2.5 + § 2.6. The enum value `bit-exact-same-hw` denotes the content-equivalent contract defined at spec § 2.5: every state array and diagnostic entry in the canonical Capture is exactly element-wise equal across two runs at the same seed on the same hardware (storage-format metadata excluded). The enum value name is preserved for backward compatibility with pre-sub-phase-capture-determinism-contract manifests; the semantics are the content-equivalent contract."
         },
         "atomic_ops":   { "type": "boolean" },
         "subgroup_ops": { "type": "boolean" }

@@ -53,5 +53,5 @@ def test_run_twice_epsilon_diff(tmp_path: Path) -> None:  # type: ignore[no-unty
     # Spec declaration is epsilon for Stack-C (Phase 2+); the Python
     # NumPy reference here over-achieves bit-exact (sub-phase plan
     # § 1.5 / conventions doc § F.4).
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"

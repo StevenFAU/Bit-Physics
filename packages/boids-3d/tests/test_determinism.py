@@ -24,12 +24,12 @@ def test_run_twice_bit_exact(tmp_path: Path) -> None:
     flock_dir = tmp_path / "flock-1000"
     flock_dir.mkdir()
     verdict_flock = run_twice_and_diff(sim_runner_seeded, seed=42, tmp_dir=flock_dir)
-    assert verdict_flock.bit_exact, verdict_flock.detail
+    assert verdict_flock.content_equivalent, verdict_flock.detail
     assert verdict_flock.detail == "captures match exactly"
     canonical_dir = tmp_path / "flock-3"
     canonical_dir.mkdir()
     verdict_canonical = run_twice_and_diff(
         sim_runner_seeded_3agent, seed=42, tmp_dir=canonical_dir
     )
-    assert verdict_canonical.bit_exact, verdict_canonical.detail
+    assert verdict_canonical.content_equivalent, verdict_canonical.detail
     assert verdict_canonical.detail == "captures match exactly"

@@ -45,9 +45,9 @@ def _nondet_runner(seed: int, out_dir: Path) -> Path:
 
 def test_deterministic_runner_passes(tmp_path: Path) -> None:
     verdict = check_determinism(_det_runner, seed=7)
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
 
 
 def test_nondeterministic_runner_fails(tmp_path: Path) -> None:
     verdict = check_determinism(_nondet_runner, seed=7)
-    assert not verdict.bit_exact
+    assert not verdict.content_equivalent

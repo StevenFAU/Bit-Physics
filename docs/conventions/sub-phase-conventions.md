@@ -33,6 +33,8 @@ Every per-sim implementation sub-phase ships under three stages:
 
 (FACT — three-stage cadence declared at `sub-phase-closed-form.md` § 1.5; inherited verbatim at `sub-phase-agent-based.md`, `sub-phase-continuous-ca-rd3d.md`, `sub-phase-particle-fluids-sph-water.md` with at most a per-sub-phase delta — e.g., RD-3D's 10-step sequence vs closed-form's 8-step sequence to absorb MMS gate-5 + commit-footer ladder.)
 
+**Gate-11 (determinism) mechanism.** Within the Stage 1 13-gate GREEN target, gate-11 is witnessed by `tools/testkit/determinism::run_twice_and_diff` (Python) or `@bit-physics/common-ts::runTwiceAndDiff` (TypeScript). The harness compares parsed Capture projections (every state array + every diagnostic entry element-wise) under the content-equivalent contract established at `sub-phase-capture-determinism-contract` per spec § 2.5. See § F.3 for the Content-equivalent vs FP-equivalent contract distinction.
+
 **Focused infrastructure hotfix sub-phases do NOT follow the three-stage cadence.** They ship a single repair audit with embedded V1–V5 validation, parallel to the replay-tool-hotfix shape (FACT — `repair-2026-05-20T19-06-35Z.md` § 7 validation table).
 
 ### A.3 Role model
@@ -136,6 +138,28 @@ docs/_audits/phase-1/sub-phase-<slug>/
 ### B.5 Audit-internal cross-references
 
 Use `[[<audit-name>]]` (without the `.md` extension) to link related audits inside an audit body (FACT — pattern visible across landing audits' "Stage 2 convergence commits" tables). At HEAD this is a documentation convention; no machine-readable index resolves it, but the consistency aids grep-based navigation.
+
+### B.7 Cross-package regression sweep — Python + TypeScript fan-out
+
+(FACT — established at `sub-phase-capture-determinism-contract`; the FIRST sub-phase to ship both Python and TypeScript implementation surface in a single Stage 1 commit.)
+
+When a sub-phase ships implementation surface in BOTH Python (workspace members at `packages/*` / `tools/*` / `common/common-py/`) AND TypeScript (`common/common-ts/`), the Stage 2 cross-package regression sweep MUST fan out across both stacks. The shape:
+
+```
+# Python fan-out (per-package per § M.4 N1 import-path-collision; one-package-at-a-time)
+for pkg in <9 phase-1 sims> tools/integrity tools/diagnostics tools/testkit common/common-py; do
+  (cd <pkg> && uv run pytest tests/ -v)
+done
+
+# TypeScript fan-out
+(cd common/common-ts && pnpm install --frozen-lockfile && pnpm vitest run)
+```
+
+Both sweeps' outputs are captured to the Stage 2 evidence directory with their respective sha256s. The landing audit § 5 (or § 6, per the per-sub-phase convention) records both totals (Python tests count + TypeScript tests count) and reports any counting-variance per the conventions-refactor § 6.1 N1 reporting-mode discipline.
+
+**When a sub-phase ships ONLY Python surface**, only the Python fan-out runs; the TypeScript fan-out is a NO-OP. Symmetric for TypeScript-only sub-phases. The fan-out shape is declared at Stage 0 Task 0.x routing per the sub-phase's deliverable surface.
+
+(INFERENCE — first per-sub-phase exercise of this discipline at `sub-phase-capture-determinism-contract`; subsequent sub-phases consume the discipline by reference rather than re-declaring it.)
 
 ### B.6 Evidence-paths strict-verify discipline
 
@@ -316,12 +340,14 @@ Clauses to enumerate, in priority order keyed to P22 / P23 / P24:
 
 | Contract | Holds across | Tolerance | Example sites |
 |---|---|---|---|
-| **Bit-identical run-to-run** | repeated runs of the SAME implementation on the SAME hardware | 0 (exact) | gate-10 `test_run_twice_bit_exact` (RD-3D, closed-form, agent-based). Numba's cold-vs-warm cache identity. |
+| **Content-equivalent run-to-run** | repeated runs of the SAME implementation on the SAME hardware | 0 (exact, element-wise over the parsed Capture projection; storage-format metadata excluded per spec § 2.5) | gate-11 `test_run_twice_*` (every Phase-1 sim + hello-physics TS smoke). Canonical mechanism: `tools/testkit/determinism::run_twice_and_diff` (Python) and `@bit-physics/common-ts::runTwiceAndDiff` (TypeScript) — both surfaces return `DeterminismVerdict { content_equivalent, detail }`. Numba's cold-vs-warm cache identity. |
 | **FP-equivalent cross-implementation** | vectorized-NumPy vs scalar-loop vs numba-JIT'd | absolute < 1e-9 | dual-implementation equivalence tests. The numba determinism-harness regression test. |
 
 The SIMD-vs-scalar gap is intrinsic: NumPy's AVX2/AVX-512 4-or-8-double-wide accumulators with pairwise summation, vs numba's lowered scalar inner loop, vs hand-rolled Python loops — these use different FP-accumulation orders. The same algebraic formula produces slightly different bit patterns at scale (residual ~1e-12 at N=1024 even after aligning operation orders). The 1e-9 tolerance is well below spec's cross-stack 1e-4 relative.
 
 **Failing an FP-equivalence test indicates a violation** (a banned flag like `fastmath=True`, or an unsorted index in a scatter-add) — do NOT relax the test; investigate.
+
+**Content-equivalent NOT raw-file-byte-equality** (FACT — established at `sub-phase-capture-determinism-contract`; spec § 2.5 amended at this sub-phase). The contract is content-equivalent over the parsed Capture data model (every state array + every diagnostic entry compared via `np.array_equal` / equivalent); wall-clock-influenced storage-format metadata (HDF5 H5O_MTIME_NEW object-header messages, file-system mtime, compression headers, library-version banners) is excluded from the comparison. Pre-`sub-phase-capture-determinism-contract` tests that asserted raw-file sha256 equality (LBM `_sha256_of_file`; MPM `_sha256_of_file`; hello-physics TS `payloadA.equals(payloadB)`) were refactored to the harness-based content-equivalent contract at that sub-phase. Defense-in-depth: the Python CaptureWriter uses `track_times=False` + `libver="earliest"`; the TypeScript CaptureWriter freezes `globalThis.Date.now` for the h5wasm write window (h5wasm 0.10.1 does not expose `H5Pset_obj_track_times`). Neither defense is load-bearing — the contract lives at the harness — but both eliminate the latent flake at the source for downstream consumers that compare bytes for forensic round-tripping.
 
 ### F.4 Over-achieving the spec
 

@@ -1,6 +1,10 @@
 name: determinism
-# Runs Block 3's determinism harness against stub sims and (post-Block-8)
-# the RD-2D sim. Gated until Block 3 lands; Block 9 activates.
+# Runs the content-equivalent determinism contract harness (Python) against
+# the testkit harness's own tests AND across each Phase-1 sim's
+# test_determinism.py under the harness API. Extended at
+# sub-phase-capture-determinism-contract STEP 10 (D4 strict-fanout) to
+# operationalize the cross-package sweep template defined at conventions
+# doc § B.7 (Python + TypeScript fan-out).
 
 on:
   push:
@@ -17,9 +21,33 @@ jobs:
         uses: astral-sh/setup-uv@v6
       - name: Set up Python
         run: uv python install 3.12
+
       - name: Sync testkit deps
         working-directory: tools/testkit
         run: uv sync --extra dev
-      - name: Run determinism harness
+
+      - name: Determinism harness (testkit)
         working-directory: tools/testkit
         run: uv run pytest -W error determinism/tests/
+
+      # Per-sim fan-out: each Phase-1 sim's test_determinism.py invokes
+      # run_twice_and_diff against the canonical sim runner under the
+      # content-equivalent contract. Per conventions § M.4 N1, packages
+      # share a `tests.conftest` import-path namespace; pytest must run
+      # one package at a time to avoid the ImportPathMismatchError.
+      - name: Determinism gate per-sim fan-out
+        run: |
+          for pkg in \
+              packages/strange-attractors \
+              packages/mandelbulb-explorer \
+              packages/boids-3d \
+              packages/physarum \
+              packages/reaction-diffusion-2d \
+              packages/reaction-diffusion-3d \
+              packages/sph-water \
+              packages/eulerian-smoke \
+              packages/lattice-boltzmann-d3q19 \
+              packages/mpm-multimaterial; do
+            echo "=== ${pkg} ==="
+            (cd "${pkg}" && uv run pytest tests/test_determinism.py -v)
+          done

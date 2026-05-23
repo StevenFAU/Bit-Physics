@@ -41,3 +41,13 @@ jobs:
       - name: vitest (skip-in-CI tests excluded per spec § 7.8)
         working-directory: common/common-ts
         run: pnpm vitest run
+
+      # Discrete determinism-gate step for visibility (sub-phase-capture-
+      # determinism-contract STEP 10 / D4 strict-fanout). Re-runs the
+      # content-equivalent contract surface explicitly so CI failures point
+      # at the gate by name rather than the catch-all vitest job above.
+      - name: Determinism gate (content-equivalent contract)
+        working-directory: common/common-ts
+        run: |
+          pnpm vitest run src/determinism/
+          pnpm vitest run examples/hello-physics/hello-physics.test.ts

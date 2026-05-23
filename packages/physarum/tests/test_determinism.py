@@ -35,7 +35,7 @@ def test_run_twice_bit_exact_zero_trail_limit(tmp_path: Path) -> None:
     function reflects the spec § 2.5 declaration's worst-case anchor.
     """
     verdict = run_twice_and_diff(sim_runner_seeded, seed=42, tmp_dir=tmp_path)
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"
 
 

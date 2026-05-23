@@ -374,13 +374,13 @@ Cat 3 (numerical correctness) HARD_FAILs on any golden table without at least th
 
 ## 2.5 Determinism harness
 
-A simulation is deterministic if it produces bit-identical output when run twice with the same seed on the same hardware. Cross-hardware and cross-stack determinism are looser categories, handled in §2.6.
+A simulation is deterministic if every state array and diagnostic entry in its canonical Capture is exactly element-wise equal across two runs at the same seed on the same hardware. This is the zero-tolerance special case of the cross-stack content-equivalence posture in §2.6, computed over the same Capture projection. Storage-format metadata (wall-clock timestamps embedded by the underlying file format, library version banners, and other environment-influenced packaging artifacts) is excluded from the comparison.
 
-`tools/testkit/determinism/` provides:
+`tools/testkit/determinism/` (Python) and `common/common-ts/src/determinism/` (TypeScript) provide the paired canonical mechanism:
 
-- A capture-twice-and-diff harness that runs any sim twice and compares its capture files.
-- A per-sim determinism declaration: bit-exact-same-hw, epsilon-bounded-same-hw, non-deterministic-by-design.
-- CI gates: every sim claiming bit-exact same-hw determinism runs the harness on every push.
+- `run_twice_and_diff` (Python) and `runTwiceAndDiff` (TypeScript) — invoke any sim twice at the same seed and compare the resulting captures over the parsed Capture projection (every state array + every diagnostic entry, element-wise; storage-format metadata excluded). Both surfaces return a `DeterminismVerdict` whose `content_equivalent` field is the canonical pass/fail signal.
+- A per-sim determinism declaration: `bit-exact-same-hw`, `epsilon`, `non-deterministic`. The `bit-exact-same-hw` value denotes the content-equivalent contract defined above (the enum value name is preserved for backward compatibility with pre-amendment manifests; its semantics are the content-equivalent contract).
+- CI gates: every sim claiming `bit-exact-same-hw` determinism runs the harness on every push (Python-strict + ts-strict CI fan-out).
 
 **Determinism risks** the harness surfaces:
 
@@ -476,6 +476,8 @@ A capture file is the canonical representation of simulation state at a single s
 **Format versioning:** semver. Breaking changes bump major; forward-compatible additions bump minor; bug fixes bump patch. Schema files in `tools/testkit/schemas/` are source of truth; all stacks consume the same schema.
 
 **Schema-version compatibility policy.** Each common-* module accepts reads of any capture schema version ≤ its build's max-supported version; writes default to the highest supported. A 1.1.0 reader accepts 1.0.0 inputs; a 1.0.0 producer cannot satisfy a 1.1.0-required consumer. When a phase ships a schema bump (e.g., Phase 4 WU-A adds `gradient_fields` and bumps 1.0.0 → 1.1.0), every common-* module's `write_capture` is extended in the same phase to accept the new version. The equivalence harness accepts mixed-version inputs and applies version-appropriate field comparisons. This policy is what makes additive schema bumps non-breaking in practice, not just in semver theory.
+
+**`payload.checksum` semantics.** The manifest's `payload.checksum` field is the sha256 of the raw HDF5 payload file as written by the producer. It is **informational** — the canonical determinism contract lives at the harness per §2.5, not at this field. Two captures of the same simulation state written at different Unix instants may have different `payload.checksum` values if the underlying file format embeds wall-clock-influenced metadata (e.g., HDF5 H5O_MTIME_NEW object-header messages); the writer suppresses such metadata defensively (h5py `track_times=False`; h5wasm `Date.now()` shim), but downstream consumers MUST NOT use `payload.checksum` byte-equality as the determinism gate. Consumers that need to assert "two captures of the same sim are determinism-equivalent" use the §2.5 harness instead.
 
 **Capture file location convention.** Sims write captures to `captures/<sim>-<variant-or-ref>/<descriptor>.h5` plus `<descriptor>.json` sidecar at repo root. The `<descriptor>` is a stack-agnostic structured filename `<test-name>-<config>-seed<N>-step<N>` (e.g., `dam-break-1M-particles-seed42-step1000`, `taylor-green-128cube-seed42-step500`). Stack-agnostic descriptors allow the equivalence harness to pair source and port captures by descriptor alone across `captures/<sim>-ref/` and `captures/<sim>-stack-<X>/` directories. Per-sim, per-test descriptors are declared in the sim's `spec-ref.md` § 9 (Equivalence).
 

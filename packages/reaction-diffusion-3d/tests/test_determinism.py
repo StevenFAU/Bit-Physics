@@ -23,5 +23,5 @@ def test_run_twice_bit_exact(tmp_path: Path) -> None:
     capture_dir = tmp_path / "rd3d-canonical"
     capture_dir.mkdir()
     verdict = run_twice_and_diff(sim_runner_seeded, seed=42, tmp_dir=capture_dir)
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"

@@ -75,13 +75,13 @@ def nondeterministic_stub(seed: int, out_dir: Path) -> Path:
 
 def test_deterministic_stub_passes_the_gate(tmp_path: Path) -> None:
     verdict = run_twice_and_diff(deterministic_stub, seed=7, tmp_dir=tmp_path)
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"
 
 
 def test_nondeterministic_stub_fails_the_gate(tmp_path: Path) -> None:
     verdict = run_twice_and_diff(nondeterministic_stub, seed=7, tmp_dir=tmp_path)
-    assert not verdict.bit_exact
+    assert not verdict.content_equivalent
     assert "max_abs_err" in verdict.detail
 
 

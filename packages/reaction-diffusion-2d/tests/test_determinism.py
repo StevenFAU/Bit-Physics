@@ -23,7 +23,7 @@ def _load_sim() -> object:
 def test_numpy_reference_is_bit_deterministic(tmp_path: Path) -> None:
     sim = _load_sim()
     verdict = run_twice_and_diff(sim.sim_runner_seeded, seed=42, tmp_dir=tmp_path)  # type: ignore[attr-defined]
-    assert verdict.bit_exact, verdict.detail
+    assert verdict.content_equivalent, verdict.detail
     assert verdict.detail == "captures match exactly"
 
 

@@ -99,13 +99,41 @@ export class CaptureWriter {
 
     const h5wasm = h5wasmNode as unknown as H5WasmReady;
     await h5wasm.ready;
-    const file = new h5wasm.File(payloadPath, "w");
+
+    // Defense-in-depth determinism (sub-phase-capture-determinism-contract):
+    // h5wasm 0.10.1's bundled HDF5 library does NOT expose
+    // H5Pset_obj_track_times at the WASM-symbol level — Stage 0 Task 0.3(c)
+    // empirical verification confirmed Module._emscripten_date_now is not
+    // accessible via h5wasm-node's exported surface. The ONLY viable
+    // userland shim path is to freeze the global ``Date.now`` for the
+    // duration of the h5wasm write window (emscripten's
+    // ``_emscripten_date_now`` closes over the host ``Date.now``).
+    //
+    // The harness-based determinism contract makes this non-load-bearing —
+    // the harness compares parsed Capture arrays, not raw file bytes —
+    // but suppressing the variance at the source eliminates the latent
+    // flake mechanically for any downstream consumer that does compare
+    // bytes (e.g., ``payload.checksum`` round-tripping).
+    //
+    // CRITICAL: the patch is scoped to this finalize() call. Concurrent
+    // callers in the same Node process must continue to see normal
+    // ``Date.now()`` behavior after finalize() returns. The save / replace
+    // / restore is wrapped in try/finally so that an exception in the
+    // h5wasm write path still restores the host ``Date.now``.
+    const FROZEN_EPOCH_MS = 0;
+    const realDateNow = globalThis.Date.now;
+    globalThis.Date.now = () => FROZEN_EPOCH_MS;
     try {
-      this._writeSteps(file);
-      this._writeMetadata(file);
+      const file = new h5wasm.File(payloadPath, "w");
+      try {
+        this._writeSteps(file);
+        this._writeMetadata(file);
+      } finally {
+        file.flush();
+        file.close();
+      }
     } finally {
-      file.flush();
-      file.close();
+      globalThis.Date.now = realDateNow;
     }
 
     const checksum = "sha256:" + sha256OfFile(payloadPath);
