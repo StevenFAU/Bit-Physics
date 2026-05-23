@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-23T21-22-23Z",
+  "status": "framework-validated",
+  "mutmut_version": "mutmut version 2.5.1",
+  "provenance": "sub-phase-reaction-diffusion-2d-stack-d",
+  "phase": 2,
+  "sub_phase": "reaction-diffusion-2d-stack-d",
+  "stage": 2,
+  "rationale": "RD-2D Stack-D cross-stack port sub-phase LANDING — B17 PATH-B (framework-validated carry-forward + re-bank). Stage 2 charter § 4.3 Step 2.8 routes between PATH-A (add a per-sim mutmut target for reaction_diffusion_2d_stack_d's Taichi-DSL source + rework the runner; produce a real per-target kill-rate baseline) and PATH-B (framework-validated artifact + re-bank to the next per-sim implementation sub-phase). PATH-B chosen, matching the operator-routed lean. Grounds: (a) this sub-phase is a cross-stack PORT of an existing sim (reaction-diffusion-2d), not a new sim; the algorithm identity is shared with the Phase-0 Stack-B reference, whose correctness is already established. The load-bearing correctness evidence at HEAD is gate-4 (MMS observed OOA 1.9972 against formal 2.0), gate-10 (IC-13 content-equivalence via run_twice_and_diff), gate-11 (3 Hypothesis PBT invariants), gate-13 (failing-tests sha256 replay + worktree ModuleNotFoundError reproduction at ca9bc0b), and the Phase-2-specific gate-14 (cross-stack equivalence within_tolerance=True at relative=1e-4; max_abs_err 1.9e-14 with ~10 orders of margin). (b) The B17 'first real per-target kill-rate baseline' milestone is already DONE — landed PATH-A at continuous-CA-rd3d and continued through sph-water / eulerian-smoke / LBM / MPM (five real per-target baselines; empirical kill-rate range [0.4879, 0.5927]). Adding a per-sim mutmut target for the Taichi-DSL @ti.kernel source would require @ti.kernel × mutmut interaction characterization (Taichi lowers kernels at first call; mutmut source-hash invalidation against the Taichi AST transformer is uncharacterized) for marginal additional signal at the FIRST cross-stack pair. That characterization is its own infrastructure work, properly owned by a testing-improvements sub-phase, not folded into a per-sim cross-stack port. The mutation gate remains advisory (non-blocking) at sub-phase scope per § J.5. B17 per-sim-target work re-banked to the testing-improvements sub-phase (Taichi-DSL mutmut characterization) per § J.2.",
+  "targets": [
+    {
+      "target": "capture",
+      "path": "tools/testkit/capture",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "golden",
+      "path": "tools/testkit/golden",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "determinism",
+      "path": "tools/testkit/determinism",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "equivalence",
+      "path": "tools/testkit/equivalence",
+      "threshold": 0.85,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "threshold": 0.8,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    },
+    {
+      "target": "cat4_draft_time",
+      "path": "tools/integrity/integrity/cat4_draft_time",
+      "threshold": 0.9,
+      "score": 0.0,
+      "killed": 0,
+      "survived": 0,
+      "status": "framework-validated-baseline-re-banked-to-testing-improvements-sub-phase"
+    }
+  ],
+  "banked_items": [
+    {
+      "id": "B17",
+      "title": "Per-target mutation runner + real kill-rate baseline for the Stack-D Taichi-DSL port",
+      "status": "re-banked",
+      "previous_owner": "first per-sim implementation sub-phase (B17 'first real baseline' milestone DONE at continuous-CA-rd3d PATH-A + sph-water/eulerian-smoke/LBM/MPM continues)",
+      "new_owner": "testing-improvements sub-phase (Taichi-DSL @ti.kernel × mutmut interaction characterization), with explicit operator re-route privilege at dispatch time",
+      "rationale_short": "Cross-stack PORT of an existing sim; algorithm identity shared with the already-validated Phase-0 Stack-B reference. A per-sim Taichi-DSL mutmut target needs @ti.kernel × mutmut source-hash-invalidation characterization (uncharacterized; Taichi lowers kernels at first call) for marginal signal at the first cross-stack pair. Owned by testing-improvements, not a per-sim cross-stack port."
+    }
+  ]
+}

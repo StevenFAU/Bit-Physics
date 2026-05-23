@@ -348,3 +348,49 @@ sub-phases, distributional mode for chaotic-regime sims) follows the same
 re-pin discipline per `docs/conventions/sub-phase-conventions.md` § H.4
 applied to the public API surface; the contract semantics are pinned at
 spec § 2.5 + the harness's `policy.md`.
+
+## spec-Phase-2 sub-phase-reaction-diffusion-2d-stack-d — first per-sim cross-stack port (added 2026-05-23)
+
+Per `docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-<UTC>.md`.
+
+### New workspace member
+
+`packages/reaction-diffusion-2d-stack-d/` (sibling workspace member; D6
+routing). Python-only Stack-D port of `reaction-diffusion-2d`; registered in
+the root `pyproject.toml` `[tool.uv.workspace].members` at Stage 1b.
+
+### Consumed surfaces (no new external pins)
+
+No new external dependency pins introduced. The port consumes existing
+workspace + external surfaces:
+
+| Surface | Source | Use |
+|---|---|---|
+| `taichi>=1.7,<2.0` | Taichi-integration pin (added 2026-05-23 above) | Taichi-DSL Gray-Scott kernels (`@ti.kernel`); `arch="cpu"`, `cpu_max_num_threads=1` |
+| `common_py.capture` (IC-2) | `common/common-py` | canonical-capture write/read |
+| `common_py.determinism.set_taichi_deterministic` (IC-11) | `common/common-py` | deterministic Taichi init before kernel decoration |
+| `tools/testkit/determinism` (IC-14) | testkit | gate-10 `run_twice_and_diff` content-equivalence |
+| `tools/testkit/equivalence` | testkit | gate-14 `compare_captures` cross-stack diff |
+| `tools/testkit/code_verification/mms` | testkit | gate-4 MMS observed-order verification |
+| `numpy`, `h5py`, `hypothesis` | existing pins | IC, capture I/O, PBT |
+
+### Tolerance table addition (at-budget; not a widening)
+
+`tools/testkit/equivalence/tolerance.toml` gains an at-budget per-sim
+override `[overrides.reaction-diffusion-2d] category = "reaction-diffusion"`
+(resolution wiring; inherits `relative = 1e-4` from
+`[defaults.reaction-diffusion]` = the `[budgets.reaction-diffusion.cross_stack]`
+cap). `tolerance-budget.toml` is unchanged.
+
+### Fresh-checkout sync
+
+```bash
+(cd packages/reaction-diffusion-2d-stack-d && uv sync --extra dev)
+```
+
+### Re-pin policy
+
+No external pins introduced. Subsequent Stack-D / Stack-E cross-stack port
+sub-phases consume the same `taichi` pin + per-sim tolerance-override pattern
+per `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § 7
+(IC-15 candidate methodology template).

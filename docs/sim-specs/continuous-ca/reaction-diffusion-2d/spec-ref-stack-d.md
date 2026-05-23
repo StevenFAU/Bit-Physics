@@ -157,8 +157,10 @@ backends; subgroup-collectives.
 
 Cross-stack content-equivalent to Stack-B's WGSL/WebGPU reference at
 `relative = 1e-4, absolute = 0.0` (the `reaction-diffusion` category
-default in `tools/testkit/equivalence/tolerance.toml`; no per-sim
-override). Diff'd via
+default in `tools/testkit/equivalence/tolerance.toml`, resolved via an
+at-budget per-sim `[overrides.reaction-diffusion-2d] category =
+"reaction-diffusion"` entry — resolution wiring, NOT a tolerance widening;
+see the Stage 1c reconciliation note below). Diff'd via
 `tools/testkit/equivalence/harness.py::compare_captures` consuming both
 the Stack-B (`captures/reaction-diffusion-2d-ref/...`) and Stack-D
 (`captures/reaction-diffusion-2d-stack-d/...`) canonical captures at
@@ -167,10 +169,23 @@ the locked descriptor `gray-scott-lambda-128sq-seed42-step2000`.
 The cross-stack diff is **content-equivalent at 1e-4**, NOT bit-exact:
 WGSL/WebGPU and Taichi-DSL/CPU use different FP-accumulation patterns
 (WGSL 8×8 workgroups vs Taichi serial ndrange) and different reduction
-primitives. Stage 1c authors
-`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` to
-document the per-field diff witness + step-horizon at which the diff
-approaches the 1e-4 tolerance.
+primitives. Stage 1c authored
+`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md`
+documenting the per-field diff witness + step-horizon analysis (the
+diff stays at FP-round-off scale ~1.9e-14 and never approaches 1e-4
+across the full step-2000 horizon).
+
+**Stage 1c reconciliation (Stage 2 amendment).** The Stage 1b draft of
+this section read "no per-sim override". Gate-14's first true matching-sim
+`compare_captures` invocation surfaced that the manifest `sim.category`
+(`continuous-ca`, physics-family taxonomy) keys no `tolerance.toml
+[defaults.*]` (numerical-method-family taxonomy), so an at-budget
+`[overrides.reaction-diffusion-2d] category = "reaction-diffusion"` entry
+is **required** for tolerance resolution. This is resolution wiring, not a
+tolerance widening — it inherits `relative = 1e-4`, the
+`[budgets.reaction-diffusion.cross_stack]` cap. Landed at Stage 1c commit
+`2b5353aee4971823ddec6e5678df90bd9e3b80b8` (tolerance.toml override +
+equivalence.md). See `equivalence.md` § 3 for the two-taxonomy framing.
 
 ## 10. Diagnostics
 

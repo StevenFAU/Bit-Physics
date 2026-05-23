@@ -1003,6 +1003,55 @@ that it is informational and the contract lives at the harness.
 | docs/dependencies.md entry | GREEN | new Python + TS determinism-harness module surfaces |
 | CHANGELOG entry | GREEN | this entry |
 
+### sub-phase-reaction-diffusion-2d-stack-d
+
+**FIRST per-sim cross-stack port sub-phase under spec-Phase-2.** Ports
+`reaction-diffusion-2d` from the Phase-0-Block-8-frozen Stack-B
+(TypeScript / WGSL / WebGPU) reference to a content-equivalent Stack-D
+(Python / Taichi-DSL / CPU) implementation through gates 4–14. No
+`-phase-N` tag pushed (spec § 7.12); optional non-phase point-release
+`v0.1.11` is a banked operator decision per
+`docs/phases/sub-phase-reaction-diffusion-2d-stack-d.md` § 11.4.
+
+#### Added
+
+- Stack-D Taichi-DSL Gray-Scott implementation at
+  `packages/reaction-diffusion-2d-stack-d/` (sibling workspace member; D6).
+  Determinism posture `bit-exact-same-hw` at `arch="cpu"` (IC-13
+  content-equivalent); `ti.ndrange(n, n)` row-major + `cpu_max_num_threads=1`;
+  NumPy-seeded IC matching Stack-B.
+- Stack-D spec sheet `docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref-stack-d.md`
+  + pre-implementation probe report.
+- Canonical Stack-D capture at the HEAD-frozen descriptor
+  `gray-scott-lambda-128sq-seed42-step2000` (`.h5` content OID
+  `2e93a751…1041b13d`; `.json` `e1752ceb…27e104`).
+- **Cross-stack equivalence (gate 14, Phase-2-specific):**
+  `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` — the
+  first cross-stack-pair methodology template (IC-15 candidate).
+  `compare_captures(Stack-B, Stack-D)` returns `within_tolerance=True` at
+  `relative=1e-4`; peak `max_abs_err=1.9e-14` (step 1600 U), margin ~10
+  orders of magnitude; R-P2 chaotic-regime divergence empirically falsified
+  for this pair at the full step-2000 horizon.
+- At-budget per-sim `[overrides.reaction-diffusion-2d] category =
+  "reaction-diffusion"` in `tools/testkit/equivalence/tolerance.toml`
+  (resolution wiring mapping physics-family `sim.category` to
+  numerical-method tolerance-category; NOT a tolerance widening).
+- Schema-corpus entry
+  `tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.{h5,json}`
+  (Phase 4 WU-A consumer).
+- `docs/perf-ledger.md` row: `taichi-cpu` 0.568 s (0.61× Stack-B
+  numpy-reference 0.931 s baseline; well below the 2× regression band).
+
+#### Verification
+
+| Gate | Status | Note |
+|---|---|---|
+| 4–13 (stack-agnostic) | GREEN | gates landed at Stage 1b (MMS OOA 1.9972; IC-13 content-equivalent; 3 PBT invariants; gate-13 structural replay) |
+| 14 (cross-stack equivalence) | GREEN | `within_tolerance=True` at `relative=1e-4`; per-field witness in `equivalence.md` |
+| Portfolio sweep | GREEN | Python 360 passed (+18 net vs 342; Stack-D +16 + testkit +2); TS 20 passed + 2 skipped; ZERO REGRESSIONS |
+| Integrity sweep | GREEN | bit-identical to `810cd6e3…23411f98` (**FIFTH byte-identical integrity sweep in a row**, despite a new sim package + spec sheet + probe + capture + perf row + Cat-X additive override) |
+| Mutation (B17) | PATH-B re-bank | framework-validated artifact; per-sim Taichi-DSL mutmut target deferred (cross-stack port) |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
