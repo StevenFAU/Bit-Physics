@@ -1452,6 +1452,8 @@ The phase plan is not dispatched until the pre-dispatch review verdict is CONFIR
 2. Every cited path is non-empty.
 3. For paths that the report attests to a hash for (e.g., failing-tests output files), the hash matches.
 
+**LFS-tracked artifacts (IC-16).** For an `evidence_hashes` entry whose path is LFS-tracked, check (3)'s "hash matches" compares the claimed sha256 against the **content OID** parsed from the artifact's git-lfs pointer stub (its `oid sha256:` line) — not the sha256 of the pointer text. `git show <sha>:<path>` returns the pointer stub rather than smudged content; `verify_evidence` resolves the embedded content OID offline (no `git lfs smudge`, no network, no LFS auth). Non-LFS paths compare the git-blob sha256 unchanged. This matches the audit chain's content-OID-load-bearing posture (conventions doc § B.1; § B.6 Mode 2 RESOLVED). Established by `sub-phase-audit-chain-correctness` Stage 1a (`tools/integrity/integrity/common/repo.py` `lfs_pointer_oid()` + the OID-aware comparison at `tools/integrity/integrity/scripts/verify_evidence.py:120-121`).
+
 The script is run by the founder at each stage boundary before approving dispatch of the next stage, and by the phase-closing-audit agent before writing its CONFIRMED verdict. This converts "founder review samples evidence" from a single-point-of-failure (samples can miss things) to a mechanical pre-filter (every evidence path is checked, every hash is verified, before sampling). The founder still does a content-quality spot check on top, but the floor is mechanical.
 
 **Cross-phase audit replay.** Phase N+1's first stage runs a `tools/integrity/scripts/replay_prior_phase.py` pass that does not trust the prior phase's landing audit text. Instead, it:
@@ -3130,7 +3132,7 @@ Phase 0 used a single `progress.md` that mixed both kinds; the resulting `EDITED
 
 1. Every path in front-matter `evidence_paths:` exists at the report's `head_sha`.
 2. Every cited path is non-empty.
-3. For paths the report attests to a hash for (front-matter `evidence_hashes:` map), the sha256 matches.
+3. For paths the report attests to a hash for (front-matter `evidence_hashes:` map), the sha256 matches. For an LFS-tracked path, the sha256 is compared against the content OID parsed from the git-lfs pointer stub's `oid sha256:` line (IC-16; see § 7.5 + conventions doc § B.6 Mode 2 RESOLVED), since `git show` returns the pointer stub, not smudged content.
 
 The script is run by the founder at every stage boundary before approving dispatch of the next stage, and by every phase-closing-audit agent before writing a CONFIRMED verdict. Sample invocation:
 
