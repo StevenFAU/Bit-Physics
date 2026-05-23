@@ -855,6 +855,154 @@ anchor for all spec-Phase-2 sub-phases until `v0.2.0-phase-2` lands.
 | `docs/dependencies.md` entry | GREEN | Taichi pin + common-py workspace member |
 | CHANGELOG entry | GREEN | this entry |
 
+### sub-phase-capture-determinism-contract
+
+**SECOND spec-Phase-2 sub-phase**; portfolio-wide contract-redesign mirroring
+`sub-phase-conventions-refactor-post-phase-1` consolidation shape per
+`docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md`.
+SUPERSEDES Taichi-integration § 10 next-sub-phase recommendation (RD-2D →
+Stack-D port) because the determinism contract is structurally upstream of
+any further Stack-D port. Surfaced via CI fan-out from Taichi-integration's
+push to main: `common/common-ts/examples/hello-physics/hello-physics.test.ts`
+asserted raw HDF5 byte-equality across two runs, which is unstable across
+Unix-second boundaries because h5wasm 0.10.1's bundled HDF5 library embeds
+wall-clock-influenced `H5O_MTIME_NEW` timestamps in every object header (the
+`H5Pset_obj_track_times` symbol is absent from h5wasm 0.10.1's WASM blob
+entirely — Stage 0 Task 0.3(c) empirical refutation of the probe's lean
+Module-direct fix path).
+
+D2 operator-routed wording at STEP 8 HALT-AND-SURFACE incorporates D2-c
+(project-onto-Capture) + explicit R-D3 cross-reference to spec § 2.6 + tool-
+agnostic exclusion language; landed verbatim at `docs/architecture.md` § 2.5.
+D2-sub: `payload.checksum` retained as raw-file sha256 + description note
+that it is informational and the contract lives at the harness.
+
+#### Added
+
+- **Spec § 2.5 amendment** (`docs/architecture.md`; primary contract wording
+  site). Replaces the pre-amendment "bit-identical output" framing with the
+  content-equivalent contract over the parsed Capture data model:
+  *"A simulation is deterministic if every state array and diagnostic entry
+  in its canonical Capture is exactly element-wise equal across two runs at
+  the same seed on the same hardware. This is the zero-tolerance special
+  case of the cross-stack content-equivalence posture in §2.6, computed over
+  the same Capture projection. Storage-format metadata (wall-clock timestamps
+  embedded by the underlying file format, library version banners, and other
+  environment-influenced packaging artifacts) is excluded from the
+  comparison."* Cross-references to the new harness API (Python + TS) added
+  alongside.
+- **Spec § 2.7 + `tools/testkit/schemas/capture-v1.json` description-only
+  amendment** clarifying `payload.checksum` is informational; the contract
+  lives at the harness; field-shape unchanged (no schema_version bump; no
+  WU-A coordination cost).
+- **Canonical Python determinism harness** at
+  `tools/testkit/determinism/harness.py` — `DeterminismVerdict.bit_exact`
+  renamed to `content_equivalent` with backward-compatibility property shim
+  emitting `DeprecationWarning` (preserve callers' surface for one
+  deprecation window). Module docstring + `policy.md` updated to reflect
+  the content-equivalent contract. 12 portfolio call sites migrated inline
+  to `verdict.content_equivalent` (8 Phase-1 sims + RD-2D Phase-0 +
+  diagnostics tier1 + harness's own tests).
+- **TypeScript determinism harness (NEW)** at
+  `common/common-ts/src/determinism/`:
+  - `captureReader.ts` — parses h5wasm `/steps/{N}/state/{field}` +
+    `/steps/{N}/diagnostics/{check}` into a typed `Capture` record;
+    reuses existing `H5FileLike` shim types.
+  - `diffCaptures.ts` — element-wise Float64Array equality + max-abs/rel
+    error reporting + sorted-step + sorted-field traversal for stable
+    first-mismatch reporting.
+  - `runTwiceAndDiff.ts` — orchestrator matching the Python harness
+    semantically; returns `DeterminismVerdict { contentEquivalent, detail }`.
+  - `index.ts` — re-exports (non-empty per § B.6 N6 banked precedent).
+  - `__tests__/harness.test.ts` — 5 tests verifying contract semantics on
+    synthetic deterministic + nondeterministic stub runners.
+- **Python `CaptureWriter` source-level fix** at
+  `tools/testkit/capture/writer.py`: `libver="earliest"` +
+  `track_order=False` on every `create_group` + `track_times=False` on
+  every `create_dataset`. Defense-in-depth — non-load-bearing per the
+  harness-based contract but eliminates the latent flake at the source for
+  any downstream consumer that does compare bytes. New
+  `test_writer_determinism.py::test_write_capture_byte_identical_across_seconds`
+  verifies byte-identical `.h5` output across 1.5 s wall-clock separation.
+- **TypeScript `CaptureWriter` source-level fix per N1 path (a)** at
+  `common/common-ts/src/capture.ts`: freezes `globalThis.Date.now` for the
+  duration of the h5wasm write window in a `try/finally` (saves real
+  `Date.now`, replaces with `() => 0`, restores in `finally`). Stage 0 Task
+  0.3(c) empirically refuted the probe's lean Module-direct path; this is
+  the only viable userland shim per the h5wasm-node 0.10.1 surface. New
+  `capture-writer-determinism.test.ts` (3 tests: byte-identical across 1.5 s
+  + no-leaked-monkey-patch + restore-on-throw).
+- **Per-test refactor V1 (hello-physics)** at
+  `common/common-ts/examples/hello-physics/hello-physics.test.ts`:
+  `payloadA.equals(payloadB)` replaced by `runTwiceAndDiff` against a
+  `SimRunner` wrapping `runHelloPhysics`; assertion is
+  `verdict.contentEquivalent === true`. Adds R-D2 spot-check (broken-
+  determinism runner with varying step count → `contentEquivalent === false`).
+- **Per-test refactor V2 (LBM)** at
+  `packages/lattice-boltzmann-d3q19/tests/test_determinism.py`: removed
+  `_sha256_of_file` helper; uses `run_twice_and_diff(sim_runner_diagnostic,
+  ...)` + asserts `verdict.content_equivalent`. Module-level + per-test
+  docstrings updated ("byte-identical HDF5 payloads" → "content-equivalent
+  Capture projections" per Stage 0 SHIFTED N2). Adds R-D2 spot-check via
+  synthetic-capture `drifting_runner` (per Stage 1 SHIFTED N1).
+- **Per-test refactor V3 (MPM)** at
+  `packages/mpm-multimaterial/tests/test_determinism.py`: same pattern as V2.
+  Per-test docstring updated. R-D2 spot-check matches V2.
+- **Conventions doc additive amendment** at
+  `docs/conventions/sub-phase-conventions.md`:
+  - § F.3 row "Bit-identical run-to-run" reworded to "Content-equivalent
+    run-to-run"; new "Content-equivalent NOT raw-file-byte-equality" prose
+    paragraph cross-referencing spec § 2.5 + the new harness API.
+  - § A.2 gate-11 mechanism cross-reference (new paragraph after the three-
+    stage cadence table).
+  - New § B.7 "Cross-package regression sweep — Python + TypeScript
+    fan-out" sub-section codifying the dual-language sweep template
+    established at this sub-phase.
+  - sha256 SHIFTED additively: pre-Stage-1 `3698d19b62a0e9066f2daf616bdd13670b757d4460ea8d3d7c114fb2392bd734`
+    (829 lines) → post-Stage-1 `167fe34911b4d3f49e3e924fcb8261421acac87a3e0931a5d00a3dbcf2c58c2e`
+    (854 lines; +25 additive). This is the first conventions-doc sha256 SHIFT
+    since the conventions-refactor-post-phase-1 sub-phase locked the baseline;
+    the new sha256 is the canonical reference for subsequent sub-phases.
+- **CI gate redesign per D4 strict-fanout**:
+  - `.github/workflows/ts-strict.yml`: new explicit "Determinism gate
+    (content-equivalent contract)" step running `pnpm vitest run` on the
+    new `src/determinism/` + the refactored `examples/hello-physics/`.
+  - `.github/workflows/python-strict.yml`: extends ruff + mypy + pytest to
+    cover `determinism/` alongside `capture/`; new explicit "Determinism
+    gate" step.
+  - `.github/workflows/determinism.yml`: new "Determinism gate per-sim
+    fan-out" step iterating over all 10 sims (per-package per § M.4 N1
+    `tests.conftest` import-path-collision avoidance).
+- **IC-13 (content-equivalence contract semantics)** + **IC-14 (determinism-
+  harness API, Python + TypeScript)** — first post-Taichi-integration ICs;
+  numbered IC-11/12 → IC-13/14 per established convention.
+- This audit chain (12 commits):
+  - Plan-drafting: probe (`44941c2`); charter (`8fe770c`); plan-drafting
+    landing (`5cf1903`); SHA back-fill (`97ff87b`).
+  - Stage 0: tolerance-budget carryover (`4fa9a07`); checkpoint (`ffc7c24`);
+    SHA back-fill (`9bc409e`).
+  - Stage 1: monolithic feat (`26e1343`); checkpoint (`0a99f4e`); SHA
+    back-fill (`1963e5d`).
+  - Stage 2: landing audit + back-fill (final SHAs).
+
+#### Verified
+
+| Deliverable | Status | Notes |
+|---|---|---|
+| Spec § 2.5 amendment | GREEN | docs/architecture.md sha256 `42f5d599…0a347b` |
+| Spec § 2.7 + capture-v1.json description edits | GREEN | capture-v1.json sha256 `7715a50a…943735` |
+| Python harness rename + deprecation shim | GREEN | 12 portfolio call sites migrated; 3 harness tests pass under `-W error` |
+| TypeScript harness (NEW; 4 source + 1 test file) | GREEN | 5 harness tests pass |
+| Python CaptureWriter source-level fix | GREEN | new test verifies byte-identical across 1.5 s |
+| TypeScript CaptureWriter source-level fix per N1 path (a) | GREEN | 3 new tests pass (incl. no-leaked-monkey-patch + restore-on-throw) |
+| V1/V2/V3 refactors + R-D2 spot-checks | GREEN | 3 sites; all R-D2 spot-checks PASS (each refactored test FAILS as expected on broken-determinism mock) |
+| Conventions doc § F.3 + § A.2 + § B.7 amendment | GREEN | sha256 `3698d19b…2bd734` → `167fe349…58c2e` (+25 lines additive) |
+| CI gate redesign per D4 strict-fanout | GREEN | 3 workflows extended |
+| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (**FOURTH byte-identical integrity sweep in a row**) |
+| Cross-package regression sweep | GREEN | Python 342 PASSED (+17 net vs Taichi-integration's 325; +1 sim RD-2D counted + 2 R-D2 spot-checks + 1 writer-determinism test); TS 20 passed + 2 skipped (interactive surfaces); ZERO REGRESSIONS |
+| docs/dependencies.md entry | GREEN | new Python + TS determinism-harness module surfaces |
+| CHANGELOG entry | GREEN | this entry |
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation

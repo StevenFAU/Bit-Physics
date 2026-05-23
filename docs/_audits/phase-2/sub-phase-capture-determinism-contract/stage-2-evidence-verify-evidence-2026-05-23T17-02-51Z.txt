@@ -1,0 +1,24 @@
+=== docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md ===
+  PASS  common/common-ts/examples/hello-physics/run.ts
+  PASS  packages/lattice-boltzmann-d3q19/tests/test_determinism.py
+  PASS  packages/mpm-multimaterial/tests/test_determinism.py
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+summary: 10 pass / 0 fail at head_sha 412b1b90b219
+=== docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-landing-2026-05-23T15-49-23Z.md ===
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/phases/sub-phase-capture-determinism-contract.md (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md (sha256 OK)
+  PASS  docs/conventions/sub-phase-conventions.md (sha256 OK)
+summary: 6 pass / 0 fail at head_sha 5cf19038dae5
+=== docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-checkpoint-2026-05-23T16-13-27Z.md ===
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-probe-ratification-2026-05-23T16-04-12Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-immune-tests-2026-05-23T16-04-12Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-py-tracktimes-2026-05-23T16-04-12Z.txt (sha256 OK)
+  PASS  tools/testkit/equivalence/tolerance-budget.toml (sha256 OK)
+summary: 16 pass / 0 fail at head_sha ffc7c2419461
+=== docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-checkpoint-2026-05-23T16-53-26Z.md ===
+  PASS  packages/mpm-multimaterial/tests/test_determinism.py (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-python-sweep-2026-05-23T16-50-00Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-ts-sweep-2026-05-23T16-50-00Z.txt (sha256 OK)
+  PASS  docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-sweep-summary-2026-05-23T16-50-00Z.txt (sha256 OK)
+summary: 40 pass / 0 fail at head_sha 0a99f4efa829

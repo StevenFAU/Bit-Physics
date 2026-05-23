@@ -268,3 +268,83 @@ regression-test re-verify** per
 [`docs/conventions/sub-phase-conventions.md`](conventions/sub-phase-conventions.md)
 § H.4. Same discipline as numba § 5 + spec § 9.2 vendored-upstream
 amendments.
+
+## spec-Phase-2 sub-phase-capture-determinism-contract — content-equivalent determinism harness (added 2026-05-23)
+
+Per `docs/_audits/phase-2/sub-phase-capture-determinism-contract/landing-<UTC>.md`.
+Establishes the canonical determinism contract (content-equivalent over a
+normalized capture-payload projection — every state array + every diagnostic
+entry compared element-wise; wall-clock-influenced storage-format metadata
+excluded) ahead of any further Stack-D port. Spec § 2.5 amended verbatim with
+operator-routed wording; conventions doc § F.3 reworded; conventions doc
+§ A.2 cross-references the harness as the gate-11 mechanism; conventions doc
+§ B.7 (NEW additive sub-section) codifies the Python + TypeScript fan-out
+shape for first-wiring sub-phases.
+
+### Runtime — new module surfaces (no new external pins)
+
+| Module surface | Used by | Public API |
+|---|---|---|
+| **`tools/testkit/determinism`** (Python; renamed contract) | every Phase-1 + Phase-0 sim's `tests/test_determinism.py`; every future Stack-{B,C,D,E} port sub-phase's gate-11 invocation | `run_twice_and_diff(runner, *, seed=42, tmp_dir=None) -> DeterminismVerdict { content_equivalent: bool, detail: str }`. Backward-compatibility shim: `DeterminismVerdict.bit_exact` returns `content_equivalent` with `DeprecationWarning` on access. |
+| **`@bit-physics/common-ts/src/determinism`** (TypeScript; NEW) | hello-physics smoke test; every future Stack-B sim's vitest gate; every TS-side dual-language sub-phase invocation | `runTwiceAndDiff(runner, options) -> Promise<DeterminismVerdict { contentEquivalent: boolean, detail: string }>`. Sibling exports: `loadCapture`, `diffCaptures`, type `Capture`, type `CaptureStep`, type `DiffResult`, type `SimRunner`, type `RunTwiceOptions`. |
+
+### Project-wide convention
+
+The contract is documented at the canonical spec wording (`docs/architecture.md` § 2.5)
++ the harness's `policy.md` (`tools/testkit/determinism/policy.md`) + the
+conventions doc (`docs/conventions/sub-phase-conventions.md` § F.3).
+Load-bearing rules:
+
+- The canonical determinism gate is the harness API — Python
+  `run_twice_and_diff` or TypeScript `runTwiceAndDiff`. Both surfaces return
+  `DeterminismVerdict { content_equivalent / contentEquivalent, detail }`.
+  The harness is the **single source of truth** for "two captures of the
+  same sim at the same seed are equivalent."
+- Raw-file byte-equality is **NOT** the contract. Two captures of the same
+  state written at different Unix instants may have different `.h5` raw
+  sha256 because the HDF5 format embeds wall-clock-influenced metadata
+  (`H5O_MTIME_NEW`, library version banners). The harness projects to the
+  parsed `Capture` data model; that projection is wall-clock-independent.
+- `payload.checksum` in the capture manifest is the raw-file sha256 of the
+  HDF5 payload as written by the producer. It is **informational only** per
+  the description annotation added to `tools/testkit/schemas/capture-v1.json`
+  at this sub-phase; downstream consumers MUST NOT use byte-equality on
+  this field as a determinism gate.
+- Defense-in-depth at the writer surface (both implementations suppress
+  wall-clock-influenced metadata at the source even though the harness
+  contract makes this non-load-bearing):
+  - **Python** (`tools/testkit/capture/writer.py`): `h5py.File(...,
+    libver="earliest")` + `track_order=False` on every `create_group` +
+    `track_times=False` on every `create_dataset`.
+  - **TypeScript** (`common/common-ts/src/capture.ts`): `globalThis.Date.now`
+    frozen to `() => 0` for the duration of the h5wasm write window via
+    `try/finally` (h5wasm 0.10.1 does NOT expose `H5Pset_obj_track_times`
+    at the WASM-symbol level; the global `Date.now` shim is the only viable
+    userland path per Stage 0 Task 0.3(c) empirical verification).
+
+### Verification
+
+The contract is verified by the regression tests at:
+
+- `tools/testkit/determinism/tests/test_harness.py` (3 tests; deterministic-
+  stub PASS, nondeterministic-stub FAIL, two-run-dirs).
+- `common/common-ts/src/determinism/__tests__/harness.test.ts` (5 tests;
+  deterministic-stub PASS, nondeterministic-stub FAIL, two-run-dirs,
+  loadCapture round-trip, diffCaptures first-mismatch).
+- 3 R-D2 spot-checks across the refactored sites (V1 hello-physics, V2 LBM,
+  V3 MPM): each refactored test FAILS as expected when a broken-determinism
+  mock runner is injected, preserving the failure-mode-on-bug witness per
+  charter § 9 R-D2 mitigation.
+
+The per-sim fan-out is also gated at CI level: `.github/workflows/determinism.yml`
+iterates over all 10 sims (per-package per § M.4 N1 import-path-collision
+avoidance) and invokes `pytest tests/test_determinism.py -v`.
+
+### Re-pin policy
+
+No new external pins introduced at this sub-phase — only new internal module
+surfaces. Future expansion of the harness (e.g., epsilon mode for cross-stack
+sub-phases, distributional mode for chaotic-regime sims) follows the same
+re-pin discipline per `docs/conventions/sub-phase-conventions.md` § H.4
+applied to the public API surface; the contract semantics are pinned at
+spec § 2.5 + the harness's `policy.md`.

@@ -1,0 +1,53 @@
+=== CI semantics (grep -E '\.ledger\.md$') ===
+(no *.ledger.md files modified)
+
+=== Strict mode: files modified in this sub-phase ===
+common/common-ts/examples/hello-physics/hello-physics.test.ts
+common/common-ts/src/capture.ts
+common/common-ts/src/determinism/captureReader.ts
+common/common-ts/src/determinism/diffCaptures.ts
+common/common-ts/src/determinism/index.ts
+common/common-ts/src/determinism/runTwiceAndDiff.ts
+common/common-ts/src/determinism/__tests__/harness.test.ts
+common/common-ts/src/__tests__/capture-writer-determinism.test.ts
+docs/architecture.md
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-landing-2026-05-23T15-49-23Z.md
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-checkpoint-2026-05-23T16-13-27Z.md
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-immune-tests-2026-05-23T16-04-12Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-probe-ratification-2026-05-23T16-04-12Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-py-tracktimes-2026-05-23T16-04-12Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-red-evidence-reverify-2026-05-23T16-04-12Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-0-replay-2026-05-23T16-04-12Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-checkpoint-2026-05-23T16-53-26Z.md
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-python-sweep-2026-05-23T16-50-00Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-sweep-summary-2026-05-23T16-50-00Z.txt
+docs/_audits/phase-2/sub-phase-capture-determinism-contract/stage-1-ts-sweep-2026-05-23T16-50-00Z.txt
+docs/conventions/sub-phase-conventions.md
+docs/phases/sub-phase-capture-determinism-contract.md
+.github/workflows/determinism.yml
+.github/workflows/python-strict.yml
+.github/workflows/ts-strict.yml
+packages/boids-3d/tests/test_determinism.py
+packages/eulerian-smoke/tests/test_determinism.py
+packages/lattice-boltzmann-d3q19/tests/test_determinism.py
+packages/mandelbulb-explorer/tests/test_determinism.py
+packages/mpm-multimaterial/tests/test_determinism.py
+packages/physarum/tests/test_determinism.py
+packages/reaction-diffusion-2d/tests/test_determinism.py
+packages/reaction-diffusion-3d/tests/test_determinism.py
+packages/sph-water/tests/test_determinism.py
+packages/strange-attractors/tests/test_determinism.py
+tools/diagnostics/diagnostics/tier1/tests/test_determinism.py
+tools/testkit/capture/tests/test_writer_determinism.py
+tools/testkit/capture/writer.py
+tools/testkit/determinism/harness.py
+tools/testkit/determinism/policy.md
+tools/testkit/determinism/tests/test_harness.py
+tools/testkit/equivalence/tolerance-budget.toml
+tools/testkit/schemas/capture-v1.json
+
+=== Audit files modified at any prior protected SHA (should be NONE) ===
+(no prior-phase audit files modified)
+
+=== Taichi-integration audit files modified (should be NONE) ===
+(no Taichi-integration audit files modified)
