@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: reaction-diffusion-2d-stack-d-stage-1b
 subject: "Stage 1b Stack-D Taichi-DSL Gray-Scott implementation through gate 13 CONFIRMED. Single monolithic sub-bundle commit 276bd85… lands the package skeleton (reference/__init__.py + reference/gray_scott_taichi.py + sim.py + invariants.py), Stack-D spec sheet sibling (spec-ref-stack-d.md), pre-implementation probe report, Stack-D canonical capture at the HEAD-frozen descriptor, GREEN evidence (15 pass + 1 skip), perf-ledger row, and the additive test-body fills for gate-4 MMS + gate-10 IC-13 same-stack content-equivalence. MMS gate-4 observed OOA combined=1.9972 against formal 2.0 (within ±0.5 tolerance). Gate-13 replay structurally reproduces 6/6 ModuleNotFoundError on the same 3 Stage-1b submodule targets in a worktree at ca9bc0b…. Gate-14 cross-stack equivalence PENDING-Stage-1c per charter § 4.2.3 (SKIPPED at module-level)."
 verdict-state: CONFIRMED
-head_sha: 276bd854cc1c41749c87cc6b9f05eea4fed4021e
-head_sha_at_checkpoint: 276bd854cc1c41749c87cc6b9f05eea4fed4021e
+head_sha: c36a1b4c7ff8c1ec83f1a8a92aaf57c5b2a8cf08
+head_sha_at_checkpoint: c36a1b4c7ff8c1ec83f1a8a92aaf57c5b2a8cf08
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-0/block-8-rd-2d-2026-05-19T16-00-36Z.md
@@ -222,6 +222,6 @@ Stage 1c (cross-stack equivalence + landing-prep) is dispatchable verbatim per c
 
 ---
 
-This checkpoint lands at HEAD `276bd854cc1c41749c87cc6b9f05eea4fed4021e` (full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time per Convention #12 § B.2 tightened-discipline). If a separate `chore(reaction-diffusion-2d-stack-d-stage1b-sha-backfill)` commit becomes needed (i.e., this checkpoint's `head_sha:` differs from the closing commit's actual SHA), the back-fill is committed per the two-commit pattern; otherwise no-op.
+This checkpoint lands at HEAD `c36a1b4c7ff8c1ec83f1a8a92aaf57c5b2a8cf08` (back-filled per Convention #12 + conventions doc § B.2 tightened-discipline in a separate commit `chore(reaction-diffusion-2d-stack-d-stage1b-sha-backfill)` per the two-commit pattern; full 40-hex SHA captured via `git rev-parse HEAD` at summary-composition time). The Stage 1b implementation commit is `276bd854cc1c41749c87cc6b9f05eea4fed4021e`.
 
 Verdict: **CONFIRMED**.
