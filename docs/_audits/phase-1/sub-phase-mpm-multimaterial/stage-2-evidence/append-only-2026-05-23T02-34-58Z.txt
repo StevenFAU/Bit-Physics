@@ -1,0 +1,40 @@
+Append-only check at Stage 2 (conventions doc § B.1 + § B.4)
+Protected sets (13 prior SHAs) — verify no commits in this sub-phase modify files present at any:
+
+Protected SHA: 8776791 (87767918825b4854aad35160eab7c83a72882c93)
+Protected SHA: v0.1.0-phase-1 (9998bc1897e8b70e28eab496977f6e82edd7485a)
+Protected SHA: 2cc0f21 (2cc0f2184cfdcaa447641f5e35256696227818ce)
+Protected SHA: 739c93f (739c93fc9c44d82f6b025eebcdfad17506a4413e)
+Protected SHA: 1f5fa0c (1f5fa0cf4313b13dd7d28e84d9b7e3730a5165e6)
+Protected SHA: 0df358d (0df358dda4a6226d5fc5eb9e00c6ffa1da9ed40d)
+Protected SHA: 569c883 (569c883fe8f0a576cd97accf3f3a8e994fac31f9)
+Protected SHA: 281c74f (281c74f17132388e5881d31b9a1bd8952b4df59c)
+Protected SHA: 27304d0 (27304d07897d3f7285cdf2c014821c22b3516990)
+Protected SHA: 34c7d34 (34c7d34d087bc7c396eb8fde00bf8bfd2318ff19)
+Protected SHA: cf13d1c (cf13d1cce0a4941562fed37444517bee86318728)
+Protected SHA: 0672554 (067255464cb20783fabdbeb54ee4d9bc79c8f37a)
+Protected SHA: 4f79e19 (4f79e190f3e4e1037f3a920c14f866afbcc20ba6)
+
+Sub-phase commits 4724284 + 9b19c26 (Cat 3 lift) diff-only against:
+  - tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json
+  - tools/integrity/integrity/cat3_numerical/golden_values.py
+
+Verifying these files exist at v0.1.0-phase-1 (must be additive-only edits per § B.1):
+  tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json: EXISTS at v0.1.0-phase-1 (additive edit permitted per § I.2 Decision A; LBM 0f8ddde + d080463 precedent)
+  tools/integrity/integrity/cat3_numerical/golden_values.py: EXISTS at v0.1.0-phase-1 (additive edit permitted per § I.2 Decision A; LBM 0f8ddde + d080463 precedent)
+
+CI semantics check (audit-append-only.yml filter):
+  CI grep -E '\.ledger\.md$' filters to *.ledger.md files only. The Cat 3 lift
+  edits a golden JSON + Python module (NEITHER is *.ledger.md). CI trivially clean.
+
+Strict-mode advisory: The two Cat 3 lift commits modify files present at v0.1.0-phase-1.
+  Per conventions doc § I.2 Decision A, this is the established additive-restructuring
+  pattern (mechanical lift of 1 packed citation → 4 discrete anchors; no new evidence;
+  every citation preserved verbatim per § I.3 anchor-count semantics). Mirrors:
+    - closed-form Stage 2 N4 / 20d02e0 (closed-form/ pickup)
+    - agent-based Stage 2 N1 / 3ce7809 + d156792 (agent-based/ lift+pickup)
+    - sph-water Stage 2 N1 / TBD-sph-water-lift + N2-pickup (particle-fluids/ lift+pickup)
+    - LBM Stage 2 / 0f8ddde + d080463 (lattice/ lift+pickup)
+  No 'unauthorised modification' concern; established additive-restructuring precedent.
+
+Verdict: APPEND-ONLY clean per CI semantics; strict-mode advisory matches Decision A precedent.

@@ -1,0 +1,22 @@
+Verify Phase 1 RED evidence files unchanged at HEAD.
+
+7d59ffdbd96d96ac3bb33439a00102a36fd29015acd564aef544850cf6e39b7b  tools/testkit/failing-tests-evidence/boids-3d-2026-05-20T13-04-01Z.txt
+26032163d891ed4f648e9d0f4778d3ce4e10db2a336c9d4432fb950ade98b3a9  tools/testkit/failing-tests-evidence/boids-3d-implemented-2026-05-20T18-02-02Z.txt
+c961dd22c1ca6117af6d9f187d2c0d3aa4d546972496b0f38d11aa14879f23a1  tools/testkit/failing-tests-evidence/eulerian-smoke-2026-05-20T13-37-41Z.txt
+c78de8bee93a5cb06c0ccc78a843766b98c93685b344c63d772cf3374b6ef3cd  tools/testkit/failing-tests-evidence/lattice-boltzmann-d3q19-2026-05-20T13-43-01Z.txt
+d4a89d3e782e639c179238d7fc5f4c307a99cf0ec74d9ebb5d8db547b37e2ca0  tools/testkit/failing-tests-evidence/mandelbulb-explorer-2026-05-20T12-54-18Z.txt
+2e73c3e347cc35356cfe05285416e9086f01efaf88abb7229a7e3a12afb18205  tools/testkit/failing-tests-evidence/mandelbulb-explorer-implemented-2026-05-20T16-41-25Z.txt
+a57251a19b28888e664402e9c92eb681fa17719be7e156154df3d681bb9edf94  tools/testkit/failing-tests-evidence/mpm-multimaterial-2026-05-20T13-48-06Z.txt
+8ee52dc7cff8a207fb8bed468b2e72cd84ea5196fafbdf646481ed328c043855  tools/testkit/failing-tests-evidence/physarum-2026-05-20T13-04-01Z.txt
+991495b4ba1dcdb66faf2b23aff29121e87d0daf1fe6d2a0f55758fde6601427  tools/testkit/failing-tests-evidence/physarum-implemented-2026-05-20T18-12-01Z.txt
+b3165ab1cd0b69d816fce8ffcdb4436d619f01c5ecfa7942eb77c4aeb2514b96  tools/testkit/failing-tests-evidence/reaction-diffusion-3d-2026-05-20T13-26-32Z.txt
+29d0b8bb5ebec53284dbf3d9607ef42c5c87efdb628faf38c175740011a05820  tools/testkit/failing-tests-evidence/reaction-diffusion-3d-implemented-2026-05-20T19-36-54Z.txt
+82fb91bcf19581cd9adc0eca4ba194de033d4a58aa9c5319d52dabc40cf12b1f  tools/testkit/failing-tests-evidence/sph-water-2026-05-20T13-32-02Z.txt
+5c3d9924c4713153376fbf42fbb729af48c229052fc4fe435e38f2ef0fcf7110  tools/testkit/failing-tests-evidence/sph-water-implemented-2026-05-20T22-27-08Z.txt
+c4f72e2595bfe0702ac1d1721371e65ea985661be89c114e100da783104cac63  tools/testkit/failing-tests-evidence/strange-attractors-2026-05-20T12-54-18Z.txt
+a19c38e9c7d7151607b07b1b773397dd4096f4f97bd3bc7d3a1d34a0f9db8a7c  tools/testkit/failing-tests-evidence/strange-attractors-implemented-2026-05-20T16-34-40Z.txt
+
+MPM Phase 1 evidence sha256 expected:
+a57251a19b28888e664402e9c92eb681fa17719be7e156154df3d681bb9edf94 (mpm-multimaterial-2026-05-20T13-48-06Z.txt)
+
+a57251a19b28888e664402e9c92eb681fa17719be7e156154df3d681bb9edf94  tools/testkit/failing-tests-evidence/mpm-multimaterial-2026-05-20T13-48-06Z.txt

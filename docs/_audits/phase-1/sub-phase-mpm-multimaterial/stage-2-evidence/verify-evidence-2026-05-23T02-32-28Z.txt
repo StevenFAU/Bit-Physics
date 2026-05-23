@@ -1,0 +1,27 @@
+  FAIL  sha256 mismatch for 'captures/mpm-ref/drop-impact-128cube-seed42-step500.h5': claimed=sha256:73e00d0976a663a8e9c1de87334cba701a385ae9b044ead929eac8b540b5ebae actual=7bed580205021c18b77fd7847e26c3bb5b01d0303b974c301fc1b3fce8817634
+  PASS  docs/phases/sub-phase-mpm-multimaterial.md
+  PASS  docs/conventions/sub-phase-conventions.md
+  PASS  docs/_audits/phase-1/sub-phase-mpm-multimaterial/stage-0-checkpoint-2026-05-23T01-33-19Z.md
+  PASS  docs/_audits/phase-1/sub-phase-mpm-multimaterial/stage-1-gate13-replay-2026-05-23T02-10-33Z.txt
+  PASS  tools/testkit/failing-tests-evidence/mpm-multimaterial-2026-05-20T13-48-06Z.txt
+  PASS  tools/testkit/failing-tests-evidence/mpm-multimaterial-implemented-2026-05-23T02-13-16Z.txt
+  PASS  tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json
+  PASS  captures/mpm-ref/drop-impact-128cube-seed42-step500.h5
+  PASS  captures/mpm-ref/drop-impact-128cube-seed42-step500.json
+  PASS  docs/perf-ledger.md
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/sim.py
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/invariants.py
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/reference/__init__.py
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/reference/shape_functions.py
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py
+  PASS  docs/_audits/phase-1/sub-phase-mpm-multimaterial/stage-1-gate13-replay-2026-05-23T02-10-33Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/mpm-multimaterial-2026-05-20T13-48-06Z.txt (sha256 OK)
+  PASS  tools/testkit/failing-tests-evidence/mpm-multimaterial-implemented-2026-05-23T02-13-16Z.txt (sha256 OK)
+  PASS  tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json (sha256 OK)
+  PASS  captures/mpm-ref/drop-impact-128cube-seed42-step500.json (sha256 OK)
+  PASS  docs/perf-ledger.md (sha256 OK)
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/sim.py (sha256 OK)
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py (sha256 OK)
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/reference/shape_functions.py (sha256 OK)
+  PASS  packages/mpm-multimaterial/mpm_multimaterial/invariants.py (sha256 OK)
+summary: 25 pass / 1 fail at head_sha 53349c1acc33

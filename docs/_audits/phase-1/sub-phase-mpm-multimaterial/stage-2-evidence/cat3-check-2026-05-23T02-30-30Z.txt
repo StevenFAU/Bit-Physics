@@ -1,0 +1,20 @@
+_SUBDIRS_PICKED_UP = ('closed-form', 'agent-based', 'particle-fluids', 'lattice', 'hybrid-pg')
+
+gathered tables:
+  tools/testkit/golden/tables/agent-based/boids-3agent-step1.json: anchors=3, algorithm=boids-reynolds-1987-3agent-step1
+  tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json: anchors=3, algorithm=physarum-jones-2010-4agent-deposit-step1
+  tools/testkit/golden/tables/closed-form/lorenz-structural.json: anchors=3, algorithm=lorenz-structural-invariants
+  tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json: anchors=3, algorithm=mandelbulb-distance-estimator-p8-quilez-2009
+  tools/testkit/golden/tables/cubic-spline-kernel.json: anchors=3, algorithm=cubic-spline-kernel-3d-monaghan
+  tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json: anchors=4, algorithm=mls-mpm-quadratic-bspline-1d-hu-2018
+  tools/testkit/golden/tables/lattice/d3q19-equilibrium.json: anchors=4, algorithm=lattice-boltzmann-d3q19-equilibrium-qian-1992
+  tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json: anchors=3, algorithm=dfsph-density-evolution-2particle
+
+Cat 3 findings:
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'boids-reynolds-1987-3agent-step1'; skipping numeric verification
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'physarum-jones-2010-4agent-deposit-step1'; skipping numeric verification
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'lorenz-structural-invariants'; skipping numeric verification
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'mandelbulb-distance-estimator-p8-quilez-2009'; skipping numeric verificati
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'mls-mpm-quadratic-bspline-1d-hu-2018'; skipping numeric verification
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'lattice-boltzmann-d3q19-equilibrium-qian-1992'; skipping numeric verificat
+  FailureMode.AUDIT_LOG |  | no Python evaluator registered for algorithm 'dfsph-density-evolution-2particle'; skipping numeric verification

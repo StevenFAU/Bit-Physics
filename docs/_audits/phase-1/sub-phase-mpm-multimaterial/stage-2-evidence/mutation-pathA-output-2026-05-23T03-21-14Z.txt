@@ -1,0 +1,50 @@
+
+- Mutation testing starting -
+
+These are the steps:
+1. A full test suite run will be made to make sure we
+   can run the tests successfully and we know how long
+   it takes (to detect infinite loops for example)
+2. Mutants will be generated and checked
+
+Results are stored in .mutmut-cache.
+Print found mutants with `mutmut results`.
+
+Legend for output:
+🎉 Killed mutants.   The goal is for everything to end up in this bucket.
+⏰ Timeout.          Test suite took 10 times as long as the baseline so were killed.
+🤔 Suspicious.       Tests took a long time, but not long enough to be fatal.
+🙁 Survived.         This means your tests need to be expanded.
+🔇 Skipped.          Skipped.
+
+1. Using cached time for baseline tests, to run baseline again delete the cache file
+
+2. Checking mutants
+⠋ 1/1510  🎉 1  ⏰ 0  🤔 0  🙁 0  🔇 0⠙ 2/1510  🎉 2  ⏰ 0  🤔 0  🙁 0  🔇 0⠹ 3/1510  🎉 3  ⏰ 0  🤔 0  🙁 0  🔇 0⠸ 4/1510  🎉 4  ⏰ 0  🤔 0  🙁 0  🔇 0⠼ 5/1510  🎉 5  ⏰ 0  🤔 0  🙁 0  🔇 0⠴ 6/1510  🎉 6  ⏰ 0  🤔 0  🙁 0  🔇 0⠦ 7/1510  🎉 7  ⏰ 0  🤔 0  🙁 0  🔇 0⠧ 8/1510  🎉 8  ⏰ 0  🤔 0  🙁 0  🔇 0⠇ 9/1510  🎉 9  ⏰ 0  🤔 0  🙁 0  🔇 0⠏ 10/1510  🎉 10  ⏰ 0  🤔 0  🙁 0  🔇 0⠋ 11/1510  🎉 11  ⏰ 0  🤔 0  🙁 0  🔇 0⠙ 12/1510  🎉 12  ⏰ 0  🤔 0  🙁 0  🔇 0⠹ 13/1510  🎉 13  ⏰ 0  🤔 0  🙁 0  🔇 0⠸ 14/1510  🎉 14  ⏰ 0  🤔 0  🙁 0  🔇 0⠼ 15/1510  🎉 15  ⏰ 0  🤔 0  🙁 0  🔇 0⠴ 15/1510  🎉 15  ⏰ 0  🤔 0  🙁 0  🔇 0⠦ 15/1510  🎉 15  ⏰ 0  🤔 0  🙁 0  🔇 0⠧ 16/1510  🎉 15  ⏰ 0  🤔 0  🙁 1  🔇 0⠇ 16/1510  🎉 15  ⏰ 0  🤔 0  🙁 1  🔇 0⠏ 16/1510  🎉 15  ⏰ 0  🤔 0  🙁 1  🔇 0⠋ 17/1510  🎉 15  ⏰ 0  🤔 0  🙁 2  🔇 0⠙ 17/1510  🎉 15  ⏰ 0  🤔 0  🙁 2  🔇 0⠹ 17/1510  🎉 15  ⏰ 0  🤔 0  🙁 2  🔇 0⠸ 18/1510  🎉 15  ⏰ 0  🤔 0  🙁 3  🔇 0⠼ 18/1510  🎉 15  ⏰ 0  🤔 0  🙁 3  🔇 0⠴ 18/1510  🎉 15  ⏰ 0  🤔 0  🙁 3  🔇 0⠦ 19/1510  🎉 15  ⏰ 0  🤔 0  🙁 4  🔇 0⠧ 19/1510  🎉 15  ⏰ 0  🤔 0  🙁 4  🔇 0⠇ 19/1510  🎉 15  ⏰ 0  🤔 0  🙁 4  🔇 0⠏ 20/1510  🎉 15  ⏰ 0  🤔 0  🙁 5  🔇 0⠋ 20/1510  🎉 15  ⏰ 0  🤔 0  🙁 5  🔇 0⠙ 20/1510  🎉 15  ⏰ 0  🤔 0  🙁 5  🔇 0⠹ 21/1510  🎉 15  ⏰ 0  🤔 0  🙁 6  🔇 0⠸ 21/1510  🎉 15  ⏰ 0  🤔 0  🙁 6  🔇 0⠼ 21/1510  🎉 15  ⏰ 0  🤔 0  🙁 6  🔇 0⠴ 22/1510  🎉 15  ⏰ 0  🤔 0  🙁 7  🔇 0⠦ 22/1510  🎉 15  ⏰ 0  🤔 0  🙁 7  🔇 0⠧ 22/1510  🎉 15  ⏰ 0  🤔 0  🙁 7  🔇 0⠇ 23/1510  🎉 15  ⏰ 0  🤔 0  🙁 8  🔇 0⠏ 23/1510  🎉 15  ⏰ 0  🤔 0  🙁 8  🔇 0⠋ 23/1510  🎉 15  ⏰ 0  🤔 0  🙁 8  🔇 0⠙ 24/1510  🎉 15  ⏰ 0  🤔 0  🙁 9  🔇 0⠹ 24/1510  🎉 15  ⏰ 0  🤔 0  🙁 9  🔇 0⠸ 24/1510  🎉 15  ⏰ 0  🤔 0  🙁 9  🔇 0⠼ 25/1510  🎉 15  ⏰ 0  🤔 0  🙁 10  🔇 0⠴ 25/1510  🎉 15  ⏰ 0  🤔 0  🙁 10  🔇 0⠦ 25/1510  🎉 15  ⏰ 0  🤔 0  🙁 10  🔇 0⠧ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠇ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠏ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠋ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠙ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠹ 26/1510  🎉 15  ⏰ 0  🤔 0  🙁 11  🔇 0⠸ 27/1510  🎉 15  ⏰ 0  🤔 1  🙁 11  🔇 0Process check_mutants:
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/shutil.py", line 886, in move
+    os.rename(src, real_dst)
+FileNotFoundError: [Errno 2] No such file or directory: 'packages/mpm-multimaterial/mpm_multimaterial/sim.py.bak' -> 'packages/mpm-multimaterial/mpm_multimaterial/sim.py'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.12/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/otacon/Projects/Bit-Physics/.venv/lib/python3.12/site-packages/mutmut/__init__.py", line 749, in check_mutants
+    status = run_mutation(context, feedback)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/otacon/Projects/Bit-Physics/.venv/lib/python3.12/site-packages/mutmut/__init__.py", line 816, in run_mutation
+    move(context.filename + '.bak', context.filename)
+  File "/usr/lib/python3.12/shutil.py", line 906, in move
+    copy_function(src, real_dst)
+  File "/usr/lib/python3.12/shutil.py", line 475, in copy2
+    copyfile(src, dst, follow_symlinks=follow_symlinks)
+  File "/usr/lib/python3.12/shutil.py", line 260, in copyfile
+    with open(src, 'rb') as fsrc:
+         ^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: 'packages/mpm-multimaterial/mpm_multimaterial/sim.py.bak'
+/usr/lib/python3.12/multiprocessing/resource_tracker.py:254: UserWarning: resource_tracker: There appear to be 6 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '
