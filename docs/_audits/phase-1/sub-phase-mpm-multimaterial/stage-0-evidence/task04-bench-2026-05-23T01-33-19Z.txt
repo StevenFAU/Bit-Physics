@@ -1,0 +1,46 @@
+Grid: 128^3 = 2,097,152 cells
+Grid memory: 16.8 MB per scalar field; ~67 MB for mass+momentum(3)
+
+=== Naive Python @ N=50,000 particles ===
+  P2G  min: 1.2506 s
+  G2P  min: 0.9011 s
+  step min: 2.1517 s  (43.034 μs/particle)
+
+=== Numba @njit @ N=50,000 particles (small) ===
+  P2G  min: 0.0133 s
+  G2P  min: 0.0128 s
+  step min: 0.0261 s  (0.522 μs/particle)
+
+=== Numba @njit @ N=2,000,000 particles (canonical scale) ===
+  P2G  min: 0.5335 s
+  G2P  min: 0.5110 s
+  step min: 1.0445 s  (0.522 μs/particle)
+
+=== Multipliers and projections ===
+  naive-vs-numba per-particle ratio: 82.4x
+  naive per-step @ N=2,000,000: 86.1 s (extrapolated linearly)
+  numba per-step @ N=2,000,000: 1.0445 s (measured)
+
+  Canonical: 500 steps
+  Naive Python wall-clock: 43034.0 s = 717.2 min = 11.95 h
+  Numba       wall-clock: 522.2 s = 8.7 min = 0.15 h
+
+  Apply ~2-3x production correction (charter § 1.3 for Python-loop-heavy):
+  Numba × 2.5x ~= 1305.6 s = 21.8 min
+
+=== Storage @ canonical ===
+  per-frame:
+    grid_mass:       16.8 MB
+    grid_momentum:   50.3 MB
+    part pos:        48.0 MB
+    part vel:        48.0 MB
+    total:          163.1 MB
+  per-frame committed (macroscopic, drop grid_mass scalar): ~146 MB
+  500-frame full cadence:  ~79.6 GiB
+  W1 ceiling = 2 GiB = 2048 MB
+
+  cadence-  1: 500 frames × 163 MB =   81554 MB (OVERSHOOTS)
+  cadence- 10:  50 frames × 163 MB =    8155 MB (OVERSHOOTS)
+  cadence- 25:  20 frames × 163 MB =    3262 MB (OVERSHOOTS)
+  cadence- 50:  10 frames × 163 MB =    1631 MB (FITS 2 GB)
+  cadence-100:   5 frames × 163 MB =     816 MB (FITS 2 GB)

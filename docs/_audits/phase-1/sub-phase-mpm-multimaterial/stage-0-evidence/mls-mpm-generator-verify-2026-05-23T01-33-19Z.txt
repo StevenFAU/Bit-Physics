@@ -1,0 +1,1 @@
+OK — /home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json matches closed-form recomputation.
