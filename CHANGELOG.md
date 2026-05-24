@@ -1466,6 +1466,41 @@ ACTION (remote-CI validation of the bumped majors happens at the operator push).
   params from module constants). Realizes § J.7's intent without a sealed-source
   refactor. Reusable for any future per-sim manifest-equality fan-out.
 
+### sub-phase-ci-action-hotfix-setup-uv-v8-pin
+
+Single-stage focused-infrastructure **hotfix** for the post-push CI failure of
+`sub-phase-ci-action-migration-and-banked-cleanup`: 6 of 9 workflows went red,
+all using `astral-sh/setup-uv@v8`. Per the setup-uv v8.0.0 release notes, the
+maintainer **discontinued publishing moving major/minor tags** at v8 as
+supply-chain hardening (*"we will stop publishing minor tags. You won't be able
+to use `@v8` or `@v8.0` any longer"*) — so `@v8` does not resolve. No `-phase-N`
+tag; PUSH IS OPERATOR ACTION.
+
+#### Changed
+
+- **Pinned `astral-sh/setup-uv@v8` → `@v8.1.0`** (immutable specific-version tag;
+  current latest v8.x, re-fetched at edit time) across the 6 setup-uv workflows
+  (`python-strict.yml`, `determinism.yml`, `equivalence.yml`, `integrity.yml`,
+  `mutation-testing.yml`, `tolerance-budget-check.yml`). 6 single-line `uses:`
+  changes; every other line byte-for-byte preserved. The other 3 bumped actions
+  (`actions/checkout@v6`, `actions/setup-node@v6`, `pnpm/action-setup@v6`) still
+  publish moving tags and are left as-is (out of scope).
+
+#### Verification
+
+- pyyaml 9/9 valid; integrity sweep `c19492ad…cb52` byte-identical (streak HELD);
+  bit-identity replay `9399fc33…18909f34` HELD (28th+ invocation). No
+  cross-package regression sweep warranted (workflow-YAML-only; zero Python/TS
+  surface touched).
+
+#### Banked observation
+
+- **Action-version web-fetch must distinguish (a) latest released version from
+  (b) usable pinning forms.** Release notes may document deviation from the
+  default "pin to major" assumption (setup-uv v8.0.0: moving tags discontinued).
+  Future workflow-action probes / D3 re-fetch must read the release notes for the
+  specific major targeted, not merely confirm the version exists.
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by
