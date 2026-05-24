@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-d-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: PLACEHOLDER_PLAN_DRAFTING_LANDING_COMMIT
+head_sha: e7d3cbd9ee69899273426492f399a77c070a44b9
 head_sha_at_checkpoint: 6b197f1a5e6a675d4cbfbeabac3d4f8dd6c09f17
 date: 2026-05-24T02-39-20Z
 verdict: plan-drafting-CONFIRMED
@@ -26,8 +26,8 @@ evidence_paths:
 |---|---|---|
 | Plan-drafting probe | `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/plan-drafting-probe-2026-05-24T02-30-12Z.md` | `19a5d8e1b7295d1688ce60c58d459c991e66286b` |
 | Charter | `docs/phases/sub-phase-lattice-boltzmann-d3q19-stack-d.md` | `6b197f1a5e6a675d4cbfbeabac3d4f8dd6c09f17` |
-| Plan-drafting landing (this) | `…/plan-drafting-landing-2026-05-24T02-39-20Z.md` | `PLACEHOLDER` → back-fill |
-| SHA back-fill | — | `PLACEHOLDER` (next commit) |
+| Plan-drafting landing (this) | `…/plan-drafting-landing-2026-05-24T02-39-20Z.md` | `e7d3cbd9ee69899273426492f399a77c070a44b9` |
+| SHA back-fill | — | this back-fill commit (SHA reported to coordinator) |
 
 Verdict: **plan-drafting-CONFIRMED.** Drafting is structurally complete; no blocking dependencies. Hard Rule 2 NOT triggered (Phase-1 LBM is structurally as the spec describes — D3Q19 BGK; tolerance + naming + perf shifts are routine HEAD-verification refinements, not structural wrongness).
 
