@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-d-stage-1a
 subject: "Stage 1a failing-tests RED-state anchored for the mpm-multimaterial -> Stack-D port (FOURTH spec-Phase-2 cross-stack port). VERDICT SHIFTED-with-N1. RED state structurally correct: 8 new test-surface files at packages/mpm-multimaterial-stack-d/tests/ import the yet-to-exist mpm_multimaterial_stack_d.{reference,sim,invariants} submodules; pytest = 6 clean collection-time ModuleNotFoundError on the named submodules (NO other error class). Package skeleton (pyproject.toml + __init__.py + README.md) + workspace registration (root pyproject members 17->18; uv sync --all-packages clean; uv.lock re-resolved) PASS. Gate-4 GOLDEN-only (no MMS arm; probe S-M6); ONE canonical capture (D4); cross-stack test single-capture vs captures/mpm-ref/. Failing-tests evidence mpm-multimaterial-stack-d-2026-05-24T12-36-43Z.txt committed-blob sha256 2e8d7ea9...82458d (== stage1a footer hash; commit-first-then-sha256). Stage1a commit b72bccb; ruff check+format clean (ruff --fix applied import-sort + RUF100 before final capture). N1: the aborted first commit attempt (ruff HARD_FAIL) left a pre-ruff evidence blob (12-35-09Z) staged; it rode into b72bccb and was removed in cleanup commit bca55c1 (process hygiene; NOT a RED-state defect). 0 methodology shifts; N1 process-hygiene only. Cumulative 144. NOT BLOCKED. No Hard-Rule-2 trigger (RED is clean ModuleNotFoundError; uv resolves cleanly)."
 verdict-state: SHIFTED
-head_sha: PENDING-BACKFILL
-head_sha_at_checkpoint: PENDING-BACKFILL
+head_sha: 0d7ce0705f219955deed2307ebe20e34a2897de4
+head_sha_at_checkpoint: 0d7ce0705f219955deed2307ebe20e34a2897de4
 parent_audits:
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-checkpoint-2026-05-24T12-16-58Z.md
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/plan-drafting-probe-2026-05-24T11-45-06Z.md
