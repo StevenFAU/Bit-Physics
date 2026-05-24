@@ -1,0 +1,59 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "blob_center": [
+        0.5,
+        0.5,
+        0.65
+      ],
+      "blob_initial_vz": -2.0,
+      "blob_radius": 0.15,
+      "boundary": "sticky-floor-at-z-index-4-axis-clamp-walls",
+      "constitutive": "neo-hookean-single-material",
+      "descriptor": "drop-impact-128cube-seed42-step500",
+      "dt": 0.0001,
+      "floor_z_index": 4,
+      "gravity_z": -9.81,
+      "material_count": 1,
+      "n_particles": 1000000,
+      "poisson_ratio": 0.3,
+      "shape_function": "quadratic-b-spline-3-node",
+      "youngs_modulus": 4000.0
+    },
+    "seed": 42,
+    "tier": "ref"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:d8d38c8d228e319c72d2a4accb7c45e1e0764aa789cc7a8cd30c353603ad7edc",
+    "format": "hdf5",
+    "path": "drop-impact-128cube-seed42-step500.h5"
+  },
+  "run": {
+    "capture_interval": 50,
+    "start_utc": "2026-05-23T00:00:00Z",
+    "step_count": 500,
+    "wall_clock_seconds": 360.77301912999246
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "hybrid-pg",
+    "name": "mpm-multimaterial",
+    "variant": "mls-mpm-hu-2018-multimaterial"
+  },
+  "stack": {
+    "build_id": "sub-phase-mpm-multimaterial-stack-d",
+    "name": "taichi-stack-d",
+    "version": "0.0.1"
+  }
+}
