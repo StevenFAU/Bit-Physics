@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-common-warp-bootstrap-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: a0ec85be2c408adb2a76bbe4e132e03495d76abc
 head_sha_at_checkpoint: 7ff2874e290e4c9531dfd8b2c522b16aff212d6e
 date: 2026-05-24T18-47-00Z
 verdict: plan-drafting-CONFIRMED

@@ -5,7 +5,7 @@ phase: 2
 artifact: task
 artifact_id: sub-phase-common-warp-bootstrap-plan-drafting-probe
 subject: "Plan-drafting probe report for the common-warp bootstrap sub-phase (Stack-E / NVIDIA Warp workspace-surface bootstrap; phase-2 plan §1.5.2 W-Gates 1-6 + §1.9.1 seven-subsystem public API). Convention-M HEAD re-anchor of every SECTION-1 believed-state value; Convention-#8 moment-of-assertion Warp upstream verify (warp-lang 1.13.0, 2026-05-04; CPU+GPU; Python 3.10-3.14); Convention-C verbatim citation of common-py surface + phase-2 plan §1.9.1 API + equivalence harness + capture-v1 schema. Surfaces D1-D14 for operator routing. NO drift blocker (Hard Rule 2 clear); two believed-state corrections recorded (S-W1 hello path examples/hello/ not examples/hello-warp/; S-W2 module has SEVEN subsystems not six, with a GPU-default device= API that the CPU-determinism posture must reconcile)."
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: 3ae3d2815add787f4080adcf1c3543226cd49205
 head_sha_at_checkpoint: 060645f28950b8683be4731bd365a2e9ad51c44d
 parent_audits:
   - docs/_audits/phase-2/sub-phase-taichi-integration/landing-2026-05-23T14-45-11Z.md
