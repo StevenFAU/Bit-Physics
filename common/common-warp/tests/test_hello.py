@@ -22,6 +22,7 @@ pytest.importorskip("warp")  # common-warp's hard dep; skip cleanly if absent in
 import warp as wp
 from capture.manifest import validate_capture_manifest
 from determinism import run_twice_and_diff
+from equivalence.harness import compare_captures
 from hello.sim import DESCRIPTOR_DEFAULT, run_hello_sim
 
 import common_warp
@@ -161,3 +162,38 @@ def test_hashgrid_over_tracer_particles() -> None:
         found = neighbors.numpy()
     assert found.size >= 1
     assert 0 in found.tolist()
+
+
+# --- W-5 full gate: format-interop run-twice-and-diff at capture level ---
+
+
+def test_hello_w5_compare_captures_run_twice(tmp_path: Path) -> None:
+    """W-5 full gate (Task 1c.5): compare_captures on the actual hello-warp capture.
+
+    (a) run the Subsystem-7 sim -> Capture A; (b) run again (same seed,
+    deterministic) -> Capture B; (c) compare_captures(A, B); (d) assert
+    within_tolerance=True (A and B are bit-identical on CPU per D4); (e)
+    assert NO HARD_FAIL on any sim/step/shape/dtype surface. This is the
+    run-twice-and-diff at the capture level — W-5 fully completes here.
+    """
+    from hello.sim import hello_sim_runner
+
+    dir_a = tmp_path / "a"
+    dir_b = tmp_path / "b"
+    dir_a.mkdir()
+    dir_b.mkdir()
+    cap_a = hello_sim_runner(42, dir_a)
+    cap_b = hello_sim_runner(42, dir_b)
+
+    verdict = compare_captures(cap_a, cap_b)  # category 'smoke' -> defaults.smoke
+
+    # (d) deterministically identical -> within tolerance
+    assert verdict.within_tolerance is True
+    # (e) no HARD_FAIL marker on any sim.{name,category}/step-set/shape/missing surface
+    diff_keys = set(verdict.per_field_diff)
+    assert "sim:category-mismatch" not in diff_keys
+    assert "step:set-mismatch" not in diff_keys
+    assert not any(k.endswith((":missing", ":shape-mismatch")) for k in diff_keys)
+    # identical runs -> every per-field diff is exactly zero (no dtype TypeError either)
+    assert diff_keys  # the diff actually ran field-by-field (not short-circuited)
+    assert all(d["max_abs_err"] == 0.0 for d in verdict.per_field_diff.values())
