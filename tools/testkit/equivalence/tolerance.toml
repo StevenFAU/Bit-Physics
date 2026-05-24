@@ -79,3 +79,17 @@ category = "mpm"
 # Established by sub-phase-mpm-multimaterial-stack-d Stage 1c.
 # Fourth per-sim override after reaction-diffusion-2d + sph-water + lattice-boltzmann-d3q19.
 # Same 1e-4 tolerance as RD-2D + sph-water (looser than LBM's 1e-5).
+
+[overrides.eulerian-smoke]
+category = "smoke"
+# Resolves sim.category='volumetric-grid' (physics-family taxonomy)
+# to tolerance-category='smoke' (numerical-method taxonomy).
+# AT-BUDGET per [defaults.smoke]: relative=1e-4, absolute=0.0.
+# NOT a tolerance widening per spec § 2.6 — resolution wiring only.
+# Established by sub-phase-eulerian-smoke-stack-d Stage 1.
+# FIFTH per-sim override after reaction-diffusion-2d + sph-water
+# + lattice-boltzmann-d3q19 + mpm-multimaterial.
+# Same 1e-4 tolerance as RD-2D + sph-water + mpm (looser than LBM's 1e-5).
+# Cross-stack-non-trivial surface: the fixed-cap (n_jacobi=20) Jacobi
+# pressure-projection FP-accumulation (deferred IC-15 aspect #5, in its
+# determinism-safe fixed-iteration-count form — D5).
