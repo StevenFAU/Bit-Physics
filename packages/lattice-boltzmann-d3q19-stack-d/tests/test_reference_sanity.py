@@ -45,7 +45,10 @@ def test_rest_equilibrium_recovers_weights() -> None:
     f = feq(rho=1.0, u=(0.0, 0.0, 0.0))
     for i, w in enumerate(WEIGHTS):
         assert f[i] == w
-    assert density_moment(f) == 1.0
+    # The f64 19-term reduction recovers rho=1 up to the accumulation residual
+    # (~2e-16); the invariant is exact only in real arithmetic (cf. the gate-4a
+    # golden test's abs=1e-14 density tolerance).
+    assert abs(density_moment(f) - 1.0) <= 1e-14
 
 
 def test_canonical_descriptors_lock() -> None:

@@ -30,10 +30,22 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from equivalence.harness import compare_captures  # type: ignore[import-not-found]
+
 from lattice_boltzmann_d3q19_stack_d.sim import (  # type: ignore[import-not-found]
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)
     sim_runner_seeded_couette,  # noqa: F401  # contract-import (public-API surface)
+)
+
+# Gate-14 is a Stage 1c deliverable: it needs the Stack-D canonical captures
+# (Stage 1b produces them) AND the MANDATORY [overrides.lattice-boltzmann-d3q19]
+# tolerance entry (D6; Stage 1c adds it -- without it compare_captures raises
+# KeyError per Stage-0 Task 0.5). Stage 1a left this file as module-import RED;
+# Stage 1b adds this SKIP; Stage 1c removes it and activates both verdicts.
+pytestmark = pytest.mark.skip(
+    reason="gate-14 cross-stack equivalence: Stage 1c implements "
+    "(needs Stack-D captures + [overrides.lattice-boltzmann-d3q19] @ 1e-5)"
 )
 
 

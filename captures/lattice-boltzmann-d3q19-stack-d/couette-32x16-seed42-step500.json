@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      32,
+      16,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "boundary": "bounce-back-y-walls-with-moving-top-plate-periodic-xz",
+      "descriptor": "couette-32x16-seed42-step500",
+      "nz_convention": "depth-3-z-periodic-slab",
+      "tau": 0.7,
+      "wall_velocity_top_lattice": 0.05
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:4d171c516327612e2846158aafde75d96243f34014153824b58d608772ddb7f6",
+    "format": "hdf5",
+    "path": "couette-32x16-seed42-step500.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-24T00:00:00Z",
+    "step_count": 500,
+    "wall_clock_seconds": 0.9729883069521748
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "lattice",
+    "name": "lattice-boltzmann-d3q19",
+    "variant": "bgk-d3q19-qian-1992"
+  },
+  "stack": {
+    "build_id": "sub-phase-lattice-boltzmann-d3q19-stack-d",
+    "name": "taichi-stack-d",
+    "version": "0.0.1"
+  }
+}

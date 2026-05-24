@@ -1,0 +1,27 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 16 items
+
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_cross_stack_equivalence.py::test_poiseuille_capture_within_tolerance_of_numpy_reference SKIPPED [  6%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_cross_stack_equivalence.py::test_couette_capture_within_tolerance_of_numpy_reference SKIPPED [ 12%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_d3q19_equilibrium_golden.py::test_19_f_eq_values_match_golden PASSED [ 18%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_d3q19_equilibrium_golden.py::test_density_moment_recovers_rho PASSED [ 25%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_d3q19_equilibrium_golden.py::test_momentum_moment_recovers_rho_u PASSED [ 31%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_determinism.py::test_run_twice_bit_exact_diagnostic PASSED [ 37%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_determinism.py::test_content_equivalent_gate_catches_drift PASSED [ 43%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_diagnostics.py::test_tier1_health_no_nan_inf PASSED [ 50%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_diagnostics.py::test_tier2_vector_field_macroscopic_moments PASSED [ 56%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_mms_convergence.py::test_mms_observed_ooa_macroscopic_moments_match_formal PASSED [ 62%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_pbt_invariants.py::test_equilibrium_density_moment_pbt PASSED [ 68%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_pbt_invariants.py::test_equilibrium_momentum_moment_pbt PASSED [ 75%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_reference_sanity.py::test_velocity_set_is_d3q19 PASSED [ 81%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_reference_sanity.py::test_weights_normalised_and_sound_speed PASSED [ 87%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_reference_sanity.py::test_rest_equilibrium_recovers_weights PASSED [ 93%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_reference_sanity.py::test_canonical_descriptors_lock PASSED [100%]
+
+======================== 14 passed, 2 skipped in 5.29s =========================
