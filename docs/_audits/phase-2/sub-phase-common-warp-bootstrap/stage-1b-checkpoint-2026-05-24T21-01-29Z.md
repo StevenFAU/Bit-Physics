@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-common-warp-bootstrap-stage-1b
 stage: stage-1b-checkpoint
 subject: "Stage 1b (Capture + Particles + Grids + HashGrid; W-1 + W-5 mechanism) CLOSE for sub-phase-common-warp-bootstrap. VERDICT CONFIRMED. §1.9.1 Subsystems 2 (Capture I/O), 4 (Particles), 5 (Grids), 6 (HashGrid) landed under common/common-warp/src/common_warp/. Capture delegates HDF5 to the testkit capture module -> compare_captures-readable (W-5 format-interop mechanism GREEN against a synthetic pair; full W-5 gate at 1c). HashGrid wraps native wp.HashGrid with a kernel-based query_radius. Verification: common-warp 26 tests pass -W error (5 capture + 2 particles + 4 grids + 4 hashgrid + 11 Stage-1a); cross-package sweep 20 members ZERO regressions; integrity c19492ad...d22cb52 baseline-MATCH (streak HELD, 9 sub-phases); bit-identity replay 9399fc33...718909f34 HELD (37th). 3 shifts (S1b-1 device-default reconciliation; S1b-2 two Warp-API quirks caught+fixed; S1b-3 §1.9.1 socket vs landed Runtime/Determinism signature divergence — surfaced for operator). Cumulative 171 -> 174. No -phase-N tag. Stage 1c (smoke sim + docs + W-3/W-4/W-5/W-6 completion) routed separately."
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 59368bd7bb4f2994e8ca7d5c0407b61f06677614
 head_sha_at_checkpoint: fae33500469d21f614be796da0afba112d3d22ce
 parent_audits:
   - docs/_audits/phase-2/sub-phase-common-warp-bootstrap/stage-1a-checkpoint-2026-05-24T20-17-42Z.md
