@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sph-water-stack-d-stage-1a
 subject: "Stage 1a (failing-tests RED-state anchor) CLOSE for the sph-water -> Stack-D port. VERDICT CONFIRMED. NEW package skeleton packages/sph-water-stack-d/ (pyproject + README + sph_water_stack_d/__init__.py) + 9-file test surface (charter § 4.2.1: golden-table gate-4 split into test_cubic_spline_kernel_golden.py + test_dfsph_density_golden.py — NOT a single test_code_verification.py; the largest delta from the RD-2D template). Root pyproject.toml additively extended (workspace members 15 -> 16 total at HEAD; dispatch's '12 -> 13' was an unverified RD-2D-era carryover). uv sync --all-packages clean. RED-state: pytest fails at collection with 7 clean ModuleNotFoundError on the Stage-1b targets sph_water_stack_d.{reference (4 tests), sim (2), invariants (1)}; no skeleton/uv/parse errors (Hard Rule 2 satisfied). Failing-tests-evidence committed-blob sha256 e5243412...0ec253 (commit-first-then-sha256; load-bearing TDD anchor). Main commit 3a6eb82. 0 new SHIFTs (clean RED-anchor); 3 Convention #8 dispatch-vs-HEAD reconciliations recorded (analogous to plan-drafting F1/F2/F3, not shifts). Cumulative 129."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-CONVENTION-12>
+head_sha: 65dad914d20f78e9f1b4c728f8aea123209ac91f
+head_sha_at_checkpoint: 65dad914d20f78e9f1b4c728f8aea123209ac91f
 parent_audits:
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-0-checkpoint-2026-05-23T23-40-26Z.md
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
