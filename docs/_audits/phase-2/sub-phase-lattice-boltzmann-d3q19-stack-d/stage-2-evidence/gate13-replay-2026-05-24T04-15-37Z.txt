@@ -1,0 +1,8 @@
+Step 2.6 — gate-13 worktree replay @ Stage-1a SHA 2fe22f1.
+git worktree add --detach /tmp/... 2fe22f1 ; uv sync --all-packages --all-extras ;
+uv run pytest packages/lattice-boltzmann-d3q19-stack-d/tests/
+Result: 7 errors during collection (ModuleNotFoundError), breakdown:
+  3 x lattice_boltzmann_d3q19_stack_d.reference
+  3 x lattice_boltzmann_d3q19_stack_d.sim
+  1 x lattice_boltzmann_d3q19_stack_d.invariants
+Structural reproduction of the Stage-1a RED anchor CONFIRMED. Worktree pruned.

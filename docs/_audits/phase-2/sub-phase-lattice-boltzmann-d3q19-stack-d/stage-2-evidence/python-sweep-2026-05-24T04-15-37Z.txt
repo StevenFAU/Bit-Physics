@@ -1,0 +1,35 @@
+Step 2.2 — portfolio Python regression sweep (per-package isolation; cross-package
+conftest basename collision is the sph-water Stage-0 banked artifact, NOT a failure).
+HEAD = 2094535 (Stage 2 convergence). uv run pytest <per-root>.
+
+packages/boids-3d/tests                                P=10
+packages/eulerian-smoke/tests                          P=10
+packages/lattice-boltzmann-d3q19/tests                 P=10
+packages/lattice-boltzmann-d3q19-stack-d/tests         P=16   (this sub-phase; gate-14 x2 active)
+packages/mandelbulb-explorer/tests                     P=10
+packages/mpm-multimaterial/tests                       P=10
+packages/physarum/tests                                P=10
+packages/reaction-diffusion-2d/tests                   P=14
+packages/reaction-diffusion-2d-stack-d/tests           P=16   (no regression from lbm override)
+packages/reaction-diffusion-3d/tests                   P=8
+packages/sph-water/tests                               P=22
+packages/sph-water-stack-d/tests                       P=15   (no regression from lbm override)
+packages/strange-attractors/tests                      P=11
+common/common-py/tests                                 P=25
+tools/integrity/tests                                  P=56
+tools/testkit/capture/tests                            P=19   (+4 new: 2 LBM schema-corpus x round_trip+schema_valid)
+tools/testkit/determinism/tests                        P=3
+tools/testkit/equivalence/tests                        P=4
+tools/testkit/golden/tests                             P=16
+tools/testkit/numba_harness/tests                      P=5
+tools/testkit/property/tests                           P=2
+tools/testkit/taichi_harness/tests                     P=5
+tools/testkit/code_verification/mms/tests              P=8
+tools/diagnostics/.../tier1/tests                      P=13
+tools/diagnostics/.../tier2/closed_form/tests          P=23
+tools/diagnostics/.../tier2/particle/tests             P=24
+tools/diagnostics/.../tier2/scalar_field/tests         P=9
+tools/diagnostics/.../tier2/vector_field/tests         P=24
+========================================================================
+PORTFOLIO TOTAL: 398 PASS, 0 FAIL/ERR, 0 SKIP. No regression; additive.
+TypeScript fan-out: NO-OP (Python-only port; charter 2.2).
