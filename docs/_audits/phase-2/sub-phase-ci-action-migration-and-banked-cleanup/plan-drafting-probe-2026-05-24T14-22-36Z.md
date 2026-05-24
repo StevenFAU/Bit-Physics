@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: ci-action-migration-and-banked-cleanup-plan-drafting-probe
 subject: "Plan-drafting anchor-probe for the spec-Phase-2 focused-infrastructure sub-phase bundling S-CI2 (GitHub Actions Node-20 deprecation; PRIMARY time-pressured driver) + banked items. HEAD d6e0671; conventions 69aa39fc…4602bf45 / architecture e82b7b8e…9292d267 / methodology 8c760383…0d8f all MATCH believed-state; 18 workspace members; cumulative 146; .gitattributes 2 LFS rules. S-CI2 FACT-verified via GitHub Changelog: Node-24-default transition begins 2026-06-16 (NOT believed 2026-06-02), full Node-20 removal 'later in fall 2026', opt-out ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true — SHIFTED on both date (S1) and failure-mode (S2: soft default-switch, not a hard same-day break). 9 workflows confirmed; 17 uses: lines across FOUR distinct node20 actions (checkout@v4 ×9, setup-uv@v6 ×6, setup-node@v4 ×1, pnpm/action-setup@v4 ×1) — believed-state named only 2; setup-node + pnpm/action-setup are UNDER-ENUMERATED (S3). All four confirmed runs.using=node20 at HEAD; node24 targets exist (checkout v5/v6; setup-node v5/v6; pnpm v5/v6; setup-uv main=node24, latest major v8). Non-mechanical preservation: python-strict lfs:true + audit-append-only fetch-depth:0 + ts-strict setup-node/pnpm with: blocks. S-CI2 NOT resolved at HEAD (no Hard-Rule-2). LBM sim_runner_diagnostic CONFIRMED cosmetic (analytic Poiseuille ICs; D7 stays banked; MPM-side already CLOSED). Taichi testing-improvements enumerated (pytest-timeout + sim.py manifest-builder + gate-6 advisory + Cat-3 evaluator shims + DFSPH coverage + mls_mpm.py mutation completion). Mid-Phase-1 capture regen: content-equivalent contract → likely no breakage. 146 inherited → N at plan-drafting close. D1-D9 surfaced."
 verdict-state: CONFIRMED
-head_sha: <COMMIT_1_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_1_SHA_PENDING>
+head_sha: c3fa95c6465f34002fe22fc3fd0be3626fd6f476
+head_sha_at_checkpoint: c3fa95c6465f34002fe22fc3fd0be3626fd6f476
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-2/sub-phase-taichi-integration/landing-2026-05-23T14-45-11Z.md
@@ -335,7 +335,7 @@ the plan-drafting landing audit (subject to the landing-audit's own re-count).
 
 ---
 
-This probe lands at HEAD `<COMMIT_1_SHA_PENDING>` (back-filled per Convention #12 + § B.2 in a
+This probe lands at HEAD `c3fa95c6465f34002fe22fc3fd0be3626fd6f476` (back-filled per Convention #12 + § B.2 in a
 separate `chore(ci-action-migration-and-banked-cleanup-plan-drafting-sha-backfill)` commit; full
 40-hex via `git rev-parse HEAD` at summary-composition time).
 

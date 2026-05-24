@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: ci-action-migration-and-banked-cleanup-plan-drafting-landing
 subject: "Plan-drafting landing for the spec-Phase-2 focused-infrastructure sub-phase (S-CI2 primary driver + banked bundle). Probe + charter committed (c3fa95c / b7741a1). Believed-state RATIFIED-with-four-shifts: repo anchors all FACT (HEAD d6e0671, 18 members, cumulative 146, conventions 69aa39fc / architecture e82b7b8e / methodology 8c760383 / .gitattributes 2 LFS rules / python-strict lfs:true at b027f60); S-CI2 SHIFTED (S1 date 2026-06-16 not believed 06-02; S2 soft default-switch not hard break; S3 +2 under-enumerated node20 actions setup-node@v4 + pnpm/action-setup@v4); LBM sim_runner_diagnostic CONFIRMED-banked (cosmetic, analytic ICs, D7); testing-improvements FACT-enumerated (S4 provenance shift); mid-Phase-1 capture regen DEFERRED (content-equivalent → no breakage). Hard Rule 2 NOT triggered (S-CI2 unresolved at HEAD). Closing-anchor re-check GREEN across probe + charter citations. Cumulative 146 + 4 plan-drafting shifts = 150. D1-D9 surfaced. SHA placeholders pending back-fill (Convention #12 + N1 enumeration). No -phase-N tag."
 verdict-state: CONFIRMED
-head_sha: <COMMIT_3_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_3_SHA_PENDING>
+head_sha: a0afe827b90f489f91980e8a98fd2bc16ab33f1f
+head_sha_at_checkpoint: a0afe827b90f489f91980e8a98fd2bc16ab33f1f
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-2/sub-phase-taichi-integration/landing-2026-05-23T14-45-11Z.md
@@ -149,6 +149,6 @@ plan-drafting commit, enumerating EVERY placeholder-bearing audit (probe + chart
 
 ---
 
-This audit lands at HEAD `<COMMIT_3_SHA_PENDING>` (back-filled per Convention #12 + § B.2 + N1 enumeration
+This audit lands at HEAD `a0afe827b90f489f91980e8a98fd2bc16ab33f1f` (back-filled per Convention #12 + § B.2 + N1 enumeration
 in a separate `chore(ci-action-migration-and-banked-cleanup-plan-drafting-sha-backfill)` commit; full
 40-hex via `git rev-parse HEAD` at summary-composition time).
