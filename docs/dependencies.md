@@ -507,3 +507,50 @@ banked at `sub-phase-sph-water-stack-d` is **RESOLVED** here (N1 routing): a
 going forward (the LBM Poiseuille schema-corpus `.h5` is ~202 MB, exceeding GitHub's
 100 MB hard push limit). Existing non-LFS entries remain as historical committed
 blobs (not retroactively re-tagged).
+
+## spec-Phase-2 sub-phase-mpm-multimaterial-stack-d — fourth cross-stack port + IC-15 partial REFINEMENT (added 2026-05-24)
+
+Per `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/landing-<UTC>.md`.
+
+The FOURTH per-sim cross-stack port (`mpm-multimaterial` → Stack-D Taichi-DSL CPU;
+MLS-MPM/APIC neo-Hookean single-material). New workspace member
+`packages/mpm-multimaterial-stack-d/` (sibling; D1/D6). No new external pins —
+consumes `taichi>=1.7,<2.0` + `bit-physics-common-py` + testkit/diagnostics (all
+pinned at `sub-phase-taichi-integration`). Cross-stack equivalence (gate 14) GREEN at
+`relative=1e-4` (the `mpm` category; same as RD-2D/sph-water) against the Phase-1
+NumPy+numba-reference capture — ~24-order margin (`particle_pos` BIT-EXACT).
+
+| Surface | Origin | Consumed for |
+|---|---|---|
+| `taichi>=1.7,<2.0` | sub-phase-taichi-integration (IC-11/12) | Stack-D MLS-MPM/APIC P2G (ti.atomic_add scatter) / G2P / stress / deformation kernels |
+| `bit-physics-common-py` | sub-phase-taichi-integration | `set_taichi_deterministic` (IC-11; cpu_max_num_threads=1 posture (i)) + `capture` (IC-2) |
+| `tools/testkit/equivalence/tolerance.toml` | testkit | gains at-budget `[overrides.mpm-multimaterial] category="mpm"` (FOURTH per-sim override) |
+| `tools/testkit/scripts/extract_capture_subset.py` | THIS sub-phase Stage 2 | first-N-frames representative-subset extraction for the schema-corpus (D10) |
+| `.gitattributes` `tests/fixtures/legacy-captures/**/*.h5` | sub-phase-lattice-boltzmann-d3q19-stack-d | LFS routing for the new MPM representative-subset entry (reused; not re-added) |
+
+### IC-15 — Cross-stack equivalence methodology (PARTIAL formalization — REFINED, not promoted)
+
+IC-15 partial-formalization (established `sub-phase-sph-water-stack-d` Stage 2;
+refined at `sub-phase-lattice-boltzmann-d3q19-stack-d` Stage 2) is **refined additively
+again** at `sub-phase-mpm-multimaterial-stack-d` Stage 2 (D5 routing = option (b)
+PARTIAL HOLDS + REFINEMENT) with **four MPM-specific amendments** to
+`docs/conventions/cross-stack-equivalence-methodology.md` § 5: atomic-scatter-PRESENT-but-
+NOT-EXERCISED pattern (deferred aspect #3 present in the P2G kernel but degenerate at the
+rigid-free-fall canonical trajectory); hybrid-particle-grid taxonomy (`hybrid-pg`→`mpm`,
+fourth indirection instance); S6 two-instance pattern (canonical trajectory vs
+spec-described dynamics — now a structural methodology consideration); legacy-captures
+schema-corpus entry size bound (~256 MiB) + representative-subset artifact class. The
+methodology now validates across **four physics families** (continuous-ca + particle-fluids
++ lattice + hybrid-particle-grid), all at the algebraically-identical-trajectory regime
+(MPM at FP-round-off-or-BELOW scale). **Full formalization status UNCHANGED — still
+DEFERRED** to a pair that exercises the remaining un-stress-tested aspects (#1 R-P2 chaotic
+/ #3 atomic-scatter substantively / #5 iterative-solver amplification).
+
+### Banked-observation resolution (LBM/MPM sim_runner_diagnostic — DECOMPOSED)
+
+The LBM/MPM `sim_runner_diagnostic` banked item is DECOMPOSED at this sub-phase: the
+MPM-side is **CLOSED AS NOT-A-DEFECT** (plan-drafting S-M4 falsification — the MPM
+`sim_runner_diagnostic` threads its seed correctly into the blob sampler; empirically
+seed42 ≠ seed99; only the descriptor filename was cosmetically hardcoded, now interpolated
+on the clean Stack-D contract). The LBM-side stays banked (cosmetic per analytic ICs). No
+Phase-1-sealed edit; no seal-exception.

@@ -1219,6 +1219,57 @@ cross-stack tolerance. No `-phase-N` tag (spec § 7.12).
   (Poiseuille 1.31×, Couette 1.61× — small-grid per-step kernel-launch overhead;
   both within the 2× regression band). Banked as a workload-dependent perf ratio.
 
+### sub-phase-mpm-multimaterial-stack-d
+
+FOURTH per-sim cross-stack port under spec-Phase-2 (`mpm-multimaterial` →
+Stack-D Taichi-DSL CPU). All 14 gates GREEN.
+
+- **Stack-D Taichi-DSL MLS-MPM/APIC port** at `packages/mpm-multimaterial-stack-d/`
+  (Stage 1b; gates 4–13 GREEN; new workspace member, 18th). MLS-MPM (Hu 2018) + APIC
+  (4/dx² reconstruction) + neo-Hookean single-material (`material_id` all-0;
+  "multimaterial" is Phase-1 naming-only). P2G `ti.atomic_add` scatter serialised at
+  `cpu_max_num_threads=1` (posture (i)); `ti.f64(0.0)` accumulator seeds throughout.
+- **Perf: 360.773 s = 2.28× the NumPy+numba baseline (158.052 s) — FLAGGED per
+  spec § 2.15** for landing-audit review. First Stack-D port over the 2× band;
+  attributable to posture-(i) serialisation (required for deterministic atomic-scatter
+  — Stage-0 Task 0.3 showed threads=8 is NOT run-to-run bit-exact) + ~3000 kernel
+  launches over 1M particles. Correctness-over-speed; informational at landing review.
+- **Gate-14 cross-stack equivalence GREEN** at `relative=1e-4` (Stage 1c): `within_tolerance=True`;
+  `particle_pos` BIT-EXACT every frame; `particle_vel` monotonic APIC residual
+  `1.18e-30 → 6.25e-28`; `grid_mom` `1.50e-32`. **~24-order margin — the largest of any
+  cross-stack port to date.**
+- **N2 finding:** the canonical drop-impact trajectory is rigid free-fall (`j_det=1.0`;
+  `F=I` → zero neo-Hookean stress → uniform velocity). The atomic-scatter surface
+  (deferred IC-15 aspect #3) is PRESENT in the P2G kernel BUT NOT EXERCISED at the
+  canonical scale (order-independent sums); aspect #3 stays substantively un-stress-tested.
+- **First cross-stack port with hybrid-particle-grid taxonomy** (`sim.category="hybrid-pg"`
+  → tolerance-category `mpm` via `[overrides.mpm-multimaterial]`; FOURTH per-sim override;
+  at-budget per `[defaults.mpm]`=1e-4).
+- **`docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md`** extended additively at
+  Stage 1c (MPM-specific aspects + N2 + S6-pattern context).
+- **IC-15 partial-formalization document AMENDED ADDITIVELY at Stage 2** (D5 routing =
+  option (b) PARTIAL HOLDS + REFINEMENT; § 5, four subsections): atomic-scatter-present-but-
+  not-exercised; hybrid-particle-grid taxonomy; S6 two-instance pattern (methodology
+  consideration); legacy-captures schema-corpus entry size bound (~256 MiB) +
+  representative-subset artifact class. **NOT promoted partial → full** — the methodology
+  now validates across four physics families at the same regime; full formalization stays
+  DEFERRED to a pair that exercises #1 (R-P2 chaotic) / #3 (atomic-scatter substantively) /
+  #5 (iterative-solver amplification).
+- **D10 schema-corpus representative-subset deliverable:** first cross-stack port to
+  introduce the representative-subset artifact class. The canonical capture is ~1.05 GiB
+  (too large for the corpus); landed a **first-2-frames representative subset** (195 MiB,
+  ≤ the ~256 MiB bound) at `tests/fixtures/legacy-captures/phase-2-mpm-multimaterial-stack-d-representative.{h5,json}`
+  via the new `tools/testkit/scripts/extract_capture_subset.py` (deterministic data-only
+  extraction; no sim re-run). LFS-routed; corpus round-trip verified locally + in CI (S-CI1).
+- **S6 pattern is now a TWO-INSTANCE banked observation** (sph-water + MPM): Phase-1
+  canonical trajectories may exercise far less than spec-described dynamics; downstream
+  cross-stack-pair probes HEAD-verify the canonical trajectory's algebraic surface at
+  plan-drafting (S6 banked precedent).
+- **LBM/MPM `sim_runner_diagnostic` banked item DECOMPOSED:** MPM-side CLOSED-AS-NOT-A-DEFECT
+  (plan-drafting S-M4 — MPM threads its seed correctly; only the descriptor filename was
+  cosmetically hardcoded, now interpolated on the clean Stack-D contract); LBM-side stays
+  banked (cosmetic per analytic ICs). No Phase-1-sealed edit.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation

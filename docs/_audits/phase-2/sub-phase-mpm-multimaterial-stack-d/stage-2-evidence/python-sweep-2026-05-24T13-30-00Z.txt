@@ -1,0 +1,19 @@
+packages/boids-3d/ :: 10 passed in 40.18s
+packages/eulerian-smoke/ :: 10 passed in 3.08s
+packages/lattice-boltzmann-d3q19/ :: 10 passed in 3.95s
+packages/lattice-boltzmann-d3q19-stack-d/ :: 16 passed in 11.12s
+packages/mandelbulb-explorer/ :: 10 passed in 0.25s
+packages/mpm-multimaterial/ :: 10 passed in 0.85s
+packages/mpm-multimaterial-stack-d/ :: 15 passed in 4.80s
+packages/physarum/ :: 10 passed in 10.50s
+packages/reaction-diffusion-2d/ :: 14 passed in 2.39s
+packages/reaction-diffusion-2d-stack-d/ :: 16 passed in 4.32s
+packages/reaction-diffusion-3d/ :: 8 passed in 23.45s
+packages/sph-water/ :: 22 passed in 0.60s
+packages/sph-water-stack-d/ :: 15 passed in 0.68s
+packages/strange-attractors/ :: 11 passed in 0.73s
+common/common-py :: 25 passed in 0.53s
+tools/testkit :: 68 passed in 6.86s
+tools/integrity :: 56 passed in 1.67s
+=== AGGREGATE: 326 passed, 0 failed, 0 errors across 17 roots ===
+tools/diagnostics :: 93 passed in 0.30s

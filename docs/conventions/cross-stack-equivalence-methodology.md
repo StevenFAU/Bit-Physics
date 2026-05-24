@@ -181,12 +181,93 @@ full-cadence LBM canonical `.h5` are large — Poiseuille ~202 MB — so the
 schema-corpus fixtures route through LFS per the `.gitattributes`
 `tests/fixtures/legacy-captures/**/*.h5` rule added this stage.)
 
-## 5. References
+## 5. Fourth-pair refinements (sub-phase-mpm-multimaterial-stack-d Stage 2; D5 (b))
+
+> **ADDITIVE amendment (Convention A); NOT a promotion partial → full.** The fourth
+> cross-stack pair (`hybrid-pg` physics family; MLS-MPM/APIC neo-Hookean
+> single-material) validated the codified components (§ 1) at a fourth physics
+> family — but at the SAME algebraically-identical-trajectory regime, this time at
+> FP-round-off-or-BELOW scale (`particle_pos` BIT-EXACT `0.0` at every frame;
+> `particle_vel` `max_abs 6.25e-28`; `grid_mom` `1.50e-32`; `within_tolerance=True`
+> at `1e-4`, ~24-order margin — the largest of any pair to date). The remaining
+> deferred aspects (#1 R-P2 chaotic / #3 atomic-scatter / #5 iterative-solver
+> amplification) STAY un-stress-tested → full IC-15 formalization remains DEFERRED
+> to a pair that exercises them. The methodology now spans four physics families
+> (continuous-ca + particle-fluids + lattice + hybrid-particle-grid) at the same
+> regime.
+
+### 5.1 Atomic-scatter-PRESENT-but-NOT-EXERCISED pattern (deferred aspect #3)
+
+MPM Stack-D's P2G uses `ti.atomic_add` at grid-node accumulation — the atomic-scatter
+surface that deferred IC-15 aspect #3 names. The Stage-0 Task-0.3 derisk demonstrated
+a `~8.5e-10` cross-stack diff at a small-scale NON-degenerate scenario (random
+velocities → reorderable non-trivial sums; threads=8 run-to-run NOT bit-exact). **But
+the canonical trajectory does NOT exercise the surface:** the drop-impact is rigid
+free-fall (the blob never reaches the floor or deforms within the horizon), so `F=I` →
+neo-Hookean stress is zero → the velocity field is nearly uniform → the per-node
+`Σ_p w_p·m_p·v` sums are (nearly) order-independent (no non-trivial values to reorder).
+The serialised `cpu_max_num_threads=1` posture makes the scatter run-to-run bit-exact;
+the residual `~1e-28` cross-stack vel diff is the APIC reconstruction FP residual, NOT
+scatter-order divergence. **Codified pattern:** a deferred aspect can be PRESENT in a
+port's kernel yet NOT substantively EXERCISED by its canonical trajectory. Aspect #3
+stays substantively un-stress-tested; banked for a fifth pair whose trajectory carries
+a non-trivial velocity gradient + a stress-bearing material model (plastic / hyperelastic
+deformation; impact/contact) to drive non-trivial reorderable scatter sums. (Analogous
+to LBM's #4, which was data-backed but at the same trivial regime.)
+
+### 5.2 Hybrid-particle-grid taxonomy (`hybrid-pg` → `mpm`)
+
+`[overrides.mpm-multimaterial] category = "mpm"` resolves the physics-family
+`sim.category="hybrid-pg"` to the numerical-method tolerance-category `mpm` (at-budget;
+`[defaults.mpm]` = `relative 1e-4, absolute 0.0` — same as RD-2D/sph, looser than LBM's
+1e-5). FOURTH instance of the physics-family → numerical-method indirection (§ 1.3):
+`continuous-ca`→`reaction-diffusion`, `particle-fluids`→`sph`, `lattice`→`lbm`,
+`hybrid-pg`→`mpm`. The pattern is now firmly established across four families; the
+MANDATORY-override insight (§ 1.3) holds for the hybrid particle-grid taxonomy too.
+
+### 5.3 S6 two-instance pattern — canonical trajectory vs spec-described dynamics
+
+A Phase-1 canonical trajectory may exercise **far less than the spec-described dynamics**.
+This is now a TWO-INSTANCE pattern: (a) `sph-water` S6 — the canonical was explicit-Euler
+rigid free-fall + a discarded SPH-density side-effect, NOT iterative DFSPH; (b)
+`mpm-multimaterial` N2 — the canonical "drop-impact" is rigid free-fall + zero stress,
+NOT a deforming impact, and single-material (`material_id` all-0), NOT multi-material.
+**The cross-stack equivalence methodology validates the canonical-trajectory regime, NOT
+the spec-described regime.** Methodology consideration (now load-bearing across pairs):
+downstream cross-stack-pair plan-drafting probes MUST read the Phase-1 `sim.py` at HEAD
+(S6 banked precedent) and HEAD-verify the canonical trajectory's actual algebraic surface
+against the spec-described dynamics, so the gate-14 expectation is calibrated to what the
+canonical capture actually exercises — not to the richer dynamics the spec/name implies.
+
+### 5.4 Legacy-captures schema-corpus entry size bound (representative-subset class)
+
+The backward-compat schema-corpus (`tests/fixtures/legacy-captures/`; spec § 2.12)
+exercises capture-I/O **schema** round-trip, NOT full simulation content. Production
+canonical captures can be too large to park there cleanly: MPM Stack-D's canonical is
+~1.05 GiB (clearly over the line); LBM's full-cadence Poiseuille (~202 MB) was already
+on the edge. **Codified bound: schema-corpus entries SHOULD stay ≤ ~256 MiB**
+(`268,435,456` bytes — a round binary bound above the two largest accepted entries: LBM
+Poiseuille 202 MB + MPM 2-frame representative 195 MiB, with headroom, and well below the
+rejected first-5-frames 511 MB / the 1.05 GiB canonical). When a port's canonical exceeds
+the bound, land a **representative subset** (a distinct artifact class from the production
+canonical): a deterministic, data-only **first-N-frames** extraction preserving the full
+schema structure (every state + diagnostic field × the first N frames) via the canonical
+reader + `write_capture` re-emit (NO sim re-run) — see `tools/testkit/scripts/extract_capture_subset.py`.
+MPM Stack-D landed the FIRST representative subset (first-2-frames; 195 MiB). Future pairs
+needing larger fixtures route a **smaller-scenario variant** (fewer particles / coarser
+grid / fewer steps) rather than stretching this bound. (This codifies what was implicit
+heuristic across the prior four sub-phases.)
+
+## 6. References
 
 - `docs/architecture.md` § 2.5 (IC-13), § 2.6 (cross-stack tolerance table).
 - `tools/testkit/equivalence/harness.py` (`compare_captures`); `tolerance.toml`;
-  `tolerance-budget.toml`.
+  `tolerance-budget.toml`. `tools/testkit/scripts/extract_capture_subset.py` (§ 5.4).
 - `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` (pair 1).
 - `docs/sim-specs/particle-fluids/sph-water/equivalence.md` (pair 2).
+- `docs/sim-specs/lattice/lattice-boltzmann-d3q19/equivalence.md` (pair 3).
+- `docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md` (pair 4).
 - Landing audits: `docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md`;
-  `docs/_audits/phase-2/sub-phase-sph-water-stack-d/landing-*.md`.
+  `docs/_audits/phase-2/sub-phase-sph-water-stack-d/landing-*.md`;
+  `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/landing-*.md`;
+  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/landing-*.md`.

@@ -1,0 +1,61 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "blob_center": [
+        0.5,
+        0.5,
+        0.65
+      ],
+      "blob_initial_vz": -2.0,
+      "blob_radius": 0.15,
+      "boundary": "sticky-floor-at-z-index-4-axis-clamp-walls",
+      "constitutive": "neo-hookean-single-material",
+      "descriptor": "phase-2-mpm-multimaterial-stack-d-representative",
+      "dt": 0.0001,
+      "floor_z_index": 4,
+      "gravity_z": -9.81,
+      "material_count": 1,
+      "n_particles": 1000000,
+      "poisson_ratio": 0.3,
+      "representative_subset_first_n_frames": 2,
+      "representative_subset_of": "phase-2-mpm-multimaterial-stack-d-representative",
+      "shape_function": "quadratic-b-spline-3-node",
+      "youngs_modulus": 4000.0
+    },
+    "seed": 42,
+    "tier": "ref"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:652abcf3c5763d272d6ecd1781c71d5f856334a22c23403ef0e27571ed3587f9",
+    "format": "hdf5",
+    "path": "phase-2-mpm-multimaterial-stack-d-representative.h5"
+  },
+  "run": {
+    "capture_interval": 50,
+    "start_utc": "2026-05-23T00:00:00Z",
+    "step_count": 50,
+    "wall_clock_seconds": 360.77301912999246
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "hybrid-pg",
+    "name": "mpm-multimaterial",
+    "variant": "mls-mpm-hu-2018-multimaterial"
+  },
+  "stack": {
+    "build_id": "sub-phase-mpm-multimaterial-stack-d",
+    "name": "taichi-stack-d",
+    "version": "0.0.1"
+  }
+}
