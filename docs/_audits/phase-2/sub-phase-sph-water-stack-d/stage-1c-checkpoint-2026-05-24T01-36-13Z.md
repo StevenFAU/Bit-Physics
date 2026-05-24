@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sph-water-stack-d-stage-1c
 subject: "Stage 1c (cross-stack equivalence + gate-14) CLOSE for the sph-water -> Stack-D port. VERDICT CONFIRMED. GATE 14 GREEN; all gates 1-14 GREEN at sub-phase close. compare_captures(NumPy-ref, Stack-D) within_tolerance=True at resolved {category:sph, relative:1e-4, absolute:0.0} via the new [overrides.sph-water]. Per-field step-horizon (11 frames): position+velocity bit-identical (0.0); density max_abs 2.557954e-13 / max_rel 1.585292e-15 (~11 orders below 1e-4); no amplification. equivalence.md EXTENDED additively (Phase-1 stub; +7 IC-15 sections + S6 calibration; sha fb85655b). tolerance.toml [overrides.sph-water] category=sph at-budget (sha ebf383a1; FIRST tolerance.toml SHIFT post-audit-chain-correctness; SECOND per-sim override). Schema-corpus phase-2-sph-water-stack-d.{h5,json} (.h5 8435f166 content unchanged; .json d982b5d9; corpus round-trip GREEN; first >3MB non-LFS legacy entry @61MB < 2GB ceiling). test_cross_stack_equivalence.py skip removed -> suite 15/15 GREEN. S6 calibration banked for D5 Stage-2: two-pair validation at algebraically-identical-trajectory regime -> option (c) partial formalization well-supported. 0 new shifts; cumulative 130. feat 497bd4e."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-CONVENTION-12>
+head_sha: bfb33123399c30b6967dc2af79f7dba819a02824
+head_sha_at_checkpoint: bfb33123399c30b6967dc2af79f7dba819a02824
 parent_audits:
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-1b-checkpoint-2026-05-24T01-16-13Z.md
   - docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md
