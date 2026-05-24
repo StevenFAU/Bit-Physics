@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-d-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: a9f8f9f50c61b96efe74dcb2de29383a418df7f5
 head_sha_at_checkpoint: ae6f9ec78f2fe559d05c3900300d1cb7cbd61c6d
 date: 2026-05-24T16-30-00Z
 verdict: plan-drafting-CONFIRMED
