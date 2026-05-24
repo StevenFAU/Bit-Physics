@@ -554,3 +554,58 @@ MPM-side is **CLOSED AS NOT-A-DEFECT** (plan-drafting S-M4 falsification — the
 seed42 ≠ seed99; only the descriptor filename was cosmetically hardcoded, now interpolated
 on the clean Stack-D contract). The LBM-side stays banked (cosmetic per analytic ICs). No
 Phase-1-sealed edit; no seal-exception.
+
+## spec-Phase-2 sub-phase-common-warp-bootstrap — NVIDIA Warp DSL + common-warp workspace surface (added 2026-05-24)
+
+Per `docs/_audits/phase-2/sub-phase-common-warp-bootstrap/stage-1a-checkpoint-<UTC>.md`.
+Establishes Stack E (Python / NVIDIA Warp) infrastructure — the workspace surface the
+spec § 11.3 Stack-E ports (MPM item 2.3, Smoke item 2.4, LBM item 2.5) consume. Promotes
+`Warp` from the § D.4 forward-looking parenthetical (above) to an active pinned dependency.
+Sister to the Taichi-integration entry (Stack-D / common-py). Landed at Stage 1a (Runtime +
+Determinism + `warp_harness/` W-2 mechanism + the 20th workspace member); Capture I/O lands
+at Stage 1b, the hello smoke simulator at Stage 1c.
+
+### Runtime — new workspace member
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| **`bit-physics-common-warp`** | `common/common-warp/` workspace member; Stack-E sims | (workspace; tracks repo HEAD) | (per repo LICENSE) | `uv tree --package bit-physics-common-warp` |
+| **`warp-lang`** | `common/common-warp/pyproject.toml` `[project].dependencies` | `>=1.13,<2.0` (1.13.0 known-good 2026-05-24; upstream-latest, no 1.13.1/1.14.x/2.x) | Apache-2.0 | `pip index versions warp-lang` |
+
+### Project-wide convention
+
+The use convention is documented at `docs/common/warp.md` (authored at Stage 1c, mirroring
+`docs/common/taichi.md`'s 8-section shape). Load-bearing rules established at Stage 1a:
+
+- **CPU is the bit-determinism backend.** `bit-exact-same-hw` (spec § 2.5) is achievable on
+  Warp's CPU backend: `wp.launch` executes serially over the launch dimension (single
+  thread), so floating-point reductions (incl. `wp.atomic_add`) are order-deterministic —
+  the Warp analog of Taichi `cpu_max_num_threads=1` / numba `parallel=False`. Empirically
+  verified at Stage-0 Task 0.2 (6/6 bit-identical sha256 `24d44c7e…0746f314`).
+- **GPU is `epsilon-bounded-cross-stack`** (spec § 4.4 posture): GPU atomic update order is
+  non-deterministic across runs/hardware. GPU-mode certification is per-sim-port future scope.
+- **`wp.capture_*` is CUDA-graph capture**, wholly unrelated to the project's HDF5 capture
+  I/O (`common_warp.write_capture` / `read_capture`, landing at Stage 1b). Never alias the two
+  (observation O-W1).
+- **No strict-pytest `filterwarnings` filter is needed** for Warp: Stage-0 Task 0.3 verified
+  Warp 1.13.0 emits no Python `Warning` that reaches pytest's gate (contrast the
+  `ignore::DeprecationWarning:taichi.*` filter common-py needs for Taichi).
+- **`@wp.kernel` tolerates `from __future__ import annotations`** (observation O-W6) — unlike
+  Taichi (`docs/common/taichi.md` § 4.2), Warp resolves PEP-563 stringified kernel-argument
+  annotations correctly. Kernel-defining modules MAY use future-annotations.
+
+### Verification
+
+The CPU determinism contract is verified by the regression test at
+`common/common-warp/tests/test_harness.py` (the `warp_harness` `assert_deterministic_run`
+mechanism), which reproduces the Stage-0 baseline sha256 `24d44c7e…0746f314` over 6 runs.
+The full W-2 gate (testkit determinism harness green on the hello smoke simulator) completes
+at Stage 1c. The `warp_harness/` subpackage is named non-shadowingly (`warp_harness` not bare
+`warp`) per the sub-phase-numba-integration § 8 N2 lesson.
+
+### Re-pin policy
+
+Raising the upper bound of `warp-lang>=1.13,<2.0` (e.g., to allow Warp 2.x) is a **separate
+operator-approved commit + audit entry + regression-test re-verify** per
+`docs/conventions/sub-phase-conventions.md` § H.4. Same discipline as the `taichi`/`numba`
+entries above + spec § 9.2 vendored-upstream amendments.

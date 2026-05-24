@@ -62,6 +62,14 @@ members = [
   # IC-15 aspect #5 [iterative-solver] in play in its determinism-safe
   # fixed-iteration-count form). Registered at Stage 1.
   "packages/eulerian-smoke-stack-d",
+  # Common module — Stack E / Python (NVIDIA Warp-backed sims). The 20th
+  # workspace member; first Stack-E entrant. Registered at
+  # sub-phase-common-warp-bootstrap Stage 1a per D14 ratification; sister to
+  # common/common-py (Stack D / Taichi). Establishes the Stack-E workspace
+  # surface (Runtime + Determinism + warp_harness W-2 mechanism at 1a;
+  # Capture/Particles/Grids/HashGrid at 1b; hello smoke sim at 1c) that the
+  # spec § 11.3 Stack-E ports (MPM 2.3 / Smoke 2.4 / LBM 2.5) consume.
+  "common/common-warp",
 ]
 exclude = []
 
