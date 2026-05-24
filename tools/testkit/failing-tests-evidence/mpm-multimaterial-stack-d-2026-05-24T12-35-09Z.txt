@@ -1,0 +1,79 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 0 items / 6 errors
+
+==================================== ERRORS ====================================
+____________ ERROR collecting tests/test_cross_stack_equivalence.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_cross_stack_equivalence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_cross_stack_equivalence.py:37: in <module>
+    from mpm_multimaterial_stack_d.sim import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.sim'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_determinism.py:36: in <module>
+    from mpm_multimaterial_stack_d.sim import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.sim'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_diagnostics.py:34: in <module>
+    from mpm_multimaterial_stack_d.sim import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.sim'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_pbt_invariants.py:26: in <module>
+    from mpm_multimaterial_stack_d.invariants import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.invariants'
+___________ ERROR collecting tests/test_quadratic_bspline_golden.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_quadratic_bspline_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_quadratic_bspline_golden.py:21: in <module>
+    from mpm_multimaterial_stack_d.reference import shape_functions  # type: ignore[import-not-found]  # noqa: F401
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.reference'
+_______________ ERROR collecting tests/test_reference_sanity.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d/tests/test_reference_sanity.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/mpm-multimaterial-stack-d/tests/test_reference_sanity.py:20: in <module>
+    from mpm_multimaterial_stack_d.reference import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'mpm_multimaterial_stack_d.reference'
+=========================== short test summary info ============================
+ERROR packages/mpm-multimaterial-stack-d/tests/test_cross_stack_equivalence.py
+ERROR packages/mpm-multimaterial-stack-d/tests/test_determinism.py
+ERROR packages/mpm-multimaterial-stack-d/tests/test_diagnostics.py
+ERROR packages/mpm-multimaterial-stack-d/tests/test_pbt_invariants.py
+ERROR packages/mpm-multimaterial-stack-d/tests/test_quadratic_bspline_golden.py
+ERROR packages/mpm-multimaterial-stack-d/tests/test_reference_sanity.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 6 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 6 errors in 0.23s ===============================

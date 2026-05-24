@@ -46,6 +46,13 @@ members = [
   # common-py + taichi for the Taichi-DSL D3Q19 BGK implementation.
   # Registered at Stage 1a.
   "packages/lattice-boltzmann-d3q19-stack-d",
+  # Spec-Phase-2 Stack-D port of mpm-multimaterial (FOURTH per-sim cross-stack
+  # port). Sibling workspace member per D1/D6 ratification at sub-phase-
+  # mpm-multimaterial-stack-d plan-drafting close; consumes common-py + taichi
+  # for the Taichi-DSL MLS-MPM/APIC neo-Hookean single-material implementation.
+  # First port to exercise the P2G atomic-scatter surface (IC-15 deferred
+  # aspect #3) on the Stack-D side. Registered at Stage 1a.
+  "packages/mpm-multimaterial-stack-d",
 ]
 exclude = []
 
