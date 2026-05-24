@@ -6,8 +6,8 @@
 # docs/architecture.md § 2.6.
 
 [phase]
-phase = "sub-phase-lattice-boltzmann-d3q19-stack-d"
-opened_at = "2026-05-24T02:51:32Z"
+phase = "sub-phase-mpm-multimaterial-stack-d"
+opened_at = "2026-05-24T12:16:58Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 
