@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-d-stage-1c
 subject: "Stage 1c cross-stack equivalence CLOSE for the mpm-multimaterial -> Stack-D port (FOURTH spec-Phase-2 cross-stack port). VERDICT SHIFTED (carries N1+N2 from Stage 1b; 0 new Stage-1c shifts). ALL 14 GATES GREEN. Gate-14 compare_captures(mpm-ref LEFT, mpm-multimaterial-stack-d RIGHT) within_tolerance=True at {category: mpm, relative: 1e-4, absolute: 0.0} resolved via the FOURTH per-sim override [overrides.mpm-multimaterial] category=mpm (Stage-0 Task 0.4 R-S5 confirmed KeyError without it). Full canonical step-500 horizon (11 frames); step-horizon roll-up max_abs_err: particle_pos 0.0 (BIT-EXACT) / particle_material_id 0.0 / grid_mom 1.502225e-32 / particle_vel 6.247778e-28 -- LARGEST cross-stack margin of any port to date (~24+ orders below 1e-4); monotone growth but never approaches 1e-4; D8 NOT activated. equivalence.md EXTENDED additively (stub -> full IC-15 methodology sections + N2 + S6 + D9). All 15 tests GREEN (cross-stack un-skipped). N2: rigid-free-fall canonical (j_det=1.0; F=I -> zero stress); atomic-scatter (deferred IC-15 aspect #3) PRESENT but NOT EXERCISED. S6 second-instance pattern (sph-water + MPM). R-S6 calibration: IC-15 partial validates across 4 physics families at FP-round-off-or-below; D5 Stage 2 routing (b) PARTIAL HOLDS + REFINEMENT well-supported. Schema-corpus DEFERRED to Stage 2 (D10). Cumulative 146. NOT BLOCKED. Stage 2 dispatchable."
 verdict-state: SHIFTED
-head_sha: PENDING-BACKFILL
-head_sha_at_checkpoint: PENDING-BACKFILL
+head_sha: b1cef58e86debaaf0a8332043051a0c008c873c0
+head_sha_at_checkpoint: b1cef58e86debaaf0a8332043051a0c008c873c0
 parent_audits:
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-1b-checkpoint-2026-05-24T12-53-50Z.md
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-checkpoint-2026-05-24T12-16-58Z.md
