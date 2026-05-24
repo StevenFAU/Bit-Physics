@@ -1,0 +1,1 @@
+TypeScript fan-out: 8 files, 20 passed | 2 skipped (baseline unchanged)

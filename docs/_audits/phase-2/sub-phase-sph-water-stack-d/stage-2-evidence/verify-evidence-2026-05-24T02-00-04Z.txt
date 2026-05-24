@@ -1,0 +1,6 @@
+plan-drafting-probe-2026-05-23T23-20-09Z:          summary: 0 pass / 0 fail at head_sha ce49cd4fc22c
+plan-drafting-landing-2026-05-23T23-20-09Z:        summary: 4 pass / 0 fail at head_sha 67c405b7d810
+stage-0-checkpoint-2026-05-23T23-40-26Z:           summary: 20 pass / 0 fail at head_sha 2f276816d0e8
+stage-1a-checkpoint-2026-05-24T00-06-11Z:          summary: 8 pass / 0 fail at head_sha 65dad914d20f
+stage-1b-checkpoint-2026-05-24T01-16-13Z:          summary: 16 pass / 0 fail at head_sha 6cde9782332b
+stage-1c-checkpoint-2026-05-24T01-36-13Z:          summary: 14 pass / 0 fail at head_sha bfb33123399c

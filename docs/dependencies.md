@@ -428,3 +428,38 @@ interface contract established by the `verify_evidence` LFS-content-OID fix.
 
 No external pins introduced. IC-16 is consumed by reference (no per-sub-phase
 re-declaration) by every subsequent sub-phase's gate-5 evidence verification.
+
+## spec-Phase-2 sub-phase-sph-water-stack-d — second cross-stack port + IC-15 partial formalization (added 2026-05-24)
+
+Per `docs/_audits/phase-2/sub-phase-sph-water-stack-d/landing-<UTC>.md`.
+
+The SECOND per-sim cross-stack port (`sph-water` → Stack-D Taichi-DSL CPU). New
+workspace member `packages/sph-water-stack-d/` (sibling; D1/D6). No new external
+pins — consumes `taichi>=1.7,<2.0` + `bit-physics-common-py` + testkit/diagnostics
+(all already pinned at `sub-phase-taichi-integration`). Cross-stack equivalence
+(gate 14) GREEN at `relative=1e-4` against the Phase-1 NumPy-reference capture.
+
+| Surface | Origin | Consumed for |
+|---|---|---|
+| `taichi>=1.7,<2.0` | sub-phase-taichi-integration (IC-11/12) | Stack-D DFSPH spatial-hash kernels |
+| `bit-physics-common-py` | sub-phase-taichi-integration | `set_taichi_deterministic` (IC-11) + `capture` (IC-2) |
+| `tools/testkit/equivalence` | testkit | gate-14 `compare_captures` cross-stack diff |
+| `tools/testkit/equivalence/tolerance.toml` | testkit | gains at-budget `[overrides.sph-water] category="sph"` (second per-sim override) |
+
+### IC-15 — Cross-stack equivalence methodology (PARTIAL formalization)
+
+| Interface contract | Shape | Established | Consumed by |
+|---|---|---|---|
+| **IC-15 — Cross-stack equivalence methodology (PARTIAL)** | A reusable per-sim cross-stack-port methodology (gate 14): per-cell/per-particle position-exact `compare_captures` diff; category-default tolerance via `tolerance.toml [defaults.<category>]`; MANDATORY per-sim override `[overrides.<sim>] category="<tolerance-category>"` (physics-family → numerical-method, two-taxonomy); per-frame `EquivalenceVerdict.per_field_diff` witness; per-sim `equivalence.md` authoring. **PARTIAL**: validated across TWO pairs (RD-2D + sph-water) at the algebraically-identical-trajectory regime only. **DEFERRED** (not codified): R-P2 chaotic-regime escape-hatch details; D8 comparison-projection axis; atomic-scatter handling; lattice-velocity quantization; iterative-solver amplification. | `sub-phase-sph-water-stack-d` Stage 2 (D5 routing = option (c)); document `docs/conventions/cross-stack-equivalence-methodology.md`. | Every subsequent cross-stack port consumes the codified components by reference. The **third** cross-stack pair (eulerian-smoke / LBM / Stack-C variant) lands the full stress test of the deferred components + the full-formalization opportunity. |
+
+### Banked methodology-precedent (S6)
+
+Plan-drafting probes for cross-stack ports MUST read the Phase-1 `sim.py`
+implementation at HEAD (not just the spec sheet) — what the cross-stack port
+actually validates may differ from the spec's theoretical method (the sph-water
+trajectory is explicit-Euler rigid free-fall, not iterative DFSPH).
+
+### Re-pin policy (IC-15)
+
+No external pins introduced. IC-15 (partial) is consumed by reference by
+subsequent cross-stack ports; full formalization is deferred to the third pair.

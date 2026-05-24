@@ -1103,6 +1103,63 @@ is a banked operator decision.
   stage**, not just the checkpoint (Stage 1b N1; the now-fixed `verify_evidence`
   is the mechanical self-check that catches placeholder leakage).
 
+### sub-phase-sph-water-stack-d
+
+**SECOND per-sim cross-stack port sub-phase under spec-Phase-2** (after
+`reaction-diffusion-2d-stack-d`); the SECOND empirical validation of the IC-15
+cross-stack-equivalence methodology and the FIRST production consumer of IC-16
+(`verify_evidence` LFS-content-OID resolution). All 14 gates GREEN. No `-phase-N`
+tag (spec § 7.12); optional non-phase point-release banked per
+`docs/phases/sub-phase-sph-water-stack-d.md` § 11.4.
+
+#### Added
+
+- **Stack-D Taichi-DSL DFSPH port** at `packages/sph-water-stack-d/` (Stage 1b;
+  workspace member 16): `reference/dfsph_taichi.py` (pure-Python golden surface +
+  inlined 27-cell spatial-hash Taichi kernels; cell = 2h cutoff), `sim.py`
+  (determinism-strategy docstring + `sim_runner_seeded` / `sim_runner_diagnostic`
+  / `compute_diagnostic_trajectory` / `neighbor_lists_at`), `invariants.py`
+  (`density_nonneg`, `kernel_normalization_unit_volume`). Gates 4–13 GREEN
+  (gate-4 golden-table, NOT MMS; err 0.0 at abs<1e-12 / abs<1e-15).
+- **Canonical Stack-D capture** `captures/sph-water-stack-d/dam-break-100K-particles-seed42-step1000.{h5,json}`
+  (252.346 s = 0.195× the numpy-reference baseline; perf-ledger row at Stage 1b).
+- **Cross-stack equivalence (gate 14) GREEN** at Stage 1c: `within_tolerance=True`
+  at `relative=1e-4` over the full canonical step-1000 horizon — position+velocity
+  bit-identical across all 11 frames; density `max_rel_err=1.585292e-15`
+  (~11 orders of margin).
+- **`[overrides.sph-water] category="sph"`** in `tools/testkit/equivalence/tolerance.toml`
+  (Stage 1c; at-budget per `[defaults.sph]`; the SECOND per-sim override).
+- **`equivalence.md` extended additively** (Stage 1c; +7 IC-15 methodology
+  sections + S6 banked methodology-precedent).
+- **Schema-corpus entry** `tests/fixtures/legacy-captures/phase-2-sph-water-stack-d.{h5,json}`
+  (Stage 1c; payload.path rewritten; corpus round-trip GREEN).
+- **IC-15 PARTIAL FORMALIZATION** (Stage 2; D5 routing = option (c)):
+  `docs/conventions/cross-stack-equivalence-methodology.md` codifies the
+  components validated across both cross-stack pairs — per-cell/per-particle
+  position-exact comparison; category-default tolerance; per-sim `tolerance.toml`
+  override pattern (two-taxonomy mapping); per-frame diff witness format; per-sim
+  `equivalence.md` authoring pattern. **Explicitly defers** (NOT codified):
+  R-P2 chaotic-regime escape-hatch details; D8 comparison-projection axis;
+  atomic-scatter handling; lattice-velocity quantization; iterative-solver
+  amplification — none stress-tested across the two algebraically-identical-
+  trajectory pairs. Third cross-stack pair lands the full stress test.
+
+#### Notes
+
+- **S6 banked methodology-precedent:** plan-drafting probes for cross-stack ports
+  MUST read the Phase-1 `sim.py` implementation at HEAD (not just the spec sheet).
+  The Phase-1 sph-water reference trajectory is explicit-Euler rigid free-fall +
+  a discarded per-step SPH-density side-effect — NOT an iterative DFSPH pressure
+  solve; this dissolved R-S1/R-S2/R-S3/R-P2 for the cross-stack pair.
+- **Forward-routable observation:** an LFS rule for `tests/fixtures/legacy-captures/`
+  as legacy-fixture sizes grow — the sph-water schema-corpus `.h5` is the first
+  >3 MB non-LFS legacy entry (61 MB; under the 2 GB hook ceiling). Banked for a
+  downstream focused-infrastructure sub-phase.
+- IC-16 first production consumer ran clean across this sub-phase's gate-5
+  evidence verification (LFS `.h5` OIDs resolved automatically; no §B.6 annotation).
+- `sim_runner_diagnostic` seed-propagating pattern established as the canonical
+  reference for the banked LBM/MPM `sim_runner_diagnostic` remediation (D7).
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
