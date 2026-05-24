@@ -26,12 +26,19 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
 from equivalence.harness import compare_captures  # type: ignore[import-not-found]
+
 from sph_water_stack_d.sim import (  # type: ignore[import-not-found]
     sim_runner_seeded,  # noqa: F401  # contract-import (probe § 5)
 )
 
 
+@pytest.mark.skip(
+    reason="gate 14 activated at Stage 1c: needs [overrides.sph-water] category='sph' "
+    "in tolerance.toml (D6; without it compare_captures raises KeyError per Stage-0 "
+    "Task 0.4). Stage 1b ships the Stack-D canonical capture this test diffs against."
+)
 def test_stack_d_capture_within_tolerance_of_numpy_reference(
     ref_manifest_path: Path,
     stack_d_manifest_path: Path,
