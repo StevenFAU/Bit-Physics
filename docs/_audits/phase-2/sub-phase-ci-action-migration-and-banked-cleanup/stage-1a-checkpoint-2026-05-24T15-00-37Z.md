@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: ci-action-migration-and-banked-cleanup-stage-1a
 subject: "Stage 1a CLOSE — S-CI2 GitHub Actions Node-20 -> Node-24 migration landed (feat 8508ed9). Four node20 actions bumped to current latest-node24 majors across all 9 workflows (D3 re-fetch at edit time 2026-05-24): actions/checkout v4->v6 (×9), astral-sh/setup-uv v6->v8 (×6), actions/setup-node v4->v6 (×1), pnpm/action-setup v4->v6 (×1) = 17 uses: version-string changes only. All four D4 with:-block preservation items verified BYTE-FOR-BYTE post-edit (R-CI CLEARED): lfs:true (python-strict), fetch-depth:0 (audit-append-only), setup-node inputs + pnpm version (ts-strict). 9/9 workflows YAML-valid via pyyaml fallback (actionlint NOT installed; documented). Surprise-action sweep CLEAN. Task 1a.4 bit-identity invariant 9399fc33…909f34 RE-HELD post-edit (25th+ invocation; workflow edits do not perturb the tagged-content replay). HEAD un-drifted from Stage-0 4ca88cb at start. Verdict CONFIRMED; 0 new shifts; cumulative 150. D10 ratified for Stage 1b (additive strategy (i); strategy (ii) banked). No -phase-N tag."
 verdict-state: CONFIRMED
-head_sha: <COMMIT_N1_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_N1_SHA_PENDING>
+head_sha: e67c3cdc35aed426dec885a60783ea370402e0a8
+head_sha_at_checkpoint: e67c3cdc35aed426dec885a60783ea370402e0a8
 parent_audits:
   - docs/_audits/phase-2/sub-phase-ci-action-migration-and-banked-cleanup/stage-0-checkpoint-2026-05-24T14-48-58Z.md
   - docs/_audits/phase-2/sub-phase-ci-action-migration-and-banked-cleanup/stage-0-sha-back-fill-2026-05-24T14-48-58Z.md
@@ -185,7 +185,7 @@ bit-identity invariant RE-HELD (25th+ invocation). **0 new Stage-1a shifts.**
 
 ---
 
-This checkpoint lands at HEAD `<COMMIT_N1_SHA_PENDING>` (back-filled per Convention #12 + § B.2 + N1
+This checkpoint lands at HEAD `e67c3cdc35aed426dec885a60783ea370402e0a8` (back-filled per Convention #12 + § B.2 + N1
 enumeration in a separate `chore(ci-action-migration-and-banked-cleanup-stage1a-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
