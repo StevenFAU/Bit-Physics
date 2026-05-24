@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-d-stage-1
 subject: "Stage 1 (collapsed cross-stack port; all 14 gates) PARTIAL CLOSE for eulerian-smoke -> Stack-D (FIFTH spec-Phase-2 cross-stack port). VERDICT Hard-Rule-2-STOP. Task 1 preflight PASS: HEAD==d868e88 at dispatch; bit-identity replay 9399fc33...718909f34 byte-identical (HELD, 30th+); integrity baseline c19492ad...d22cb52 byte-identical (streak HELD). tolerance.toml [overrides.eulerian-smoke] category=smoke landed (5th per-sim override; COMMIT 1 29837da). Failing-tests gate-3 anchor landed (COMMIT 2 2341920; 6 ModuleNotFoundError). Stack-D Taichi Stam-Fedkiw implementation landed (COMMIT 3 42ed61e); gates 4-13 GREEN (MMS advection OOA 1.9892 / projection 1.9976; gate-10 content-equivalent; gate-11 2 PBT @ 50; gate-13 worktree replay reproduces 6 ModuleNotFoundError). f64-seed banked precedent #7 applies NON-vacuously (3D Jacobi pure-literal 1.0/6.0 inferred f32, ~1e-9 leak; seeded ti.f64). GATE-14 HARD-RULE-2 STOP: BOTH verdicts within_tolerance=False -- BOTH canonical trajectories are numerically UNSTABLE (NOT laminar, contra probe S6/§6): 2D Kelvin-Helmholtz shear instability (reference u->1.6e3 by step 5); 3D Taylor-Green blowup (reference max|u| 0.999->8.1e7[step50]->5.1e19[step250]). IC-15 deferred aspect #1 (chaotic-regime) EXERCISED, inverting the D5(b)/D11 disarmed-aspect-#5 premise. Port is FAITHFUL (matches sealed NumPy reference to ~1e-16 while stable; blowup is in the reference, verified independently). STOPPED per dispatch SECTION 2; equivalence.md + IC-15 §6 amendment NOT landed; gate-14 tests SKIPPED pending operator routing; 3D 738MB capture held local (D13). Operator re-routes."
 verdict-state: Hard-Rule-2-STOP
-head_sha: STAGE1-BACKFILL-PENDING
-head_sha_at_checkpoint: STAGE1-CHECKPOINT-PENDING
+head_sha: 1617a2b817e388cd6cd123110e15c23ba62264c5
+head_sha_at_checkpoint: 42ed61eb794ddb5accc9f07b52f13b9c4f0502ab
 parent_audits:
   - docs/_audits/phase-1/sub-phase-eulerian-smoke/landing-2026-05-22T13-30-00Z.md
   - docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/plan-drafting-landing-2026-05-24T16-30-00Z.md
