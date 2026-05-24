@@ -5,7 +5,7 @@ phase: 2
 artifact: task
 artifact_id: sub-phase-common-warp-bootstrap-stage-0-evidence-warp-determinism
 subject: "Stage-0 Task 0.2 empirical-verification evidence — Warp 1.13.0 CPU-mode bit-determinism. EPHEMERAL verification kernel source (NOT committed to common/common-warp/; reproduced here for audit reference per dispatch SECTION 6) + 6-run sha256 evidence (3 pairs, identical seed+inputs, device=cpu): all six bit-identical -> 24d44c7e...0746f314. This is the W-2 baseline under D4 (bit-exact-same-hw on CPU single-device). Cited from Stage-0 checkpoint § 5."
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: dd7106e71fb9d27343c5d758b4c1e289ce83871d
 head_sha_at_checkpoint: 090ac940dec42c3c4821e8f35ec2358745e0cc5d
 parent_audits:
   - docs/_audits/phase-2/sub-phase-common-warp-bootstrap/plan-drafting-landing-2026-05-24T18-47-00Z.md

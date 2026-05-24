@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-common-warp-bootstrap-stage-0
 stage: stage-0-checkpoint
 subject: "Stage 0 (pre-flight) CLOSE for sub-phase-common-warp-bootstrap (Stack-E / NVIDIA Warp workspace surface). VERDICT CONFIRMED. Empirical-verification stage: Warp 1.13.0 installed + version-pin verified (>=1.13,<2.0; still latest, no 1.14.x/2.x); CPU-mode bit-determinism VERIFIED 6/6 (digest 24d44c7e...0746f314 = W-2 baseline, D4); filterwarnings D13 = NO filter needed (Warp emits no Warning under strict pytest); common-py layout = src/ (Stage-1a mirror inputs documented); W-5 format-interop contract enumerated (compare_captures sim.{name,category} HARD_FAIL surface); Subsystem-7 design-time trajectory BOUNDED+MONOTONE-DECAYING (max 1.0->0.219/400 steps); 1a/1b/1c scope CONFIRMED toward charter §2 with one reconciliation (S0-W1). Task 0.0: bit-identity replay 9399fc33...718909f34 HELD (33rd+); integrity sweep c19492ad...d22cb52 baseline-MATCH (streak HELD, 9th sub-phase, FIRST Stack-E). 1 shift (S0-W1); cumulative 168 -> 169. NOT implementation: common/common-warp/ NOT created. No -phase-N tag. Operator routes Stage 1a separately."
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: dd7106e71fb9d27343c5d758b4c1e289ce83871d
 head_sha_at_checkpoint: 090ac940dec42c3c4821e8f35ec2358745e0cc5d
 parent_audits:
   - docs/_audits/phase-2/sub-phase-common-warp-bootstrap/plan-drafting-landing-2026-05-24T18-47-00Z.md
