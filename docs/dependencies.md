@@ -463,3 +463,47 @@ trajectory is explicit-Euler rigid free-fall, not iterative DFSPH).
 
 No external pins introduced. IC-15 (partial) is consumed by reference by
 subsequent cross-stack ports; full formalization is deferred to the third pair.
+
+## spec-Phase-2 sub-phase-lattice-boltzmann-d3q19-stack-d — third cross-stack port + IC-15 partial REFINEMENT (added 2026-05-24)
+
+Per `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/landing-<UTC>.md`.
+
+The THIRD per-sim cross-stack port (`lattice-boltzmann-d3q19` → Stack-D Taichi-DSL
+CPU). New workspace member `packages/lattice-boltzmann-d3q19-stack-d/` (sibling;
+D1/D6). No new external pins — consumes `taichi>=1.7,<2.0` + `bit-physics-common-py`
++ testkit/diagnostics (all already pinned at `sub-phase-taichi-integration`).
+Cross-stack equivalence (gate 14) GREEN ×2 at `relative=1e-5` (the `lbm` category;
+10× tighter than the prior two pairs) against the Phase-1 NumPy-reference captures.
+
+| Surface | Origin | Consumed for |
+|---|---|---|
+| `taichi>=1.7,<2.0` | sub-phase-taichi-integration (IC-11/12) | Stack-D D3Q19 BGK + Guo-forcing kernels (in-kernel f64 reductions) |
+| `bit-physics-common-py` | sub-phase-taichi-integration | `set_taichi_deterministic` (IC-11) + `capture` (IC-2) |
+| `tools/testkit/equivalence/tolerance.toml` | testkit | gains at-budget `[overrides.lattice-boltzmann-d3q19] category="lbm"` (THIRD per-sim override) |
+| `tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/` | testkit | gate-4b MMS arm (shared, read-only; dual-arm gate-4 with the d3q19 golden) |
+| `.gitattributes` `tests/fixtures/legacy-captures/**/*.h5` | THIS sub-phase Stage 2 | LFS routing for schema-corpus `.h5` (N1 resolution) |
+
+### IC-15 — Cross-stack equivalence methodology (PARTIAL formalization — REFINED, not promoted)
+
+IC-15 partial-formalization (established `sub-phase-sph-water-stack-d` Stage 2) is
+**refined additively** at `sub-phase-lattice-boltzmann-d3q19-stack-d` Stage 2 (D5
+routing = option (b) PARTIAL HOLDS + REFINEMENT) with **five LBM-specific
+amendments** to `docs/conventions/cross-stack-equivalence-methodology.md` § 4:
+collision-step FP-accumulation handling; dual-arm gate-4 verification surface;
+`1e-5` vs `1e-4` tolerance routing; dual-canonical-capture + two-seeded-runner
+pattern; near-zero-field-value relative-error harness-artifact. The methodology now
+validates across **three physics families** (continuous-ca + particle-fluids +
+lattice), all at the algebraically-identical-trajectory FP-round-off-scale regime.
+**Full formalization status UNCHANGED — still DEFERRED** to a pair that exercises the
+remaining un-stress-tested aspects (#1 R-P2 chaotic / #3 atomic-scatter / #5
+iterative-solver amplification). Deferred aspect #4 (lattice-velocity quantization /
+collision-step FP-accumulation) is now data-backed (§ 4.1).
+
+### Banked-observation resolution (LFS-rule-for-legacy-captures)
+
+The forward-routable LFS-rule-for-`tests/fixtures/legacy-captures/` observation
+banked at `sub-phase-sph-water-stack-d` is **RESOLVED** here (N1 routing): a
+`.gitattributes` rule routes `tests/fixtures/legacy-captures/**/*.h5` through LFS
+going forward (the LBM Poiseuille schema-corpus `.h5` is ~202 MB, exceeding GitHub's
+100 MB hard push limit). Existing non-LFS entries remain as historical committed
+blobs (not retroactively re-tagged).

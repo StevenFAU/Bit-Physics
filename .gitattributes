@@ -36,3 +36,10 @@
 *.wgsl   text
 *.sh     text eol=lf
 captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text
+# Schema-corpus HDF5 fixtures route through LFS as of
+# sub-phase-lattice-boltzmann-d3q19-stack-d Stage 2 (N1 resolution): the LBM
+# Poiseuille canonical (~202 MB) exceeds GitHub's 100 MB hard push limit, which
+# the prior non-LFS legacy-captures convention could not carry. Applies going
+# forward only; the existing non-LFS sph-water-stack-d (61 MB) + smaller phase-0/2
+# entries remain as committed historical blobs (not retroactively re-tagged).
+tests/fixtures/legacy-captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text

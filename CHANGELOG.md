@@ -1160,6 +1160,65 @@ tag (spec § 7.12); optional non-phase point-release banked per
 - `sim_runner_diagnostic` seed-propagating pattern established as the canonical
   reference for the banked LBM/MPM `sim_runner_diagnostic` remediation (D7).
 
+### sub-phase-lattice-boltzmann-d3q19-stack-d
+
+THIRD per-sim cross-stack port under spec-Phase-2 (after `reaction-diffusion-2d`
++ `sph-water`). Stack-D Taichi-DSL CPU port of the Phase-1 D3Q19 BGK reference;
+all 14 gates GREEN (gate-14 ×2 for the dual-canonical-capture). FIRST cross-stack
+port with dual-arm gate-4, two seeded runners, two canonical captures, two
+perf-ledger rows, two independent gate-14 verdicts, and the tighter `1e-5`
+cross-stack tolerance. No `-phase-N` tag (spec § 7.12).
+
+#### Added
+
+- `packages/lattice-boltzmann-d3q19-stack-d/` — Stack-D Taichi-DSL D3Q19 BGK port
+  (Qian-1992 equilibrium + Guo-2002 forcing). `reference` (Taichi `feq`/`feq_field`/
+  `bgk_step`/`stream`/f64-seeded moment reductions + NumPy bounce-back), `sim`
+  (`sim_runner_seeded` Poiseuille + `sim_runner_seeded_couette` Couette +
+  `sim_runner_diagnostic`), `invariants` (2 PBT). Gates 4–13 GREEN at Stage 1b.
+- DUAL cross-stack equivalence at gate 14 (Stage 1c): both `within_tolerance=True`
+  at `relative=1e-5` with ~10 orders of margin — Poiseuille (1001 frames) rho/u
+  max_abs `5.77e-15`/`6.16e-15`; Couette (501 frames) rho/u max_abs `3.33e-15`/
+  `1.27e-15`. Step-horizon flat at FP-round-off scale (no amplification).
+- `[overrides.lattice-boltzmann-d3q19] category="lbm"` in `tolerance.toml` (Stage 1c;
+  THIRD per-sim override; at-budget per `[defaults.lbm]=1e-5`; 10× tighter than the
+  prior two ports; NOT a widening).
+- `docs/sim-specs/lattice/lattice-boltzmann-d3q19/{spec-ref-stack-d,equivalence}.md`
+  (spec sheet Stage 1b; equivalence.md additive amendment Stage 1c).
+- Two canonical captures at `captures/lattice-boltzmann-d3q19-stack-d/` + two
+  perf-ledger rows (Stage 1b; taichi-cpu 4.954s / 0.973s).
+- `f64` accumulator-seed pattern empirically validated (Stage 0 banked, Stage 1b
+  applied to in-kernel 19-term collision-moment reductions: bare `0.0`→f32 leaked
+  `3.4e-6`; `ti.f64(0.0)` seed → `7e-15`). First port with genuine in-kernel f64
+  reductions (D9 cross-stack-non-trivial surface).
+
+#### Notes
+
+- **D5 = option (b) PARTIAL HOLDS + REFINEMENT:** `docs/conventions/cross-stack-
+  equivalence-methodology.md` AMENDED ADDITIVELY (Stage 2) with five subsections —
+  collision-step FP-accumulation handling; dual-arm gate-4 verification surface;
+  `1e-5` vs `1e-4` tolerance routing; dual-canonical-capture + two-seeded-runner
+  pattern; near-zero-field-value relative-error harness-artifact. **NOT promoted
+  partial → full**; full IC-15 formalization remains DEFERRED to a pair that
+  exercises the un-stress-tested aspects (#1 R-P2 chaotic / #3 atomic-scatter /
+  #5 iterative-solver amplification). Methodology now validates across three
+  physics families, all at the algebraically-identical-trajectory FP-round-off-scale
+  regime.
+- **N1 schema-corpus deferral RESOLVED (Stage 2):** added a `.gitattributes` LFS
+  rule for `tests/fixtures/legacy-captures/**/*.h5`; both LBM schema-corpus entries
+  added through LFS (Poiseuille ~202 MB exceeds GitHub's 100 MB hard push limit —
+  the prior non-LFS convention could not carry it). This RESOLVES the
+  forward-routable LFS-rule-for-legacy-captures observation banked at
+  `sub-phase-sph-water-stack-d`. The existing non-LFS sph-water (61 MB) + smaller
+  phase-0/2 entries remain as historical committed blobs (not retroactively re-tagged;
+  the rule applies going forward).
+- **`u` `max_rel_err≈2.0` harness-artifact (informational):** near-zero transverse
+  velocity in unidirectional flow; `compare_captures` verdicts on `abs_err > atol +
+  rtol·field_scale`, so `within_tolerance=True` is correct (banked in methodology § 4.5).
+- **First cross-stack port with Taichi-cpu running SLOWER than the NumPy reference**
+  (Poiseuille 1.31×, Couette 1.61× — small-grid per-step kernel-launch overhead;
+  both within the 2× regression band). Banked as a workload-dependent perf ratio.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
