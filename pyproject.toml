@@ -40,6 +40,12 @@ members = [
   # sph-water-stack-d plan-drafting close; consumes common-py + taichi
   # for the Taichi-DSL DFSPH implementation. Registered at Stage 1a.
   "packages/sph-water-stack-d",
+  # Spec-Phase-2 Stack-D port of lattice-boltzmann-d3q19 (THIRD per-sim
+  # cross-stack port). Sibling workspace member per D1/D6 ratification at
+  # sub-phase-lattice-boltzmann-d3q19-stack-d plan-drafting close; consumes
+  # common-py + taichi for the Taichi-DSL D3Q19 BGK implementation.
+  # Registered at Stage 1a.
+  "packages/lattice-boltzmann-d3q19-stack-d",
 ]
 exclude = []
 
