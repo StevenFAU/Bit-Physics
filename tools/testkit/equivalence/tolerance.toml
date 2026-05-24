@@ -58,3 +58,14 @@ category = "sph"
 # NOT a tolerance widening per spec § 2.6 — resolution wiring only.
 # Established by sub-phase-sph-water-stack-d Stage 1c.
 # Second per-sim override after sub-phase-reaction-diffusion-2d-stack-d.
+
+[overrides.lattice-boltzmann-d3q19]
+category = "lbm"
+# Resolves sim.category='lattice' (physics-family taxonomy)
+# to tolerance-category='lbm' (numerical-method taxonomy).
+# AT-BUDGET per [defaults.lbm]: relative=1e-5, absolute=0.0.
+# NOT a tolerance widening per spec § 2.6 — resolution wiring only.
+# Established by sub-phase-lattice-boltzmann-d3q19-stack-d Stage 1c.
+# Third per-sim override after sub-phase-reaction-diffusion-2d-stack-d
+# + sub-phase-sph-water-stack-d.
+# 10x tighter cross-stack tolerance than the prior two ports (1e-4 -> 1e-5).

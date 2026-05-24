@@ -1,0 +1,26 @@
+Stage 1c dual gate-14 cross-stack equivalence (NumPy-reference <-> Stack-D Taichi)
+compare_captures(captures/lbm-ref/<desc>.json, captures/lattice-boltzmann-d3q19-stack-d/<desc>.json)
+==============================================================================
+
+##### Poiseuille (primary): poiseuille-64x32-seed42-step1000 #####
+within_tolerance = True
+tolerance_table_used = {'category': 'lbm', 'relative': 1e-05, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+frames_compared = 1001
+  field 'rho': global max_abs_err=5.773160e-15  max_rel_err=5.773160e-15  worst-abs at step 877
+  field 'u': global max_abs_err=6.163473e-15  max_rel_err=2.000000e+00  worst-abs at step 988
+  step-horizon: frames with max_abs_err >= 0.1*1e-5 (1e-6): 0 (none expected)
+  verdict: GREEN @ relative=1e-5; margin ~10 orders (1e-15 vs 1e-5)
+
+##### Couette (secondary): couette-32x16-seed42-step500 #####
+within_tolerance = True
+tolerance_table_used = {'category': 'lbm', 'relative': 1e-05, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+frames_compared = 501
+  field 'rho': global max_abs_err=3.330669e-15  max_rel_err=3.330669e-15  worst-abs at step 107
+  field 'u': global max_abs_err=1.273287e-15  max_rel_err=2.000000e+00  worst-abs at step 149
+  step-horizon: frames with max_abs_err >= 0.1*1e-5 (1e-6): 0 (none expected)
+  verdict: GREEN @ relative=1e-5; margin ~10 orders (1e-15 vs 1e-5)
+
+NOTE: max_rel_err~2.0 on 'u' is the near-zero transverse-velocity per-element
+artifact (Poiseuille/Couette are unidirectional; u_y,u_z ~ 1e-15). compare_captures
+verdicts on abs_err > atol + rtol*field_scale (field scale = max|u| ~ 0.01-0.05),
+NOT per-element relative -> within_tolerance=True holds for both pairs.

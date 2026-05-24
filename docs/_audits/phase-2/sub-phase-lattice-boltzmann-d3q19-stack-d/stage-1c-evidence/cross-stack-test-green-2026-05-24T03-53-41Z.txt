@@ -1,0 +1,13 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 2 items
+
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_cross_stack_equivalence.py::test_poiseuille_capture_within_tolerance_of_numpy_reference PASSED [ 50%]
+packages/lattice-boltzmann-d3q19-stack-d/tests/test_cross_stack_equivalence.py::test_couette_capture_within_tolerance_of_numpy_reference PASSED [100%]
+
+============================== 2 passed in 5.46s ===============================
