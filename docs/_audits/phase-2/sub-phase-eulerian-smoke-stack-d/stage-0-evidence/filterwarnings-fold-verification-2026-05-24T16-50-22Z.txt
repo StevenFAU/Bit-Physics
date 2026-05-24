@@ -1,0 +1,33 @@
+S-2.1 filterwarnings fold-in (D3) — Stage-0 empirical verification
+sub-phase-eulerian-smoke-stack-d  |  2026-05-24T16-50-22Z
+
+ROOT CAUSE (cold-.pyc gap, HEAD-reproduced)
+  Under [tool.pytest.ini_options] filterwarnings = ["error", ...], a fresh
+  checkout's first taichi import recompiles taichi/tools/image.py. Its line-60
+  docstring contains an invalid escape sequence ('\['). Python 3.12 raises a
+  compile-time SyntaxWarning, escalated by the "error" filter to:
+    File ".../taichi/tools/image.py", line 60
+      """Save a field to a a specific file.
+    SyntaxError: invalid escape sequence '\['
+  -> pytest collection fails (6-7 errors/port) on cold .pyc.
+
+FILTER-FORM EXPERIMENT (real pytest, cold .pyc, packages/reaction-diffusion-2d-stack-d)
+  A  ignore::SyntaxWarning:taichi.*            -> FAIL (6 collection errors)   [dispatch/charter form]
+  C  ignore:invalid escape sequence::SyntaxWarning -> FAIL (6 collection errors)   [message-qualified]
+  B  ignore::SyntaxWarning                     -> PASS (16 tests collected)    [bare category — ADOPTED]
+
+  Reason A/C fail: a compile-time SyntaxWarning is emitted with a NULL module;
+  the warnings machinery derives the filter "module" from the source FILENAME,
+  not the dotted package name -> a `:taichi.*` (dotted) qualifier never matches.
+  (Message-qualified C likewise fails at the compile-time escalation path.)
+  Only the bare category form matches. This mirrors the pre-existing locale
+  DeprecationWarning filter in these files, which is message-based (not
+  `:taichi.*`) for the same module-match-fails reason.
+
+PER-PORT VERIFICATION (corrected form ignore::SyntaxWarning; cold .pyc; full suite)
+  reaction-diffusion-2d-stack-d  16 passed
+  sph-water-stack-d              15 passed
+  lattice-boltzmann-d3q19-stack-d 16 passed
+  mpm-multimaterial-stack-d      15 passed
+  (a) no SyntaxWarning leak  (b) locale+Deprecation filters still operate
+  (c) zero test-count regression vs landed baseline.
