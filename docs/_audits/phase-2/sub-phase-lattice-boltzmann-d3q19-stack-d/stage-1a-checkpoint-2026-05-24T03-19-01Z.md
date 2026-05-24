@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-d-stage-1a
 subject: "Stage 1a (failing-tests RED-state anchor) CLOSE for the lattice-boltzmann-d3q19 -> Stack-D port (THIRD spec-Phase-2 cross-stack port). VERDICT CONFIRMED. NEW package skeleton packages/lattice-boltzmann-d3q19-stack-d/ (pyproject + README + lattice_boltzmann_d3q19_stack_d/__init__.py) + 9-file test surface per charter 4.2.1 (DUAL-ARM gate-4: test_d3q19_equilibrium_golden.py [gate-4a] + test_mms_convergence.py [gate-4b]; plus test_diagnostics, test_pbt_invariants, test_determinism, test_reference_sanity, test_cross_stack_equivalence [both Poiseuille+Couette descriptors]). Root pyproject.toml additively extended (workspace members 16 -> 17 at HEAD; matches probe estimate). uv sync --all-packages --all-extras clean (built+installed lattice-boltzmann-d3q19-stack-d==0.0.0; uv.lock +39). RED-state: pytest fails at collection with 7 clean ModuleNotFoundError on the Stage-1b targets lattice_boltzmann_d3q19_stack_d.{reference (3 tests), sim (3), invariants (1)}; zero skeleton/uv/parse errors (Hard Rule 2 satisfied). Failing-tests-evidence committed-blob sha256 df1f1c9a...992070 (commit-first-then-sha256; verified stable post-commit; load-bearing TDD anchor). Main commit 2fe22f1. 0 new SHIFTs (clean RED-anchor); 2 Convention #8 dispatch-vs-HEAD reconciliations recorded (cross_stack module-import RED over dispatch pytest.mark.skip; test_mms_convergence over dispatch test_mms_bgk_convergence) -- coordinator-side catches, not shifts. Cumulative 136."
 verdict-state: CONFIRMED
-head_sha: PENDING-STAGE1A-SHA-BACKFILL
-head_sha_at_checkpoint: PENDING-STAGE1A-SHA-BACKFILL
+head_sha: 767a3e5c582aa678e3053dd77d0eb6e33ba456b2
+head_sha_at_checkpoint: 767a3e5c582aa678e3053dd77d0eb6e33ba456b2
 parent_audits:
   - docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/stage-0-checkpoint-2026-05-24T02-51-32Z.md
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-1a-checkpoint-2026-05-24T00-06-11Z.md
