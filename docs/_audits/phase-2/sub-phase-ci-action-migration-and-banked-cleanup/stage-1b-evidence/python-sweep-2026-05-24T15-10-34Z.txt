@@ -1,0 +1,13 @@
+packages/strange-attractors : 11 passed in 0.75s
+packages/mandelbulb-explorer : 10 passed in 0.25s
+packages/boids-3d : 10 passed in 40.07s
+packages/physarum : 10 passed in 10.46s
+packages/reaction-diffusion-3d : 8 passed in 23.46s
+packages/sph-water : 22 passed in 0.70s
+packages/eulerian-smoke : 10 passed in 3.26s
+packages/lattice-boltzmann-d3q19 : 12 passed in 4.12s
+packages/mpm-multimaterial : 10 passed in 0.84s
+tools/integrity : 56 passed in 1.70s
+tools/diagnostics : 22 passed in 0.16s
+tools/testkit : 58 passed in 4.97s
+common/common-py : 22 passed, 3 skipped in 0.22s
