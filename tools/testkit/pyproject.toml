@@ -35,6 +35,15 @@ dev = [
   "mypy>=1.10",
   "pytest>=8.0",
   "pytest-cov>=5.0",
+  # pytest-timeout: per-test wall-clock timeout. Lands the requirement
+  # documented at docs/conventions/sub-phase-conventions.md § J.3 — numba-using
+  # PATH-A mutation targets (e.g. MPM mls_mpm.py) can loop indefinitely or
+  # allocate extreme memory under pathological mutations; pytest's own signal
+  # handler terminates the offending test before an orphan pytest grandchild
+  # reparents past the outer `timeout` command's reach (the § J.3 R15 failure
+  # mode). Default per-test ceiling is set in [tool.pytest.ini_options] below;
+  # per-target mutmut runners may tighten it.
+  "pytest-timeout>=2.0",
   "ruff>=0.5",
   # mutmut pinned to 2.x: Block-5's run-mutation.sh uses
   # `--paths-to-mutate` which was removed in 3.x (config moved to
@@ -74,6 +83,12 @@ ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 filterwarnings = ["error"]
+# Default per-test wall-clock ceiling (pytest-timeout; conventions § J.3).
+# 300 s accommodates capture-generation tests while terminating an
+# infinite-loop / runaway-allocation mutation before it orphans (the § J.3
+# R15 mode). Unit tests finish far under this; per-target mutmut runners may
+# pass a tighter --timeout. Honored when pytest-timeout is installed (dev extra).
+timeout = 300
 testpaths = [
   "capture/tests",
   "code_verification/mms/tests",
