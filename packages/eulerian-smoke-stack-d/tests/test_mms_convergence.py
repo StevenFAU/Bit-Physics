@@ -21,11 +21,12 @@ Phase-1 NumPy reference observed advection 1.99 / projection 2.00). The inline
 convergence study (LBM Stack-D ``test_mms_convergence.py`` + Phase-1 smoke Path-Y
 precedent) does NOT generalize the heat-1D MMS runner (banked, testkit scope).
 
-NOTE (Stage-1 precision, Stage-0 banked): the Stam-Fedkiw pipeline carries NO
-in-kernel reductions (the per-cell SL gather is a fixed 4/8-term convex sum, the
-Jacobi sweep is a fixed 4/6-term stencil), so the LBM f32-default reduction trap
-does not arise; the Taichi kernels operate on f64 ``ti.types.ndarray`` views
-throughout (banked precedent #7 discipline applies vacuously here).
+NOTE (Stage-1 precision, Stage-0 banked precedent #7 -- applies NON-vacuously):
+the pipeline carries no in-kernel reductions, but the f64-seed trap still bites
+the 3D Jacobi pure-literal normaliser ``1.0/6.0`` (infers f32 absent
+``default_fp``; ~1e-9 cross-stack leak), seeded ``ti.f64(1.0)/ti.f64(6.0)``. The
+2D MMS arms here multiply by ``0.25`` (exact in f32), so this MMS test is
+insensitive to that trap; the 3D capture (gate 14) is where it surfaced.
 
 The Stack-D reference submodule ``eulerian_smoke_stack_d.reference`` does NOT
 exist at the failing-tests commit -- collection fails with ModuleNotFoundError
@@ -38,11 +39,12 @@ import numpy as np
 from code_verification.mms.solutions.incompressible_ns_2d.solution import (
     IncompressibleNS2DSolution,
 )
+from numpy.typing import NDArray
+
 from eulerian_smoke_stack_d.reference import (  # type: ignore[import-not-found]
     project_pressure,
     stable_fluids_step,
 )
-from numpy.typing import NDArray
 
 Array2D = NDArray[np.float64]
 

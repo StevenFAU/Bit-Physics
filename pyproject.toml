@@ -53,6 +53,15 @@ members = [
   # First port to exercise the P2G atomic-scatter surface (IC-15 deferred
   # aspect #3) on the Stack-D side. Registered at Stage 1a.
   "packages/mpm-multimaterial-stack-d",
+  # Spec-Phase-2 Stack-D port of eulerian-smoke (FIFTH per-sim cross-stack
+  # port). Sibling workspace member per D1/D6 ratification at sub-phase-
+  # eulerian-smoke-stack-d plan-drafting close; consumes common-py + taichi
+  # for the Taichi-DSL Stam-Fedkiw stable-fluids implementation (collocated
+  # cell-centered periodic; plain trilinear SL 3D + MacCormack 2D; fixed-cap
+  # Jacobi pressure-projection FP-accumulation, the first port to put deferred
+  # IC-15 aspect #5 [iterative-solver] in play in its determinism-safe
+  # fixed-iteration-count form). Registered at Stage 1.
+  "packages/eulerian-smoke-stack-d",
 ]
 exclude = []
 
