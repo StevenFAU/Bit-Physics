@@ -1,0 +1,6 @@
+=== Task 0.3 P2G scatter-posture probe ===
+[threads=1] run-to-run bit-exact: True
+[threads=8] run-to-run bit-exact: False
+cross-stack (taichi threads=1) vs numpy: max_abs_diff mass=8.468e-10 mom=3.467e-10
+cross-stack (taichi threads=8) vs numpy: max_abs_diff mass=8.468e-10 mom=3.467e-10
+mass totals: numpy=1.000000000000000 ti1=1.000000000000000 ti8=1.000000000000000

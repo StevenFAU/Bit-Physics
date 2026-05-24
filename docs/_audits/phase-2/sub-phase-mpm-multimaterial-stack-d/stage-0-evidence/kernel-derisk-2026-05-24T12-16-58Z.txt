@@ -1,0 +1,6 @@
+=== Task 0.5 MLS-MPM/APIC kernel derisk ===
+(b) 3x3 ti.Matrix F+C f64: constructed + multiplied + det/log OK
+(c) full step chain run-twice bit-exact (threads=1): True
+    all state finite (no NaN/Inf): True
+(d) seeded blob IC deterministic: pos[0]= [0.70546704 0.45415883 0.76894834]
+    F[0] det after 1 step: 1.0
