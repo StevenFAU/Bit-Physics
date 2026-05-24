@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-common-warp-bootstrap-stage-1a
 stage: stage-1a-checkpoint
 subject: "Stage 1a (workspace registration + Runtime + Determinism + warp_harness W-2 mechanism) CLOSE for sub-phase-common-warp-bootstrap. VERDICT CONFIRMED. common/common-warp/ comes into existence: 20th workspace member (D14); warp-lang>=1.13,<2.0 (D3; 1.13.0 re-verified upstream-latest per Convention #8); src/ layout (D6); filterwarnings=[error] only (D13/Task 0.3, no taichi-style filter). Runtime (Subsystem 1: init/get_device/set_device, cpu default per D4/R-W3) + Determinism (Subsystem 3: set_warp_deterministic/get_seed/deterministic_context/set_seed) + W-2 mechanism (warp_harness.assert_deterministic_run) landed. W-2 mechanism reproduces the Stage-0 Task-0.2 baseline sha256 24d44c7e...0746f314 over 6 runs (the full W-2 gate completes at Stage 1c via run_twice_and_diff on the smoke sim). Verification: common-warp 11 tests pass -W error; cross-package sweep 20 members ZERO regressions; integrity sweep c19492ad...d22cb52 baseline-MATCH (streak HELD, 9th sub-phase, FIRST Stack-E); bit-identity replay 9399fc33...718909f34 HELD (35th+). 2 shifts (S1a-1 dispatch-vs-HEAD common-py premises; S1a-2 Cat-1 GPU-device-token false-citation); cumulative 169 -> 171. No -phase-N tag. Stage 1b (Capture+Particles+Grids+HashGrid; W-1) routed separately."
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 5d5aefa946724eb479e5ea5d0a9aef8f63fbee37
 head_sha_at_checkpoint: 327955e073d1524364427e2c64a5b15c297a45f6
 parent_audits:
   - docs/_audits/phase-2/sub-phase-common-warp-bootstrap/stage-0-checkpoint-2026-05-24T20-03-28Z.md
