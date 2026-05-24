@@ -635,6 +635,47 @@ The carry-forward chain is visible by reading the audits in order. The conventio
 | B2 / B3 / B4 / B5 / B6 / B11 / B16 (Phase 1 open) | Per their original Phase 1 audit § 13 owners. | Out of any current sub-phase's scope. |
 | B-hotfix-1 / B-hotfix-2 (replay-tool-hotfix) | Phase-2+ Stack-C effort. | Banked. |
 
+### L.4 Formalized methodology-precedents — eulerian-smoke-stack-d Stage 2 (chaotic-regime first instance)
+
+(FACT — `sub-phase-eulerian-smoke-stack-d` Stage 1 § S1-4 + Stage 2 Option-2
+routing. The FIFTH cross-stack pair was the FIRST of five to exercise the IC-15
+R-P2 chaotic-regime escape-hatch substantively; both canonical trajectories are
+numerically unstable (positive Lyapunov). Three cross-cutting precedents stabilized
+for all future plan-drafting + cross-stack work. Cross-reference: methodology
+`docs/conventions/cross-stack-equivalence-methodology.md` § 6.)
+
+- **S6-trajectory-simulation discipline.** S6 plan-drafting discipline (read the
+  Phase-1 `sim.py` at HEAD — § 3 methodology precedent) is NECESSARY but
+  INSUFFICIENT: a code-structure read alone misses chaotic-regime instabilities.
+  Phase-1's within-stack determinism is bit-exact even for chaos; finite-NaN/Inf
+  masks late-stage divergence (smoke's reference reaches `5e19` without NaN/Inf).
+  Smoke is the data-backed FIRST instance where the S6 code-read gave a false
+  "tame/laminar" verdict that cross-stack execution refuted. **Applies to: all
+  future plan-drafting probes for cross-stack ports.** The probe protocol
+  ADDITIONALLY executes `sim_runner_diagnostic` (or a small-N canonical) for
+  ~50-100 steps and reports the max-field-value growth rate: bounded → tame
+  regime; exponential → chaotic regime (R-P2 escape-hatch expected; plan gate-14
+  as a divergence-rate witness from the start).
+
+- **Cross-stack testing as defect-amplifier (beyond equivalence-as-contract).**
+  Cross-stack equivalence testing surfaces latent defects that within-stack
+  verification structurally cannot. Smoke is the data-backed FIRST instance:
+  Phase-1's within-stack determinism + finite-NaN/Inf gates were GREEN, yet
+  cross-stack execution (a second arithmetic backend) revealed the canonical
+  trajectory is numerically unstable. Cross-stack testing's value extends beyond
+  equivalence-as-contract to **equivalence-as-defect-amplifier** — a second
+  deterministic backend exposes sensitive-dependence that one backend cannot.
+
+- **Banked precedent #7 (f64-accumulator-seed) extends to pure-literal kernel
+  constants.** Banked precedent #7 (`ti.f64(0.0)` accumulator seeds; methodology
+  § 4.1) extends from in-kernel REDUCTION accumulators to **pure-literal numerical
+  constants** in `@ti.kernel` bodies. Smoke's 3D Jacobi pure-literal `1.0/6.0`
+  (both operands literals, no f64 ndarray) inferred f32 absent `default_fp=ti.f64`
+  (~1e-9 cross-stack leak) until seeded `ti.f64(1.0) / ti.f64(6.0)`; the 2D `0.25`
+  is exact in f32 (no seed needed). **Applies to: all future Taichi-DSL ports** —
+  seed ANY pure-literal non-power-of-2 constant in a numerical kernel, not only
+  reduction accumulators.
+
 ---
 
 ## § P. Capture cadence routing
