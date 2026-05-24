@@ -77,12 +77,22 @@ a pre-existing Phase-1 stub (Convention A).
 
 ## 2. DEFERRED components (NOT codified — candidate-status; third pair stress-tests)
 
-1. **R-P2 chaotic-regime escape-hatch substantive details.** Both validated pairs
-   had R-P2 (chaotic-divergence) empirically dissolved (RD-2D: algebraic identity
-   across stacks; sph-water: rigid-free-fall trajectory + discarded SPH side-
-   effect per S6). The operator-routing playbook — among tolerance-amendment /
-   step-horizon-override / implementation-debug (P27-analog) — has **not** been
-   exercised. The spec § 2.6 framework exists; the practical routing is unproven.
+1. **R-P2 chaotic-regime escape-hatch substantive details.** The first four
+   validated pairs had R-P2 (chaotic-divergence) empirically dissolved (RD-2D:
+   algebraic identity across stacks; sph-water: rigid-free-fall trajectory +
+   discarded SPH side-effect per S6; LBM: laminar single-pass dissipative; MPM:
+   rigid free-fall). The operator-routing playbook — among tolerance-amendment /
+   step-horizon-override / implementation-debug (P27-analog) — was **unproven**.
+   **Now FORMALIZED (see § 6):** the FIFTH pair (`eulerian-smoke`) is the first to
+   exercise R-P2 substantively — both canonical trajectories are numerically
+   unstable (positive Lyapunov), so cross-stack content-equivalence is physically
+   impossible at non-trivial horizons; gate-14 `within_tolerance=False` is the
+   CORRECT verdict and the escape-hatch is invoked (Option-2 routing). § 6
+   formalizes when the escape-hatch applies, the evidence that justifies it, how
+   `equivalence.md` documents it, its interaction with gates 4-13, and the
+   plan-drafting probe implications. This is a promotion of THIS deferred
+   component to formalized; the remaining deferred aspects (#2, #3, #5) stay
+   candidate-status, so the methodology overall remains PARTIAL.
 2. **D8 comparison-projection axis.** Position-binned histograms / per-particle-
    density / energy-momentum-conservation as alternatives to position-exact
    comparison. Not needed for two algebraically-identical-trajectory pairs.
@@ -258,7 +268,143 @@ needing larger fixtures route a **smaller-scenario variant** (fewer particles / 
 grid / fewer steps) rather than stretching this bound. (This codifies what was implicit
 heuristic across the prior four sub-phases.)
 
-## 6. References
+## 6. Fifth-pair refinements (sub-phase-eulerian-smoke-stack-d Stage 2; Option-2 routing)
+
+> **ADDITIVE amendment (Convention A); a PROMOTION of deferred component § 2 item 1
+> (R-P2 chaotic-regime escape-hatch) from deferred → FORMALIZED — NOT a promotion
+> of the methodology partial → full** (aspects #2/#3/#5 stay candidate-status). The
+> fifth cross-stack pair (`volumetric-grid` physics family; Stam-Fedkiw
+> stable-fluids) is the FIRST of the five spec-Phase-2 pairs to exercise R-P2
+> substantively: BOTH canonical trajectories are numerically UNSTABLE (positive
+> Lyapunov exponent), so the cross-stack diff does NOT stay at FP-round-off scale —
+> it grows exponentially to O(field). Gate-14 returned `within_tolerance=False` on
+> BOTH descriptors, and this is the CORRECT verdict (Option-2 operator routing):
+> the equivalence harness is a test, not an aspiration (spec § 3.6); when a pair
+> fails the test for a documented physical reason (chaos), the escape-hatch
+> acknowledges it. Evidence verbatim from the Stage-1 partial checkpoint § S1-4 /
+> § 6 (`docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/stage-1-checkpoint-2026-05-24T17-29-59Z.md`).
+> The note: the prior four pairs' FP-round-off margins do NOT auto-inherit; each
+> pair's regime must be assessed empirically.
+
+### 6.1 The R-P2 chaotic-regime escape-hatch — when it applies
+
+A cross-stack pair invokes the escape-hatch when its canonical trajectory has a
+**positive Lyapunov exponent** (sensitive dependence on initial conditions). Two
+arithmetic backends (e.g. NumPy-reference ↔ Taichi-CPU) computing the "same"
+algorithm differ at FP-round-off scale (~1e-16) from the first step; a chaotic
+trajectory amplifies that difference exponentially until it saturates at the
+field magnitude. Cross-stack content-equivalence at the category tolerance
+(`relative=1e-4`) over a non-trivial horizon is then **physically impossible** —
+NOT a port defect, NOT a tolerance-calibration problem. The escape-hatch is the
+correct disposition; `within_tolerance=False` is the correct verdict.
+
+This is distinct from the four prior pairs, all at the **algebraically-identical-
+trajectory regime** (the cross-stack diff stays flat at ~1e-15 across the full
+horizon — no amplification). The discriminator is the **divergence RATE across the
+horizon**, not the diff at any single frame.
+
+### 6.2 Evidence that justifies invocation (smoke, the data-backed first instance)
+
+Two independent, falsifiable conditions — BOTH must hold:
+
+1. **Port faithfulness at step 1** (the trajectory is not yet diverged): the
+   Stack-D port matches the frozen reference to FP-round-off at the first step.
+   Smoke: **3D `max_abs_err = 5.6e-16` at step 1; 2D `= 0.0` at step 1** (the 2D
+   first step is bit-identical). This rules out an implementation defect — the
+   port is computing the same algorithm; the divergence is the flow's, not the
+   port's. (Corroborated independently: a fresh NumPy reference run blows up on
+   its own — the instability lives in the SEALED Phase-1 reference, not the port;
+   a fresh NumPy 2D run reproduces the committed reference capture bit-for-bit,
+   `max|u diff|=0.0`.)
+
+2. **Positive divergence rate across the horizon** (cross-stack diff grows
+   exponentially, not flat). Smoke step-by-step `max_abs_err` (Stack-D vs
+   sealed NumPy reference, same IC):
+
+   | 3D Taylor-Green (64³ derisk) | step 1 | step 10 | step 30 | step 60 |
+   |---|---|---|---|---|
+   | `max_abs_err` | `5.6e-16` | `7.8e-16` | `1.9e-14` | `1.1e-10` |
+
+   | 2D lid-driven-cavity (128²) | step 1 | step 2 | step 5 |
+   |---|---|---|---|
+   | `max_abs_err` | `0.0` | `8.9e-16` | `1.0e+03` |
+
+   The growth is exponential and ACCELERATING (the flow develops finer scales).
+   The estimated cross-stack-divergence Lyapunov rate for the 3D 64³ window is
+   `λ ≈ 0.12 → 0.29 per step` (`ln(1.1e-10/5.6e-16)/59 ≈ 0.21/step` mean, growing
+   over the window); the 2D is far more violent (`λ` effectively `≫ 1/step` —
+   `~1e18`-fold growth from step 2 to step 5). The underlying FIELD instability is
+   confirmed by the canonical-resolution capture: 3D reference `max|u|` evolves
+   `0.999 → 8.1e7` (step 50) `→ 5.1e19` (step 250) — a field-amplification rate
+   `ln(8.1e7)/50 ≈ 0.36/step` — and the Stack-D capture blows up to a DIFFERENT
+   magnitude (`1.2e19`), the signature of chaotic divergence between backends.
+   The 2D shear layer reaches `u ~ 1.6e3` by step 5 (Kelvin-Helmholtz instability
+   of the thin lid-shear-layer on a periodic grid).
+
+### 6.3 How `equivalence.md` documents a chaotic-regime result (the witness template)
+
+A chaotic-regime pair's `equivalence.md` is a **divergence-rate witness**, NOT a
+per-field FP-round-off-margin table. It records: (§) the gate-14 verdict
+`within_tolerance=False` with the escape-hatch explicitly invoked; (§) the
+step-1 port-faithfulness baseline; (§) the step-by-step `max_abs_err` growth
+table + Lyapunov-rate estimate for each descriptor; (§) the physical instability
+mechanism cited (here: 3D collocated-grid / under-resolved-Jacobi blow-up; 2D
+Kelvin-Helmholtz shear); (§) the within-stack correctness evidence (gates 4-13
+GREEN); (§) why this is the correct verdict. The smoke pair's
+`docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` is the **template**
+future chaotic-regime pairs inherit.
+
+### 6.4 Interaction with gates 4-13 (the stack-agnostic correctness surface)
+
+The escape-hatch applies ONLY to gate-14 (cross-stack content-equivalence). The
+13 stack-agnostic correctness gates (4-13) **remain mandatory and must still pass**
+— they verify the port's physical correctness independently of cross-stack
+content-equivalence. Smoke's gates 4-13 are all GREEN: code-verification (MMS OOA
+advection 1.9892 / projection 1.9976, within ±0.5 of formal p=2), Tier-1/Tier-2
+diagnostics, citations, API, captures, same-stack determinism (`run_twice_and_diff`
+content-equivalent — bit-exact even though the trajectory is chaotic, because
+within-stack determinism is order-deterministic), 2 PBT invariants @ 50 examples,
+perf-ledger, failing-tests replay. **A chaotic-regime pair is a physically-correct
+port whose cross-stack content-equivalence simply does not apply** — the
+methodology validation (the escape-hatch is invoked correctly, witnessed) is the
+deliverable, not a forced gate-14 PASS (spec § 3.5 / charter § 2).
+
+### 6.5 Implications for future Phase-2 cross-stack ports (plan-drafting probe protocol)
+
+Chaotic-regime risk MUST be assessed at plan-drafting, BEFORE committing to a
+canonical descriptor. The S6 banked precedent (read the Phase-1 `sim.py`) is
+NECESSARY but INSUFFICIENT — a code-structure read alone gave smoke a false "tame /
+laminar" verdict (probe § 6 read the Stam-Fedkiw structure but did not simulate
+the trajectory). The refined protocol (now a conventions-doc banked precedent —
+`docs/conventions/sub-phase-conventions.md` § L.4): **the plan-drafting probe
+additionally EXECUTES `sim_runner_diagnostic` (or a small-N canonical) for ~50-100
+steps and reports the max-field-value growth rate.** Bounded growth → tame regime
+(FP-round-off cross-stack expected). Exponential growth → chaotic regime (R-P2
+escape-hatch expected; plan gate-14 as a divergence-rate witness from the start).
+Within-stack determinism (gate-10) is bit-exact even for chaos and finite-NaN/Inf
+(gate-5) passes even at `5e19`, so neither stack-agnostic gate surfaces the
+instability — only trajectory simulation (or cross-stack execution) does.
+
+### 6.6 Two corollary refinements surfaced by the fifth pair
+
+- **f64-seed (§ 4.1) extends to pure-literal CONSTANTS, not only reductions.** § 4.1
+  codified `ti.f64(0.0)` accumulator seeds for in-kernel REDUCTIONS (LBM's 19-term
+  moment sums). Smoke is the first port where the f64-seed trap bites a **pure-literal
+  numerical constant**: the 3D Jacobi normaliser `1.0/6.0` (both operands literals,
+  no f64 ndarray) infers f32 absent `default_fp=ti.f64` and leaked ~1e-9 into the
+  3D cross-stack pressure solve (vs ~1e-16 with the seed); seeded
+  `ti.f64(1.0) / ti.f64(6.0)`. The 2D Jacobi multiplies by `0.25` (exact in f32, no
+  seed). Codified discipline: seed ANY pure-literal non-power-of-2 constant in a
+  `@ti.kernel` body, not only reduction accumulators. (Conventions-doc § L.4.)
+- **Cross-stack testing is a defect-AMPLIFIER, beyond its equivalence-as-contract
+  framing.** The smoke 2D + 3D canonicals are numerically unstable in the SEALED
+  Phase-1 reference; Phase-1's within-stack determinism (bit-exact even for chaos)
+  and finite-NaN/Inf gate were GREEN and could not see it. Cross-stack execution
+  (a second arithmetic backend) made the latent instability visible. Banked
+  methodology insight: cross-stack equivalence testing surfaces latent defects that
+  within-stack verification structurally cannot. (Conventions-doc § L.4.)
+
+## 7. References
 
 - `docs/architecture.md` § 2.5 (IC-13), § 2.6 (cross-stack tolerance table).
 - `tools/testkit/equivalence/harness.py` (`compare_captures`); `tolerance.toml`;
@@ -267,7 +413,10 @@ heuristic across the prior four sub-phases.)
 - `docs/sim-specs/particle-fluids/sph-water/equivalence.md` (pair 2).
 - `docs/sim-specs/lattice/lattice-boltzmann-d3q19/equivalence.md` (pair 3).
 - `docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md` (pair 4).
+- `docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` (pair 5 — the
+  chaotic-regime witness template; § 6).
 - Landing audits: `docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/landing-2026-05-23T21-22-23Z.md`;
   `docs/_audits/phase-2/sub-phase-sph-water-stack-d/landing-*.md`;
   `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/landing-*.md`;
-  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/landing-*.md`.
+  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/landing-*.md`;
+  `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/landing-*.md` (pair 5).
