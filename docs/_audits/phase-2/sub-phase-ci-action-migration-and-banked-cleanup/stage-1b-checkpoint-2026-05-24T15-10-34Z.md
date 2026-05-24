@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: ci-action-migration-and-banked-cleanup-stage-1b
 subject: "Stage 1b CLOSE — testing-improvements subset landed (additive strategy (i), D10). D12: pytest-timeout>=2.0 + timeout=300 ini at tools/testkit/pyproject.toml (§ J.3; smoke-verified plugin timeout-2.4.0 loads, 300s honored, testkit 58 passed under -W error — R-T1 cleared). D11: representative-single-sim LBM manifest-equality test (test 7ce5d76) — invokes sim_runner_diagnostic, asserts full emitted .json manifest vs expected literals (volatile wall_clock_seconds + checksum excluded per spec § 2.5/§ F.3) + run-to-run stability; 2 passed under -W error. ZERO sealed-source edits; NO public build_manifest() (strategy (ii) banked). Cross-package regression sweep 13 roots 261 passed + 3 skipped, ZERO regressions (LBM 10->12 = +2 new tests only). Integrity sweep c19492ad byte-identical to MPM-close baseline (streak HELD across S-CI2 migration + dep + test). Bit-identity invariant 9399fc33…909f34 HELD (26th+ invocation). Verdict SHIFTED-with-notes (S-1b1: Convention-#8 precision correction to Stage-0 Task 0.5(b) manifest-builder enumeration). Cumulative 150 + 1 = 151. LBM sim_runner_diagnostic cosmetic STAYS BANKED (D6). No -phase-N tag."
 verdict-state: SHIFTED
-head_sha: <COMMIT_N1_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_N1_SHA_PENDING>
+head_sha: cc1071a86eccb019ced05dd1e1786446c5baf428
+head_sha_at_checkpoint: cc1071a86eccb019ced05dd1e1786446c5baf428
 parent_audits:
   - docs/_audits/phase-2/sub-phase-ci-action-migration-and-banked-cleanup/stage-1a-checkpoint-2026-05-24T15-00-37Z.md
   - docs/_audits/phase-2/sub-phase-ci-action-migration-and-banked-cleanup/stage-1a-sha-back-fill-2026-05-24T15-00-37Z.md
@@ -196,7 +196,7 @@ deliverables all CONFIRMED-quality).
 
 ---
 
-This checkpoint lands at HEAD `<COMMIT_N1_SHA_PENDING>` (back-filled per Convention #12 + § B.2 + N1
+This checkpoint lands at HEAD `cc1071a86eccb019ced05dd1e1786446c5baf428` (back-filled per Convention #12 + § B.2 + N1
 enumeration in a separate `chore(ci-action-migration-and-banked-cleanup-stage1b-sha-backfill)` commit;
 full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
