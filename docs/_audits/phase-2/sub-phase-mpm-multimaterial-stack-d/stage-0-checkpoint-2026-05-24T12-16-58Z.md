@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-d-stage-0
 subject: "Stage 0 pre-flight CLOSE for the mpm-multimaterial -> Stack-D port (FOURTH spec-Phase-2 cross-stack port). VERDICT CONFIRMED; all six Stage-0 tasks PASS. Task 0.0 cross-phase replay vs v0.1.0-phase-1 GREEN (8/8 gates, ok=True); replay-output sha256 9399fc33…909f34 byte-identical to the bit-identity invariant (23rd invocation). Task 0.1 tolerance-budget carryover committed 8c9e601 ([phase].phase=sub-phase-mpm-multimaterial-stack-d, opened_at=2026-05-24T12:16:58Z; no [budgets.*] widening; [budgets.mpm.cross_stack]=1e-4 at-budget per D3; tolerance.toml prior overrides untouched). Task 0.2 reference reverify @ captures/mpm-ref/: .h5 LFS content OID 73e00d09…b5ebae MATCH (pointer-stub + ls-files + smudged-content all agree; size 1,125,718,712 B ~1.05 GiB); .json blob ea3531e0…28d1a2f MATCH; IC-16 lfs_pointer_oid() SIZE-INDEPENDENT — reads the 135-byte pointer stub, NOT the 1.05 GiB content (largest LFS consumer to date; clean, no unexpected behavior). Task 0.3 (LOAD-BEARING P2G scatter-posture probe) RESULTS: posture (i) serialised cpu_max_num_threads=1 run-to-run BIT-EXACT (True); posture (ii) parallel cpu_max_num_threads=8 run-to-run NOT bit-exact (False) -> genuine parallel atomic-scatter surface PRESENT empirically (confirms spec determinism.md epsilon rationale); cross-stack posture-(i)-Taichi vs NumPy-numba single-thread max_abs_diff mass=8.47e-10/mom=3.47e-10 -> within the ~1e-13..1e-9 comfortable-margin band, ~5 orders below 1e-4, but NOTABLY LARGER than the prior 3 pairs' ~1e-15 (the genuinely-new atomic-scatter FP-accumulation surface; deferred IC-15 aspect #3 partially exercised even serialised). Stage-1b lean: posture (i) cpu_max_num_threads=1. D5 calibration -> (b) PARTIAL HOLDS + REFINEMENT. Task 0.4 (R-S5) compare_captures KeyError on sim.category 'hybrid-pg' fires -> D6-MANDATORY [overrides.mpm-multimaterial] category=mpm confirmed required; planned override resolves at-budget to relative=1e-4,absolute=0.0. Task 0.5 MLS-MPM/APIC Taichi-cpu derisk ALL PASS: 3x3 ti.Matrix F+C f64 + det/log branch OK; full step chain (stress->P2G->grid->G2P/APIC->deform->advect) run-twice BIT-EXACT at threads=1 + all-finite; seeded blob IC deterministic; ti.f64(0.0) accumulator seeds clean (LBM banked f64-seed precedent applies). Task 0.6 blocking-dependency scan: all conditions NEGATIVE (Taichi 1.7.4 in [>=1.7,<2.0]; Phase-1 ref + determinism + golden(4 anchors) + harness present; overrides.mpm-multimaterial absent as expected). 0 new Stage-0 shifts; cumulative 143. NOT BLOCKED. Hard-Rule-2: posture-(ii) parallel surface present is SURFACED for operator awareness (expected per spec; posture (i) is the achievable + chosen mitigation) — NOT a blocker, NOT unexpected behavior."
 verdict-state: CONFIRMED
-head_sha: PENDING-BACKFILL
-head_sha_at_checkpoint: PENDING-BACKFILL
+head_sha: 03a329653ae927fd01c36b9ff551a05f8f14ec50
+head_sha_at_checkpoint: 03a329653ae927fd01c36b9ff551a05f8f14ec50
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md
@@ -23,9 +23,9 @@ evidence_paths:
   - docs/architecture.md
 evidence_hashes:
   docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-evidence/replay-2026-05-24T12-16-58Z.txt: sha256:9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34
-  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-evidence/scatter-posture-probe-2026-05-24T12-16-58Z.txt: sha256:PENDING-BACKFILL
-  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-evidence/kernel-derisk-2026-05-24T12-16-58Z.txt: sha256:PENDING-BACKFILL
-  tools/testkit/equivalence/tolerance-budget.toml: sha256:PENDING-BACKFILL
+  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-evidence/scatter-posture-probe-2026-05-24T12-16-58Z.txt: sha256:b411567e4309cf523ef53da07b6cca78da2b4d7cc7abb75b0db743a85ec931ea
+  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/stage-0-evidence/kernel-derisk-2026-05-24T12-16-58Z.txt: sha256:b66a0d1e8c2a679a3107c0d57ec9e12e33a1e4b6d5ddc4f7c2b6f9e2c6b57a49
+  tools/testkit/equivalence/tolerance-budget.toml: sha256:6c265f1286aa46ba77c793c9a5c7476b31eb83876cda7744967ba0f1eead2446
   docs/conventions/sub-phase-conventions.md: sha256:69aa39fceb3fcb0f0b6080068bdbb33a98736c73650de4ebc883de5f4602bf45
   docs/architecture.md: sha256:e82b7b8e4cc88441a1cdbedda1da2876ab9ccc74c64742585f66e4639292d267
 ---
