@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-d-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: PENDING-BACKFILL
+head_sha: 41310ac5a1154687d9e5a9ca52c81cd6a2015c88
 head_sha_at_checkpoint: b973fd9405cf6684d94fedb296ab8ec1c877a75e
 date: 2026-05-24T11-52-00Z
 verdict: plan-drafting-CONFIRMED

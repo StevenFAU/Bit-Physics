@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-d-plan-drafting
 stage: plan-drafting-probe
 phase: phase-2
-head_sha: PENDING-BACKFILL
+head_sha: 4d1bcc5bb33f8069c76bf000996c9e259c1fe0a5
 head_sha_at_checkpoint: b027f6093685b4dd2b7d0fc9b0d7bc94d30ad3d1
 date: 2026-05-24T11-45-06Z
 verdict: probe-complete
