@@ -69,6 +69,10 @@ filterwarnings = [
   # cadence (sister convention: `common/common-py/pyproject.toml` per
   # docs/common/taichi.md 4.5; mirrors packages/lattice-boltzmann-d3q19-stack-d).
   "ignore::DeprecationWarning:taichi.*",
+  # taichi's cold-`.pyc` compile raises an invalid-escape SyntaxWarning
+  # (taichi/tools/image.py); compile-time SyntaxWarnings carry a
+  # filename-derived module, so only the bare category form matches.
+  "ignore::SyntaxWarning",
   "ignore:.*locale\\.getdefaultlocale.*:DeprecationWarning",
 ]
 testpaths = ["tests"]
