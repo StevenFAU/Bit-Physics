@@ -1501,6 +1501,80 @@ tag; PUSH IS OPERATOR ACTION.
   Future workflow-action probes / D3 re-fetch must read the release notes for the
   specific major targeted, not merely confirm the version exists.
 
+### sub-phase-eulerian-smoke-stack-d
+
+FIFTH per-sim cross-stack port under spec-Phase-2: `eulerian-smoke` →
+Stack-D (Taichi-DSL / CPU); spec § 11.3 item 2.4 first half (the Stack-E
+Warp half deferred). **The FIRST of the five cross-stack pairs to exercise
+IC-15 aspect #1 (R-P2 chaotic regime) substantively** — both Phase-1 canonical
+trajectories are numerically unstable (positive Lyapunov; 2D Kelvin-Helmholtz
+shear, 3D Taylor-Green blow-up to ~5e19). Gates 4-13 GREEN; gate-14
+`within_tolerance=False` on both canonicals with the **chaotic-regime
+escape-hatch invoked correctly** (Option-2 operator routing): cross-stack
+content-equivalence is physically impossible for chaotic trajectories, so the
+failing verdict is the CORRECT verdict, and the methodology gains its first
+formalized chaotic-regime component. A methodology-strengthening sub-phase. The
+port is faithful (matches the sealed NumPy reference to ~1e-16 while stable; the
+instability is in the Phase-1 reference, verified independently). Cross-stack
+testing surfaced a latent Phase-1 instability that within-stack determinism +
+finite-NaN/Inf gates could not see. No `-phase-N` tag (spec § 7.12); local
+landing only — remote-CI re-validation banked behind the LFS-architecture
+sub-phase (D13).
+
+#### Added
+
+- `packages/eulerian-smoke-stack-d/` — 19th workspace member. Taichi-DSL CPU
+  Stam-Fedkiw stable-fluids port: `reference/stable_fluids_taichi.py`
+  (`@ti.kernel` per-cell SL-advect / Laplacian / divergence / Jacobi-sweep /
+  gradient / curl primitives + NumPy wrappers mirroring the Phase-1 reference;
+  CANONICAL_* re-derived verbatim), `sim.py` (`sim_runner_seeded` 3D,
+  `sim_runner_seeded_2d` 2D, `sim_runner_diagnostic`,
+  `compute_canonical_trajectory_3d`), `invariants.py` (2 PBT @ 50 examples).
+  Collocated cell-centered periodic; plain trilinear SL (3D) + MacCormack (2D);
+  fixed-`n_jacobi=20` Jacobi; vorticity confinement `eps=0` PRESENT-but-NOT-
+  EXERCISED. Gate-4 MMS-only (advection OOA 1.9892 / projection 1.9976).
+- `tools/testkit/equivalence/tolerance.toml` `[overrides.eulerian-smoke]
+  category="smoke"` — 5th per-sim override (additive; resolves
+  `volumetric-grid`→`smoke`@1e-4).
+- `docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` — extended to
+  the **chaotic-regime witness** (the template future chaotic-regime pairs
+  inherit): divergence-rate witness, Lyapunov estimates, step-1 port-faithfulness
+  baseline, gates-4-13-GREEN evidence.
+- `docs/conventions/cross-stack-equivalence-methodology.md` § 6 — **IC-15 § 2
+  item 1 (R-P2 chaotic-regime escape-hatch) promoted deferred → FORMALIZED**
+  (smoke the data-backed first instance); References renumbered → § 7. Methodology
+  remains PARTIAL (#2/#3/#5 deferred).
+- `docs/conventions/sub-phase-conventions.md` § L.4 — three banked
+  methodology-precedents: S6-trajectory-simulation discipline; cross-stack-as-
+  defect-amplifier; banked precedent #7 (f64-seed) extends to pure-literal kernel
+  constants (3D Jacobi `1.0/6.0` → `ti.f64(1.0)/ti.f64(6.0)`).
+- `docs/perf-ledger.md` — two rows (2D 8.470s / 3D 698.986s; both within 2× band).
+- Sub-phase audit chain under
+  `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/` (plan-drafting 4 +
+  Stage 0 3 + Stage 1 5 + Stage 2 6 = 18 commits).
+
+#### Verification
+
+Gates 4-13 GREEN (MMS OOA 1.9892/1.9976; Tier-1/Tier-2; citations; API; captures;
+`run_twice_and_diff` content-equivalent; 2 PBT @ 50; perf; failing-tests replay).
+Gate-14 `within_tolerance=False` (chaotic-regime escape-hatch — correct verdict).
+Cross-package regression sweep: 19 members + testkit (58) + diagnostics (22), ZERO
+regressions. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak HELD, 8th
+sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (32nd+). Append-only PASS;
+`verify_evidence` full chain PASS. Cumulative shifts 159 → 165 (Stage 1: 4; Stage 2: 2).
+
+#### Banked
+
+- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint/check-yaml/
+  supply-chain-pin for the other 3 actions; LFS-architecture sub-phase (D13);
+  manifest-equality smoke-specific test (D7).
+- NEW banked observation: **Phase-1-canonical re-characterization question** —
+  whether future Phase-1 canonicals should "exhibit stable physics" vs "exercise
+  numerics including unstable cases" (raised by smoke's chaotic finding; banked
+  for operator routing, Option-2).
+- NEW banked methodology-precedents: S6-trajectory-simulation; cross-stack-as-
+  defect-amplifier; banked-#7-pure-literal-constants (conventions § L.4).
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by

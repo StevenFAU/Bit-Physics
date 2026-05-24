@@ -1,0 +1,30 @@
+tools/testkit :: (no tests/ dir)
+tools/integrity :: 56 passed in 2.06s
+tools/diagnostics :: (no tests/ dir)
+packages/reaction-diffusion-2d :: 14 passed in 2.56s
+packages/strange-attractors :: 11 passed in 0.80s
+packages/mandelbulb-explorer :: 10 passed in 0.26s
+packages/boids-3d :: 10 passed in 46.11s
+packages/physarum :: 10 passed in 10.10s
+packages/reaction-diffusion-3d :: 8 passed in 24.41s
+packages/sph-water :: 22 passed in 1.88s
+packages/eulerian-smoke :: 10 passed in 3.35s
+packages/lattice-boltzmann-d3q19 :: 12 passed in 4.23s
+packages/mpm-multimaterial :: 10 passed in 2.35s
+common/common-py :: 25 passed in 1.02s
+packages/reaction-diffusion-2d-stack-d :: 16 passed in 4.28s
+packages/sph-water-stack-d :: 15 passed in 0.63s
+packages/lattice-boltzmann-d3q19-stack-d :: 16 passed in 10.85s
+packages/mpm-multimaterial-stack-d :: 15 passed in 5.49s
+packages/eulerian-smoke-stack-d :: 15 passed, 1 skipped in 8.33s
+SWEEP_COMPLETE fail=0
+tools/testkit (recursive) :: 58 passed in 6.36s
+tools/diagnostics (recursive) :: 22 passed in 0.17s
+ALL_SWEEPS_DONE
+INTEGRITY_SHA c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52
+summary: 0 HARD_FAIL, 14 SOFT_WARN
+REPLAY_SHA 9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34
+VE stage-1-checkpoint :: summary: 4 pass / 0 fail at head_sha 1617a2b817e3
+exit=0
+VE stage-0-checkpoint :: summary: 24 pass / 0 fail at head_sha 5cb67280be99
+LANDING_VERIFICATION_COMPLETE
