@@ -35,6 +35,11 @@ members = [
   # diffusion-2d-stack-d plan-drafting close; consumes common-py +
   # taichi for the Taichi-DSL Gray-Scott implementation.
   "packages/reaction-diffusion-2d-stack-d",
+  # Spec-Phase-2 Stack-D port of sph-water (SECOND per-sim cross-stack
+  # port). Sibling workspace member per D1/D6 ratification at sub-phase-
+  # sph-water-stack-d plan-drafting close; consumes common-py + taichi
+  # for the Taichi-DSL DFSPH implementation. Registered at Stage 1a.
+  "packages/sph-water-stack-d",
 ]
 exclude = []
 

@@ -25,6 +25,7 @@ members = [
     "reaction-diffusion-2d-stack-d",
     "reaction-diffusion-3d",
     "sph-water",
+    "sph-water-stack-d",
     "strange-attractors",
 ]
 
@@ -1662,6 +1663,44 @@ requires-dist = [
     { name = "numpy", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "scipy", specifier = ">=1.10" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "sph-water-stack-d"
+version = "0.0.0"
+source = { editable = "packages/sph-water-stack-d" }
+dependencies = [
+    { name = "bit-physics-common-py" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "taichi" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-py", editable = "common/common-py" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "taichi", specifier = ">=1.7,<2.0" },
 ]
 provides-extras = ["dev"]
 
