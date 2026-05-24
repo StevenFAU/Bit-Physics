@@ -1,0 +1,16 @@
+Task 0.2 — Phase-1 LBM reference capture reverify (BOTH captures) @ HEAD
+captures dir: captures/lbm-ref/  (charter + HEAD agree; dispatch narrative 'lattice-boltzmann-d3q19-ref' was a dispatch-side error)
+
+== git lfs ls-files (lbm-ref) ==
+7a94843457 * captures/lbm-ref/couette-32x16-seed42-step500.h5
+0e0843aa87 * captures/lbm-ref/poiseuille-64x32-seed42-step1000.h5
+
+== .h5 LFS content OIDs (working-tree sha256 == LFS OID; smudged) ==
+0e0843aa8707e5f07f2e12fae81c764fccdbe91b408833bbc67450f1b5e16f68  captures/lbm-ref/poiseuille-64x32-seed42-step1000.h5
+7a94843457e44c8747a6514fe6bc56548f637e09a3bd5ee2631d9ddfae15b65b  captures/lbm-ref/couette-32x16-seed42-step500.h5
+
+== .json sidecar committed-blob sha256 (HEAD) ==
+8347922d10f048abcb778af2674c4e1f0ef4c49f4f27eca2ddc4736cef611b8f  poiseuille.json
+d9fbcafbc52b0c0be20c83a875ea67f2b8b56704cdb0157c5c7ad2eff54c480f  couette.json
+
+Charter Task 0.2 anchors: h5 OIDs 0e0843aa.../7a948434...; json 8347922d.../d9fbcafb... -> ALL MATCH

@@ -1,0 +1,43 @@
+Tasks 0.3 (Taichi-DSL LBM kernel validation, LOAD-BEARING) + 0.4 (golden+MMS feed) + 0.5 (R-S5 taxonomy)
+Stage-0 throwaway smoke (/tmp/lbm_stage0_scratch/smoke.py); Taichi 1.7.4, arch=cpu, cpu_max_num_threads=1, seed=42.
+Host: Linux 6.17.0-29-generic x86_64
+================================================================
+
+======== Task 0.3(c) — Taichi feq reproduces d3q19-equilibrium golden ========
+  golden tol (abs)=1e-15
+  Taichi feq vs GOLDEN    max_abs_err = 0.000e+00
+  Taichi feq vs NumPy ref max_abs_err = 0.000e+00
+  => PASS (max_abs=0.00e+00 vs golden; 0.00e+00 vs NumPy ref)
+
+======== Task 0.3 — integer-offset streaming bit-exact vs np.roll oracle ========
+  np.array_equal(taichi, np.roll oracle)=True; max_abs=0.000e+00
+  => PASS (bit-exact)
+
+======== Task 0.3(d) — per-cell 19-term moment reduction (fixed ti.static order) ========
+  Taichi vs NumPy reduction: max_abs rho=7.105e-15, mom=8.882e-16
+  => PASS (max_abs rho=7.11e-15, mom=8.88e-16; << 1e-5 cross-stack)
+
+======== Task 0.3(a)+(b) — deterministic init + run_twice bit-exact (BGK+Guo+stream) ========
+  content_equivalent=True; detail=captures match exactly
+  => PASS (content_equivalent, bit-exact)
+
+======== Task 0.4 — incompressible_ns_2d MMS feeds a Taichi Guo bgk step ========
+  MMS evaluate -> u(8, 8),v(8, 8),p(8, 8); source_term -> S_u(8, 8); formal_order=2
+  Taichi Guo bgk step on MMS-derived force ran; all-finite=True; mean(S_u)=2.082e-16
+  => PASS (MMS evaluate+source_term feed a Taichi Guo bgk step; finite output)
+
+======== Task 0.5 — R-S5 taxonomy resolution (compare_captures, sim.category='lattice') ========
+  no-override compare_captures -> KeyError: "tolerance.toml has no defaults for category 'lattice'; add `[defaults.lattice]` or an override for sim 'lattice-boltzmann-d3q19'"
+  with planned [overrides.lattice-boltzmann-d3q19] category='lbm' -> {'category': 'lbm', 'relative': 1e-05, 'absolute': 0.0}
+  end-to-end temp override: within_tolerance=True, resolved={'category': 'lbm', 'relative': 1e-05, 'absolute': 0.0, 'path': '/tmp/lbm_stage0_scratch/r_s5/tolerance.toml'}
+  => PASS (KeyError without override; category=lbm/1e-5 with planned override; confirms D6-MANDATORY)
+
+======== STAGE-0 SMOKE RESULTS ========
+  [PASS] 0.3c golden reproduction: PASS (max_abs=0.00e+00 vs golden; 0.00e+00 vs NumPy ref)
+  [PASS] 0.3 streaming bit-exact vs np.roll: PASS (bit-exact)
+  [PASS] 0.3d 19-term moment reduction: PASS (max_abs rho=7.11e-15, mom=8.88e-16; << 1e-5 cross-stack)
+  [PASS] 0.3a/b run_twice bit-exact: PASS (content_equivalent, bit-exact)
+  [PASS] 0.4 MMS feeds Taichi Guo bgk: PASS (MMS evaluate+source_term feed a Taichi Guo bgk step; finite output)
+  [PASS] 0.5 R-S5 taxonomy resolution: PASS (KeyError without override; category=lbm/1e-5 with planned override; confirms D6-MANDATORY)
+
+OVERALL: ALL PASS
