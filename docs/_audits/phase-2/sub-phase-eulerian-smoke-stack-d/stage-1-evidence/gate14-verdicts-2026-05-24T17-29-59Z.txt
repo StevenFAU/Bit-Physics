@@ -1,0 +1,24 @@
+GATE-14 cross-stack equivalence (compare_captures @ relative=1e-4, smoke category)
+eulerian-smoke-stack-d Stage 1; HEAD 42ed61e
+
+2D  lid-driven-cavity-128sq-re100-seed42-step1000
+    within_tolerance=False   resolved_tol=smoke/0.0001
+    density: max_abs_err=9.422026e-01  max_rel_err=1.000000e+00
+    u: max_abs_err=9.500774e+00  max_rel_err=1.999961e+00
+    v: max_abs_err=1.072472e+01  max_rel_err=1.999995e+00
+
+3D  taylor-green-128cube-seed42-step500
+    within_tolerance=False   resolved_tol=smoke/0.0001
+    density: max_abs_err=6.708497e-04  max_rel_err=2.140705e-02
+    u: max_abs_err=5.418147e+20  max_rel_err=1.999999e+00
+    v: max_abs_err=5.863839e+20  max_rel_err=1.999999e+00
+    w: max_abs_err=3.973365e+20  max_rel_err=1.999999e+00
+
+FIELD-MAGNITUDE BLOWUP (the reference trajectory itself is unstable -- not a port bug):
+  REF    : step0:max|u|=9.991e-01  step50:max|u|=8.109e+07  step250:max|u|=5.135e+19  step500:max|u|=5.135e+19
+  STACK-D: step0:max|u|=9.991e-01  step50:max|u|=6.634e+07  step250:max|u|=1.198e+19  step500:max|u|=1.198e+19
+
+Port fidelity while STABLE (Taichi vs sealed NumPy reference, step-by-step from same IC):
+  3D 64cube: step1=5.6e-16  step10=7.8e-16  step30=1.9e-14  step60=1.1e-10 (Lyapunov amplification of FP-round-off)
+  2D 128sq:  step1=0.0  step2=8.9e-16  step5=1.0e+3 (u_scale 1.6e3) -- exponential blowup
+  => the port matches NumPy to FP-round-off while the trajectory is stable; divergence is the flow amplifying FP perturbations.
