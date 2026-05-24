@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: ci-action-migration-and-banked-cleanup-stage-0
 subject: "Stage 0 pre-flight CLOSE for sub-phase-ci-action-migration-and-banked-cleanup (focused-infrastructure; S-CI2 GitHub Actions Node-20 migration primary driver + banked testing-improvements subset). All 8 tasks (0.0-0.7) PASS. Task 0.0 cross-phase replay vs v0.1.0-phase-1 GREEN (8/8 gates, ok=True); replay-output sha256 9399fc33…909f34 byte-identical to the bit-identity invariant (24th invocation). Task 0.1 HEAD == f202a57 (NO drift since plan-drafting close). Task 0.2 INFORMATIONAL latest majors (Stage 1a re-fetches at edit time, D3): checkout v6 / setup-uv v8 / setup-node v6 / pnpm v6; Node-20 default-switch date 2026-06-16 CONFIRMED (plan-drafting S1 holds), removal fall 2026. Task 0.3 D4 preservation set: 4 of 4 verified verbatim, NO surprise with: blocks across the other 7 workflows. Task 0.4 tolerance-budget NO-OP (CI+testing scope; no equivalence work; no carryover artifact committed per D4). Task 0.5 testing-improvements scope: pytest-timeout ABSENT at HEAD (clean); no public build_manifest()/manifest-equality test in any sim (physarum has a private _build_manifest fixture-helper; other 8 build inline) — Stage 1b representative-subset scope ~1+ test. Task 0.6 LBM sim_runner_diagnostic STAYS BANKED (manifest-equality test is additive/new-file; no natural sealed-package co-location). Task 0.7 9 workflows confirmed. Verdict CONFIRMED; 0 new Stage-0 shifts; cumulative 150. No -phase-N tag."
 verdict-state: CONFIRMED
-head_sha: <COMMIT_N_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_N_SHA_PENDING>
+head_sha: 5b80a59c4964a7ef98cd358d69da9a7bf717e647
+head_sha_at_checkpoint: 5b80a59c4964a7ef98cd358d69da9a7bf717e647
 parent_audits:
   - docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-d/landing-2026-05-24T13-45-00Z.md
@@ -253,7 +253,7 @@ new-file additive deliverable (representative subset; § 8). No blockers.
 
 ---
 
-This checkpoint lands at HEAD `<COMMIT_N_SHA_PENDING>` (back-filled per Convention #12 + § B.2 + N1
+This checkpoint lands at HEAD `5b80a59c4964a7ef98cd358d69da9a7bf717e647` (back-filled per Convention #12 + § B.2 + N1
 enumeration in a separate `chore(ci-action-migration-and-banked-cleanup-stage0-sha-backfill)`
 commit; full 40-hex via `git rev-parse HEAD` at summary-composition time).
 
