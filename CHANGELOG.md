@@ -1400,6 +1400,72 @@ particle-fluids, volumetric-grid, lattice, and hybrid-particle-grid.
 - **Phase 0 regression.** RD-2D Phase 0 test suite remains 14/14
   green; no Phase 0 deliverable was edited.
 
+### sub-phase-ci-action-migration-and-banked-cleanup
+
+Focused-infrastructure sub-phase whose PRIMARY, time-pressured driver is
+**S-CI2** — the GitHub Actions Node-20 runtime deprecation (Node-24 default
+2026-06-16; Node-20 removal "later in fall 2026"). Bumps every workflow action
+pinned to a Node-20 major to its latest Node-24 major, preserving four
+load-bearing `with:` blocks byte-for-byte, and bundles the banked
+testing-improvements subset (pytest-timeout + a representative manifest-equality
+test) per the focused-infra `sub-phase-audit-chain-correctness` shape. NOT a
+per-sim port; NOT cross-stack. No `-phase-N` tag (spec § 7.12); PUSH IS OPERATOR
+ACTION (remote-CI validation of the bumped majors happens at the operator push).
+
+#### Added / Changed
+
+- **S-CI2 workflow Node-runtime migration (Stage 1a).** Across all 9
+  `.github/workflows/*.yml` (17 `uses:` version-string changes only):
+  `actions/checkout@v4`→`@v6` (×9), `astral-sh/setup-uv@v6`→`@v8` (×6),
+  `actions/setup-node@v4`→`@v6` (×1, `ts-strict.yml`),
+  `pnpm/action-setup@v4`→`@v6` (×1, `ts-strict.yml`). Target majors web-fetched
+  fresh at edit time (D3). The four D4 `with:` blocks preserved byte-for-byte
+  (R-CI CLEARED): `lfs: true` (`python-strict.yml`, the S-CI1 legacy-captures
+  smudge), `fetch-depth: 0` (`audit-append-only.yml`, prior-tag read),
+  `setup-node` inputs + pnpm `version: 10` (`ts-strict.yml`).
+- **pytest-timeout (Stage 1b, § J.3, D12 shape (b)).** `pytest-timeout>=2.0`
+  added to `tools/testkit/pyproject.toml` dev extras + a default per-test ceiling
+  in `[tool.pytest.ini_options]`. Lands the § J.3 requirement (numba PATH-A
+  mutation targets); per-target mutmut runners may tighten it. MPM `mls_mpm.py`
+  mutation completion remains banked.
+- **LBM manifest-equality test (Stage 1b, § J.7, D11, strategy (i)).** New
+  `packages/lattice-boltzmann-d3q19/tests/test_manifest_equality.py` — invokes
+  the existing `sim_runner_diagnostic` and asserts the full emitted `.json`
+  manifest against expected literals (volatile `run.wall_clock_seconds` +
+  `payload.checksum` excluded per spec § 2.5 / § F.3) + run-to-run stability.
+  ZERO sealed-source edits; no public `build_manifest()` (strategy (ii) banked).
+  Representative-single-sim (the representative-subset artifact class).
+- **Conventions § J amended additively** (`docs/conventions/sub-phase-conventions.md`):
+  § J.3 records pytest-timeout LANDED; § J.7 records the manifest-equality test
+  REALIZED via strategy (i) (banked methodology-precedent #14). Existing prose
+  unchanged.
+
+#### Verification
+
+- **Python 18-root sweep:** ZERO code regressions (418 passed + 3 skipped,
+  full-collection mode; LBM 10→12 is the only intended delta). The 4 Stack-D
+  ports errored on a COLD taichi `.pyc` (latent pre-existing
+  taichi-`SyntaxWarning` filterwarnings gap, exposed by the Stage-1b `uv sync`;
+  proven not a code regression — warming the `.pyc` → all pass; banked as a
+  recommended Stack-D-filterwarnings follow-up).
+- **TypeScript sweep:** 20 passed + 2 skipped (baseline-match).
+- **Integrity sweep:** `0 HARD_FAIL, 14 SOFT_WARN`; sweep-output sha256
+  `c19492ad…cb52` byte-identical to the MPM Stack-D close baseline (streak HELD
+  across the migration + § J amendment + new test).
+- **Bit-identity replay invariant:** `9399fc33…18909f34` HELD (27th+ invocation).
+- **Append-only:** PASS (no Phase-0/Phase-1 or prior-sub-phase audit edited).
+- **verify_evidence:** full 9-audit chain GREEN.
+
+#### Banked methodology-precedent
+
+- **#14 — strategy-(i) manifest-equality pattern.** The literal
+  `<sim>.sim.build_manifest()` call site does not exist at HEAD; invoke the
+  existing `sim_runner_*` (or its diagnostic-tier variant), load the emitted
+  `.json` manifest sidecar, shape-check-then-exclude the volatile wall-clock +
+  checksum fields, and assert the remainder equals expected literals (numeric
+  params from module constants). Realizes § J.7's intent without a sealed-source
+  refactor. Reusable for any future per-sim manifest-equality fan-out.
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by

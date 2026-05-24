@@ -1,0 +1,26 @@
+packages/strange-attractors                    11 passed in 0.74s
+packages/mandelbulb-explorer                   10 passed in 0.24s
+packages/boids-3d                              10 passed in 40.73s
+packages/physarum                              10 passed in 10.63s
+packages/reaction-diffusion-2d                 14 passed in 2.49s
+packages/reaction-diffusion-3d                 8 passed in 23.69s
+packages/sph-water                             22 passed in 0.57s
+packages/eulerian-smoke                        10 passed in 3.23s
+packages/lattice-boltzmann-d3q19               12 passed in 4.11s
+packages/mpm-multimaterial                     10 passed in 0.81s
+packages/reaction-diffusion-2d-stack-d         6 errors in 0.58s
+packages/sph-water-stack-d                     7 errors in 0.47s
+packages/lattice-boltzmann-d3q19-stack-d       7 errors in 0.53s
+packages/mpm-multimaterial-stack-d             6 errors in 0.49s
+tools/integrity                                56 passed in 1.65s
+tools/diagnostics                              22 passed in 0.16s
+tools/testkit                                  58 passed in 4.85s
+common/common-py                               22 passed, 3 skipped in 0.23s
+--- Stack-D ports re-run (warm taichi .pyc; cold-cache errored — see S-2.1 finding) ---
+packages/reaction-diffusion-2d-stack-d         16 passed in 4.10s
+packages/sph-water-stack-d                     15 passed in 0.70s
+packages/lattice-boltzmann-d3q19-stack-d       16 passed in 11.19s
+packages/mpm-multimaterial-stack-d             15 passed in 5.80s
+--- full-collection re-run (diagnostics all-tiers; testkit incl numba+taichi harness) per § B.7 reporting-mode ---
+tools/diagnostics (full): 93 passed in 0.30s
+tools/testkit (full incl harnesses): 68 passed in 6.82s
