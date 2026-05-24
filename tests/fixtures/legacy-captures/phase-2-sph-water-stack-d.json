@@ -1,0 +1,45 @@
+{
+  "config": {
+    "dims": [
+      100000,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.001,
+      "g_z": -9.81,
+      "h": 0.05,
+      "n_particles": 100000,
+      "rho_0": 1000.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:8435f16677a496d0191ac001e7fafb3c650d4430d9d1203a6a9a1eda54c1678b",
+    "format": "hdf5",
+    "path": "phase-2-sph-water-stack-d.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-24T00:00:00Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 252.34585822396912
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "particle-fluids",
+    "name": "sph-water",
+    "variant": "dfsph-bender-koschier-2015"
+  },
+  "stack": {
+    "build_id": "sub-phase-sph-water-stack-d",
+    "name": "taichi-stack-d",
+    "version": "0.0.1"
+  }
+}

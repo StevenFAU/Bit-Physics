@@ -49,3 +49,12 @@ category = "reaction-diffusion"
 # AT-BUDGET per [defaults.reaction-diffusion]: relative=1e-4, absolute=0.0.
 # NOT a tolerance widening per spec § 2.6 — resolution wiring only.
 # Established by sub-phase-reaction-diffusion-2d-stack-d Stage 1c.
+
+[overrides.sph-water]
+category = "sph"
+# Resolves sim.category='particle-fluids' (physics-family taxonomy)
+# to tolerance-category='sph' (numerical-method taxonomy).
+# AT-BUDGET per [defaults.sph]: relative=1e-4, absolute=0.0.
+# NOT a tolerance widening per spec § 2.6 — resolution wiring only.
+# Established by sub-phase-sph-water-stack-d Stage 1c.
+# Second per-sim override after sub-phase-reaction-diffusion-2d-stack-d.

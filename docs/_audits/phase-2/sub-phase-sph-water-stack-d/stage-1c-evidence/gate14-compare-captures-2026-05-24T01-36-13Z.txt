@@ -1,0 +1,43 @@
+=== gate-14 cross-stack equivalence: NumPy-reference (LEFT) vs Stack-D Taichi (RIGHT) ===
+within_tolerance: True
+tolerance_table_used: {'category': 'sph', 'relative': 0.0001, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+
+per_field_diff (step:field -> max_abs_err / max_rel_err):
+  step:0:density                max_abs_err=2.557954e-13  max_rel_err=1.585292e-15
+  step:0:position               max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:0:velocity               max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:100:density              max_abs_err=2.273737e-13  max_rel_err=1.351931e-15
+  step:100:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:100:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:200:density              max_abs_err=2.273737e-13  max_rel_err=1.401229e-15
+  step:200:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:200:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:300:density              max_abs_err=2.273737e-13  max_rel_err=1.436149e-15
+  step:300:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:300:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:400:density              max_abs_err=2.273737e-13  max_rel_err=1.404203e-15
+  step:400:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:400:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:500:density              max_abs_err=2.273737e-13  max_rel_err=1.388167e-15
+  step:500:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:500:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:600:density              max_abs_err=2.273737e-13  max_rel_err=1.432110e-15
+  step:600:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:600:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:700:density              max_abs_err=2.273737e-13  max_rel_err=1.432110e-15
+  step:700:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:700:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:800:density              max_abs_err=1.989520e-13  max_rel_err=1.432110e-15
+  step:800:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:800:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:900:density              max_abs_err=1.989520e-13  max_rel_err=1.306779e-15
+  step:900:position             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:900:velocity             max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:1000:density             max_abs_err=2.273737e-13  max_rel_err=1.397293e-15
+  step:1000:position            max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+  step:1000:velocity            max_abs_err=0.000000e+00  max_rel_err=0.000000e+00
+
+step-horizon roll-up (max over all frames, per field):
+  density       max_abs_err=2.557954e-13  max_rel_err=1.585292e-15  (target rel<=1e-4)
+  position      max_abs_err=0.000000e+00  max_rel_err=0.000000e+00  (target rel<=1e-4)
+  velocity      max_abs_err=0.000000e+00  max_rel_err=0.000000e+00  (target rel<=1e-4)
