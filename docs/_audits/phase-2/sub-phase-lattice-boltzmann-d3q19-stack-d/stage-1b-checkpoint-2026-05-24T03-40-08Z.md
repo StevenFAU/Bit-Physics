@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-d-stage-1b
 subject: "Stage 1b (implementation) CLOSE for the lattice-boltzmann-d3q19 -> Stack-D port (THIRD spec-Phase-2 cross-stack port). VERDICT CONFIRMED; gates 4-13 GREEN, gate-14 PENDING-1c. Taichi-DSL D3Q19 BGK reference (Qian-1992 equilibrium + Guo-2002 forcing) + dual sim runners + 2 PBT invariants + spec sheet + probe report. 14 tests pass, 2 skipped (cross_stack SKIP added). Gate-4a equilibrium golden reproduced bit-identically (max_abs=0.0 @ abs 1e-15). Gate-4b MMS observed OOA=2.39 over the UNMODIFIED incompressible_ns_2d solution (within +/-0.5 of formal p=2; FIRST port with BOTH gate-4 arms). f64 design choice: explicit ti.f64(0.0) accumulator seeds throughout the in-kernel 19-term reductions (Stage-0 banked; NO default_fp/IC-11 edit) -- LBM is the FIRST cross-stack port with genuine in-kernel f64 reductions (D9). TWO canonical captures (D4 dual-capture; FIRST port): poiseuille .h5 OID d7ace41e... / .json a395e30c..., couette .h5 OID 4d171c51... / .json aa6451ac.... TWO perf-ledger rows (FIRST port adding two): poiseuille 4.954s, couette 0.973s taichi-cpu (1.31x / 1.61x the NumPy baselines; within 2x band). Informal cross-stack sanity: poiseuille final-step vs NumPy ref max_abs ~1e-15 (gate-14 @ 1e-5 is Stage 1c). Gate-13 worktree replay at 2fe22f1 reproduced 7/7 ModuleNotFoundError (3-reference/3-sim/1-invariants). Main commit 3bdd6a8. GREEN-evidence sha256 d160ed17...da7be. 1 minor Stage-1b test-assertion correction (over-strict exact-equality on an FP sum relaxed to abs 1e-14); NOT a plan shift. Cumulative 136."
 verdict-state: CONFIRMED
-head_sha: PENDING-STAGE1B-SHA-BACKFILL
-head_sha_at_checkpoint: PENDING-STAGE1B-SHA-BACKFILL
+head_sha: 9a3bf3495884a7eb1851b55d6640b9ec4f00e23f
+head_sha_at_checkpoint: 9a3bf3495884a7eb1851b55d6640b9ec4f00e23f
 parent_audits:
   - docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/stage-1a-checkpoint-2026-05-24T03-19-01Z.md
   - docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-d/stage-0-checkpoint-2026-05-24T02-51-32Z.md
