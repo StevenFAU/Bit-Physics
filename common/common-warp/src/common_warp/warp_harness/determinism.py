@@ -67,19 +67,27 @@ def set_warp_deterministic(seed: int, device: str = BIT_DETERMINISTIC_DEVICE) ->
 
 
 @contextmanager
-def deterministic_context(seed: int, device: str = BIT_DETERMINISTIC_DEVICE) -> Iterator[int]:
-    """Context manager yielding a deterministic Warp environment.
+def deterministic_context() -> Iterator[int]:
+    """Context manager yielding a deterministic Warp environment (§1.9.1).
 
-    Enters by pinning ``device`` + setting ``seed`` (via
-    :func:`set_warp_deterministic`); on exit restores the prior seed and
-    prior device so the deterministic configuration does not leak into
-    surrounding code. Yields the active seed.
+    **§1.9.1 socket reconciliation (S1b-3 / Stage-1c Task 1c.1).** The
+    phase-2 plan §1.9.1 specifies a **no-arg** ``deterministic_context()``
+    (verbatim, plan lines 918-920) — "ensures deterministic execution
+    inside the block." Stage 1a landed ``deterministic_context(seed,
+    device)``. Stage 1c reconciles to the no-arg form: the seed and device
+    come from the prior :func:`set_seed` / :func:`set_warp_deterministic` /
+    ``runtime.init`` calls (the "current init() settings"), not from
+    arguments.
+
+    Yields the active seed (raising if none has been set, per the
+    :func:`get_seed` contract) and restores the prior seed on exit so the
+    block does not leak seed state into surrounding code. The device is the
+    one selected by the prior ``init()`` (D4: CPU is the bit-exact backend;
+    the CPU determinism guarantee is structural — serial launch).
     """
     global _seed
     prior_seed = _seed
-    prior_device = runtime.get_device()
     try:
-        yield set_warp_deterministic(seed, device)
+        yield get_seed()
     finally:
-        runtime.set_device(prior_device)
         _seed = prior_seed

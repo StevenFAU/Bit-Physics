@@ -54,4 +54,4 @@ def test_hashgrid_query_is_deterministic() -> None:
             idx = hg.query_radius(wp.vec3(0.0, 0.0, 0.0), 1.2)
             return np.sort(idx.numpy())
 
-    common_warp.assert_deterministic_run(_run, n_runs=3)
+    common_warp.assert_deterministic_run(_run, runs=3)

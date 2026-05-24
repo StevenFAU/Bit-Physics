@@ -66,11 +66,18 @@ def test_set_seed_get_seed_roundtrip() -> None:
     assert common_warp.get_seed() == 1234
 
 
-def test_deterministic_context_sets_and_restores() -> None:
+def test_deterministic_context_no_arg_yields_current_seed() -> None:
+    """§1.9.1 no-arg ``deterministic_context()`` (S1b-3 / Task 1c.1).
+
+    The context takes no args: the seed comes from the prior
+    ``set_seed`` / ``set_warp_deterministic`` call. Mutating the seed
+    inside the block does not leak out (restored on exit).
+    """
     common_warp.set_warp_deterministic(7)
     assert common_warp.get_seed() == 7
-    with common_warp.deterministic_context(99) as active:
-        assert active == 99
+    with common_warp.deterministic_context() as active:
+        assert active == 7  # yields the current seed, not an argument
+        common_warp.set_seed(99)
         assert common_warp.get_seed() == 99
     # prior seed restored on exit (no leak)
     assert common_warp.get_seed() == 7
@@ -79,12 +86,14 @@ def test_deterministic_context_sets_and_restores() -> None:
 def test_assert_deterministic_run_matches_stage0_baseline() -> None:
     """W-2 mechanism: assert_deterministic_run reproduces 24d44c7e…0746f314.
 
-    This proves warp_harness reproduces Stage-0's empirical CPU
-    bit-determinism contract. If this fails, determinism is non-stable
-    across invocations (Hard Rule 2 — do NOT relax; investigate per R-W1).
+    THE LOAD-BEARING TEST for the §1.9.1 socket refactor (S1b-3 / Task
+    1c.1): the baseline must reproduce under the refactored
+    ``(sim_fn, *, runs=2, tolerance=0.0)`` signature. If this fails, the
+    refactor changed determinism semantics not just the API surface
+    (Hard Rule 2 — do NOT relax; investigate per R-W1).
     """
     common_warp.set_warp_deterministic(42, device="cpu")
-    digest = common_warp.assert_deterministic_run(_baseline_runner, n_runs=6)
+    digest = common_warp.assert_deterministic_run(_baseline_runner, runs=6)
     assert digest == STAGE0_BASELINE_SHA256
 
 
@@ -96,9 +105,31 @@ def test_assert_deterministic_run_detects_nondeterminism() -> None:
         return rng.standard_normal(8).astype(np.float64)
 
     with pytest.raises(AssertionError, match="NOT bit-deterministic"):
-        common_warp.assert_deterministic_run(_nondet, n_runs=3)
+        common_warp.assert_deterministic_run(_nondet, runs=3)
 
 
 def test_assert_deterministic_run_rejects_single_run() -> None:
-    with pytest.raises(ValueError, match="n_runs must be >= 2"):
-        common_warp.assert_deterministic_run(_baseline_runner, n_runs=1)
+    with pytest.raises(ValueError, match="runs must be >= 2"):
+        common_warp.assert_deterministic_run(_baseline_runner, runs=1)
+
+
+def test_assert_deterministic_run_tolerance_admits_epsilon() -> None:
+    """``tolerance > 0.0`` admits epsilon-bounded matches (D4 GPU posture).
+
+    A runner whose output drifts by < tolerance passes the epsilon-bounded
+    check but FAILS the bit-exact (tolerance=0.0) check — the §1.9.1
+    tolerance parameter is live, not inert.
+    """
+    base = np.linspace(0.0, 1.0, 16, dtype=np.float64)
+    calls = {"n": 0}
+
+    def _drifts():
+        calls["n"] += 1
+        # run 0 returns base; later runs drift by 1e-9 (< 1e-6, > 0)
+        return base if calls["n"] == 1 else base + 1e-9
+
+    assert common_warp.assert_deterministic_run(_drifts, runs=3, tolerance=1e-6)
+
+    calls["n"] = 0
+    with pytest.raises(AssertionError, match="NOT bit-deterministic"):
+        common_warp.assert_deterministic_run(_drifts, runs=3, tolerance=0.0)
