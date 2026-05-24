@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sph-water-stack-d-stage-1b
 subject: "Stage 1b (implementation) CLOSE for the sph-water -> Stack-D port. VERDICT CONFIRMED. Gates 4-13 GREEN; gate 14 PENDING-1c. Stack-D Taichi-DSL DFSPH port at packages/sph-water-stack-d/ (reference/dfsph_taichi.py pure-Python golden surface + Taichi spatial-hash kernels; sim.py determinism docstring + runners; invariants.py 2 invariants); spec-ref-stack-d.md; probe report. Golden gate-4a/4b err 0.0 (pure-Python f64). Test suite 14 passed / 1 skipped (cross_stack -> 1c). Canonical capture dam-break-100K-particles-seed42-step1000 (.h5 OID 8435f166...; .json 4027f89c...; 252.346s = 0.195x numpy-ref baseline). f64 via IC-11 + f64-typed ndarrays (no default_fp edit). R-S3: combined iters/step = 1 (explicit-Euler rigid free-fall, NOT iterative DFSPH; Stage-0 k≈10 estimate dissolved); 252s << 43-min band; escape-hatch NOT invoked. Gate-13 worktree replay at 3a6eb82: 7 MNFE (4 reference/2 sim/1 invariants) structural reproduction VERIFIED. Informational gate-14 preview: position/velocity bit-identical, density max_rel_err 1.07e-15 (~10 orders < 1e-4). 1 new SHIFT (S6: reference trajectory is explicit-Euler free-fall not iterative DFSPH). Cumulative 130. feat commit 41f6685."
 verdict-state: CONFIRMED
-head_sha: <PLACEHOLDER-BACKFILL-CONVENTION-12>
-head_sha_at_checkpoint: <PLACEHOLDER-BACKFILL-CONVENTION-12>
+head_sha: 6cde9782332b21c5212a75b4085b17606f57da39
+head_sha_at_checkpoint: 6cde9782332b21c5212a75b4085b17606f57da39
 parent_audits:
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-0-checkpoint-2026-05-23T23-40-26Z.md
   - docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-1a-checkpoint-2026-05-24T00-06-11Z.md
