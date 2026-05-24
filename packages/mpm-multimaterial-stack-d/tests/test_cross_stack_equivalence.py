@@ -32,22 +32,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from equivalence.harness import compare_captures  # type: ignore[import-not-found]
 
 from mpm_multimaterial_stack_d.sim import (  # type: ignore[import-not-found]
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)
 )
 
-# Gate-14 is ACTIVATED at Stage 1c (RD-2D / sph-water / LBM Stack-D pattern): Stage
-# 1b ships the Stack-D canonical capture but NOT the MANDATORY
-# [overrides.mpm-multimaterial] tolerance entry (D6) -- without it compare_captures
-# raises KeyError on sim.category='hybrid-pg' (Stage-0 Task 0.4). Stage 1c adds the
-# override + the captures/mpm-ref reference partner is diffed. SKIP until then.
-pytestmark = pytest.mark.skip(
-    reason="gate-14 cross-stack equivalence activated at Stage 1c "
-    "([overrides.mpm-multimaterial] + per-field witness + step-horizon analysis)"
-)
+# Gate-14 ACTIVE at Stage 1c: the MANDATORY [overrides.mpm-multimaterial]
+# category="mpm" entry (D6) is in tolerance.toml, so compare_captures resolves
+# sim.category='hybrid-pg' -> 'mpm' @ 1e-4 (no KeyError) and the verdict runs
+# against the Phase-1 captures/mpm-ref reference partner. GREEN with ~24-order
+# margin (rigid free-fall; particle_pos bit-exact; see equivalence.md).
 
 
 def test_canonical_capture_within_tolerance_of_numpy_reference(

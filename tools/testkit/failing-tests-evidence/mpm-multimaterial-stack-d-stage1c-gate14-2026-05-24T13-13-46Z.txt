@@ -1,0 +1,60 @@
+=== gate-14 compare_captures verdict (mpm-ref LEFT vs mpm-multimaterial-stack-d RIGHT) ===
+within_tolerance: True
+tolerance_table_used: {'category': 'mpm', 'relative': 0.0001, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+step:0:grid_mom: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:0:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:0:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:0:particle_vel: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:50:grid_mom: max_abs_err=4.212972e-35 max_rel_err=1.129543e-11
+step:50:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:50:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:50:particle_vel: max_abs_err=1.183291e-30 max_rel_err=5.865449e-10
+step:100:grid_mom: max_abs_err=1.143521e-34 max_rel_err=1.460460e-11
+step:100:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:100:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:100:particle_vel: max_abs_err=3.944305e-30 max_rel_err=7.758554e-10
+step:150:grid_mom: max_abs_err=2.648154e-34 max_rel_err=1.861254e-11
+step:150:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:150:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:150:particle_vel: max_abs_err=1.262177e-29 max_rel_err=2.885856e-09
+step:200:grid_mom: max_abs_err=5.777790e-34 max_rel_err=3.236030e-11
+step:200:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:200:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:200:particle_vel: max_abs_err=2.208811e-29 max_rel_err=2.297006e-09
+step:250:grid_mom: max_abs_err=1.059261e-33 max_rel_err=2.111866e-11
+step:250:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:250:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:250:particle_vel: max_abs_err=4.417621e-29 max_rel_err=9.110741e-07
+step:300:grid_mom: max_abs_err=1.925930e-33 max_rel_err=5.825415e-11
+step:300:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:300:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:300:particle_vel: max_abs_err=8.519698e-29 max_rel_err=1.124001e-09
+step:350:grid_mom: max_abs_err=3.274081e-33 max_rel_err=6.002670e-11
+step:350:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:350:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:350:particle_vel: max_abs_err=1.514613e-28 max_rel_err=2.471442e-09
+step:400:grid_mom: max_abs_err=5.007418e-33 max_rel_err=2.871450e-10
+step:400:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:400:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:400:particle_vel: max_abs_err=2.587464e-28 max_rel_err=2.249790e-09
+step:450:grid_mom: max_abs_err=8.474092e-33 max_rel_err=1.225952e-10
+step:450:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:450:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:450:particle_vel: max_abs_err=3.912750e-28 max_rel_err=3.135117e-09
+step:500:grid_mom: max_abs_err=1.502225e-32 max_rel_err=5.358411e-09
+step:500:particle_material_id: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:500:particle_pos: max_abs_err=0.000000e+00 max_rel_err=0.000000e+00
+step:500:particle_vel: max_abs_err=6.247778e-28 max_rel_err=3.406352e-08
+
+=== test_cross_stack_equivalence.py GREEN (gate-14 un-skipped) ===
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-stack-d
+configfile: pyproject.toml
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 1 item
+
+packages/mpm-multimaterial-stack-d/tests/test_cross_stack_equivalence.py::test_canonical_capture_within_tolerance_of_numpy_reference PASSED [100%]
+
+============================== 1 passed in 3.54s ===============================

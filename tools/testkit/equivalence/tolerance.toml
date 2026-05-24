@@ -69,3 +69,13 @@ category = "lbm"
 # Third per-sim override after sub-phase-reaction-diffusion-2d-stack-d
 # + sub-phase-sph-water-stack-d.
 # 10x tighter cross-stack tolerance than the prior two ports (1e-4 -> 1e-5).
+
+[overrides.mpm-multimaterial]
+category = "mpm"
+# Resolves sim.category='hybrid-pg' (physics-family taxonomy)
+# to tolerance-category='mpm' (numerical-method taxonomy).
+# AT-BUDGET per [defaults.mpm]: relative=1e-4, absolute=0.0.
+# NOT a tolerance widening per spec § 2.6 — resolution wiring only.
+# Established by sub-phase-mpm-multimaterial-stack-d Stage 1c.
+# Fourth per-sim override after reaction-diffusion-2d + sph-water + lattice-boltzmann-d3q19.
+# Same 1e-4 tolerance as RD-2D + sph-water (looser than LBM's 1e-5).
