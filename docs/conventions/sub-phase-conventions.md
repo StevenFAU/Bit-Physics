@@ -725,6 +725,36 @@ attribution is preserved.)
   wins on drift) are the agent's reconciliation backstop. **Applies to: all
   future plan-drafting dispatches + execution-stage socket consumption.**
 
+### L.6 Formalized methodology-precedents — mpm-multimaterial-stack-e Stage 0/1a (first Stack-E consumer port)
+
+(FACT — `sub-phase-mpm-multimaterial-stack-e` Stage 0 Task 0.6 [S0-ME1] +
+Stage 1a kernel application. The FIRST Stack-E *consumer* port — the first sim
+to write production `@wp.kernel` MLS-MPM bodies against the common-warp socket.
+New subsection rather than an append to § L.5 because § L.5 is the
+common-warp-bootstrap locus; per-sub-phase attribution is preserved [§ L.5
+preamble]. Cross-reference: the O-W6/O-W7 base Warp-quirk set is documented at
+`docs/common/warp.md` § 5 + the common-warp-bootstrap landing.)
+
+- **O-W7 extension — the `wp.float64()` taint workaround.** In NVIDIA Warp
+  1.13.0, applying `wp.float64(v)` to a kernel-local variable **taints `v`'s
+  inferred type to float64** for its subsequent uses (reproduced minimally:
+  `rx = fx - wp.float64(bx)` makes the later `bx + di` a forbidden
+  `int32 + float64` and the `@wp.kernel` fails to compile). This is the THIRD
+  Warp `@wp.kernel`-authoring quirk after the O-W7 base set (the `int(0)` idiom
+  for kernel-local mutable ints; explicit `dtype=` to `wp.from_numpy` for
+  multi-dimensional scalar arrays). **Discipline:** when deriving an integer grid
+  index from a float quantity (e.g. a base node from `particle_pos / dx`), derive
+  it via `wp.int32(<float_base>)` where the float base is NOT reused as an int;
+  and pack B-spline weights / node offsets / other per-axis vector quantities
+  into a `wp.vec3d` indexed by the pure-int stencil loop variable — never
+  `wp.float64(di)` on a loop variable also used as an int index. Discovered at
+  `sub-phase-mpm-multimaterial-stack-e` Stage 0 Task 0.6 (the P2G atomic-scatter
+  determinism kernel; see that sub-phase's Stage-0 evidence artifact) and applied
+  throughout the Stage-1a MLS-MPM kernels (`reference/mls_mpm_warp.py`'s `p2g` /
+  `p2g_with_stress` / `g2p` via the `_bspline_w` / `_node_off` `@wp.func`
+  helpers). **Applies to: all future Stack-E ports' `@wp.kernel` implementations**
+  (Smoke Stack-E / LBM Stack-E remain).
+
 ---
 
 ## § P. Capture cadence routing
