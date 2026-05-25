@@ -755,6 +755,44 @@ preamble]. Cross-reference: the O-W6/O-W7 base Warp-quirk set is documented at
   helpers). **Applies to: all future Stack-E ports' `@wp.kernel` implementations**
   (Smoke Stack-E / LBM Stack-E remain).
 
+### L.7 Formalized observations — mpm-multimaterial-stack-e Stage 2 (landing)
+
+(FACT — `sub-phase-mpm-multimaterial-stack-e` Stages 0/1a/1b/1c + landing. The
+FIRST Stack-E *consumer* port to complete the full gate chain; these are
+OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — not
+"must-apply" precedents. New subsection per per-sub-phase-stage attribution
+[§ L.5 preamble]; § L.6 is this sub-phase's Stage-0/1a locus.)
+
+- **O-1 — Cross-stack equivalence verdict taxonomy.** Cross-stack equivalence
+  pairs produce one of three verdict shapes: **(a) bit-exact** (`max_abs_err = 0.0`
+  all fields/frames; arises from verbatim re-derived algebra + same operation
+  order + an algebraically-tame trajectory — MPM Stack-E `drop-impact` rigid
+  free-fall is the data-backed first instance); **(b) FP-round-off within
+  tolerance** (the typical expected case; `within_tolerance=True` at a residual
+  far below the category threshold — the Stack-D ports' `~1e-28`–`~1e-10`
+  `max_abs_err`); **(c) chaotic-regime escape-hatch** (`within_tolerance=False`,
+  the CORRECT verdict; R-P2 invoked per `cross-stack-equivalence-methodology.md`
+  § 6 — `eulerian-smoke` Stack-D is the data-backed first instance). **Downstream
+  applicability:** future plan-drafting probes' gate-14 predictions SHOULD
+  enumerate which shape is expected, with rationale (trajectory boundedness from
+  the § L.4 S6-simulation probe; algebraic faithfulness; backend arithmetic),
+  rather than defaulting to (b). Bit-exact is canonical-specific, never a general
+  port claim.
+
+- **O-2 — Warp CPU determinism four-checkpoint chain.** For Stack-E ports using
+  common-warp's deterministic execution, the determinism-verification chain spans
+  four stage checkpoints: **(1) Stage 0** establishes the R-A1 anchor sha256 via a
+  minimal verification kernel (MPM Stack-E: the P2G atomic-scatter determinism
+  kernel `a8f6e654…07ff1fe1`); **(2) Stage 1a** gate-10 has the production kernel
+  reproduce the R-A1 anchor bit-for-bit; **(3) Stage 1b** the canonical-scale
+  capture reproduces deterministically across 2+ runs (MPM: 2/2 content-digest
+  MATCH at 1M particles / 128³); **(4) Stage 1c** formal gate-14 cross-stack
+  equivalence. MPM Stack-E is the data-backed first instance of the full
+  four-checkpoint chain (the R-A1 anchor re-verified at every stage's preflight).
+  **Downstream applicability:** future Stack-E ports inherit this chain as the
+  determinism-evidence template — anchor at Stage 0, production-kernel reproduce
+  at Stage 1a, canonical-scale at Stage 1b, gate-14 at Stage 1c.
+
 ---
 
 ## § P. Capture cadence routing

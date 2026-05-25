@@ -225,6 +225,26 @@ a non-trivial velocity gradient + a stress-bearing material model (plastic / hyp
 deformation; impact/contact) to drive non-trivial reorderable scatter sums. (Analogous
 to LBM's #4, which was data-backed but at the same trivial regime.)
 
+**THIRD-INSTANCE amendment (`sub-phase-mpm-multimaterial-stack-e` Stage 2; D8; ADDITIVE).**
+MPM Stack-E (NVIDIA Warp CPU port) re-runs the SAME canonical (`drop-impact-128cube-seed42-step500`)
+on a SECOND backend and reproduces the present-but-not-exercised disposition exactly:
+the rigid-free-fall trajectory degenerates the P2G scatter surface (`F=I` → zero stress
+→ gravity-uniform velocity → order-independent per-node sums), so aspect #3 stays
+substantively un-stress-tested on Warp too. Two backend-specific notes: (a) Warp CPU's
+single-threaded serial `wp.launch` is **structurally** order-deterministic (no
+`cpu_max_num_threads` knob to set — contrast Taichi's explicit serialisation); (b) the
+cross-stack result is even cleaner than Stack-D's — **BIT-EXACT** (`max_abs_err = 0.0`
+all fields/frames) vs Stack-D's `~1e-28` APIC FP residual (`equivalence.md` Stack-E
+section). **The pattern is therefore STACK-PORTABLE (Taichi `ti.atomic_add` CPU → Warp
+serial-launch CPU), not Taichi-specific** — a deferred aspect that a port's kernel
+implements can be left substantively un-exercised by the canonical trajectory regardless
+of backend. With three data-backed instances (MPM Stack-D atomic-scatter; LBM #4; MPM
+Stack-E atomic-scatter), the present-but-not-exercised pattern GRADUATES from a
+two-instance observation to an **established portfolio pattern**. (This does NOT promote
+IC-15 partial → full: aspect #3 remains substantively un-stress-tested; it is now
+established that it is *consistently* un-exercised by the canonical trajectories, across
+backends — a stronger statement of the same gap, banked for a stress-bearing trajectory.)
+
 ### 5.2 Hybrid-particle-grid taxonomy (`hybrid-pg` → `mpm`)
 
 `[overrides.mpm-multimaterial] category = "mpm"` resolves the physics-family
