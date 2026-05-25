@@ -1875,6 +1875,57 @@ regressions; `ctest` 5/5. Methodology § 6.8 (Warp-CPU-f64↔NumPy) explicitly d
 NOT inherit to the Vulkan/C++↔NumPy backend pair (documented at plan-drafting;
 established empirically at the per-sim ports). No `-phase-N` tag pushed (D12).
 
+### sub-phase-reaction-diffusion-2d-stack-c
+
+The **8th and final** spec § 11.3 cross-stack port and the **FIRST Stack-C
+(Vulkan / C++)** per-sim port: the Phase-1 NumPy Gray-Scott reaction-diffusion 2D
+reference ported to GLSL `double` compute on Mesa **lavapipe**, consuming the
+`common-cpp` § 1.9.1-cpp substrate. With this landing Phase-2 is **substantively
+complete** (8/8 ports landed; the comprehensive cleanup sub-phase + the deferred
+LFS-architecture sub-phase become routable). The **formal Phase-2 close** (a
+phase-level closing audit + a proposed `v0.2.0-phase-2` tag) is a dedicated
+**Stage 9 — Landing** pass per Phase-2 plan § 2.12, routed separately — NOT part of
+this sub-phase. `common-cpp` + RD-2D-Stack-C are **CMake-registered, NOT uv
+workspace members** (D6/D11; member count stays **23**). No `-phase-N` tag (D12).
+
+#### Added
+
+- **`packages/reaction-diffusion-2d-stack-c/`** — Vulkan/C++ Gray-Scott f64 port:
+  `src/gray_scott.cpp` (run-loop consuming `vkcompute` + `capture` + `determinism`
+  + `hash`); **two** embedded SPIR-V kernels — the plain Gray-Scott step **and** a
+  manufactured-source variant for the gate-4 MMS order-ladder (S0-RD2C1) —
+  `precise`/`NoContraction` f64; `gray_scott_capture_main` capture binary;
+  doctest suite + the `rd2d_stack_c_gate14` cross-language ctest.
+- **`captures/reaction-diffusion-2d-stack-c/gray-scott-lambda-128sq-seed42-step2000.{h5,json}`**
+  (LFS; h5 sha256 `00081dc42b…`, 2.94 MB) — capture-v1-conformant
+  (`payload.format="hdf5"`, non-empty `run.start_utc`).
+- **`tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-c.{h5,json}`**
+  (LFS) — schema-corpus entry (corpus round-trip 17 → **19**).
+- **`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § C** —
+  additive Stack-C bit-exactness witness (Stack-B ↔ Stack-D §§ untouched).
+- **`docs/perf-ledger.md`** — `reaction-diffusion-2d | vulkan-cpp | gray-scott-lambda-128sq-seed42-step2000 | 1.13 | i7-12700KF-linux-6.17`
+  gate-12 row (added at Stage 2; the row was omitted at Stage 1b — S2-RD2C1).
+- Top-level `CMakeLists.txt` `add_subdirectory(packages/reaction-diffusion-2d-stack-c)`.
+
+#### Changed (additive per Convention A)
+
+- **`docs/conventions/cross-stack-equivalence-methodology.md`** — § 6.7 within-sim
+  cross-backend corroboration #2 (RD-2D Stack-D Taichi `~1.9e-14` vs Stack-C
+  Vulkan/C++ `0.0`); § 6.8 the **SECOND** zero-seed-difference backend pair
+  (Vulkan/C++-f64-lavapipe-NoContraction ↔ NumPy, n=1; Option α per charter § 6 —
+  n=3 bit-exact instances across two backend pairs, SUGGESTIVE not established).
+- **`docs/conventions/sub-phase-conventions.md`** — § L.7 O-1 shape-(a)
+  **fourth-instance / first-non-Warp** note; § L.9 Q-CPP2 **D16** FloatControls
+  f32-scoped cleanup-candidate note.
+- **`docs/common/cpp.md`** § 4 — D16 f64-scoping note.
+
+**gate-14: cross-stack BIT-EXACT** (`within_tolerance=True`, `max_abs_err=0.0`,
+all 11 frames × {U,V}, full `step-2000` horizon) — the THIRD shape-(a) instance
+overall and the FIRST on a non-Warp backend. Verification: all 14 gates GREEN;
+`ctest` **7/7** (incl. `rd2d_stack_c_gate14`); integrity baseline-MATCH
+`c19492ad…d22cb52` (0 HF / 14 SW) HELD; bit-identity replay `9399fc33…` HELD;
+portfolio sweep ZERO regressions. No `-phase-N` tag pushed (D12).
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by
