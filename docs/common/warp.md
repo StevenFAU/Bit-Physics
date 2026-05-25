@@ -204,7 +204,7 @@ module:
 | Port | common-warp surface consumed |
 |---|---|
 | **MPM Stack-E** (next; D9) | the most of the surface — `Particles`, `HashGrid`, `ScalarField3D` (particle-to-grid transfer) |
-| **Smoke Stack-E** | `ScalarField3D` / `VectorField3D` (dense fields), Capture |
+| **Smoke Stack-E** | `SHIFTED` (D15; § 6.2) — predicted `ScalarField3D` / `VectorField3D`; **landed socket-only** (Runtime + Capture + Determinism + own f64 `wp.array`s). The f32-pinned dense-grid convenience surface structurally fits a dense-grid sim yet is f64-blocked. |
 | **LBM Stack-E** | a `wp.array(dtype=wp.float32, ndim=4)` directly for the 19-component D3Q19 distribution functions — documented as "LBM-specific, not in common-warp" (the single-component `ScalarField3D` does not fit); the rest of the surface (Runtime, Determinism, Capture) applies |
 
 Port adoption procedure:
@@ -255,6 +255,33 @@ Smoke / LBM Stack-E rows above are predictions pending their own plan-drafting
 HEAD-verification (the same S-ME1 discipline applies — verify the actual
 consumption, do not assume the convenience surfaces fit). This note is ADDITIVE;
 the original § 6 prediction is preserved above as the pre-port baseline.
+
+### 6.2 Post-Smoke-Stack-E confirmation (D15) — the f64-principle holds even when the surface structurally fits
+
+(FACT — `sub-phase-eulerian-smoke-stack-e` Stages 1b/1c/1c-revisited/2; D15. The
+SECOND f64 socket-only consumer.) Smoke Stack-E **confirms** the § 6.1 f64-principle
+and sharpens it. Where MPM Stack-E was a *particle* sim (the f32 `ScalarField3D` /
+`VectorField3D` surfaces did not structurally fit anyway — no dense field + no
+neighbor-search `HashGrid`), Smoke Stack-E is a **dense collocated-grid** sim — the
+`ScalarField3D` / `VectorField3D` convenience surfaces are its *natural structural
+home*. It STILL consumes socket-only and rolls its own
+`wp.array(dtype=wp.float64)` fields, because:
+
+- **f64 precision is load-bearing (D15/D8).** The Stam-Fedkiw reference is f64; the
+  convenience surfaces are f32-pinned, and an f32 downcast would change the
+  (positive-Lyapunov) trajectory itself. So even though the surface FITS structurally,
+  f64 BLOCKS it. Smoke Stack-E is thus the cleaner demonstration of the f64-principle:
+  the consumption decision is governed by **precision**, not by structural fit.
+- **gate-14 confirmed the f64 path** — cross-stack **BIT-EXACT** vs the Phase-1 f64
+  NumPy reference (`max_abs_err = 0.0`; `equivalence.md` § E), i.e. the own-f64-`wp.array`
+  path reproduces the reference byte-for-byte.
+
+**Refined general principle:** the consumption decision is `f64 → socket-only` vs
+`f32-acceptable → may consume the convenience surfaces` — and the f64 branch holds
+**regardless of whether the convenience surface structurally fits** (MPM: did not fit
++ f64; Smoke: fits + f64 → still socket-only). The § 6 table's Smoke row is updated
+(`SHIFTED`) to the landed socket-only consumption; the LBM Stack-E row remains a
+prediction pending its own plan-drafting. This note is ADDITIVE.
 
 ## 7. Warp upstream references
 

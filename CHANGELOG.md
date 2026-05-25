@@ -1270,6 +1270,58 @@ Stack-D Taichi-DSL CPU). All 14 gates GREEN.
   cosmetically hardcoded, now interpolated on the clean Stack-D contract); LBM-side stays
   banked (cosmetic per analytic ICs). No Phase-1-sealed edit.
 
+### sub-phase-eulerian-smoke-stack-e
+
+SEVENTH per-sim cross-stack port under spec-Phase-2 (`eulerian-smoke` →
+Stack-E NVIDIA-Warp 1.13.0 CPU); the SECOND Stack-E port (after
+`mpm-multimaterial-stack-e`) and the SECOND `eulerian-smoke` port (after the
+Stack-D Taichi port). Spec § 11.3 item 2.4 (the Stack-E half). All 14 gates
+landed; gate-14 is **cross-stack BIT-EXACT**.
+
+- **Stack-E Warp Stam-Fedkiw stable-fluids port** at
+  `packages/eulerian-smoke-stack-e/` (Stage 1b; gates 4–13 GREEN; 22nd workspace
+  member). Socket-only common-warp consumption (Runtime + Capture + Determinism)
+  over its own f64 `wp.array`s — the dense-grid f32 `ScalarField3D` /
+  `VectorField3D` surfaces structurally fit but are f64-blocked (D15;
+  `docs/common/warp.md` § 6.2). § L.7 O-2 four-checkpoint Warp-CPU determinism
+  chain complete.
+- **Gate-14 cross-stack BIT-EXACT** (Stage 1c-revisited): `within_tolerance=True`,
+  `max_abs_err = 0.0` on BOTH canonicals — the Warp port is **byte-identical** to
+  the sealed Phase-1 NumPy reference across the full horizon, INCLUDING through the
+  3D Taylor-Green blow-up (reference AND port both reach `|u| ≈ 5.1e19` at step 500,
+  bit-for-bit). The FIRST portfolio instance of bit-exactness through a chaotic
+  (positive-Lyapunov) horizon; logically a consequence of the step-1 cross-stack
+  BIT-EXACT baseline. Tolerance REUSES `[overrides.eulerian-smoke]` (smoke/1e-4; D6,
+  no new row).
+- **R-P2 is NOT stack-portable — counter-evidence to smoke-Stack-D.** The same
+  chaotic canonicals produced Stack-D's `within_tolerance=False` R-P2 chaotic-regime
+  verdict but Stack-E's `within_tolerance=True` bit-exact verdict. The plan-drafting
+  prediction (R-P2 stack-portable Taichi → Warp) was empirically FALSIFIED at
+  Stage 1c (Hard Rule 2 STOP) and the charter §§ 1/3/5 amended mid-sub-phase to the
+  cross-stack BIT-EXACT verdict shape (Stage 1c-revisited). Stack-D's divergence was
+  a Taichi-FP-specific step-1 round-off; Warp's same-operation-order arithmetic
+  yields a `0.0` step-1 difference, so chaos has nothing to amplify.
+- **Methodology + conventions refinements (Stage 2):**
+  `cross-stack-equivalence-methodology.md` § 6.1 + new § 6.7 (R-P2 requires a
+  non-zero cross-stack seed-difference AND a chaotic regime — chaos amplifies, it
+  does not manufacture, a seed-difference); `sub-phase-conventions.md` § L.7 O-1
+  shape-(a) refinement (the bit-exact condition is a zero seed-difference, not an
+  "algebraically-tame trajectory"; D-S2-1) + new § L.8 (O-W7 narrowing, R-SME9
+  resolution-dependent false-laminar trap, the charter-amendment-landing precedent,
+  the `uv sync` `.venv`-prune hazard).
+- **`docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md`** extended
+  additively with a Stack-E § E **bit-exactness witness** (Stage 1c-revisited; the
+  Stack-D chaotic-regime witness §§ 1–7 unchanged).
+- **Schema-corpus representative-subset:** the 2D 4.4 MB capture at
+  `tests/fixtures/legacy-captures/phase-2-eulerian-smoke-stack-e.{h5,json}`
+  (LFS-routed; corpus round-trip verified). The 3D 738 MB capture is held local
+  (D14). No `-phase-N` tag (D12); local-only (D13).
+- **D17 banked (operator routing):** the committed 2D lid-driven-cavity reference is
+  laminar-bounded (`max|u| ≈ 2.08`), NOT the plan-drafting `~1.64e3` Kelvin-Helmholtz
+  blow-up — a candidate Phase-1-canonical re-characterization trigger (empirical
+  second instance, after smoke-Stack-D's finding). The 3D blow-up is confirmed. This
+  sub-phase surfaces, but does NOT adjudicate, the Phase-1 provenance question.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
