@@ -766,8 +766,7 @@ OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — no
 - **O-1 — Cross-stack equivalence verdict taxonomy.** Cross-stack equivalence
   pairs produce one of three verdict shapes: **(a) bit-exact** (`max_abs_err = 0.0`
   all fields/frames; arises from verbatim re-derived algebra + same operation
-  order + an algebraically-tame trajectory — MPM Stack-E `drop-impact` rigid
-  free-fall is the data-backed first instance); **(b) FP-round-off within
+  order — i.e. a **zero cross-stack seed-difference**); **(b) FP-round-off within
   tolerance** (the typical expected case; `within_tolerance=True` at a residual
   far below the category threshold — the Stack-D ports' `~1e-28`–`~1e-10`
   `max_abs_err`); **(c) chaotic-regime escape-hatch** (`within_tolerance=False`,
@@ -778,6 +777,20 @@ OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — no
   the § L.4 S6-simulation probe; algebraic faithfulness; backend arithmetic),
   rather than defaulting to (b). Bit-exact is canonical-specific, never a general
   port claim.
+  - **`SHIFTED` refinement (D-S2-1; `eulerian-smoke` Stack-E Stage 2; § L.8).** Shape
+    (a)'s original framing required "an algebraically-tame trajectory" (MPM Stack-E
+    `drop-impact` rigid free-fall, the first instance). That qualifier is
+    **sufficient-but-not-necessary** — dropped. The actual condition for shape (a) is
+    a **zero cross-stack seed-difference** (verbatim algebra + identical operation
+    order); the trajectory's Lyapunov regime is **orthogonal** to the verdict.
+    `eulerian-smoke` Stack-E (Warp) is the data-backed SECOND shape-(a) instance and
+    the one that DECOUPLES bit-exactness from tameness: it is bit-exact
+    (`max_abs_err = 0.0`) through a **chaotic** Taylor-Green trajectory that blows up
+    to `|u| ≈ 5e19`. This also clarifies the (a)-vs-(c) boundary: same chaotic
+    regime, opposite verdict — (c) when the backend-pair carries a non-zero
+    seed-difference that chaos amplifies (Stack-D Taichi), (a) when it does not
+    (Stack-E Warp). R-P2 is therefore NOT stack-portable
+    (`cross-stack-equivalence-methodology.md` § 6.7).
 
 - **O-2 — Warp CPU determinism four-checkpoint chain.** For Stack-E ports using
   common-warp's deterministic execution, the determinism-verification chain spans
@@ -792,6 +805,86 @@ OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — no
   **Downstream applicability:** future Stack-E ports inherit this chain as the
   determinism-evidence template — anchor at Stage 0, production-kernel reproduce
   at Stage 1a, canonical-scale at Stage 1b, gate-14 at Stage 1c.
+
+### L.8 Formalized observations — eulerian-smoke-stack-e (the cross-stack BIT-EXACT counter-instance; Stages 1c/1c-revisited/2)
+
+(FACT — `sub-phase-eulerian-smoke-stack-e` Stage 1b § 10 [S1b-SME1/2/3] + Stage 1c
+STOP-evidence audit [S1c-SME1/2] + Stage 1c-revisited [S1c-r-SME1] + Stage 2 landing.
+The SEVENTH cross-stack pair and the SECOND `eulerian-smoke` port — the NVIDIA-Warp
+CPU port of the same Stam-Fedkiw reference whose Taichi port (Stack-D, § L.4) was the
+first R-P2 instance. New subsection per per-sub-phase attribution [§ L.5 preamble];
+§ L.6 is the MPM-Stack-E O-W7 locus, § L.7 the MPM-Stack-E O-1/O-2 locus.)
+
+- **R-P2 is NOT stack-portable (S1c-SME2) — the cross-stack BIT-EXACT
+  counter-instance.** The same chaotic canonicals that produced Stack-D's
+  `within_tolerance=False` R-P2 verdict produced `within_tolerance=True`,
+  `max_abs_err=0.0` on Warp — byte-identical through the full horizon, including the
+  3D `|u| ≈ 5e19` blow-up. R-P2 (chaos amplifying a cross-stack seed-difference) needs
+  a NON-ZERO seed-difference; the Warp port's step-1 cross-stack difference is exactly
+  `0.0` (same `np.roll` gather order, `np.mod`-via-floor wrap, fixed-20-sweep Jacobi
+  arithmetic), so nothing amplifies. **Discipline:** a gate-14 prediction must assess
+  the backend-PAIR's step-1 arithmetic faithfulness, not just the trajectory regime;
+  a chaotic regime does NOT imply R-P2. (Methodology re-characterization:
+  `cross-stack-equivalence-methodology.md` § 6.1 + § 6.7. Verdict-taxonomy: O-1 shape
+  (a), refined D-S2-1 above.) **Applies to: all future cross-stack ports of a
+  chaotic-regime sim onto a new backend.**
+
+- **D-S2-1 — O-1 shape-(a) refinement (the bit-exact condition is a zero
+  seed-difference, not a tame trajectory).** Landed in O-1 above. The agent selected
+  REFINE-shape-(a) (Option β) over ADD-a-new-shape-(d) (Option α): a verdict-relevant
+  taxonomy classifies by the verdict mechanism (seed-difference magnitude), not by an
+  orthogonal trajectory property; a "bit-exact through chaotic horizon" category would
+  over-fit. Smoke Stack-E is the second shape-(a) instance.
+
+- **O-W7 narrowing (S1b-SME1) — refines § L.6.** The § L.6 O-W7 `wp.float64()` taint
+  workaround was discovered on MPM's REUSED-variable case (`rx = fx - wp.float64(bx)`
+  taints the later-int `bx`). Smoke Stack-E narrows it empirically: a **fresh** variable
+  `fi = wp.float64(i)` does NOT taint the int loop index `i` for later `out[i,j]` /
+  `field[i0,j]` integer indexing — the taint is per-variable, not per-scope. **Refined
+  discipline:** assign the float to a FRESH var and derive the int base via
+  `wp.int32(<fresh_float>)`; only a REUSED variable is tainted. (Narrower than the
+  § L.6 blanket statement; § L.6 cross-ref.)
+
+- **R-SME9 (D16) — resolution-dependent false-laminar trap; refines § L.4.** The § L.4
+  S6-trajectory-simulation discipline guards against the CODE-READ false-laminar trap
+  (read `sim.py` → simulate the trajectory). Smoke Stack-E adds a SECOND trap class:
+  **resolution-dependence.** The 64³ de-risk trajectory DECAYS (looks laminar) while
+  the 128³ canonical BLOWS UP — so a sub-canonical-resolution probe is itself a
+  false-laminar trap. **Refined discipline:** the § L.4 S6-simulation probe MUST run at
+  the **canonical resolution**, not a downscaled de-risk grid. (§ L.4 cross-ref.)
+
+- **S1c-r-SME1 — charter-amendment-landing precedent (mid-sub-phase, post-empirical-
+  falsification).** Charters are normally ratified at plan-drafting and held. When
+  empirical execution overturns a load-bearing charter prediction (here gate-14's
+  R-P2 chaotic-regime verdict shape), the correct recovery is a **coordinator-routed
+  mid-sub-phase charter amendment**: amend §§ affected (here charter §§ 1/3/5 +
+  §§ 6/7 + D-lines) IN PLACE with `SHIFTED` tagging + `FACT`/`INFERENCE` empirical
+  citations + a dated AMENDED banner, rather than executing the remaining stages
+  against a known-wrong spec. The amendment is a normal (non-STOP) stage once routed;
+  the falsification itself is the Hard Rule 2 STOP that triggers the routing.
+  **Applies to: any future sub-phase whose execution empirically falsifies a
+  load-bearing charter prediction.**
+
+- **S1b-SME3 — `uv sync` prunes the workspace `.venv` (operational).** Plain
+  `uv sync` (run after a workspace-member registration) removes non-root workspace
+  members (`integrity`, `pyyaml`, …) from `.venv`, breaking the cat4 pre-commit hook
+  (`ModuleNotFoundError: No module named 'yaml'`). **Fix:** `uv sync --all-packages`
+  (restores all members) — or run `uv lock` ONLY (no sync; the `.venv` already carries
+  the members). For ad-hoc additive installs use `uv pip install <pkg>` (non-pruning).
+  **Applies to: any sub-phase whose environment ops touch `uv` after a member add.**
+
+- **Held-local-capture `evidence_paths` hygiene (Stage 2; IC-16 evidence-path-verify).**
+  A capture HELD LOCAL (untracked by design — e.g. a large 3D capture, D14) must NOT
+  be listed in an audit's `evidence_paths` front-matter: `cat5.audit-links` flags
+  untracked `evidence_paths` entries as a SOFT_WARN (the integrity-baseline drift this
+  sub-phase's Stage-1c evidence audit inadvertently introduced, +1 over the 14-SW
+  baseline, corrected at Stage 2). **Discipline:** `evidence_paths` lists only TRACKED
+  artifacts; a held-local capture is referenced in the audit BODY/prose (with its `.h5`
+  content sha256) instead. Established pattern (smoke-Stack-D, MPM-Stack-D omit
+  untracked held-local paths from `evidence_paths`); smoke-Stack-E re-confirms it after
+  one deviation. (Distinct from § B.6, which governs `evidence_hashes` sha-verification;
+  this is the tracked-file-listing rule for `evidence_paths`.) **Applies to: any
+  sub-phase holding a capture local per a D-class held-local decision.**
 
 ---
 

@@ -308,15 +308,25 @@ heuristic across the prior four sub-phases.)
 
 ### 6.1 The R-P2 chaotic-regime escape-hatch — when it applies
 
-A cross-stack pair invokes the escape-hatch when its canonical trajectory has a
-**positive Lyapunov exponent** (sensitive dependence on initial conditions). Two
-arithmetic backends (e.g. NumPy-reference ↔ Taichi-CPU) computing the "same"
-algorithm differ at FP-round-off scale (~1e-16) from the first step; a chaotic
-trajectory amplifies that difference exponentially until it saturates at the
-field magnitude. Cross-stack content-equivalence at the category tolerance
+A cross-stack pair invokes the escape-hatch when **BOTH** hold: **(i)** its
+canonical trajectory has a **positive Lyapunov exponent** (sensitive dependence on
+initial conditions), AND **(ii)** the two backends carry a **non-zero cross-stack
+seed-difference** (they differ at FP-round-off scale from the first step). A chaotic
+trajectory amplifies that step-1 difference exponentially until it saturates at the
+field magnitude; cross-stack content-equivalence at the category tolerance
 (`relative=1e-4`) over a non-trivial horizon is then **physically impossible** —
 NOT a port defect, NOT a tolerance-calibration problem. The escape-hatch is the
 correct disposition; `within_tolerance=False` is the correct verdict.
+
+> **`SHIFTED` (seventh-pair re-characterization; § 6.7):** condition (ii) is
+> load-bearing and was IMPLICIT in the first instance. Chaos (i) **amplifies** an
+> existing seed-difference; it does NOT **manufacture** one. A pair with a chaotic
+> trajectory BUT a **zero** cross-stack seed-difference (verbatim re-derived algebra
+> + identical operation order) stays **bit-exact** through the entire chaotic horizon
+> — `within_tolerance=True`, NOT the escape-hatch. R-P2 is therefore **NOT
+> automatically stack-portable**: it is a property of the backend-PAIR's arithmetic,
+> not of the (shared) chaotic trajectory. See § 6.7 (eulerian-smoke Stack-E, the
+> data-backed counter-instance).
 
 This is distinct from the four prior pairs, all at the **algebraically-identical-
 trajectory regime** (the cross-stack diff stays flat at ~1e-15 across the full
@@ -423,6 +433,46 @@ instability — only trajectory simulation (or cross-stack execution) does.
   (a second arithmetic backend) made the latent instability visible. Banked
   methodology insight: cross-stack equivalence testing surfaces latent defects that
   within-stack verification structurally cannot. (Conventions-doc § L.4.)
+
+### 6.7 Seventh-pair re-characterization — R-P2 is NOT stack-portable (eulerian-smoke Stack-E, the counter-instance)
+
+(FACT — `sub-phase-eulerian-smoke-stack-e` Stage 1c STOP-evidence audit
+`docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/stage-1c-gate-14-evidence-2026-05-25T13-21-16Z.md`
++ Stage 1c-revisited; the citing sim-spec artifact is
+`docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` § E. The SEVENTH
+cross-stack pair and the SECOND `eulerian-smoke` port — the NVIDIA-Warp CPU port of
+the SAME Stam-Fedkiw reference whose Taichi port (Stack-D) was the § 6 first R-P2
+instance.)
+
+The plan-drafting prediction was that R-P2 is **stack-portable Taichi → Warp** — the
+same chaotic canonicals would produce a second `within_tolerance=False`
+divergence-rate verdict on Warp. **Empirically OVERTURNED.** gate-14 returned
+`within_tolerance=True` with `max_abs_err = 0.0` on BOTH canonicals — the Warp port
+is **byte-identical** to the sealed NumPy reference across the full horizon,
+INCLUDING through the 3D Taylor-Green blow-up (reference AND port both reach
+`|u| ≈ 5.1e19` at step 500, bit-for-bit). The 3D trajectory IS chaotic (condition
+(i) holds), yet the verdict is bit-exact — because **condition (ii) fails**:
+
+- The Stack-D **Taichi** port carried a Taichi-FP-specific step-1 cross-stack
+  difference (`5.6e-16` on 3D; the pure-literal `1.0/6.0` f32-inference leak,
+  § 6.6) that the chaos amplified to `O(field)`.
+- The Stack-E **Warp** port, executing the same algorithm with the **same operation
+  order** (the `np.roll` gather order, the `np.mod`-via-floor periodic wrap, the
+  fixed-20-sweep Jacobi arithmetic), yields a step-1 cross-stack difference of
+  **exactly `0.0`**. There is no seed-difference to amplify, so the trajectories
+  stay byte-identical regardless of the Lyapunov regime.
+
+**Re-characterization (load-bearing):** R-P2 invocation requires (i) AND (ii)
+(§ 6.1). Chaos alone is **not** sufficient — absence of a cross-stack seed-difference
+means R-P2 does not apply even when the trajectory is chaotic. R-P2 is a property of
+the **backend-pair's arithmetic faithfulness**, not a stack-portable property of the
+sim. The `equivalence.md` witness for a zero-seed-difference chaotic pair is a
+**bit-exactness witness** (§ E), NOT a divergence-rate witness (§ 6.3). IC-15 stays
+**PARTIAL** (this refines the R-P2 component; aspects #2/#3/#5 unchanged). Taxonomy:
+the verdict is shape **(a) bit-exact** (conventions § L.7 O-1, refined at Stage 2
+D-S2-1 — the bit-exact condition is a zero cross-stack seed-difference, NOT an
+"algebraically-tame trajectory"; smoke Stack-E is the second shape-(a) instance and
+the one that decouples bit-exactness from trajectory tameness).
 
 ## 7. References
 
