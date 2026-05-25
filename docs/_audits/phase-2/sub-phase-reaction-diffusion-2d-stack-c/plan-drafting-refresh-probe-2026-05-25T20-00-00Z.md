@@ -4,7 +4,7 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-plan-drafting-refresh
 stage: plan-drafting-refresh
 phase: 2
 date: 2026-05-25T20-00-00Z
-head_sha: PENDING-BACKFILL
+head_sha: 5583f6e535130893a8eab3f2b2a90b1675d13db8
 head_sha_at_checkpoint: fd8453b597b8ed2d59402d356b57c10a70708888
 verdict: MATURE — held-chain gaps CLOSED at common-cpp-bootstrap; step-1 cross-stack seed-difference MEASURED = 0.0 (shape (a) BIT-EXACT anchored); fresh charter PRODUCED
 parent_audits:

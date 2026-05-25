@@ -4,8 +4,8 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-plan-drafting-refresh
 stage: plan-drafting-refresh
 phase: 2
 date: 2026-05-25T20-00-00Z
-head_sha: PENDING-BACKFILL
-head_sha_at_checkpoint: PENDING-BACKFILL
+head_sha: 12117df110a117c72382eea25d56f21d38caba12
+head_sha_at_checkpoint: 970bbcbb38052c1ce389ed98a34f045e4c842f02
 verdict: plan-drafting-refresh-CONFIRMED — held HELD verdict RESOLVED; charter PRODUCED; gate-14 shape (a) BIT-EXACT grounded (step-1 measured 0.0)
 verdict-state: CONFIRMED
 parent_audits:
