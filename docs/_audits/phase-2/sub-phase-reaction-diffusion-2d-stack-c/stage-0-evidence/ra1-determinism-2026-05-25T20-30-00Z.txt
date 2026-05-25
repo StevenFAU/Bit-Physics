@@ -1,0 +1,10 @@
+# RD-2D-Stack-C Stage 0 — R-A1 ephemeral Vulkan/C++ determinism digest (O-2 ckpt 1)
+# backend: lavapipe (VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json, LP_NUM_THREADS=0); shader = plan-drafting-refresh-evidence/rd2d_step.comp (f64, NoContraction)
+# date: 2026-05-25T20-30-00Z
+
+device=llvmpipe (LLVM 20.1.2, 256 bits) float64=ENABLED
+FloatControls assert at pipeline-context: PASS (f32-scoped)
+multi-run bit-identity: 6/6
+K(ephemeral steps)=100  N=128  posture=NoContraction(f64)
+R-A1 ephemeral determinism digest (sha256-of-content): 9d8ca9b08dce3fb6f78ac4261a165781a61e8cedb8db67627b7ecc32b676a766
+witness(U||V) sha-pair: a7ffd34255f1230b45205db0591f9442280e36a1dafcf71a55c3dcc01c161b514995227f899b572a2142dd9d3fe1c251a8f1e295d45f5d55676b8aaf6b5da442
