@@ -118,9 +118,11 @@ Hdf5Writer::Hdf5Writer(const std::filesystem::path& manifest_path, Manifest m)
     : impl_(std::make_unique<Impl>()) {
     impl_->manifest_path = manifest_path;
     impl_->manifest = std::move(m);
+    // The testkit capture-v1 manifest schema pins payload.format to "hdf5"
+    // (the HDF5 payload kind); the raw-binary path uses "raw-binary-v1".
     if (impl_->manifest.payload.format.empty() ||
         impl_->manifest.payload.format == "raw-binary-v1") {
-        impl_->manifest.payload.format = "capture-v1";
+        impl_->manifest.payload.format = "hdf5";
     }
     if (impl_->manifest.payload.path.empty()) {
         impl_->manifest.payload.path = h5_path_for(manifest_path).filename();

@@ -218,3 +218,61 @@ if (HDF5_FOUND)
   )
   add_test(NAME common_cpp_hdf5_tests COMMAND bit_physics_common_cpp_hdf5_tests)
 endif()
+
+# ---- Stage 1c: 2D advection-diffusion smoke (C-4) ----------------
+#
+# The canonical end-to-end consumer: substrate + determinism socket +
+# FloatControls/NoContraction + capture-v1. Requires Vulkan AND HDF5.
+if (Vulkan_FOUND AND HDF5_FOUND)
+  bitphysics_embed_compute_shader(ADV_DIFF_HEADER
+    shaders/advection_diffusion_2d.comp kAdvectionDiffusion2dSpv)
+
+  add_executable(bit_physics_common_cpp_smoke_advection_diffusion_2d
+    smoke/advection_diffusion_2d_main.cpp
+    smoke/advection_diffusion_2d.cpp
+    ${ADV_DIFF_HEADER}
+  )
+  target_include_directories(bit_physics_common_cpp_smoke_advection_diffusion_2d PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/smoke
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/shaders
+  )
+  target_link_libraries(bit_physics_common_cpp_smoke_advection_diffusion_2d PRIVATE
+    bit_physics_common_cpp_vulkan
+    bit_physics_common_cpp_hdf5
+  )
+
+  add_executable(bit_physics_common_cpp_smoke_tests
+    tests/test_main.cpp
+    tests/test_smoke_advection_diffusion.cpp
+    smoke/advection_diffusion_2d.cpp
+    ${ADV_DIFF_HEADER}
+  )
+  target_include_directories(bit_physics_common_cpp_smoke_tests PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/smoke
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/shaders
+  )
+  target_link_libraries(bit_physics_common_cpp_smoke_tests PRIVATE
+    bit_physics_common_cpp_vulkan
+    bit_physics_common_cpp_hdf5
+    doctest
+  )
+  add_test(NAME common_cpp_smoke_tests COMMAND bit_physics_common_cpp_smoke_tests)
+  set_tests_properties(common_cpp_smoke_tests PROPERTIES
+    ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
+
+  # C-6 cross-stack format-interop: the Python testkit reader parses the
+  # C++-emitted .h5 + compare_captures yields a verdict. Driven via uv from the
+  # testkit workspace (so `capture` + `equivalence` import). The script sets the
+  # lavapipe env for the smoke subprocess it spawns.
+  find_program(UV_EXECUTABLE NAMES uv)
+  if (UV_EXECUTABLE)
+    add_test(NAME common_cpp_cross_language_interop
+      COMMAND ${UV_EXECUTABLE} run --no-sync python
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_cross_language_interop.py
+        $<TARGET_FILE:bit_physics_common_cpp_smoke_advection_diffusion_2d>)
+    set_tests_properties(common_cpp_cross_language_interop PROPERTIES
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit)
+  else()
+    message(WARNING "uv not found: skipping C-6 cross-language interop ctest.")
+  endif()
+endif()

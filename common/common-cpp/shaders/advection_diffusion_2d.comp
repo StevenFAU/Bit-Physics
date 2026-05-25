@@ -1,0 +1,51 @@
+#version 450
+// 2D advection-diffusion smoke step (Stage 1c; gate C-4).
+//
+// One explicit FTCS step on a periodic nx*ny grid: diffusion (5-point
+// Laplacian) + first-order upwind advection (vx,vy >= 0). Ping-pong buffers
+// (binding 0 = u_in, binding 1 = u_out). `precise` -> NoContraction (the
+// FMA-contraction discipline, R-CPPB3 / S1b-CPPB3): the update is the
+// separately-rounded value, not an FMA-fused one.
+//
+// §L.4 (S6-trajectory): diffusion-dominated, periodic BC -> mass-conserving and
+// max-field non-increasing (bounded/stable). The laminar bootstrap analog of
+// common-warp's hello sim; NOT a cross-stack-equivalence test.
+//
+// No atomics, no cross-invocation reduction -> bit-identical run-to-run on
+// lavapipe regardless of thread count (S0-CPPB3).
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std430, binding = 0) readonly buffer In  { float u_in[]; };
+layout(std430, binding = 1) writeonly buffer Out { float u_out[]; };
+layout(push_constant) uniform Params {
+    uint  nx;
+    uint  ny;
+    float dt;
+    float dx;
+    float diff;
+    float vx;
+    float vy;
+} p;
+
+void main() {
+    uint gx = gl_GlobalInvocationID.x;
+    uint gy = gl_GlobalInvocationID.y;
+    if (gx >= p.nx || gy >= p.ny) return;
+
+    uint xm = (gx + p.nx - 1u) % p.nx;
+    uint xp = (gx + 1u) % p.nx;
+    uint ym = (gy + p.ny - 1u) % p.ny;
+    uint yp = (gy + 1u) % p.ny;
+
+    uint i = gy * p.nx + gx;
+    float c = u_in[i];
+    float lap = (u_in[gy * p.nx + xm] + u_in[gy * p.nx + xp]
+               + u_in[ym * p.nx + gx] + u_in[yp * p.nx + gx]
+               - 4.0 * c) / (p.dx * p.dx);
+    // First-order upwind (vx, vy >= 0): backward differences.
+    float dudx = (c - u_in[gy * p.nx + xm]) / p.dx;
+    float dudy = (c - u_in[ym * p.nx + gx]) / p.dx;
+
+    precise float unew = c + p.dt * (p.diff * lap - p.vx * dudx - p.vy * dudy);
+    u_out[i] = unew;
+}
