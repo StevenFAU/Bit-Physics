@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-e-stage-1c-gate-14-evidence
 subject: "Stage-1c formal gate-14 (§ L.7 O-2 checkpoint 4) EVIDENCE + falsification analysis. compare_captures(LEFT=eulerian-smoke-ref NumPy, RIGHT=eulerian-smoke-stack-e Warp) returned within_tolerance=True on BOTH canonicals -- the Warp port is BYTE-IDENTICAL to the sealed NumPy reference across the full horizon, including through the 3D Taylor-Green blow-up (|u| ~5e19 @ step 500). This FALSIFIES the charter § 3/§ 5 R-P2 chaotic-regime prediction (predicted within_tolerance=False) and is the explicit Hard Rule 2 STOP condition. DESCRIPTIVE evidence record only -- no source/test/equivalence.md/charter edits; the re-characterization is coordinator-routed re-spec work, out of Stage-1c-as-scoped bounds."
 verdict-state: STOP
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: 1e07f9cd110554f446e1240c1caa65366bed22eb
 head_sha_at_checkpoint: 466c24d3f1317d45e364160ad27f228a543db8db
 parent_audits:
   - docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/stage-1b-checkpoint-2026-05-25T12-50-14Z.md

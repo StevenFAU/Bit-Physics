@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-e-stage-1c
 subject: "Stage-1c checkpoint. VERDICT: STOP (Hard Rule 2 -- empirical falsification). Formal gate-14 (O-2 checkpoint 4) returned within_tolerance=True on BOTH canonicals -- the Warp port is byte-identical to the sealed NumPy reference across the full horizon (incl. the 3D ~5e19 blow-up). This falsifies the charter section 3/section 5 R-P2 chaotic-regime prediction, D5 substance, section L.7 O-1 shape (c), and the methodology section 6 R-P2 stack-portability assumption. Stage 1c NOT CONFIRMED; re-characterization is coordinator-routed re-spec work, held pending a re-spec dispatch. Evidence + falsification analysis: stage-1c-gate-14-evidence-2026-05-25T13-21-16Z.md."
 verdict-state: STOP
-head_sha: <COMMIT_2_SHA_PENDING>
+head_sha: 1210abe4dcedf80bb8fee9938fd55e518843a134
 head_sha_at_checkpoint: 1e07f9cd110554f446e1240c1caa65366bed22eb
 parent_audits:
   - docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/stage-1c-gate-14-evidence-2026-05-25T13-21-16Z.md
