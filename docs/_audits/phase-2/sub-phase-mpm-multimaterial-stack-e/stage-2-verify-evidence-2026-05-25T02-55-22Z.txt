@@ -1,0 +1,17 @@
+Stage 2 — verify_evidence --strict over the full sub-phase audit .md chain (12 audits with front-matter)
+(The dispatch's "18" counts the 18 pre-Stage-2 git commits; the .md-audit count with evidence front-matter is 12.)
+
+  PASS  plan-drafting-landing
+  PASS  plan-drafting-probe
+  PASS  sha-back-fill (plan-drafting)
+  PASS  stage-0-checkpoint
+  PASS  stage-0-evidence-warp-p2g-determinism
+  PASS  stage-0-sha-back-fill
+  PASS  stage-1a-checkpoint
+  PASS  stage-1a-sha-back-fill
+  PASS  stage-1b-checkpoint
+  PASS  stage-1b-sha-back-fill
+  PASS  stage-1c-checkpoint   (after S2 evidence_paths correctness fix, commit 3bb54ae)
+  PASS  stage-1c-sha-back-fill
+
+TOTAL: 12 pass / 0 fail. Full chain GREEN.

@@ -1652,6 +1652,71 @@ Stage 1c 1; Stage 2 1).
   socket-reconciliation Option B; S1c-1 plan-prose-gloss vs spec-verbatim
   (conventions § L.5).
 
+### sub-phase-mpm-multimaterial-stack-e
+
+SIXTH per-sim cross-stack port; FIRST Stack-E (NVIDIA Warp 1.13.0) port to
+*consume* the `common-warp` § 1.9.1 socket (the bootstrap landed the socket
+itself). Spec § 11.3 item 2.3 mandate. All 14 gates GREEN; **gate-14 BIT-EXACT**
+(`within_tolerance=True`; `max_abs_err = max_rel_err = 0.0` across 4 fields × 11
+frames) — the FIRST bit-exact cross-stack verdict across the six-port portfolio
+(contrast the Stack-D Taichi ports' `~1e-28` FP-round-off and `eulerian-smoke`
+Stack-D's chaotic-regime `within_tolerance=False`). No `-phase-N` tag (D12);
+local-only (D13; remote-CI deferred).
+
+#### Added
+
+- `packages/mpm-multimaterial-stack-e/` — 21st workspace member; the Warp
+  MLS-MPM/APIC neo-Hookean single-material port. Socket-only `common-warp`
+  consumption (Runtime + Capture + Determinism) with its own
+  `wp.array(dtype=wp.float64)` sim-state (D15; the convenience surfaces are
+  f32-pinned); fixed 27-cell B-spline stencil (no `HashGrid`).
+- `captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.{h5,json}`
+  — canonical capture (~1.05 GiB; LFS; `.h5` oid `dfc4d699…4554d0a9`); 2/2
+  canonical-scale determinism; mass-conservation partition-of-unity exact
+  (`4.44e-16`) at 1M particles / 128³.
+- `docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-ref-stack-e.md` — Stack-E
+  spec sheet (gate-7 Cat-1 surface).
+- `docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md` — ADDITIVE Stack-E
+  section (bit-exact per-field witness; Stack-D Taichi section preserved).
+- `docs/perf-ledger.md` — canonical Warp-CPU row (`304.492 s`; 1.93×-numba,
+  within the 2× band).
+- conventions § L.6 — O-W7 extension (`wp.float64()` taint workaround) [Stage 1b].
+- `docs/common/warp.md` § 6.1 — D16 correction: MPM socket-only consumption
+  pattern (general principle for f64 vs f32 Stack-E ports).
+- `cross-stack-equivalence-methodology.md` § 5.1 — third-instance (D8): the
+  atomic-scatter PRESENT-but-NOT-EXERCISED pattern is stack-portable
+  (Taichi → Warp); graduated to an established portfolio pattern.
+- conventions § L.7 — two banked observations: O-1 cross-stack verdict taxonomy
+  (bit-exact / FP-round-off / chaotic-regime escape-hatch); O-2 Warp CPU
+  determinism four-checkpoint chain.
+
+#### Audit chain
+
+- 23 commits across plan-drafting (4) + Stage 0 (2) + Stage 1a (4) + Stage 1b (5)
+  + Stage 1c (3) + Stage 2 (5), under
+  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/`.
+
+#### Verification
+
+- 14 gates GREEN (gate-14 BIT-EXACT). 21-root regression sweep ZERO REGRESSIONS
+  (490 passed + 1 skipped; after a Stage-2 `.venv` dev-dep restoration — the
+  workspace lost `scipy`/`mutmut`/`pytest-timeout` since the prior landing,
+  restored via `uv sync --all-packages --all-extras`). TS sweep 20 passed + 2
+  skipped. Integrity `c19492ad…d22cb52` baseline-MATCH (10th contiguous
+  sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (47th). Append-only
+  PASS. verify_evidence full chain (12 .md audits) PASS.
+
+#### Banked
+
+- STAYED: LFS-architecture (D13); multi-material MPM extension (single-material
+  scope per S1a-ME2); the standing tooling/CI items.
+- CLOSED: MPM → Stack-E port; D7 RATIFIED REUSE (tolerance override edit no-op —
+  first per-sim port to skip it); O-W7 § L.6; warp.md § 6 D16; methodology § 5.1
+  third-instance.
+- NEW observations: cross-stack verdict taxonomy (§ L.7 O-1); Warp CPU
+  four-checkpoint chain (§ L.7 O-2); environment-provisioning drift (dev extras
+  must be synced for the sweep/mutation gates).
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by

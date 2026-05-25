@@ -1,0 +1,29 @@
+Stage 2 — 21-root regression sweep (cold .pyc; each root under its own pytest config; no blanket -W error)
+Environment restored to declared state via `uv sync --all-packages --all-extras` (scipy 1.17.1, mutmut 2.5.1, pytest-timeout 2.4.0 + dev tooling) — see landing § 5 / shift S2-1.
+testkit + diagnostics use full-tree collection (their own testpaths are partial); all others bare-pytest under own config.
+
+  tools/testkit                              68 passed   (full-tree)
+  tools/integrity                            56 passed
+  tools/diagnostics                          93 passed   (full-tree)
+  packages/reaction-diffusion-2d             14 passed
+  packages/strange-attractors                11 passed
+  packages/mandelbulb-explorer               10 passed
+  packages/boids-3d                          10 passed
+  packages/physarum                          10 passed
+  packages/reaction-diffusion-3d              8 passed
+  packages/sph-water                         22 passed
+  packages/eulerian-smoke                    10 passed
+  packages/lattice-boltzmann-d3q19           12 passed
+  packages/mpm-multimaterial                 10 passed
+  common/common-py                           25 passed
+  packages/reaction-diffusion-2d-stack-d     16 passed
+  packages/sph-water-stack-d                 15 passed
+  packages/lattice-boltzmann-d3q19-stack-d   16 passed
+  packages/mpm-multimaterial-stack-d         15 passed
+  packages/eulerian-smoke-stack-d            15 passed, 1 skipped
+  common/common-warp                         38 passed
+  packages/mpm-multimaterial-stack-e         16 passed
+
+TOTAL: 490 passed + 1 skipped across 21 roots. ZERO REGRESSIONS.
+Per-root match to prior landing (common-warp-bootstrap, 474 passed + 1 skipped across 20 roots): EXACT for all 20 prior roots; +16 for the new 21st root (mpm-multimaterial-stack-e). 474 + 16 = 490.
+TS sweep (common-ts vitest): 20 passed + 2 skipped (8 files).
