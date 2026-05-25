@@ -8,13 +8,17 @@ head_sha_at_checkpoint: 12bc66c9bb8ded896333d8fcb6a1032b8f316b83
 date: 2026-05-25T02-15-23Z
 verdict: stage-1c-CONFIRMED
 evidence_paths:
-  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-gate14-equivalence-2026-05-25T02-15-23Z.txt: sha256:51951f3c25a4f1891729351fd5c85fdff32ac6b6d08d2ed60657cec6e4f3e442
-  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-replay-2026-05-25T02-15-23Z.txt: sha256:9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34
-  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-integrity-sweep-2026-05-25T02-15-23Z.txt: sha256:c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52
+  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-gate14-equivalence-2026-05-25T02-15-23Z.txt
+  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-replay-2026-05-25T02-15-23Z.txt
+  - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-integrity-sweep-2026-05-25T02-15-23Z.txt
   - docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md
   - packages/mpm-multimaterial-stack-e/tests/test_cross_stack_equivalence.py
   - captures/mpm-ref/drop-impact-128cube-seed42-step500.json
   - captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.json
+evidence_hashes:
+  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-gate14-equivalence-2026-05-25T02-15-23Z.txt: sha256:51951f3c25a4f1891729351fd5c85fdff32ac6b6d08d2ed60657cec6e4f3e442
+  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-replay-2026-05-25T02-15-23Z.txt: sha256:9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34
+  docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/stage-1c-integrity-sweep-2026-05-25T02-15-23Z.txt: sha256:c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52
 ---
 
 # Stage 1c checkpoint — sub-phase-mpm-multimaterial-stack-e
