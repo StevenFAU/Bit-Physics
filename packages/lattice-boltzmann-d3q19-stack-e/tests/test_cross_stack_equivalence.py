@@ -39,8 +39,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
 from equivalence.harness import compare_captures  # type: ignore[import-not-found]
+
 from lattice_boltzmann_d3q19_stack_e.sim import (  # type: ignore[import-not-found]
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)
     sim_runner_seeded_couette,  # noqa: F401  # contract-import (public-API surface)
@@ -53,10 +53,6 @@ def _worst_abs_err(verdict: object) -> float:
     return max((d.get("max_abs_err", 0.0) for d in pfd.values()), default=0.0)
 
 
-@pytest.mark.skip(
-    reason="gate-14 un-skipped at Stage 1c (charter § 2); the Stack-E Poiseuille "
-    "capture is the Stage-1b deliverable."
-)
 def test_poiseuille_capture_bit_exact_with_numpy_reference(
     ref_poiseuille_manifest_path: Path,
     stack_e_poiseuille_manifest_path: Path,
@@ -93,10 +89,6 @@ def test_poiseuille_capture_bit_exact_with_numpy_reference(
     )
 
 
-@pytest.mark.skip(
-    reason="gate-14 un-skipped at Stage 1c (charter § 2); the Stack-E Couette "
-    "capture is the Stage-1b deliverable."
-)
 def test_couette_capture_bit_exact_with_numpy_reference(
     ref_couette_manifest_path: Path,
     stack_e_couette_manifest_path: Path,
