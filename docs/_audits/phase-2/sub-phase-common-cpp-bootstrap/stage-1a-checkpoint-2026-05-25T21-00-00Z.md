@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-stage-1a
 stage: stage-1a
 phase: 2
 date: 2026-05-25T21-00-00Z
-head_sha: <pending-stage-1a-checkpoint-commit-sha-backfill>
+head_sha: d116be4a03da673015cbc95d209167b4e838c786
 head_sha_at_checkpoint: ff0866769cd0da2cb345698c7ece3cda7316bdb4
 verdict: CONFIRMED — C-3 GREEN; Vulkan compute substrate operational headless on lavapipe; reproduces baseline a7f85bd4…; SPIR-V build-time wiring reproducible; top-level CMake registration (D6) operational; integrity baseline-MATCH + replay HELD; Stage 1b dispatchable
 evidence_paths:
