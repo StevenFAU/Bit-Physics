@@ -234,6 +234,83 @@ pair lands (charter § 11.2 D5 full-consolidation defer).
 
 ---
 
+## Stack-C (Vulkan / C++) bit-exactness witness
+
+> **Pair:** Phase-1 NumPy f64 reference (`numpy-reference` / `phase-0`) ↔ Stack-C
+> (Vulkan compute / C++ / lavapipe f64; `cpp` / `stage-1b`). 8th and final spec
+> § 11.3 port; FIRST Stack-C (Vulkan/C++) port. **Verdict:** `within_tolerance == True`
+> at `relative = 1e-4, absolute = 0.0`, with `max_abs_err == 0.0` (BIT-EXACT).
+
+Added by `sub-phase-reaction-diffusion-2d-stack-c` Stage 1c. The Stack-B↔Stack-D
+sections (§§ 1–7) are untouched; this section is additive.
+
+### C.1 The pair + verdict
+
+`compare_captures(LEFT = reaction-diffusion-2d-ref, RIGHT =
+reaction-diffusion-2d-stack-c, tolerance.toml)` →
+`within_tolerance == True`, peak `max_abs_err == 0.0`, peak `max_rel_err == 0.0`
+across all 22 field entries (11 captured frames × {U, V} at steps 0, 200, …,
+2000). The Stack-C Vulkan/C++ f64 trajectory is **byte-identical** to the sealed
+NumPy f64 reference through the full canonical horizon (128² × 2000 steps).
+Resolved tolerance: `reaction-diffusion` / `1e-4` via the **reused**
+`[overrides.reaction-diffusion-2d]` (D17 verify-only no-op — the 4th port to skip
+the override edit after MPM-E + smoke-E + LBM-E).
+
+### C.2 Posture + the §6.8 backend pair
+
+f64 (`require_float64`) + NoContraction (`precise` → SPIR-V `NoContraction`;
+Q-CPP1), on Mesa lavapipe (LLVM 20.1.2; element-wise no-atomics → Q-CPP3
+thread-invariant). This is the **first empirical data point for the Vulkan/C++
+f64 ↔ NumPy f64 backend pair** (methodology § 6.8): established independently —
+it does NOT inherit the Warp-CPU-f64 ↔ NumPy bit-faithfulness. When NumPy's
+operation order + numerical primitives are preserved and FMA contraction is
+disabled, lavapipe's IEEE-754 RTE f64 reproduces NumPy's f64 results bit-for-bit.
+FloatControls is asserted only for f32 (RTE + signed-zero/inf/nan; Q-CPP2/D16);
+the f64 path relies on lavapipe's inherent IEEE-754 f64 + NoContraction (the
+step-1 measurement at the plan-drafting-refresh probe was already `0.0`).
+
+### C.3 Within-sim cross-backend contrast
+
+For the SAME RD-2D canonical, Stack-D (Taichi-DSL / CPU) is shape (b) — peak
+`max_abs_err ≈ 1.9 × 10⁻¹⁴` (§ 5), within tolerance but NOT bit-exact — while
+Stack-C (Vulkan/C++ f64) is `0.0`. The (bit-exact vs round-off) split is a
+property of the **backend-pair arithmetic faithfulness**, not of the trajectory:
+RD-2D is bounded/dissipative pattern-forming (no positive-Lyapunov amplification;
+the § 6 R-P2 escape-hatch is empirically disengaged for this sim on both pairs).
+This mirrors the LBM Stack-D (~6e-15) vs Stack-E Warp (0.0) within-sim contrast.
+
+### C.4 Faithfulness boundary — IC sourcing (S1b-RD2C1)
+
+The cross-stack test isolates the **stepping kernel** (the unit under test). The
+Phase-1 IC is a seeded NumPy PCG64 draw — a NumPy-RNG artifact, not part of the
+ported dynamics — and the Vulkan/C++ backend does not reproduce NumPy's PCG64.
+The port therefore consumes the reference's step-0 (U, V) via `load_reference_ic`
+and evolves it: frame 0 matches by construction, and frames 1…2000 are the
+genuine cross-stack dynamics witness. (Stack-D shares NumPy's RNG and regenerates
+the IC trivially; the Vulkan/C++ backend has no such luxury.)
+
+### C.5 File-checksum vs dataset-equivalence (S1b-RD2C2)
+
+The Stack-C `.h5` FILE checksum (`00081dc42b…`) differs from the reference
+(`bcae544ae5…`) even though the **state datasets** U, V are byte-identical — HDF5
+container metadata + the `mass_U`/`mass_V` diagnostics differ (the port accumulates
+naively; the reference's `np.sum` is pairwise, a ~1e-13 difference). `compare_captures`
+compares DATASETS, not raw file bytes (consistent with § 2: "gate-14 acceptance is
+`within_tolerance == True`, NOT raw-byte-equality"), so the bit-exact state verdict
+holds and the diagnostics delta is far within `1e-4`.
+
+### C.6 gate-4 (MMS) + distinct provenance
+
+gate-4 (Cat 3 code verification) is MMS single-arm for RD-2D (no closed-form
+golden table): the manufactured-source kernel variant over the 4-grid ladder
+N ∈ {16, 32, 64, 128} at `t_final = 0.05` yields an observed L2 spatial order of
+**2.0008** (within ±0.5 of the formal 2.0 for the 5-point Laplacian; manufactured
+solution at `tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d/`).
+Distinct provenance: NumPy reference `.h5` oid `bcae544ae5…` (`numpy-reference`/`phase-0`)
+vs Stack-C `.h5` oid `00081dc42b…` (`cpp`/`stage-1b`) — independent producers, identical state.
+
+---
+
 ## References
 
 - `docs/architecture.md` § 2.5 (content-equivalent contract; IC-13), § 2.6

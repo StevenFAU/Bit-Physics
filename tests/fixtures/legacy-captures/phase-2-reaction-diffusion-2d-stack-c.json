@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "Du": 0.16,
+      "Dv": 0.08,
+      "F": 0.0367,
+      "dt": 1.0,
+      "dx": 1.0,
+      "k": 0.0649
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:00081dc42b192e653656705ca81c1c974735728efae10b6b2f9b6c0bce032f42",
+    "format": "hdf5",
+    "path": "phase-2-reaction-diffusion-2d-stack-c.h5"
+  },
+  "run": {
+    "capture_interval": 200,
+    "start_utc": "2026-05-25T22:48:24Z",
+    "step_count": 2000,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "reaction-diffusion-2d",
+    "variant": "gray-scott"
+  },
+  "stack": {
+    "build_id": "stage-1b",
+    "name": "cpp",
+    "version": "0.0.0"
+  }
+}

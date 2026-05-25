@@ -61,6 +61,22 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
     set_tests_properties(rd2d_stack_c_tests PROPERTIES
       ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
   endif()
+
+  # --- gate-14 cross-stack equivalence (Stage 1c; §L.7 O-2 ckpt 4) ------------
+  # Formal compare_captures(LEFT=NumPy ref, RIGHT=Stack-C) via the Python testkit
+  # harness (cross-language: Python reads the C++-emitted .h5). Driven by uv from
+  # the testkit workspace so `capture` + `equivalence` import (common-cpp C-6 pattern).
+  find_program(UV_EXECUTABLE NAMES uv)
+  if (UV_EXECUTABLE)
+    add_test(NAME rd2d_stack_c_gate14
+      COMMAND ${UV_EXECUTABLE} run --no-sync python
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_gate14_cross_stack.py
+        $<TARGET_FILE:bit_physics_rd2d_stack_c_capture>)
+    set_tests_properties(rd2d_stack_c_gate14 PROPERTIES
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit)
+  else()
+    message(WARNING "uv not found: skipping rd2d_stack_c_gate14 cross-stack ctest.")
+  endif()
 else()
   message(STATUS "reaction-diffusion-2d-stack-c: Vulkan + HDF5 required; skipping (Stage 1b targets).")
 endif()
