@@ -1,0 +1,43 @@
+# RD-2D-Stack-C Stage 1a — RED failing-tests evidence (doctest)
+# build: c++ -std=c++20 (doctest v2.4.11 from build tree); stub src/gray_scott.cpp (no Vulkan)
+# RED mechanism: stub throws NotImplemented -> doctest marks each TEST CASE failed (C++ TDD RED)
+# date: 2026-05-25T21-00-00Z
+
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+packages/reaction-diffusion-2d-stack-c/tests/test_cross_stack_equivalence.cpp:22:
+TEST CASE:  RED[gate-14] Stack-C capture writer emits the RIGHT-partner .h5
+
+packages/reaction-diffusion-2d-stack-c/tests/test_cross_stack_equivalence.cpp:22: ERROR: test case THREW exception: run_gray_scott: not yet implemented (Stage 1b lands the Vulkan/C++ f64 NoContraction kernel + run-loop + capture-v1 writer)
+
+===============================================================================
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:15:
+TEST CASE:  RED[gate-5] canonical run produces n*n f64 fields
+
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:15: ERROR: test case THREW exception: run_gray_scott: not yet implemented (Stage 1b lands the Vulkan/C++ f64 NoContraction kernel + run-loop + capture-v1 writer)
+
+===============================================================================
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:24:
+TEST CASE:  RED[gate-9] trajectory is bounded/dissipative (§L.4)
+
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:24: ERROR: test case THREW exception: run_gray_scott: not yet implemented (Stage 1b lands the Vulkan/C++ f64 NoContraction kernel + run-loop + capture-v1 writer)
+
+===============================================================================
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:29:
+TEST CASE:  RED[gate-7] determinism witness is present (2-run bit-exact, Q-CPP1)
+
+packages/reaction-diffusion-2d-stack-c/tests/test_gray_scott.cpp:29: ERROR: test case THREW exception: run_gray_scott: not yet implemented (Stage 1b lands the Vulkan/C++ f64 NoContraction kernel + run-loop + capture-v1 writer)
+
+===============================================================================
+packages/reaction-diffusion-2d-stack-c/tests/test_mms_order.cpp:15:
+TEST CASE:  RED[gate-4] MMS observed L2 order ~ 2.0 +/- 0.5
+
+packages/reaction-diffusion-2d-stack-c/tests/test_mms_order.cpp:15: ERROR: test case THREW exception: mms_observed_l2_order: not yet implemented (Stage 1b lands the manufactured-source variant + 4-grid order ladder, gate-4 / S0-RD2C1)
+
+===============================================================================
+[doctest] test cases: 5 | 0 passed | 5 failed | 0 skipped
+[doctest] assertions: 0 | 0 passed | 0 failed |
+[doctest] Status: FAILURE!
+
+exit_code=1

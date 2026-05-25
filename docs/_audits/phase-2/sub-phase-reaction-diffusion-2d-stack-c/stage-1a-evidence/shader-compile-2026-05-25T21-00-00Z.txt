@@ -1,0 +1,8 @@
+# RD-2D-Stack-C Stage 1a — shader compile verification (glslangValidator 15.1.0, vulkan1.2)
+# date: 2026-05-25T21-00-00Z
+== gray_scott_2d.comp ==
+compiled OK (7000 bytes SPIR-V)
+  Float64 caps: 1
+== gray_scott_2d_mms.comp ==
+compiled OK (7120 bytes SPIR-V)
+  Float64 caps: 1
