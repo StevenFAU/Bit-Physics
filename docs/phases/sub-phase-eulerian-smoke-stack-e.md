@@ -29,6 +29,22 @@
 > **Plan-drafting-probe report:** `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/plan-drafting-probe-2026-05-25T03-30-00Z.md`. Read FIRST. Authoritative for the Phase-1 baseline + Task 1.6 (§ 6 — CHAOTIC), common-warp consumption (§ 3 (c) — socket-only), tolerance/capture mechanics (§ 7 — reuse), the R-SME* surface (§ 5), and the D1–D17 surface (§ 9).
 > **Date drafted:** 2026-05-25.
 > **Status:** drafting CONFIRMED; subsequent stages dispatchable by operator pending D1–D17 routing (§ 9).
+>
+> **AMENDED 2026-05-25 (Stage 1c-revisited; S1c-r-SME1 charter-amendment-landing precedent):**
+> Stage 1c formal gate-14 empirically **falsified** the plan-drafting chaotic-regime /
+> R-P2 verdict-shape prediction. `FACT` the Warp port is **byte-identical** to the
+> sealed NumPy reference across BOTH full horizons (`within_tolerance=True`,
+> `max_abs_err=0.0`), INCLUDING through the confirmed 3D Taylor-Green blow-up
+> (`max|u| ≈ 5.1e19 @ step 500`). §§ 1, 3, 5 are amended below to the **cross-stack
+> BIT-EXACT** verdict shape (`SHIFTED` markers inline). The R-P2 chaotic-regime
+> references remaining in §§ 6–7 are SUPERSEDED and reconcile at Stage 2 (methodology
+> § 6 R-P2 re-characterization + D5 substance update — out of Stage-1c-revisited
+> scope). `FACT` the committed 2D reference is laminar-bounded (NOT the predicted
+> Kelvin-Helmholtz blow-up); the Phase-1 provenance investigation is banked as the
+> **D17** candidate Phase-1-canonical re-characterization trigger — NOT adjudicated
+> here. Empirical record:
+> `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/stage-1c-gate-14-evidence-2026-05-25T13-21-16Z.md`
+> (S1c-SME1 candidate-verdict-shape; S1c-SME2 R-P2-not-stack-portable).
 
 ---
 
@@ -56,14 +72,24 @@ collocated centered-difference projection + Fedkiw vorticity confinement
 (`vorticity_eps=0`, PRESENT-but-NOT-EXERCISED). The cross-stack-sensitive surface is
 the Jacobi-projection FP-accumulation + the MacCormack/centered-difference operators.
 
-**The defining regime (Task 1.6; probe § 6):** BOTH canonical trajectories are
-**CHAOTIC (positive-Lyapunov)** at canonical resolution — 3D Taylor-Green `max|u|
-0.999 → 1.34e8 @ step 50`; 2D lid-driven-cavity Kelvin-Helmholtz `0.99 → 1.64e3 @
-step 5`. The SEALED Phase-1 reference itself blows up, so cross-stack
-content-equivalence at `relative=1e-4` over the 500/1000-step horizons is physically
-impossible. gate-14 is therefore planned as a **divergence-rate witness** (R-P2
-escape-hatch; `within_tolerance=False` is the CORRECT verdict) **from the start** —
-the key improvement over smoke-Stack-D, whose probe missed the chaos.
+**The defining regime — `SHIFTED` (Stage 1c-revisited; empirical gate-14 supersedes
+the plan-drafting prediction):** Plan-drafting (Task 1.6; probe § 6) predicted BOTH
+canonical trajectories **CHAOTIC (positive-Lyapunov)** with cross-stack
+content-equivalence physically impossible, so gate-14 was planned as an R-P2
+**divergence-rate witness** (`within_tolerance=False`). Stage 1c gate-14 **falsified
+the verdict shape**: `FACT` the Warp port is **byte-identical** to the sealed NumPy
+reference across BOTH full horizons (`within_tolerance=True`, `max_abs_err=0.0`),
+INCLUDING through the **3D Taylor-Green blow-up** (`max|u| ≈ 5.1e19 @ step 500` —
+empirically confirmed; reference AND port reach it bit-for-bit). `INFERENCE` with a
+step-1 cross-stack difference of exactly zero (S1b-SME2), a positive-Lyapunov
+trajectory has nothing to amplify, so the trajectories stay bit-identical regardless
+of Lyapunov regime — gate-14 is a **cross-stack BIT-EXACT witness**, NOT an R-P2
+divergence-rate witness. `FACT` Secondary discrepancy: the committed **2D**
+lid-driven-cavity reference is **laminar-bounded** (`max|u| ≈ 2.08` across the
+0→1000 horizon), NOT the plan-drafting `1.64e3 @ step 5` Kelvin-Helmholtz blow-up;
+this sub-phase does **NOT** adjudicate the Phase-1 reference provenance — the full
+investigation is banked as the **D17** candidate Phase-1-canonical re-characterization
+sub-phase trigger. The **3D** blow-up claim is empirically confirmed and stands.
 
 ---
 
@@ -90,8 +116,9 @@ Stage-1 STOP — unlike smoke-Stack-D).
 ## § 3. Acceptance criteria (14 gates per spec § 11.3 + § 3.5 / Appendix D.6)
 
 Canonical Appendix D.6 numbering. Gates 4–13 are stack-agnostic correctness;
-gate-14 is the Phase-2 cross-stack equivalence gate (here a **chaotic-regime
-divergence-rate witness**).
+gate-14 is the Phase-2 cross-stack equivalence gate (`SHIFTED` Stage 1c-revisited:
+here a **cross-stack BIT-EXACT witness** — the plan-drafting chaotic-regime / R-P2
+divergence-rate framing was empirically falsified; see § 1 + the gate-14 row).
 
 | Gate | Surface | Smoke Stack-E specifics |
 |---|---|---|
@@ -105,7 +132,7 @@ divergence-rate witness**).
 | **11** PBT (≥ 2 invariants) | `divergence_free_post_projection` + `smoke_density_nonneg` at `n_examples ≥ 50`; Hypothesis DB committed | — |
 | **12** Perf-ledger row | `docs/perf-ledger.md` → eulerian-smoke / **warp-cpu** / BOTH descriptors / wall-clock / hw_id / commit / date / baseline | TWO rows (2D + 3D). |
 | **13** Failing-tests replay | `git worktree add … <stage-1a-sha>`; pytest reproduces `ModuleNotFoundError`; HEAD GREEN (§ E worktree pattern) | — |
-| **14** Cross-stack equivalence (Phase-2) | `compare_captures(LEFT=eulerian-smoke-ref, RIGHT=stack-e)` at `relative=1e-4`, BOTH descriptors; empirical verdict + per-field per-frame witness + **divergence-rate analysis** in `equivalence.md` | **predicted `within_tolerance=False` on BOTH (R-P2 chaotic-regime escape-hatch — the CORRECT verdict)**. The gate-14 test asserts `within_tolerance=False` AND the § 6.2 escape-hatch criteria hold (step-1 port faithfulness + positive divergence rate). **STOP-and-surface only if step-1 port faithfulness FAILS** (a real defect — NOT chaos; § 5 R-SME1). NO silent tolerance widening / horizon shortening. |
+| **14** Cross-stack equivalence (Phase-2) | `compare_captures(LEFT=eulerian-smoke-ref, RIGHT=stack-e)` at `relative=1e-4`, BOTH descriptors; empirical verdict + per-field per-frame witness + **bit-exactness analysis** in `equivalence.md` | `SHIFTED` (Stage 1c-revisited): plan-drafting predicted `within_tolerance=False` (R-P2 chaotic-regime escape-hatch); **empirically FALSIFIED**. `FACT` gate-14 returned **`within_tolerance=True`, `max_abs_err=0.0`** on BOTH descriptors (Warp byte-identical to the NumPy reference through the full horizon, incl. the 3D ~5e19 blow-up; distinct-provenance ruled out a copy/wiring defect). The gate-14 test asserts **`within_tolerance=True` AND bit-exactness** (`max_abs_err == 0.0`) AND that the tolerance resolves to `smoke`/`1e-4` (D6). `INFERENCE` consistent with S1b-SME2 (step-1 BIT-EXACT 0.0 → no seed-difference → bit-exact regardless of Lyapunov regime). **STOP-and-surface only if step-1 port faithfulness FAILS** (a real defect — § 5 R-SME1). NO silent tolerance widening / horizon shortening. Empirical record: the Stage-1c STOP-evidence audit. |
 
 ---
 
@@ -123,7 +150,7 @@ divergence-rate witness**).
 
 ## § 5. Risk surface (R-SME*; probe § 5)
 
-- **R-SME1** S6 canonical-trajectory verdict — **CHAOTIC / positive-Lyapunov** (Task 1.6); gate-14 predicted `within_tolerance=False` on BOTH (R-P2 — the CORRECT verdict). **STOP-discipline INVERTED vs MPM:** `within_tolerance=False` is EXPECTED, NOT a STOP; STOP on a **step-1 port-faithfulness failure** (≫ FP-round-off — a real defect).
+- **R-SME1** S6 canonical-trajectory verdict — `SHIFTED` (Stage 1c-revisited): plan-drafting predicted **CHAOTIC / positive-Lyapunov** (Task 1.6) with gate-14 `within_tolerance=False` (R-P2). **Empirically FALSIFIED** — `FACT` gate-14 is **cross-stack BIT-EXACT** (`within_tolerance=True`, `max_abs_err=0.0` on BOTH descriptors, through the confirmed 3D ~5e19 blow-up). The 3D reference DOES blow up (confirmed); the committed 2D reference is laminar-bounded (`max|u| ≈ 2.08`; D17 banked). **STOP-discipline:** `within_tolerance=True` / bit-exact is the EXPECTED verdict, NOT a STOP; STOP only on a **step-1 port-faithfulness failure** (a real defect — but step-1 is bit-exact per S1b-SME2, so this STOP is structurally inert). Empirical record: the Stage-1c STOP-evidence audit (S1c-SME1, S1c-SME2).
 - **R-SME2** f64 precision posture — **MEDIUM**: own `wp.array(dtype=wp.float64)` dense fields; pure-literal `wp.float64(1.0)/wp.float64(6.0)` 3D Jacobi normaliser (§ 6.6; the constant that leaked `~1e-9` in Taichi; Warp also infers f32 — O-W7). f32 would change the chaotic trajectory itself (D8).
 - **R-SME3** common-warp consumption — **MEDIUM** design surface; socket-only (§ 3 (c)); CONFIRMS warp.md § 6.1 f64-principle (2nd instance; D7/D15).
 - **R-SME4** iterative-solver Jacobi-20 determinism (deferred aspect #5) — **LOW** (fixed cap; identical sweep count; `wp.float64(0.0)` seeds; Warp CPU serial launch).
@@ -136,7 +163,10 @@ divergence-rate witness**).
 R-class STOP-AND-SURFACE (conventions § K) applies to any **step-1 port-faithfulness
 failure** at Stage 1 and any Stage-0 finding that Warp CPU determinism cannot be
 achieved (Hard Rule 2 condition 4 — assessed LOW; MPM-Stack-E established the O-2
-chain). A gate-14 `within_tolerance=False` is the EXPECTED R-P2 verdict, NOT a STOP.
+chain). `SHIFTED` (Stage 1c-revisited): a gate-14 `within_tolerance=True` (cross-stack
+BIT-EXACT) is the EXPECTED Stack-E verdict, NOT a STOP; STOP only on a step-1
+port-faithfulness failure (the plan-drafting `within_tolerance=False` R-P2 expectation
+was empirically falsified — § 1, § 3 gate-14, R-SME1).
 
 ---
 
