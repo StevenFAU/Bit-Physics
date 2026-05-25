@@ -1,0 +1,17 @@
+# RD-2D-Stack-C plan-drafting-refresh — step-1 cross-stack measurement (probe item c)
+# backend: lavapipe (VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json, LP_NUM_THREADS=0)
+# shader: rd2d_step.comp -> SPIR-V (glslangValidator 15.1.0, --target-env vulkan1.2; Float64 + NoContraction)
+# IC+ref provenance sha256: 81b3b869af878fb837aaee08e106527d2a7a5a6869905a35da084a4e3caa533b
+# date: 2026-05-25T20-00-00Z
+
+device      : llvmpipe (LLVM 20.1.2, 256 bits)
+float64     : ENABLED
+f32 RTE     : 1 | f32 SZINP: 1 | f32 denorm-preserve: 0 | f32 FTZ: 0
+fc assert   : PASS (f32-scoped)
+determinism : run1==run2 TRUE (bit-identical)
+
+== step-1 cross-stack seed-difference (Vulkan/C++ f64 lavapipe vs NumPy f64) ==
+U: max_abs_err=0  ndiff=0/16384  max_rel_err=0
+V: max_abs_err=0  ndiff=0/16384  max_rel_err=0
+step-1 max_abs_err (both fields) = 0
+VERDICT-SHAPE ANCHOR: (a) BIT-EXACT (max_abs_err == 0.0)

@@ -1,0 +1,72 @@
+#version 450
+// Faithful scratch RD-2D Gray-Scott step-1 kernel (f64) for the
+// reaction-diffusion-2d-stack-c plan-drafting-refresh probe (item c).
+//
+// One explicit forward-Euler step, 5-point Laplacian, periodic BC. Op-order
+// is matched byte-for-byte to the Phase-1 NumPy reference
+// (packages/reaction-diffusion-2d/.../gray_scott_numpy.py:98-119):
+//   lap   = (((up + down) + left) + right) - 4.0*c        (then / (dx*dx))
+//   uvv   = (u*v)*v
+//   du_dt = ((Du*lap_u) - uvv) + (F*(1.0 - u))
+//   dv_dt = ((Dv*lap_v) + uvv) - ((F + k)*v)
+//   u'    = u + dt*du_dt ;  v' = v + dt*dv_dt
+//
+// `precise` -> SPIR-V NoContraction (Q-CPP1): separately-rounded multiply+add,
+// no FMA fusion -> matches NumPy's non-fused f64 arithmetic. Canonical params
+// are baked as f64 literals (lf suffix) = the nearest-f64 of each decimal,
+// identical to Python's float() parse. No atomics, element-wise (Q-CPP3).
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std430, binding = 0) readonly  buffer Uin  { double u_in[];  };
+layout(std430, binding = 1) readonly  buffer Vin  { double v_in[];  };
+layout(std430, binding = 2) writeonly buffer Uout { double u_out[]; };
+layout(std430, binding = 3) writeonly buffer Vout { double v_out[]; };
+
+const uint  N  = 128u;
+const double Du = 0.16lf;
+const double Dv = 0.08lf;
+const double F  = 0.0367lf;
+const double k  = 0.0649lf;
+const double dx = 1.0lf;
+const double dt = 1.0lf;
+
+void main() {
+    uint gx = gl_GlobalInvocationID.x;
+    uint gy = gl_GlobalInvocationID.y;
+    if (gx >= N || gy >= N) return;
+
+    uint xm = (gx + N - 1u) % N;
+    uint xp = (gx + 1u) % N;
+    uint ym = (gy + N - 1u) % N;
+    uint yp = (gy + 1u) % N;
+    uint i  = gy * N + gx;
+
+    double u = u_in[i];
+    double v = v_in[i];
+
+    // np.roll order: roll(+1,ax0)=up, roll(-1,ax0)=down, roll(+1,ax1)=left,
+    // roll(-1,ax1)=right; then - 4.0*center; then / (dx*dx).
+    double up_u = u_in[ym * N + gx];
+    double dn_u = u_in[yp * N + gx];
+    double lf_u = u_in[gy * N + xm];
+    double rt_u = u_in[gy * N + xp];
+    precise double lap_u = ((up_u + dn_u) + lf_u) + rt_u - 4.0lf * u;
+    lap_u = lap_u / (dx * dx);
+
+    double up_v = v_in[ym * N + gx];
+    double dn_v = v_in[yp * N + gx];
+    double lf_v = v_in[gy * N + xm];
+    double rt_v = v_in[gy * N + xp];
+    precise double lap_v = ((up_v + dn_v) + lf_v) + rt_v - 4.0lf * v;
+    lap_v = lap_v / (dx * dx);
+
+    precise double uvv   = (u * v) * v;
+    precise double du_dt = (Du * lap_u - uvv) + F * (1.0lf - u);
+    precise double dv_dt = (Dv * lap_v + uvv) - (F + k) * v;
+
+    precise double un = u + dt * du_dt;
+    precise double vn = v + dt * dv_dt;
+    u_out[i] = un;
+    v_out[i] = vn;
+}
