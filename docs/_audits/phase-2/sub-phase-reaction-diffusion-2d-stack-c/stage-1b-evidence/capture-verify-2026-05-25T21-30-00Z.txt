@@ -1,0 +1,3 @@
+# RD-2D-Stack-C Stage 1b — canonical capture byte-equality vs Phase-1 NumPy reference; date 2026-05-25T21-30-00Z
+# port .h5 sha256: 00081dc42b192e653656705ca81c1c974735728efae10b6b2f9b6c0bce032f42  size=2940664  lfs-oid=00081dc42b
+frames=11 state max_abs_err=0.0 byte_identical=True (shape (a) BIT-EXACT)

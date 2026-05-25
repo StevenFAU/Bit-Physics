@@ -1,0 +1,7 @@
+# RD-2D-Stack-C Stage 1b — gates 4-13 GREEN (doctest on lavapipe); date 2026-05-25T21-30-00Z
+
+/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d-stack-c/tests/test_cross_stack_equivalence.cpp:49: MESSAGE: gate-14 precursor max_abs_err across 11 frames = 0
+/home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d-stack-c/tests/test_mms_order.cpp:16: MESSAGE: observed L2 order = 2.0008
+[doctest] test cases: 3 | 3 passed | 0 failed | 0 skipped
+[doctest] assertions: 9 | 9 passed | 0 failed |
+[doctest] Status: SUCCESS!
