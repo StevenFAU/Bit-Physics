@@ -149,6 +149,25 @@ surface** for grid-kinetic methods (D9); the f64-seed pattern keeps it at
 FP-round-off scale. (sph-water's analogous f64-typed `ti.types.ndarray` args keep
 its non-reduction kernels f64; LBM is the first with genuine in-kernel reductions.)
 
+**SECOND-INSTANCE amendment (`sub-phase-lattice-boltzmann-d3q19-stack-e` Stage 2; D11; ADDITIVE).**
+LBM Stack-E (NVIDIA Warp CPU port) re-runs the SAME D3Q19 BGK collision-step
+FP-accumulation surface (the per-cell 19-term moment reductions — `density_field`
+`f.sum(axis=0)`, `momentum_field` `einsum`, the feq polynomial) on a SECOND backend
+and is the **FIRST Warp measurement** of deferred aspect #4. The Warp form of the
+f64-accumulator-seed discipline is `wp.float64(0.0)` reduction seeds +
+`wp.float64(1.0)` feq literal + precomputed f64 `c_s²`-derived constants
+(`inv_cs2`/`inv_cs4`/`inv_two_cs2`/`inv_two_cs4`) + the lex 19-direction order
+preserved. With those, the collision-step reductions reproduce the sealed NumPy
+reference **bit-for-bit** (`max_abs_err = 0.0` full-horizon, both canonicals;
+`equivalence.md` § E) — even cleaner than Stack-D Taichi's `~6e-15` (Taichi's
+division-form feq + summation order leaves a residual; Warp CPU f64's scalar IEEE-754
+ops, with no FMA fusion / no reassociation when op-order is preserved, do not). The
+collision-step FP-accumulation is therefore **determinism-safe AND cross-stack
+bit-faithful on Warp CPU f64**; aspect #4 stays data-backed but at the same
+algebraically-identical-trajectory regime (laminar, dissipative) — NOT a promotion to
+full formalization. (See § 6.7 for the within-sim cross-backend reading and § 6.8 for
+the backend-pair observation this second data point feeds.)
+
 ### 4.2 Dual-arm gate-4 verification surface
 
 A port may carry BOTH a golden-table arm (4a) AND an MMS arm (4b) — LBM Stack-D is
@@ -473,6 +492,83 @@ the verdict is shape **(a) bit-exact** (conventions § L.7 O-1, refined at Stage
 D-S2-1 — the bit-exact condition is a zero cross-stack seed-difference, NOT an
 "algebraically-tame trajectory"; smoke Stack-E is the second shape-(a) instance and
 the one that decouples bit-exactness from trajectory tameness).
+
+**Within-sim cross-backend corroboration (eighth pair, `lattice-boltzmann-d3q19`
+Stack-E; ADDITIVE).** Smoke Stack-E corroborated the "backend-pair property, not the
+sim's" claim ACROSS sims at the same backend transition (Stack-D Taichi → Stack-E
+Warp, both `eulerian-smoke`). LBM provides the sharper, WITHIN-sim cross-backend
+corroboration: the SAME `lattice-boltzmann-d3q19` reference, the SAME laminar
+canonicals (Poiseuille + Couette), the SAME sealed NumPy LEFT partner — yet the two
+RIGHT backends carry different cross-stack seed-differences:
+
+| Same sim, same laminar canonicals, same NumPy reference | Stack-D **Taichi** | Stack-E **Warp** |
+|---|---|---|
+| feq form | division-form | reciprocal-operand-form |
+| reduction seeds | `ti.f64(0.0)` | `wp.float64(0.0)` |
+| `max_abs_err` vs NumPy | `~6e-15` (shape **(b)**) | `0.0` (shape **(a)**) |
+| gate-14 verdict | `within_tolerance=True` ×2 | `within_tolerance=True` ×2 |
+
+Holding the sim AND the trajectory regime fixed (laminar, dissipative — no chaos to
+amplify) and varying ONLY the backend, the step-1-and-onward seed-difference flips
+from `~6e-15` to exactly `0.0`. This is the cleanest possible demonstration of the
+§ 6.7 conclusion: the seed-difference is a property of the **backend-pair's
+arithmetic faithfulness** (Taichi↔NumPy carries a residual; Warp-CPU-f64↔NumPy does
+not, because Warp's scalar IEEE-754 f64 ops reproduce NumPy's lex-sequential
+operation order without FMA fusion or reassociation), NOT a property of the sim or
+its trajectory. Both verdicts clear the `lbm`/`1e-5` budget by ~10 orders; the point
+is the *mechanism* (seed-difference origin), not the pass/fail. (Empirical artifacts:
+`sub-phase-lattice-boltzmann-d3q19-stack-e` Stage 1c formal gate-14 +
+`docs/sim-specs/lattice/lattice-boltzmann-d3q19/equivalence.md` § E; the Stack-D
+`~6e-15` from that sub-phase's landing.)
+
+### 6.8 Eighth-pair observation — Warp CPU f64 ↔ NumPy as an emerging zero-seed-difference backend pair (n=2; SUGGESTIVE, not established)
+
+(FACT — `sub-phase-eulerian-smoke-stack-e` Stage 1c [step-1 `0.0` both canonicals;
+bit-exact full horizon incl. the chaotic 3D blow-up] + `sub-phase-lattice-boltzmann-d3q19-stack-e`
+Stage 1c [`max_abs_err=0.0` full horizon, both laminar canonicals]. The EIGHTH
+cross-stack pair. ADDITIVE; companion to § 6.7's backend-pair framing — NOT a
+promotion of the methodology partial → full.)
+
+§ 6.7 establishes that the cross-stack seed-difference is a property of the
+backend-PAIR. This subsection records the first cross-sim **data point pattern** for
+one specific pair. Across **two structurally different Phase-1 sims** ported onto
+**NVIDIA Warp 1.13.0 CPU f64**, the Warp ↔ NumPy pair has reproduced the sealed
+NumPy reference **byte-for-byte** (cross-stack seed-difference exactly `0.0`):
+
+| Warp-CPU-f64 ↔ NumPy data point | physics family | trajectory regime | algorithmic surface | result |
+|---|---|---|---|---|
+| `eulerian-smoke-stack-e` | volumetric-grid (advection–projection) | **chaotic** (`\|u\|→5e19`) | `np.roll` gather + floor-mod wrap + fixed-sweep Jacobi | step-1 `0.0`; bit-exact full horizon |
+| `lattice-boltzmann-d3q19-stack-e` | lattice (collision–streaming) | **laminar** (dissipative) | 19-term in-kernel reductions + periodic-mod streaming gather | `max_abs_err=0.0` full horizon |
+
+The pattern spans two physics families AND two trajectory regimes (chaotic +
+laminar), which is what makes it suggestive of a **backend-pair FP property** rather
+than a per-sim coincidence: when a Warp CPU f64 port preserves NumPy's operation
+order + numerical primitives (and seeds `wp.float64()` accumulators/literals per
+§ 4.1), Warp's scalar IEEE-754 f64 arithmetic (no FMA fusion, no reassociation in
+serial launch) reproduces NumPy's f64 results bit-for-bit. This is the inverse of the
+Taichi backend, which carried backend-specific residuals (LBM-D `~6e-15`; smoke-D's
+pure-literal `1.0/6.0` f32-inference leak, § 6.6) under the same op-order discipline.
+
+**QUALIFIER (load-bearing — surfaced, not asserted).** This is **`n=2`**. Two data
+points on structurally different sims are *suggestive* of a backend-pair property but
+**NOT conclusive** — a third Warp-CPU-f64 port could surface a backend-specific
+residual (an FMA path, a reduction the port restructures, a non-power-of-2 literal
+left unseeded) and reduce this to "bit-exact when the port is disciplined." To
+**graduate from suggestive to established**, portfolio-track future cross-stack ports
+that target the Warp CPU f64 backend for this property; bank each as an additional
+data point. IC-15 stays **PARTIAL** (this neither promotes a deferred aspect nor adds
+a codified component; it is an empirical pair-observation companion to § 6.7).
+
+**Home routing (D-S2-1, this sub-phase; agent-selected, surfaced for the record).**
+This observation is homed in the methodology doc (here, § 6.8) rather than the
+conventions doc (`sub-phase-conventions.md` § L.7 as an "O-3"): the substance is a
+cross-stack-equivalence claim about a backend pair's FP faithfulness — methodology
+material, the direct empirical follow-on to § 6.7 — and the methodology § 6.x grows
+per-pair (§ 6 fifth-pair → § 6.7 seventh-pair → § 6.8 eighth-pair), whereas § L.7 is
+`mpm-multimaterial-stack-e`'s attributed locus (per-sub-phase attribution, § L.5
+preamble), where an "O-3" would mis-attribute. The conventions doc carries only the
+§ L.7 O-1 verdict-taxonomy third-instance refinement (which IS a refinement of MPM-E's
+O-1, landed in place).
 
 ## 7. References
 

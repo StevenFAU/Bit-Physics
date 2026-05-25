@@ -791,6 +791,22 @@ OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — no
     seed-difference that chaos amplifies (Stack-D Taichi), (a) when it does not
     (Stack-E Warp). R-P2 is therefore NOT stack-portable
     (`cross-stack-equivalence-methodology.md` § 6.7).
+  - **THIRD-INSTANCE / FIRST-LAMINAR note (`lattice-boltzmann-d3q19` Stack-E Stage 2;
+    ADDITIVE).** `lattice-boltzmann-d3q19` Stack-E (Warp CPU) is the **THIRD** shape-(a)
+    instance (after MPM Stack-E `drop-impact` and smoke Stack-E Taylor-Green) and the
+    **FIRST on a LAMINAR trajectory** — `max_abs_err = 0.0` through the full horizon of
+    both bounded, dissipative canonicals (Poiseuille 1001 frames; Couette 501 frames).
+    Together with smoke Stack-E (the second instance, on a CHAOTIC `|u|→5e19` horizon),
+    it empirically **completes the D-S2-1 decoupling**: shape (a) now spans both a
+    chaotic and a laminar trajectory at zero seed-difference, so the controlling
+    condition is confirmed to be the **zero cross-stack seed-difference** (verbatim
+    algebra + same operation order + same numerical primitives + sufficient
+    FP-determinism on the executing stack) — fully **orthogonal** to the Lyapunov
+    regime. LBM Stack-E also sharpens the (a)-vs-(b) boundary WITHIN a single sim: its
+    Stack-D Taichi sibling is shape (b) (`~6e-15`) on the SAME laminar canonicals, so
+    the (a)/(b) split is a backend-pair property, not a trajectory property
+    (`cross-stack-equivalence-methodology.md` § 6.7 within-sim corroboration + § 6.8
+    the Warp-CPU-f64↔NumPy backend-pair observation, n=2).
 
 - **O-2 — Warp CPU determinism four-checkpoint chain.** For Stack-E ports using
   common-warp's deterministic execution, the determinism-verification chain spans
