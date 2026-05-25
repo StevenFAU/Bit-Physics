@@ -104,7 +104,7 @@ MEASURED `0.0` and the regime is MEASURED laminar).
 | **Stage 1a — Failing-tests commit** | `packages/lattice-boltzmann-d3q19-stack-e/` skeleton + test surface (`tests/`) at clean `ModuleNotFoundError`; failing-tests evidence + sha256 (commit-first-then-sha256). Build against the § 1.9.1 socket VERBATIM from the start (§ L.5 S1b-3). **Scaffold only — no implementation, no registration, no gate-10** (those are Stage 1b). | yes, single commit |
 | **Stage 1b — Implementation commit** | Determinism-strategy docstring first (§ 6); Warp D3Q19 reference (`bgk_step` collision + Guo, `stream` periodic-mod gather, `apply_bounce_back_y_walls` with `OPP` swap + moving-wall injection, `density_field`/`momentum_field`/`feq_field` as `@wp.kernel`s over an own `wp.array(dtype=wp.float64, ndim=4)` distribution) → `sim.py` wrapper (`sim_runner_seeded` + `sim_runner_seeded_couette` + `sim_runner_diagnostic`; common-warp `init`/`set_warp_deterministic`/`write_capture`) → `invariants.py` → spec sheet (`spec-ref-stack-e.md`) → test bodies GREEN (gates 4–13; gate-4 DUAL-ARM — 4a equilibrium golden + 4b NS-2D MMS) → TWO canonical captures (both LFS-committable) → perf-ledger rows (Poiseuille + Couette, warp-cpu) → root `pyproject.toml` workspace registration (22 → 23) → gate-13 replay. O-2 chain checkpoints 2 (gate-10 production reproduction) + 3 (canonical-scale 2-run). | yes, single commit |
 | **Stage 1c — Cross-stack equivalence + landing-prep** | gate-14 `compare_captures(lbm-ref, lattice-boltzmann-d3q19-stack-e)` at `relative=1e-5` for BOTH descriptors (full horizon; per-field per-frame witness + bit-exactness analysis) → **predicted `within_tolerance=True` / `max_abs_err=0.0` on both (shape (a) bit-exact)** → `equivalence.md` additive **Stack-E section** (a bit-exactness witness; extends the LBM-Stack-D pair-3 entry) → tolerance-override REUSE **verify-only** (no new row; D6) → schema-corpus representative-subset entry (the Couette 27 MB capture; ≤256 MiB; § 5.4) → un-skip gate-14 test (asserts `within_tolerance=True` AND `max_abs_err==0.0` AND tolerance resolves to `lbm`/`1e-5`). O-2 chain checkpoint 4 (formal gate-14). | yes, single commit |
-| **Stage 2 — Landing** | anchor re-check → portfolio regression sweep (23 members; verify `[overrides]` non-interference + per-package pytest-config certification incl. nested `*/tests/`, NOT blanket `-W error`) → integrity sweep (informational; `c19492ad…` baseline) → evidence-path verify (IC-16) → gate-13 replay → append-only check → **IC-15 disposition (D5)**: methodology § 6.7 within-sim cross-backend corroboration (LBM-D Taichi shape (b) → LBM-E Warp shape (a); the aspect-#4 second-data-point note + the candidate "Warp CPU f64 is bit-faithful to NumPy" portfolio observation) + equivalence.md § Stack-E bit-exactness witness + conventions § L.7 O-1 shape-(a) third-instance note (first on a laminar trajectory) + warp.md § 6 line-208 LBM-row dtype f32→f64 refinement (D15) → CHANGELOG → landing audit → SHA back-fill. | yes if Stage 1 clean |
+| **Stage 2 — Landing** | anchor re-check → portfolio regression sweep (23 members; verify `[overrides]` non-interference + per-package pytest-config certification incl. nested `*/tests/`, NOT blanket `-W error`) → integrity sweep (informational; `c19492ad…` baseline) → evidence-path verify (IC-16) → gate-13 replay → append-only check → **IC-15 disposition (D5)** — `SHIFTED` (Stage 2; landed homes): methodology § 6.7 within-sim cross-backend corroboration (LBM-D Taichi shape (b) → LBM-E Warp shape (a)) + the aspect-#4 second-data-point note (landed at methodology § 4.1) + the "Warp CPU f64 is bit-faithful to NumPy" `n=2` observation (landed at **new methodology § 6.8**, NOT folded into § 6.7; D-S2-1) + conventions § L.7 O-1 shape-(a) third-instance / first-laminar note + warp.md § 6 LBM-row dtype f32→f64 (D15) + new § 6.3 [equivalence.md § Stack-E witness already landed Stage 1c] → CHANGELOG → landing audit → SHA back-fill. | yes if Stage 1 clean |
 
 ---
 
@@ -138,7 +138,7 @@ probe § 6 step-1 seed-difference MEASURED `0.0`).
 | Stage 1a | `packages/lattice-boltzmann-d3q19-stack-e/` (pkg skeleton + `tests/` failing surface + `pyproject.toml`) | — | NO impl / NO registration / NO gate-10 (Stage 1b) |
 | Stage 1b | reference modules + `sim.py` + `invariants.py` + `spec-ref-stack-e.md` + TWO canonical captures (`captures/lattice-boltzmann-d3q19-stack-e/`) | root `pyproject.toml` (workspace member 23); `docs/perf-ledger.md` (2 rows) | Phase-1 source; common-warp |
 | Stage 1c | schema-corpus subset fixture (Couette) | `docs/sim-specs/lattice/lattice-boltzmann-d3q19/equivalence.md` (additive Stack-E section); un-skip gate-14 test | **`tolerance.toml` (NO edit — reuse; D6)**; conventions/methodology |
-| Stage 2 | landing audit + SHA back-fill | CHANGELOG entry; methodology § 6.7 (within-sim cross-backend corroboration; aspect-#4 second data point; S-LBME6 candidate observation); conventions § L.7 (O-1 shape-(a) third-instance note — first on a laminar trajectory); warp.md § 6 (line-208 LBM-row dtype f32→f64 refinement; D15); charter §§ reconcile + D5/D7/D15 substance | `tolerance.toml` (D6 no-op) |
+| Stage 2 | landing audit + SHA back-fill | `SHIFTED` (Stage 2; landed): CHANGELOG entry; methodology § 4.1 (aspect-#4 SECOND-INSTANCE amendment) + § 6.7 (within-sim cross-backend corroboration) + **new § 6.8** (the `n=2` Warp-CPU-f64↔NumPy backend-pair observation; D-S2-1 home = methodology, not conventions § L.7 O-3); conventions § L.7 (O-1 shape-(a) third-instance / first-laminar note — no new § L.x and no O-3); warp.md § 6 (LBM-row dtype f32→f64 + **new § 6.3**; D15); charter §§ 2/4/7 reconcile + D5/D7/D15 substance | `tolerance.toml` (D6 no-op); `equivalence.md` (Stage-1c-locked); Phase-1 source; common-warp |
 
 ---
 
@@ -191,9 +191,12 @@ laminar at plan-drafting (§ L.4 + § L.8 disciplines applied).
   § L.8 S1b-SME1 fresh-var narrowing covers any incidental cast. O-W6: omit
   `from __future__ import annotations` defensively.
 - **§ L.7 O-1 verdict taxonomy (refined D-S2-1)** — predicted shape **(a) bit-exact**
-  (`within_tolerance=True`, `max_abs_err=0.0`); LBM Stack-E is the THIRD shape-(a)
-  instance and the FIRST on a LAMINAR trajectory (the bit-exact condition is a zero
-  cross-stack seed-difference, orthogonal to the Lyapunov regime — Stage-2 § L.7 note).
+  (`within_tolerance=True`, `max_abs_err=0.0`); `SHIFTED` (Stage 2; **CONFIRMED, not
+  overturned** — contrast smoke-E): the formal gate-14 landed shape (a) on both
+  canonicals; LBM Stack-E is the THIRD shape-(a) instance and the FIRST on a LAMINAR
+  trajectory (the bit-exact condition is a zero cross-stack seed-difference, orthogonal
+  to the Lyapunov regime — landed as the Stage-2 § L.7 O-1 third-instance / first-laminar
+  note, completing the D-S2-1 decoupling empirically).
 - **§ L.7 O-2 four-checkpoint Warp CPU determinism chain** — the stage→checkpoint
   mapping per §§ 2/4 authoritative: Stage-0 R-A1 anchor (ckpt 1) → Stage-**1b** gate-10
   production reproduction (ckpt 2) + canonical-scale 2-run (ckpt 3) → Stage-1c formal
@@ -231,14 +234,22 @@ laminar at plan-drafting (§ L.4 + § L.8 disciplines applied).
 19. D4 determinism contract (`tolerance=0.0` CPU bit-exact-same-hw).
 20. The LBM-Stack-D dual-arm gate-4 (equilibrium golden + NS-2D MMS) + the two-capture pattern (Poiseuille + Couette) + the IC-6 `vector_field` Tier-2.
 
-(20 precedents.) **Produced (D5, LANDED at Stage 2):** a methodology § 6.7 within-sim
-cross-backend corroboration (LBM-D Taichi shape (b) `~6e-15` → LBM-E Warp shape (a)
-`0.0`; the seed-difference is a backend-pair property, confirmed within a single laminar
-sim) + the aspect-#4 second-data-point note (collision-step FP-accumulation is
-determinism-safe on Warp, bit-exact) + a candidate portfolio observation (Warp CPU f64
-is bit-faithful to NumPy across both ports tested; `n=2`, surfaced not asserted) + the
-conventions § L.7 O-1 shape-(a) third-instance note (first on a laminar trajectory) +
-the warp.md § 6 line-208 LBM-row dtype f32→f64 refinement (D15). IC-15 stays PARTIAL.
+(20 precedents.) **Produced (D5) — `SHIFTED` (Stage 2; LANDED scope, all confirmed):**
+(1) the methodology § 6.7 within-sim cross-backend corroboration (LBM-D Taichi shape
+(b) `~6e-15` → LBM-E Warp shape (a) `0.0`; the seed-difference is a backend-pair
+property, confirmed within a single laminar sim); (2) the aspect-#4 second-data-point
+note — landed as the methodology **§ 4.1 SECOND-INSTANCE amendment** (collision-step
+FP-accumulation is determinism-safe AND bit-faithful on Warp CPU f64; the FIRST Warp
+measurement of deferred aspect #4); (3) the candidate "Warp CPU f64 is bit-faithful to
+NumPy" portfolio observation (`n=2`, surfaced not asserted) — landed as the **new
+methodology § 6.8** (the Warp-CPU-f64 ↔ NumPy zero-seed-difference backend-pair
+observation; routed to the methodology doc over a conventions § L.7 "O-3" per **D-S2-1**,
+this sub-phase's sole Stage-2 decision — rationale: methodology-substance + § 6.x
+per-pair growth + § L.7 is MPM-E's attributed locus); (4) the conventions **§ L.7 O-1
+shape-(a) third-instance / first-laminar note** (completes the D-S2-1 decoupling
+empirically); (5) the **warp.md § 6 LBM-row dtype f32 → f64 refinement (D15) + new
+§ 6.3**. IC-15 stays PARTIAL (neither a deferred-aspect promotion nor a new codified
+component). `equivalence.md` § E (the Stack-E bit-exactness witness) landed at Stage 1c.
 
 ---
 
