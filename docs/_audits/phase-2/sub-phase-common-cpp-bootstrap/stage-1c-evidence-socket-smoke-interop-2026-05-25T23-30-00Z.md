@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-stage-1c
 stage: stage-1c
 phase: 2
 date: 2026-05-25T23-30-00Z
-head_sha: <pending-stage-1c-checkpoint-commit-sha-backfill>
+head_sha: a78f8032679261682b9afcdfd73ec4b708268bec
 head_sha_at_checkpoint: 9a4a0cb79a97e81c62c21bdbec7f61fcaca73f4a
 verdict: C-4 + C-5 + C-6 GREEN — §1.9.1-cpp socket reconciled; advection-diffusion smoke bounded/stable; cpp.md de-scaffolded; cross-language interop passes; cpp-strict CI added
 evidence_paths:
