@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-stage-0
 stage: stage-0
 phase: 2
 date: 2026-05-25T19-30-00Z
-head_sha: <COMMIT-1-SHA — back-filled per Convention #12>
+head_sha: d43d09847a5d6a7e68d7d026d6aed81b7447fcb4
 head_sha_at_checkpoint: 134d7bee67c3deae3dfb3cae5b0ab88953fe0748
 verdict: C-stack determinism baseline digest ESTABLISHED — a7f85bd4…2844f05 (bit-identical ×3 + threading-invariant)
 evidence_paths:
