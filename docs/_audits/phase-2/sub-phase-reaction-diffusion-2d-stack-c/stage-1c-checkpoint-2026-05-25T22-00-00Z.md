@@ -4,8 +4,8 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-stage-1c
 stage: stage-1c
 phase: 2
 date: 2026-05-25T22-00-00Z
-head_sha: PENDING-BACKFILL
-head_sha_at_checkpoint: PENDING-BACKFILL
+head_sha: fa58d8cab602093c81c9f4178600810760530ea2
+head_sha_at_checkpoint: 2bd30c2ca15bb6aa2c052c0e3549710dcb9fc3ed
 verdict: stage-1c-CONFIRMED
 verdict-state: CONFIRMED
 parent_audits:
