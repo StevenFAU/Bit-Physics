@@ -1,0 +1,4 @@
+# RD-2D-Stack-C Stage 1c — FORMAL gate-14 (compare_captures; O-2 ckpt 4); date 2026-05-25T22-00-00Z
+# LEFT=reaction-diffusion-2d-ref (numpy/phase-0)  RIGHT=reaction-diffusion-2d-stack-c (cpp/stage-1b)
+gate-14: within_tolerance=True peak_max_abs_err=0.0 peak_max_rel_err=0.0 n_entries=22
+gate-14 GREEN — shape (a) BIT-EXACT (Vulkan/C++ f64 == NumPy f64; rd-2d/1e-4)
