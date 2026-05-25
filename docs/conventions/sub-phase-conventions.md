@@ -676,6 +676,55 @@ for all future plan-drafting + cross-stack work. Cross-reference: methodology
   seed ANY pure-literal non-power-of-2 constant in a numerical kernel, not only
   reduction accumulators.
 
+### L.5 Formalized methodology-precedents — common-warp-bootstrap Stage 2 (Stack-E bootstrap)
+
+(FACT — `sub-phase-common-warp-bootstrap` Stage 1a § 10 [S1a-2], Stage 1b § 10
+[S1b-3], Stage 1c § 4 [S1c-1] + landing § 7. The FIRST Stack-E sub-phase — the
+`common/common-warp/` Python/NVIDIA-Warp bootstrap — stabilized three
+cross-cutting precedents. New subsection rather than an append to § L.4 because
+§ L.4 is the eulerian-smoke-stack-d chaotic-regime locus; per-sub-phase
+attribution is preserved.)
+
+- **S1a-2 — GPU device-string discipline.** A bare zero-indexed CUDA device
+  token (the `cuda:N` form where N is a digit) written in audit prose, source
+  comments, or docstrings parses as a `path:line` citation under
+  `cat1.intra-repo` and HARD_FAILs the integrity sweep (the `cuda` part reads as
+  a filename, the digit as a line number; first caught at Stage 1a on a
+  `runtime.py` docstring). **Discipline:** name GPU devices in **prose form**
+  ("CUDA device zero", "the zero-indexed CUDA device", "GPU device with index
+  0") — never the bare `cuda:N` token in running text. (Inline backtick spans
+  and fenced code blocks are exempt: Cat-1 skips them per § M.1 shift #10, so a
+  back-ticked `` `device="cuda:N"` `` code reference is safe — the discipline
+  governs *un-backticked prose*.) **Applies to: all future Stack-E ports + any
+  audit/source/doc text naming a GPU device.**
+
+- **S1b-3 — socket-reconciliation precedent (Option B: refactor implementation
+  to match the plan socket).** When a plan's load-bearing socket contract (a
+  §1.9.x signature) diverges from the landed implementation signature post-hoc,
+  **Option B — refactor the implementation to match the socket verbatim, BEFORE
+  the first downstream consumer** — is the methodologically-correct recovery: it
+  preserves the plan's "sockets are NOT stage-overrideable" framing, keeps the
+  contract intact for downstream consumers, and REQUIRES load-bearing-baseline
+  reproduction verification under the refactored signature (here the W-2 digest
+  `24d44c7e…0746f314` reproduced unchanged, confirming signature-only / not
+  semantics-changing). **Option A** (amend the plan to match the implementation)
+  is the fallback when refactor risk is unbounded OR the socket's design intent
+  is genuinely wrong (NOT the case here — the §1.9.1 `tolerance=0.0` determinism
+  surface was load-bearing and the landed signature would have dropped it).
+  **Applies to: any future plan-socket-vs-landed-implementation divergence.**
+
+- **S1c-1 — plan-prose-gloss vs spec-verbatim discipline.** A plan-drafting
+  dispatch that *paraphrases* plan/spec language in its operative instructions
+  can introduce drift even when the underlying intent matches (here the dispatch
+  glossed §1.9.1's `init(device: str | None = None, deterministic: bool = False)`
+  as "both positional; no None default", which the agent reconciled to the spec
+  verbatim per Convention C/M). **Discipline:** dispatches reference plan
+  sections **by section number for verbatim consumption**; paraphrase belongs in
+  coordinator-side *framing* only, never in operative instruction language.
+  Execution-time Convention C (cite the spec verbatim) + Convention M (HEAD/spec
+  wins on drift) are the agent's reconciliation backstop. **Applies to: all
+  future plan-drafting dispatches + execution-stage socket consumption.**
+
 ---
 
 ## § P. Capture cadence routing
