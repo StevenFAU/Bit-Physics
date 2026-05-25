@@ -1575,6 +1575,83 @@ sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (32nd+). Append-only
 - NEW banked methodology-precedents: S6-trajectory-simulation; cross-stack-as-
   defect-amplifier; banked-#7-pure-literal-constants (conventions § L.4).
 
+### sub-phase-common-warp-bootstrap
+
+Focused-infrastructure sub-phase (not a per-sim cross-stack port): establishes
+`common/common-warp/` as the **20th workspace member** and the **Stack-E
+(Python / NVIDIA Warp 1.13.0)** workspace surface — the phase-2 plan §1.9.1
+seven-subsystem minimal API. Enables the 3 forthcoming Stack-E port sub-phases
+(MPM, Smoke, LBM). All six W-Gates GREEN. The module is "shipped, then wired"
+(consumed at landing only by its own tests + `examples/hello/`; the Stack-E
+ports import it). No `-phase-N` tag (spec § 7.12); local landing only —
+remote-CI re-validation banked behind the LFS-architecture sub-phase (D13).
+
+#### Added
+
+- `common/common-warp/` — 20th workspace member (`bit-physics-common-warp`;
+  import package `common_warp`; `warp-lang>=1.13,<2.0`). The §1.9.1 seven
+  subsystems: **Runtime** (`runtime.py` — `init(device, deterministic)` /
+  `get_device` / `set_device`; CPU-default per D4/R-W3), **Determinism**
+  (`warp_harness/` — `set_seed` / `get_seed` / `assert_deterministic_run` /
+  `deterministic_context` / `set_warp_deterministic`; W-2), **Capture I/O**
+  (`capture/` — `Capture` / `write_capture` / `read_capture` delegating to the
+  testkit capture format; W-1), **Particles** (`particles/`), **Grids**
+  (`grids/` — `ScalarField3D` / `VectorField3D` + allocators), **HashGrid**
+  (`hashgrid/` — native `wp.HashGrid` + kernel `query_radius`).
+- `common/common-warp/examples/hello/` — **Subsystem 7** smoke sim (W-3): 2D
+  advection-diffusion 64×64, explicit FTCS diffusion + first-order upwind
+  advection, double-buffered per-cell gather (no atomics, no RNG). Bounded +
+  monotonically-decaying trajectory reproduces the Stage-0 design-time
+  prediction (max-field 1.0 → 0.218683 over 400 steps, zero increases, mass
+  conserved). Exercises Runtime/Determinism/Capture/Grids directly; Particles +
+  HashGrid via smoke-field tracer-particle unit tests.
+- `docs/common/warp.md` — W-4 project-wide Stack-E Warp convention + the
+  common-warp public API reference (8-section, mirrors `docs/common/taichi.md`).
+- `docs/dependencies.md` — `warp-lang` entry; root `pyproject.toml` — 20th
+  workspace member.
+- `warp_harness/` §1.9.1 socket — the Runtime + Determinism signatures
+  reconciled to §1.9.1 verbatim (S1b-3 Option-B refactor): `init(device,
+  deterministic)`, no-arg `deterministic_context()`,
+  `assert_deterministic_run(sim_fn, *, runs=2, tolerance=0.0)`. The W-2 baseline
+  `24d44c7e…0746f314` reproduces under the refactored signature (load-bearing).
+- `docs/conventions/sub-phase-conventions.md` § L.5 — three new
+  methodology-precedents: **S1a-2** GPU device-string discipline; **S1b-3**
+  socket-reconciliation Option B; **S1c-1** plan-prose-gloss vs spec-verbatim.
+- Sub-phase audit chain under
+  `docs/_audits/phase-2/sub-phase-common-warp-bootstrap/` (plan-drafting 4 +
+  Stage 0 2 + Stage 1a 4 + Stage 1b 4 + Stage 1c 6 + Stage 2 3 = 23 commits).
+
+#### Verification
+
+All six W-Gates GREEN: W-1 Capture (1b mechanism / 1c full, real capture); W-2
+Determinism (1a mechanism / 1c full, `assert_deterministic_run` +
+`run_twice_and_diff` on the smoke sim; baseline `24d44c7e…0746f314`); W-3 smoke
+sim; W-4 docs; W-5 equivalence-compat (`compare_captures` run-twice-and-diff,
+`within_tolerance=True`, no HARD_FAIL); W-6 integrity. Cross-package regression
+sweep (20 workspace roots, cold `.pyc`): ZERO REGRESSIONS (common-warp 38;
+common-py 25; 5 Stack-D ports + 10 Phase-1 sims + 3 tools unchanged). TS sweep:
+20 passed + 2 skipped. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak
+HELD, 9th sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (40th).
+Append-only PASS; `verify_evidence --strict` full chain (12 audits) PASS.
+Cumulative shifts 165 → 176 (plan-drafting 3; Stage 0 1; Stage 1a 2; Stage 1b 3;
+Stage 1c 1; Stage 2 1).
+
+#### Banked
+
+- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint installation /
+  check-yaml hook `.github/workflows/` coverage / supply-chain-pin for the other
+  3 actions; LFS-architecture sub-phase (D13); manifest-equality smoke test (D7);
+  Phase-1-canonical re-characterization; **mypy --strict warp partial-stub
+  errors** (banked at Stage 1c; future tooling-improvement).
+- CLOSED: common-warp bootstrap (all 6 W-Gates GREEN); S1b-3 socket
+  reconciliation (Option B refactor landed; §1.9.1 verbatim signatures shipped);
+  Subsystem-7 design-time prediction verified empirically.
+- NEW banked observation: the next 3 Stack-E ports (MPM, Smoke, LBM) inherit the
+  common-warp surface + the S6-trajectory-simulation discipline at plan-drafting.
+- NEW banked methodology-precedents: S1a-2 GPU device-string discipline; S1b-3
+  socket-reconciliation Option B; S1c-1 plan-prose-gloss vs spec-verbatim
+  (conventions § L.5).
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by
