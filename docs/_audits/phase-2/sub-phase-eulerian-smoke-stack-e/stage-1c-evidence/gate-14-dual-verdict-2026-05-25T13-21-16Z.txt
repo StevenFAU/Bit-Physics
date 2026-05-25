@@ -1,0 +1,67 @@
+# Stage-1c formal gate-14 evidence (O-2 checkpoint 4) -- sub-phase-eulerian-smoke-stack-e
+# Generated: 2026-05-25T13:22:21Z  HEAD: 466c24d3f1317d45e364160ad27f228a543db8db
+# Command: uv run --no-sync --package eulerian-smoke-stack-e python gate14_full_evidence.py
+# harness: tools/testkit/equivalence/harness.py :: compare_captures
+#
+==============================================================================
+DESCRIPTOR: 2D lid-driven-cavity  (lid-driven-cavity-128sq-re100-seed42-step1000)
+  [provenance]
+    LEFT  : stack={'build_id': 'sub-phase-eulerian-smoke', 'name': 'numpy-reference', 'version': '0.0.1'}  payload.checksum=sha256:e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb  start=2026-05-22T00:00:00Z  wall=5.087067s
+    RIGHT : stack={'build_id': 'sub-phase-eulerian-smoke-stack-e', 'name': 'warp-stack-e', 'version': '0.0.1'}  payload.checksum=sha256:aa67929f4c84b76c21d847946a101e964366cccc178193c258873efbdd214734  start=2026-05-25T00:00:00Z  wall=5.897250s
+    distinct .h5 checksums: True
+  [verdict]
+    within_tolerance = True
+    tolerance_table_used = {"category": "smoke", "relative": 0.0001, "absolute": 0.0, "path": "/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml"}
+    worst max_abs_err = 0.000000e+00  at ''
+  [per-frame divergence witness: max_abs_err over fields]
+    step     0 : 0.000000e+00  (field u)
+    step   100 : 0.000000e+00  (field u)
+    step   200 : 0.000000e+00  (field u)
+    step   300 : 0.000000e+00  (field u)
+    step   400 : 0.000000e+00  (field u)
+    step   500 : 0.000000e+00  (field u)
+    step   600 : 0.000000e+00  (field u)
+    step   700 : 0.000000e+00  (field u)
+    step   800 : 0.000000e+00  (field u)
+    step   900 : 0.000000e+00  (field u)
+    step  1000 : 0.000000e+00  (field u)
+  [endpoint magnitudes + byte-identity]
+    step     0  density: ref_absmax=9.9392e-01  se_absmax=9.9392e-01  max|diff|=0.0000e+00  bytes_equal=True
+    step     0        u: ref_absmax=9.9014e-01  se_absmax=9.9014e-01  max|diff|=0.0000e+00  bytes_equal=True
+    step     0        v: ref_absmax=0.0000e+00  se_absmax=0.0000e+00  max|diff|=0.0000e+00  bytes_equal=True
+    step  1000  density: ref_absmax=9.4695e-02  se_absmax=9.4695e-02  max|diff|=0.0000e+00  bytes_equal=True
+    step  1000        u: ref_absmax=2.0754e+00  se_absmax=2.0754e+00  max|diff|=0.0000e+00  bytes_equal=True
+    step  1000        v: ref_absmax=1.2604e+00  se_absmax=1.2604e+00  max|diff|=0.0000e+00  bytes_equal=True
+==============================================================================
+DESCRIPTOR: 3D taylor-green  (taylor-green-128cube-seed42-step500)
+  [provenance]
+    LEFT  : stack={'build_id': 'sub-phase-eulerian-smoke', 'name': 'numpy-reference', 'version': '0.0.1'}  payload.checksum=sha256:4604ebdc40b7fdf80c0354c4429f6fb0a12fd566c5bc301ad9ceed60dcd4e2ed  start=2026-05-22T00:00:00Z  wall=691.046964s
+    RIGHT : stack={'build_id': 'sub-phase-eulerian-smoke-stack-e', 'name': 'warp-stack-e', 'version': '0.0.1'}  payload.checksum=sha256:6b5158e80b6eef171d65c3d2ce72d923baa0974c49d57ec59e9a0c1b7bb47fe5  start=2026-05-25T00:00:00Z  wall=541.977160s
+    distinct .h5 checksums: True
+  [verdict]
+    within_tolerance = True
+    tolerance_table_used = {"category": "smoke", "relative": 0.0001, "absolute": 0.0, "path": "/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml"}
+    worst max_abs_err = 0.000000e+00  at ''
+  [per-frame divergence witness: max_abs_err over fields]
+    step     0 : 0.000000e+00  (field v)
+    step    50 : 0.000000e+00  (field v)
+    step   100 : 0.000000e+00  (field v)
+    step   150 : 0.000000e+00  (field v)
+    step   200 : 0.000000e+00  (field v)
+    step   250 : 0.000000e+00  (field v)
+    step   300 : 0.000000e+00  (field v)
+    step   350 : 0.000000e+00  (field v)
+    step   400 : 0.000000e+00  (field v)
+    step   450 : 0.000000e+00  (field v)
+    step   500 : 0.000000e+00  (field v)
+  [endpoint magnitudes + byte-identity]
+    step     0  density: ref_absmax=9.9771e-01  se_absmax=9.9771e-01  max|diff|=0.0000e+00  bytes_equal=True
+    step     0        u: ref_absmax=9.9910e-01  se_absmax=9.9910e-01  max|diff|=0.0000e+00  bytes_equal=True
+    step     0        v: ref_absmax=9.9910e-01  se_absmax=9.9910e-01  max|diff|=0.0000e+00  bytes_equal=True
+    step     0        w: ref_absmax=0.0000e+00  se_absmax=0.0000e+00  max|diff|=0.0000e+00  bytes_equal=True
+    step   500  density: ref_absmax=3.0667e-02  se_absmax=3.0667e-02  max|diff|=0.0000e+00  bytes_equal=True
+    step   500        u: ref_absmax=5.1347e+19  se_absmax=5.1347e+19  max|diff|=0.0000e+00  bytes_equal=True
+    step   500        v: ref_absmax=2.5420e+19  se_absmax=2.5420e+19  max|diff|=0.0000e+00  bytes_equal=True
+    step   500        w: ref_absmax=5.6147e+19  se_absmax=5.6147e+19  max|diff|=0.0000e+00  bytes_equal=True
+==============================================================================
+DONE
