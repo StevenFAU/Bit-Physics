@@ -1,0 +1,15 @@
+# Stage-2 bit-identity replay invariant (§ D.5; expect ok=True, sha256 9399fc33...718909f34)
+# Generated: 2026-05-25T17-00-00Z  HEAD: 7f1388d96698b4c1d63000371bf83748eaeb896d
+# Cmd: python -m integrity.scripts.replay_prior_phase --prior-phase phase-1 --audit docs/_audits/phase-1/landing-2026-05-20T14-18-00Z.md --gates integrity,pytest,equivalence,determinism,perf-ledger,property,mutation,tolerance-budget
+#
+  PASS  gate=integrity audit_verdict=None
+  PASS  gate=pytest audit_verdict=None
+  PASS  gate=equivalence audit_verdict=None
+  PASS  gate=determinism audit_verdict=None
+  PASS  gate=perf-ledger audit_verdict=None
+  PASS  gate=property audit_verdict=None
+  PASS  gate=mutation audit_verdict=None
+  PASS  gate=tolerance-budget audit_verdict=None
+summary: prior_phase=v0.1.0-phase-1 ok=True
+# output sha256: 9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34
+# verdict: byte-identical to the replay invariant 9399fc33...718909f34. HELD.

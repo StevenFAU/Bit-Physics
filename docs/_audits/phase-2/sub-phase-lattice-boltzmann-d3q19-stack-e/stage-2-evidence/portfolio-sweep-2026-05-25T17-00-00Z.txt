@@ -1,0 +1,31 @@
+# Stage-2 portfolio regression sweep (23 workspace members; each under its OWN pytest config; N1)
+# Generated: 2026-05-25T17-00-00Z  HEAD: 7f1388d96698b4c1d63000371bf83748eaeb896d
+# Runner: .venv/bin/python -m pytest <member> -q  (config auto-discovered per member; NO blanket -W error)
+#
+[tools/testkit] 72 passed in 7.40s
+[tools/integrity] 56 passed in 2.16s
+[tools/diagnostics] 93 passed in 0.30s
+[common/common-py] 25 passed in 0.53s
+[common/common-warp] 38 passed in 0.52s
+[packages/reaction-diffusion-2d] 14 passed in 2.48s
+[packages/strange-attractors] 11 passed in 0.77s
+[packages/mandelbulb-explorer] 10 passed in 0.24s
+[packages/boids-3d] 10 passed in 49.12s
+[packages/physarum] 10 passed in 10.59s
+[packages/reaction-diffusion-3d] 8 passed in 24.19s
+[packages/sph-water] 22 passed in 0.58s
+[packages/eulerian-smoke] 10 passed in 3.25s
+[packages/lattice-boltzmann-d3q19] 12 passed in 4.17s
+[packages/mpm-multimaterial] 10 passed in 0.88s
+[packages/reaction-diffusion-2d-stack-d] 16 passed in 4.22s
+[packages/sph-water-stack-d] 15 passed in 0.66s
+[packages/lattice-boltzmann-d3q19-stack-d] 16 passed in 10.91s
+[packages/mpm-multimaterial-stack-d] 15 passed in 5.37s
+[packages/eulerian-smoke-stack-d] 15 passed, 1 skipped in 8.25s
+[packages/mpm-multimaterial-stack-e] 16 passed in 4.74s
+[packages/eulerian-smoke-stack-e] 17 passed in 6.61s
+[packages/lattice-boltzmann-d3q19-stack-e] 17 passed in 10.31s
+----
+MEMBERS_OK=23  FAILED=[none]
+# gate-14 verdict HELD: lattice-boltzmann-d3q19-stack-e includes both un-skipped gate-14 tests
+#   (within_tolerance=True AND max_abs_err==0.0 at lbm/1e-5) -- the Hard Rule 2 verdict-shift check.

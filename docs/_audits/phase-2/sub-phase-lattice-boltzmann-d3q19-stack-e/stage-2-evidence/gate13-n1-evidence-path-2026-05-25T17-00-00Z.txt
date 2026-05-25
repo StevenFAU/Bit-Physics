@@ -1,0 +1,21 @@
+# Stage-2 gate-13 RED->GREEN replay + N1 pytest-config + IC-16 evidence-path verify
+# Generated: 2026-05-25T17-00-00Z  HEAD: 7f1388d96698b4c1d63000371bf83748eaeb896d
+#
+## Gate-13 (§ E worktree pattern; informational -- confirms the scaffold RED anchor reproduces post-impl)
+  RED anchor: git worktree add --detach <tmp> 411bf3ba (Stage-1a scaffold; committed RED blob bc310b1c)
+    -> 7 errors in 0.35s   (clean ModuleNotFoundError on absent reference/sim/invariants submodules)
+  HEAD GREEN: .venv/bin/python -m pytest packages/lattice-boltzmann-d3q19-stack-e/tests/ -q
+    -> 17 passed in 10.58s
+  verdict: RED->GREEN HELD; scaffold pattern intact post-Stage-1b impl.
+#
+## N1 per-package pytest-config certification (23 workspace members)
+  All 23 members carry their OWN [tool.pytest.ini_options]; portfolio sweep ran each under its
+  own auto-discovered config (NO blanket -W error CLI flag). COVERED = 23 / 23.
+  lattice-boltzmann-d3q19-stack-e: filterwarnings = ["error"] (bare-form strict posture, S0-1;
+  mirrors common-warp -- Warp 1.13.0 emits no warning reaching pytest's gate, no ignore needed).
+#
+## IC-16 evidence-path verify (§ L.8 inheritance check; cat5.audit-links)
+  integrity --all ran cat5.audit-links across ALL repo audits. Findings against any
+  docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/ audit: NONE.
+  D14: both LBM canonicals LFS-committed (no held-local), so the held-local evidence_paths
+  hygiene hazard (§ L.8) is structurally not exercised; verified-once clean.
