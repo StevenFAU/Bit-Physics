@@ -205,7 +205,7 @@ module:
 |---|---|
 | **MPM Stack-E** (next; D9) | the most of the surface — `Particles`, `HashGrid`, `ScalarField3D` (particle-to-grid transfer) |
 | **Smoke Stack-E** | `SHIFTED` (D15; § 6.2) — predicted `ScalarField3D` / `VectorField3D`; **landed socket-only** (Runtime + Capture + Determinism + own f64 `wp.array`s). The f32-pinned dense-grid convenience surface structurally fits a dense-grid sim yet is f64-blocked. |
-| **LBM Stack-E** | a `wp.array(dtype=wp.float32, ndim=4)` directly for the 19-component D3Q19 distribution functions — documented as "LBM-specific, not in common-warp" (the single-component `ScalarField3D` does not fit); the rest of the surface (Runtime, Determinism, Capture) applies |
+| **LBM Stack-E** | `SHIFTED` (D15; § 6.3) — predicted `wp.array(dtype=wp.float32, ndim=4)`; **landed socket-only** with an own `wp.array(dtype=wp.float64, ndim=4)` (f64, **not** the predicted f32) for the 19-component D3Q19 distribution (the single-component `ScalarField3D` does not structurally fit a 19-component lattice **AND** f64 blocks the f32 surface — the `lbm` category tolerance `1e-5` is the portfolio-tightest). Runtime + Determinism + Capture apply |
 
 Port adoption procedure:
 
@@ -280,8 +280,38 @@ home*. It STILL consumes socket-only and rolls its own
 `f32-acceptable → may consume the convenience surfaces` — and the f64 branch holds
 **regardless of whether the convenience surface structurally fits** (MPM: did not fit
 + f64; Smoke: fits + f64 → still socket-only). The § 6 table's Smoke row is updated
-(`SHIFTED`) to the landed socket-only consumption; the LBM Stack-E row remains a
-prediction pending its own plan-drafting. This note is ADDITIVE.
+(`SHIFTED`) to the landed socket-only consumption; the LBM Stack-E row is now landed
+(§ 6.3). This note is ADDITIVE.
+
+### 6.3 Post-LBM-Stack-E confirmation (D15) — the f64-principle's THIRD instance (first with in-kernel reductions)
+
+(FACT — `sub-phase-lattice-boltzmann-d3q19-stack-e` Stages 0/1b/1c/2; D7/D15. The
+THIRD f64 socket-only consumer.) LBM Stack-E **confirms** the § 6.1/§ 6.2 f64-principle
+a third time and extends it along a NEW structural axis. Where MPM was a *particle*
+sim (the f32 `ScalarField3D` did not fit anyway) and Smoke a *dense single-component
+grid* sim (fits but f64-blocked), LBM is a **dense 19-component lattice** — neither the
+single-component `ScalarField3D` nor any f32 convenience surface fits, AND it is the
+**FIRST f64 consumer with genuine in-kernel reductions** (the per-cell 19-term BGK
+moment sums — `density_field` `f.sum(axis=0)`, `momentum_field` `einsum`, the feq
+polynomial). It STILL consumes socket-only and rolls its own
+`wp.array(dtype=wp.float64, ndim=4)` distribution, because:
+
+- **f64 precision is load-bearing (D15/D8).** The Qian-1992 D3Q19 reference is f64;
+  the `lbm` category tolerance (`relative=1e-5`) is the **portfolio-tightest**, and an
+  f32 downcast would destroy it. The own-f64-`wp.array` path is the only viable one.
+- **The reductions stay bit-exact (D11; deferred aspect #4).** With `wp.float64(0.0)`
+  reduction seeds + `wp.float64(1.0)` feq literal + precomputed f64 `c_s²`-derived
+  constants + lex 19-direction order, gate-14 is **cross-stack BIT-EXACT**
+  (`max_abs_err = 0.0` on both canonicals; `equivalence.md` § E) — Warp CPU f64
+  reproduces NumPy's lex-sequential reductions byte-for-byte
+  (`cross-stack-equivalence-methodology.md` § 4.1 + § 6.8).
+
+**Refined general principle (third instance):** the `f64 → socket-only` branch holds
+regardless of structural fit (MPM: no fit; Smoke: fits) **OR** of in-kernel-reduction
+presence (LBM: present). All three f64 Stack-E consumers roll their own
+`wp.array(dtype=wp.float64)` state and consume only Runtime + Capture + Determinism.
+The § 6 table's LBM row is updated (`SHIFTED`) to the landed socket-only consumption.
+This note is ADDITIVE.
 
 ## 7. Warp upstream references
 

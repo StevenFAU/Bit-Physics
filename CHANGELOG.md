@@ -1322,6 +1322,64 @@ landed; gate-14 is **cross-stack BIT-EXACT**.
   second instance, after smoke-Stack-D's finding). The 3D blow-up is confirmed. This
   sub-phase surfaces, but does NOT adjudicate, the Phase-1 provenance question.
 
+### sub-phase-lattice-boltzmann-d3q19-stack-e
+
+EIGHTH per-sim cross-stack port under spec-Phase-2 (`lattice-boltzmann-d3q19` →
+Stack-E NVIDIA-Warp 1.13.0 CPU); the THIRD Stack-E port (after
+`mpm-multimaterial-stack-e` + `eulerian-smoke-stack-e`) and the SECOND
+`lattice-boltzmann-d3q19` port (after the Stack-D Taichi port). Spec § 11.3 item 2.5
+(the Stack-E half; the Stack-D half landed at `lattice-boltzmann-d3q19-stack-d`).
+All 14 gates landed; gate-14 is **cross-stack BIT-EXACT** — the expected,
+plan-drafting-MEASURED verdict (no surprise in either direction).
+
+- **Stack-E Warp D3Q19 BGK port** at `packages/lattice-boltzmann-d3q19-stack-e/`
+  (Stage 1b; gates 4–13 GREEN incl. the **dual-arm gate-4** — 4a D3Q19 equilibrium
+  golden `abs=1e-15` + 4b NS-2D MMS; 23rd workspace member). Socket-only common-warp
+  consumption (Runtime + Capture + Determinism) over its own
+  `wp.array(dtype=wp.float64, ndim=4)` 19-component distribution — the single-component
+  f32 `ScalarField3D` does not structurally fit a 19-component lattice AND f64 blocks
+  the f32 surface (D15/D7; `docs/common/warp.md` § 6.3). The THIRD f64 socket-only
+  consumer and the FIRST with genuine **in-kernel reductions** (the per-cell 19-term
+  BGK moment sums). § L.7 O-2 four-checkpoint Warp-CPU determinism chain complete
+  (4/4; every checkpoint a zero-seed-difference / bit-exact result).
+- **Gate-14 cross-stack BIT-EXACT** (Stage 1c): `within_tolerance=True`,
+  `max_abs_err = 0.0` on BOTH canonicals (Poiseuille 1001 frames + Couette 501 frames)
+  at the resolved `lbm`/`1e-5` (the portfolio-tightest category, ~10 orders of margin).
+  The **THIRD shape-(a) instance and the FIRST on a LAMINAR trajectory** — together
+  with `eulerian-smoke-stack-e` (the second instance, on a CHAOTIC horizon) it
+  empirically **completes the D-S2-1 decoupling**: shape (a) is a zero cross-stack
+  seed-difference property, orthogonal to the Lyapunov regime. Tolerance REUSES
+  `[overrides.lattice-boltzmann-d3q19]` (`lbm`/`1e-5`; D6, no new row — the THIRD port
+  to skip the Stage-1c override add).
+- **§ 6.7 within-sim cross-backend corroboration.** Same sim, same laminar canonicals,
+  same sealed NumPy reference: Stack-D **Taichi** is shape **(b)** (`~6e-15`,
+  division-form feq + summation order) while Stack-E **Warp** is shape **(a)** (`0.0`,
+  reciprocal-operand-form feq + `wp.float64(0.0)` seeds). Varying ONLY the backend
+  flips the seed-difference from `~6e-15` to `0.0` — the sharpest demonstration that
+  the cross-stack seed-difference is a **backend-pair arithmetic property**, not the
+  sim's or the trajectory's.
+- **Methodology + conventions refinements (Stage 2):**
+  `cross-stack-equivalence-methodology.md` § 4.1 second-instance amendment
+  (collision-step FP-accumulation is determinism-safe AND bit-faithful on Warp CPU
+  f64; deferred aspect #4's FIRST Warp measurement) + § 6.7 within-sim corroboration +
+  **new § 6.8** (the Warp-CPU-f64 ↔ NumPy zero-seed-difference backend-pair
+  observation, **`n=2`** — suggestive, NOT established; surfaced not asserted, with a
+  portfolio-track-future-ports qualifier; routed to the methodology doc over
+  `sub-phase-conventions.md` § L.7 "O-3" per D-S2-1); `sub-phase-conventions.md`
+  § L.7 O-1 shape-(a) **third-instance / first-laminar** note; `docs/common/warp.md`
+  § 6 LBM-row dtype `f32 → f64` (D15) + new § 6.3 (the f64-principle's third instance,
+  first with in-kernel reductions).
+- **Schema-corpus representative-subset:** the Couette 27 MB capture (the smaller
+  canonical) at
+  `tests/fixtures/legacy-captures/phase-2-lattice-boltzmann-d3q19-stack-e-couette.{h5,json}`
+  (LFS-routed; corpus round-trip verified). BOTH canonicals are LFS-committable
+  (≤ 256 MiB) — NO held-local (D14). No `-phase-N` tag (D12); local-only (D13).
+- **Phase-2 cross-stack status:** completes the Stack-E ports of spec § 11.3
+  items 2.3–2.5 (MPM + smoke + LBM → Stack-E all landed). The remaining enumerated
+  spec § 11.3 cross-stack port is `reaction-diffusion-2d` → Stack-C (charter § 8;
+  a different `common-cpp` infrastructure arc). Banked LFS-architecture +
+  comprehensive-cleanup sub-phases remain queued for after Phase-2 completion.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
