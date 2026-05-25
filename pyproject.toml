@@ -70,6 +70,14 @@ members = [
   # Capture/Particles/Grids/HashGrid at 1b; hello smoke sim at 1c) that the
   # spec § 11.3 Stack-E ports (MPM 2.3 / Smoke 2.4 / LBM 2.5) consume.
   "common/common-warp",
+  # Spec-Phase-2 Stack-E port of mpm-multimaterial (SIXTH per-sim cross-stack
+  # port; FIRST Stack-E port; spec § 11.3 item 2.3). The 21st workspace member;
+  # FIRST common-warp consumer. NVIDIA Warp @wp.kernel MLS-MPM/APIC neo-Hookean
+  # single-material against the Phase-1-frozen NumPy+numba reference; cross-stack
+  # content-equivalent at relative = 1e-4 (mpm category, override REUSED per D7).
+  # Consumes the common-warp §1.9.1 socket only (Runtime + Capture + Determinism
+  # per D10); own wp.array(dtype=wp.float64) per D15. Registered at Stage 1a.
+  "packages/mpm-multimaterial-stack-e",
 ]
 exclude = []
 

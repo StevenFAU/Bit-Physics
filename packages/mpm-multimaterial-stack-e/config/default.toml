@@ -1,0 +1,29 @@
+# mpm-multimaterial-stack-e — default run configuration.
+#
+# Canonical + diagnostic descriptors are pinned in
+# mpm_multimaterial_stack_e/reference/mls_mpm_warp.py (re-derived verbatim from
+# the Phase-1 reference; no Phase-1 import). This file records the run-time
+# device + tolerance posture for operators; the runners do not read it (the
+# constants are module-level Finals).
+
+[device]
+backend = "cpu"          # D4 bit-exact-same-hw; GPU is epsilon-bounded (out of scope)
+deterministic = true     # Warp CPU wp.launch is structurally serial (D5)
+
+[cross_stack]
+category = "mpm"         # tolerance.toml [overrides.mpm-multimaterial]; relative = 1e-4
+reference_capture = "captures/mpm-ref/drop-impact-128cube-seed42-step500"
+
+[canonical]
+descriptor = "drop-impact-128cube-seed42-step500"
+grid_n = 128
+n_particles = 1000000
+n_steps = 500
+capture_interval = 50
+
+[diagnostic]
+descriptor = "drop-impact-16cube-seed42-step50"
+grid_n = 16
+n_particles = 5000
+n_steps = 50
+capture_interval = 10
