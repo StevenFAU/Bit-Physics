@@ -20,6 +20,7 @@ widening (spec § 2.6). FIFTH per-sim override.
 | Pair | Status | Phase |
 |---|---|---|
 | NumPy-reference (CPU) ↔ Stack-D Taichi (CPU) | **gate-14 CHAOTIC-REGIME escape-hatch invoked (within_tolerance=False is the correct verdict)** (Stage 1 + Stage 2) | Phase 2 cross-stack |
+| NumPy-reference (CPU) ↔ Stack-E Warp (CPU) | **gate-14 cross-stack BIT-EXACT (within_tolerance=True, max_abs_err=0.0 on BOTH descriptors, through the full horizon incl. the 3D blow-up)** (§ E below) | Phase 2 cross-stack |
 | Stack-C (Vulkan, MAC-staggered) self-replicates | Not yet exercised (unimplemented) | Phase 2+ |
 | Flow-map family variants (Clebsch-PFM etc.) | Not in scope | Phase 4+ |
 
@@ -172,3 +173,97 @@ is order-deterministic; the chaos surfaces ONLY across two arithmetic backends.
   canonicals should "exhibit stable physics" rather than "exercise the numerics
   including unstable cases" is a Phase-1 design question surfaced (not resolved)
   here; banked for operator routing (Option-2).
+
+---
+
+# § E. Stack-E (NVIDIA Warp, CPU) — cross-stack BIT-EXACT witness
+
+> **The SECOND `eulerian-smoke` cross-stack pair, and the SIXTH spec-Phase-2 pair.**
+> Where the Stack-D Taichi port produced a chaotic-regime escape-hatch verdict
+> (`within_tolerance=False`; § 2–§ 4 above), the Stack-E Warp port produced the
+> **opposite** result: gate-14 is **cross-stack BIT-EXACT** — the Warp port matches
+> the sealed Phase-1 NumPy reference **byte-for-byte** across the full horizon of
+> BOTH canonicals, `within_tolerance=True`, `max_abs_err=0.0`. This section is the
+> bit-exactness witness; it does NOT supersede the Stack-D chaotic-regime witness
+> (a different pair, a different backend, a different — and equally correct — verdict).
+
+## § E.1. The cross-stack pair
+
+`sim.{category="volumetric-grid", name="eulerian-smoke"}`, `dtype=f64`. LEFT =
+Phase-1 NumPy reference (`numpy-reference`; SEALED). RIGHT = Stack-E NVIDIA-Warp
+CPU port (`warp-stack-e`). TWO canonical descriptors (D4 dual-capture); tolerance
+resolves to `smoke`/`relative=1e-4` via the REUSED `[overrides.eulerian-smoke]`
+(D6; verified post-amendment — the LEFT/RIGHT manifests agree on
+`sim.{name,category,variant}`).
+
+## § E.2. Gate-14 verdict — within_tolerance=True (cross-stack BIT-EXACT)
+
+`compare_captures(numpy_ref, warp_stack_e)` at `relative=1e-4, absolute=0.0`. BOTH
+verdicts `within_tolerance=True`; the cross-stack difference is **exactly zero** at
+every committed frame (the strongest possible form of equivalence — well beyond the
+`1e-4` budget):
+
+| Descriptor | within_tolerance | worst max_abs_err | per-frame divergence |
+|---|---|---|---|
+| `taylor-green-128cube-seed42-step500` (3D) | **True** | `0.0` | `0.0` at every frame (0,50,…,500) |
+| `lid-driven-cavity-128sq-re100-seed42-step1000` (2D) | **True** | `0.0` | `0.0` at every frame (0,100,…,1000) |
+
+## § E.3. Bit-exactness through the chaotic horizon (the load-bearing finding)
+
+The 3D Taylor-Green canonical genuinely **blows up** — at step 500 the reference
+reaches `|u| ≈ 5.13e19`, `|v| ≈ 2.54e19`, `|w| ≈ 5.61e19` — yet the Warp port reaches
+those magnitudes **bit-for-bit** (`a.tobytes() == b.tobytes()`, `max|diff| = 0.0`):
+
+| Descriptor | frame | field | ref absmax | stack-e absmax | max\|diff\| | bytes_equal |
+|---|---|---|---|---|---|---|
+| 3D | 500 | u | 5.1347e+19 | 5.1347e+19 | 0.0 | True |
+| 3D | 500 | v | 2.5420e+19 | 2.5420e+19 | 0.0 | True |
+| 3D | 500 | w | 5.6147e+19 | 5.6147e+19 | 0.0 | True |
+| 2D | 1000 | u | 2.0754e+00 | 2.0754e+00 | 0.0 | True |
+| 2D | 1000 | v | 1.2604e+00 | 1.2604e+00 | 0.0 | True |
+
+`within_tolerance` verdicts the cross-stack DIFFERENCE, not the field magnitude;
+a positive-Lyapunov trajectory blowing up to `5e19` is compatible with a `0.0`
+cross-stack difference when both backends compute the identical FP sequence.
+
+## § E.4. This is not a defect (distinct-provenance evidence)
+
+The two captures are genuinely independent runs, not a copy or a wiring artifact:
+
+| Axis | LEFT (NumPy reference) | RIGHT (Warp Stack-E) |
+|---|---|---|
+| `.h5` checksum (2D / 3D) | `e13b0d05…` / `4604ebdc…` | `aa67929f…` / `6b5158e8…` |
+| `stack.{build_id, name}` | `sub-phase-eulerian-smoke` / `numpy-reference` | `sub-phase-eulerian-smoke-stack-e` / `warp-stack-e` |
+| `run.start_utc` | 2026-05-22 | 2026-05-25 |
+| `run.wall_clock_seconds` (2D / 3D) | 5.087s / 691.047s | 5.897s / 541.977s |
+
+Distinct `.h5` payloads, distinct provenance, distinct wall-clocks — the f64 field
+arrays nonetheless agree byte-for-byte.
+
+## § E.5. Why bit-exact (logical consistency with step-1 port faithfulness)
+
+The Stage-1b step-1 cross-stack baseline was already **BIT-EXACT** (`max_abs_err=0.0`,
+exceeding the `~1e-16` FP-round-off prediction — the Warp port replicates the NumPy
+`np.roll` gather order, the `np.mod`-via-floor periodic wrap, and the fixed-20-sweep
+Jacobi arithmetic with identical f64 operation order). With a step-1 cross-stack
+**seed difference of exactly zero**, a positive-Lyapunov trajectory has **nothing to
+amplify** — so the trajectories stay byte-identical for the entire horizon,
+**regardless of Lyapunov regime**. Chaotic amplification requires a non-zero
+seed-difference; it does not manufacture one.
+
+This is the inverse of the Stack-D Taichi result: Taichi introduced a Taichi-FP-specific
+`~1e-16` step-1 round-off that the chaotic flow amplified to `O(field)`
+(`within_tolerance=False`); Warp, executing the same algorithm with the same operation
+order, introduces no round-off. **The chaotic-regime escape-hatch is therefore NOT
+stack-portable Taichi → Warp** — cross-stack divergence is a property of the
+backend-pair's arithmetic, not of the (shared) chaotic trajectory.
+
+## § E.6. Within-stack correctness — gates 4-13 all GREEN
+
+The Stack-E port's physical correctness is verified by the stack-agnostic gates
+(15 passed at Stage 1b; the gate-14 cross-stack assertion runs at Stage 1c-revisited).
+gate-10 within-stack determinism is bit-exact (`tolerance=0.0`) even though the 3D
+trajectory is chaotic — within-stack determinism is order-deterministic. The
+cross-stack bit-exactness (this section) is a strictly stronger statement: not just
+that the port is internally reproducible, but that it reproduces a *different backend*
+byte-for-byte.
