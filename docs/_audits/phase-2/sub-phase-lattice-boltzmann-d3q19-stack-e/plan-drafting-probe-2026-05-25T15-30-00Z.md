@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-e-plan-drafting
 stage: plan-drafting-probe
 phase: phase-2
-head_sha: <COMMIT-1-SHA — back-filled per Convention #12 / N1>
+head_sha: 68bddc2fa29019fba5dbead5957d7241dbcce005
 head_sha_at_checkpoint: c5806f3dae69c6b1f65505ec42c0e9595ebe6479
 date: 2026-05-25T15-30-00Z
 verdict: probe-complete

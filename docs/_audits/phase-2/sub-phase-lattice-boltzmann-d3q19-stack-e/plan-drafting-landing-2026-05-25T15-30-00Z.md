@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-e-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: <COMMIT-3-SHA — back-filled per Convention #12 / N1>
+head_sha: cd74bcde27b94d3a89fd96a4a7ff42f2fe9dca28
 head_sha_at_checkpoint: 80753c4dc4985996d65b64ec03f38198e6f4fc87
 date: 2026-05-25T15-30-00Z
 verdict: plan-drafting-CONFIRMED
@@ -32,9 +32,9 @@ evidence_paths:
 
 | Artifact | Path | Commit |
 |---|---|---|
-| Plan-drafting probe | `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/plan-drafting-probe-2026-05-25T15-30-00Z.md` | COMMIT 1 (`head_sha` back-filled in COMMIT 4) |
-| Charter | `docs/phases/sub-phase-lattice-boltzmann-d3q19-stack-e.md` | COMMIT 2 |
-| Plan-drafting landing (this) | `…/plan-drafting-landing-2026-05-25T15-30-00Z.md` | COMMIT 3 (`head_sha` back-filled in COMMIT 4) |
+| Plan-drafting probe | `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/plan-drafting-probe-2026-05-25T15-30-00Z.md` | COMMIT 1 = `68bddc2fa29019fba5dbead5957d7241dbcce005` (`head_sha` back-filled in COMMIT 4) |
+| Charter | `docs/phases/sub-phase-lattice-boltzmann-d3q19-stack-e.md` | COMMIT 2 = `80753c4dc4985996d65b64ec03f38198e6f4fc87` |
+| Plan-drafting landing (this) | `…/plan-drafting-landing-2026-05-25T15-30-00Z.md` | COMMIT 3 = `cd74bcde27b94d3a89fd96a4a7ff42f2fe9dca28` (`head_sha` back-filled in COMMIT 4) |
 | SHA back-fill | `…/sha-back-fill-2026-05-25T15-30-00Z.md` | COMMIT 4 (SHA reported to coordinator) |
 
 Verdict: **plan-drafting-CONFIRMED.** Drafting is structurally complete; no blocking
@@ -166,11 +166,12 @@ LFS-committable (no held-local); D15 warp.md § 6 line-208 LBM-row dtype f32→f
   warp.md `eff17d30…`) and are unaffected by back-fill (those docs were untouched by
   this chain).
 - **SHA back-fill (Convention #12):** this landing's `head_sha` is placeholder-deferred
-  and is back-filled to its own committing-commit SHA (COMMIT 3) in COMMIT 4 (separate
-  commit; never `--amend`; N1 enumeration). The probe's `head_sha` is back-filled to its
-  committing commit (COMMIT 1). The charter (`docs/phases/`) carries no `head_sha`
-  front-matter (it is a plan, not an audit) — recorded for the chain at COMMIT 2; no
-  back-fill. See the SHA back-fill ledger for the full enumeration.
+  and is back-filled to its own committing-commit SHA `cd74bcde27b94d3a89fd96a4a7ff42f2fe9dca28`
+  (COMMIT 3) in COMMIT 4 (separate commit; never `--amend`; N1 enumeration). The probe's
+  `head_sha` is back-filled to its committing commit `68bddc2fa29019fba5dbead5957d7241dbcce005`
+  (COMMIT 1). The charter (`docs/phases/`) carries no `head_sha` front-matter (it is a
+  plan, not an audit) — recorded for the chain at `80753c4dc4985996d65b64ec03f38198e6f4fc87`
+  (COMMIT 2); no back-fill. See the SHA back-fill ledger for the full enumeration.
 
 ## § 9. Next step
 
