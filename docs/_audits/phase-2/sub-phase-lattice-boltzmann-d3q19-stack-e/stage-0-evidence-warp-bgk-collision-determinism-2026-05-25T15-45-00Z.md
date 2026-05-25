@@ -5,7 +5,7 @@ phase: 2
 artifact: task
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-e-stage-0-evidence-warp-bgk-collision-determinism
 subject: "Stage-0 Task 0.2 empirical-verification evidence — Warp 1.13.0 CPU-mode bit-determinism of a D3Q19 BGK-collision @wp.kernel (the LBM-specific cross-stack-sensitive surface: the 19-term moment reductions density_field/momentum_field + the Qian-1992 feq polynomial + the BGK relaxation f - (f - feq)/tau; IC-15 deferred aspect #4 — collision-step FP-accumulation). This is the R-A1 anchor / section-L.7 O-2 four-checkpoint Warp CPU determinism chain CHECKPOINT 1. EPHEMERAL verification kernel (NOT committed to packages/lattice-boltzmann-d3q19-stack-e/; the package does not exist yet — Stage 1a's job; reproduced here for audit reference per Convention A) + 6-run sha256 evidence (3 pairs, identical seed+inputs, device=cpu): all six bit-identical -> 74e6bc16...282838bc. Confirms R-LBME4 (collision FP-accumulation determinism-safe) + R-LBME5 (atomic-scatter N/A — pure per-cell gather, no wp.atomic_add). BONUS faithfulness witness (NOT the R-A1 anchor claim): the Warp f64 collision reproduces the NumPy reference collision byte-for-byte (max_abs_err = 0.0) — MEASURED per section L.8, corroborating the probe Task 1.6 Part B step-1 seed-difference 0.0 and grounding the shape-(a) gate-14 prediction. Mass-conservation witness: max|rho_post - rho_pre| = 4.441e-16 (collision invariant to f64 round-off). Cited from Stage-0 checkpoint section 8."
-head_sha: PENDING-COMMIT-1-SHA-BACKFILL
+head_sha: 10af482ca05e1cccbf95fcda92c49f2004570be8
 head_sha_at_checkpoint: c2e9621a7488619b479430f8180d985ac3a41317
 parent_audits:
   - docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/plan-drafting-landing-2026-05-25T15-30-00Z.md
