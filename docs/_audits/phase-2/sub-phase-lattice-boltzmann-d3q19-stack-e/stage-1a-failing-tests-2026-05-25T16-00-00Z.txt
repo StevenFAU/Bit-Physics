@@ -1,0 +1,88 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+collected 0 items / 7 errors
+
+==================================== ERRORS ====================================
+____________ ERROR collecting tests/test_cross_stack_equivalence.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_cross_stack_equivalence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_cross_stack_equivalence.py:44: in <module>
+    from lattice_boltzmann_d3q19_stack_e.sim import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.sim'
+___________ ERROR collecting tests/test_d3q19_equilibrium_golden.py ____________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_d3q19_equilibrium_golden.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_d3q19_equilibrium_golden.py:23: in <module>
+    from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.reference'
+__________________ ERROR collecting tests/test_determinism.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_determinism.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_determinism.py:46: in <module>
+    from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.reference'
+__________________ ERROR collecting tests/test_diagnostics.py __________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_diagnostics.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_diagnostics.py:25: in <module>
+    from lattice_boltzmann_d3q19_stack_e.sim import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.sim'
+________________ ERROR collecting tests/test_mms_convergence.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_mms_convergence.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_mms_convergence.py:37: in <module>
+    from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.reference'
+________________ ERROR collecting tests/test_pbt_invariants.py _________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_pbt_invariants.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_pbt_invariants.py:18: in <module>
+    from lattice_boltzmann_d3q19_stack_e.invariants import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.invariants'
+_______________ ERROR collecting tests/test_reference_sanity.py ________________
+ImportError while importing test module '/home/otacon/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-stack-e/tests/test_reference_sanity.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/usr/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+packages/lattice-boltzmann-d3q19-stack-e/tests/test_reference_sanity.py:17: in <module>
+    from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
+E   ModuleNotFoundError: No module named 'lattice_boltzmann_d3q19_stack_e.reference'
+=========================== short test summary info ============================
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_cross_stack_equivalence.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_d3q19_equilibrium_golden.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_determinism.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_diagnostics.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_mms_convergence.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_pbt_invariants.py
+ERROR packages/lattice-boltzmann-d3q19-stack-e/tests/test_reference_sanity.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 7 errors during collection !!!!!!!!!!!!!!!!!!!!
+============================== 7 errors in 0.35s ===============================
