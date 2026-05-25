@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-plan-drafting
 stage: plan-drafting
 phase: 2
 date: 2026-05-25T19-00-00Z
-head_sha: <COMMIT-1-SHA — back-filled per Convention #12>
+head_sha: c7007be967ce2afe9c086ea148f988c8dd77ce67
 head_sha_at_checkpoint: a33cb0b21ea2b4cfba43aac6be26d847635cc843
 verdict: CONFIRMED — charter dispatchable; common-cpp NOT MATURE confirmed; 6-stage bootstrap refined; D1-D6 ratified + D7-D14 surfaced
 ---

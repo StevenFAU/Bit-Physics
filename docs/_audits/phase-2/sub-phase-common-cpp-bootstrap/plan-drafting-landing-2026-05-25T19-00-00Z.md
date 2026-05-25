@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-plan-drafting
 stage: plan-drafting
 phase: 2
 date: 2026-05-25T19-00-00Z
-head_sha: <COMMIT-3-SHA — back-filled per Convention #12>
+head_sha: e54ef29a0974cbc116bedc0c92eeed0959b3af44
 head_sha_at_checkpoint: a33cb0b21ea2b4cfba43aac6be26d847635cc843
 verdict: CONFIRMED — charter dispatchable; D1-D6 ratified + D7-D14 surfaced; 6-stage decomposition; 223 → 229 shifts
 evidence_paths:
@@ -25,9 +25,9 @@ the charter. Operator routes D7–D14, then dispatches Stage 0.
 
 | # | Artifact | Commit | head_sha (back-filled) |
 |---|---|---|---|
-| 1 | `plan-drafting-probe-2026-05-25T19-00-00Z.md` | COMMIT 1 — `docs(common-cpp-bootstrap-plan-drafting): plan-drafting probe report` | `<COMMIT-1-SHA>` |
-| 2 | `docs/phases/sub-phase-common-cpp-bootstrap.md` (charter) | COMMIT 2 — `docs(common-cpp-bootstrap-plan-drafting): sub-phase charter` | `<COMMIT-2-SHA>` |
-| 3 | `plan-drafting-landing-2026-05-25T19-00-00Z.md` (this file) | COMMIT 3 — `docs(common-cpp-bootstrap-plan-drafting): plan-drafting landing audit` | `<COMMIT-3-SHA>` |
+| 1 | `plan-drafting-probe-2026-05-25T19-00-00Z.md` | COMMIT 1 — `docs(common-cpp-bootstrap-plan-drafting): plan-drafting probe report` | `c7007be967ce2afe9c086ea148f988c8dd77ce67` |
+| 2 | `docs/phases/sub-phase-common-cpp-bootstrap.md` (charter) | COMMIT 2 — `docs(common-cpp-bootstrap-plan-drafting): sub-phase charter` | `b4032161af00e33fc34e74023741f00022a2733c` (recorded; charter is a plan, not back-filled) |
+| 3 | `plan-drafting-landing-2026-05-25T19-00-00Z.md` (this file) | COMMIT 3 — `docs(common-cpp-bootstrap-plan-drafting): plan-drafting landing audit` | `e54ef29a0974cbc116bedc0c92eeed0959b3af44` |
 | 4 | `plan-drafting-sha-back-fill-2026-05-25T19-00-00Z.md` | COMMIT 4 — `chore(common-cpp-bootstrap-plan-drafting-sha-backfill): …` | (ledger; own commit not back-filled) |
 
 The charter (COMMIT 2) is a `docs/phases/` plan and carries **no `head_sha` front-matter**
