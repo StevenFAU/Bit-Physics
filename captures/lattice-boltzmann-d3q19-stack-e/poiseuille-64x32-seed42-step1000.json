@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      64,
+      32,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "boundary": "bounce-back-y-walls-periodic-xz",
+      "descriptor": "poiseuille-64x32-seed42-step1000",
+      "force_x_lattice": 1e-05,
+      "nz_convention": "depth-3-z-periodic-slab",
+      "tau": 0.7
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:c44cd395fb55d316fdd9fd41f52ffe317f28eeb12c0fcf7c85bc536356791dfa",
+    "format": "hdf5",
+    "path": "poiseuille-64x32-seed42-step1000.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-25T00:00:00Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 4.943834202014841
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "lattice",
+    "name": "lattice-boltzmann-d3q19",
+    "variant": "bgk-d3q19-qian-1992"
+  },
+  "stack": {
+    "build_id": "sub-phase-lattice-boltzmann-d3q19-stack-e",
+    "name": "warp-stack-e",
+    "version": "0.0.1"
+  }
+}

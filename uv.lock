@@ -22,6 +22,7 @@ members = [
     "eulerian-smoke-stack-e",
     "lattice-boltzmann-d3q19",
     "lattice-boltzmann-d3q19-stack-d",
+    "lattice-boltzmann-d3q19-stack-e",
     "mandelbulb-explorer",
     "mpm-multimaterial",
     "mpm-multimaterial-stack-d",
@@ -875,6 +876,44 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
     { name = "taichi", specifier = ">=1.7,<2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "lattice-boltzmann-d3q19-stack-e"
+version = "0.0.0"
+source = { editable = "packages/lattice-boltzmann-d3q19-stack-e" }
+dependencies = [
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
 ]
 provides-extras = ["dev"]
 

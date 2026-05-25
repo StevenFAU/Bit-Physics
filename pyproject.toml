@@ -90,6 +90,15 @@ members = [
   # Capture + Determinism per D7); own wp.array(dtype=wp.float64) per D15.
   # Registered at Stage 1b (the failing-tests scaffold landed at Stage 1a).
   "packages/eulerian-smoke-stack-e",
+  # EIGHTH per-sim cross-stack port; THIRD Stack-E port; SECOND LBM port. D3Q19
+  # BGK lattice-Boltzmann (Qian-1992 equilibrium + Guo-2002 forcing); NVIDIA Warp
+  # CPU. Cross-stack content-equivalent at relative = 1e-5 (lbm category, the
+  # portfolio-tightest) -- a cross-stack BIT-EXACT witness (within_tolerance=True,
+  # max_abs_err=0.0; shape (a), the FIRST on a laminar trajectory; D10). Consumes
+  # the common-warp §1.9.1 socket only (Runtime + Capture + Determinism per D7);
+  # own wp.array(dtype=wp.float64, ndim=4) per D8/D15. Registered at Stage 1b (the
+  # failing-tests scaffold landed at Stage 1a).
+  "packages/lattice-boltzmann-d3q19-stack-e",
 ]
 exclude = []
 
