@@ -15,7 +15,13 @@ evidence_paths:
   - captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.json
   - captures/eulerian-smoke-ref/taylor-green-128cube-seed42-step500.json
   - captures/eulerian-smoke-stack-e/lid-driven-cavity-128sq-re100-seed42-step1000.json
-  - captures/eulerian-smoke-stack-e/taylor-green-128cube-seed42-step500.json
+  # SHIFTED (Stage 2; IC-16 evidence-path-verify correction): the held-local 3D capture
+  # `captures/eulerian-smoke-stack-e/taylor-green-128cube-seed42-step500.json` (untracked per
+  # D14) was REMOVED from evidence_paths to align with the established held-local-capture
+  # pattern (smoke-Stack-D / MPM-Stack-D omit untracked held-local paths from evidence_paths)
+  # and restore the 14-SOFT_WARN integrity baseline (cat5.audit-links flags untracked
+  # evidence_paths entries). The capture remains referenced in prose (§§ 1, 3, 4) + its `.h5`
+  # content sha `6b5158e8…` is recorded there. Rationale: Stage-2 landing audit.
 ---
 
 # Stage-1c Formal Gate-14 — Evidence + Falsification Analysis (O-2 Checkpoint 4)

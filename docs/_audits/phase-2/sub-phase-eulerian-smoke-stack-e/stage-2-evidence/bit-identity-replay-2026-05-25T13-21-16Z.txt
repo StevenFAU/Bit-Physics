@@ -1,0 +1,12 @@
+# Stage-2 bit-identity replay invariant (§ D.3; expect ok=True, sha256 9399fc33...718909f34)
+# Generated: 2026-05-25T14:07:30Z  HEAD: 03da239dd54a25dbdb9f2fb8a08476009359fe32
+#
+  PASS  gate=integrity audit_verdict=None
+  PASS  gate=pytest audit_verdict=None
+  PASS  gate=equivalence audit_verdict=None
+  PASS  gate=determinism audit_verdict=None
+  PASS  gate=perf-ledger audit_verdict=None
+  PASS  gate=property audit_verdict=None
+  PASS  gate=mutation audit_verdict=None
+  PASS  gate=tolerance-budget audit_verdict=None
+summary: prior_phase=v0.1.0-phase-1 ok=True
