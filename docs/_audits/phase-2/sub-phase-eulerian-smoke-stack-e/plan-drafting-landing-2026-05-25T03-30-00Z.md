@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-e-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 96c067ca9a856ec8457c75b0a92c5dd4693ddd79
 head_sha_at_checkpoint: 879be47551dbfd8801a0ccfefc592bf6dcc9d60f
 date: 2026-05-25T03-30-00Z
 verdict: plan-drafting-CONFIRMED
@@ -146,9 +146,10 @@ line-207 refinement noted (no edit at plan-drafting).
   probe (conventions `1937a7cf…`, methodology `a154d10c…`, architecture `e82b7b8e…`)
   and are unaffected by back-fill (those docs were untouched by this chain).
 - **SHA back-fill (Convention #12):** this landing's `head_sha` was placeholder-deferred
-  (`<COMMIT_3_SHA_PENDING>`) and is back-filled to its own committing-commit SHA
-  (COMMIT 3) in COMMIT 4 (separate commit; never `--amend`; N1 enumeration). The probe's
-  `head_sha` (placeholder `<COMMIT_1_SHA_PENDING>`) is back-filled to its committing
+  and is back-filled to its own committing-commit SHA
+  `96c067ca9a856ec8457c75b0a92c5dd4693ddd79` (COMMIT 3) in COMMIT 4 (separate commit;
+  never `--amend`; N1 enumeration). The probe's
+  `head_sha` is back-filled to its committing
   commit `1ec2eae113165522de0a7155b61f4f82a98d2255` (COMMIT 1). The charter
   (`docs/phases/`) carries no `head_sha` front-matter (it is a plan, not an audit) —
   recorded for the chain at `879be47551dbfd8801a0ccfefc592bf6dcc9d60f` (COMMIT 2); no
