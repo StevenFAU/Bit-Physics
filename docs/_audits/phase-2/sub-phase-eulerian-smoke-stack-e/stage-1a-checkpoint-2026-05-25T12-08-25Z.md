@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-e-stage-1a
 stage: stage-1a-checkpoint
 phase: phase-2
-head_sha: <COMMIT_2_SHA_PENDING>
+head_sha: 03752a920908f538aa6234dd7022fc5d8774f11a
 head_sha_at_checkpoint: b04cdbdefeeae90591e41e2dcbd7733cfb498382
 date: 2026-05-25T12-08-25Z
 verdict: stage-1a-CONFIRMED
