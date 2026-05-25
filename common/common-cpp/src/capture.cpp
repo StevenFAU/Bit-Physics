@@ -39,11 +39,19 @@
 
 namespace bit_physics::common_cpp::capture {
 
-namespace {
-
 using json = nlohmann::json;
 
-json metadata_to_json(const Manifest& m) {
+namespace {
+
+std::filesystem::path payload_path_for(const std::filesystem::path& manifest_path) {
+    auto bin = manifest_path;
+    bin.replace_extension(".bin");
+    return bin;
+}
+
+}  // namespace
+
+json manifest_to_json(const Manifest& m) {
     json out;
     out["schema_version"] = m.schema_version;
     out["sim"] = {{"name", m.sim.name}, {"category", m.sim.category},
@@ -72,7 +80,7 @@ json metadata_to_json(const Manifest& m) {
     return out;
 }
 
-Manifest json_to_metadata(const json& in) {
+Manifest manifest_from_json(const json& in) {
     Manifest m;
     m.schema_version = in.at("schema_version").get<std::string>();
     m.sim.name = in.at("sim").at("name").get<std::string>();
@@ -103,14 +111,6 @@ Manifest json_to_metadata(const json& in) {
     return m;
 }
 
-std::filesystem::path payload_path_for(const std::filesystem::path& manifest_path) {
-    auto bin = manifest_path;
-    bin.replace_extension(".bin");
-    return bin;
-}
-
-}  // namespace
-
 struct Reader::Impl {
     Manifest manifest;
     json step_index;  // the "steps" array from the manifest JSON
@@ -124,7 +124,7 @@ Reader::Reader(const std::filesystem::path& manifest_path)
         throw std::runtime_error("Reader: cannot open manifest " + manifest_path.string());
     }
     json doc = json::parse(fh);
-    impl_->manifest = json_to_metadata(doc);
+    impl_->manifest = manifest_from_json(doc);
     impl_->step_index = doc.value("steps", json::array());
     auto payload = manifest_path.parent_path() / impl_->manifest.payload.path;
     impl_->payload_path = payload;
@@ -247,7 +247,7 @@ void Writer::finalize() {
     }
     payload.close();
 
-    json manifest_doc = metadata_to_json(impl_->manifest);
+    json manifest_doc = manifest_to_json(impl_->manifest);
     manifest_doc["steps"] = steps;
     std::ofstream manifest_fh(impl_->manifest_path);
     if (!manifest_fh) {

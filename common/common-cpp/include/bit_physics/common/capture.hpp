@@ -116,4 +116,68 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
+// Manifest <-> JSON (shared by the raw-binary and HDF5 writers/readers). The
+// JSON sidecar uses nlohmann::json's default ordered-map (keys sorted), so
+// dump(2) is the C++ analog of the testkit's json.dump(sort_keys=True, indent=2).
+nlohmann::json manifest_to_json(const Manifest& m);
+Manifest manifest_from_json(const nlohmann::json& j);
+
+// ---------------------------------------------------------------------------
+// HDF5 capture-v1 (Stage 1b; charter §2 row "Stage 1b" + §3 C-1).
+//
+// Replicates the testkit capture-v1 layout (tools/testkit/capture/writer.py):
+//   <descriptor>.h5  — /steps/{N}/state/{field}, /steps/{N}/diagnostics/{check},
+//                      /metadata attrs (schema_version, sim_name, sim_category,
+//                      sim_variant, stack_name, seed).
+//   <descriptor>.json — manifest sidecar (payload.path = .h5 name,
+//                      payload.checksum = "sha256:" + file hash).
+//
+// C-1's bar (charter §3) is the C++-internal write -> read-back round-trip
+// (field + manifest equality). Cross-language Python-reads-C++ parse-equality is
+// C-6 (Stage 1c), NOT this stage.
+// ---------------------------------------------------------------------------
+
+class Hdf5Writer {
+public:
+    // `manifest_path` is the .json sidecar path; the .h5 payload path is
+    // manifest.payload.path (resolved alongside) or derived from the stem.
+    Hdf5Writer(const std::filesystem::path& manifest_path, Manifest m);
+    ~Hdf5Writer();
+
+    Hdf5Writer(const Hdf5Writer&) = delete;
+    Hdf5Writer& operator=(const Hdf5Writer&) = delete;
+    Hdf5Writer(Hdf5Writer&&) noexcept;
+    Hdf5Writer& operator=(Hdf5Writer&&) noexcept;
+
+    void write_step(std::size_t step_number, const StepData& data);
+    // Writes the .h5 (capture-v1 layout) + the .json sidecar with checksum.
+    void finalize();
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
+class Hdf5Reader {
+public:
+    explicit Hdf5Reader(const std::filesystem::path& manifest_path);
+    ~Hdf5Reader();
+
+    Hdf5Reader(const Hdf5Reader&) = delete;
+    Hdf5Reader& operator=(const Hdf5Reader&) = delete;
+    Hdf5Reader(Hdf5Reader&&) noexcept;
+    Hdf5Reader& operator=(Hdf5Reader&&) noexcept;
+
+    const Manifest& manifest() const;
+    // Metadata attrs read from the .h5 /metadata group (subset of the manifest).
+    const std::unordered_map<std::string, std::string>& metadata() const;
+    // Sorted step numbers present in /steps.
+    std::vector<std::size_t> step_numbers() const;
+    StepData read_step(std::size_t step_number) const;
+
+private:
+    struct Impl;
+    std::unique_ptr<Impl> impl_;
+};
+
 }  // namespace bit_physics::common_cpp::capture

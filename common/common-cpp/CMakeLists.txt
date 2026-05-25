@@ -120,6 +120,40 @@ else()
     "Install libvulkan-dev + mesa-vulkan-drivers to build the Stack-C substrate.")
 endif()
 
+# ---- HDF5 capture-v1 (Stage 1b; requires libhdf5 + HighFive) -----
+#
+# D3/D8: system libhdf5-dev + header-only HighFive (highfive-devs fork). The
+# capture-v1 writer/reader is a separate target gated on HDF5 (additive; the
+# core lib's raw-binary capture stays HDF5-free). HighFive's CMake runs its own
+# find_package(HDF5); on Ubuntu serial that resolves /usr/include/hdf5/serial.
+find_package(HDF5 QUIET COMPONENTS C)
+if (HDF5_FOUND)
+  FetchContent_Declare(HighFive
+    GIT_REPOSITORY https://github.com/highfive-devs/highfive.git
+    GIT_TAG v2.10.1
+    GIT_SHALLOW TRUE
+  )
+  set(HIGHFIVE_USE_BOOST OFF CACHE BOOL "" FORCE)
+  set(HIGHFIVE_UNIT_TESTS OFF CACHE BOOL "" FORCE)
+  set(HIGHFIVE_EXAMPLES OFF CACHE BOOL "" FORCE)
+  set(HIGHFIVE_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+  FetchContent_MakeAvailable(HighFive)
+
+  add_library(bit_physics_common_cpp_hdf5 STATIC
+    src/capture_hdf5.cpp
+  )
+  target_link_libraries(bit_physics_common_cpp_hdf5 PUBLIC
+    bit_physics_common_cpp
+    HighFive
+  )
+  target_compile_features(bit_physics_common_cpp_hdf5 PUBLIC cxx_std_20)
+  add_library(bit_physics::common_cpp_hdf5 ALIAS bit_physics_common_cpp_hdf5)
+else()
+  message(WARNING
+    "HDF5 not found: skipping bit_physics_common_cpp_hdf5 (capture-v1). "
+    "Install libhdf5-dev to build the Stack-C capture I/O surface.")
+endif()
+
 # ---- Smoke sim (Phase-1 host-C++ 1D advection; Stack-C 2D smoke = Stage 1c) ---
 
 add_executable(bit_physics_common_cpp_smoke_advection_1d
@@ -169,4 +203,18 @@ if (Vulkan_FOUND)
   # Lavapipe selection (D14) + determinism lever (D4) for the substrate/determinism tests.
   set_tests_properties(common_cpp_vulkan_tests PROPERTIES
     ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
+endif()
+
+# HDF5 capture-v1 test (C-1): C++ write -> read-back round-trip (field + manifest
+# equality). Gated on HDF5.
+if (HDF5_FOUND)
+  add_executable(bit_physics_common_cpp_hdf5_tests
+    tests/test_main.cpp
+    tests/test_capture_hdf5.cpp
+  )
+  target_link_libraries(bit_physics_common_cpp_hdf5_tests PRIVATE
+    bit_physics_common_cpp_hdf5
+    doctest
+  )
+  add_test(NAME common_cpp_hdf5_tests COMMAND bit_physics_common_cpp_hdf5_tests)
 endif()
