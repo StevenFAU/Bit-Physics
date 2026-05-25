@@ -5,7 +5,7 @@ phase: 2
 artifact: task
 artifact_id: sub-phase-eulerian-smoke-stack-e-stage-0-evidence-warp-jacobi-determinism
 subject: "Stage-0 Task 0.2 empirical-verification evidence — Warp 1.13.0 CPU-mode bit-determinism of a 3D collocated Jacobi pressure-projection kernel (the smoke-specific cross-stack-sensitive surface; the inv6 = 1.0/6.0 normaliser + fixed n_jacobi=20 determinism-safe iterative solver, IC-15 aspect #5). This is the R-A1 anchor / section-L.7 O-2 four-checkpoint Warp CPU determinism chain CHECKPOINT 1. EPHEMERAL verification kernel (NOT committed to packages/eulerian-smoke-stack-e/; the package does not exist yet — Stage 1a's job; reproduced here for audit reference per Convention A) + 6-run sha256 evidence (3 pairs, identical seed+inputs, device=cpu): all six bit-identical -> 79d15705...b342b2eea2. Confirms R-SME4 (Jacobi fixed-cap determinism) + R-SME5 (atomic-scatter N/A — this is a pure gather, strictly simpler than MPM's P2G atomic-scatter). Divergence-reduction correctness witness: max|div| 7.651e+01 -> 5.147e+01. O-W7 part-1 (pure-literal wp.float64(1.0)/wp.float64(6.0)) EXERCISED + compiles; O-W7 part-2 (wp.float64(v) index-taint workaround) NOT exercised by the Jacobi gather (integer-mod periodic wrap) — deferred to the Stage-1b semi_lagrangian_advect SL-backtrace (S0-SME1). Cited from Stage-0 checkpoint section 8."
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: 4433f4b98174051884bc7a1449374427332a2f1e
 head_sha_at_checkpoint: acd6c0465d427836b53954054a3ff1efb2092f18
 parent_audits:
   - docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/plan-drafting-landing-2026-05-25T03-30-00Z.md
