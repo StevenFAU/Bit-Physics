@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-eulerian-smoke-stack-e-stage-1c-revisited
 subject: "Stage-1c-revisited checkpoint. VERDICT: CONFIRMED. Coordinator-routed re-spec stage: amended charter sections 1/3/5 from the falsified chaotic-regime/R-P2 prediction to the empirical cross-stack BIT-EXACT verdict, and landed the charter section 2/section 4 Stage-1c sim-spec deliverables under the corrected shape (equivalence.md section E bit-exactness witness; gate-14 tests un-skipped + bit-exactness assertions; 2D schema-corpus subset fixture; D6 reuse verify-only). gate-14 GREEN (within_tolerance=True, max_abs_err=0.0, BOTH descriptors); full stack-e suite 17 passed; corpus round-trip 15 passed. O-2 checkpoint 4 lands under the BIT-EXACT shape; determinism chain complete. 1 shift (S1c-r-SME1 charter-amendment-landing precedent); cumulative 207 -> 208."
 verdict-state: CONFIRMED
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 9ba8cb386fed142d3ca2d76fb680039500736ef3
 head_sha_at_checkpoint: 4dc1fd00574b376800e25ade983c8634a3af4ae4
 parent_audits:
   - docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-e/stage-1c-gate-14-evidence-2026-05-25T13-21-16Z.md
