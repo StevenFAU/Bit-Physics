@@ -224,6 +224,38 @@ Port adoption procedure:
    cross-stack partner so `compare_captures` produces a meaningful
    field-by-field verdict (not a `sim:category-mismatch` HARD_FAIL).
 
+### 6.1 Post-MPM-Stack-E correction (D16) — socket-only consumption
+
+(FACT — `sub-phase-mpm-multimaterial-stack-e` plan-drafting probe [S-ME1] +
+Stages 1a/1b/1c; D16/D15.) The § 6 table above PREDICTED MPM Stack-E would
+consume "the most of the surface" — `Particles` + `HashGrid` + `ScalarField3D`.
+**What actually landed is socket-only.** MPM Stack-E consumes only the
+stack-agnostic sockets — Runtime (device + launch), Capture (`write_capture`),
+Determinism (`deterministic_context`) — and rolls its OWN
+`wp.array(dtype=wp.float64)` sim-state arrays. Two reasons, both HEAD-verified:
+
+- **f64 precision (D15).** The MLS-MPM/APIC reference is f64 throughout, but the
+  common-warp `Particles` / `ScalarField3D` / `VectorField3D` convenience
+  surfaces are **f32-pinned**. Consuming them would downcast the f64 state, so
+  the port allocates its own f64 `wp.array`s (the LBM-precedent of stack-specific
+  arrays; § 6 LBM row). Bit-exact gate-14 vs the Phase-1 f64 numba reference
+  confirmed the f64 path (`equivalence.md` Stack-E section).
+- **No `HashGrid`.** MLS-MPM uses a **fixed 27-cell (3×3×3) B-spline stencil**
+  indexed directly from each particle's base node — there is no neighbor-search,
+  so the spatial-hash surface is unused. (`HashGrid` remains relevant to
+  search-based ports, e.g. SPH neighbor queries.)
+
+**General principle for future Stack-E ports (the consumption decision):** a
+sim whose reference requires **f64** consumes the sockets only (Runtime +
+Capture + Determinism) and rolls its own `wp.array(dtype=wp.float64)` state; a
+sim that is **f32-acceptable** may additionally consume the f32 convenience
+surfaces (`Particles` / `ScalarField3D` / `VectorField3D` / `HashGrid`). MPM
+Stack-E is the data-backed first instance of the socket-only (f64) pattern; the
+Smoke / LBM Stack-E rows above are predictions pending their own plan-drafting
+HEAD-verification (the same S-ME1 discipline applies — verify the actual
+consumption, do not assume the convenience surfaces fit). This note is ADDITIVE;
+the original § 6 prediction is preserved above as the pre-port baseline.
+
 ## 7. Warp upstream references
 
 (FACT — NVIDIA Warp 1.13.0 documentation; Convention C upstream names cited
