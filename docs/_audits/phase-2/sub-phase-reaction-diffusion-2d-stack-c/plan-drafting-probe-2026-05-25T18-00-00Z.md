@@ -4,7 +4,7 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-plan-drafting
 stage: plan-drafting
 phase: 2
 date: 2026-05-25T18-00-00Z
-head_sha: <COMMIT-1-SHA — back-filled per Convention #12>
+head_sha: 4f9e523aea6481fb32b71e3ee32bb2f7e16e0f65
 head_sha_at_checkpoint: 15453bb5698ce31b109fb711444e335ffab488ac
 verdict: NOT-MATURE — common-cpp-bootstrap PRECONDITION surfaced (Hard Rule 2 STOP; NO charter this stage)
 ---

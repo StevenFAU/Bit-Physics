@@ -4,7 +4,7 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-plan-drafting
 stage: plan-drafting
 phase: 2
 date: 2026-05-25T18-00-00Z
-head_sha: <COMMIT-2-SHA — back-filled per Convention #12>
+head_sha: 8605a31f2e65f64dd4d45826aa578fc96f44d17e
 head_sha_at_checkpoint: 15453bb5698ce31b109fb711444e335ffab488ac
 verdict: RECOMMENDATION — route a `common-cpp-bootstrap` precondition sub-phase before RD-2D-Stack-C charter
 supersedes: (none — this artifact stands in lieu of a charter; the RD-2D-Stack-C charter is deferred to post-bootstrap)

@@ -4,7 +4,7 @@ artifact_id: sub-phase-reaction-diffusion-2d-stack-c-plan-drafting
 stage: plan-drafting
 phase: 2
 date: 2026-05-25T18-00-00Z
-head_sha: <COMMIT-3-SHA — back-filled per Convention #12>
+head_sha: f772f71454e0b6b1ab0e41aab7a5f98d4c65ae91
 head_sha_at_checkpoint: 15453bb5698ce31b109fb711444e335ffab488ac
 verdict: HELD — NOT MATURE; common-cpp-bootstrap precondition surfaced; awaiting operator routing (NO charter, NO Stage 0 dispatch)
 evidence_paths:
@@ -27,9 +27,9 @@ charter, no Stage-0 dispatch, no source touched.
 
 | # | Artifact | Commit | head_sha (back-filled) |
 |---|---|---|---|
-| 1 | `plan-drafting-probe-2026-05-25T18-00-00Z.md` | COMMIT 1 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): plan-drafting probe report` | `<COMMIT-1-SHA>` |
-| 2 | `common-cpp-bootstrap-precondition-recommendation-2026-05-25T18-00-00Z.md` | COMMIT 2 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): common-cpp-bootstrap precondition recommendation` | `<COMMIT-2-SHA>` |
-| 3 | `plan-drafting-landing-2026-05-25T18-00-00Z.md` (this file) | COMMIT 3 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): plan-drafting landing audit` | `<COMMIT-3-SHA>` |
+| 1 | `plan-drafting-probe-2026-05-25T18-00-00Z.md` | COMMIT 1 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): plan-drafting probe report` | `4f9e523aea6481fb32b71e3ee32bb2f7e16e0f65` |
+| 2 | `common-cpp-bootstrap-precondition-recommendation-2026-05-25T18-00-00Z.md` | COMMIT 2 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): common-cpp-bootstrap precondition recommendation` | `8605a31f2e65f64dd4d45826aa578fc96f44d17e` |
+| 3 | `plan-drafting-landing-2026-05-25T18-00-00Z.md` (this file) | COMMIT 3 — `docs(reaction-diffusion-2d-stack-c-plan-drafting): plan-drafting landing audit` | `f772f71454e0b6b1ab0e41aab7a5f98d4c65ae91` |
 | 4 | `plan-drafting-sha-back-fill-2026-05-25T18-00-00Z.md` | COMMIT 4 — `chore(reaction-diffusion-2d-stack-c-plan-drafting-sha-backfill): …` | (the ledger; its own commit not back-filled) |
 
 **No charter** (cf. the per-sim ports' COMMIT 2 = charter). COMMIT 2 here is the
