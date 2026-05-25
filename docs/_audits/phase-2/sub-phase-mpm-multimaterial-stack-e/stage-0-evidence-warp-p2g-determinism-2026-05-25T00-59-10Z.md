@@ -5,7 +5,7 @@ phase: 2
 artifact: task
 artifact_id: sub-phase-mpm-multimaterial-stack-e-stage-0-evidence-warp-p2g-determinism
 subject: "Stage-0 Task 0.6 empirical-verification evidence — Warp 1.13.0 CPU-mode bit-determinism of an MLS-MPM P2G atomic-scatter kernel (the MPM-specific IC-15 aspect #3 surface). EPHEMERAL verification kernel (NOT committed to packages/mpm-multimaterial-stack-e/; reproduced here for audit reference per dispatch SECTION 6) + 6-run sha256 evidence (3 pairs, identical seed+inputs, device=cpu): all six bit-identical -> a8f6e654...07ff1fe1. Confirms D5 N/A (no cpu_max_num_threads=1 equivalent needed; Warp CPU wp.launch is structurally serial) + banked #8 Warp analog. Mass-conservation correctness witness: sum(grid_mass)=1.0 (abs_err 2.22e-16). O-W7 extension: wp.float64(var) taints var's inferred type. Cited from Stage-0 checkpoint § 8."
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: 1333384a9c5761a589b3d220e18171295a151477
 head_sha_at_checkpoint: bc33ef11dfdca06e37cf89985cd2f3e5ea114239
 parent_audits:
   - docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/plan-drafting-landing-2026-05-25T00-27-55Z.md

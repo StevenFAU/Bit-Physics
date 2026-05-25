@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-e-stage-0
 stage: stage-0-checkpoint
 phase: phase-2
-head_sha: <COMMIT_1_SHA_PENDING>
+head_sha: 1333384a9c5761a589b3d220e18171295a151477
 head_sha_at_checkpoint: bc33ef11dfdca06e37cf89985cd2f3e5ea114239
 date: 2026-05-25T00-59-10Z
 verdict: stage-0-CONFIRMED
