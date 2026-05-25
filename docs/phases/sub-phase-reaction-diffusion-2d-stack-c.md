@@ -17,7 +17,10 @@ Port the Phase-1 NumPy reference `packages/reaction-diffusion-2d/` (Gray-Scott
 reaction-diffusion 2D, explicit forward-Euler, 5-point Laplacian, periodic BC,
 **f64**) to a **Stack-C Vulkan / C++** implementation consuming the §1.9.1-cpp
 common-cpp substrate. **8th and final spec § 11.3 cross-stack port; FIRST Stack-C
-port** in the portfolio (after this lands, Phase-2 closes formally: 8/8).
+port** in the portfolio. `SHIFTED` (operator routing, Stage 2): after this lands,
+Phase-2 is **substantively complete** (8/8 spec § 11.3 ports landed); the **formal
+close** (phase-level closing audit + `v0.2.0-phase-2` tag) is a dedicated **Stage 9 —
+Landing** pass per Phase-2 plan § 2.12, not this sub-phase's Stage 2.
 
 - **Canonical descriptor:** `gray-scott-lambda-128sq-seed42-step2000` — n=128,
   F=0.0367, k=0.0649, Du=0.16, Dv=0.08, dx=1.0, dt=1.0, seed=42, 2000 steps,
@@ -43,9 +46,9 @@ port** in the portfolio (after this lands, Phase-2 closes formally: 8/8).
 | **plan-drafting-refresh** (DONE) | This charter + refresh probe (step-1 measured) + refresh landing + SHA back-fill | held HELD verdict resolved |
 | **Stage 0 — pre-flight** | Convention-M anchor re-check; lavapipe f64 determinism R-A1 anchor (O-2 ckpt 1); NoContraction baseline confirmation; integrity + replay sweeps | pre-flight checkpoint |
 | **Stage 1a — scaffold** | CMake target skeleton (port tree + shader); RED failing tests (gates 4-13 + gate-14 fixtures absent) | scaffold + RED evidence |
-| **Stage 1b — implementation** | Full Gray-Scott f64 kernel + run-loop + capture-v1 HDF5 writer; CMake registration (D11); gates 4-13 GREEN; canonical capture; determinism O-2 ckpts 2/3 | gates 4-13 GREEN |
+| **Stage 1b — implementation** | `SHIFTED` (S0-RD2C1; reconciled at Stage 2 to the landed scope): **two** f64 SPIR-V kernels — the plain Gray-Scott step **and** a manufactured-source variant — + run-loop + the **4-grid MMS order-ladder** harness (N∈{16,32,64,128}, gate-4) + capture-v1 HDF5 writer; CMake registration (D11); gates 4-13 GREEN; canonical capture; determinism O-2 ckpts 2/3. (Original row said "Full Gray-Scott f64 kernel"; gate-4 is MMS single-arm, so the port required the second kernel + ladder per the Stage-0 S0-RD2C1 banking — charter was silent, not contradictory.) | gates 4-13 GREEN |
 | **Stage 1c — equivalence** | gate-14 cross-stack witness (`compare_captures` vs NumPy ref); tolerance-override **no-op** verify (D17, 4th skip); corpus fixture; O-2 ckpt 4 | **gate-14 GREEN** |
-| **Stage 2 — landing** | Portfolio sweep (23/23 + Stack-C target); integrity baseline; replay invariant; §L.7 O-1 instance note; landing audit; **Phase-2 formal close (8/8)** | all 14 gates GREEN |
+| **Stage 2 — landing** | Portfolio sweep (23 uv + Stack-C + common-cpp CMake targets); integrity baseline; replay invariant; methodology §6.7/§6.8 (Option α); §L.7 O-1 fourth-instance note; §L.9/cpp.md D16 note; charter §§ reconcile; CHANGELOG; gate-12 perf-row restoration (S2-RD2C1); landing audit. `SHIFTED` (operator routing, Stage 2): **Phase-2 formal close split out** — this landing delivers SUBSTANTIVE completeness (8/8 spec § 11.3 ports landed; cleanup + LFS-architecture sub-phases become routable), while the FORMAL close MECHANISM (phase-level closing audit + cross-cutting sweeps + proposed `v0.2.0-phase-2` tag) is a dedicated **Stage 9 — Landing** pass per Phase-2 plan § 2.12 (the §2.12 mechanism predates the sub-phase execution model; routed as its own dispatch). | all 14 gates GREEN |
 
 Each stage closes with a checkpoint + SHA back-fill (Convention #12, separate
 commit, never `--amend`).
@@ -134,7 +137,15 @@ bootstrap — none surfaced (probe § 7).
   `integrity-baseline-digest-method`).
 - **Replay invariant:** `9399fc33…718909f34` — HELD; landing re-verifies.
 - **Cumulative shifts:** entering plan-drafting-refresh 230 → 235 (5 refresh shifts).
-- **Phase-2 formal close:** this landing is the **8th of 8** spec § 11.3 ports;
-  Phase-2 closes and the comprehensive cleanup sub-phase becomes routable.
+- **Phase-2 substantive completeness + formal-close routing (`SHIFTED`, Stage 2):**
+  this landing is the **8th of 8** spec § 11.3 ports, so Phase-2 is **substantively
+  complete** and the comprehensive cleanup sub-phase + the deferred LFS-architecture
+  sub-phase (D13) become routable. The **formal close** — a phase-level closing audit
+  consolidating all 8 sub-phase landings + cross-cutting `verify_evidence`/perf-ledger/
+  append-only sweeps + a proposed `v0.2.0-phase-2` tag (operator-only push; D12) — is
+  the dedicated **Stage 9 — Landing** pass (Phase-2 plan § 2.12), routed as its own
+  dispatch after this Stage 2 lands. The charter is authoritative that Phase-2 closes;
+  the § 2.12 Stage-9 mechanism (authored for the superseded single-linear-dispatch
+  model) is the close mechanism, executed separately.
 - **Terminal discipline:** no push, no tag — operator action at landing per spec
   § 7.12 + standing D12 NO-TAG default.
