@@ -1,0 +1,35 @@
+# RD-2D-Stack-C Stage 2 — portfolio regression sweep
+# date 2026-05-25T23-30-00Z; HEAD d5d93fa; hardware i7-12700KF-linux-6.17
+# RD-2D-Stack-C is a CMake target (NOT a uv workspace member; D11). It touched
+# NO Python workspace-member source. Sweep targets: the 2 CMake targets (ctest)
+# + the testkit corpus fixture (the only Python-side delta) + the tool members'
+# pytest + the cat1-5 integrity contract sweep across the whole repo.
+
+== C++ ctest (build/cpp-stage2-verify; top-level CMake = common-cpp + RD-2D-Stack-C; fresh build) ==
+VK_DRIVER_FILES=lvp_icd.json LP_NUM_THREADS=0 ctest --output-on-failure
+  1/7 common_cpp_tests ..................... Passed
+  2/7 common_cpp_vulkan_tests .............. Passed
+  3/7 common_cpp_hdf5_tests ................ Passed
+  4/7 common_cpp_smoke_tests ............... Passed
+  5/7 common_cpp_cross_language_interop .... Passed
+  6/7 rd2d_stack_c_tests ................... Passed (gates 4-13 surface; gate-4 MMS order 2.0008)
+  7/7 rd2d_stack_c_gate14 .................. Passed (gate-14 cross-stack: within_tolerance=True, max_abs_err=0.0)
+  100% tests passed, 0 failed out of 7
+
+== Python tool members (pytest) ==
+  tools/testkit/      : 74 passed   (incl. legacy-captures corpus round-trip)
+  tools/integrity/    : 56 passed
+  tools/diagnostics/  : 93 passed
+
+== Schema-corpus round-trip (19 entries incl. phase-2-reaction-diffusion-2d-stack-c) ==
+  uv run pytest tools/testkit/ -k "corpus or legacy" : 19 passed, 55 deselected
+
+== Whole-repo contract sweep (cat 1-5) ==
+  python -m integrity --all --mode strict : 0 HARD_FAIL, 14 SOFT_WARN
+    report digest c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52 = baseline EXACT MATCH
+
+== Cross-phase replay invariant (vs v0.1.0-phase-1) ==
+  8/8 gates PASS, ok=True
+    digest 9399fc337160dd20a3aeefdad6bc8d93edb7918ea5e8d005253d3ce718909f34 = invariant MATCH (HELD)
+
+VERDICT: NO REGRESSIONS. All gates GREEN at HEAD d5d93fa.

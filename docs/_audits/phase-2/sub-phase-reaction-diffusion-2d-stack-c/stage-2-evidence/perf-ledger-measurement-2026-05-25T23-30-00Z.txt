@@ -1,0 +1,13 @@
+# RD-2D-Stack-C gate-12 perf-ledger row — wall-clock measurement
+# date 2026-05-25T23-30-00Z; hardware i7-12700KF-linux-6.17
+# binary: bit_physics_rd2d_stack_c_capture (src/gray_scott_capture_main.cpp)
+# canonical descriptor: gray-scott-lambda-128sq-seed42-step2000 (n=128, 2000 steps, f64)
+# backend: lavapipe (VK_DRIVER_FILES=lvp_icd.json) NoContraction f64; LP_NUM_THREADS=0
+
+warm-up: captured 11 frames; bounded=1; determinism_witness=493ffbbae5c124b599aff2628f03a397b514bf161acd748d814e30869fad2e4f
+timed (warm-cache, 3 runs): 1.13s / 1.12s / 1.13s  -> representative 1.13s
+
+NOTE: gate-12 perf-ledger row was OMITTED at Stage 1b (S2-RD2C1 finding); added at
+Stage 2 via the established per-port perf-row convention. The >2x source-stack-baseline
+comparison (RD-2D Stack-B numpy 0.931s / Stack-D taichi 0.568s are on i7-7700HQ — a
+DIFFERENT host) is a Stage-9 cross-cutting concern (operator-deferred), not adjudicated here.
