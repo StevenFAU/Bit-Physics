@@ -1,0 +1,55 @@
+within_tolerance: True
+tolerance_table_used: {'category': 'mpm', 'relative': 0.0001, 'absolute': 0.0, 'path': '/home/otacon/Projects/Bit-Physics/tools/testkit/equivalence/tolerance.toml'}
+n per_field entries: 44
+
+=== PER-FIELD PER-FRAME (verbatim repr) ===
+step:0:grid_mom                           max_abs_err=0.0                        max_rel_err=0.0
+step:0:particle_material_id               max_abs_err=0.0                        max_rel_err=0.0
+step:0:particle_pos                       max_abs_err=0.0                        max_rel_err=0.0
+step:0:particle_vel                       max_abs_err=0.0                        max_rel_err=0.0
+step:50:grid_mom                          max_abs_err=0.0                        max_rel_err=0.0
+step:50:particle_material_id              max_abs_err=0.0                        max_rel_err=0.0
+step:50:particle_pos                      max_abs_err=0.0                        max_rel_err=0.0
+step:50:particle_vel                      max_abs_err=0.0                        max_rel_err=0.0
+step:100:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:100:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:100:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:100:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:150:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:150:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:150:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:150:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:200:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:200:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:200:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:200:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:250:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:250:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:250:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:250:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:300:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:300:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:300:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:300:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:350:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:350:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:350:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:350:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:400:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:400:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:400:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:400:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:450:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:450:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:450:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:450:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+step:500:grid_mom                         max_abs_err=0.0                        max_rel_err=0.0
+step:500:particle_material_id             max_abs_err=0.0                        max_rel_err=0.0
+step:500:particle_pos                     max_abs_err=0.0                        max_rel_err=0.0
+step:500:particle_vel                     max_abs_err=0.0                        max_rel_err=0.0
+
+=== ROLL-UP ===
+max_abs_err over ALL fields x frames: 0.0
+max_rel_err over ALL fields x frames: 0.0
+distinct fields: ['grid_mom', 'particle_material_id', 'particle_pos', 'particle_vel']
+distinct steps: [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500] count 11
