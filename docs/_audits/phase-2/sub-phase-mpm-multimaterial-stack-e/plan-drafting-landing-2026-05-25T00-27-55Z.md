@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-mpm-multimaterial-stack-e-plan-drafting
 stage: plan-drafting-landing
 phase: phase-2
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 77238f8ee518991735334fb831f273e0a4197043
 head_sha_at_checkpoint: 93e29675c3e96a9eeefe4e8e65e0033639490d7c
 date: 2026-05-25T00-27-55Z
 verdict: plan-drafting-CONFIRMED
@@ -131,10 +131,12 @@ new row); D10 Runtime+Capture+Determinism only; D15 own f64 `wp.array`s
   sha-drift (audit-chain-correctness § 9 N2). The stable doc anchors are hashed
   in the probe (conventions `49c90fc2…`, methodology `61350ee4…`, architecture
   `e82b7b8e…`) and are unaffected by back-fill.
-- **SHA placeholders:** this landing's `head_sha` is `<COMMIT_3_SHA_PENDING>`,
-  back-filled to its own committing-commit SHA in COMMIT 4 (Convention #12;
-  separate commit; never `--amend`; N1 enumeration). The probe's `head_sha`
-  (`<COMMIT_1_SHA_PENDING>`) is back-filled to `5862eb89`.
+- **SHA back-fill (Convention #12):** this landing's `head_sha` was
+  placeholder-deferred and is back-filled to its own committing-commit SHA
+  `77238f8ee518991735334fb831f273e0a4197043` (COMMIT 3) in COMMIT 4 (separate
+  commit; never `--amend`; N1 enumeration). The probe's `head_sha` is back-filled
+  to `5862eb899159a67b1934350e28f7bc28e771bd8f` (COMMIT 1). See the SHA back-fill
+  ledger for the full enumeration.
 
 ## § 9. Next step
 
