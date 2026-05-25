@@ -4,7 +4,7 @@ artifact_id: sub-phase-common-cpp-bootstrap-stage-1b
 stage: stage-1b
 phase: 2
 date: 2026-05-25T22-30-00Z
-head_sha: <pending-stage-1b-checkpoint-commit-sha-backfill>
+head_sha: d962069962e2bedced629667b97efdaff8651751
 head_sha_at_checkpoint: cb11ede62b9f1859b912173c6cfe2010f8f74ed3
 verdict: C-1 + C-2 GREEN — HDF5 capture-v1 round-trips; determinism socket 2-run bit-identical; FloatControls levers asserted; NoContraction discipline verified
 evidence_paths:
