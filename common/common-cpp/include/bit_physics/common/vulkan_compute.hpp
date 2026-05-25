@@ -98,6 +98,24 @@ public:
     bool float64_enabled() const { return float64_enabled_; }
     bool validation_enabled() const { return validation_enabled_; }
 
+    // VkPhysicalDeviceFloatControlsProperties (f32) levers, queried via
+    // vkGetPhysicalDeviceProperties2 (Stage 1b; S0-CPPB2). On lavapipe: RTE +
+    // signed-zero/inf/nan preserve are advertised (assertable NumPy-match
+    // levers); denorm preserve/FTZ are NOT (residual near-zero risk → quirks
+    // catalog, Stage 2).
+    struct FloatControls {
+        bool rounding_mode_rte_f32 = false;
+        bool signed_zero_inf_nan_preserve_f32 = false;
+        bool denorm_preserve_f32 = false;
+        bool denorm_flush_to_zero_f32 = false;
+    };
+    FloatControls query_float_controls() const;
+    // Assert the determinism-relevant f32 levers (RTE rounding +
+    // signed-zero/inf/nan preserve) are advertised; throws VulkanError if not
+    // (Stage-1b Hard-Rule-2 condition). Denorm behaviour is NOT assertable on
+    // lavapipe (S0-CPPB2) — documented, not asserted.
+    void assert_deterministic_float_controls() const;
+
 private:
     void destroy() noexcept;
 

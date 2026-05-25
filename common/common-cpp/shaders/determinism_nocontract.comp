@@ -1,0 +1,27 @@
+#version 450
+// NoContraction determinism-contract shader (Stage 1b; gate C-2).
+//
+// Same element-wise computation as determinism_probe.comp, but the result is
+// `precise` so glslang emits SPIR-V `NoContraction` decorations on the FP ops
+// (verified: 6 decorations vs 0 in the contraction-allowed probe). This pins
+// the FMA-contraction discipline (charter §5 R-CPPB3): Vulkan/SPIR-V allows FMA
+// contraction by default, which gives a different rounding than NumPy's separate
+// multiply+add. NoContraction makes the result the separately-rounded value.
+//
+// EMPIRICAL (Stage 1b): on lavapipe this changes the digest — the contracted
+// probe yields a7f85bd4…2844f05 (the Stage-0/1a substrate baseline) while this
+// NoContraction shader yields 48c92e95…a174cbec. Both are run-to-run
+// bit-identical; 48c92e95… is the NoContraction determinism witness (the
+// NumPy-match-friendly digest for future Stack-C ports). The determinism socket
+// must NOT assert this reproduces the contracted a7f85bd4… baseline.
+//
+// No atomics, no cross-invocation reduction (S0-CPPB3 thread-count invariant).
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer Buf { float data[]; };
+void main() {
+    uint i = gl_GlobalInvocationID.x;
+    if (i >= data.length()) return;
+    float x = float(i) * 0.01;
+    precise float y = x * x * 0.5 + x * 0.25 + 0.125;
+    data[i] = y;
+}

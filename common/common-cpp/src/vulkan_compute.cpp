@@ -232,6 +232,37 @@ void ComputeContext::destroy() noexcept {
     physical_ = VK_NULL_HANDLE;
 }
 
+ComputeContext::FloatControls ComputeContext::query_float_controls() const {
+    VkPhysicalDeviceFloatControlsProperties fc{
+        VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES};
+    VkPhysicalDeviceProperties2 props2{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
+    props2.pNext = &fc;
+    vkGetPhysicalDeviceProperties2(physical_, &props2);
+    FloatControls out;
+    out.rounding_mode_rte_f32 = fc.shaderRoundingModeRTEFloat32 == VK_TRUE;
+    out.signed_zero_inf_nan_preserve_f32 =
+        fc.shaderSignedZeroInfNanPreserveFloat32 == VK_TRUE;
+    out.denorm_preserve_f32 = fc.shaderDenormPreserveFloat32 == VK_TRUE;
+    out.denorm_flush_to_zero_f32 = fc.shaderDenormFlushToZeroFloat32 == VK_TRUE;
+    return out;
+}
+
+void ComputeContext::assert_deterministic_float_controls() const {
+    FloatControls fc = query_float_controls();
+    if (!fc.rounding_mode_rte_f32) {
+        throw VulkanError(
+            "FloatControls: shaderRoundingModeRTEFloat32 not advertised (RTE rounding "
+            "is the NumPy-match contract; contradicts S0-CPPB2)");
+    }
+    if (!fc.signed_zero_inf_nan_preserve_f32) {
+        throw VulkanError(
+            "FloatControls: shaderSignedZeroInfNanPreserveFloat32 not advertised "
+            "(contradicts S0-CPPB2)");
+    }
+    // Denorm preserve/FTZ are NOT pinnable on lavapipe (S0-CPPB2) — not asserted;
+    // banked as a residual near-zero cross-stack risk for the quirks catalog.
+}
+
 ComputeContext::~ComputeContext() { destroy(); }
 
 ComputeContext::ComputeContext(ComputeContext&& o) noexcept

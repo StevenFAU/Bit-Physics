@@ -78,3 +78,58 @@ TEST_CASE("IC-3 unrelated argv is left untouched") {
     CHECK(c.seed == 0u);
     CHECK(argc == 2);
 }
+
+// ---- Determinism socket (Stage 1b; C-2) — backend-agnostic CPU unit tests ----
+
+namespace {
+std::vector<unsigned char> bytes_of(std::initializer_list<float> vs) {
+    std::vector<unsigned char> b(vs.size() * sizeof(float));
+    std::vector<float> tmp(vs);
+    std::memcpy(b.data(), tmp.data(), b.size());
+    return b;
+}
+}  // namespace
+
+TEST_CASE("assert_deterministic_run returns a stable digest for a deterministic fn") {
+    auto fn = [] { return bytes_of({1.0f, 2.0f, 3.0f}); };
+    std::string d1 = det::assert_deterministic_run(fn, 2);
+    std::string d2 = det::assert_deterministic_run(fn, 5);
+    CHECK(d1.size() == 64);
+    CHECK(d1 == d2);  // same bytes -> same sha256 witness
+}
+
+TEST_CASE("assert_deterministic_run throws DeterminismError on divergence") {
+    int call = 0;
+    auto flaky = [&call] {
+        // Returns different bytes on alternate calls -> not bit-deterministic.
+        return (call++ % 2 == 0) ? bytes_of({1.0f}) : bytes_of({2.0f});
+    };
+    CHECK_THROWS_AS(det::assert_deterministic_run(flaky, 2), det::DeterminismError);
+}
+
+TEST_CASE("assert_deterministic_run validates arguments") {
+    auto fn = [] { return bytes_of({1.0f}); };
+    CHECK_THROWS_AS(det::assert_deterministic_run(fn, 1), std::invalid_argument);
+    CHECK_THROWS_AS(det::assert_deterministic_run(fn, 2, -1.0), std::invalid_argument);
+}
+
+TEST_CASE("assert_deterministic_run tolerance>0 accepts bounded f32 drift") {
+    int call = 0;
+    auto near = [&call] {
+        return (call++ == 0) ? bytes_of({1.0f, 2.0f}) : bytes_of({1.0f, 2.0001f});
+    };
+    CHECK_NOTHROW(det::assert_deterministic_run(near, 2, 1e-3));
+    call = 0;
+    CHECK_THROWS_AS(det::assert_deterministic_run(near, 2, 1e-9), det::DeterminismError);
+}
+
+TEST_CASE("DeterministicContext sets and restores seed/flag") {
+    CHECK_FALSE(det::is_deterministic());
+    {
+        det::DeterministicContext ctx(123);
+        CHECK(det::is_deterministic());
+        CHECK(det::get_seed() == 123u);
+        CHECK(ctx.seed() == 123u);
+    }
+    CHECK_FALSE(det::is_deterministic());
+}

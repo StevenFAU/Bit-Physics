@@ -56,6 +56,7 @@ find_program(GLSLANG_VALIDATOR NAMES glslangValidator)
 add_library(bit_physics_common_cpp STATIC
   src/capture.cpp
   src/determinism.cpp
+  src/hash.cpp
 )
 target_include_directories(bit_physics_common_cpp PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -142,16 +143,20 @@ target_link_libraries(bit_physics_common_cpp_tests PRIVATE
 )
 add_test(NAME common_cpp_tests COMMAND bit_physics_common_cpp_tests)
 
-# Vulkan substrate test (C-3): runs the compute substrate end-to-end headless on
-# lavapipe and asserts the readback reproduces the Stage-0 determinism baseline
-# digest a7f85bd4…2844f05. Gated on Vulkan; runs under the lavapipe pin (D14/D4).
+# Vulkan tests: C-3 substrate (reproduces baseline a7f85bd4…) + C-2 determinism
+# socket (assert_deterministic_run 2-run bit-identical, incl. the NoContraction
+# shader). Gated on Vulkan; run under the lavapipe pin (D14/D4).
 if (Vulkan_FOUND)
   bitphysics_embed_compute_shader(DETERMINISM_PROBE_HEADER
     shaders/determinism_probe.comp kDeterminismProbeSpv)
+  bitphysics_embed_compute_shader(DETERMINISM_NOCONTRACT_HEADER
+    shaders/determinism_nocontract.comp kDeterminismNoContractSpv)
   add_executable(bit_physics_common_cpp_vulkan_tests
     tests/test_main.cpp
     tests/test_vulkan_substrate.cpp
+    tests/test_determinism_socket.cpp
     ${DETERMINISM_PROBE_HEADER}
+    ${DETERMINISM_NOCONTRACT_HEADER}
   )
   target_include_directories(bit_physics_common_cpp_vulkan_tests PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}/generated/shaders
@@ -161,7 +166,7 @@ if (Vulkan_FOUND)
     doctest
   )
   add_test(NAME common_cpp_vulkan_tests COMMAND bit_physics_common_cpp_vulkan_tests)
-  # Lavapipe selection (D14) + determinism lever (D4) for the substrate test.
+  # Lavapipe selection (D14) + determinism lever (D4) for the substrate/determinism tests.
   set_tests_properties(common_cpp_vulkan_tests PROPERTIES
     ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
 endif()

@@ -21,7 +21,7 @@
 
 #include "bit_physics/common/vulkan_compute.hpp"
 #include "determinism_probe.spv.h"  // generated: const uint32_t kDeterminismProbeSpv[]
-#include "sha256_util.hpp"
+#include "sha256_util.hpp"          // test-only; delegates to lib hash::sha256_hex
 
 namespace vk = bit_physics::common_cpp::vkcompute;
 namespace bptest = bit_physics::common_cpp::test;
