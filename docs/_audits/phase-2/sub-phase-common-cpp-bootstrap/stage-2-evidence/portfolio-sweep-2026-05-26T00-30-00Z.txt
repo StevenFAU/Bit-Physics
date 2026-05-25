@@ -1,0 +1,27 @@
+# Stage-2 portfolio regression sweep (23 workspace members; each under its OWN pytest config; N1)
+# Generated: 2026-05-25T19:06:58Z  HEAD: 6dec2407c8faa8ff21b046bb0f679135372c4edd
+# Runner: .venv/bin/python -m pytest <member> -q
+#
+[tools/testkit] 72 passed in 7.10s
+[tools/integrity] 56 passed in 2.13s
+[tools/diagnostics] 93 passed in 0.29s
+[packages/reaction-diffusion-2d] 14 passed in 2.39s
+[packages/strange-attractors] 11 passed in 0.74s
+[packages/mandelbulb-explorer] 10 passed in 0.24s
+[packages/boids-3d] 10 passed in 38.75s
+[packages/physarum] 10 passed in 10.50s
+[packages/reaction-diffusion-3d] 8 passed in 23.20s
+[packages/sph-water] 22 passed in 0.55s
+[packages/eulerian-smoke] 10 passed in 3.05s
+[packages/lattice-boltzmann-d3q19] 12 passed in 4.09s
+[packages/mpm-multimaterial] 10 passed in 0.82s
+[common/common-py] 25 passed in 0.50s
+[packages/reaction-diffusion-2d-stack-d] 16 passed in 4.07s
+[packages/sph-water-stack-d] 15 passed in 0.65s
+[packages/lattice-boltzmann-d3q19-stack-d] 16 passed in 10.69s
+[packages/mpm-multimaterial-stack-d] 15 passed in 4.99s
+[packages/eulerian-smoke-stack-d] 15 passed, 1 skipped in 8.05s
+[common/common-warp] 38 passed in 0.51s
+[packages/mpm-multimaterial-stack-e] 16 passed in 3.83s
+[packages/eulerian-smoke-stack-e] 17 passed in 6.39s
+[packages/lattice-boltzmann-d3q19-stack-e] 17 passed in 10.31s
