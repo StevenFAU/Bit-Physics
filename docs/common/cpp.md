@@ -94,6 +94,15 @@ advertised (both true on lavapipe — the NumPy-match levers). **Denorm
 preserve/FTZ are NOT pinnable** on lavapipe (neither advertised) — a residual
 near-zero cross-stack risk, documented, not asserted.
 
+> **f64-scoping (D16 cleanup-candidate; first surfaced at RD-2D-Stack-C, the first
+> f64 consumer).** `assert_deterministic_float_controls()` queries only the **f32**
+> levers; there is no f64-lever (`…Float64`) assertion. f64 ports rely on lavapipe's
+> **inherent IEEE-754 f64** + `NoContraction` (§ 4 FMA note) for the NumPy-match
+> rounding, NOT an advertised f64 rounding/sign-preserve lever — empirically
+> sufficient (RD-2D-Stack-C gate-14 is f64↔NumPy BIT-EXACT). Extending the API to
+> assert the f64 levers explicitly is a banked cleanup-sub-phase item (conventions
+> § L.9 Q-CPP2 D16).
+
 **FMA contraction / NoContraction (R-CPPB3; S1b-CPPB3).** Vulkan/SPIR-V allows
 FMA contraction by default, which rounds differently than NumPy's separate
 multiply+add. A shader marked `precise` emits SPIR-V `NoContraction`

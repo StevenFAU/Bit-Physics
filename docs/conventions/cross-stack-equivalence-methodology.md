@@ -521,7 +521,30 @@ is the *mechanism* (seed-difference origin), not the pass/fail. (Empirical artif
 `docs/sim-specs/lattice/lattice-boltzmann-d3q19/equivalence.md` § E; the Stack-D
 `~6e-15` from that sub-phase's landing.)
 
-### 6.8 Eighth-pair observation — Warp CPU f64 ↔ NumPy as an emerging zero-seed-difference backend pair (n=2; SUGGESTIVE, not established)
+**Within-sim cross-backend corroboration #2 (ninth pair, `reaction-diffusion-2d`
+Stack-C; ADDITIVE).** RD-2D supplies a SECOND within-sim demonstration — and the
+FIRST that varies the backend to a **non-Warp, non-Taichi** family. The SAME
+`reaction-diffusion-2d` reference, the SAME laminar Gray-Scott canonical
+(`gray-scott-lambda-128sq-seed42-step2000`), the SAME sealed NumPy LEFT partner —
+yet the two RIGHT backends carry different cross-stack seed-differences:
+
+| Same sim, same Gray-Scott canonical, same NumPy reference | Stack-D **Taichi** | Stack-C **Vulkan/C++** |
+|---|---|---|
+| backend family | Taichi-DSL CPU | Vulkan compute / GLSL `double` on Mesa lavapipe |
+| FP discipline | `default_fp=ti.f64` + f64-typed ndarrays | `shaderFloat64` + GLSL `precise` → SPIR-V `NoContraction` |
+| `max_abs_err` vs NumPy | `~1.9e-14` (shape **(b)**) | `0.0` (shape **(a)**) |
+| gate-14 verdict | `within_tolerance=True` | `within_tolerance=True` |
+
+Holding the sim and the (laminar, bounded) trajectory regime fixed and varying ONLY
+the backend, the seed-difference again flips from a residual (`~1.9e-14`) to exactly
+`0.0` — confirming the § 6.7 conclusion a second time, now across a THIRD backend
+family (Vulkan/C++): the seed-difference is a property of the backend-pair's
+arithmetic faithfulness, not of the sim. (Empirical artifacts:
+`sub-phase-reaction-diffusion-2d-stack-c` Stage 1c formal gate-14 +
+`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § C; the Stack-D
+`~1.9e-14` from § 1 + that sub-phase's landing.)
+
+### 6.8 Eighth-pair observation — Warp CPU f64 ↔ NumPy (n=2) + the SECOND zero-seed-difference backend pair, Vulkan/C++ f64 ↔ NumPy (n=1) (SUGGESTIVE across two backend pairs, not established)
 
 (FACT — `sub-phase-eulerian-smoke-stack-e` Stage 1c [step-1 `0.0` both canonicals;
 bit-exact full horizon incl. the chaotic 3D blow-up] + `sub-phase-lattice-boltzmann-d3q19-stack-e`
@@ -569,6 +592,42 @@ per-pair (§ 6 fifth-pair → § 6.7 seventh-pair → § 6.8 eighth-pair), where
 preamble), where an "O-3" would mis-attribute. The conventions doc carries only the
 § L.7 O-1 verdict-taxonomy third-instance refinement (which IS a refinement of MPM-E's
 O-1, landed in place).
+
+**SECOND backend pair (`sub-phase-reaction-diffusion-2d-stack-c` Stage 2; ADDITIVE;
+Option α per charter § 6).** The ninth cross-stack pair is the FIRST **non-Warp**
+zero-seed-difference instance: **Vulkan/C++ f64 (Mesa lavapipe, GLSL `precise` →
+SPIR-V `NoContraction`) ↔ NumPy f64**. RD-2D Stack-C reproduces the sealed NumPy
+Gray-Scott reference **byte-for-byte** (`max_abs_err = 0.0`, all 11 frames × {U,V},
+through the full `step-2000` canonical horizon; gate-14 `within_tolerance=True`).
+This pair was established **independently** — NOT inherited from the Warp pair (charter
+§ 6) — so the zero-seed-difference observation now spans **two distinct backend
+pairs**:
+
+| Zero-seed-difference backend pair | data points (n) | sims | result |
+|---|---|---|---|
+| Warp-CPU-f64 ↔ NumPy | 2 | `eulerian-smoke-stack-e`, `lattice-boltzmann-d3q19-stack-e` | `max_abs_err=0.0` full horizon |
+| Vulkan/C++-f64-lavapipe-NoContraction ↔ NumPy | 1 | `reaction-diffusion-2d-stack-c` | `max_abs_err=0.0` full horizon |
+
+Three bit-exact instances across two backend families generalize the mechanism beyond
+any single framework wrapper: **a deterministic f64 backend + verbatim re-derived
+algebra + a matching FP discipline (no FMA fusion / no reassociation — Warp's serial
+scalar IEEE-754; Vulkan's `NoContraction` decoration) + NumPy's operation order →
+cross-stack bit-exactness, regardless of the framework wrapper.** What differs between
+the pairs is only HOW the FP discipline is pinned (Warp: serial `wp.launch` + typed
+literals; Vulkan/C++: `shaderFloat64` + `precise`/`NoContraction` — Q-CPP1/Q-CPP2), not
+the outcome. The Taichi backend is the standing **counter**-example (LBM-D `~6e-15`;
+smoke-D `1.0/6.0` f32-inference leak, § 6.6) — bit-faithfulness is a property the
+backend-pair either has or lacks under matched op-order, not a universal.
+
+**QUALIFIER (load-bearing — surfaced, not asserted; carries forward).** The Vulkan/C++
+pair is **`n=1`** — a single sim on a single (laminar, bounded) trajectory. The
+cross-pair generalization above is therefore **SUGGESTIVE, not established**: a second
+Vulkan/C++ port (a different algorithmic surface — atomics, subgroup collectives,
+denorm-sensitive quiescent regions per Q-CPP2's un-pinnable FTZ) could still surface a
+backend-specific residual. To graduate, portfolio-track future Stack-C ports for this
+property (as for the Warp pair). IC-15 stays **PARTIAL**. (Empirical artifacts:
+`sub-phase-reaction-diffusion-2d-stack-c` Stage 1b ckpt 2 + Stage 1c formal gate-14;
+`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § C.2.)
 
 ## 7. References
 

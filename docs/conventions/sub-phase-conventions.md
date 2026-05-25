@@ -807,6 +807,25 @@ OBSERVATIONS — taxonomy/process clarifications for future plan-drafting — no
     the (a)/(b) split is a backend-pair property, not a trajectory property
     (`cross-stack-equivalence-methodology.md` § 6.7 within-sim corroboration + § 6.8
     the Warp-CPU-f64↔NumPy backend-pair observation, n=2).
+  - **FOURTH-INSTANCE / FIRST-NON-WARP note (`reaction-diffusion-2d` Stack-C Stage 2;
+    ADDITIVE).** `reaction-diffusion-2d` Stack-C (**Vulkan / C++ f64** on Mesa
+    lavapipe, GLSL `precise` → SPIR-V `NoContraction`) is the **FOURTH** shape-(a)
+    instance (after MPM Stack-E `drop-impact`, smoke Stack-E Taylor-Green, LBM Stack-E
+    Poiseuille/Couette) and the **FIRST on a non-Warp backend** — every prior shape-(a)
+    instance was NVIDIA-Warp-CPU-f64. `max_abs_err = 0.0` through the full laminar
+    Gray-Scott canonical (`gray-scott-lambda-128sq-seed42-step2000`, 11 frames × {U,V};
+    gate-14 `within_tolerance=True`). It confirms the D-S2-1 condition once more — a
+    **zero cross-stack seed-difference** (verbatim algebra + identical operation order +
+    sufficient FP-determinism: here `shaderFloat64` + `NoContraction`, no FMA fusion)
+    — on a backend whose determinism levers are pinned by an entirely different
+    mechanism than Warp's (§ L.9 Q-CPP1/Q-CPP2). Within-sim, RD-2D's Stack-D **Taichi**
+    sibling is shape (b) (`~1.9e-14`) on the SAME Gray-Scott canonical, so the (a)/(b)
+    split is again a backend-pair property, not a trajectory property. Empirically this
+    promotes the verdict-taxonomy from "shape (a) is observed across Warp ports" to
+    "shape (a) is a cross-backend-FAMILY property of any deterministic-f64 backend that
+    preserves NumPy's op-order under a matching FP discipline"
+    (`cross-stack-equivalence-methodology.md` § 6.7 within-sim corroboration #2 + § 6.8
+    the SECOND backend pair, Vulkan/C++-f64↔NumPy, n=1).
 
 - **O-2 — Warp CPU determinism four-checkpoint chain.** For Stack-E ports using
   common-warp's deterministic execution, the determinism-verification chain spans
@@ -935,6 +954,22 @@ per-sim ports [RD-2D-Stack-C next, D11] inherit; future Stack-C ports extend.)
   behaviour is a residual cross-stack risk, documented not asserted. **Applies
   to: Stack-C determinism gates + any near-zero-regime sim** — assert the two
   pinnable levers; treat denorm-sensitive regions as an epsilon risk at gate-14.
+  - **D16 cleanup-candidate (`reaction-diffusion-2d` Stack-C Stage 2; first f64
+    consumer).** `assert_deterministic_float_controls()` queries only the **f32**
+    `VkPhysicalDeviceFloatControlsProperties` levers (`…Float32`); the API is
+    **f32-scoped** — there is no analogous f64-lever (`…Float64`) assertion. RD-2D
+    Stack-C is the FIRST **f64** Stack-C port, and it carries **no** explicit f64
+    FloatControls assertion: the f64 NumPy-match path relies on lavapipe's **inherent
+    IEEE-754 f64** + the `NoContraction` decoration (Q-CPP1), not an advertised f64
+    rounding/sign-preserve lever. RD-2D Stack-C's gate-14 BIT-EXACT verdict
+    (`max_abs_err = 0.0` f64↔NumPy) **empirically confirms this is sufficient** for the
+    NumPy-match contract — so the f32-scoping is an observed-LIMITATION, not a defect.
+    **Cleanup-sub-phase candidate (D16):** extend the FloatControls API to query +
+    assert the f64 levers (`shaderRoundingModeRTEFloat64`,
+    `shaderSignedZeroInfNanPreserveFloat64`) for an explicit f64 determinism contract,
+    rather than relying on the inherent-IEEE-754 + NoContraction path implicitly. (Also
+    noted in `docs/common/cpp.md` § 4.) Banked, not fixed in-sub-phase (cross-cutting:
+    the API lives in common-cpp, locked from RD-2D-Stack-C; § 13).
 
 - **Q-CPP3 — lavapipe determinism levers: thread-invariant element-wise +
   CPU-ICD memory model.** No-atomics element-wise kernels are bit-identical
