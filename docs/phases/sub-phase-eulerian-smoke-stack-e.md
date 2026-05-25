@@ -1,4 +1,4 @@
-# eulerian-smoke → Stack-E Port — Sub-Phase Charter (SEVENTH spec-Phase-2 cross-stack port; SECOND Stack-E port; SECOND R-P2 chaotic-regime instance)
+# eulerian-smoke → Stack-E Port — Sub-Phase Charter (SEVENTH spec-Phase-2 cross-stack port; SECOND Stack-E port; `SHIFTED` Stage 1c-revisited: cross-stack BIT-EXACT — the predicted "SECOND R-P2 chaotic-regime instance" was empirically falsified; see the AMENDED banner + §§ 1/3/5)
 
 > **Document type:** Sub-phase plan (spec § 7.13 artifact type `sub-phase`) —
 > **SEVENTH per-sim cross-stack port under spec-Phase-2**, the **SECOND Stack-E
@@ -16,9 +16,9 @@
 > **Repository:** `git@github.com:StevenFAU/Bit-Physics.git` (owner: Steven Cohen).
 > **Spec anchor:** `docs/architecture.md` (sha256 `e82b7b8e4cc88441a1cdbedda1da2876ab9ccc74c64742585f66e4639292d267` — verified at HEAD per probe § 2) §§ 2.5 (IC-13), 2.6 (cross-stack tolerance — **`smoke` category `relative = 1e-4`**), 2.7 (capture format + canonical descriptor), 3.5 + Appendix **D.6** (14 acceptance gates), D.7 (volumetric-grid Tier-2 = `vector_field` IC-6), 3.6 (Layer-5 per-replication; "the harness is a test, not an aspiration"), 4.4 (CPU `bit-exact-same-hw` / GPU `epsilon-bounded-cross-stack`), 7.5 + Appendix G.7 (IC-16 citations), **11.3 item 2.4** (Smoke → Stack-D+E mandate), Appendix D § D.2.3 (canonical descriptors).
 > **Parent conventions doc** (authoritative): `docs/conventions/sub-phase-conventions.md` (sha256 `1937a7cfa53a6daf790def43f5cc13ba932d54d2c185275a506eb9fab269d031` — verified at HEAD). **§ L.4** (chaotic-regime + S6-trajectory-simulation), **§ L.5** (common-warp-bootstrap S1a-2/S1b-3/S1c-1), **§ L.6** (Warp `@wp.kernel` quirks O-W6/O-W7 — names "Smoke Stack-E" explicitly), **§ L.7** (MPM-Stack-E O-1 verdict taxonomy + O-2 four-checkpoint Warp CPU determinism chain) all load-bearing. Inherits role model (§ A.3), three-stage cadence (§ A.2), append-only discipline (§ B), Convention #12 SHA back-fill (§ B.2 + audit-chain-correctness N1 enumerate-all-placeholders), commit-message convention (§ C), replay-chain non-participation (§ D.4), gate-13 worktree pattern (§ E), determinism convention (§ F), Stage-0 scope-analysis (§ N), capture cadence routing (§ P).
-> **IC-15 reference document (consumed AS-IS):** `docs/conventions/cross-stack-equivalence-methodology.md` (sha256 `a154d10c48be5ee9b5fda7e4d4e3819eed758e792215f7602f49ebf8b1d76421` — verified at HEAD). 5 codified components + § 4 LBM + § 5 MPM (+ § 5.1 third-instance) + **§ 6 smoke R-P2 escape-hatch FORMALIZED** + 5 deferred aspects. This is the SEVENTH pair; it **re-engages deferred aspect #1 (R-P2 chaotic-regime) substantively** — the SECOND R-P2 instance (FIRST on Stack-E), the data point that R-P2 is **stack-portable (Taichi → Warp)** — while #3 (atomic-scatter) is N/A and #5 (iterative-solver) is exercised in determinism-safe fixed-cap form (probe § 6).
+> **IC-15 reference document (consumed AS-IS):** `docs/conventions/cross-stack-equivalence-methodology.md` (sha256 `a154d10c48be5ee9b5fda7e4d4e3819eed758e792215f7602f49ebf8b1d76421` — verified at HEAD). 5 codified components + § 4 LBM + § 5 MPM (+ § 5.1 third-instance) + **§ 6 smoke R-P2 escape-hatch FORMALIZED** + 5 deferred aspects. This is the SEVENTH pair; it **re-engages deferred aspect #1 (R-P2 chaotic-regime) substantively** — `SHIFTED` (Stage 1c-revisited): the plan-drafting "SECOND R-P2 instance; R-P2 is stack-portable (Taichi → Warp)" claim was empirically **OVERTURNED** — the verdict is cross-stack BIT-EXACT and R-P2 is NOT stack-portable (S1c-SME2; methodology § 6 re-characterization, Stage 2) — while #3 (atomic-scatter) is N/A and #5 (iterative-solver) is exercised in determinism-safe fixed-cap form (probe § 6).
 > **common-warp inheritance contract (§ 1.9.1 socket; verified verbatim at HEAD per probe § 2):** `init(device: str | None = None, deterministic: bool = False) -> str`; no-arg `deterministic_context() -> Iterator[int]`; `assert_deterministic_run(sim_fn, *, runs=2, tolerance=0.0) -> str`; `set_warp_deterministic(seed, device="cpu") -> int`; `set_seed` / `get_seed`; `write_capture` / `read_capture` / `Capture`. W-2 baseline `24d44c7e…0746f314`. Subsystems consumed: **1 Runtime + 2 Capture + 3 Determinism** (the socket); Subsystems 4 Particles (no particles) / 5 Grids (f32-pinned; smoke is f64) / 6 HashGrid (no neighbor-search) are NOT structurally consumed (probe § 3 (c)).
-> **Structural inheritance template:** `docs/phases/sub-phase-mpm-multimaterial-stack-e.md` (the SIXTH per-sim port; FIRST common-warp consumer; closest STRUCTURAL template — socket consumption, f64-own-arrays, four-checkpoint determinism chain, Convention-#12 chain) + `docs/phases/sub-phase-eulerian-smoke-stack-d.md` (the FIFTH; SAME sim source; the chaotic-regime / two-capture / MMS-gate-4 / IC-6 CONTENT template). This charter inherits MPM-Stack-E's structure with the chaotic-regime content explicit (§ 5): common-warp instead of common-py; Warp CPU serial launch instead of Taichi `cpu_max_num_threads=1`; `wp.float64(…)` seeds instead of `ti.f64(…)`; `@wp.kernel` instead of `@ti.kernel`; gate-14 R-P2 divergence-rate witness instead of FP-round-off margin.
+> **Structural inheritance template:** `docs/phases/sub-phase-mpm-multimaterial-stack-e.md` (the SIXTH per-sim port; FIRST common-warp consumer; closest STRUCTURAL template — socket consumption, f64-own-arrays, four-checkpoint determinism chain, Convention-#12 chain) + `docs/phases/sub-phase-eulerian-smoke-stack-d.md` (the FIFTH; SAME sim source; the chaotic-regime / two-capture / MMS-gate-4 / IC-6 CONTENT template). This charter inherits MPM-Stack-E's structure with the chaotic-regime content explicit (§ 5): common-warp instead of common-py; Warp CPU serial launch instead of Taichi `cpu_max_num_threads=1`; `wp.float64(…)` seeds instead of `ti.f64(…)`; `@wp.kernel` instead of `@ti.kernel`; gate-14 — `SHIFTED` (Stage 1c-revisited): a cross-stack BIT-EXACT witness (`max_abs_err=0.0`), NOT the planned R-P2 divergence-rate witness.
 > **Parent audits / pre-conditions (FACT — reverify at Stage 0 Task 0.0):**
 > - Phase-1 `eulerian-smoke` reference sealed: `packages/eulerian-smoke/` (Stam-Fedkiw stable-fluids; collocated cell-centered; periodic-BC; plain trilinear SL 3D + MacCormack 2D; 5pt/7pt Laplacian diffuse; Jacobi-20 collocated centered-difference project; vorticity confinement OFF; f64; NO atomic-scatter). TWO canonical captures (LFS): `captures/eulerian-smoke-ref/{taylor-green-128cube-seed42-step500, lid-driven-cavity-128sq-re100-seed42-step1000}.{h5,json}` (gate-14 LEFT-partners).
 > - `mpm-multimaterial-stack-e` landed `d4e52f9`; all gates GREEN; § 1.9.1 socket established + bit-exact CPU determinism four-checkpoint chain (O-2); the socket-only-for-f64 consumption pattern data-backed (warp.md § 6.1).
@@ -109,7 +109,7 @@ Stage-1 STOP — unlike smoke-Stack-D).
 | **Stage 1a — Failing-tests commit** | `packages/eulerian-smoke-stack-e/` skeleton + test surface (`tests/`) at clean `ModuleNotFoundError`; failing-tests evidence + sha256 (commit-first-then-sha256). Build against the § 1.9.1 socket VERBATIM from the start (§ L.5 S1b-3). | yes, single commit |
 | **Stage 1b — Implementation commit** | Determinism-strategy docstring first (§ 6); Warp Stam-Fedkiw reference (`semi_lagrangian_advect` 2D/3D, `maccormack_advect_2d`, `diffuse`, `project_pressure`/`project_pressure_3d` Jacobi-20, `vorticity_confinement` OFF, `curl`/`divergence` as `@wp.kernel`s over own f64 `wp.array`s) → `sim.py` wrapper (`sim_runner_seeded` + `sim_runner_seeded_2d` + `sim_runner_diagnostic`; common-warp `init`/`set_warp_deterministic`/`write_capture`) → `invariants.py` → spec sheet (`spec-ref-stack-e.md`) → test bodies GREEN (gates 4–13; gate-4 MMS-only) → TWO canonical captures (3D held local) → perf-ledger rows (2D + 3D, warp-cpu) → root `pyproject.toml` workspace registration (21 → 22) → gate-13 replay. O-2 chain checkpoints 2 (gate-10 production reproduction) + 3 (canonical-scale 2-run). | yes, single commit |
 | **Stage 1c — Cross-stack equivalence + landing-prep** | gate-14 `compare_captures(eulerian-smoke-ref, eulerian-smoke-stack-e)` at `relative=1e-4` for BOTH descriptors (full horizon; per-field per-frame witness + step-horizon divergence-rate analysis REGARDLESS of pass/fail) → **predicted `within_tolerance=False` on both (R-P2 escape-hatch)** → `equivalence.md` additive **Stack-E section** (extends the chaotic-regime witness template) → tolerance-override REUSE **verify-only** (no new row; D6) → schema-corpus representative-subset entry (the 2D 4.4 MB capture; ≤256 MiB; § 5.4) → un-skip gate-14 test (asserts `within_tolerance=False` AND the § 6.2 escape-hatch criteria hold). O-2 chain checkpoint 4 (formal gate-14). | yes, single commit |
-| **Stage 2 — Landing** | anchor re-check → portfolio regression sweep (22 members; verify `[overrides]` non-interference + per-package pytest-config certification incl. nested `*/tests/`, NOT blanket `-W error`) → integrity sweep (informational; `c19492ad…` baseline) → evidence-path verify (IC-16) → gate-13 replay → append-only check → **IC-15 disposition (D5)**: methodology § 6 R-P2 SECOND-INSTANCE additive refinement (stack-portable Taichi → Warp) + the R-SME9 resolution-dependence § L.4 refinement candidate → landing audit → SHA back-fill. | yes if Stage 1 clean |
+| **Stage 2 — Landing** | anchor re-check → portfolio regression sweep (22 members; verify `[overrides]` non-interference + per-package pytest-config certification incl. nested `*/tests/`, NOT blanket `-W error`) → integrity sweep (informational; `c19492ad…` baseline) → evidence-path verify (IC-16) → gate-13 replay → append-only check → **IC-15 disposition (D5)**: `SHIFTED` (Stage 2) — methodology § 6 R-P2 **re-characterization** (R-P2 NOT stack-portable; cross-stack BIT-EXACT counter-instance; S1c-SME2) + conventions § L.7 O-1 refinement (shape (a), D-S2-1; S1c-SME1) + § L.6 O-W7 narrowing (S1b-SME1) + § L.4 R-SME9 (D16) + § L.5 uv-sync hazard (S1b-SME3) + warp.md § 6 (D15) + charter §§ 6-7 reconcile + CHANGELOG → landing audit → SHA back-fill. | yes if Stage 1 clean |
 
 ---
 
@@ -144,7 +144,7 @@ divergence-rate framing was empirically falsified; see § 1 + the gate-14 row).
 | Stage 1a | `packages/eulerian-smoke-stack-e/` (pkg skeleton + `tests/` failing surface + `pyproject.toml`) | — | — |
 | Stage 1b | reference modules + `sim.py` + `invariants.py` + `spec-ref-stack-e.md` + TWO canonical captures (`captures/eulerian-smoke-stack-e/`) | root `pyproject.toml` (workspace member 22); `docs/perf-ledger.md` (2 rows) | Phase-1 source; common-warp |
 | Stage 1c | schema-corpus subset fixture (2D) | `docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` (additive Stack-E section); un-skip gate-14 test | **`tolerance.toml` (NO edit — reuse; D6)**; conventions/methodology |
-| Stage 2 | landing audit + SHA back-fill | CHANGELOG entry; methodology § 6 (R-P2 second-instance, if D5 routes it); conventions § L.4 (R-SME9 refinement, if D16 routes it) | — |
+| Stage 2 | landing audit + SHA back-fill | `SHIFTED` (landed scope): CHANGELOG entry; methodology § 6 (R-P2 **re-characterization** — NOT stack-portable; S1c-SME2); conventions § L.7 (O-1 shape-(a) refinement, D-S2-1) + § L.6 (O-W7 narrowing) + § L.4 (R-SME9, D16) + § L.5 (uv-sync hazard); warp.md § 6 (D15); charter §§ 1(title)/2/4/6/7 + D5/D10/D11 reconcile | `tolerance.toml` (D6 no-op) |
 
 ---
 
@@ -193,13 +193,20 @@ was empirically falsified — § 1, § 3 gate-14, R-SME1).
   workaround (derive int index via `wp.int32(…)`; never `wp.float64(loop_var)` on an
   int-indexing loop variable). O-W6: omit `from __future__ import annotations`
   defensively.
-- **§ L.7 O-1 verdict taxonomy** — smoke Stack-E is the Stack-E first instance of
-  verdict shape **(c) chaotic-regime escape-hatch** (`within_tolerance=False`); the
-  gate-14 prediction enumerates this shape with rationale (probe § 6) rather than
-  defaulting to FP-round-off.
-- **§ L.7 O-2 four-checkpoint Warp CPU determinism chain** — Stage-0 R-A1 anchor →
-  Stage-1a gate-10 production reproduction → Stage-1b canonical-scale 2-run →
-  Stage-1c formal gate-14.
+- **§ L.7 O-1 verdict taxonomy** — `SHIFTED` (Stage 1c-revisited): plan-drafting
+  predicted shape **(c) chaotic-regime escape-hatch** (`within_tolerance=False`);
+  empirically the verdict is shape **(a) bit-exact** (`within_tolerance=True`,
+  `max_abs_err=0.0`) — smoke Stack-E is the SECOND instance of shape (a) and the one
+  that decouples bit-exactness from trajectory-tameness (Stage-2 § L.7 O-1
+  refinement, D-S2-1: the "algebraically-tame trajectory" qualifier is
+  sufficient-but-not-necessary; the actual condition is a zero cross-stack
+  seed-difference).
+- **§ L.7 O-2 four-checkpoint Warp CPU determinism chain** — `SHIFTED` (S1a-SME1
+  reconcile): the stage→checkpoint mapping per §§ 2/4 authoritative is Stage-0 R-A1
+  anchor (ckpt 1) → Stage-**1b** gate-10 production reproduction (ckpt 2) +
+  canonical-scale 2-run (ckpt 3) → Stage-1c formal gate-14 (ckpt 4; landed under the
+  BIT-EXACT shape at Stage 1c-revisited). (gate-10 + 2-run both landed at Stage 1b,
+  NOT Stage 1a — the earlier "Stage-1a gate-10" mapping was MPM-inherited drift.)
 - **Bare-form `filterwarnings` (S0-1)** — the Stack-E `pyproject.toml` mirrors
   common-warp's; nested `*/tests/` packages swept recursively (smoke-Stack-D S2-2).
 - **N1 per-package pytest-config** — Stage-2 portfolio sweep certifies each package
@@ -224,19 +231,23 @@ was empirically falsified — § 1, § 3 gate-14, R-SME1).
 11. methodology § 5.2 physics-family → numerical-method taxonomy (`volumetric-grid` → `smoke`).
 12. methodology § 5.3 S6 two-instance pattern (spec-vs-implementation; re-confirmed for Stack-E).
 13. methodology § 5.4 legacy-captures schema-corpus ≤ ~256 MiB representative-subset (the 2D 4.4 MB capture).
-14. **methodology § 6 R-P2 chaotic-regime escape-hatch — INVOKED** (SECOND instance; FIRST on Stack-E).
+14. **methodology § 6 R-P2 chaotic-regime escape-hatch** — `SHIFTED` (Stage 1c-revisited): NOT invoked; the cross-stack diff is `0.0` (bit-exact), so R-P2 (which witnesses divergence) does not apply. Smoke Stack-E is the COUNTER-instance: R-P2 is NOT stack-portable Taichi → Warp (Stage-2 methodology § 6 re-characterization; S1c-SME2).
 15. § L.5 S1a-2 / S1b-3 / S1c-1 (GPU device-string / socket-reconciliation / plan-prose-gloss).
 16. § L.6 O-W6 / O-W7 (Warp `@wp.kernel` quirks; names Smoke Stack-E).
-17. § L.7 O-1 verdict taxonomy (shape (c)) + O-2 four-checkpoint determinism chain.
+17. § L.7 O-1 verdict taxonomy (`SHIFTED`: shape **(a) bit-exact**, NOT (c) — Stage-2 D-S2-1 refinement) + O-2 four-checkpoint determinism chain (complete; ckpt 4 under the BIT-EXACT shape).
 18. Bare-form `filterwarnings` (S0-1) + nested-`*/tests/` recursive sweep (smoke-Stack-D S2-2).
 19. D4 determinism contract (`tolerance=0.0` CPU bit-exact-same-hw — bit-exact even for chaos).
-20. The chaotic-regime `equivalence.md` **witness template** (smoke-Stack-D) — extended with an additive Stack-E section.
+20. The chaotic-regime `equivalence.md` **witness template** (smoke-Stack-D) — `SHIFTED` (Stage 1c-revisited): the additive Stack-E section (§ E) is a **bit-exactness** witness, NOT a divergence-rate witness (the divergence is `0.0`); the Stack-D chaotic-regime template is referenced for layout only.
 
-(20 precedents.) **Produced (candidate, D5 at Stage 2):** a methodology § 6
-SECOND-INSTANCE note that the R-P2 chaotic-regime escape-hatch is **stack-portable**
-(Taichi `ti.kernel` CPU → Warp `@wp.kernel` serial-launch CPU; within-stack
-determinism bit-exact on both; cross-stack divergence positive-Lyapunov on both),
-analogous to the § 5.1 third-instance amendment MPM Stack-E produced; plus a
+(20 precedents.) **Produced (D5, LANDED at Stage 2 — `SHIFTED`/OVERTURNED):** the
+plan-drafting candidate was a methodology § 6 note that R-P2 is **stack-portable**
+(Taichi → Warp). Empirically **OVERTURNED**: R-P2 is NOT stack-portable — the
+Stack-D Taichi divergence was Taichi-FP-specific (~1e-16 step-1 round-off); the Warp
+port, same algorithm + same operation order, yields a `0.0` cross-stack
+step-1 difference, so nothing amplifies and the verdict is cross-stack BIT-EXACT
+(within-stack determinism bit-exact on both; cross-stack divergence positive-Lyapunov
+on Taichi only). IC-15 stays PARTIAL. The methodology § 6 re-characterization
+(Stage 2) records this counter-instance; plus a
 candidate § L.4 R-SME9 resolution-dependence refinement.
 
 ---
@@ -274,13 +285,13 @@ candidate § L.4 R-SME9 resolution-dependence refinement.
 - **D2** stage decomposition 6-stage (§ 2); Stage 1c override-add → no-op; gate-14 divergence-rate witness from start.
 - **D3** S6-simulation verdict **CHAOTIC / positive-Lyapunov** (Task 1.6).
 - **D4** gate-14 LEFT-partners (TWO `captures/eulerian-smoke-ref/…`) PRESENT + LFS (CONFIRM); 3D 738 MB RIGHT held local.
-- **D5** *(most consequential)* IC-15 disposition: PARTIAL HOLDS + methodology § 6 R-P2 **SECOND-INSTANCE** refinement (stack-portable Taichi → Warp) + equivalence.md additive Stack-E section + R-SME9 § L.4 candidate. Routed at Stage 2.
+- **D5** *(most consequential)* IC-15 disposition: `SHIFTED`/LANDED (Stage 2) — IC-15 stays PARTIAL; the methodology § 6 candidate was R-P2 SECOND-INSTANCE "stack-portable Taichi → Warp" but is **OVERTURNED** — R-P2 is NOT stack-portable (cross-stack BIT-EXACT counter-instance; S1c-SME2). LANDED: methodology § 6 re-characterization + equivalence.md § E bit-exactness witness + R-SME9 § L.4 (D16).
 - **D6** **REUSE `[overrides.eulerian-smoke]`; NO new tolerance row** (SECOND port to skip).
 - **D7** common-warp consumption: Runtime + Capture + Determinism; NOT Particles/Grids/HashGrid (socket-only; warp.md § 6.1 f64-principle confirmed).
 - **D8** f64 storage: **own `wp.array(dtype=wp.float64)`** + `wp.float64(1.0)/wp.float64(6.0)` 3D Jacobi normaliser — RECOMMENDED.
 - **D9** determinism `tolerance=0.0` (CPU bit-exact, even for chaos); O-2 four-checkpoint chain.
-- **D10** gate-14 = divergence-rate witness; test asserts `within_tolerance=False` + escape-hatch criteria; STOP only on step-1 faithfulness failure.
-- **D11** IC-15 aspects: #1 EXERCISED (R-P2, 2nd / 1st on Stack-E); #5 fixed-cap determinism-safe; #3 N/A.
+- **D10** gate-14 — `SHIFTED` (Stage 1c-revisited): planned as a divergence-rate witness (test asserts `within_tolerance=False`); empirically a **bit-exactness witness** (test asserts `within_tolerance=True` + `max_abs_err==0.0` + smoke/1e-4). STOP only on step-1 faithfulness failure (inert — step-1 bit-exact).
+- **D11** IC-15 aspects: `SHIFTED` (Stage 1c-revisited) — #1 (R-P2) was ENGAGED but the chaotic-regime escape-hatch did NOT apply (cross-stack BIT-EXACT; R-P2 NOT stack-portable; S1c-SME2); #5 fixed-cap determinism-safe (confirmed); #3 N/A.
 - **D12** **NO `-phase-N` tag.**
 - **D13** CI-red LFS-bandwidth **known-banked; no action.**
 - **D14** 3D 738 MB capture **held LOCAL**; schema-corpus subset = the 2D 4.4 MB capture.
