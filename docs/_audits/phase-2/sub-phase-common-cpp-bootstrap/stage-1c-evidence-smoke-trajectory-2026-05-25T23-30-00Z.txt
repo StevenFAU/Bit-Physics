@@ -1,0 +1,13 @@
+advection-diffusion-2d 64x64, 400 steps; initial_max=0.990509 final_max=0.192253
+  step    0  max=0.990509
+  step   40  max=0.701296
+  step   80  max=0.542578
+  step  120  max=0.442248
+  step  160  max=0.373083
+  step  200  max=0.322510
+  step  240  max=0.283919
+  step  280  max=0.253504
+  step  320  max=0.228923
+  step  360  max=0.208982
+  step  400  max=0.192253
+bounded=true monotone_nonincreasing=true
