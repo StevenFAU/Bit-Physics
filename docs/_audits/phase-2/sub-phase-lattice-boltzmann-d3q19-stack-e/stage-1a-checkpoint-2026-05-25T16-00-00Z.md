@@ -3,7 +3,7 @@ artifact: stage
 artifact_id: sub-phase-lattice-boltzmann-d3q19-stack-e-stage-1a
 stage: stage-1a-checkpoint
 phase: phase-2
-head_sha: PENDING-COMMIT-2-SHA-BACKFILL
+head_sha: 242ed4d1b799cd6b1c18ce7e805013974283bb5c
 head_sha_at_checkpoint: 411bf3ba141e541fe7fa5bdbdbc9d7021d6bbd4b
 date: 2026-05-25T16-00-00Z
 verdict: stage-1a-CONFIRMED
