@@ -78,6 +78,18 @@ members = [
   # Consumes the common-warp §1.9.1 socket only (Runtime + Capture + Determinism
   # per D10); own wp.array(dtype=wp.float64) per D15. Registered at Stage 1a.
   "packages/mpm-multimaterial-stack-e",
+  # Spec-Phase-2 Stack-E port of eulerian-smoke (SEVENTH per-sim cross-stack
+  # port; SECOND Stack-E port; spec § 11.3 item 2.4 Stack-E half). The 22nd
+  # workspace member; SECOND common-warp consumer. NVIDIA Warp @wp.kernel
+  # Stam-Fedkiw stable-fluids (collocated cell-centered periodic; trilinear SL
+  # 3D + MacCormack 2D; fixed-cap Jacobi pressure-projection) against the
+  # Phase-1-frozen NumPy reference; cross-stack content-equivalent at
+  # relative = 1e-4 (smoke category, override REUSED per D6) -- the SECOND R-P2
+  # chaotic-regime instance (gate-14 within_tolerance=False is the CORRECT
+  # verdict; D10). Consumes the common-warp §1.9.1 socket only (Runtime +
+  # Capture + Determinism per D7); own wp.array(dtype=wp.float64) per D15.
+  # Registered at Stage 1b (the failing-tests scaffold landed at Stage 1a).
+  "packages/eulerian-smoke-stack-e",
 ]
 exclude = []
 
