@@ -1827,6 +1827,54 @@ local-only (D13; remote-CI deferred).
   four-checkpoint chain (§ L.7 O-2); environment-provisioning drift (dev extras
   must be synced for the sweep/mutation gates).
 
+### sub-phase-common-cpp-bootstrap
+
+Focused-infrastructure sub-phase maturing `common/common-cpp/` from a
+Phase-1-Stage-1 declarations-only scaffold into a consumable Stack-C (C++ /
+Vulkan) surface — the **precondition** that unblocks the Stack-C per-sim ports
+(RD-2D-Stack-C plan-drafting REFRESH next, D11). Determinism is pinned to Mesa
+**lavapipe** (CPU software Vulkan; `VK_DRIVER_FILES` + `LP_NUM_THREADS=0`).
+Gates C-0..C-7 all GREEN. `common-cpp` is **CMake-registered, NOT a uv workspace
+member** (D6; member count stays 23). No `-phase-N` tag (D12 — reserved for
+spec-phase boundaries). Initiates the **Vulkan/C++ quirks catalog**
+(`docs/conventions/sub-phase-conventions.md` § L.9; D5).
+
+#### Added
+
+- **Vulkan headless compute substrate** (`bit_physics::common_cpp_vulkan`;
+  `include/bit_physics/common/vulkan_compute.hpp` + `src/vulkan_compute.cpp`) —
+  `vkcompute::{ComputeContext, StorageBuffer, ComputePipeline, dispatch}` (RAII,
+  move-only, VkResult→exception); instance / device / compute-queue /
+  command-pool / descriptor-set / pipeline / SPIR-V module / host-visible
+  buffer-IO / fence sync; `query_float_controls` +
+  `assert_deterministic_float_controls`. Reproduces the Stage-0 determinism
+  baseline `a7f85bd4…` (C-3).
+- **SPIR-V build-time wiring** — `bitphysics_embed_compute_shader()` CMake helper
+  (glslang `--vn` embedded `uint32_t[]` headers; reproducible) + `shaders/`.
+- **Determinism socket** (`include/bit_physics/common/determinism.hpp`) —
+  `DeterministicContext` RAII + `assert_deterministic_run` + `set_seed`/`get_seed`
+  + library `hash::sha256_hex`; FloatControls + NoContraction (`precise`)
+  discipline (NoContraction baseline `48c92e95…`, distinct from the contracted
+  `a7f85bd4…` — the two-baseline rule, § L.9 Q-CPP1) (C-1/C-2).
+- **HDF5 capture-v1** (`bit_physics::common_cpp_hdf5`; `src/capture_hdf5.cpp`) —
+  `Hdf5Writer`/`Hdf5Reader` replicating the testkit capture-v1 layout (system
+  `libhdf5-dev` + header-only HighFive v2.10.1, FetchContent; D3/D8).
+- **§1.9.1-cpp socket** (`include/bit_physics/common/common_cpp.hpp` umbrella) +
+  **2D advection-diffusion smoke** (Vulkan compute; bounded/stable § L.4,
+  max-field 0.99→0.19) + **cross-language interop** (Python testkit parses the
+  C++-emitted `.h5`; C-4/C-5/C-6).
+- **Top-level `CMakeLists.txt`** registering `bit_physics::common_cpp` (D6) +
+  **`.github/workflows/cpp-strict.yml`** (lavapipe + cmake + ctest CI; S-CPPB5).
+- De-scaffolded `docs/common/cpp.md` (C-5; resolves the dangling
+  `_staging/deps.md` reference, B-RD2C1) + § L.9 Vulkan/C++ quirks catalog
+  (Q-CPP1..5; D5).
+
+Verification: integrity baseline-MATCH `c19492ad…d22cb52` (0 HF / 14 SW) HELD;
+bit-identity replay `9399fc33…` HELD; portfolio sweep 23/23 members ZERO
+regressions; `ctest` 5/5. Methodology § 6.8 (Warp-CPU-f64↔NumPy) explicitly does
+NOT inherit to the Vulkan/C++↔NumPy backend pair (documented at plan-drafting;
+established empirically at the per-sim ports). No `-phase-N` tag pushed (D12).
+
 ## [0.0.0] — Initial placeholder
 
 - Pre-tag placeholder. Phase 0 landing tag (`v0.0.0-phase-0`) is pushed by

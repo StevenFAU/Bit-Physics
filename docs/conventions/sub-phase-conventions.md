@@ -902,6 +902,84 @@ first R-P2 instance. New subsection per per-sub-phase attribution [§ L.5 preamb
   this is the tracked-file-listing rule for `evidence_paths`.) **Applies to: any
   sub-phase holding a capture local per a D-class held-local decision.**
 
+### L.9 Vulkan/C++ quirks catalog — common-cpp-bootstrap (Stack-C / Vulkan-C++ bootstrap)
+
+(FACT — `sub-phase-common-cpp-bootstrap` Stage 0 [S0-CPPB1..5] + Stage 1a
+[S1a-CPPB1..2] + Stage 1b [S1b-CPPB3..5] + Stage 1c [S1c-CPPB1..2]. The FIRST
+Stack-C sub-phase — the `common/common-cpp/` C++/Vulkan-compute bootstrap on Mesa
+lavapipe — initiates the **Vulkan/C++ quirks catalog** (D5), the Stack-C analog
+of the Stack-E precedents in § L.5. New subsection per per-sub-phase attribution
+[§ L.5 pattern]. These entries are the determinism + capture contract the Stack-C
+per-sim ports [RD-2D-Stack-C next, D11] inherit; future Stack-C ports extend.)
+
+- **Q-CPP1 — FMA contraction is ON by default; NoContraction is a load-bearing
+  numeric choice (the TWO-baseline rule).** Mesa lavapipe FMA-contracts the
+  default compute shader. The same element-wise polynomial yields TWO distinct,
+  each-internally-bit-identical readback digests: the contraction-allowed path
+  (`a7f85bd4…2844f05`, the Stage-0/1a substrate baseline) and the NoContraction
+  path (`48c92e95…a174cbec`, via a `precise` GLSL shader → SPIR-V `NoContraction`
+  decorations). NoContraction is the NumPy-match path (separate IEEE-754 RTE
+  multiply+add, no fusion). **A determinism / reproduction claim MUST name its
+  contraction posture** — do NOT assert the NoContraction contract reproduces the
+  contracted baseline, or vice-versa (the Stack-C analog of § L.8 S2-SME1 /
+  smoke-E's R-A1 reproduction caveat). **Applies to: every Stack-C port** — use
+  NoContraction (`precise`) shaders where the cross-stack partner needs
+  NumPy-match rounding; record which digest the determinism gate pins.
+
+- **Q-CPP2 — FloatControls is only PARTIALLY pinnable on lavapipe.** Per
+  `VkPhysicalDeviceFloatControlsProperties` (f32): `shaderRoundingModeRTEFloat32`
+  + `shaderSignedZeroInfNanPreserveFloat32` are advertised (assertable — the
+  NumPy-match levers; `ComputeContext::assert_deterministic_float_controls()`
+  asserts both), but **denorm preserve / FTZ are NOT advertised** (neither
+  pinnable). For near-zero quiescent regimes (e.g. Gray-Scott) the denorm
+  behaviour is a residual cross-stack risk, documented not asserted. **Applies
+  to: Stack-C determinism gates + any near-zero-regime sim** — assert the two
+  pinnable levers; treat denorm-sensitive regions as an epsilon risk at gate-14.
+
+- **Q-CPP3 — lavapipe determinism levers: thread-invariant element-wise +
+  CPU-ICD memory model.** No-atomics element-wise kernels are bit-identical
+  regardless of `LP_NUM_THREADS` (0/1/default — S0-CPPB3); `LP_NUM_THREADS=0` is
+  prescribed (D4) belt-and-suspenders for any future in-shader reduction. On the
+  CPU ICD, `HOST_VISIBLE|HOST_COHERENT` memory IS the device memory, so storage
+  buffers are mapped and used directly as SSBOs (zero-copy readback — S1a-CPPB1);
+  a real-GPU backend needs a device-local + staging path (banked, R-CPPB5).
+  Lavapipe is selected via `VK_DRIVER_FILES=…/lvp_icd.json` (D14). **Applies to:
+  Stack-C substrate use; the determinism contract is same-host-same-build.**
+
+- **Q-CPP4 — capture-v1 cross-language conformance is stricter than the C++
+  round-trip.** The C++-internal `Hdf5Writer`→`Hdf5Reader` round-trip (gate C-1)
+  does NOT validate the testkit's capture-v1 JSON schema; the cross-language gate
+  (the Python testkit reading the C++ `.h5`) does. Two schema points the
+  C++-internal round-trip missed and the cross-language check surfaced
+  (S1c-CPPB2): `payload.format` must be `"hdf5"` (schema enum), and
+  `run.start_utc` must be non-empty. Plus the HighFive determinism flag uses
+  `FileVersionBounds(EARLIEST, LATEST)` — `(EARLIEST, EARLIEST)` is rejected by
+  HDF5 (S1b-CPPB5; h5py `libver="earliest"` semantics). **Applies to: any
+  Stack-C capture writer** — validate against the testkit schema (run the
+  cross-language read), not only the C++ round-trip.
+
+- **Q-CPP5 — exact-digest reproduction is same-host-same-build (CI portability).**
+  The determinism baselines (Q-CPP1) hold for a fixed Mesa/LLVM build on the same
+  host (R-CPPB2); a CI runner with a different Mesa/LLVM may diverge on the
+  FMA-**contracted** digest. The NoContraction path is the more portable
+  (IEEE-754 RTE) of the two. `cpp-strict.yml` runs the full ctest; a red
+  digest-exact test on a divergent runner is expected R-CPPB2 cross-build
+  divergence, not a substrate defect (S1c-CPPB1). **Applies to: Stack-C CI +
+  any cross-machine determinism claim** — pin Mesa/LLVM (container) or scope the
+  exact-digest assertion to the pinned host; assert 2-run determinism + bounded
+  trajectory (portable) as the cross-machine gate.
+
+**Process precedents (NOT Vulkan/C++ quirks — banked coordinator-side):** the
+sub-phase reinforced § L.5 S1c-1 (dispatch-paraphrase drift) THREE times —
+S1a-CPPB3 (FloatControls framed into Stage 1a; charter §2 assigns it to 1b),
+S1b-CPPB1 (C-1/C-2 gate labels swapped vs charter §3), S1b-CPPB2 (Python
+parse-equality framed into 1b; charter scopes it to C-6/Stage 1c). Each was
+reconciled per Convention M (charter explicit stage/gate assignment trumps
+coordinator logical-inference). S1c-CPPB3 confirms § L.5 S1b-3 (socket-
+reconciliation Option B): the §1.9.1-cpp umbrella contract had NO API gap vs the
+first real consumer (the smoke), validating "reconcile the socket BEFORE the
+first consumer."
+
 ---
 
 ## § P. Capture cadence routing
