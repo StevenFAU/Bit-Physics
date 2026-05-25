@@ -1,0 +1,64 @@
+#version 450
+// Gray-Scott reaction-diffusion 2D — Stack-C MMS (manufactured-source) variant.
+//
+// gate-4 (Cat 3 code verification) is MMS single-arm for RD-2D (S0-RD2C1; no
+// closed-form golden table). The 4-grid ladder N∈{16,32,64,128} at t_final=0.05
+// asserts observed L2 order within ±0.5 of formal 2.0 (5-point Laplacian),
+// consuming the shared manufactured solution at
+// tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d/solution.py.
+//
+// This is the plain step + a manufactured forcing term S_u, S_v added per-cell
+// (bindings 4,5) so the chosen analytic u*,v* are exact PDE solutions — the
+// Stack-C analog of Stack-D's `step_diffuse_react_with_source`.
+//
+// SCAFFOLD NOTE (Stage 1a): the source-term op-order is reconciled to the shared
+// solution.py contract at Stage 1b; the C++ driver (run-loop + ladder harness)
+// is Stage 1b. This file establishes the kernel slot per S0-RD2C1.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std430, binding = 0) readonly  buffer Uin  { double u_in[];  };
+layout(std430, binding = 1) readonly  buffer Vin  { double v_in[];  };
+layout(std430, binding = 2) writeonly buffer Uout { double u_out[]; };
+layout(std430, binding = 3) writeonly buffer Vout { double v_out[]; };
+layout(std430, binding = 4) readonly  buffer Su   { double src_u[]; };
+layout(std430, binding = 5) readonly  buffer Sv   { double src_v[]; };
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    double Du;
+    double Dv;
+    double F;
+    double k;
+    double dx;
+    double dt;
+} p;
+
+void main() {
+    uint gx = gl_GlobalInvocationID.x;
+    uint gy = gl_GlobalInvocationID.y;
+    if (gx >= p.nx || gy >= p.ny) return;
+
+    uint xm = (gx + p.nx - 1u) % p.nx;
+    uint xp = (gx + 1u) % p.nx;
+    uint ym = (gy + p.ny - 1u) % p.ny;
+    uint yp = (gy + 1u) % p.ny;
+    uint i  = gy * p.nx + gx;
+
+    double u = u_in[i];
+    double v = v_in[i];
+
+    precise double lap_u = ((u_in[ym * p.nx + gx] + u_in[yp * p.nx + gx])
+                          + u_in[gy * p.nx + xm]) + u_in[gy * p.nx + xp] - 4.0lf * u;
+    lap_u = lap_u / (p.dx * p.dx);
+    precise double lap_v = ((v_in[ym * p.nx + gx] + v_in[yp * p.nx + gx])
+                          + v_in[gy * p.nx + xm]) + v_in[gy * p.nx + xp] - 4.0lf * v;
+    lap_v = lap_v / (p.dx * p.dx);
+
+    precise double uvv   = (u * v) * v;
+    precise double du_dt = ((p.Du * lap_u - uvv) + p.F * (1.0lf - u)) + src_u[i];
+    precise double dv_dt = ((p.Dv * lap_v + uvv) - (p.F + p.k) * v) + src_v[i];
+
+    u_out[i] = u + p.dt * du_dt;
+    v_out[i] = v + p.dt * dv_dt;
+}

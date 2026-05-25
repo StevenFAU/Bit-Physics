@@ -1,0 +1,73 @@
+#version 450
+// Gray-Scott reaction-diffusion 2D — Stack-C Vulkan/C++ port (plain step).
+//
+// One explicit forward-Euler step, 5-point Laplacian, periodic BC, f64.
+// Op-order matched byte-for-byte to the Phase-1 NumPy reference
+// (packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/gray_scott_numpy.py:110-119):
+//   lap   = (((up + down) + left) + right) - 4.0*c      (then / (dx*dx))
+//   uvv   = (u*v)*v
+//   du_dt = ((Du*lap_u) - uvv) + (F*(1.0 - u))
+//   dv_dt = ((Dv*lap_v) + uvv) - ((F + k)*v)
+//   u'    = u + dt*du_dt ;  v' = v + dt*dv_dt
+//
+// `precise` -> SPIR-V NoContraction (Q-CPP1): separately-rounded multiply+add,
+// no FMA fusion -> NumPy-match f64 arithmetic. nx/ny + scalar params via push
+// constants (Stage 1b drives the MMS 4-grid ladder N∈{16,32,64,128} through nx/ny).
+// No atomics, element-wise (Q-CPP3) -> bit-identical run-to-run on lavapipe.
+//
+// Determinism anchor: this kernel's ephemeral digest is recorded at Stage 0
+// (R-A1 9d8ca9b0…, K=100 baked-param variant); the production digest is Stage 1b.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(std430, binding = 0) readonly  buffer Uin  { double u_in[];  };
+layout(std430, binding = 1) readonly  buffer Vin  { double v_in[];  };
+layout(std430, binding = 2) writeonly buffer Uout { double u_out[]; };
+layout(std430, binding = 3) writeonly buffer Vout { double v_out[]; };
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    double Du;
+    double Dv;
+    double F;
+    double k;
+    double dx;
+    double dt;
+} p;
+
+void main() {
+    uint gx = gl_GlobalInvocationID.x;
+    uint gy = gl_GlobalInvocationID.y;
+    if (gx >= p.nx || gy >= p.ny) return;
+
+    uint xm = (gx + p.nx - 1u) % p.nx;
+    uint xp = (gx + 1u) % p.nx;
+    uint ym = (gy + p.ny - 1u) % p.ny;
+    uint yp = (gy + 1u) % p.ny;
+    uint i  = gy * p.nx + gx;
+
+    double u = u_in[i];
+    double v = v_in[i];
+
+    // np.roll order: roll(+1,ax0)=up, roll(-1,ax0)=down, roll(+1,ax1)=left, roll(-1,ax1)=right.
+    double up_u = u_in[ym * p.nx + gx];
+    double dn_u = u_in[yp * p.nx + gx];
+    double lf_u = u_in[gy * p.nx + xm];
+    double rt_u = u_in[gy * p.nx + xp];
+    precise double lap_u = ((up_u + dn_u) + lf_u) + rt_u - 4.0lf * u;
+    lap_u = lap_u / (p.dx * p.dx);
+
+    double up_v = v_in[ym * p.nx + gx];
+    double dn_v = v_in[yp * p.nx + gx];
+    double lf_v = v_in[gy * p.nx + xm];
+    double rt_v = v_in[gy * p.nx + xp];
+    precise double lap_v = ((up_v + dn_v) + lf_v) + rt_v - 4.0lf * v;
+    lap_v = lap_v / (p.dx * p.dx);
+
+    precise double uvv   = (u * v) * v;
+    precise double du_dt = (p.Du * lap_u - uvv) + p.F * (1.0lf - u);
+    precise double dv_dt = (p.Dv * lap_v + uvv) - (p.F + p.k) * v;
+
+    u_out[i] = u + p.dt * du_dt;
+    v_out[i] = v + p.dt * dv_dt;
+}
