@@ -31,3 +31,9 @@ enable_testing()
 #   bit_physics::common_cpp          (core: capture + determinism)
 #   bit_physics::common_cpp_vulkan   (Vulkan compute substrate; if Vulkan found)
 add_subdirectory(common/common-cpp)
+
+# Stack-C per-sim port (D11 — CMake subdirectory, NOT a uv member; uv stays 23).
+# Added AFTER common/common-cpp so its substrate targets +
+# bitphysics_embed_compute_shader helper are in scope.
+#   sub-phase-reaction-diffusion-2d-stack-c, Stage 1b (registration).
+add_subdirectory(packages/reaction-diffusion-2d-stack-c)

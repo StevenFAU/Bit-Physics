@@ -1,10 +1,6 @@
-// RED failing tests — gates 4-13 surface (Stage 1a). These pin the Stage-1b
-// contract; they FAIL RED now because the impl is a stub (throws NotImplemented).
-//
-// gate-5 reference-sanity / gate-7 determinism / gate-9 diagnostics (bounded,
-// §L.4) map onto run_gray_scott; the canonical step-1 faithfulness (the gate-14
-// precursor measured 0.0 at the refresh probe) is asserted here against the
-// NumPy reference once Stage 1b implements the kernel.
+// gates 4-13 surface (Stage 1b GREEN). One canonical run exercises gate-5
+// (fields), gate-7 (2-run determinism witness; O-2 ckpt 3), gate-9 (bounded,
+// §L.4). IC sourced from the Phase-1 reference (S1b-RD2C1; RD2D_REF_MANIFEST).
 
 #include <doctest/doctest.h>
 
@@ -12,21 +8,20 @@
 
 namespace rd = bit_physics::reaction_diffusion_2d_stack_c;
 
-TEST_CASE("RED[gate-5] canonical run produces n*n f64 fields") {
-    rd::GrayScottConfig cfg;  // canonical 128^2
-    // Stage 1b: this returns populated fields. Stage 1a: stub throws -> RED.
-    rd::GrayScottResult r = rd::run_gray_scott(cfg);
-    CHECK(r.final_u.size() == static_cast<size_t>(cfg.n) * cfg.n);
+#ifndef RD2D_REF_MANIFEST
+#error "RD2D_REF_MANIFEST must be defined (path to the Phase-1 reference .json)"
+#endif
+
+TEST_CASE("GREEN[gate-5/7/9] canonical run: fields + determinism + bounded") {
+    rd::GrayScottConfig cfg;  // canonical 128^2 step2000
+    rd::Fields ic = rd::load_reference_ic(RD2D_REF_MANIFEST);
+    REQUIRE(ic.u.size() == static_cast<size_t>(cfg.n) * cfg.n);
+
+    rd::GrayScottResult r = rd::run_gray_scott(cfg, ic);
+
+    CHECK(r.final_u.size() == static_cast<size_t>(cfg.n) * cfg.n);   // gate-5
     CHECK(r.final_v.size() == static_cast<size_t>(cfg.n) * cfg.n);
-    CHECK(r.captured_steps.size() == 11u);  // steps 0,200,...,2000
-}
-
-TEST_CASE("RED[gate-9] trajectory is bounded/dissipative (§L.4)") {
-    rd::GrayScottResult r = rd::run_gray_scott(rd::GrayScottConfig{});
-    CHECK(r.bounded);
-}
-
-TEST_CASE("RED[gate-7] determinism witness is present (2-run bit-exact, Q-CPP1)") {
-    rd::GrayScottResult r = rd::run_gray_scott(rd::GrayScottConfig{});
-    CHECK_FALSE(r.determinism_witness.empty());
+    CHECK(r.captured_steps.size() == 11u);                           // steps 0,200,...,2000
+    CHECK_FALSE(r.determinism_witness.empty());                      // gate-7 (O-2 ckpt 3)
+    CHECK(r.bounded);                                                // gate-9 (§L.4)
 }
