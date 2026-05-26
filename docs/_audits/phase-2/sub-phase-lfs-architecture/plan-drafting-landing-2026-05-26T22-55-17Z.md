@@ -6,14 +6,14 @@ artifact: stage
 artifact_id: sub-phase-lfs-architecture-plan-drafting
 stage: plan-drafting-landing
 verdict: plan-drafting-CONFIRMED
-head_sha: 01b651e22dbd45aa31c9c31a99295095d04aa2ef
-head_sha_at_checkpoint: 1a96fbdc436614daa059a021800cc067928e009b
+head_sha: c771d70c7b3285274c11bd0155f1c7b3abaeff35
+head_sha_at_checkpoint: c771d70c7b3285274c11bd0155f1c7b3abaeff35
 evidence_paths:
   - tools/testkit/probes/reports/sub-phase-lfs-architecture-probe.md
   - docs/phases/sub-phase-lfs-architecture.md
 evidence_hashes:
-  - tools/testkit/probes/reports/sub-phase-lfs-architecture-probe.md: sha256:1bfbae5102585a7b9b9bef00a2612566b8a22440afc2b46010dc271121a5e194
-  - docs/phases/sub-phase-lfs-architecture.md: sha256:5f97f03d23e2325247a854fb0ba2adf81fc6086999df7a68167c0fe55740fdf0
+  tools/testkit/probes/reports/sub-phase-lfs-architecture-probe.md: sha256:af2f8f3251ae7f2045da210fc27580708c893ecb9cc80e99aa5c306887827220
+  docs/phases/sub-phase-lfs-architecture.md: sha256:5f97f03d23e2325247a854fb0ba2adf81fc6086999df7a68167c0fe55740fdf0
 deferred_items: []
 ci_activation: []
 top_level_deps_to_merge: []
@@ -34,8 +34,28 @@ named with verification commands, and the D-class decisions are surfaced for ope
 | 3 | this landing audit | `docs/_audits/phase-2/sub-phase-lfs-architecture/plan-drafting-landing-2026-05-26T22-55-17Z.md` | `01b651e22dbd45aa31c9c31a99295095d04aa2ef` (back-filled in COMMIT 4 per Convention #12) |
 | 4 | SHA back-fill ledger | `docs/_audits/phase-2/sub-phase-lfs-architecture/sha-back-fill-2026-05-26T22-55-17Z.md` | reported in coordinator summary (terminal artifact; not back-filled) |
 
-Probe sha256 `1bfbae51…a5e194`; charter sha256 `5f97f03d…40fdf0` (both recorded in front-matter
-`evidence_hashes` and verifiable by `verify_evidence` at this audit's `head_sha`).
+Probe sha256 `af2f8f32…827220` (post-correction, see § 1b); charter sha256 `5f97f03d…40fdf0`
+(both recorded in front-matter `evidence_hashes` and verifiable by `verify_evidence` at this
+audit's `head_sha`).
+
+## 1b — Post-landing corrections (commits 5–6; self-caught during final verification)
+
+Final-verification sweeps after COMMIT 4 caught two self-introduced errors; both fixed in
+corrective commits (trunk-based; these files are not `*.ledger.md`, so the append-only CI gate
+does not gate the edits — spec § 7.5):
+
+- **COMMIT 5 `c771d70c7b3285274c11bd0155f1c7b3abaeff35`** — the probe report carried 9 abbreviated
+  backtick `path:line` citations that `cat1.intra-repo` (run by `integrity --all`, distinct from
+  the docs-only `cat4` pre-commit hook that had passed) could not resolve → 9 HARD_FAIL. Rewritten
+  to full repo-relative paths; integrity restored to **0 HARD_FAIL** (I3). Probe sha256 changed
+  `1bfbae51…` → `af2f8f32…`.
+- **COMMIT 6 (this correction's commit)** — `evidence_hashes` was written as a YAML *list* of
+  single-key maps; `verify_evidence` requires a *mapping* (`evidence_hashes is not a mapping`).
+  Converted to a mapping and updated the probe hash to `af2f8f32…`. `head_sha` re-anchored to
+  COMMIT 5 `c771d70…` (HEAD at this correction's write; the commit where the fixed probe + charter
+  both resolve) — no further self-referential back-fill needed (the COMMIT-4 ledger's head_sha
+  back-fill stands as the record of the original chain). `verify_evidence` now GREEN
+  (2 pass / 0 fail).
 
 ## 2 — Preconditions verified at session start (all PASS — no Hard Rule 2 STOP)
 
