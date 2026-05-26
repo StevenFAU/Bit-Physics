@@ -6,7 +6,7 @@ artifact: stage
 artifact_id: sub-phase-lfs-architecture-plan-drafting
 stage: plan-drafting-landing
 verdict: plan-drafting-CONFIRMED
-head_sha: <COMMIT_3_SHA_PENDING>
+head_sha: 01b651e22dbd45aa31c9c31a99295095d04aa2ef
 head_sha_at_checkpoint: 1a96fbdc436614daa059a021800cc067928e009b
 evidence_paths:
   - tools/testkit/probes/reports/sub-phase-lfs-architecture-probe.md
@@ -31,7 +31,7 @@ named with verification commands, and the D-class decisions are surfaced for ope
 |---|---|---|---|
 | 1 | probe report | `tools/testkit/probes/reports/sub-phase-lfs-architecture-probe.md` | `d17a479dfd078c26965d86f7d176380a75727dae` |
 | 2 | charter | `docs/phases/sub-phase-lfs-architecture.md` | `1a96fbdc436614daa059a021800cc067928e009b` |
-| 3 | this landing audit | `docs/_audits/phase-2/sub-phase-lfs-architecture/plan-drafting-landing-2026-05-26T22-55-17Z.md` | `<COMMIT_3_SHA_PENDING>` (back-filled in COMMIT 4 per Convention #12) |
+| 3 | this landing audit | `docs/_audits/phase-2/sub-phase-lfs-architecture/plan-drafting-landing-2026-05-26T22-55-17Z.md` | `01b651e22dbd45aa31c9c31a99295095d04aa2ef` (back-filled in COMMIT 4 per Convention #12) |
 | 4 | SHA back-fill ledger | `docs/_audits/phase-2/sub-phase-lfs-architecture/sha-back-fill-2026-05-26T22-55-17Z.md` | reported in coordinator summary (terminal artifact; not back-filled) |
 
 Probe sha256 `1bfbae51…a5e194`; charter sha256 `5f97f03d…40fdf0` (both recorded in front-matter
