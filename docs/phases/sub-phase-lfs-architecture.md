@@ -19,9 +19,10 @@ posture: >
 > build. Plan-drafting CONFIRMED means *the plan is ready for Stage 0 dispatch* — it does
 > **not** mean the migration is complete. Every concrete claim is tagged FACT / INFERENCE.
 > Repo-HEAD facts cite full repo-relative `path:line`. External facts cite URL + access
-> date (full verbatim in the probe report). The **master catalog is a local planning
-> artifact, not in the repo** (probe Finding D0); its sections are tagged
-> `[CATALOG — not in repo]` and are never treated as repo-HEAD facts.
+> date (full verbatim in the probe report). The master catalog was a local planning artifact at
+> plan-drafting (probe Finding D0); **vendored into the repo at Stage 0** (commit `0ae3c57`,
+> `docs/planning/bit-physics-master-catalog.md`). Its sections are tagged `[CATALOG]` and cite the
+> vendored file; it remains a planning artifact, not a normative spec.
 
 ## § 0 — Front matter
 
@@ -150,7 +151,7 @@ Full verbatim citations: probe § S1–§ S7. Decision-relevant distilled facts 
 
 ## § 4 — Tiered CI architecture (operationalizing catalog § 41 + § 45)
 
-`[CATALOG — not in repo]` Catalog § 41 defines five CI tiers by **cadence** (T1 hot per-push
+(`docs/planning/bit-physics-master-catalog.md:3427` § 41) Catalog § 41 defines five CI tiers by **cadence** (T1 hot per-push
 smoke ~1 min; T2 per-PR full-sim gate ~30 min; T3 nightly cross-stack/cross-tier equivalence
 ~3 h; T4 weekly mutation/fuzz/stability ~12 h; T5 phase-landing full audit). § 45.1 defines
 **selective execution via dependency graph** (a PR runs only tests downstream of its changed
@@ -192,7 +193,7 @@ both set `with: lfs: true` under `actions/checkout@v6`.)
 
 ### 4.3 D-9 resolution (local, for this sub-phase)
 
-`[CATALOG — not in repo, § 41 + § 38]` Catalog flags D-9 (5-tier vs 4-tier) as open and notes
+(`docs/planning/bit-physics-master-catalog.md:3427` § 41 + `docs/planning/bit-physics-master-catalog.md:3325` § 38) Catalog flags D-9 (5-tier vs 4-tier) as open and notes
 both defensible. **Local resolution (D2 lean):** adopt the catalog's **5-tier vocabulary**
 (T1–T5) as naming, but recognize only **T1/T2 are wired today** (per-push + per-PR); T3/T4
 (scheduled) and T5 (phase-landing) are **staged** until nightly/weekly runner infrastructure
@@ -483,7 +484,8 @@ here, routed to operator as a Stage-1a optional rider (not a blocker).
 ### 12.1 UNKNOWNs for Stage 0 to resolve
 - **UNKNOWN-1 (catalog provenance):** the master catalog is local-only (probe Finding D0). Stage
   0 confirms the operator-intended catalog path and whether it should be **vendored into the
-  repo** before its tier model is normative (currently `[CATALOG — not in repo]`).
+  repo** before its tier model is normative — vendored at Stage 0 →
+  `docs/planning/bit-physics-master-catalog.md` (commit `0ae3c57`); citations re-anchored.
 - **UNKNOWN-2 (live billing):** paste the live GitHub LFS dashboard (storage/bandwidth used this
   cycle) — probe § P2 NOTE — to anchor § 11 to a real starting point.
 - **UNKNOWN-3 (D1 routing):** operator must choose the backend (D1 lean R2) before Stage 1b.

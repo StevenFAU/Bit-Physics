@@ -6,8 +6,10 @@
 - **Phase tag present:** `v0.2.0-phase-2` (FACT — `git tag -l 'v0.2.0-phase-2'` → present)
 - **Convention #8 posture:** every concrete claim below is grep-verified against repo HEAD
   or web-fetched from an official source with URL + access date. Claims grounded in the
-  *local* master-catalog planning artifact (see preamble) are tagged
-  `[CATALOG — not in repo]` so they are never mistaken for repo-HEAD facts.
+  master-catalog planning artifact are tagged `[CATALOG]` and cite the now-vendored
+  `docs/planning/bit-physics-master-catalog.md` (vendored at Stage 0, commit `0ae3c57`) so they
+  are never mistaken for normative repo-HEAD spec facts (the catalog is a planning artifact, not
+  a spec). Finding D0 below records the plan-drafting state, when it was still local-only.
 
 ---
 
@@ -241,7 +243,7 @@ cadence; there is no nightly/weekly tier in existence yet.
    `git lfs pull --include="tests/fixtures/legacy-captures/**"`.
 4. **`mutation-testing.yml` is mis-tiered.** Its own header says *"SOFT_WARN on push
    (informational), HARD_FAIL at phase landing only"* yet it runs on every push + PR; the catalog
-   places mutation/fuzz at **T4 (weekly)** `[CATALOG — not in repo, § 41.4]`. Re-tiering candidate.
+   places mutation/fuzz at **T4 (weekly)** (`docs/planning/bit-physics-master-catalog.md:3489` § 41.4). Re-tiering candidate.
 
 (INFERENCE) Per-run LFS bandwidth today ≈ python-strict (~4.85 GiB full pull) + cpp-strict
 (~4.85 GiB full pull) per push **and** per PR event. After the § P3 fixes: python-strict ≈
@@ -379,7 +381,7 @@ large-band. This is the concrete event the external-backend architecture exists 
 
 ### P6.3 Phase 6 — first ~16 priority sims
 
-`[CATALOG — not in repo, § 35]` The catalog's 16-item leverage-ordered priority list (ranks 1–16)
+(`docs/planning/bit-physics-master-catalog.md:3256` § 35) The catalog's 16-item leverage-ordered priority list (ranks 1–16)
 begins with a Phase-6.0 maintenance sweep + common-module promotions (no captures), then sims:
 MD-with-MLIPs, shallow-water + sediment, continuum MHD, buoyancy composition, phase-field fracture,
 cardiac digital twin, dendrite growth, wildfire CA, multiphase VOF, MC radiation transport, PIC
@@ -390,7 +392,7 @@ matched pairs → **1–3 capture instances per sim**. Rough Phase-6-first-16 ad
 
 ### P6.4 Decade horizon
 
-`[CATALOG — not in repo, L3381]` *"~170 phenomena and ~95 compositions (potential maximum;
+(`docs/planning/bit-physics-master-catalog.md:3381`) *"~170 phenomena and ~95 compositions (potential maximum;
 realistic implementation will be 15-30 % of that over a multi-year horizon)."* 15–30 % of 265
 phenomena+compositions ≈ **40 – 80 implemented units**, each × 1–3 stack/tier capture instances ×
 periodic re-baseline cadence.

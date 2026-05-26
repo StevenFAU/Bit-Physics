@@ -102,8 +102,11 @@ This is a SHIFT in *framing* from the brief; the *deliverables* are unchanged an
 
 - **UNKNOWN-1 — catalog provenance (Finding D0).** `bit-physics-master-catalog.md` is **not in
   the repo**; it is a local planning artifact (`/home/otacon/Downloads/…`, operator-confirmed).
-  All catalog citations are tagged `[CATALOG — not in repo]`. Stage 0 confirms the intended
-  catalog path and whether it should be vendored before its tier model is normative.
+  All catalog citations are tagged `[CATALOG]` (off-repo at plan-drafting). Stage 0 confirms the
+  intended catalog path and whether it should be vendored before its tier model is normative.
+  (Stage-0 re-anchor: vendored to `docs/planning/bit-physics-master-catalog.md`, commit `0ae3c57`;
+  citations updated. Per spec § 7.5 this is a `plan-drafting-landing-*` file, not a `*.ledger.md`,
+  so the append-only CI gate does not gate the edit.)
 - **UNKNOWN-2 — live billing dashboard.** Not pasted (probe § P2 NOTE). Stage 0 attaches the live
   storage/bandwidth-used figures to anchor § 11.
 - **UNKNOWN-3 — D1 backend routing.** Operator must choose the backend (lean R2) before Stage 1b.
