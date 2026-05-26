@@ -220,7 +220,7 @@ cadence; there is no nightly/weekly tier in existence yet.
 | `structure.yml` | @v6 | none | No | push + PR | T1 |
 | `tolerance-budget-check.yml` | @v6 | none | No | push + PR (path-filtered) | T1/T2 |
 | `ts-strict.yml` | @v6 | none | No | push + PR | T1/T2 |
-| `audit-append-only.yml` | @v6 (`fetch-depth:0`) | none | No | push + PR | T1 + landing |
+| `audit-append-only.yml` | @v6 (`fetch-depth` 0) | none | No | push + PR | T1 + landing |
 
 **P3 key findings (FACT):**
 
@@ -229,11 +229,11 @@ cadence; there is no nightly/weekly tier in existence yet.
    stubs only** — they already operate "selective-fetch-free."
 2. **`cpp-strict`'s `lfs: true` is unnecessary.** The C++ smoke binaries *write* to
    `captures/common-cpp-smoke/` (runtime output dir: `common/common-cpp/smoke/advection_1d.cpp:57`,
-   `advection_diffusion_2d_main.cpp:16`); the C-6 interop ctest reads a **C++-emitted** `.h5`
+   `common/common-cpp/smoke/advection_diffusion_2d_main.cpp:16`); the C-6 interop ctest reads a **C++-emitted** `.h5`
    generated at test time (`common/common-cpp/tests/python/test_cross_language_interop.py`). No
    committed `captures/**` or `legacy-captures/**` LFS object is read. → `lfs: false` is safe.
 3. **`python-strict`'s LFS need is narrow.** Its `pytest … capture/tests/` step
-   (`python-strict.yml:42`) runs `capture/tests/test_legacy_captures_corpus.py`, which globs
+   (`.github/workflows/python-strict.yml:42`) runs `capture/tests/test_legacy_captures_corpus.py`, which globs
    `tests/fixtures/legacy-captures/phase-*.json` and calls `load_capture()` →
    reads the sidecar `.h5` payloads (asserts `arr.size > 0`). It needs **only
    `tests/fixtures/legacy-captures/**`** (447.44 MiB logical / smaller after dedup), **not** the
@@ -262,14 +262,14 @@ _LFS_POINTER_PREFIX = b"version https://git-lfs.github.com/spec/v1"   # repo.py:
 _LFS_OID_RE = re.compile(rb"(?m)^oid sha256:([0-9a-f]{64})$")          # repo.py:82
 ```
 
-Docstring (verbatim excerpt, `repo.py:88-101`): *"A git-lfs pointer stub (spec v1) embeds the
+Docstring (verbatim excerpt, `tools/integrity/integrity/common/repo.py:88-101`): *"A git-lfs pointer stub (spec v1) embeds the
 content's sha256 directly … The `oid` is the content-addressed sha256 of the smudged artifact —
 exactly the value an audit's `evidence_hashes` records for LFS-tracked captures … Parsing it from
 the pointer text needs no `git lfs smudge` / network / working-tree access: the OID is
 deterministic, offline, and content-addressed."* Non-pointer blobs return `None` (caller hashes
 the blob directly).
 
-### P4.2 `verify_evidence` LFS branch (FACT — `verify_evidence.py:113-128`)
+### P4.2 `verify_evidence` LFS branch (FACT — `tools/integrity/integrity/scripts/verify_evidence.py:113-128`)
 
 ```
 blob = file_at_sha(root, head_sha, path_str)                 # :113  git show <sha>:<path>
@@ -280,7 +280,7 @@ if actual != claimed_hex: result.failures.append(...)        # :123-126
 ```
 
 **Load-bearing architectural fact (FACT):** `verify_evidence` is **fully offline**. It calls
-`git show <sha>:<path>` (`repo.py:63-78`, `file_at_sha`), which returns the **pointer stub** (git
+`git show <sha>:<path>` (`tools/integrity/integrity/common/repo.py:63-78`, `file_at_sha`), which returns the **pointer stub** (git
 does not smudge under `git show`), then parses the embedded `oid sha256:` line. It **never fetches
 LFS content**, never calls `git lfs smudge`, needs no network and no LFS auth. → **I1 (the
 audit-chain content-OID invariant) is decoupled from LFS *backend availability*.** A backend
@@ -298,8 +298,8 @@ This is the central reason the migration is low-risk for the evidence chain (cha
 
 Command form: `python -m integrity.scripts.verify_evidence --audit <path>` (exit 0 each).
 The LBM-D landing exercises multiple LFS `.h5` evidence_hashes resolving via content-OID — the
-strongest single demonstration that I1 holds at HEAD. (Cross-ref spec § 7.5 `architecture.md:1455`;
-Appendix G.7 `architecture.md:3135`; conventions § B.6 Mode-2 RESOLVED.)
+strongest single demonstration that I1 holds at HEAD. (Cross-ref spec § 7.5 `docs/architecture.md:1455`;
+Appendix G.7 `docs/architecture.md:3135`; conventions § B.6 Mode-2 RESOLVED.)
 
 ---
 
@@ -356,7 +356,7 @@ created to absorb), MPM 1.05 GiB (FACT).
 
 ### P6.2 Phase 4 — 27 frontier variants
 
-(FACT — `phase-4-plan.md:127` *"Phase 4 enumerates 27 frontier-variant sims"*; `:2440` each
+(FACT — `docs/phases/phase-4-plan.md:127` *"Phase 4 enumerates 27 frontier-variant sims"*; line 2440 each
 produces `captures/<sim>-<variant>/<descriptor>.h5` **and** a corpus seed copy at
 `tests/fixtures/legacy-captures/phase-4-<sim>-<variant>.h5`.) So each variant adds **≥ 2 LFS
 pointers** (canonical + corpus seed), though the corpus seed may dedup against the canonical OID
