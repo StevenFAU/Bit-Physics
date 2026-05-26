@@ -1,0 +1,11 @@
+# Append-only check vs v0.1.0-phase-1 over docs/_audits/ (Phase-2 plan §2.12 Task L.1b)
+# Mechanism note: §2.12 names integrity.scripts.check_append_only — that module was never built;
+# the established practice (sub-phase-phase-2-audit-revision §4) uses git diff --numstat, reproduced here.
+# command: git diff --name-status v0.1.0-phase-1 HEAD -- docs/_audits/
+
+Added (A):    483
+Modified (M): 0
+Deleted (D):  0
+Renamed (R):  0
+
+RESULT: pure-additive vs v0.1.0-phase-1 (no Phase-1 audit file edited, shortened, or deleted). PASS.
