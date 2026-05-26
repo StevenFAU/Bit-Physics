@@ -24,6 +24,26 @@ posture: >
 > `docs/planning/bit-physics-master-catalog.md`). Its sections are tagged `[CATALOG]` and cite the
 > vendored file; it remains a planning artifact, not a normative spec.
 
+> **AMENDMENT — Stage 0 (2026-05-26).** Operator D-class routings ratified; one rider held.
+> Prior text below is preserved; this block governs where it overlaps.
+>
+> - **D-class LOCKED (operator):** D1 = **R2 via `lfs-s3`**; D2 = **5-tier vocabulary, T1/T2
+>   active, T3–T5 staged**; D5 = **T1/T2 SOFT_WARN, T3+ HARD_FAIL**; D6 = **per-workflow
+>   selective-fetch now, shared dependency-graph filter deferred**. D3/D4/D7/D8/D9 plan-drafting
+>   leans **accepted** (no inversion surfaced at Stage-0 re-anchor). § 8 lean text stands.
+> - **UNKNOWN status:** UNKNOWN-1 (catalog provenance) **RESOLVED** (vendored, commit `0ae3c57`);
+>   UNKNOWN-3 (D1 routing) **RESOLVED** (R2). UNKNOWN-2 (live LFS billing dashboard) **still open**
+>   (carry to Stage 1a). UNKNOWN-4 (R2 bucket + scoped token) **operator-pending** — § 6 M0 stays
+>   pending; Stage 1a/1b do not block on credentials.
+> - **mutation-testing re-tier rider HELD (Hard-Rule-2 surface, NOT executed).** Re-tiering
+>   `.github/workflows/mutation-testing.yml` to weekly per `docs/planning/bit-physics-master-catalog.md:3489`
+>   § 41.4 is correct in principle, BUT the workflow is enumerated under "Required workflows that
+>   must run on `main`" at `docs/ops/branch-protection.md:49-65`. Moving it to conditional/scheduled
+>   triggers could break it as a required status check (a required check that does not run on a
+>   given push blocks that push/merge). Per the Stage-0 dispatch P7 STOP rule, the workflow is
+>   **not changed**; the re-tier is routed to the operator coupled with a `branch-protection.md`
+>   de-listing (+ live branch-protection update). See Stage-0 checkpoint § 7.
+
 ## § 0 — Front matter
 
 - **Sub-phase:** `sub-phase-lfs-architecture` (Phase-2 infrastructure tail; Phase 2 closed
