@@ -1442,6 +1442,56 @@ decision (`docs/conventions/sub-phase-conventions.md` § D.2).
   from required-must-run in `docs/ops/branch-protection.md`; `docs/architecture.md`
   § 2.13 CI-policy amended accordingly.
 
+### sub-phase-phase-2-cleanup
+
+Phase-2-tail basket-hygiene sub-phase, landing after `sub-phase-lfs-architecture`.
+Pays down the hygiene debt consolidated at Phase-2 close — citation/path drift,
+convention amendments, doc-truth divergences, deferred small follow-ups — across
+seven thematic clusters (A–G) before Phase 3 dispatches. Of **53 enumerated items**
+(41 from the Phase-2 landing § 13 inventory + 8 operator-known-pre-queued + 4
+probe-discovered), the cleanup-shaped ones were resolved in place and **11 items
+were routed forward as candidate sibling sub-phases / operator-decision dispatches /
+Phase-3 consumptions** (the full forward-routing catalog is in the sub-phase landing
+audit). No simulation source changed; all seven invariants (I1–I7), the bit-identity
+replay (`9399fc33…`), and the integrity baseline (`c19492ad…`) held byte-for-byte
+throughout. No `-phase-N` tag and — per the § D.2 default this sub-phase itself
+authored — **no point-release tag** (cleanup is steady-state hygiene, meeting none
+of the three intermediate-tag conditions).
+
+**What changed for contributors:**
+
+- **Intermediate-tag policy is now explicit** (`docs/conventions/sub-phase-conventions.md`
+  § D.2): the default is **NO tag** for a sub-phase, except when it (a) adds an external
+  dependency, (b) marks durable architecture worth git-archaeology, or (c) the operator
+  judges historical significance — precedent `v0.2.1-sub-phase-lfs-architecture`.
+- **Per-package code ownership scaffolding** (`.github/CODEOWNERS`, new): 19 sim packages
+  + 4 common + tooling, with an operator owner and agent-id sentinel comments. **Latent**
+  (not enforced — the repo has no live branch protection); it benefits the project at
+  multi-agent maturity.
+- **README test invocations standardized** to `uv run pytest …` across all 11 packages.
+- **GitHub Actions pinned to immutable commit SHAs** (`checkout`, `setup-node`,
+  `pnpm/action-setup`) with the mutable-tag-vs-immutable-SHA distinction documented in
+  `docs/dependencies.md`.
+- **CHANGELOG structure fix:** seven misfiled Phase-2 sub-phase sections that had been
+  recorded under the `[0.1.0-phase-1]` header were relocated (byte-exact) to
+  `[Unreleased]`, where they belong.
+- **Conventions / methodology reconciled:** the § M cumulative-shift inventory and
+  several stale § L / methodology § 6 section titles were brought current; the
+  integrity baseline-digest derivation and coordinator-drift patterns were formalized
+  in a new § L.10; verdict-states were mapped to Nygard ADR states as a § L.11
+  intention-note (no ADR directory yet); and the matched-pair cross-stack gate ↔
+  differential-testing relationship was cross-referenced (§ L.11 + catalog § 50.1)
+  without renaming anything.
+- **The I7 no-agent-pushed-tags guard test was rewritten** to encode the actual
+  invariant — it now forbids *agent-pushed* tags via a declarative
+  operator-sanctioned-tags allowlist, rather than forbidding *all* tags pointing into
+  a sub-phase range (which had wrongly flagged the operator's legitimate
+  `v0.2.1-sub-phase-lfs-architecture`).
+- **Branch-protection doc amended to live state** (`docs/ops/branch-protection.md`):
+  the documented rules are DESIGNED-but-unenforced (the live API returns 404 "not
+  protected"); implementing them is forward-routed for if/when the contributor model
+  grows beyond solo+agent.
+
 ### sub-phase-ci-action-migration-and-banked-cleanup
 
 Focused-infrastructure sub-phase whose PRIMARY, time-pressured driver is
