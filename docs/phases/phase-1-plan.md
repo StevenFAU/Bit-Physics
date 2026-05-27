@@ -133,7 +133,7 @@ Spec § 11.2 does not distinguish between "spec the sims" and "implement the sim
 This charter is drafted from the spec without re-anchoring against a live repo, because Phase 0 has not landed yet at draft time. Some assumptions reflect spec intent rather than verified disk state:
 
 - Directory layouts (`packages/<sim>` for Stack B, `<category>/<sim>` for Stack C/D, `docs/sim-specs/<category>/<sim>` for specs per spec § 8.1).
-- Path for golden tables: `tools/testkit/code_verification/golden/tables/` per § 3.1.
+- Path for golden tables: `tools/testkit/golden/tables/` per § 3.1.
 - Path for MMS solutions: `tools/testkit/code_verification/mms/solutions/<sim-name>/` per § 3.1.
 - Path for schemas: `tools/testkit/schemas/` per § 3.1; § 3.4 also names `common/schemas/` as cross-stack canonical; relationship unclear — agent probes.
 - Path for vendored upstreams: top-level `references/<UpstreamName>/` per § 2.8; § 3.4 mentions `common/references/`; same ambiguity.
@@ -693,7 +693,7 @@ head_sha: <SHA at probe-authoring time>
 ## 4. Test fixture paths
 | Path | Type | Derivation |
 |---|---|---|
-| tools/testkit/code_verification/golden/tables/.../dfsph-density-evolution.json | golden | from derivations/dfsph-density-evolution.md |
+| tools/testkit/golden/tables/.../dfsph-density-evolution.json | golden | from derivations/dfsph-density-evolution.md |
 | ... | ... | ... |
 
 ## 5. Public exports the sim will provide (Phase 2+ implementation contract)
@@ -1393,7 +1393,7 @@ The remaining § 7 subsections (§ 7.4 through § 7.10) are reference cards the 
 2. View per-sim spec template per spec § 8.2 (the 12 sections).
 3. View `tools/testkit/probes/template.md` for Phase 0's probe shape.
 4. View `common/common-ts/` API for what's available in Stack B.
-5. View `tools/testkit/code_verification/golden/tables/` for golden-table JSON schema.
+5. View `tools/testkit/golden/tables/` for golden-table JSON schema.
 6. View `tools/diagnostics/tier2/closed_form/` (Stage 1 commit) to confirm IC-7 conformance — your tests will call those exact functions.
 7. View Phase 0's `docs/sim-specs/continuous-ca/reaction-diffusion-2d/` for an exemplar 5-file doc set; mirror format.
 8. Probe Stack B test framework: vitest by default (Vite stack per spec § 9.1); confirm against Phase 0.
@@ -1527,8 +1527,8 @@ The remaining § 7 subsections (§ 7.4 through § 7.10) are reference cards the 
 - algebraic.md. DFSPH derivation + cubic-spline kernel evaluation. Sets up the density-evolution arithmetic the new golden encodes.
 - determinism.md. Epsilon (atomic scatter-add in neighbor accumulation breaks bit-exact even same-hw).
 - equivalence.md. Stack-C only; Stack-D replication Phase 2.
-- DFSPH density-evolution golden at `tools/testkit/code_verification/golden/tables/particle-fluids/dfsph-density-evolution.json`. 64 particles in regular grid at known density; density-prediction step closed-form. JSON schema matches Phase 0's cubic-spline-kernel.
-- Derivation at `tools/testkit/code_verification/golden/derivations/dfsph-density-evolution.md`.
+- DFSPH density-evolution golden at `tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json`. 64 particles in regular grid at known density; density-prediction step closed-form. JSON schema matches Phase 0's cubic-spline-kernel.
+- Derivation at `tools/testkit/golden/derivations/dfsph-density-evolution.md`.
 - Probe per IC-8. Enumerate SPlisHSPlasH paths from vendored tree; common-cpp APIs (IC-1, IC-3); license file location; IC-5 check signatures.
 - Failing test suite:
   - Phase 0's cubic-spline-kernel golden (exists; test asserts sim output matches).
@@ -1581,7 +1581,7 @@ The remaining § 7 subsections (§ 7.4 through § 7.10) are reference cards the 
 
 **Re-anchor checklist:**
 
-1. View spec § 5.7. Confirm Stack C, D3Q19 BGK, NACA airfoil. Note spec text: "Vendored against Krüger et al. 2017 book companion code (D2Q9 only); D3Q19 lattice constants derived in `tools/testkit/code_verification/golden/derivations/d3q19.md`."
+1. View spec § 5.7. Confirm Stack C, D3Q19 BGK, NACA airfoil. Note spec text: "Vendored against Krüger et al. 2017 book companion code (D2Q9 only); D3Q19 lattice constants derived in `tools/testkit/golden/derivations/d3q19.md`."
 2. View `references/` for a Krüger 2017 directory.
    - If absent, decide: (a) vendor as a separate sub-step per spec § 2.8 (your scope expands within Stage 2 — SHIFTED in checkpoint with justification) OR (b) cite as algebraic-ground-truth without vendored code path (INFERENCE). Document choice in checkpoint log.
 3. View Stage 1 common-cpp commit.
@@ -1591,8 +1591,8 @@ The remaining § 7 subsections (§ 7.4 through § 7.10) are reference cards the 
 **Substantive deliverables:**
 
 - README.md.
-- `d3q19.md` at `tools/testkit/code_verification/golden/derivations/d3q19.md` (called out by name in spec). Derive from first principles: 19 velocity vectors, 19 weights, sound speed c_s, equilibrium distribution f_i^eq. Cite Krüger 2017 + Qian-d'Humières-Lallemand 1992.
-- Equilibrium golden table at `tools/testkit/code_verification/golden/tables/lattice/d3q19-equilibrium.json`. For fixed (ρ, u), compute f_i^eq for each of 19 directions analytically. JSON + a Python script `d3q19-equilibrium-script.py` that independently reproduces.
+- `d3q19.md` at `tools/testkit/golden/derivations/d3q19.md` (called out by name in spec). Derive from first principles: 19 velocity vectors, 19 weights, sound speed c_s, equilibrium distribution f_i^eq. Cite Krüger 2017 + Qian-d'Humières-Lallemand 1992.
+- Equilibrium golden table at `tools/testkit/golden/tables/lattice/d3q19-equilibrium.json`. For fixed (ρ, u), compute f_i^eq for each of 19 directions analytically. JSON + a Python script `d3q19-equilibrium-script.py` that independently reproduces.
 - spec-ref.md per § 8.2; § 6 per IC-10:
   - § 2: Krüger 2017, Qian-d'Humières-Lallemand 1992.
   - 6.1 code verification: MMS for incompressible NS via LBM moments + D3Q19 equilibrium golden.
@@ -1627,7 +1627,7 @@ The remaining § 7 subsections (§ 7.4 through § 7.10) are reference cards the 
 **Substantive deliverables:**
 
 - README.md.
-- MLS-MPM quadratic B-spline shape function derivation at `tools/testkit/code_verification/golden/derivations/mls-mpm-quadratic-bspline.md` + golden table at `tools/testkit/code_verification/golden/tables/hybrid-pg/mls-mpm-shape-functions.json`. For fixed (particle position, grid node position), weight is closed-form. Golden table for representative offsets.
+- MLS-MPM quadratic B-spline shape function derivation at `tools/testkit/golden/derivations/mls-mpm-quadratic-bspline.md` + golden table at `tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json`. For fixed (particle position, grid node position), weight is closed-form. Golden table for representative offsets.
 - spec-ref.md per § 8.2; § 6 per IC-10:
   - § 2: Hu et al. 2018.
   - 6.1 code verification: quadratic-B-spline golden + MMS for linear elasticity component.

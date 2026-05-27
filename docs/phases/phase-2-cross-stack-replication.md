@@ -168,7 +168,7 @@ The probe commands below are shown as the canonical checks each stage's Task X.1
 # Probe 1: Testkit operational
 ls tools/testkit/schemas/capture-v1.json                # FACT-or-fail
 ls tools/testkit/code_verification/mms/runner.py        # FACT-or-fail
-ls tools/testkit/code_verification/golden/tables/       # FACT-or-fail (non-empty)
+ls tools/testkit/golden/tables/       # FACT-or-fail (non-empty)
 ls tools/testkit/determinism/harness.py                 # FACT-or-fail
 ls tools/testkit/equivalence/harness.py                 # FACT-or-fail
 ls tools/testkit/equivalence/tolerance.toml             # FACT-or-fail
@@ -1353,7 +1353,7 @@ The Stage 9 (landing) later stitches per-stack fragments into the canonical `doc
 - `tools/testkit/equivalence/harness.py` exists; invokable as `python -m testkit.equivalence`.
 - `tools/testkit/equivalence/tolerance.toml` exists with per-category default rows.
 - `tools/testkit/code_verification/mms/solutions/` has at minimum heat-equation-1d; per Rule P3 a stage falls back to this if its sim's exact manufactured solution isn't yet vendored.
-- `tools/testkit/code_verification/golden/tables/` has at minimum the cubic-spline kernel table.
+- `tools/testkit/golden/tables/` has at minimum the cubic-spline kernel table.
 - `references/<vendored-upstreams>/` populated for SPlisHSPlasH and any LBM upstream Phase 1 vendored.
 - `captures/<sim>-ref/` exists for each Phase 1 source sim with at least the descriptors named in §1.9.3 above.
 - `docs/sim-specs/<category>/<sim>/spec-ref.md` exists for each Phase 1 source sim.
@@ -2762,7 +2762,7 @@ The non-exhaustive list of high-stakes anchor sketches:
 - `tools/testkit/equivalence/tolerance.toml` — the per-category tolerance table.
 - `tools/testkit/equivalence/harness.py` — the equivalence harness.
 - `tools/testkit/code_verification/mms/solutions/` — manufactured-solution library.
-- `tools/testkit/code_verification/golden/tables/` — golden-value tables.
+- `tools/testkit/golden/tables/` — golden-value tables.
 - `tools/testkit/probes/template.md` — probe-report template.
 - `common/common-cpp/`, `common/common-py/` — Stack C and Stack D common modules.
 - `docs/common/cpp.md`, `docs/common/py.md` — Stack C and Stack D API specs.
