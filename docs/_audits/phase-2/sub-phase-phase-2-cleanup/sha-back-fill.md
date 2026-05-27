@@ -153,3 +153,24 @@ gotcha.)
 #1 STAYS-BANKED (R-1); #10/#17/#28 DEFER-OUT (charter § 9; #17 = 93 mypy errors/9 files); K-3 CARRY
 (UNKNOWN-1, post-reset follow-up). No scope absorbed. I1–I7 hold; integrity baseline `c19492ad…d22cb52`
 held; verify_evidence 8/0. Banked lesson L-CLEANUP-1. No tag pushed by agent (I7).
+
+## Stage 1.E chain SHAs (appended at Stage 1.E close; Convention #12)
+
+Cluster E (working-tree & doc-truth hygiene) — **CONFIRMED-Stage-1-E**. Two theme-commits (R-4) +
+checkpoint. #20/#24/#26 RESOLVED; #38 VERIFY-CLOSE; #27 DEFER (gate unmet).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | #20 CHANGELOG byte-exact relocation | `CHANGELOG.md` | `3216b2e74e3634bf797a04653b52907396cbc8e0` |
+| 2 | #24 gitignore + #26 doc-truth note | `.gitignore`, `docs/phases/sub-phase-common-cpp-bootstrap.md` | `eddd86e55a3d89ec05c9dcb1284abc17126f426f` |
+| 3 | Stage-1.E checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-e-checkpoint-2026-05-27T22-20-04Z.md` | `9061d7034995e31b6eb8433cd5afae0c98558cdb` |
+| 4 | this back-fill (Stage 1.E section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** Checkpoint `head_sha` pinned to `eddd86e` (where all evidence
+resolves; `verify_evidence` 10 pass / 0 fail). Separate commit; never `--amend`.
+
+**Stage 1.E CONFIRMED-Stage-1-E.** #20 (CHANGELOG split-location; byte-exact 7-section relocation),
+#24 (working-tree clutter gitignored — captures preserved for D13/D14), #26 (project-state.md doc-truth)
+RESOLVED; #38 VERIFY-CLOSE (hello_taichi.py exemplar consumed by RD2D); #27 DEFER (removal gate unmet).
+#20 release-section workflow banked to charter § 9. I1–I7 hold; integrity baseline `c19492ad…d22cb52`
+held; verify_evidence 10/0. No tag pushed by agent (I7).
