@@ -48,6 +48,11 @@ WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     # Stage 1b: the M2 R2 round-trip proof — operates on a throwaway object,
     # reads no committed capture; checks out lfs: false.
     "r2-roundtrip-proof.yml": "none",
+    # Stage 1c: the M4 R2 sweep proof legitimately fetches the FULL committed LFS
+    # object set — but FROM R2, into a throwaway lfs.storage, to verify sha256 ==
+    # OID at HEAD + every phase tag. It checks out lfs: false and fetches
+    # explicitly (never lfs: true), so it does not over-fetch via the smudge path.
+    "r2-sweep-proof.yml": "full",
 }
 
 _WORKFLOW_DIR = ".github/workflows"
