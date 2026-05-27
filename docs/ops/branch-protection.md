@@ -62,7 +62,23 @@ inherits them green.
 | `.github/workflows/equivalence.yml` | Cross-stack equivalence harness | gated (Block 9 activates) |
 | `.github/workflows/audit-append-only.yml` | Append-only enforcement for `docs/_audits/` | gated (Block 9 activates; goes live for Phase 1) |
 | `.github/workflows/tolerance-budget-check.yml` | Tolerance overrides within budget | gated (Block 9 activates) |
-| `.github/workflows/mutation-testing.yml` | Mutation thresholds on testkit/integrity | gated (Block 9 activates) |
+
+> **Re-tier note — `mutation-testing.yml` de-listed (catalog
+> `docs/planning/bit-physics-master-catalog.md:3489` § 41.4 T4).**
+> Catalog § 41.4 places mutation / fuzz / long-running stability in the
+> **weekly T4** tier, not the per-push required-check set. The workflow was
+> re-tiered to a weekly cron + `workflow_dispatch` + a path-filtered SOFT_WARN
+> push over the modules under test; its HARD_FAIL-at-phase-landing semantics
+> are unchanged (`architecture.md` § 2.13). A scheduled/conditional workflow
+> cannot serve as a required status check — a required check that does not run
+> on a given push blocks that push — so de-listing here is coupled to the live
+> config.
+>
+> **Operator action (M0) — NOT yet performed:** update the live GitHub branch
+> protection config to drop `mutation-testing` from the required status checks
+> (Settings → Branches → `main` rule → required status checks → remove
+> `mutation-testing`). Per the closing paragraph below, drift between this doc
+> and the applied rules is resolved in favour of the synced GitHub state.
 
 ## Operator verification checklist
 
