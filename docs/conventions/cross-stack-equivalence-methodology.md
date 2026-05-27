@@ -307,7 +307,7 @@ needing larger fixtures route a **smaller-scenario variant** (fewer particles / 
 grid / fewer steps) rather than stretching this bound. (This codifies what was implicit
 heuristic across the prior four sub-phases.)
 
-## 6. Fifth-pair refinements (sub-phase-eulerian-smoke-stack-d Stage 2; Option-2 routing)
+## 6. Cross-stack pair refinements, pairs 5–8 (originated at sub-phase-eulerian-smoke-stack-d Stage 2 as the fifth-pair refinements, Option-2 routing; § 6.7–6.8 extend to the seventh/eighth pairs)
 
 > **ADDITIVE amendment (Convention A); a PROMOTION of deferred component § 2 item 1
 > (R-P2 chaotic-regime escape-hatch) from deferred → FORMALIZED — NOT a promotion
