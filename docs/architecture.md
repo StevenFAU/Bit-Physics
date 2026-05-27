@@ -593,7 +593,7 @@ The testkit (Layer 0) and integrity toolkit (Layer 1) are load-bearing for every
 - `tools/testkit/capture/` — capture reader/writer/diff. ≥ 90%.
 - `tools/integrity/integrity/cat4_draft_time/` — Cat 4 grammar checker. ≥ 90% (false-negatives here let fabrication through).
 
-Mutation-test runs are SOFT_WARN in CI on every push (informational; do not block) and HARD_FAIL on phase landings (the phase cannot tag if mutation score has regressed below threshold for any in-scope module). Phase 0 lands the initial mutation-testing harness and baselines; subsequent phases inherit the thresholds. Phase 4 elevates `cat4_draft_time` to 95% after schema-bump traffic has stress-tested its grammars.
+Mutation-test runs are a weekly **T4** tier (catalog `docs/planning/bit-physics-master-catalog.md:3489` § 41.4 — "weekly mutation / fuzz / long-running stability"): a scheduled weekly cron plus `workflow_dispatch`, plus a SOFT_WARN run on pushes that touch the modules under test (informational; do not block). They remain HARD_FAIL on phase landings (the phase cannot tag if mutation score has regressed below threshold for any in-scope module). Phase 0 lands the initial mutation-testing harness and baselines; subsequent phases inherit the thresholds. Phase 4 elevates `cat4_draft_time` to 95% after schema-bump traffic has stress-tested its grammars.
 
 **Configuration:** `tools/testkit/mutation/mutmut-config.toml` for Python; `tools/testkit/mutation/stryker.conf.json` for TS. Both committed alongside `tools/testkit/` so the configuration is co-versioned with the modules it tests.
 
