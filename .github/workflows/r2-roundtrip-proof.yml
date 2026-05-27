@@ -1,0 +1,82 @@
+name: r2-roundtrip-proof
+# Stage 1b M2 (sub-phase-lfs-architecture): a live proof that the lfs-s3
+# custom-transfer agent reaches Cloudflare R2 with the repo's R2_* secrets and
+# round-trips a git-LFS object by content-OID (push -> drop local cache -> fetch
+# -> sha256 verify). Manual trigger only. Operates on a throwaway 4 KiB random
+# object in a temp repo; NO committed capture / LFS object is touched, and the
+# repo's own LFS resolution is unaffected (per-job config in a temp checkout).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  r2-roundtrip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      - name: R2 round-trip via lfs-s3 (push → drop cache → fetch → sha256)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+          AWS_REGION: auto
+        run: |
+          set -euo pipefail
+          git lfs version
+          repo_root="${GITHUB_WORKSPACE}"
+
+          # Throwaway repo so nothing here can perturb the real checkout's LFS config.
+          work="$(mktemp -d)"
+          cd "$work"
+          git init -q
+          git lfs install --local
+
+          # Per-job lfs-s3 configuration against R2 (installs agent + git config +
+          # exports endpoint/region; credentials come from env, never git config).
+          # shellcheck disable=SC1091
+          source "${repo_root}/tools/lfs/setup-lfs-s3.sh"
+
+          fname="m2-${GITHUB_RUN_ID}.bin"
+          head -c 4096 /dev/urandom > "$fname"
+          sha_before="$(sha256sum "$fname" | awk '{print $1}')"
+
+          git lfs track "*.bin" >/dev/null
+          git add .gitattributes "$fname"
+          git -c user.email=ci@bit-physics.local -c user.name=ci commit -qm "m2 test object"
+          oid="$(git show "HEAD:$fname" | sed -n 's/^oid sha256://p')"
+          echo "test object: $fname  oid=$oid  sha256=$sha_before"
+
+          # Local bare remote holds git refs only; LFS bytes go to R2 via lfs-s3.
+          bare="$(mktemp -d)/remote.git"
+          git init -q --bare "$bare"
+          git remote add origin "$bare"
+          git push -q origin HEAD:refs/heads/main
+
+          echo "--- upload LFS object to R2 via lfs-s3 ---"
+          git lfs push origin main
+
+          echo "--- drop every local copy of the object ---"
+          rm -f "$fname"
+          rm -rf .git/lfs/objects
+
+          echo "--- fetch object back from R2 via lfs-s3 ---"
+          git lfs fetch origin main
+          git lfs checkout "$fname"
+
+          sha_after="$(sha256sum "$fname" | awk '{print $1}')"
+          echo "sha_before=$sha_before"
+          echo "sha_after =$sha_after"
+          echo "pointer_oid=$oid"
+          if [ "$sha_before" = "$sha_after" ] && [ "$sha_before" = "$oid" ]; then
+            echo "M2 ROUND-TRIP: PASS (content-OID preserved through R2)"
+          else
+            echo "M2 ROUND-TRIP: FAIL"
+            exit 1
+          fi
