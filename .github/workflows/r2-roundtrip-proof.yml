@@ -8,6 +8,18 @@ name: r2-roundtrip-proof
 
 on:
   workflow_dispatch:
+  # Path-filtered push trigger scoped to the proof's OWN files. Purpose: a
+  # brand-new workflow_dispatch-only workflow is not registered for manual
+  # dispatch until GitHub's async sync indexes it (observed to lag many minutes
+  # on first appearance). A push trigger is evaluated when GitHub processes the
+  # push, so the workflow registers + runs immediately when its own mechanism
+  # changes — and stays manually dispatchable. The filter keeps it from running
+  # on unrelated pushes.
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/r2-roundtrip-proof.yml
+      - tools/lfs/setup-lfs-s3.sh
 
 permissions:
   contents: read
