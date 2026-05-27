@@ -79,3 +79,27 @@ Plan-drafting **SHIFTED-with-notes** (precondition-5 deviation + UNKNOWN-2; land
 Operator routes D1–D6 + confirms UNKNOWN-2 (PROCEED vs hard-STOP on the I7-test deviation) →
 coordinator dispatches Stage 0. No `-phase-N` tag (this is a Phase-2-tail sub-phase; cleanup is
 steady-state hygiene → no v-tag by default per charter § 7 Stage 2). No tag pushed by agent (I7).
+
+## Stage 0 chain SHAs (appended at Stage 0 close; Convention #12)
+
+Operator ratified all D-class routings (D1–D6) + PROCEED on UNKNOWN-2; Stage 0 locked them into
+the charter, re-anchored citations (Convention M; no drift), and verified invariants.
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | charter Stage-0 amendment (D-class ratification) | `docs/phases/sub-phase-phase-2-cleanup.md` | `ee2d95270dced45aacffd0d1bfd4748ae7990374` |
+| 2 | Stage-0 checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-0-checkpoint-2026-05-27T20-29-08Z.md` | `807042c5e12f06fb7e7e904e560209d29c7a2d91` |
+| 3 | this back-fill (Stage 0 section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** The Stage-0 checkpoint's `head_sha` was pinned to
+commit 1 `ee2d952` (where its evidence — charter + plan-drafting landing — resolves), so no
+self-referential `<…_PENDING>` token existed (the clean approach used since lfs Stage-0). The
+SHAs above are recorded for the chain. This file is a `sha-back-fill-*.md`, not a `*.ledger.md`,
+so the `audit-append-only.yml` gate permits this append (it enforces prefix-immutability only on
+`*.ledger.md`; spec `docs/architecture.md:1448`). Separate commit (COMMIT 3); never `--amend`.
+
+**Stage 0 CONFIRMED-Stage-0.** D1–D6 LOCKED; UNKNOWN-2 resolved (PROCEED — PD-1 fix routed to
+Stage 1.D alongside D3); UNKNOWN-1 carried to Cluster C; § 13 #29 moved to deferred-OUT. I1–I7
+hold (I7 substantive; the over-strict proxy test is PD-1, not a violation); integrity baseline
+`c19492ad…d22cb52` held; verify_evidence 4/0 + regression 24/0, 7/0. Cluster stages 1.A–1.G
+dispatchable per charter § 4. No tag pushed by agent (I7).
