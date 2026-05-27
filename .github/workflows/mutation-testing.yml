@@ -1,15 +1,38 @@
 name: mutation-testing
 # Runs mutmut against tools/testkit/ and tools/integrity/ per
-# docs/architecture.md § 2.13. SOFT_WARN on push (informational), HARD_FAIL
-# at phase landing only.
+# docs/architecture.md § 2.13. Re-tiered to the weekly T4 tier (catalog
+# docs/planning/bit-physics-master-catalog.md § 41.4): a weekly cron +
+# workflow_dispatch + a path-filtered SOFT_WARN push over the modules under
+# test (informational); HARD_FAIL at phase landing only.
 #
 # Gated until Block 5 ships the mutmut config + run-mutation.sh. Block 9
 # activates.
 
 on:
+  schedule:
+    # weekly, Monday 06:00 UTC — catalog § 41.4 T4
+    # ("weekly mutation / fuzz / long-running stability")
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
   push:
     branches: [main]
-  pull_request:
+    # Path-filtered SOFT_WARN over the modules under mutation test per
+    # tools/testkit/mutation/mutmut-config.toml (the authoritative target
+    # list), covering architecture.md § 2.13 testkit+integrity tooling and
+    # the § 2.14 property target, plus the harness + config co-versioned
+    # per § 2.13. Per-sim packages/** targets are intentionally excluded
+    # (§ 2.13 scope is testkit + integrity tooling). NB: § 2.13 prose cites
+    # the golden verifier at code_verification/golden; the real module path
+    # is tools/testkit/golden (used below).
+    paths:
+      - 'tools/testkit/mutation/**'
+      - 'tools/testkit/capture/**'
+      - 'tools/testkit/code_verification/**'
+      - 'tools/testkit/golden/**'
+      - 'tools/testkit/determinism/**'
+      - 'tools/testkit/equivalence/**'
+      - 'tools/testkit/property/**'
+      - 'tools/integrity/**'
 
 jobs:
   mutation-testing:
