@@ -103,3 +103,28 @@ Stage 1.D alongside D3); UNKNOWN-1 carried to Cluster C; § 13 #29 moved to defe
 hold (I7 substantive; the over-strict proxy test is PD-1, not a violation); integrity baseline
 `c19492ad…d22cb52` held; verify_evidence 4/0 + regression 24/0, 7/0. Cluster stages 1.A–1.G
 dispatchable per charter § 4. No tag pushed by agent (I7).
+
+## Stage 1.A chain SHAs (appended at Stage 1.A close; Convention #12)
+
+Cluster A (citation & path drift) — K-2 (§ 2.13 golden-path drift, executed plans) + PD-2
+(README `uv run` consistency). Two theme-commits (R-4) + checkpoint. phase-3-plan.md deferred
+(D1 carve-out).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | K-2 golden-path fix (D1) | `docs/phases/phase-1-plan.md`, `docs/phases/phase-2-cross-stack-replication.md` | `c58d4ab2a769fbff67ae05c3b306f2e458ebbebf` |
+| 2 | PD-2 README uv-run | `packages/*/README.md` (11) | `e91a5eb31bfc497d2b924022662ef338bf6ff3ba` |
+| 3 | Stage-1.A checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-a-checkpoint-2026-05-27T20-56-32Z.md` | `cc3f857e9c6d77185691dd7410dbb864fe3eff69` |
+| 4 | this back-fill (Stage 1.A section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** The Stage-1.A checkpoint's `head_sha` was pinned to
+`e91a5eb` (the last cluster commit, where all evidence — both plan files + a representative
+README + the charter — resolves: `verify_evidence` 8 pass / 0 fail). No self-referential
+`<…_PENDING>` token existed. The SHAs above are recorded for the chain. This file is a
+`sha-back-fill-*.md`, not a `*.ledger.md`, so the `audit-append-only.yml` gate permits this
+append (prefix-immutability is enforced only on `*.ledger.md`; spec `docs/architecture.md:1448`).
+Separate commit; never `--amend`.
+
+**Stage 1.A CONFIRMED-Stage-1-A.** K-2 (executed plans) RESOLVED; K-2 phase-3-plan.md DEFERRED
+(D1); PD-2 RESOLVED (11 READMEs). I1–I7 hold; integrity baseline `c19492ad…d22cb52` held;
+verify_evidence 8/0. No tag pushed by agent (I7).
