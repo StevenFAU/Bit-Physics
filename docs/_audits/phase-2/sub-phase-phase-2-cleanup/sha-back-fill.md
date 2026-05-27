@@ -263,3 +263,40 @@ by agent (I7).
 held byte-for-byte at every cluster boundary; pytest `tools/testkit/lfs_migration/` 15/1→**16/0** at Cluster D
 (PD-1) and maintained; verify_evidence GREEN on every cluster checkpoint; I1–I7 hold throughout; no
 agent-pushed tag (I7). **Stage 2 (sub-phase landing audit) is the NEXT dispatch — not attempted here.**
+
+## Stage 2 chain SHAs (appended at Stage 2 close; Convention #12) — SUB-PHASE LANDING
+
+Stage 2 = the formal closing audit per phase-2 § 2.12, scoped to this sub-phase.
+**CONFIRMED-sub-phase-landing.** Three commits (no v-tag — charter § 7 + § D.2 default-NO; cleanup is
+steady-state hygiene). I1–I7 re-verified PASS at HEAD `abf077c`; D1–D6 + PD-1..PD-4 dispositions
+synthesized (cited by reference to cluster checkpoints); 4 banked lessons; 12-item forward-routing
+catalog (11 deferred + 1 banked); 53-item discipline reconciliation (exact).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | sub-phase landing audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sub-phase-landing-2026-05-27T23-16-50Z.md` | `6eaaed0656e10526370e23f4254526e44b61204a` |
+| 2 | CHANGELOG entry | `CHANGELOG.md` | `a114e3d0d39388cbc454e9fbef108c7e779353af` |
+| 3 | this back-fill (Stage 2 section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** The landing audit's `head_sha` was pinned to `abf077c` (the
+Stage-1.G back-fill, where all 12 evidence files resolve — `verify_evidence` 24 pass / 0 fail), so no
+self-referential `head_sha` placeholder existed and its § 2 cumulative ledger recorded the Stage-2 SHAs
+**by reference to this ledger** rather than embedding self-referential tokens (the clean approach used by
+every checkpoint in this sub-phase). The SHAs above are recorded for the chain. This file is a
+`sha-back-fill-*.md`, not a `*.ledger.md`, so the `audit-append-only.yml` gate permits this append
+(prefix-immutability is enforced only on `*.ledger.md`; spec `docs/architecture.md:1448`). Separate
+commit (COMMIT 3); never `--amend`.
+
+**Stage 2 CONFIRMED-sub-phase-landing.** Integrity baseline `c19492ad…d22cb52` held byte-for-byte
+(reproduced with the landing audit staged); I2 replay `9399fc33…718909f34` ok=True; I1 0 diff lines;
+I4 21A/0M/0D; I6 16 back-fill commits in range; I7 operator-only tags; pytest 16/0; verify_evidence
+24/0 on the landing audit + 9 sub-phase audits no-regression. **No tag pushed by agent (I7); no v-tag at
+close.** Once the operator pushes this 3-commit Stage-2 chain, `sub-phase-phase-2-cleanup` is formally
+and publicly closed.
+
+---
+
+**SUB-PHASE-PHASE-2-CLEANUP COMPLETE.** 36 commits total (33 through Stage 1.G = plan-drafting 4 +
+Stage 0 3 + Stage-1 cluster arc 26; + 3 Stage-2). 53 items dispositioned, 0 dropped. Phase-2-tail
+cleanup complete (with `sub-phase-lfs-architecture`); Phase 3 dispatch is the next major scheduling
+decision.
