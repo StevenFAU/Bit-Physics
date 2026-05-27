@@ -27,6 +27,64 @@ posture: >
 > `tools/testkit/probes/reports/sub-phase-phase-2-cleanup-probe.md`; this charter
 > summarizes and routes.
 
+> **AMENDMENT — Stage 0 (2026-05-27).** Operator D-class routings ratified; UNKNOWN-2
+> resolved; UNKNOWN-1 carried forward. Prior text below is preserved; this block governs
+> where it overlaps. Re-anchored against HEAD `1f4e159` (Convention M); no citation drift
+> (no cited file changed since plan-drafting).
+>
+> **UNKNOWN-2 — RESOLVED → PROCEED (operator).** The substantive I7 invariant holds; the red
+> `test_i7_no_agent_tags.py::test_no_tag_points_into_subphase_range` is a proxy-vs-intent gap,
+> not a real violation. The fix lands at **Stage 1.D as PD-1, alongside D3**. No hard-STOP.
+>
+> **UNKNOWN-1 — carried to Stage 0/Cluster-C execution.** Post-reset CI green-check is not yet
+> observable (the May 31/Jun 1 2026 LFS-quota reset post-dates this Stage-0 anchor); Cluster C
+> verifies + documents it when it executes (it will be post-reset by then). `cpp-strict` +
+> `python-strict` red is the expected pre-reset state, NOT a regression.
+>
+> **D-class — LOCKED (operator):**
+> - **D1 (golden-path scope) = prior routing HELD.** Fix `code_verification/golden` occurrences
+>   in `docs/phases/phase-1-plan.md` (9) + `docs/phases/phase-2-cross-stack-replication.md` (3) at
+>   Stage 1.A. **Defer the 7 `docs/phases/phase-3-plan.md` occurrences** to Phase-3 plan-drafting's
+>   Convention-M re-anchor. Stage 1.A **documents the deferral explicitly** (an intentional carve-out,
+>   not an omission).
+> - **D2 (branch-protection) = AMEND SPEC to match live state.** `docs/ops/branch-protection.md`
+>   is amended (at Stage 1.D) to reflect the live state (nothing configured; `gh api …/protection`
+>   → 404), per the doc's own drift rule (`docs/ops/branch-protection.md:99-102`). The current
+>   solo+agent operating model gains nothing from server-side rules that Convention M + Hard Rule 2
+>   + the audit chain already enforce in practice. **Forward-routing note** (record at Stage 1.D /
+>   § 8): *"implement-live-branch-protection" becomes a candidate sub-phase if/when the contributor
+>   model grows beyond solo+agent.* M0 (mutation-re-tier required-check removal) closes as a
+>   confirmed **no-op** (no required checks exist to remove).
+> - **D3 (§ D.2 intermediate-tag wording) = DEFER specific wording to Stage 1.D draft (operator
+>   ratifies inline).** Principle to encode: *intermediate sub-phase tags are appropriate when the
+>   sub-phase (a) adds an external dependency, (b) marks durable architecture worth git-archaeology
+>   lookup, or (c) the operator judges historical significance; **default NO for hygiene sub-phases.***
+>   Couples to PD-1 (the I7 test must permit operator non-phase tags).
+> - **D4 (CODEOWNERS granularity) = PER-PACKAGE, marked latent enforcement.** Scaffolding lands at
+>   Stage 1.G; current single-agent operation does not depend on it; the structure benefits the
+>   project at multi-agent maturity. Aligns with catalog § 52.4 "Conway's law and the directory tree"
+>   (`docs/planning/bit-physics-master-catalog.md:3919`) — FACT: the section maps agent work-units to
+>   the directory tree; INFERENCE: that implies per-package CODEOWNERS granularity.
+> - **D5 (ADR scaffolding) = DEFER the directory.** Introducing an ADR directory implies a process
+>   change that should be deliberate. Stage 1.G amends the conventions doc with the *intention* that
+>   the four-state verdicts (`docs/architecture.md:1442,1476`) align to Nygard ADR states, as a
+>   future note; the actual ADR directory waits for a deliberate scaffolding sub-phase.
+> - **D6 (differential-testing terminology) = CROSS-REFERENCE ONLY (no renames).** Stage 1.G updates
+>   `docs/conventions/sub-phase-conventions.md` + `docs/planning/bit-physics-master-catalog.md` to note
+>   that matched-pair (cross-stack) gates **are** differential testing *in the academic sense*
+>   (identical input → two implementations → compare). **Drafting nuance (Convention #8):** catalog
+>   § 50.1 (`docs/planning/bit-physics-master-catalog.md:3841`) reserves "differential testing" for
+>   the cross-**algorithm** variant (independent algorithms, same physics); the matched-pair gates are
+>   cross-**stack** (same algorithm, different backend). The cross-reference must relate the two
+>   senses **without conflating** them — no file/class renames. Searchability benefit at low cost.
+>
+> **Items deferred OUT — all 6 confirmed (operator).** § 13 #29 (`assert_deterministic_float_controls`
+> f32→f64) **joins the deferred-OUT set explicitly** (it leaves Cluster G): a borderline-per-agent
+> item is probably bigger than it looks; cleanup keeps focus on hygiene. § 9 governs; the § 3 / § 5
+> Cluster-G membership for #29 is withdrawn.
+>
+> **Exit:** D-class LOCKED; cluster stages 1.A–1.G dispatchable per § 4 ordering.
+
 ## § 1 — Scope and posture
 
 **(FACT)** This sub-phase is a **basket**, not a coherent architecture. It pays down the
