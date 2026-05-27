@@ -44,6 +44,24 @@ posture: >
 >   **not changed**; the re-tier is routed to the operator coupled with a `branch-protection.md`
 >   de-listing (+ live branch-protection update). See Stage-0 checkpoint § 7.
 
+> **AMENDMENT — Stage 1a (2026-05-27).** RED test surface scaffolded; UNKNOWN-2 resolved.
+> Prior text below is preserved; this block and the § 11 amendment note govern where they overlap.
+>
+> - **UNKNOWN-2 (live LFS billing) RESOLVED** (operator dashboard, period 2026-05-01..26): bandwidth
+>   **10 GB / 10 GB** free tier (100% consumed; **throttled**); storage **380.77 GB-hr** usage
+>   integral (period-average ~0.61 GB; well under the 10 GB quota); **$0 billed** (capped at free
+>   tier). Source: `github.com/settings/billing` metered-usage view. Folded into § 11.
+> - **§ 11 reframe (dashboard-anchored):** the live data confirms **bandwidth is the load-bearing
+>   constraint** (100% of free tier, throttled), not storage (comfortable). R2 dissolves the
+>   bandwidth axis (zero egress); storage is a secondary slow-burn axis where R2 buys headroom to
+>   the Phase-4 10 GiB crossing.
+> - **UNKNOWN-4 (R2 secrets):** operator confirms the four repo secrets exist (`R2_ACCESS_KEY_ID`,
+>   `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`, `R2_BUCKET_NAME` = `bit-physics-lfs`). Stage 1a does
+>   **not** read their values; Stage 1b consumes them. § 6 M0 secret-injection is satisfied.
+> - **Stage 1a deliverable:** invariant test surface `tools/testkit/lfs_migration/` (I1–I7 +
+>   cost-axis + R2-config), committed RED-first. The mutation-testing re-tier rider remains **HELD**
+>   (routed separately per Stage-0 § 7; out of this dispatch's scope).
+
 ## § 0 — Front matter
 
 - **Sub-phase:** `sub-phase-lfs-architecture` (Phase-2 infrastructure tail; Phase 2 closed
@@ -483,6 +501,25 @@ here, routed to operator as a Stage-1a optional rider (not a blocker).
 - **Exit:** sub-phase landed CONFIRMED; **no tag** (operator decision on optional point-release).
 
 ## § 11 — Scale projection (capacity headroom)
+
+> **AMENDMENT — Stage 1a (2026-05-27): dashboard-anchored.** The figures below were
+> inventory-derived at plan-drafting (the live dashboard was probe § P2 NOTE / UNKNOWN-2). The
+> operator's live GitHub LFS billing dashboard (period 2026-05-01..26) now anchors them:
+> - **Bandwidth: 10 GB / 10 GB free tier — 100% consumed, throttled.** (FACT — dashboard) This is
+>   the **load-bearing constraint** driving the sub-phase. Selective fetch (§ 4.2) drops the
+>   dominant per-run term ~20×; R2's zero egress dissolves the axis entirely.
+> - **Storage: 380.77 GB-hr usage integral over the period (period-average ~0.61 GB), well under the
+>   10 GB free quota.** (FACT — dashboard) A secondary slow-burn axis; R2 ($0.015/GB-mo beyond 10 GB)
+>   buys headroom to the Phase-4 crossing below.
+> - **Billed: $0** (FACT — dashboard) — capped at the free tier; the $0 budget blocks overage rather
+>   than charging. Source: `github.com/settings/billing` metered-usage view.
+>
+> (INFERENCE) The dashboard storage figure is a **time-integral over the billing period** (GB-hours,
+> a period during which the Phase-2 capture corpus was still being committed) — a different basis
+> from the **4.852 GiB HEAD snapshot** (probe § P1). Both confirm storage sits comfortably under the
+> 10 GiB free quota; the decision-relevant signal is unchanged — **bandwidth (100%/throttled) is the
+> live pressure, storage is not.** The original inventory-derived narrative below stands as the
+> repo-side measurement.
 
 (Synthesis of probe § P6; INFERENCE-tagged ranges.)
 
