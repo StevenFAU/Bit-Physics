@@ -1380,6 +1380,68 @@ plan-drafting-MEASURED verdict (no surprise in either direction).
   a different `common-cpp` infrastructure arc). Banked LFS-architecture +
   comprehensive-cleanup sub-phases remain queued for after Phase-2 completion.
 
+### sub-phase-lfs-architecture
+
+Phase-2-tail infrastructure sub-phase. Migrates the portfolio's large
+capture/audit-evidence LFS content (4.852 GiB across 26 unique objects) off
+GitHub LFS — whose **bandwidth** free tier (10 GB/month) was fully consumed and
+throttled — onto **Cloudflare R2** (zero-egress, 10 GiB free storage) via the
+`lfs-s3` custom-transfer agent, **without rewriting any git history**. Every LFS
+pointer stub stays byte-identical; only the resolver/backend config changes. All
+seven named invariants (I1–I7) and the bit-identity replay (`9399fc33…`) and
+integrity baseline (`c19492ad…`) held throughout. No `-phase-N` tag; an optional
+non-phase point-release `v0.2.1-sub-phase-lfs-architecture` is a banked operator
+decision (`docs/conventions/sub-phase-conventions.md` § D.2).
+
+**What changed for contributors:**
+
+- **CI handles R2 automatically, per-job.** The two capture-heavy workflows
+  (`python-strict`, `cpp-strict`) no longer fetch all LFS content on every run.
+  `python-strict` pulls only `tests/fixtures/legacy-captures/**`; `cpp-strict`
+  pulls only `captures/reaction-diffusion-2d-ref/**` (its gate-14 reference
+  capture) — the dominant per-run LFS term drops ~20×. The R2-routed workflows
+  install `lfs-s3` and opt in via per-job `git config` (`tools/lfs/setup-lfs-s3.sh`),
+  using the repo's `R2_*` Actions secrets.
+- **Local dev is unaffected by default.** A fresh clone with no R2 credentials
+  resolves LFS via GitHub LFS exactly as before (the steady-state fallback). To
+  route local LFS through R2 (faster, zero-egress), follow the one-command
+  bootstrap in `tools/lfs/README.md` to register `lfs-s3` in your **trusted**
+  `.git/config` (git-lfs ignores these keys from a committed `.lfsconfig` by
+  design, so R2 activation is always explicit opt-in).
+- **Steady-state architecture:** R2 is primary for opted-in consumers (CI + any
+  developer who bootstraps it); GitHub LFS remains the fallback for default
+  consumers. Both backends hold every object; decommissioning GitHub LFS
+  (R2-only) is deferred indefinitely to a future operator decision.
+
+#### Added
+
+- `tools/lfs/setup-lfs-s3.sh` — per-job `lfs-s3` installer + trusted-config
+  registrar (credentials from env, never committed).
+- `tools/lfs/r2-bulk-upload.sh` — deterministic bulk upload of the HEAD +
+  phase-tag OID union (26 objects) to R2, with per-object sha256 round-trip
+  verification.
+- `tools/lfs/README.md` — R2 opt-in bootstrap + local-dev runbook.
+- `.github/workflows/r2-roundtrip-proof.yml` — M2 single-object R2 round-trip
+  proof (content-OID preserved).
+- `.github/workflows/r2-sweep-proof.yml` — M4 sweep: verifies every LFS pointer
+  at HEAD + each phase tag resolves from R2 by sha256 (62/62 PASS).
+- `tools/testkit/lfs_migration/` — invariant-verification lock surface for
+  I1–I7 + cost-axis registry + per-job R2-config (16 tests).
+- `docs/planning/bit-physics-master-catalog.md` (+ `docs/planning/README.md`) —
+  vendored CI-tier / capacity planning catalog.
+- Sub-phase audit chain under `docs/_audits/phase-2/sub-phase-lfs-architecture/`
+  (plan-drafting → Stage 0 → 1a → 1b → 1c → 2 landing).
+
+#### Changed
+
+- `.github/workflows/python-strict.yml`, `.github/workflows/cpp-strict.yml` —
+  `lfs: true` → `lfs: false` + targeted `git lfs pull --include=` (selective
+  fetch).
+- `.github/workflows/mutation-testing.yml` — re-tiered to weekly T4 (cron +
+  dispatch + path-filtered push) per catalog § 41.4 (sibling chain); de-listed
+  from required-must-run in `docs/ops/branch-protection.md`; `docs/architecture.md`
+  § 2.13 CI-policy amended accordingly.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
