@@ -13,7 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          lfs: true
+          # Selective LFS fetch (charter § 4.2 / D6): do NOT fetch all LFS objects
+          # at checkout; the only captures this job reads are the legacy-captures
+          # corpus, pulled targeted below (~447 MiB vs ~4.85 GiB → ~20× less).
+          lfs: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@v8.1.0
@@ -36,6 +39,14 @@ jobs:
         run: |
           uv run mypy --strict capture/
           uv run mypy --strict determinism/
+
+      - name: Selective LFS fetch — legacy-captures corpus only
+        # The only captures-reading test under this pytest run is
+        # capture/tests/test_legacy_captures_corpus.py, which reads
+        # tests/fixtures/legacy-captures/**. Pull exactly that set (GitHub LFS;
+        # D4 fallback path — R2 routing of fetches lands at the operator-gated M5
+        # cutover, after the M3 bulk upload populates R2).
+        run: git lfs pull --include="tests/fixtures/legacy-captures/**"
 
       - name: pytest -W error + coverage (advisory)
         working-directory: tools/testkit

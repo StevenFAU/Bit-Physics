@@ -26,7 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          lfs: true
+          # Selective LFS fetch (charter § 4.2 / D6): cpp-strict reads NO committed
+          # capture — its smoke binaries write runtime .h5 and the C-6 interop ctest
+          # reads a C++-emitted .h5 generated at test time. So fetch no LFS objects.
+          lfs: false
 
       - name: Install C++ / Vulkan / HDF5 toolchain (lavapipe pin)
         run: |
