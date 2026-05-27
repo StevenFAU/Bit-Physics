@@ -1,0 +1,108 @@
+name: r2-sweep-proof
+# Stage 1c M4 (sub-phase-lfs-architecture): the bulk-verification sweep. For HEAD
+# and each prior phase tag, enumerate every git-LFS pointer (via `git lfs ls-files`,
+# NOT a path glob — so non-pointer files and pre-LFS tags are handled correctly),
+# fetch each object FROM R2 via the lfs-s3 standalone transfer agent into a
+# throwaway lfs.storage dir, and assert sha256 == pointer OID. HARD_FAILs if any
+# pointer at any inspected ref does not resolve from R2 (charter § 6 M4 / § 7 A5).
+# This is the substantive proof that D4's GitHub-LFS fallback is no longer
+# load-bearing — every ref resolves from R2 alone. Manual trigger only.
+
+on:
+  workflow_dispatch:
+  # Path-filtered push trigger scoped to the sweep's OWN files: a brand-new
+  # workflow_dispatch-only workflow is not registered for manual dispatch until
+  # GitHub's async sync indexes it (observed to lag minutes). A push trigger
+  # registers + runs it immediately when its own mechanism changes, and it stays
+  # manually dispatchable. (Same registration workaround as r2-roundtrip-proof.)
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/r2-sweep-proof.yml
+      - tools/lfs/setup-lfs-s3.sh
+
+permissions:
+  contents: read
+
+jobs:
+  r2-sweep:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false          # keep pointers as stubs; the sweep fetches from R2 itself
+          fetch-depth: 0       # full history …
+          fetch-tags: true     # … and the phase tags, so `git lfs ls-files <tag>` resolves
+
+      - name: R2 sweep — every LFS pointer at HEAD + each phase tag resolves from R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+          AWS_REGION: auto
+        run: |
+          set -euo pipefail
+          git lfs version
+          repo_root="${GITHUB_WORKSPACE}"
+
+          # Per-job lfs-s3 configuration against R2 (installs agent + sets
+          # lfs.standalonetransferagent for THIS checkout; creds from env only).
+          # shellcheck disable=SC1091
+          source "${repo_root}/tools/lfs/setup-lfs-s3.sh"
+
+          REFS="HEAD v0.0.0-phase-0 v0.1.0-phase-1 v0.2.0-phase-2"
+          total_objects=0
+          total_pass=0
+          total_fail=0
+
+          echo "=================== R2 SWEEP ==================="
+          for ref in $REFS; do
+            echo "--- ref: $ref ---"
+            # Enumerate LFS pointers at this ref by reading the tree (no checkout).
+            # Format: "<oid> <flag> <path>"; field 1 is the content OID.
+            mapfile -t rows < <(git lfs ls-files --long "$ref" 2>/dev/null || true)
+            n="${#rows[@]}"
+            echo "ref $ref: $n LFS pointer(s)"
+            if [ "$n" -eq 0 ]; then
+              echo "  (no LFS objects at $ref — pre-LFS history; vacuous PASS)"
+              continue
+            fi
+
+            # Fetch this ref's LFS objects from R2 into an isolated, empty storage
+            # dir, so a hit proves the bytes came from R2 (not a prior local copy).
+            tmp_store="$(mktemp -d)"
+            git -c lfs.storage="$tmp_store" lfs fetch origin "$ref"
+
+            for row in "${rows[@]}"; do
+              oid="$(awk '{print $1}' <<<"$row")"
+              path="$(cut -d' ' -f3- <<<"$row")"
+              total_objects=$((total_objects + 1))
+              f="${tmp_store}/objects/${oid:0:2}/${oid:2:2}/${oid}"
+              if [ -f "$f" ]; then
+                got="$(sha256sum "$f" | awk '{print $1}')"
+                if [ "$got" = "$oid" ]; then
+                  echo "  PASS  $oid  $path"
+                  total_pass=$((total_pass + 1))
+                else
+                  echo "  FAIL  $oid  $path  (got sha256=$got)"
+                  total_fail=$((total_fail + 1))
+                fi
+              else
+                echo "  FAIL  $oid  $path  (absent from R2)"
+                total_fail=$((total_fail + 1))
+              fi
+            done
+            rm -rf "$tmp_store"
+          done
+
+          echo "================ R2 SWEEP SUMMARY ================"
+          echo "refs_inspected: $REFS"
+          echo "objects_verified: $total_objects"
+          echo "pass: $total_pass"
+          echo "fail: $total_fail"
+          if [ "$total_fail" -ne 0 ]; then
+            echo "M4 R2 SWEEP: FAIL ($total_fail object(s) did not resolve from R2)"
+            exit 1
+          fi
+          echo "M4 R2 SWEEP: PASS (every LFS pointer at every inspected ref resolves from R2)"
