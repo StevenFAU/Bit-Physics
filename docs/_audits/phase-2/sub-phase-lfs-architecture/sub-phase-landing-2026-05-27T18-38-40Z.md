@@ -183,14 +183,16 @@ here and recorded separately in § 9. Sub-phase commits: **34** (39 in-range −
 
 | # | SHA | Title |
 |---|---|---|
-| 1 | `<STAGE-2-COMMIT-1-SHA-PENDING>` | audit: sub-phase-lfs-architecture sub-phase landing — CONFIRMED (this file) |
-| 2 | `<STAGE-2-COMMIT-2-SHA-PENDING>` | docs(changelog): sub-phase-lfs-architecture landed (R2 migration; per-job opt-in model) |
-| 3 | `<STAGE-2-COMMIT-3-SHA-PENDING>` | chore: SHA back-fill for Stage 2 chain (Convention #12) — recursion-stopper, reported in summary |
+| 1 | `8f4dea3` | docs(lfs-architecture-stage-2): sub-phase landing audit — CONFIRMED (this file; dispatch title "audit: …") |
+| 2 | `5bc2baf` | docs(changelog): sub-phase-lfs-architecture landed (R2 migration; per-job opt-in model) |
+| 3 | (this commit) | chore(lfs-architecture-stage-2-sha-backfill): SHA back-fill for Stage 2 chain (Convention #12) — recursion-stopper, reported in coordinator summary |
 
 The Stage-2 SHAs are back-filled in commit 3 per Convention #12 (this landing audit's own
 `head_sha` front-matter is set to `6139b59` — the Stage-1c close, where all 12 evidence files
 resolve — so no `head_sha` placeholder is needed; only the body's self-referential commit-SHA
-tokens above are back-filled).
+tokens here and in § 11 are back-filled in commit 3. This file is a `sub-phase-landing-*.md`,
+not a `*.ledger.md`, so the `audit-append-only.yml` gate permits the corrective edit; spec
+`docs/architecture.md:1448`).
 
 ---
 
@@ -437,12 +439,12 @@ pushed to `origin/main`, the operator pushes the optional non-phase point-releas
 
 ```
 Proposed tag: v0.2.1-sub-phase-lfs-architecture   (no -phase-N suffix; conventions § D.2)
-Tag commit SHA: <STAGE-2-COMMIT-1-SHA-PENDING>    (the SHA of THIS landing-audit commit)
+Tag commit SHA: 8f4dea3069fbd8f2a1adef0ab75147123dc3f144   (the SHA of THIS landing-audit commit, Stage-2 commit 1)
 Tag pushed: NO (operator action required)
 ```
 
 ```
-git tag -s v0.2.1-sub-phase-lfs-architecture <STAGE-2-COMMIT-1-SHA>
+git tag -s v0.2.1-sub-phase-lfs-architecture 8f4dea3069fbd8f2a1adef0ab75147123dc3f144
 git push origin v0.2.1-sub-phase-lfs-architecture
 ```
 
