@@ -1041,6 +1041,30 @@ first consumer."
 
 - **PD-3 (B-LFS1 offline-OID property) — no further amendment needed.** The lfs-architecture landing (`docs/_audits/phase-2/sub-phase-lfs-architecture/sub-phase-landing-2026-05-27T18-38-40Z.md:55`) judged the verify_evidence offline-OID property already adequately captured by § B.6 Mode-2 (IC-16); no new § L entry is required. Recorded here to close the PD-3 candidate.
 
+### L.11 Synthesis-report dispositions — sub-phase-phase-2-cleanup Stage 1.G (D5 ADR-alignment, D6 differential-testing terminology)
+
+(FACT — operator-ratified Stage-0 routings D5 / D6; cross-reference-only, no directory/file/class introduced.)
+
+- **D5 — verdict-states ↔ Nygard ADR-states alignment (INTENTION; no ADR directory introduced).** The four-state audit verdicts (`docs/architecture.md:1442`: **CONFIRMED / SHIFTED / REFUTED / DEFERRED**, compounds DISCONFIRMED-AT-HEAD / REFRAMED) map onto the Nygard ADR lifecycle states (**Proposed / Accepted / Deprecated / Superseded**) as follows, recorded as a **future-note** for if/when an ADR corpus is stood up (a deliberate scaffolding sub-phase — **NOT** introduced here):
+  - **DEFERRED ↔ Proposed** (decision raised, not yet adjudicated);
+  - **CONFIRMED ↔ Accepted** (the hypothesis/decision held at HEAD);
+  - **SHIFTED ↔ Accepted-with-amendment** (held but adapted in flight; the closest Nygard state is an Accepted ADR carrying an amendment note);
+  - **REFUTED ↔ Deprecated/Rejected** (overturned by evidence);
+  - **DISCONFIRMED-AT-HEAD / REFRAMED ↔ Superseded** (a later record replaces the prior).
+  Standing up the ADR directory is sibling-sized; this note is the cross-reference only.
+
+- **D6 — matched-pair (cross-stack) gates vs cross-algorithm differential testing (cross-reference, no rename).** The matched-pair gate-14 **shape-(a) bit-exact** gates (§ L.7 O-1 taxonomy above; `cross-stack-equivalence-methodology.md`) apply **differential-testing methodology** (identical input → two implementations → compare) to the **cross-stack** equivalence problem (*same algorithm, different backend/stack*). This is **distinct from but methodologically related to** the **cross-algorithm** differential testing scoped in catalog § 50.1 (`docs/planning/bit-physics-master-catalog.md:3841` — *independent algorithms, same physics*: SPH vs LBM, Athena++ vs PLUTO). **The two senses are RELATED, not the same** — § 50.1 reserves the bare term "differential testing" for the cross-algorithm variant; the matched-pair gates are its cross-stack sibling. No test files / classes are renamed (D6 = cross-reference only). A reciprocal note is added at catalog § 50.1.
+
+### L.12 Banked precedents formalized — sub-phase-phase-2-cleanup Stage 1.G (§ 13 #39, S-P2AR1, S-P2AR2)
+
+(FACT — each item below **banks an ALREADY-ESTABLISHED precedent** from the cited audit(s); this section *formally documents* established patterns, it does **not** establish new convention going forward.)
+
+- **R-P1 — cross-stack Stage-0 task-scope includes the end-to-end harness invocation (§ 13 #39; established at sub-phase-reaction-diffusion-2d-stack-d).** The portfolio's FIRST true matched-sim cross-stack `compare_captures` invocation (R-P1; `docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-checkpoint-2026-05-23T20-53-53Z.md:57`) established that a cross-stack port's Stage-0 task scope spans the **end-to-end equivalence-harness invocation** (gate-14 `compare_captures`), not only parser/perf surface. Banked at that sub-phase's landing (`…/landing-2026-05-23T21-22-23Z.md:290`) as a methodology-precedent informing the next cross-stack dispatch. Formally documented here.
+
+- **S-P2AR1 — cross-sub-phase audit-revision precedent (established at sub-phase-phase-2-audit-revision).** A narrow-scope revision pass MAY correct landing-time front-matter defects in a **prior** sub-phase's landing audit **cross-sub-phase** (the smoke-E-Stage-1c-revisited precedent applied across sub-phases), **additively** (no `--amend`; original landing commits preserved in-tree), with all substantive evidence (gate verdicts, anchor SHAs, capture OIDs, baselines, replay invariants) preserved at landing-time values. Established at `docs/_audits/phase-2/sub-phase-phase-2-audit-revision/landing-2026-05-26T01-00-00Z.md`. Formally documented here.
+
+- **S-P2AR2 — self-referential verify_evidence-capture paradox (established at sub-phase-phase-2-audit-revision).** A `verify_evidence` output **cannot record its own final content-hash** (writing the hash into the audit changes the file the hash is taken over). Resolution: **OMIT** the self-referential capture from `evidence_hashes`; existence-verify it via `evidence_paths` only (body claim FACT→SHIFTED). Established at the audit-revision landing (Defect B). Formally documented here.
+
 ---
 
 ## § P. Capture cadence routing
