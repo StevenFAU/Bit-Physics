@@ -1,0 +1,79 @@
+# CODEOWNERS — agent work-unit boundaries (LATENT; NOT server-side-enforced)
+#
+# Per sub-phase-phase-2-cleanup Stage 1.G / D4 (operator-ratified). This file is
+# SCAFFOLDING that records the per-package agent work-unit boundaries; it is
+# **latent / advisory**, NOT a live reviewer-enforcement mechanism:
+#
+#   - No branch protection is configured (docs/ops/branch-protection.md live-state
+#     amendment; gh api .../protection -> 404), so GitHub does NOT require these
+#     owners to review. The single-agent + operator model already gets its
+#     guarantees from Convention M + Hard Rule 2 + the append-only audit chain + CI.
+#   - The owner column is the operator (@StevenFAU) so the file is VALID and inert.
+#     The work-unit's **agent-id sentinel** (claude-code-<unit>@bit-physics.local) is
+#     recorded as the comment line above each entry — a marker of the directory's
+#     agent work-unit, per catalog § 52.4 "Conway's law and the directory tree"
+#     (docs/planning/bit-physics-master-catalog.md: per-phenomenon dir = one agent;
+#     per-stack subdir = one agent per stack per sim).
+#
+# When the contributor model grows beyond solo + agent (see branch-protection.md
+# forward-routing), swap the operator owner for the real per-unit reviewers and
+# turn on CODEOWNERS-required review — the boundaries are already mapped here.
+
+# ── Default ────────────────────────────────────────────────────────────────
+*                                              @StevenFAU
+
+# ── Simulation packages (per-phenomenon, per-stack; catalog § 52.4) ──────────
+# agent-id sentinel: claude-code-strange-attractors@bit-physics.local
+/packages/strange-attractors/                  @StevenFAU
+# agent-id sentinel: claude-code-mandelbulb-explorer@bit-physics.local
+/packages/mandelbulb-explorer/                 @StevenFAU
+# agent-id sentinel: claude-code-boids-3d@bit-physics.local
+/packages/boids-3d/                            @StevenFAU
+# agent-id sentinel: claude-code-physarum@bit-physics.local
+/packages/physarum/                            @StevenFAU
+# agent-id sentinel: claude-code-reaction-diffusion-2d@bit-physics.local
+/packages/reaction-diffusion-2d/               @StevenFAU
+/packages/reaction-diffusion-2d-stack-c/       @StevenFAU
+/packages/reaction-diffusion-2d-stack-d/       @StevenFAU
+# agent-id sentinel: claude-code-reaction-diffusion-3d@bit-physics.local
+/packages/reaction-diffusion-3d/               @StevenFAU
+# agent-id sentinel: claude-code-sph-water@bit-physics.local
+/packages/sph-water/                           @StevenFAU
+/packages/sph-water-stack-d/                   @StevenFAU
+# agent-id sentinel: claude-code-eulerian-smoke@bit-physics.local
+/packages/eulerian-smoke/                      @StevenFAU
+/packages/eulerian-smoke-stack-d/              @StevenFAU
+/packages/eulerian-smoke-stack-e/              @StevenFAU
+# agent-id sentinel: claude-code-lattice-boltzmann-d3q19@bit-physics.local
+/packages/lattice-boltzmann-d3q19/             @StevenFAU
+/packages/lattice-boltzmann-d3q19-stack-d/     @StevenFAU
+/packages/lattice-boltzmann-d3q19-stack-e/     @StevenFAU
+# agent-id sentinel: claude-code-mpm-multimaterial@bit-physics.local
+/packages/mpm-multimaterial/                   @StevenFAU
+/packages/mpm-multimaterial-stack-d/           @StevenFAU
+/packages/mpm-multimaterial-stack-e/           @StevenFAU
+
+# ── Common modules (per-stack substrate) ─────────────────────────────────────
+# agent-id sentinel: claude-code-common-py@bit-physics.local
+/common/common-py/                             @StevenFAU
+# agent-id sentinel: claude-code-common-warp@bit-physics.local
+/common/common-warp/                           @StevenFAU
+# agent-id sentinel: claude-code-common-cpp@bit-physics.local
+/common/common-cpp/                            @StevenFAU
+# agent-id sentinel: claude-code-common-ts@bit-physics.local
+/common/common-ts/                             @StevenFAU
+
+# ── Tooling (testkit / integrity / diagnostics / dispatch / lfs) ─────────────
+# agent-id sentinel: claude-code-testkit@bit-physics.local
+/tools/testkit/                                @StevenFAU
+# agent-id sentinel: claude-code-integrity@bit-physics.local
+/tools/integrity/                              @StevenFAU
+# agent-id sentinel: claude-code-diagnostics@bit-physics.local
+/tools/diagnostics/                            @StevenFAU
+/tools/dispatch/                               @StevenFAU
+/tools/lfs/                                    @StevenFAU
+
+# ── Specs / audits / conventions (operator-stewarded) ────────────────────────
+/docs/architecture.md                          @StevenFAU
+/docs/_audits/                                 @StevenFAU
+/docs/conventions/                             @StevenFAU
