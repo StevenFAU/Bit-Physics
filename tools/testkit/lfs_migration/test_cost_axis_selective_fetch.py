@@ -28,9 +28,10 @@ from __future__ import annotations
 from lfs_migration._helpers import repo_root
 
 # Per-workflow committed-capture requirement (probe section P3).
-#   "none"        -> reads no committed LFS object
-#   "corpus-only" -> needs only tests/fixtures/legacy-captures/** (targeted pull)
-#   "full"        -> genuinely needs the full canonical capture set (none today)
+#   "none"              -> reads no committed LFS object
+#   "corpus-only"       -> needs only tests/fixtures/legacy-captures/** (targeted pull)
+#   "reference-capture" -> needs a narrow committed canonical capture set (targeted pull)
+#   "full"              -> genuinely needs the full canonical capture set (none today)
 WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     "structure.yml": "none",
     "integrity.yml": "none",
@@ -40,7 +41,9 @@ WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     "determinism.yml": "none",
     "equivalence.yml": "none",
     "python-strict.yml": "corpus-only",
-    "cpp-strict.yml": "none",
+    # Stage-1b finding: the RD-2D-Stack-C ctests read the committed RD-2D reference
+    # capture (captures/reaction-diffusion-2d-ref/**) — probe § 4.1 "none" was wrong.
+    "cpp-strict.yml": "reference-capture",
     "mutation-testing.yml": "none",
     # Stage 1b: the M2 R2 round-trip proof — operates on a throwaway object,
     # reads no committed capture; checks out lfs: false.
@@ -55,8 +58,9 @@ def _workflow_files() -> set[str]:
 
 
 def _sets_lfs_true(name: str) -> bool:
+    """True iff the workflow has an actual ``lfs: true`` setting (not a comment mention)."""
     text = (repo_root() / _WORKFLOW_DIR / name).read_text(encoding="utf-8")
-    return "lfs: true" in text
+    return any(line.strip() == "lfs: true" for line in text.splitlines())
 
 
 def test_workflow_capture_requirements_registry_is_complete() -> None:

@@ -244,7 +244,12 @@ both set `with: lfs: true` under `actions/checkout@v6`.)
 
 - **`cpp-strict`:** drop `lfs: true` → `lfs: false`. (FACT — its smoke binaries *write*
   runtime `.h5` to `captures/common-cpp-smoke/`; the C-6 interop ctest reads a C++-emitted
-  `.h5`; no committed LFS object is read.)
+  `.h5`; no committed LFS object is read.) *[CORRECTED Stage 1b (FALSIFIED): the probe missed
+  the RD-2D-Stack-C ctests (`rd2d_stack_c_tests`, `rd2d_stack_c_gate14`) — the gate-14
+  cross-stack test reads the committed `captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5`.
+  cpp-strict therefore needs a **narrow reference-capture** set, not zero. Fix: `lfs: false` +
+  targeted `git lfs pull --include="captures/reaction-diffusion-2d-ref/**"` (still ≫ smaller than
+  a full fetch). Surfaced to operator in the Stage-1b report.]*
 - **`python-strict`:** drop `lfs: true`; add an explicit step
   `git lfs pull --include="tests/fixtures/legacy-captures/**"` before the `pytest capture/tests/`
   step. (FACT — `tools/testkit/capture/tests/test_legacy_captures_corpus.py` is the only

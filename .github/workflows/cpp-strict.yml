@@ -26,9 +26,10 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          # Selective LFS fetch (charter § 4.2 / D6): cpp-strict reads NO committed
-          # capture — its smoke binaries write runtime .h5 and the C-6 interop ctest
-          # reads a C++-emitted .h5 generated at test time. So fetch no LFS objects.
+          # Selective LFS fetch (charter § 4.2 / D6): do NOT fetch all LFS objects at
+          # checkout. The common-cpp tests need none (they write/read runtime .h5), but
+          # the RD-2D-Stack-C ctests read ONE committed reference capture — pulled
+          # targeted after the build (see the "Selective LFS fetch" step below).
           lfs: false
 
       - name: Install C++ / Vulkan / HDF5 toolchain (lavapipe pin)
@@ -57,6 +58,15 @@ jobs:
 
       - name: Build
         run: cmake --build build/cpp -j"$(nproc)"
+
+      - name: Selective LFS fetch — RD-2D reference capture (gate-14 cross-stack)
+        # Stage-1b finding correction: the RD-2D-Stack-C ctests (rd2d_stack_c_tests,
+        # rd2d_stack_c_gate14) DO read a committed canonical capture
+        # (captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5)
+        # via packages/reaction-diffusion-2d-stack-c/tests/python/test_gate14_cross_stack.py.
+        # The probe / charter § 4.1 ("cpp-strict needs zero captures") was wrong. Pull
+        # exactly that narrow set (still ~20×+ less than a full lfs: true fetch).
+        run: git lfs pull --include="captures/reaction-diffusion-2d-ref/**"
 
       - name: ctest (substrate C-3, determinism C-2, capture C-1, smoke C-4, interop C-6)
         # The Vulkan/determinism/smoke tests set the lavapipe env (VK_DRIVER_FILES +

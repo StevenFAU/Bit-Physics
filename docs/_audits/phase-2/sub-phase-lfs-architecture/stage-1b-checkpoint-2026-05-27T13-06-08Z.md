@@ -158,9 +158,36 @@ to M5). No further charter amendment at this checkpoint. Charter sha256
   to work around GitHub's slow first-time registration of a `workflow_dispatch`-only workflow; it
   is scoped to the proof's own files and remains manually dispatchable.
 
+## § 11 — CORRECTION (post-checkpoint, commit 8): cpp-strict DOES need a capture
+
+(FACT, surfaced by the live CI run on the push) The § 4 claim "cpp-strict … captures needed: none"
+is **FALSIFIED**. The first CI run with `cpp-strict` at `lfs: false` failed: the RD-2D-Stack-C
+ctests `rd2d_stack_c_tests` + `rd2d_stack_c_gate14` (the gate-14 cross-stack witness,
+`packages/reaction-diffusion-2d-stack-c/tests/python/test_gate14_cross_stack.py`) read the committed
+canonical capture `captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5`
+→ with `lfs: false` and no pull, that file is the pointer stub → `HighFive` "Not an HDF5 file" →
+SIGABRT. The probe / charter § 4.1 ("cpp-strict needs zero committed captures") was **wrong** (it
+predated / missed the RD-2D-Stack-C ctests).
+
+**Fix (commit 8, still selective):** `cpp-strict` keeps `lfs: false` + adds a targeted
+`git lfs pull --include="captures/reaction-diffusion-2d-ref/**"` after the build (≫ smaller than a
+full fetch). Cost-axis registry `cpp-strict: none → reference-capture`; the cost-axis
+`_sets_lfs_true` matcher was hardened to an exact-line check (a comment mentioning `lfs: true` must
+not flag a workflow). Charter § 4.2 cpp-strict bullet corrected. Surface still **16/0**; I1 intact
+(no pointer touched).
+
+**CI status note:** both `python-strict` (corpus pull) and `cpp-strict` (reference-capture pull)
+now fail on the **GitHub LFS budget throttle** ("This repository exceeded its LFS budget"), NOT a
+config defect — the operator-acknowledged state until the ~2026-05-31 quota reset (and dissolved by
+the M5 R2-routing once M3 populates R2). The **verdict CONFIRMED-Stage-1b-GREEN stands**: the
+selective-fetch design is correct (each workflow pulls only its narrow set), all invariants hold,
+the RED surface is GREEN. (verify_evidence on this checkpoint pins charter@`d361fff` = `922fb17a…`,
+unaffected by the commit-8 charter correction.)
+
 ## Conventions honored
 
 Convention #8 (web-fetched lfs-s3 facts; M2 evidence verbatim incl. the first-run failures; M3/M4
-honestly deferred with rationale, not faked); Convention M (re-anchored at HEAD); per-job mechanism
+honestly deferred with rationale, not faked; the cpp-strict probe error surfaced + corrected, not
+hidden); Convention M (re-anchored at HEAD); per-job mechanism
 ratified by operator before edits; `evidence_hashes` as a YAML mapping; cat-4 full-path citations;
 no committed credentials; Convention #12 (SHA back-fill is the separate commit 7). No tag pushed (I7).
