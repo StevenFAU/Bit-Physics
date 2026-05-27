@@ -62,6 +62,30 @@ posture: >
 >   cost-axis + R2-config), committed RED-first. The mutation-testing re-tier rider remains **HELD**
 >   (routed separately per Stage-0 § 7; out of this dispatch's scope).
 
+> **AMENDMENT — Stage 1b (2026-05-27): per-job R2 transfer-agent config (mechanism substitution).**
+> Operator-ratified. Prior text below is preserved; this block governs § 5.2 / § 6 M1 / § 6 M5
+> where they overlap.
+>
+> - **Mechanism, not intent, changed.** `lfs-s3` activates **only** via
+>   `lfs.standalonetransferagent lfs-s3`, which routes *all* git-LFS transfers through it and
+>   bypasses GitHub LFS. A **committed root `.lfsconfig`** carrying that switch (as § 5.2 / § 6 M1
+>   originally prescribed) would impose the agent on **local dev + all 8 non-LFS workflows**,
+>   breaking object resolution wherever `lfs-s3`/credentials are absent — i.e. it is structurally
+>   the **M5 cutover, not the additive M1**.
+> - **Ratified approach (per-job CI git config):** the workflows that need R2 install `lfs-s3` and
+>   run `git config --local lfs.standalonetransferagent lfs-s3` (+ `lfs.customtransfer.lfs-s3.path`)
+>   **as a CI step, for that checkout only**, via the shared helper `tools/lfs/setup-lfs-s3.sh`
+>   (credentials + endpoint from env, never committed). **No committed root `.lfsconfig` at M1.**
+>   This realizes the charter's M1 intent — *additive; both paths resolvable through transition;
+>   D4 GitHub-LFS fallback (a workflow without R2 config resolves via GitHub LFS exactly as today)*
+>   — through a different mechanism than § 5.2 / § 6 M1 assumed.
+> - **§ 6 M1 amended:** "install `lfs-s3`; per-job CI git config (no committed root `.lfsconfig`)";
+>   the committed-root-`.lfsconfig` standalone-agent switch is **deferred to the M5 cutover**
+>   (operator-gated, after R2 is proven stable across all consumers). § 6 M5 absorbs it.
+> - **D4 unchanged** (R2 primary + GitHub LFS fallback through transition); the per-job mechanism
+>   *is* how D4 is implemented. M2 (round-trip proof) and the Hard-Rule-2 STOPs (M2-fail, I1
+>   pointer-byte preservation) stand.
+
 ## § 0 — Front matter
 
 - **Sub-phase:** `sub-phase-lfs-architecture` (Phase-2 infrastructure tail; Phase 2 closed
@@ -288,7 +312,9 @@ the read side free; OID-addressing means re-pointing storage never rewrites git 
   scoped API token; inject into Actions Secrets. *Operator action for the secret; agent drafts
   the runbook.*
 - **M1 — agent install + config:** install `lfs-s3`; write `.lfsconfig` + git config (§ 5.2).
-  Commit `.lfsconfig` (additive; pointer stubs untouched).
+  Commit `.lfsconfig` (additive; pointer stubs untouched). *[AMENDED Stage 1b — see top block:
+  per-job CI git config via `tools/lfs/setup-lfs-s3.sh`; **no committed root `.lfsconfig`** at M1;
+  the committed standalone-agent switch is deferred to the M5 cutover.]*
 - **M2 — prove on a test object:** create a throwaway LFS-tracked test file under a temp path;
   `git lfs push` it to R2; delete the local cache; `git lfs pull` it back; sha256-verify the
   smudged content == pointer OID. **PASS gates Stage 1b.**
@@ -299,7 +325,8 @@ the read side free; OID-addressing means re-pointing storage never rewrites git 
   file required.
 - **M5 — cutover (D3-gated, operator go ONLY):** flip `.lfsconfig` `lfs.url` to R2 (or the
   custom-agent to standalone); GitHub LFS retained as fallback during transition (D4). Re-run
-  M4 + I1/I2/I3.
+  M4 + I1/I2/I3. *[AMENDED Stage 1b — this is where the **committed root `.lfsconfig`** standalone-agent
+  switch lands (deferred here from M1); until then R2 access is per-job CI config only.]*
 - **M6 — (deferred, future trigger) turn GitHub LFS off** once R2 is proven primary and the
   storage-approaching-10-GiB trigger fires; operator decision.
 
