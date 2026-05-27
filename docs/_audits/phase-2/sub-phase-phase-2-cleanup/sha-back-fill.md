@@ -128,3 +128,28 @@ Separate commit; never `--amend`.
 **Stage 1.A CONFIRMED-Stage-1-A.** K-2 (executed plans) RESOLVED; K-2 phase-3-plan.md DEFERRED
 (D1); PD-2 RESOLVED (11 READMEs). I1–I7 hold; integrity baseline `c19492ad…d22cb52` held;
 verify_evidence 8/0. No tag pushed by agent (I7).
+
+## Stage 1.C chain SHAs (appended at Stage 1.C close; Convention #12)
+
+Cluster C (CI / workflow / supply-chain hygiene) — **SHIFTED-with-notes** (scope re-shape, not an
+execution failure; two operator-ratified STOP-and-surface events). One substantive commit (the
+coupled #12 SHA-pin + #14 methodology theme; R-4) + checkpoint. The verify-close / stays-banked /
+defer-OUT items are documentation-only dispositions (no source change → no commit).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | #12 SHA-pin (3 actions) + #14 version-fetch methodology | `.github/workflows/*.yml` (12), `docs/dependencies.md` | `caafdc9d08899154581d39d9c98f06110fde96e1` |
+| 2 | Stage-1.C checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-c-checkpoint-2026-05-27T22-06-35Z.md` | `1f4d946eb85f66e1a11a671a7001459dceb6bb51` |
+| 3 | this back-fill (Stage 1.C section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** The Stage-1.C checkpoint's `head_sha` was pinned to
+`caafdc9` (where the #12/#14 evidence resolves; `verify_evidence` 8 pass / 0 fail). No self-referential
+token. Separate commit; never `--amend`. (Note: the checkpoint's first commit attempt was correctly
+**aborted by the cat4 hook** — two workflow citations needed full repo-relative paths,
+`.github/workflows/<f>.yml:NN`; fixed and re-committed at `1f4d946`. The recurring cat1/cat4 full-path
+gotcha.)
+
+**Stage 1.C SHIFTED-with-notes.** #12 (SHA-pin) + #14 (methodology) RESOLVED; #11/#13/#16 VERIFY-CLOSE;
+#1 STAYS-BANKED (R-1); #10/#17/#28 DEFER-OUT (charter § 9; #17 = 93 mypy errors/9 files); K-3 CARRY
+(UNKNOWN-1, post-reset follow-up). No scope absorbed. I1–I7 hold; integrity baseline `c19492ad…d22cb52`
+held; verify_evidence 8/0. Banked lesson L-CLEANUP-1. No tag pushed by agent (I7).
