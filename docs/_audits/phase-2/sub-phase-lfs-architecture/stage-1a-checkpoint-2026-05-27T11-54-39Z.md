@@ -6,8 +6,8 @@ artifact: stage
 artifact_id: sub-phase-lfs-architecture-stage-1a
 stage: stage-1a-checkpoint
 verdict: CONFIRMED-Stage-1a-RED
-head_sha: <COMMIT_3_SHA_PENDING>
-head_sha_at_checkpoint: <COMMIT_3_SHA_PENDING>
+head_sha: 897143297f08eb12e9d20e3d222326d1e3b852b4
+head_sha_at_checkpoint: 897143297f08eb12e9d20e3d222326d1e3b852b4
 evidence_paths:
   - docs/phases/sub-phase-lfs-architecture.md
   - tools/testkit/lfs_migration/README.md
@@ -32,9 +32,10 @@ unchanged. No migration was performed (no `.lfsconfig`, no R2, no secret, no cap
 touched). One pre-existing repo-state finding (two non-phase tags) is surfaced in § 1 / § 8; it is
 **not** a Hard-Rule-2 STOP (the I7 invariant holds — see below).
 
-`head_sha` is `<COMMIT_3_SHA_PENDING>` at write time (this checkpoint bundles the charter § 11
+`head_sha` was `<COMMIT_3_SHA_PENDING>` at write time (this checkpoint bundles the charter § 11
 amendment in its own commit, so its evidence resolves at that commit); the SHA back-fill (commit 4,
-Convention #12) sets it to commit 3's actual SHA.
+Convention #12) set it to commit 3's actual SHA `897143297f08eb12e9d20e3d222326d1e3b852b4` — where
+the amended charter (`76db6139…`), README (`e813bb48…`), and evidence file (`9644a435…`) resolve.
 
 ## § 1 — Anchor re-check (P1)
 
