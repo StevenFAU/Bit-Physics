@@ -234,3 +234,32 @@ reconciled 65→242; new § L.10 coordinator-drift + baseline-digest formalizati
 methodology § 6 title; gate-12 perf-row Stage-1b acceptance); #5/#6 VERIFY-CLOSE (§ B.6 modes documented);
 K-5 satisfied at 1.D; PD-3 closed; PD-4 deferred (cosmetic). I1–I7 hold; integrity baseline
 `c19492ad…d22cb52` held; verify_evidence 6/0; pytest 16/0. No tag pushed by agent (I7).
+
+## Stage 1.G chain SHAs (appended at Stage 1.G close; Convention #12) — FINAL Stage-1 cluster
+
+Cluster G (synthesis-report dispositions D4/D5/D6 + methodology) — **SHIFTED-with-notes**. Two
+theme-commits (R-4) + checkpoint. This is the **last** Stage-1 cluster (order 1.A→1.C→1.E→1.F→1.D→1.B→1.G).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | D4 per-package CODEOWNERS (latent scaffolding) | `.github/CODEOWNERS` (new) | `99226cf55d4e7ac7e1a18c6be704bdff3a86b0b5` |
+| 2 | D5 ADR-verdict note + D6 differential-testing cross-ref + § L.12 banked precedents | `docs/conventions/sub-phase-conventions.md`, `docs/planning/bit-physics-master-catalog.md` | `4a0ad2587826df28029d78e55cad18d640456b98` |
+| 3 | Stage-1.G checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-g-checkpoint-2026-05-27T22-51-18Z.md` | `42c7df3ac87627bb3941f0650d1020c850250009` |
+| 4 | this back-fill (Stage 1.G section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** Checkpoint `head_sha` pinned to `4a0ad25` (where all evidence
+resolves; `verify_evidence` 6 pass / 0 fail). Separate commit; never `--amend`.
+
+**Stage 1.G SHIFTED-with-notes.** D4 (CODEOWNERS), D5 (ADR-verdict intention-note, no dir), D6
+(differential-testing cross-ref, conventions + catalog § 50.1), #39 + S-P2AR1 + S-P2AR2 (§ L.12 banked
+ESTABLISHED precedents) RESOLVED; #2 VERIFY-CLOSE; #3 / #18 / S9-PHASE2-1/2/3 DEFER (charter § 9, documented).
+I1–I7 hold; integrity baseline `c19492ad…d22cb52` held; verify_evidence 6/0; pytest 16/0. No tag pushed
+by agent (I7).
+
+---
+
+**STAGE-1 ARC COMPLETE.** All seven clusters landed (1.A CONFIRMED, 1.C SHIFTED-with-notes, 1.E CONFIRMED,
+1.F CONFIRMED, 1.D CONFIRMED, 1.B CONFIRMED, 1.G SHIFTED-with-notes). Integrity baseline `c19492ad…d22cb52`
+held byte-for-byte at every cluster boundary; pytest `tools/testkit/lfs_migration/` 15/1→**16/0** at Cluster D
+(PD-1) and maintained; verify_evidence GREEN on every cluster checkpoint; I1–I7 hold throughout; no
+agent-pushed tag (I7). **Stage 2 (sub-phase landing audit) is the NEXT dispatch — not attempted here.**
