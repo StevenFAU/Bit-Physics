@@ -174,3 +174,20 @@ resolves; `verify_evidence` 10 pass / 0 fail). Separate commit; never `--amend`.
 RESOLVED; #38 VERIFY-CLOSE (hello_taichi.py exemplar consumed by RD2D); #27 DEFER (removal gate unmet).
 #20 release-section workflow banked to charter § 9. I1–I7 hold; integrity baseline `c19492ad…d22cb52`
 held; verify_evidence 10/0. No tag pushed by agent (I7).
+
+## Stage 1.F chain SHAs (appended at Stage 1.F close; Convention #12)
+
+Cluster F (verify-and-close) — **CONFIRMED-Stage-1-F**. **No substantive commits** (verification-only);
+the checkpoint + this back-fill are the only artifacts.
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | Stage-1.F checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-f-checkpoint-2026-05-27T22-22-25Z.md` | `b8b43f2225e7111e827fbdfd50de08ed2a7be4ff` |
+| 2 | this back-fill (Stage 1.F section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** Checkpoint `head_sha` pinned to `ede4887` (the 1.E back-fill;
+where all resolution evidence resolves; `verify_evidence` 10 pass / 0 fail). Separate commit; never `--amend`.
+
+**Stage 1.F CONFIRMED-Stage-1-F.** § 13 #4, #7, #15, #34, #9-landed CLOSED with evidence-of-resolution;
+M0 confirmed no-op (branch not protected, 404). #9 residual stays deferred-OUT (charter § 9). I1–I7 hold;
+integrity baseline `c19492ad…d22cb52` held; verify_evidence 10/0. No tag pushed by agent (I7).
