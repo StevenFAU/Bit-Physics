@@ -86,6 +86,34 @@ posture: >
 >   *is* how D4 is implemented. M2 (round-trip proof) and the Hard-Rule-2 STOPs (M2-fail, I1
 >   pointer-byte preservation) stand.
 
+> **AMENDMENT — Stage 1c / M3 (2026-05-27): M3 mechanism refined to `git lfs push --object-id`
+> over the exact ref-union.** Operator-ratified (Convention M — the live ref-walk wins over the
+> planning spec's literal command). Prior text below is preserved; this block governs § 6 M3 where
+> they overlap.
+>
+> - **§ 6 M3 migrates from the literal `git lfs push --all` to
+>   `git lfs push --object-id <union-OID-list> --stdin`**, where the OID list is the union of LFS
+>   objects referenced by **`HEAD` + each prior phase tag** (`v0.0.0-phase-0`, `v0.1.0-phase-1`,
+>   `v0.2.0-phase-2`) at M3 time. *Intent unchanged* ("upload every object in use"); the mechanism
+>   is made precise.
+> - **Why (FACT — probe at HEAD `0c8aeb1`):** `git lfs push --all --dry-run origin` enumerates **27**
+>   objects; the union of `HEAD` + the three phase tags is **26** (`v0.0.0-phase-0` /
+>   `v0.1.0-phase-1` carry **zero** LFS objects — pre-LFS history). The 27th is the empty-file OID
+>   `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`, a referenced-by-nothing
+>   degenerate from commit `11d2b93`'s brief `.gitattributes`-glob mismatch; it is **not in the
+>   local LFS cache** and is referenced by **no inspected ref**. `--all` would attempt it (risking a
+>   missing-local-object push abort) and create a 27≠26 count drift against the inventory.
+> - **M3's upload surface == M4's sweep surface (26 OIDs).** M4 (`r2-sweep-proof.yml`) walks the same
+>   `HEAD` + phase-tags union via `git lfs ls-files`; scoping M3 identically keeps the migration's
+>   verification surface symmetric (no object uploaded-but-unswept, none swept-but-unuploaded).
+> - **Reproducibility:** the exact 26-OID list is computed deterministically by
+>   `tools/lfs/r2-bulk-upload.sh` from the union refs and captured in the M3 audit
+>   (`docs/_audits/phase-2/sub-phase-lfs-architecture/m3-bulk-upload-<UTC>.md`) verbatim.
+> - **Verification (§ 7 A5 / bulk sweep):** after upload, every object is re-fetched **from R2** into
+>   a temporary `lfs.storage` dir and `sha256`-checked against its OID — all 26, not a sample (the
+>   git-lfs 3.7.1 ↔ lfs-s3 0.2.2 transfer path is exercised at bulk scale; full verification makes
+>   any silent corruption a loud failure). The canonical `.git/lfs/objects` is never touched.
+
 ## § 0 — Front matter
 
 - **Sub-phase:** `sub-phase-lfs-architecture` (Phase-2 infrastructure tail; Phase 2 closed
