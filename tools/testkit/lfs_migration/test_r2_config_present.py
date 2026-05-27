@@ -1,25 +1,22 @@
 """R2 integration config surface (probe section P4; charter sections 5-6).
 
-RED-only at Stage 1a: Stage 1a does not touch R2, .lfsconfig, or any workflow
-secret. These tests encode Stage 1b's static-config PASS target so it is
-unambiguous. There is deliberately NO live-network test here -- R2 endpoint
-reachability is deferred to the Stage 1b M2 test-object proof (charter section
-6, M2); Stage 1a asserts only repo-resident configuration.
+GREEN at Stage 1b. These were RED at Stage 1a; Stage 1b satisfied them via the
+operator-ratified **per-job** mechanism (charter Stage-1b amendment): there is
+deliberately **no committed root ``.lfsconfig``** — that standalone-agent switch
+would bypass GitHub LFS for the whole repo (the M5 cutover, not the additive
+M1). Instead a CI job that needs R2 sources ``tools/lfs/setup-lfs-s3.sh`` to
+register the agent for its checkout only. The committed root ``.lfsconfig`` is
+deferred to the operator-gated **M5** cutover (charter § 6 M5), so it is NOT a
+Stage-1b assertion here.
 
-The four R2 GitHub Actions secrets (R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY,
-R2_ACCOUNT_ID, R2_BUCKET_NAME) exist at repo Settings per the Stage 1a
-operator input (UNKNOWN-4 resolved). Their *values* are never read; this
-surface checks only that workflows *reference* them by name.
-
-Satisfaction targets (Stage 1b):
-* M1 -> commit a repo-root ``.lfsconfig`` pointing at the R2 S3 endpoint via
-  the ``lfs-s3`` standalone transfer agent.
-* workflow edits -> reference all four R2 secrets via ``secrets.<NAME>``.
+There is no live-network test; R2 reachability was proven once by the M2
+round-trip workflow (``.github/workflows/r2-roundtrip-proof.yml``), evidenced at
+``docs/_audits/phase-2/sub-phase-lfs-architecture/r2-roundtrip-proof-*.md``.
 """
 
 from __future__ import annotations
 
-from lfs_migration._helpers import red_until_stage_1b, repo_root
+from lfs_migration._helpers import repo_root
 
 R2_SECRET_NAMES = (
     "R2_ACCESS_KEY_ID",
@@ -29,21 +26,28 @@ R2_SECRET_NAMES = (
 )
 
 _WORKFLOW_DIR = ".github/workflows"
-_R2_ENDPOINT_MARKERS = ("r2.cloudflarestorage.com", "lfs-s3")
+_SETUP_SCRIPT = "tools/lfs/setup-lfs-s3.sh"
 
 
-@red_until_stage_1b("Stage 1b M1 commits a repo-root .lfsconfig pointing at the R2 endpoint")
-def test_lfsconfig_points_to_r2() -> None:
-    """A repo-root ``.lfsconfig`` exists and references the R2 / lfs-s3 backend."""
-    lfsconfig = repo_root() / ".lfsconfig"
-    assert lfsconfig.exists(), ".lfsconfig not present (Stage 1b M1 adds it)"
-    text = lfsconfig.read_text(encoding="utf-8")
-    assert any(marker in text for marker in _R2_ENDPOINT_MARKERS), (
-        f".lfsconfig present but references none of {_R2_ENDPOINT_MARKERS}"
+def test_per_job_r2_transfer_agent_configured() -> None:
+    """The per-job R2 mechanism exists: the helper registers the lfs-s3 agent + endpoint.
+
+    This is the ratified Stage-1b realization of charter § 6 M1 (per-job, not a
+    committed root ``.lfsconfig``). The committed-``.lfsconfig`` cutover is an M5
+    target and is intentionally NOT asserted here.
+    """
+    script = repo_root() / _SETUP_SCRIPT
+    assert script.exists(), f"{_SETUP_SCRIPT} (per-job R2 agent helper) missing"
+    text = script.read_text(encoding="utf-8")
+    assert "lfs.standalonetransferagent lfs-s3" in text, "helper must register the standalone agent"
+    assert "lfs.customtransfer.lfs-s3.path" in text, "helper must set the custom-transfer path"
+    assert "r2.cloudflarestorage.com" in text, "helper must target the Cloudflare R2 S3 endpoint"
+    # No committed root .lfsconfig at Stage 1b (deferred to the M5 cutover).
+    assert not (repo_root() / ".lfsconfig").exists(), (
+        "a committed root .lfsconfig is the M5 cutover, not Stage 1b (per-job config only)"
     )
 
 
-@red_until_stage_1b("Stage 1b workflow edits reference all four R2 secrets via secrets.<NAME>")
 def test_all_r2_secrets_referenced_by_a_workflow() -> None:
     """Each of the four R2 secrets is referenced by at least one workflow."""
     blob = "\n".join(

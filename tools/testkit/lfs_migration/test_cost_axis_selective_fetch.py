@@ -25,7 +25,7 @@ marker off).
 
 from __future__ import annotations
 
-from lfs_migration._helpers import red_until_stage_1b, repo_root
+from lfs_migration._helpers import repo_root
 
 # Per-workflow committed-capture requirement (probe section P3).
 #   "none"        -> reads no committed LFS object
@@ -42,6 +42,9 @@ WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     "python-strict.yml": "corpus-only",
     "cpp-strict.yml": "none",
     "mutation-testing.yml": "none",
+    # Stage 1b: the M2 R2 round-trip proof — operates on a throwaway object,
+    # reads no committed capture; checks out lfs: false.
+    "r2-roundtrip-proof.yml": "none",
 }
 
 _WORKFLOW_DIR = ".github/workflows"
@@ -64,13 +67,14 @@ def test_workflow_capture_requirements_registry_is_complete() -> None:
     )
 
 
-@red_until_stage_1b(
-    "cpp-strict -> lfs:false; python-strict -> lfs:false + targeted "
-    "`git lfs pull --include=tests/fixtures/legacy-captures/**` (so no "
-    "non-`full` workflow sets lfs:true)"
-)
 def test_no_workflow_overfetches_lfs() -> None:
-    """Only a workflow declared ``full`` may set ``lfs: true``."""
+    """Only a workflow declared ``full`` may set ``lfs: true``.
+
+    GREEN at Stage 1b: the selective-fetch cutover (charter § 4.2) set both
+    former over-fetchers to ``lfs: false`` (cpp-strict reads no capture;
+    python-strict pulls only the legacy-captures corpus targeted). No workflow
+    is ``full``, and none sets ``lfs: true``.
+    """
     overfetchers = [
         name
         for name, requirement in WORKFLOW_CAPTURE_REQUIREMENT.items()
