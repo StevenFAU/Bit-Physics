@@ -587,7 +587,7 @@ The testkit (Layer 0) and integrity toolkit (Layer 1) are load-bearing for every
 **Required coverage:**
 
 - `tools/testkit/code_verification/mms/` — the MMS pipeline. Mutation score ≥ 80% required.
-- `tools/testkit/code_verification/golden/` — golden-value verifier. ≥ 80%.
+- `tools/testkit/golden/` — golden-value verifier. ≥ 80%.
 - `tools/testkit/determinism/` — determinism harness. ≥ 90% (higher because failures here are silent in downstream verification).
 - `tools/testkit/equivalence/` — equivalence harness. ≥ 85%.
 - `tools/testkit/capture/` — capture reader/writer/diff. ≥ 90%.
