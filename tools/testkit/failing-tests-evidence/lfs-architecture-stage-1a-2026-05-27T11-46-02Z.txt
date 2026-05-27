@@ -1,0 +1,51 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- <INTERPRETER>
+hypothesis profile 'default'
+rootdir: <REPO>/tools/testkit
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+timeout: 300.0s
+timeout method: signal
+timeout func_only: False
+collecting ... collected 16 items
+
+lfs_migration/test_cost_axis_selective_fetch.py::test_workflow_capture_requirements_registry_is_complete PASSED [  6%]
+lfs_migration/test_cost_axis_selective_fetch.py::test_no_workflow_overfetches_lfs FAILED [ 12%]
+lfs_migration/test_i1_content_oid.py::test_pinned_audits_verify_evidence_pass PASSED [ 18%]
+lfs_migration/test_i1_content_oid.py::test_every_pointer_at_head_is_well_formed PASSED [ 25%]
+lfs_migration/test_i1_content_oid.py::test_local_object_store_sizes_match_pointers PASSED [ 31%]
+lfs_migration/test_i1_content_oid.py::test_content_hash_matches_oid_for_witnessed_objects PASSED [ 37%]
+lfs_migration/test_i2_replay_lock.py::test_phase1_replay_ok PASSED       [ 43%]
+lfs_migration/test_i3_integrity_baseline.py::test_integrity_zero_hard_fail PASSED [ 50%]
+lfs_migration/test_i4_append_only_lock.py::test_append_only_workflow_present_and_configured PASSED [ 56%]
+lfs_migration/test_i4_append_only_lock.py::test_ledger_files_are_append_only_at_head PASSED [ 62%]
+lfs_migration/test_i5_worktree_replay.py::test_prior_tags_have_well_formed_resolvable_pointers PASSED [ 68%]
+lfs_migration/test_i6_convention_12.py::test_backfill_commits_are_separate_and_doc_only PASSED [ 75%]
+lfs_migration/test_i7_no_agent_tags.py::test_no_tag_points_into_subphase_range PASSED [ 81%]
+lfs_migration/test_i7_no_agent_tags.py::test_operator_phase_tags_present PASSED [ 87%]
+lfs_migration/test_r2_config_present.py::test_lfsconfig_points_to_r2 FAILED [ 93%]
+lfs_migration/test_r2_config_present.py::test_all_r2_secrets_referenced_by_a_workflow FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_no_workflow_overfetches_lfs _______________________
+lfs_migration/test_cost_axis_selective_fetch.py:79: in test_no_workflow_overfetches_lfs
+    assert not overfetchers, (
+E   AssertionError: workflows set lfs:true without a 'full' capture requirement: ['cpp-strict.yml', 'python-strict.yml']
+E   assert not ['python-strict.yml', 'cpp-strict.yml']
+_________________________ test_lfsconfig_points_to_r2 __________________________
+lfs_migration/test_r2_config_present.py:39: in test_lfsconfig_points_to_r2
+    assert lfsconfig.exists(), ".lfsconfig not present (Stage 1b M1 adds it)"
+E   AssertionError: .lfsconfig not present (Stage 1b M1 adds it)
+E   assert False
+E    +  where False = exists()
+E    +    where exists = PosixPath('<REPO>/.lfsconfig').exists
+_________________ test_all_r2_secrets_referenced_by_a_workflow _________________
+lfs_migration/test_r2_config_present.py:53: in test_all_r2_secrets_referenced_by_a_workflow
+    assert not unreferenced, f"R2 secrets not referenced by any workflow: {unreferenced}"
+E   AssertionError: R2 secrets not referenced by any workflow: ['R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_ACCOUNT_ID', 'R2_BUCKET_NAME']
+E   assert not ['R2_ACCESS_KEY_ID', 'R2_SECRET_ACCESS_KEY', 'R2_ACCOUNT_ID', 'R2_BUCKET_NAME']
+=========================== short test summary info ============================
+FAILED lfs_migration/test_cost_axis_selective_fetch.py::test_no_workflow_overfetches_lfs
+FAILED lfs_migration/test_r2_config_present.py::test_lfsconfig_points_to_r2
+FAILED lfs_migration/test_r2_config_present.py::test_all_r2_secrets_referenced_by_a_workflow
+========================= 3 failed, 13 passed in NN.NNs =========================
