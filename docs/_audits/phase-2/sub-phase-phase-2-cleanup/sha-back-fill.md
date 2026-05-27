@@ -191,3 +191,25 @@ where all resolution evidence resolves; `verify_evidence` 10 pass / 0 fail). Sep
 **Stage 1.F CONFIRMED-Stage-1-F.** § 13 #4, #7, #15, #34, #9-landed CLOSED with evidence-of-resolution;
 M0 confirmed no-op (branch not protected, 404). #9 residual stays deferred-OUT (charter § 9). I1–I7 hold;
 integrity baseline `c19492ad…d22cb52` held; verify_evidence 10/0. No tag pushed by agent (I7).
+
+## Stage 1.D chain SHAs (appended at Stage 1.D close; Convention #12)
+
+Cluster D (branch-protection & tag governance) — **CONFIRMED-Stage-1-D**. Three theme-commits (R-4)
++ checkpoint. The § D.2 wording is drafted here (soft-dep feed to Cluster 1.B / K-5).
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | D3 § D.2 intermediate-tag conditions | `docs/conventions/sub-phase-conventions.md` | `6674bc6a72061c47ae9bce6e337f8d9f4330c1e8` |
+| 2 | PD-1 I7 guard re-encoding (→ 16/0) | `tools/testkit/lfs_migration/test_i7_no_agent_tags.py` | `d861274a7d50fb933bfbb2b056745011b207645c` |
+| 3 | D2 branch-protection live-state + M0 no-op | `docs/ops/branch-protection.md` | `3c9d926e7682f182523e6762322e0c84cbe493ef` |
+| 4 | Stage-1.D checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-d-checkpoint-2026-05-27T22-28-49Z.md` | `cd9e52e06bc1c569a7813d47204b9c2065ce657a` |
+| 5 | this back-fill (Stage 1.D section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** Checkpoint `head_sha` pinned to `3c9d926` (where all evidence
+resolves; `verify_evidence` 6 pass / 0 fail). Separate commit; never `--amend`.
+
+**Stage 1.D CONFIRMED-Stage-1-D.** D3 (§ D.2 intermediate-tag conditions), PD-1 (I7 guard re-encoded —
+declarative operator-sanctioned-tags allowlist; **pytest 16/0**, the precondition-6 deviation now
+RESOLVED), D2 (branch-protection live-state amendment), K-4/M0 (no-op), § 13 #41 (via D3) RESOLVED.
+§ D.2 wording drafted (soft-dep feed to 1.B). No STOP (PD-1 not brittle). I1–I7 hold; integrity baseline
+`c19492ad…d22cb52` held; verify_evidence 6/0. No tag pushed by agent (I7).
