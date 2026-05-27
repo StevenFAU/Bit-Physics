@@ -6,6 +6,33 @@ protection rules plus repo-side CI workflows. Phase 0 Block 1 ships this
 document; the operator applies the rules at phase open and re-verifies
 after every phase landing.
 
+> **Live-state amendment (2026-05-27, sub-phase-phase-2-cleanup Stage 1.D / D2).**
+> **No branch- or tag-protection rule is configured live.** `gh api
+> repos/StevenFAU/Bit-Physics/branches/main/protection` → **404 "Branch not
+> protected"**; `…/tags/protection` likewise returns nothing configured. Per the
+> closing drift rule (§ "Operator verification checklist" below — "the synced
+> GitHub state wins; the doc is amended via a separate commit"), this document is
+> amended to record that **the rules in the sections below are the *designed*
+> posture, NOT currently enforced server-side.**
+>
+> For the current **solo + single-agent** operating model the designed rules add
+> little: the equivalent guarantees are delivered in practice by **Convention M**
+> (re-anchor before edit), **Hard Rule 2** (STOP-and-surface), the **append-only
+> audit chain**, the repo-side **CI workflows** (`audit-append-only.yml`,
+> `integrity.yml`, …), and **I7** (operator-only tag pushing, enforced by the
+> regression guard `tools/testkit/lfs_migration/test_i7_no_agent_tags.py`).
+>
+> **Forward-routing.** *"implement-live-branch-protection"* becomes a candidate
+> sub-phase if/when the contributor model grows beyond solo + agent (multiple
+> human contributors, untrusted forks, or CI bots with write scope) — at which
+> point the designed rules below should be applied server-side and re-verified
+> against the checklist.
+>
+> **M0 (mutation-testing re-tier required-check removal) — CONFIRMED NO-OP.** The
+> operator action below ("drop `mutation-testing` from the required status
+> checks") has **nothing to remove**: with branch protection at 404, there is no
+> required-status-check set configured at all. M0 closes as a no-op.
+
 ## Rules to apply (GitHub Repository Settings → Branches → Branch protection)
 
 For the `main` branch:
@@ -74,11 +101,12 @@ inherits them green.
 > on a given push blocks that push — so de-listing here is coupled to the live
 > config.
 >
-> **Operator action (M0) — NOT yet performed:** update the live GitHub branch
-> protection config to drop `mutation-testing` from the required status checks
-> (Settings → Branches → `main` rule → required status checks → remove
-> `mutation-testing`). Per the closing paragraph below, drift between this doc
-> and the applied rules is resolved in favour of the synced GitHub state.
+> **Operator action (M0) — CONFIRMED NO-OP (2026-05-27, Stage 1.D / D2).** The
+> action was to drop `mutation-testing` from the required status checks (Settings
+> → Branches → `main` rule → required status checks → remove `mutation-testing`).
+> Live branch protection is **404 / not configured** (see the live-state amendment
+> at the top of this doc), so there is **no required-status-check set to remove**.
+> M0 is a no-op. Per the closing paragraph below, the synced GitHub state wins.
 
 ## Operator verification checklist
 
