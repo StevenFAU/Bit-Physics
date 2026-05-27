@@ -100,6 +100,16 @@ Plus (additive, existing-file or new):
 **Stage 2 creates/edits (additive):** `CHANGELOG.md` entry; `docs/project-state.md` row;
 landing audit + evidence + SHA back-fill.
 
+> **Doc-truth note (added 2026-05-27, cleanup § 13 #26 / B-CPPB2).** `docs/project-state.md`
+> was **never adopted** project-wide — it was specced in the early convergence-file model
+> (alongside `CHANGELOG.md` + `tolerance.toml`) but no such file exists at any HEAD. Sub-phase
+> status is tracked instead in the **landing audit** under `docs/_audits/<phase>/<sub-phase>/`
+> plus the per-phase ledger (e.g. `docs/_audits/phase-0/ledger.md`). This "project-state.md row"
+> line is a historical planning artifact superseded by this sub-phase's landing audit; the same
+> stale mention recurs in sibling charters (`docs/phases/sub-phase-common-warp-bootstrap.md`,
+> `docs/phases/phase-2-cross-stack-replication.md`) and is correctly guarded as "if present" in
+> the unexecuted `docs/phases/phase-5-productization.md`.
+
 **Explicitly NOT touched:** root `pyproject.toml [tool.uv.workspace].members` (D6 —
 common-cpp is CMake, not a uv member; count stays 23).
 

@@ -41,3 +41,18 @@ Thumbs.db
 
 # Mutation-testing artifacts
 .mutmut-cache
+
+# Claude Code local agent config (per-checkout; not project content)
+.claude/
+
+# Dear ImGui runtime window-layout (per-machine; written by C++ UI runs)
+imgui.ini
+
+# Held-local gate-14 reference captures — eulerian-smoke 3D Taylor-Green
+# (128³, step-500, ~738 MB each). Deliberately NOT committed per D13/D14
+# (LFS-bandwidth conservation); their sha256 digests are recorded in the
+# eulerian-smoke-stack-{d,e} audits. Ignored to de-clutter `git status`
+# (cleanup §13 #24); these are intentional held-local artifacts, NOT stray
+# junk — remove the matching line if a future operator routing commits them.
+captures/eulerian-smoke-stack-d/taylor-green-128cube-seed42-step500.*
+captures/eulerian-smoke-stack-e/taylor-green-128cube-seed42-step500.*
