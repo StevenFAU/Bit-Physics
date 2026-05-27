@@ -213,3 +213,24 @@ declarative operator-sanctioned-tags allowlist; **pytest 16/0**, the preconditio
 RESOLVED), D2 (branch-protection live-state amendment), K-4/M0 (no-op), § 13 #41 (via D3) RESOLVED.
 § D.2 wording drafted (soft-dep feed to 1.B). No STOP (PD-1 not brittle). I1–I7 hold; integrity baseline
 `c19492ad…d22cb52` held; verify_evidence 6/0. No tag pushed by agent (I7).
+
+## Stage 1.B chain SHAs (appended at Stage 1.B close; Convention #12)
+
+Cluster B (conventions / methodology reconciliation) — **CONFIRMED-Stage-1-B**. Two theme-commits (R-4)
++ checkpoint. K-5 (§ D.2) was satisfied at 1.D (soft-dep); 1.B cross-references without a second touch.
+
+| Commit | Artifact | Path | SHA |
+|---|---|---|---|
+| 1 | conventions reconciliation (§M, §L.10, §L.7, §L S1b-SME3) | `docs/conventions/sub-phase-conventions.md` | `416828f8a94d6399f0bf3efb8f05848cb9d1a3df` |
+| 2 | methodology § 6 title + per-port gate-12 perf-row acceptance | `docs/conventions/cross-stack-equivalence-methodology.md`, `docs/phases/phase-2-cross-stack-replication.md` | `6ff65db0fd0cc4587cda83ab04b29e44286f794d` |
+| 3 | Stage-1.B checkpoint audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-b-checkpoint-2026-05-27T22-40-20Z.md` | `e2fd285ef3bf65a3e6af57022f02b3e5fedec88a` |
+| 4 | this back-fill (Stage 1.B section) | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (recursion-stopper; not committed-then-back-filled) |
+
+**No placeholder back-fill was needed.** Checkpoint `head_sha` pinned to `6ff65db` (where all evidence
+resolves; `verify_evidence` 6 pass / 0 fail). Separate commit; never `--amend`.
+
+**Stage 1.B CONFIRMED-Stage-1-B.** § 13 #19, #21, #22, #23, #30, #31, #32, #33, #35 RESOLVED (§ M
+reconciled 65→242; new § L.10 coordinator-drift + baseline-digest formalizations; § L.7 title-scope;
+methodology § 6 title; gate-12 perf-row Stage-1b acceptance); #5/#6 VERIFY-CLOSE (§ B.6 modes documented);
+K-5 satisfied at 1.D; PD-3 closed; PD-4 deferred (cosmetic). I1–I7 hold; integrity baseline
+`c19492ad…d22cb52` held; verify_evidence 6/0; pytest 16/0. No tag pushed by agent (I7).
