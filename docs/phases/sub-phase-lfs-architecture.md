@@ -114,6 +114,50 @@ posture: >
 >   git-lfs 3.7.1 ↔ lfs-s3 0.2.2 transfer path is exercised at bulk scale; full verification makes
 >   any silent corruption a loud failure). The canonical `.git/lfs/objects` is never touched.
 
+> **AMENDMENT — Stage 1c / M5 (2026-05-27): the committed-`.lfsconfig` cutover is
+> mechanically unreachable; per-job trusted-config is the steady-state end state.**
+> Operator-ratified (Hard-Rule-2 re-characterization). Prior text below is preserved;
+> this block governs § 6 M5 / § 6 M6 / D4 and the Stage-1b amendment's M5 absorption
+> where they overlap.
+>
+> - **(1) Constraint discovered (FACT — empirical).** git-lfs **ignores**
+>   `lfs.standalonetransferagent` and `lfs.customtransfer.*.path` when they are read
+>   from an in-repo `.lfsconfig` (these keys can execute arbitrary binaries on clone,
+>   so they are honored **only** from the user's trusted `.git/config`). Verified at
+>   HEAD on git-lfs `3.4.1` (local) and `3.7.1` (CI runner): a `.lfsconfig` carrying
+>   the switch yields `git lfs env` transfers `basic,lfs-standalone-file,ssh` (lfs-s3
+>   **absent**) + the warning `These unsafe '.lfsconfig' keys were ignored:`; the same
+>   keys in `.git/config` yield `basic,lfs-s3,lfs-standalone-file,ssh` (honored). This
+>   is a **git-lfs security feature, not a workaround target.**
+> - **(2) Intent reframed.** The sub-phase's load-bearing requirement (charter Stage-1a
+>   reframe) was eliminating CI's GitHub-LFS **bandwidth** exhaustion (dashboard:
+>   10/10 GB free tier, throttled, at sub-phase open). That is **met** by the per-job
+>   trusted-config model shipped at Stage 1b and proven at bulk scale by M3/M4: the
+>   LFS-fetching workflows (`python-strict`, `cpp-strict`) source `setup-lfs-s3.sh`
+>   (writes trusted `.git/config`) and fetch from R2, not GitHub LFS. The implicit
+>   aspiration of a **universal R2 default via committed config** was never load-bearing
+>   for any current requirement, required subverting the git-lfs security feature, and
+>   is **correctly unreachable**.
+> - **(3) D4 re-status: steady-state, not transitional.** D4 ("GitHub LFS fallback")
+>   was framed with an implicit end at M5. Instead **D4 is the steady state** for any
+>   consumer who has not opted into R2 (fresh clones without `lfs-s3`/creds resolve LFS
+>   via GitHub LFS exactly as before). Objects remain in GitHub LFS as fallback.
+>   **§ 6 M6** (decommission GitHub LFS → "R2 only") becomes the only path that would
+>   force R2 universally, and it **stays deferred indefinitely** — a future operator
+>   decision, explicitly **out of this sub-phase**.
+> - **§ 6 M5 amended:** M5 does **not** commit a root `.lfsconfig` (it would be inert).
+>   M5 = the documentation + acceptance that R2 activation is **opt-in via trusted
+>   `.git/config`** (per-job in CI; a documented one-command bootstrap for local dev,
+>   `tools/lfs/README.md`). The Stage-1b amendment's "the committed root `.lfsconfig`
+>   switch lands at M5" is **withdrawn** as mechanically impossible.
+> - **Finding that shaped the final architecture (FACT — design).** The per-job opt-in
+>   model with GitHub-LFS fallback is **more robust** than universal-default routing
+>   would have been: fresh clones work without R2 credentials; CI opts in precisely
+>   where bandwidth matters; D4's "fallback" is revealed as load-bearing safety, not a
+>   transitional inconvenience. The git-lfs protection that prevents a committed
+>   `.lfsconfig` from activating an arbitrary binary is the correct design; the original
+>   M5 plan was implicitly trying to subvert it.
+
 ## § 0 — Front matter
 
 - **Sub-phase:** `sub-phase-lfs-architecture` (Phase-2 infrastructure tail; Phase 2 closed

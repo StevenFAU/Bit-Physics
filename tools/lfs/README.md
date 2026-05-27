@@ -5,20 +5,27 @@ the [`lfs-s3`](https://github.com/nicolas-graves/lfs-s3) custom-transfer agent.
 Landed by `sub-phase-lfs-architecture` Stage 1b. Authoritative design:
 `docs/phases/sub-phase-lfs-architecture.md` §§ 5–6 (+ the Stage-1b amendment block).
 
-## The per-job model (additive, not a cutover)
+## The trusted-config (per-job / opt-in) model — the end state
 
-`lfs-s3` activates **only** by setting `lfs.standalonetransferagent lfs-s3`, which
-routes **every** git-LFS transfer through it and bypasses GitHub LFS. Committing
-that switch to a root `.lfsconfig` would impose it on local dev and all 8 non-LFS
-workflows — breaking object resolution wherever `lfs-s3`/credentials are absent.
-That is the **M5 cutover**, not the additive **M1**.
+`lfs-s3` activates **only** by setting `lfs.standalonetransferagent lfs-s3`. By
+git-lfs security design, that key (and `lfs.customtransfer.*.path`) is honored
+**only from the user's trusted `.git/config`** — git-lfs **ignores it from an
+in-repo `.lfsconfig`** (it can execute arbitrary binaries on clone). So there is
+**no committed-config way** to make R2 the default backend; R2 is **opt-in via
+trusted `.git/config`**. (M5 re-characterization — see the charter
+**AMENDMENT — Stage 1c / M5** block; verified on git-lfs 3.4.1 + 3.7.1.)
 
-So Stage 1b configures R2 **per job**: a workflow that needs R2 sources
-`setup-lfs-s3.sh`, which installs the agent and registers it for **that checkout
-only**. The committed repo stays **GitHub-LFS-default**; a checkout without R2
-config resolves LFS objects via GitHub LFS exactly as before (this is the D4
-fallback through the transition). The committed root `.lfsconfig` is deferred to
-the operator-gated M5 cutover.
+This is the steady state, and it is the more robust one:
+
+- **CI** opts in per job: a workflow that needs R2 sources `setup-lfs-s3.sh`, which
+  installs the agent + writes `git config --local` for **that checkout only**. The
+  bandwidth-load-bearing workflows (`python-strict`, `cpp-strict`) fetch from R2 this
+  way — which is what relieves the throttled GitHub-LFS bandwidth.
+- **Local dev** opts in with a one-command bootstrap (below).
+- **Anyone who has not opted in** resolves LFS via GitHub LFS exactly as before —
+  this is **D4, now steady-state fallback** (not a transitional phase). Objects
+  remain in GitHub LFS; turning it off entirely (M6 → "R2 only") is deferred
+  indefinitely. Fresh clones therefore work **without** R2 credentials.
 
 ## `setup-lfs-s3.sh`
 
@@ -43,11 +50,27 @@ vars directly, so credentials never enter git config or process args):
 The S3 endpoint is constructed at runtime as
 `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`.
 
-## Local developer setup
+## Local developer setup (opt into R2)
 
-To push/pull LFS objects against R2 locally, export the same env vars (using your
-own scoped R2 token — never the CI secrets) and `source` the script. Without it,
-your clone keeps using GitHub LFS, which is the intended default.
+R2 routing is **optional** locally — without it your clone uses GitHub LFS (the
+steady-state fallback), so a plain `git clone` works with no R2 credentials. To
+route LFS through R2 (faster, off the throttled GitHub-LFS bandwidth), opt in once
+per clone with your **own scoped** R2 token (never the CI secrets):
+
+```bash
+# 1. install the pinned agent (once per machine)
+curl -fsSL https://github.com/nicolas-graves/lfs-s3/releases/download/0.2.2/lfs-s3-linux \
+  -o ~/.local/bin/lfs-s3 && chmod +x ~/.local/bin/lfs-s3
+# 2. export your R2 token + opt this clone in (writes trusted .git/config)
+export R2_ACCOUNT_ID=... AWS_ACCESS_KEY_ID=... AWS_SECRET_ACCESS_KEY=... S3_BUCKET=...
+source tools/lfs/setup-lfs-s3.sh
+```
+
+`setup-lfs-s3.sh` writes `lfs.standalonetransferagent`/`customtransfer.lfs-s3.path`
+into this clone's `.git/config` (the *trusted* config git-lfs honors) and exports
+the endpoint/region. A committed `.lfsconfig` **cannot** do this — git-lfs ignores
+those keys from in-repo config — so this one-time, per-clone step is the supported
+path.
 
 ## `r2-bulk-upload.sh` — M3 bulk upload (charter § 6 M3)
 
@@ -88,16 +111,17 @@ contract** (`R2_ACCOUNT_ID` + `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` +
 
 ## Migration ordering (M3 → M4 → M5)
 
-1. **M3** — `r2-bulk-upload.sh` puts every in-use object in R2 (additive; GitHub LFS
-   still holds them — D4 fallback intact). Gate: all objects PASS round-trip.
-2. **M4** — `.github/workflows/r2-sweep-proof.yml` proves every LFS pointer at `HEAD`
-   and each prior phase tag resolves *from R2*. Gate: every pointer resolves.
-3. **M5** — commit the root `.lfsconfig` that flips default resolution to R2 for all
-   consumers. **D4 fallback ends here**: from this commit, a clone/CI run needs
-   `lfs-s3` + R2 creds (or the read path R2 exposes) to resolve LFS content. Local
-   dev that pulled LFS before M5 keeps its cache; fresh clones need the agent.
+1. **M3 — CONFIRMED.** `r2-bulk-upload.sh` put every in-use object in R2 (26 OIDs,
+   all PASS round-trip). Evidence: `docs/_audits/.../m3-bulk-upload-*.md`.
+2. **M4 — CONFIRMED.** `r2-sweep-proof.yml` proved every LFS pointer at `HEAD` + each
+   prior phase tag resolves *from R2* (62/62 PASS). Evidence: `.../m4-r2-sweep-proof-*.md`.
+3. **M5 — re-characterized (no committed cutover).** A committed `.lfsconfig` cannot
+   flip the default (git-lfs ignores the agent keys from in-repo config). R2 stays
+   **opt-in via trusted `.git/config`** (CI per-job; local one-command bootstrap above).
+   **D4 (GitHub-LFS fallback) is steady-state**, not ended; M6 ("R2 only") stays
+   deferred. The CI bandwidth goal is already met by the per-job model.
 
-Each step gates the next; a failure at any step is a HARD RULE 2 STOP (no auto-recover).
+Each step gated the next; a failure at any step was a HARD RULE 2 STOP (no auto-recover).
 
 ## Proof
 
