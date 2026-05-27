@@ -34,7 +34,7 @@ mean any cleanup item is resolved.
 |---|---|---|---|
 | 1 | probe report | `tools/testkit/probes/reports/sub-phase-phase-2-cleanup-probe.md` | `71483f17e8bff824143d7bcdda97c66a09f329d6` |
 | 2 | charter | `docs/phases/sub-phase-phase-2-cleanup.md` | `4dac480db90b2c7b07fe72b12f9739b83b63ee25` |
-| 3 | this landing audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/plan-drafting-landing-2026-05-27T20-08-34Z.md` | back-filled in COMMIT 4 per Convention #12 |
+| 3 | this landing audit | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/plan-drafting-landing-2026-05-27T20-08-34Z.md` | `95a24d99d07de1758e5034b0d39669e6172e0f0a` (back-filled in COMMIT 4 per Convention #12) |
 | 4 | SHA back-fill ledger | `docs/_audits/phase-2/sub-phase-phase-2-cleanup/sha-back-fill.md` | reported in coordinator summary (terminal artifact) |
 
 Probe sha256 `f090fde2…1da8c`; charter sha256 `59f50090…7bf23` — both recorded in front-matter
