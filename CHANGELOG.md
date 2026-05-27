@@ -1442,136 +1442,6 @@ decision (`docs/conventions/sub-phase-conventions.md` § D.2).
   from required-must-run in `docs/ops/branch-protection.md`; `docs/architecture.md`
   § 2.13 CI-policy amended accordingly.
 
-## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
-
-Phase 1 lands the reference-sim TDD bootstraps for nine simulation
-references across categories closed-form, agent-based, continuous-CA,
-particle-fluids, volumetric-grid, lattice, and hybrid-particle-grid.
-
-### Added
-
-#### Stage 1 — Common modules + Tier 2 substacks + Cat 4 grammars
-
-- `common/common-cpp/` — Stack-C common module: capture I/O (`Reader` /
-  `Writer`, IC-1, `raw-binary-v1` payload format shift documented in
-  Stage 1 final checkpoint § 6), determinism `Config` (IC-3), Vulkan
-  device-init declarations + ImGui / VDB / Alembic / USD export-hook
-  stubs. `nlohmann/json` v3.11.3 and `doctest` v2.4.11 via FetchContent.
-- `common/common-py/` — Stack-D common module: capture I/O wrapping
-  Phase 0's `capture.CaptureManifest` (IC-2), determinism `Config`
-  (IC-4), Taichi GGUI F-key workaround (`common_py.ggui`),
-  watchfiles-based hot-reload (`common_py.hotreload`). Optional extras
-  `[taichi]`, `[plotting]`, `[dev]`. B12 fix at `bcd9cb2`:
-  `__init__.py` `__all__` reconciled with module surface
-  (cat2.python-exports → 0 HARD_FAIL).
-- `tools/diagnostics/diagnostics/tier2/particle/` (IC-5) — substack
-  shipping `check_no_overlap`, `check_neighbor_list_integrity`,
-  `check_momentum_conservation`, `check_count_invariance`.
-- `tools/diagnostics/diagnostics/tier2/vector_field/` (IC-6) — substack
-  shipping `check_divergence_free`, `check_circulation`,
-  `check_helicity`, `check_energy_spectrum`.
-- `tools/diagnostics/diagnostics/tier2/closed_form/` (IC-7) — substack
-  shipping `check_output_stability`, `check_precision_sensitivity`,
-  `check_bound_preservation`.
-- Cat 4 grammars per charter § 1.7 R8 amendment (B1; commit `71d4a9e`):
-  - Grammar (b) `<phrase "X" in Y>` at
-    `tools/integrity/integrity/cat4_draft_time/grammars/phrase_in_file.py`.
-  - Grammar (c) `<API X has shape Y>` at
-    `tools/integrity/integrity/cat4_draft_time/grammars/api_shape.py`
-    (Python AST + C++ regex resolvers; libclang follow-up banked as B11).
-
-#### Stage 2 — Per-sim TDD bootstraps (9 sims; spec § 6.6 declares ≥ 2 PBT invariants per sim)
-
-- `closed-form/strange-attractors` (commit `9766498`) — Lorenz /
-  Rössler / Aizawa / Sprott-A / Pickover ODE family. Lorenz
-  structural-invariants golden table at
-  `tools/testkit/golden/tables/closed-form/lorenz-structural.json`
-  with SymPy generator.
-- `closed-form/mandelbulb-explorer` (commit `9766498`) — Hart 1996 /
-  Quilez 2009 distance estimator (p = 8). Mandelbulb DE samples
-  golden at
-  `tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json`
-  (3 anchor points; SymPy 30-digit precision for far-field per Stage
-  2 shift #13).
-- `agent-based/boids-3d` (commit `5dd919c`) — Reynolds 1987 three-rule
-  flocking. 3-agent step-1 golden at
-  `tools/testkit/golden/tables/agent-based/boids-3agent-step1.json`.
-- `agent-based/physarum` (commit `5dd919c`) — Jones 2010 mold
-  transport. 4-agent zero-trail deposit golden at
-  `tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json`.
-- `continuous-ca/reaction-diffusion-3d` (commit `a159086`) — 3D
-  Gray-Scott. MMS at
-  `tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d/`
-  plus the RD-2D MMS co-bundle at
-  `tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d/`
-  per R8 amendment (Phase 0 RD-2D gains an MMS gate for the per-sim
-  implementation phase).
-- `particle-fluids/sph-water` (commit `cd20faa`) — DFSPH
-  (Bender-Koschier 2015), references Phase-0-vendored SPlisHSPlasH
-  (manifest SHA `6bff55a6...`; license MIT). DFSPH density-evolution
-  two-particle golden at
-  `tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json`.
-- `volumetric-grid/eulerian-smoke` (commit `216021a`) — Stam-Fedkiw
-  stable-fluids. Taylor-Green-style MMS at
-  `tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/`.
-- `lattice/lattice-boltzmann-d3q19` (commit `b6abd7e`) — Qian 1992 BGK
-  D3Q19. Algebraic reference only per R8 amendment (no Krüger 2017
-  vendoring). D3Q19 equilibrium golden at
-  `tools/testkit/golden/tables/lattice/d3q19-equilibrium.json` plus
-  the first-principles derivation at
-  `tools/testkit/golden/derivations/d3q19.md`. Shares the NS-2D MMS
-  with eulerian-smoke per Stage 2 shift #18.
-- `hybrid-pg/mpm-multimaterial` (commit `9de8048`) — MLS-MPM (Hu
-  2018; 88-line reference). Quadratic B-spline shape-function golden
-  at
-  `tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json`.
-
-#### Stage 2 — Testkit artifacts summary
-
-- **3 MMS solutions:** RD-2D (R8 co-bundle), RD-3D, NS-2D Taylor-Green.
-  NumPy ≡ SymPy within 1e-12 to 1e-14 at canonical test points.
-- **7 new golden tables** (Phase 0's cubic-spline-kernel unchanged):
-  Lorenz structural, mandelbulb DE, boids 3-agent, physarum deposit,
-  DFSPH density-evolution, D3Q19 equilibrium, MLS-MPM quadratic-B-spline.
-- Each Phase 1 golden carries an independent_reference block citing
-  ≥ 3 sources per spec § 2.4 R9.
-- All 9 sim packages ship Phase-1-light pyprojects with `pytest >= 8.0`
-  as the sole `[dev]` extra; pytest is the uniform TDD-bootstrap
-  framework across stacks (per Stage 2 shifts #11 / #15).
-- 9 legacy-capture placeholder fixtures at
-  `tests/fixtures/legacy-captures/<sim>-ref.{h5,json}` declaring the
-  canonical capture descriptors per R8 amendment (`gray-scott-lambda-
-  64cube-seed42-step2000`, `dam-break-1M-particles-seed42-step1000`,
-  `drop-impact-128cube-seed42-step500`, plus structured names for the
-  others).
-
-#### Stage 3 — Convergence
-
-- All 9 sim packages registered in `[tool.uv.workspace].members` in
-  the root `pyproject.toml` (resolves banked items B7, B13, B15).
-- `references/SPlisHSPlasH/MANIFEST.toml` `[scope].used_by_sims`
-  updated from `[]` to `["sph-water"]`.
-- `tools/integrity/integrity/phase1_registry.toml` enumerates every
-  Phase 1 testkit artifact (3 Tier 2 substacks, 3 MMS solutions, 8
-  golden tables, 3 Cat 4 grammars, vendored SPlisHSPlasH).
-- `justfile` recipes: `test-tier2`, `test-sim <sim>`, `test-sims-all`,
-  `verify-goldens`.
-- `docs/dependencies.md` consolidated common-cpp + common-py deps from
-  the Stage 1 `_staging/` files (which are now removed).
-- `docs/diagnostics/overview.md` Tier 2 rows updated from "(Phase 1+)"
-  placeholder to concrete `tier2-*.md` links.
-- `docs/sim-specs/README.md` created (Phase 0 shipped only the
-  per-sim dirs); indexes all 1 Phase 0 + 9 Phase 1 sims by category.
-- `CHANGELOG.md` Phase 1 entry (this entry).
-
-### Notes
-
-- **Tag pushing.** The Phase 1 landing tag `v0.1.0-phase-1` is pushed
-  by the operator after independent review of the landing audit at
-  `docs/_audits/phase-1/landing-<UTC>.md` per spec § 7.12 R9 amendment.
-- **Phase 0 regression.** RD-2D Phase 0 test suite remains 14/14
-  green; no Phase 0 deliverable was edited.
-
 ### sub-phase-ci-action-migration-and-banked-cleanup
 
 Focused-infrastructure sub-phase whose PRIMARY, time-pressured driver is
@@ -1987,6 +1857,136 @@ overall and the FIRST on a non-Warp backend. Verification: all 14 gates GREEN;
 `ctest` **7/7** (incl. `rd2d_stack_c_gate14`); integrity baseline-MATCH
 `c19492ad…d22cb52` (0 HF / 14 SW) HELD; bit-identity replay `9399fc33…` HELD;
 portfolio sweep ZERO regressions. No `-phase-N` tag pushed (D12).
+
+## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
+
+Phase 1 lands the reference-sim TDD bootstraps for nine simulation
+references across categories closed-form, agent-based, continuous-CA,
+particle-fluids, volumetric-grid, lattice, and hybrid-particle-grid.
+
+### Added
+
+#### Stage 1 — Common modules + Tier 2 substacks + Cat 4 grammars
+
+- `common/common-cpp/` — Stack-C common module: capture I/O (`Reader` /
+  `Writer`, IC-1, `raw-binary-v1` payload format shift documented in
+  Stage 1 final checkpoint § 6), determinism `Config` (IC-3), Vulkan
+  device-init declarations + ImGui / VDB / Alembic / USD export-hook
+  stubs. `nlohmann/json` v3.11.3 and `doctest` v2.4.11 via FetchContent.
+- `common/common-py/` — Stack-D common module: capture I/O wrapping
+  Phase 0's `capture.CaptureManifest` (IC-2), determinism `Config`
+  (IC-4), Taichi GGUI F-key workaround (`common_py.ggui`),
+  watchfiles-based hot-reload (`common_py.hotreload`). Optional extras
+  `[taichi]`, `[plotting]`, `[dev]`. B12 fix at `bcd9cb2`:
+  `__init__.py` `__all__` reconciled with module surface
+  (cat2.python-exports → 0 HARD_FAIL).
+- `tools/diagnostics/diagnostics/tier2/particle/` (IC-5) — substack
+  shipping `check_no_overlap`, `check_neighbor_list_integrity`,
+  `check_momentum_conservation`, `check_count_invariance`.
+- `tools/diagnostics/diagnostics/tier2/vector_field/` (IC-6) — substack
+  shipping `check_divergence_free`, `check_circulation`,
+  `check_helicity`, `check_energy_spectrum`.
+- `tools/diagnostics/diagnostics/tier2/closed_form/` (IC-7) — substack
+  shipping `check_output_stability`, `check_precision_sensitivity`,
+  `check_bound_preservation`.
+- Cat 4 grammars per charter § 1.7 R8 amendment (B1; commit `71d4a9e`):
+  - Grammar (b) `<phrase "X" in Y>` at
+    `tools/integrity/integrity/cat4_draft_time/grammars/phrase_in_file.py`.
+  - Grammar (c) `<API X has shape Y>` at
+    `tools/integrity/integrity/cat4_draft_time/grammars/api_shape.py`
+    (Python AST + C++ regex resolvers; libclang follow-up banked as B11).
+
+#### Stage 2 — Per-sim TDD bootstraps (9 sims; spec § 6.6 declares ≥ 2 PBT invariants per sim)
+
+- `closed-form/strange-attractors` (commit `9766498`) — Lorenz /
+  Rössler / Aizawa / Sprott-A / Pickover ODE family. Lorenz
+  structural-invariants golden table at
+  `tools/testkit/golden/tables/closed-form/lorenz-structural.json`
+  with SymPy generator.
+- `closed-form/mandelbulb-explorer` (commit `9766498`) — Hart 1996 /
+  Quilez 2009 distance estimator (p = 8). Mandelbulb DE samples
+  golden at
+  `tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json`
+  (3 anchor points; SymPy 30-digit precision for far-field per Stage
+  2 shift #13).
+- `agent-based/boids-3d` (commit `5dd919c`) — Reynolds 1987 three-rule
+  flocking. 3-agent step-1 golden at
+  `tools/testkit/golden/tables/agent-based/boids-3agent-step1.json`.
+- `agent-based/physarum` (commit `5dd919c`) — Jones 2010 mold
+  transport. 4-agent zero-trail deposit golden at
+  `tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json`.
+- `continuous-ca/reaction-diffusion-3d` (commit `a159086`) — 3D
+  Gray-Scott. MMS at
+  `tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d/`
+  plus the RD-2D MMS co-bundle at
+  `tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d/`
+  per R8 amendment (Phase 0 RD-2D gains an MMS gate for the per-sim
+  implementation phase).
+- `particle-fluids/sph-water` (commit `cd20faa`) — DFSPH
+  (Bender-Koschier 2015), references Phase-0-vendored SPlisHSPlasH
+  (manifest SHA `6bff55a6...`; license MIT). DFSPH density-evolution
+  two-particle golden at
+  `tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json`.
+- `volumetric-grid/eulerian-smoke` (commit `216021a`) — Stam-Fedkiw
+  stable-fluids. Taylor-Green-style MMS at
+  `tools/testkit/code_verification/mms/solutions/incompressible_ns_2d/`.
+- `lattice/lattice-boltzmann-d3q19` (commit `b6abd7e`) — Qian 1992 BGK
+  D3Q19. Algebraic reference only per R8 amendment (no Krüger 2017
+  vendoring). D3Q19 equilibrium golden at
+  `tools/testkit/golden/tables/lattice/d3q19-equilibrium.json` plus
+  the first-principles derivation at
+  `tools/testkit/golden/derivations/d3q19.md`. Shares the NS-2D MMS
+  with eulerian-smoke per Stage 2 shift #18.
+- `hybrid-pg/mpm-multimaterial` (commit `9de8048`) — MLS-MPM (Hu
+  2018; 88-line reference). Quadratic B-spline shape-function golden
+  at
+  `tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json`.
+
+#### Stage 2 — Testkit artifacts summary
+
+- **3 MMS solutions:** RD-2D (R8 co-bundle), RD-3D, NS-2D Taylor-Green.
+  NumPy ≡ SymPy within 1e-12 to 1e-14 at canonical test points.
+- **7 new golden tables** (Phase 0's cubic-spline-kernel unchanged):
+  Lorenz structural, mandelbulb DE, boids 3-agent, physarum deposit,
+  DFSPH density-evolution, D3Q19 equilibrium, MLS-MPM quadratic-B-spline.
+- Each Phase 1 golden carries an independent_reference block citing
+  ≥ 3 sources per spec § 2.4 R9.
+- All 9 sim packages ship Phase-1-light pyprojects with `pytest >= 8.0`
+  as the sole `[dev]` extra; pytest is the uniform TDD-bootstrap
+  framework across stacks (per Stage 2 shifts #11 / #15).
+- 9 legacy-capture placeholder fixtures at
+  `tests/fixtures/legacy-captures/<sim>-ref.{h5,json}` declaring the
+  canonical capture descriptors per R8 amendment (`gray-scott-lambda-
+  64cube-seed42-step2000`, `dam-break-1M-particles-seed42-step1000`,
+  `drop-impact-128cube-seed42-step500`, plus structured names for the
+  others).
+
+#### Stage 3 — Convergence
+
+- All 9 sim packages registered in `[tool.uv.workspace].members` in
+  the root `pyproject.toml` (resolves banked items B7, B13, B15).
+- `references/SPlisHSPlasH/MANIFEST.toml` `[scope].used_by_sims`
+  updated from `[]` to `["sph-water"]`.
+- `tools/integrity/integrity/phase1_registry.toml` enumerates every
+  Phase 1 testkit artifact (3 Tier 2 substacks, 3 MMS solutions, 8
+  golden tables, 3 Cat 4 grammars, vendored SPlisHSPlasH).
+- `justfile` recipes: `test-tier2`, `test-sim <sim>`, `test-sims-all`,
+  `verify-goldens`.
+- `docs/dependencies.md` consolidated common-cpp + common-py deps from
+  the Stage 1 `_staging/` files (which are now removed).
+- `docs/diagnostics/overview.md` Tier 2 rows updated from "(Phase 1+)"
+  placeholder to concrete `tier2-*.md` links.
+- `docs/sim-specs/README.md` created (Phase 0 shipped only the
+  per-sim dirs); indexes all 1 Phase 0 + 9 Phase 1 sims by category.
+- `CHANGELOG.md` Phase 1 entry (this entry).
+
+### Notes
+
+- **Tag pushing.** The Phase 1 landing tag `v0.1.0-phase-1` is pushed
+  by the operator after independent review of the landing audit at
+  `docs/_audits/phase-1/landing-<UTC>.md` per spec § 7.12 R9 amendment.
+- **Phase 0 regression.** RD-2D Phase 0 test suite remains 14/14
+  green; no Phase 0 deliverable was edited.
 
 ## [0.0.0] — Initial placeholder
 
