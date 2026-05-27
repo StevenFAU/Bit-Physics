@@ -762,7 +762,7 @@ preamble]. Cross-reference: the O-W6/O-W7 base Warp-quirk set is documented at
   helpers). **Applies to: all future Stack-E ports' `@wp.kernel` implementations**
   (Smoke Stack-E / LBM Stack-E remain).
 
-### L.7 Formalized observations — mpm-multimaterial-stack-e Stage 2 (landing)
+### L.7 Formalized observations — mpm-multimaterial-stack-e Stage 2 (landing) + cross-instance Stage-2 additions (lattice-boltzmann-d3q19-stack-e THIRD-instance, reaction-diffusion-2d-stack-c FOURTH-instance)
 
 (FACT — `sub-phase-mpm-multimaterial-stack-e` Stages 0/1a/1b/1c + landing. The
 FIRST Stack-E *consumer* port to complete the full gate chain; these are
@@ -913,6 +913,11 @@ first R-P2 instance. New subsection per per-sub-phase attribution [§ L.5 preamb
   (`ModuleNotFoundError: No module named 'yaml'`). **Fix:** `uv sync --all-packages`
   (restores all members) — or run `uv lock` ONLY (no sync; the `.venv` already carries
   the members). For ad-hoc additive installs use `uv pip install <pkg>` (non-pruning).
+  **Dev-extras nuance (§ 13 #19):** `--all-packages` restores the workspace *members* but
+  NOT their optional/dev *extras* — the `[dev]` / `[extra]` deps (`scipy`, `mutmut`,
+  `pytest-timeout`, …) are pruned unless you also pass `--all-extras` (or, per-member,
+  `uv sync --extra dev`). The fresh-checkout recipe in `docs/dependencies.md` uses the
+  per-member `(cd <member> && uv sync --extra dev)` form for exactly this reason.
   **Applies to: any sub-phase whose environment ops touch `uv` after a member add.**
 
 - **Held-local-capture `evidence_paths` hygiene (Stage 2; IC-16 evidence-path-verify).**
@@ -1022,6 +1027,20 @@ reconciliation Option B): the §1.9.1-cpp umbrella contract had NO API gap vs th
 first real consumer (the smoke), validating "reconcile the socket BEFORE the
 first consumer."
 
+### L.10 Formalized banked observations — sub-phase-phase-2-cleanup Stage 1.B
+
+(FACT — Phase-2 § 13 banked-for-cleanup items #31, #32, #35, #33; formalized here per the cleanup sub-phase. Source audits cited inline.)
+
+- **S1c-RD2C1 — C++ gate-14 "un-skip" is a cross-language `ctest`, not a pytest skip-marker removal (§ 13 #31).** For a Stack-C (Vulkan/C++) port, the gate-14 cross-stack equivalence test is realized as a **cross-language `ctest`** (the testkit `compare_captures` invoked via `uv` against the C++-emitted capture), **not** as a Python `pytest` skip-marker removal. The Python un-skip pattern (§ L.5 S1c-1) does **not** paraphrase to Stack-C. Source: `docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-c/stage-1c-checkpoint-2026-05-25T22-00-00Z.md:34-36`.
+
+- **S0-LBME1 — dispatch anchor-SHA hygiene (§ 13 #32; § L.5 S1c-1 precedent).** A dispatch header carried **stale anchor SHAs** inherited from a prior sub-phase. Discipline: dispatch headers regenerate (or omit) anchor SHAs at dispatch time; carry-in SHAs are re-verified against HEAD (Convention M) before use. Source: `docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/landing-2026-05-25T17-00-00Z.md` (S0-LBME1; § 6 S-bank).
+
+- **Coordinator scope-extrapolation drift (§ 13 #35; § L.5 S1c-1 sibling).** A Stage-9 dispatch framed Phase-2 as **"9 sub-phases"**; the actual delivery was **16 substantive + 1 audit-revision = 17**. Discipline: dispatcher scope framings must account for infrastructure (common-warp, common-cpp), DSL-integration (taichi-integration), CI (ci-action-*), and audit-revision sub-phases — not only the enumerated per-sim ports. Source: `docs/_audits/phase-2/sub-phase-phase-2-audit-revision/landing-2026-05-26T01-00-00Z.md:160`.
+
+- **Integrity baseline-digest derivation (§ 13 #33).** The integrity baseline digest (`c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52` at Phase-2 close) is the **sha256 of the FULL `python -m integrity --all --mode strict` report**. The report prints to **STDERR** (stdout is empty), so the digest is computed over the captured stderr stream (e.g. `… --all --mode strict 2>report.txt; sha256sum report.txt`), covering all `[SOFT_WARN]`/`[HARD_FAIL]` lines **and** the trailing `summary:` line. It is reproduced byte-for-byte at each sub-phase/stage boundary as the integrity-hold check (`0 HARD_FAIL, 14 SOFT_WARN` at Phase-2 close). Recorded so the derivation is not re-discovered ad hoc.
+
+- **PD-3 (B-LFS1 offline-OID property) — no further amendment needed.** The lfs-architecture landing (`docs/_audits/phase-2/sub-phase-lfs-architecture/sub-phase-landing-2026-05-27T18-38-40Z.md:55`) judged the verify_evidence offline-OID property already adequately captured by § B.6 Mode-2 (IC-16); no new § L entry is required. Recorded here to close the PD-3 candidate.
+
 ---
 
 ## § P. Capture cadence routing
@@ -1064,9 +1083,18 @@ Cite the W1 raise + cadence decision in the sub-phase plan § 4.1 Task 0.4 and t
 
 ---
 
-## § M. The 65 cumulative shifts inventory (one-line summaries)
+## § M. Cumulative shifts inventory (one-line summaries; per-shift IDs frozen at 65, running tally 242)
 
-(FACT — cumulative shift count crossed 60 at sph-water Stage 2; final tally is **65 going into the next sub-phase**.) Future plans cite shifts by their canonical IDs rather than re-deriving them. The full inventory:
+> **Reconciliation (2026-05-27, sub-phase-phase-2-cleanup Stage 1.B / § 13 #23).** This section's
+> *per-shift one-line inventory* is **frozen at 65** (the tally going into the first Phase-2 sub-phase).
+> The **running cumulative-shift tally is 242** (Phase-2 Stage-9 landing,
+> `docs/_audits/phase-2/landing-2026-05-26T02-30-00Z.md:302-303`: 240 + S-P2AR1 + S-P2AR2). Shifts
+> **66–242 are NOT re-inventoried per-shift here** — each is recorded in its originating sub-phase
+> checkpoint/landing audit, which is authoritative. Re-deriving 176 one-line summaries is sub-phase-sized;
+> the forward option (a generated roll-up replacing this static list) is banked for a tooling/methodology
+> sub-phase. Cite shifts 1–65 by the canonical IDs below; cite 66–242 by their sub-phase audit.
+
+(FACT — cumulative shift count crossed 60 at sph-water Stage 2; the per-shift inventory below is **65 going into the first Phase-2 sub-phase**; the running tally is now **242**, see the reconciliation note above.) Future plans cite shifts by their canonical IDs rather than re-deriving them. The frozen 1–65 inventory:
 
 ### M.1 Phase 1 baseline (21 shifts) — Phase 1 landing audit § 14
 
