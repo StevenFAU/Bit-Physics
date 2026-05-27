@@ -28,7 +28,7 @@ jobs:
   r2-sweep:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           lfs: false          # keep pointers as stubs; the sweep fetches from R2 itself
           fetch-depth: 0       # full history …

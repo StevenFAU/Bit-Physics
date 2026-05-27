@@ -609,3 +609,40 @@ Raising the upper bound of `warp-lang>=1.13,<2.0` (e.g., to allow Warp 2.x) is a
 operator-approved commit + audit entry + regression-test re-verify** per
 `docs/conventions/sub-phase-conventions.md` § H.4. Same discipline as the `taichi`/`numba`
 entries above + spec § 9.2 vendored-upstream amendments.
+
+## spec-Phase-2 sub-phase-phase-2-cleanup Cluster C — GitHub Actions SHA pins + version-fetch methodology (added 2026-05-27)
+
+Per `docs/_audits/phase-2/sub-phase-phase-2-cleanup/stage-1-c-checkpoint-<UTC>.md` (§ 13 items
+#12 + #14). The CIM sub-phase (`sub-phase-ci-action-migration-and-banked-cleanup`) bumped the four
+third-party actions to current majors (version-string only); this Cluster pins the three
+**moving-major-tag** actions to immutable commit SHAs. `astral-sh/setup-uv@v8.1.0` is intentionally
+out of scope (already on a precise patch tag, not a moving major — the "other 3" framing of § 13 #12).
+
+### Active GitHub Actions pins (immutable commit SHA)
+
+| Action | Used by | Pin (commit SHA `# version`) | License | Verification command |
+|---|---|---|---|---|
+| **actions/checkout** | all 12 workflow jobs | `de0fac2e4500dabe0009e67214ff5f5447ce83dd` `# v6.0.2` | MIT | `gh api repos/actions/checkout/git/refs/tags/v6.0.2 --jq .object.sha` |
+| **actions/setup-node** | `ts-strict.yml` | `48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e` `# v6.4.0` | MIT | `gh api repos/actions/setup-node/git/refs/tags/v6.4.0 --jq .object.sha` |
+| **pnpm/action-setup** | `ts-strict.yml` | `0e279bb959325dab635dd2c09392533439d90093` `# v6.0.8` | MIT | `gh api repos/pnpm/action-setup/git/refs/tags/v6.0.8 --jq '.object.sha'` (annotated tag → deref via `git/tags/<sha>`) |
+
+### Version-fetch methodology — latest-released form vs usable-pinning form (§ 13 #14)
+
+**(FACT — HOTFIX-originated banked item.)** When web-/`gh`-fetching a GitHub Action version, two
+distinct forms must be kept separate:
+
+- **Latest-released form** — the human-readable release tag, e.g. `v6.0.2`, returned by
+  `gh release view -R <owner>/<repo>` or `gh api repos/<owner>/<repo>/releases/latest`. This is what
+  the inline `# vX.Y.Z` comment records; it is **mutable** (the `v6` *major* tag re-points as new
+  v6.x.y ship, and even a patch tag can in principle be force-moved).
+- **Usable-pinning form** — the immutable 40-char **commit SHA** the tag resolves to, returned by
+  `gh api repos/<owner>/<repo>/git/refs/tags/<tag>`. Supply-chain hardening pins to this; only a
+  commit SHA is tamper-evident. **Annotated tags** (`.object.type == "tag"`, e.g. `pnpm/action-setup`)
+  require a second deref through `gh api repos/<owner>/<repo>/git/tags/<tag-object-sha>` to reach the
+  underlying commit — a lightweight tag (`.object.type == "commit"`, e.g. `actions/checkout`,
+  `actions/setup-node`) is already the commit.
+
+**Pin format:** `uses: <owner>/<repo>@<commit-sha> # <release-tag>` — SHA carries the immutability,
+the comment carries human readability + the re-verify handle. Re-pinning to a new release is a
+deliberate edit (re-fetch both forms; confirm the SHA the new tag resolves to) — never trust a
+remembered SHA (Convention #8). Aligns with the workflow-lint posture of architecture § G.9.
