@@ -248,6 +248,13 @@ The resolver's regex `^v(\d+)\.(\d+)\.(\d+)-phase-(\d+)$` mechanically rejects m
 
 **Optional non-phase point-release tag** (e.g., `v0.1.1`, `v0.1.2`, `v0.1.3`, `v0.1.4`, no `-phase-N` suffix) is a banked operator decision per sub-phase. Lean recommendation across all four landed per-sim sub-phases: **NO intermediate tag**. Sub-phase commits + landing audit + per-sim commits provide the audit trail.
 
+**When an intermediate tag IS appropriate** (operator-ratified, sub-phase-phase-2-cleanup Stage 0 / D3). The default remains **NO**, but an intermediate non-phase tag is appropriate when the sub-phase:
+- **(a)** adds an **external dependency** (e.g. an R2 / LFS storage backend) where a point-release handle aids rollback and citation; **or**
+- **(b)** marks **durable architecture** worth a git-archaeology lookup handle; **or**
+- **(c)** the **operator judges historical significance** warrants one.
+
+**Default NO for hygiene sub-phases** (cleanup, doc-truth, citation drift) — their audit trail is sufficient without a tag. Two tag *forms* are permitted (neither carries `-phase-N`, so both satisfy spec § 7.12 and the phase-tag regex correctly rejects them): the bare point-release (`v0.1.1`) and the **sub-phase-named** handle (`v0.<minor>.<patch>-sub-phase-<name>`). **Precedent:** `v0.2.1-sub-phase-lfs-architecture` (condition (a) — the R2 backend; operator-pushed at the lfs-architecture sub-phase landing). In all cases the tag is **operator-pushed only**; the agent never runs `git tag` / `git push origin <tag>` (I7). The I7 regression guard enumerates operator-sanctioned tags in `tools/testkit/lfs_migration/test_i7_no_agent_tags.py` — an in-range tag absent from that allowlist is presumed agent-pushed and HARD_FAILs.
+
 ### D.3 Bit-identity replay invariant
 
 (FACT — established across closed-form / agent-based / RD-3D / numba-integration / particle-fluids-sph-water Stage 0 replays + the replay-tool-hotfix V1 and mutation-script-hotfix V4 validations.) Every cross-phase replay of `phase-1` → `v0.1.0-phase-1` with the canonical 8-gate set produces a replay-output sha256 of:
