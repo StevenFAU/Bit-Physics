@@ -18,8 +18,22 @@ _RANGE = "v0.2.0-phase-2..HEAD"
 
 
 def _backfill_commits() -> list[str]:
-    out = git("log", "--format=%H", "--grep=back-fill", "-i", _RANGE)
-    return [line.strip() for line in out.splitlines() if line.strip()]
+    """SHAs of actual back-fill commits in range, matched by SUBJECT.
+
+    Matching the whole message would falsely catch commits that merely *mention*
+    back-fill in prose (e.g. an audit body describing this very lock); a back-fill
+    commit is identified by its subject line carrying "back-fill" / "backfill".
+    """
+    out = git("log", "--format=%H%x1f%s", _RANGE)
+    commits: list[str] = []
+    for line in out.splitlines():
+        if "\x1f" not in line:
+            continue
+        sha, subject = line.split("\x1f", 1)
+        low = subject.lower()
+        if "back-fill" in low or "backfill" in low:
+            commits.append(sha.strip())
+    return commits
 
 
 def test_backfill_commits_are_separate_and_doc_only() -> None:
