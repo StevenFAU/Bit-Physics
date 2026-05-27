@@ -47,7 +47,7 @@ jobs:
           # Throwaway repo so nothing here can perturb the real checkout's LFS config.
           work="$(mktemp -d)"
           cd "$work"
-          git init -q
+          git init -q -b main          # force local branch = main so `git lfs push origin main` resolves
           git lfs install --local
 
           # Per-job lfs-s3 configuration against R2 (installs agent + git config +
@@ -69,10 +69,9 @@ jobs:
           bare="$(mktemp -d)/remote.git"
           git init -q --bare "$bare"
           git remote add origin "$bare"
-          git push -q origin HEAD:refs/heads/main
-
           echo "--- upload LFS object to R2 via lfs-s3 ---"
-          git lfs push origin main
+          git push -q origin main          # pre-push hook uploads the LFS object to R2 via lfs-s3
+          git lfs push origin main         # explicit re-assert (idempotent)
 
           echo "--- drop every local copy of the object ---"
           rm -f "$fname"
