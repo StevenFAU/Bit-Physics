@@ -7,5 +7,5 @@ See [`docs/sim-specs/agent-based/boids-3d/`](../../docs/sim-specs/agent-based/bo
 ## Run the failing test suite
 
 ```bash
-(cd packages/boids-3d && PYTHONPATH=. python3 -m pytest tests/ -v)
+uv run pytest packages/boids-3d/tests/ -v
 ```

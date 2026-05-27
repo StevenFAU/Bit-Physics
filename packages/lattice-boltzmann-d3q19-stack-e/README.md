@@ -56,5 +56,5 @@ root-workspace registration (22 → 23); Stage 1c lands gate-14 (the cross-stack
 ## Run
 
 ```
-python -m pytest packages/lattice-boltzmann-d3q19-stack-e/tests/ -v
+uv run pytest packages/lattice-boltzmann-d3q19-stack-e/tests/ -v
 ```

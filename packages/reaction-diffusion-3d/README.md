@@ -5,7 +5,7 @@ Phase 1 Stage 2 — TDD bootstrap. Implementation deferred to Phase 2+.
 See [`docs/sim-specs/continuous-ca/reaction-diffusion-3d/`](../../docs/sim-specs/continuous-ca/reaction-diffusion-3d/).
 
 ```bash
-(cd packages/reaction-diffusion-3d && PYTHONPATH=. python3 -m pytest tests/ -v)
+uv run pytest packages/reaction-diffusion-3d/tests/ -v
 ```
 
 Per charter shift #15 (partial checkpoint at 71b952f), Stack C sims

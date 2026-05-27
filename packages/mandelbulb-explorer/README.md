@@ -9,7 +9,7 @@ for the full reference spec.
 ## Run the failing test suite (Phase 1 contract)
 
 ```bash
-PYTHONPATH=packages/mandelbulb-explorer python -m pytest packages/mandelbulb-explorer/tests/ -v
+uv run pytest packages/mandelbulb-explorer/tests/ -v
 ```
 
 ## What is committed at Phase 1

@@ -41,5 +41,5 @@ a clean `ModuleNotFoundError`. Stage 1b lands the Warp implementation (GREEN, ga
 ## Run
 
 ```
-python -m pytest packages/eulerian-smoke-stack-e/tests/ -v
+uv run pytest packages/eulerian-smoke-stack-e/tests/ -v
 ```

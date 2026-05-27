@@ -9,7 +9,7 @@ for the full reference spec.
 ## Run the failing test suite (Phase 1 contract)
 
 ```bash
-PYTHONPATH=packages/strange-attractors python -m pytest packages/strange-attractors/tests/ -v
+uv run pytest packages/strange-attractors/tests/ -v
 ```
 
 Tests are RED by construction: they import from `strange_attractors.reference`
