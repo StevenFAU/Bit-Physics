@@ -1,0 +1,345 @@
+FFFFFFFFFF.FFFFFF                                                        [100%]
+=================================== FAILURES ===================================
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_psnr_identity_is_sentinel(
+        image=array([[[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]]], dtype=float32),  # or any other generated value
+    )
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_ssim_identity_is_one(
+        image=array([[[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]]], dtype=float32),  # or any other generated value
+    )
+render_similarity/metrics.py:66: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_psnr_symmetry(
+        a=array([[[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]]], dtype=float32),
+        b=array([[[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]],
+
+               [[0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.],
+                [0., 0., 0.]]], dtype=float32),
+    )
+    Explanation:
+        These lines were always and only run by failing examples:
+            render_similarity/tests/test_metrics_pbt.py:71
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:66: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:87: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:66: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:87: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:66: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:87: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:53: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:66: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+render_similarity/metrics.py:87: NotImplementedError: render-similarity Stage 1a scaffold: implementation lands at Stage 1b
+=========================== short test summary info ============================
+FAILED render_similarity/tests/test_metrics_pbt.py::test_psnr_identity_is_sentinel
+FAILED render_similarity/tests/test_metrics_pbt.py::test_ssim_identity_is_one
+FAILED render_similarity/tests/test_metrics_pbt.py::test_psnr_symmetry - NotI...
+FAILED render_similarity/tests/test_metrics_smoke.py::test_psnr_identity_returns_sentinel_uint8
+FAILED render_similarity/tests/test_metrics_smoke.py::test_psnr_identity_returns_sentinel_float32
+FAILED render_similarity/tests/test_metrics_smoke.py::test_ssim_identity_returns_one
+FAILED render_similarity/tests/test_metrics_smoke.py::test_lpips_identity_near_zero
+FAILED render_similarity/tests/test_metrics_smoke.py::test_psnr_perturbed_pair_finite_and_positive
+FAILED render_similarity/tests/test_metrics_smoke.py::test_ssim_perturbed_pair_in_unit_interval
+FAILED render_similarity/tests/test_metrics_smoke.py::test_lpips_perturbed_pair_positive
+FAILED render_similarity/tests/test_metrics_smoke.py::test_shape_mismatch_raises_value_error[psnr]
+FAILED render_similarity/tests/test_metrics_smoke.py::test_shape_mismatch_raises_value_error[ssim]
+FAILED render_similarity/tests/test_metrics_smoke.py::test_shape_mismatch_raises_value_error[lpips]
+FAILED render_similarity/tests/test_metrics_smoke.py::test_unsupported_dtype_raises_value_error[psnr]
+FAILED render_similarity/tests/test_metrics_smoke.py::test_unsupported_dtype_raises_value_error[ssim]
+FAILED render_similarity/tests/test_metrics_smoke.py::test_unsupported_dtype_raises_value_error[lpips]
+16 failed, 1 passed
