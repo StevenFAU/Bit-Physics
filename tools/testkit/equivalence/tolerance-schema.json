@@ -64,6 +64,22 @@
           }
         }
       }
+    },
+    "golden_tolerance": {
+      "type": "object",
+      "description": "Phase-3 additive extension (lenia-tolerance-schema-fix). Golden-table tolerances per (category, sim) for SINGLE-stack sims that carry no cross-stack equivalence pair (i.e. cannot use `overrides.<sim>` which is cross-stack relative/absolute resolution wiring). Phase-3 plan §3.2.4 enumerates the per-sim key shapes (e.g. lenia: `golden_kernel_abs/rel`, `golden_trajectory_abs`; pinn-poisson: `analytical_l2`, `fd_l2`; articulated-pedagogical: `pendulum_period_rel`, `trajectory_abs`, `energy_drift_rel_per_second`). Per-sim keys are bespoke to each anchor family, so per-sim entries permit additional numeric/boolean/string properties; the schema enforces the (category, sim) two-level nesting only. Mirrors the `render_similarity` additive-extension shape established at sub-phase-phase-3-render-similarity Stage 1a.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Per-category golden-tolerance table (key = sim category, e.g. `continuous-ca`, `rigid-body`, `soft-body`, `learned-dynamics`).",
+        "additionalProperties": {
+          "type": "object",
+          "description": "Per-sim golden-tolerance entry (key = sim short-name). Bespoke per-anchor-family keys per phase-3-plan.md §3.2.4; values are numeric scalars (abs/rel tolerances), booleans (e.g. `golden_checkpoint_match`), or strings (e.g. `training_loss_distributional_bound = \"EFECT\"`).",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": ["number", "boolean", "string"]
+          }
+        }
+      }
     }
   }
 }

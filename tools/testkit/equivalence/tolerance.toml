@@ -110,7 +110,15 @@ category = "smoke"
 # -----------------------------------------------------------------------------
 # Phase-3 lenia (task-3, sub-phase-phase-3-lenia) — golden-table tolerances.
 # -----------------------------------------------------------------------------
-# Single-stack sim (Stack D, Taichi); NO cross-stack equivalence row.
+# Single-stack sim (Stack D, Taichi); NO cross-stack equivalence row (so the
+# `overrides.<sim>` shape — which carries cross-stack relative/absolute
+# resolution wiring — does not fit semantically and has no per-anchor key
+# slots for `golden_kernel_*` / `golden_trajectory_*`).
+#
+# Schema landed under top-level `[golden_tolerance.<category>.<sim>]`
+# (lenia-tolerance-schema-fix; mirrors the `render_similarity` additive-
+# extension shape from sub-phase-phase-3-render-similarity Stage 1a).
+#
 # Per §3.2.4 pre-baked schema (docs/phases/phase-3-plan.md:426-433):
 #   golden_kernel_abs     = 1e-6  (Quad4 kernel anchor absolute tolerance)
 #   golden_kernel_rel     = 1e-5  (Quad4 kernel anchor relative tolerance)
@@ -120,7 +128,7 @@ category = "smoke"
 # un-capped-by-design (Stage-0 audit FRICTION #1; STOP-CAT-X NOT fired).
 # Operator routing options at the landing review.
 
-[continuous-ca.lenia]
+[golden_tolerance.continuous-ca.lenia]
 golden_kernel_abs = 1e-6
 golden_kernel_rel = 1e-5
 golden_trajectory_abs = 1e-4
