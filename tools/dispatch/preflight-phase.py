@@ -56,6 +56,19 @@ from pathlib import Path
 # docs/_audits/phase-0/hotfix-preflight-phase-1-2026-05-19.md.
 
 
+# NOTE — Tooling-hardening (2026-05-28, infra task per Convention I; audit
+# docs/_audits/phase-3/preflight-hardening-*.md): the integrity precondition
+# is invoked via `uv run python -m integrity --all`, NOT `sys.executable -m
+# integrity`. The bare-interpreter form resolved to whatever editable
+# `integrity` install happened to be first on the running interpreter's path —
+# on at least one operator machine that was a STALE pre-rename install
+# (GPU-Sims/GPU-Sims) predating the `--all` flag, so the check errored with
+# `unrecognized arguments: --all` regardless of THIS repo's green state. The
+# `uv run` form mirrors the canonical CI invocation (.github/workflows/
+# integrity.yml) and resolves to this workspace's pinned integrity build.
+INTEGRITY_CMD = ["uv", "run", "python", "-m", "integrity", "--all"]
+
+
 @dataclass
 class CheckResult:
     name: str
@@ -220,7 +233,7 @@ def phase_1_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            [sys.executable, "-m", "integrity", "--all"],
+            INTEGRITY_CMD,
             name="integrity-all-green",
         ),
     )
@@ -287,7 +300,7 @@ def phase_2_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            [sys.executable, "-m", "integrity", "--all"],
+            INTEGRITY_CMD,
             name="integrity-all-green",
         ),
     )
@@ -303,18 +316,21 @@ def phase_3_preflight() -> PreflightReport:
         Path("docs/common/warp.md"),
     ]:
         _add_check(r, check_path_exists(p))
-    # Phase 2 port directories
+    # Phase 2 port directories. NOTE — these were authored against a
+    # category-folder layout (continuous-ca/, particle-fluid/, hybrid-pg/)
+    # the project never adopted; Phase 1/2 settled on packages/<sim>-stack-X.
+    # Repointed to the real live paths (tooling-hardening 2026-05-28, F2).
     for port_dir in [
-        "continuous-ca/reaction-diffusion-2d/ref-stack-c",
-        "continuous-ca/reaction-diffusion-2d/ref-stack-d",
-        "particle-fluid/sph-water/ref-stack-d",
-        "hybrid-pg/mpm-multimaterial/ref-stack-e",
+        "packages/reaction-diffusion-2d-stack-c",
+        "packages/reaction-diffusion-2d-stack-d",
+        "packages/sph-water-stack-d",
+        "packages/mpm-multimaterial-stack-e",
     ]:
         _add_check(r, check_path_exists(Path(port_dir)))
     _add_check(
         r,
         check_command(
-            [sys.executable, "-m", "integrity", "--all"],
+            INTEGRITY_CMD,
             name="integrity-all-green",
         ),
     )
@@ -332,11 +348,21 @@ def phase_4_preflight() -> PreflightReport:
     for p in [
         Path("common/common-3dgs"),
         Path("tools/testkit/render_similarity"),
-        # Phase 3 sims
-        Path("continuous-ca/lenia"),
-        Path("continuous-ca/neural-ca"),
-        Path("rigid-body/articulated-pedagogical"),
-        Path("soft-body/cloth-xpbd"),
+        # Phase 3 sims. NOTE — repointed from the never-adopted category-folder
+        # layout (continuous-ca/, rigid-body/, soft-body/) to packages/<sim>,
+        # the live convention (tooling-hardening 2026-05-28, forward-looking).
+        # Only the layout ROOT was corrected: sims not yet built (neural-ca,
+        # articulated-pedagogical, cloth-xpbd) still FAIL — correctly — against
+        # their real target path, preserving the precondition's intent.
+        Path("packages/lenia"),
+        Path("packages/neural-ca"),
+        Path("packages/articulated-pedagogical"),
+        Path("packages/cloth-xpbd"),
+        # SURFACED (tooling-hardening 2026-05-28): `learned-dynamics` is a bare
+        # category segment, not a category/sim pair, so there is no mechanical
+        # layout-root swap. The concrete Phase-3 learned-dynamics sim folder
+        # name under packages/ is not yet built and not knowable from here;
+        # left unchanged rather than guessed. Resolve when that sim lands.
         Path("learned-dynamics"),
         # Pre-vendored frontier papers
         Path("references/papers"),
@@ -364,7 +390,7 @@ def phase_4_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            [sys.executable, "-m", "integrity", "--all"],
+            INTEGRITY_CMD,
             name="integrity-all-green",
         ),
     )
@@ -387,7 +413,7 @@ def phase_5_preflight() -> PreflightReport:
     _add_check(
         r,
         check_command(
-            [sys.executable, "-m", "integrity", "--all"],
+            INTEGRITY_CMD,
             name="integrity-all-green",
         ),
     )
