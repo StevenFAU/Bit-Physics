@@ -3,7 +3,7 @@ date: 2026-05-28T13-13-19Z
 author: phase-3 render-similarity stage-1b (Claude Code)
 subject: Phase 3 render-similarity Stage 1b — implementation + 3 anchors + adversarial + 13-gate + D-DET
 verdict: CONFIRMED
-head_sha: bedef6a (audit-writing tip; Convention #12 back-fill follows)
+head_sha: 1b78a150f4943e3d969c87be5b6117184ada6c24
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
