@@ -1281,6 +1281,91 @@ Direction of bias correlates with **sim-shape**:
 
 ---
 
+## § Q. R2-LFS Stage-0 bootstrap (every LFS-touching sub-phase inherits)
+
+### Q.1 Why the convention exists
+
+`sub-phase-lfs-architecture` (`docs/phases/sub-phase-lfs-architecture.md`,
+landed `v0.2.1-sub-phase-lfs-architecture`) established that `lfs-s3` /
+Cloudflare R2 is opt-in via the **trusted `.git/config`** — committed
+`.lfsconfig` cannot carry `lfs.standalonetransferagent` (git-lfs security;
+see the charter `AMENDMENT — Stage 1c / M5` block + `tools/lfs/README.md`).
+That leaves two opt-in surfaces — CI (per-job, secrets) and the developer /
+agent machine (per-clone) — each silent if the opt-in is missing.
+
+Three consecutive Phase-3 sims (`common-3dgs` Stage 1c, `lenia` Stage 1c,
+the `r2-credentials-durability-fix` infra pass closing the gap) confirmed
+the failure mode: the agent shell loses creds between sessions, the per-job
+opt-in was never wired into `python-strict.yml` / `cpp-strict.yml`, and the
+sim Stage-1c `git lfs push` of new `.h5` fixtures EOFs against the
+standalone-agent-aware remote. The convention prevents recurrence.
+
+### Q.2 The bootstrap (durable, off-tree)
+
+Durable creds file at `~/.config/bit-physics/r2-credentials.env`, mode 600,
+outside the repo tree. Six vars: `S3_BUCKET`, `R2_ACCOUNT_ID`,
+`AWS_S3_ENDPOINT`, `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`.
+Wired by `tools/lfs/setup-lfs-s3-local.sh` which sources the env file then
+chains into `tools/lfs/setup-lfs-s3.sh` (the per-job CI script — UNCHANGED;
+the local wrapper preserves its narrow env-only contract).
+
+### Q.3 Inheritance rule — every LFS-touching sub-phase Stage 0 does this first
+
+> **Stage 0 task — LFS-touching sub-phases:** if the sub-phase will commit
+> a new `.h5` fixture under `tests/fixtures/legacy-captures/` (or any new
+> object under `captures/` outside the lfs-architecture pre-committed set),
+> the agent runs `source tools/lfs/setup-lfs-s3-local.sh` as the first
+> action after the anchor probe. A non-zero return = STOP-LFS-PUSH surfaced
+> to the operator (rotate / regenerate R2 token before any commit work).
+
+This makes the local opt-in part of the anchor surface — not a Stage-1c
+afterthought when the push fails. The bootstrap is idempotent and prints no
+secret values, so it is also safe to re-run inside Stage 1c just before the
+fixture push to confirm wiring is still hot.
+
+### Q.4 CI inheritance rule — LFS-pulling jobs source the per-job opt-in
+
+> **Workflow-author rule — LFS-pulling CI jobs:** any GitHub Actions job
+> whose steps invoke `git lfs pull` / `git lfs fetch` against
+> `tests/fixtures/legacy-captures/**` or `captures/**` must guard the pull
+> with the opt-in source:
+>
+> ```yaml
+> env:
+>   R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+>   AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+>   AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+>   S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+> run: |
+>   if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+>      [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+>     source tools/lfs/setup-lfs-s3.sh
+>   fi
+>   git lfs pull --include="<narrow-glob>"
+> ```
+>
+> Same-repo runs route through R2 (off the throttled GitHub-LFS bandwidth);
+> fork PRs (no secrets) fall through to GitHub LFS (D4 steady-state
+> fallback per `sub-phase-lfs-architecture.md`). Landed at:
+> `.github/workflows/python-strict.yml`,
+> `.github/workflows/cpp-strict.yml`.
+
+### Q.5 Back-fill obligation — never let GitHub LFS hold a unique copy
+
+Every new `.h5` (or any new LFS-pointered object) pushed during a sub-phase
+must be present in R2 by the sub-phase landing. The Stage-1c push routes
+through the lfs-s3 standalone transfer agent (after the Q.2 bootstrap), so
+the upload is one-shot. If the operator's R2 creds were unavailable during
+the sim sub-phase and only GitHub LFS received the new object, the next
+LFS-touching sub-phase Stage 0 surfaces the gap (via `git lfs ls-files
+HEAD` cross-referenced against an R2 round-trip probe) and routes a
+focused back-fill commit before the new sub-phase advances past Stage 0.
+The R2 sweep (`r2-sweep-proof.yml` / the equivalent local sweep wrapped
+around `git -c lfs.storage=<tmp> lfs fetch`) is the M4 invariant — I5 only
+holds when every pointer at every inspected ref resolves *from R2*.
+
+---
+
 ## § O. Coherence note
 
 This document is the consolidation of cross-cutting patterns from the following audit chain (chronological):

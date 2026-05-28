@@ -72,6 +72,48 @@ the endpoint/region. A committed `.lfsconfig` **cannot** do this — git-lfs ign
 those keys from in-repo config — so this one-time, per-clone step is the supported
 path.
 
+### Durable local credentials (one-command bootstrap)
+
+The bare `setup-lfs-s3.sh` contract is env-only — credentials must already be
+exported. Three consecutive Phase-3 Stage-1c sessions hit a recurring failure:
+the operator pastes the R2 env into one shell, the shell exits, and the next
+`git lfs push` from this clone EOFs because the standalone transfer agent isn't
+wired and the env is gone. Closes by keeping the creds durable in a file
+**outside** the repo and bootstrapping with a single sourceable wrapper.
+
+```bash
+# 1. one-time setup of the durable creds file (mode 600, OUTSIDE the repo)
+mkdir -p ~/.config/bit-physics && chmod 700 ~/.config/bit-physics
+umask 177
+cat > ~/.config/bit-physics/r2-credentials.env <<EOF
+S3_BUCKET=<your-r2-bucket-name>
+R2_ACCOUNT_ID=<your-cloudflare-account-id>
+AWS_S3_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+AWS_REGION=auto
+AWS_ACCESS_KEY_ID=<your-r2-token-access-key-id>
+AWS_SECRET_ACCESS_KEY=<your-r2-token-secret-access-key>
+EOF
+chmod 600 ~/.config/bit-physics/r2-credentials.env
+
+# 2. every new shell that wants R2 routing
+source tools/lfs/setup-lfs-s3-local.sh
+```
+
+`setup-lfs-s3-local.sh` (a) refuses to run on a world/group-readable creds file,
+(b) loads the six env vars without printing values, then (c) chains into
+`setup-lfs-s3.sh` so the per-job CI path stays exactly as it was.
+
+> **Stage-0 obligation — LFS-touching sub-phases.** Per
+> `docs/conventions/sub-phase-conventions.md` § Q.3, every sub-phase that will
+> commit a new `.h5` runs `source tools/lfs/setup-lfs-s3-local.sh` as its
+> first action after the anchor probe. A non-zero return = `STOP-LFS-PUSH`
+> surfaced to the operator (rotate / regenerate R2 token before commit work
+> begins), not deferred to a Stage-1c-time push failure.
+
+The creds file is `chmod 600` and lives outside the repo tree; nothing under
+`/home/<you>/Projects/Bit-Physics/` ever holds the values. The bootstrap script
+prints **no** secret values on success or failure.
+
 ## `r2-bulk-upload.sh` — M3 bulk upload (charter § 6 M3)
 
 Uploads the **in-use** LFS objects to R2 via `lfs-s3`, then verifies every object
