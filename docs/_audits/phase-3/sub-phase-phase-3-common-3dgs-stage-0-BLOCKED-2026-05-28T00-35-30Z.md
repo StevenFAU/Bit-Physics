@@ -3,7 +3,7 @@ date: 2026-05-28T00-35-30Z
 author: phase-3 common-3dgs stage-0 (Claude Code)
 subject: Phase 3 common-3dgs Stage 0 — pre-flight + SHA pinning — BLOCKED at FIRST ACTION (STOP-B)
 verdict: BLOCKED
-head_sha: <PLACEHOLDER — back-filled per Convention #12 in the SHA-back-fill commit>
+head_sha: 6dd5494f2b7a1a5db7150f446d04afe8288131eb
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: NOT-RUN (session halted at FIRST ACTION before anchor-probe sweep)
 invariants_at_head: NOT-VERIFIED (session halted at FIRST ACTION before I1–I7 sweep)
