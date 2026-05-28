@@ -29,6 +29,16 @@ The portfolio is simultaneously:
   strategies.
 - **External dependency pins:** [`docs/dependencies.md`](docs/dependencies.md).
 
+## Common modules
+
+Shared per-stack infrastructure under `common/`:
+
+- `common-py` (Stack D / Taichi) — [`docs/common/py.md`](docs/common/py.md)
+- `common-warp` (Stack E / NVIDIA Warp) — [`docs/common/warp.md`](docs/common/warp.md)
+- `common-cpp` (Stack C / Vulkan + C++) — [`docs/common/cpp.md`](docs/common/cpp.md)
+- `common-ts` (Stack B / WebGPU + TypeScript) — [`docs/common/ts.md`](docs/common/ts.md)
+- `common-3dgs` (Stack E / 3D Gaussian Splatting) — [`docs/common/3dgs.md`](docs/common/3dgs.md)
+
 ## License
 
 [MIT](LICENSE) — see [`docs/architecture.md`](docs/architecture.md) § 12.7

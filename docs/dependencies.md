@@ -646,3 +646,35 @@ distinct forms must be kept separate:
 the comment carries human readability + the re-verify handle. Re-pinning to a new release is a
 deliberate edit (re-fetch both forms; confirm the SHA the new tag resolves to) — never trust a
 remembered SHA (Convention #8). Aligns with the workflow-lint posture of architecture § G.9.
+
+## Phase-3 sub-phase-phase-3-common-3dgs — 3D-Gaussian-Splatting common module (added 2026-05-28)
+
+Per `docs/_audits/phase-3/progress.md`. First Phase-3 sub-phase (task-1, spec
+§ 11.4 item 3.8). Introduces `common/common-3dgs/` — the second Stack-E (Python /
+NVIDIA Warp) common module, sister to `common-warp` — and vendors the first
+non-permissive upstream. Produces the `GaussianSplatModel` / `Camera` / `render`
+API consumed by task-8 (3dgs-mpm) and Phase-4 WU-C.
+
+### Runtime — new workspace member
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| **`bit-physics-common-3dgs`** | `common/common-3dgs/` workspace member (23rd); Stack-E 3DGS sims | (workspace; tracks repo HEAD) | (per repo LICENSE) | `uv tree --package bit-physics-common-3dgs` |
+| **`warp-lang`** | `common/common-3dgs/pyproject.toml` `[project].dependencies` | `>=1.13,<2.0` (shared with common-warp) | Apache-2.0 | `pip index versions warp-lang` |
+| **`matplotlib`** | `common/common-3dgs/pyproject.toml` `[project].dependencies` (the `save_png` RGB-image writer) | `>=3.8` | PSF/Matplotlib (BSD-style) | `pip index versions matplotlib` |
+
+### Vendored upstream — NON-COMMERCIAL
+
+`references/3DGS-reference/` vendors graphdeco-inria/gaussian-splatting at SHA
+`54c035f7834b564019656c3e3fcc3646292f727d` (§2.18). License: **NOASSERTION /
+Gaussian-Splatting research license — NON-COMMERCIAL** (the first non-permissive
+upstream in the repo). Cited research material for independent derivation (spec
+§ 2.4 / § 2.8), read-only (architecture.md Appendix D § D.8); NOT a redistributed
+dependency. The non-commercial clause binds task-8 + Phase-4 WU-C. Manifest:
+`references/3DGS-reference/MANIFEST.toml`.
+
+### Project-wide convention
+
+The use convention is documented at `docs/common/3dgs.md`. Determinism declared in
+`tools/testkit/determinism/registry.toml` (`[neural-rendered.common-3dgs]` =
+bit-exact / same-stack-same-hw; MEASURED).

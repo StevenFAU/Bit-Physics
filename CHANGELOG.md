@@ -1908,6 +1908,36 @@ overall and the FIRST on a non-Warp backend. Verification: all 14 gates GREEN;
 `c19492ad…d22cb52` (0 HF / 14 SW) HELD; bit-identity replay `9399fc33…` HELD;
 portfolio sweep ZERO regressions. No `-phase-N` tag pushed (D12).
 
+### sub-phase-phase-3-common-3dgs
+
+First Phase-3 sub-phase (task-1, scope item 3.8). Introduces
+`common/common-3dgs/` — the Stack-E (Python / NVIDIA Warp) 3D-Gaussian-Splatting
+common module — under the matured per-sub-phase cadence. Produces the
+`GaussianSplatModel` / `Camera` / `render` API that task-8 (3dgs-mpm) and Phase-4
+WU-C consume unchanged.
+
+#### Added
+
+- `common/common-3dgs/` workspace member (23rd; second Stack-E common module):
+  `GaussianSplatModel` (Warp-array fields; Inria `.ply` load/save), `Camera`
+  (view/projection + `look_at`), the deterministic forward EWA-splatting
+  `render`, and `save_png` (the D-D RGB-image writer). Smoke sim at
+  `examples/smoke_3dgs/` (`just run-3dgs-smoke`).
+- `references/3DGS-reference/` — vendored Inria gaussian-splatting at the §2.18
+  SHA `54c035f7…` (**NON-COMMERCIAL** research license; read-only; the first
+  non-permissive upstream; the clause binds task-8 + Phase-4 WU-C).
+- `docs/common/3dgs.md`; `tools/testkit/determinism/registry.toml` (NEW Phase-3
+  surface) with `[neural-rendered.common-3dgs]` = bit-exact / same-stack-same-hw
+  (D-C; MEASURED `max_abs_diff = 0.0`); `test-common-3dgs` job in
+  `.github/workflows/python-strict.yml`; `just run-3dgs-smoke` / `just test-3dgs`;
+  schema-corpus fixture `tests/fixtures/legacy-captures/phase-3-common-3dgs.h5`.
+
+#### Tag reservation
+
+Intermediate tag `v0.2.2-sub-phase-phase-3-common-3dgs` is the **lean-YES** Stage-2
+landing tag (D-E: external dependency + durable architecture; operator-pushed, I7).
+Not pushed during Stage 1.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation
