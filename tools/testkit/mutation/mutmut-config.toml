@@ -226,3 +226,19 @@ runner    = "uv run --no-sync pytest packages/lattice-boltzmann-d3q19/tests/ -x 
 path      = "packages/mpm-multimaterial/mpm_multimaterial"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/mpm-multimaterial/tests/ -x -q --tb=no"
+
+# Phase-3 sub-phase-phase-3-common-3dgs (task-1) — NEW mutation-testing target
+# (spec § 2.13; phase-3-plan §6.0 item 12, common-3dgs floor ≥ 0.80). FIRST
+# Phase-3 + FIRST common-module + FIRST Warp-kernel mutation target. The runner
+# runs the common-3dgs suite from repo root; tests/conftest.py injects src/ +
+# examples/ onto sys.path (so common_3dgs + smoke_3dgs resolve without an install).
+#
+# Warp-kernel-mutation note: src/common_3dgs/_kernels.py holds the @wp.kernel
+# composite_splats. mutmut mutates the .py source; Warp recompiles the kernel on
+# the next launch (content-addressed kernel cache keys off source), so mutations
+# propagate through the render() path and the smoke-contract/PBT tests act as the
+# kill-signal — analogous to the numba-cache propagation banked at sph-water N3.
+[targets.common_3dgs]
+path      = "common/common-3dgs/src/common_3dgs"
+threshold = 0.80
+runner    = "uv run --no-sync pytest common/common-3dgs/tests/ -x -q --tb=no"
