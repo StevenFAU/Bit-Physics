@@ -29,24 +29,31 @@ from render_similarity import lpips, ms_ssim, psnr, ssim
 # ----------------------------------------------------------------------------
 
 
+# LPIPS AlexNet has 5 conv/pool layers — input H,W must be at least 64 to
+# survive the max_pool2d cascade (8x8 collapses to 0x0). 64x64 is the
+# Zhang 2018 BAPPS test-pair canonical size, fast in CPU eval (~ms per call)
+# and keeps PSNR/SSIM exactness exact.
+_SMOKE_HW: int = 64
+
+
 def _identity_pair_uint8() -> tuple[np.ndarray, np.ndarray]:
-    """A deterministic (H,W,C)=(8,8,3) uint8 image and its identical copy."""
+    """A deterministic (H,W,C)=(64,64,3) uint8 image and its identical copy."""
     rng = np.random.default_rng(0)
-    a = rng.integers(0, 256, size=(8, 8, 3), dtype=np.uint8)
+    a = rng.integers(0, 256, size=(_SMOKE_HW, _SMOKE_HW, 3), dtype=np.uint8)
     return a, a.copy()
 
 
 def _identity_pair_float32() -> tuple[np.ndarray, np.ndarray]:
-    """A deterministic (H,W,C)=(8,8,3) float32 image and its identical copy."""
+    """A deterministic (H,W,C)=(64,64,3) float32 image and its identical copy."""
     rng = np.random.default_rng(0)
-    a = rng.random(size=(8, 8, 3), dtype=np.float32)
+    a = rng.random(size=(_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float32)
     return a, a.copy()
 
 
 def _perturbed_pair_float32() -> tuple[np.ndarray, np.ndarray]:
     """A known-perturbation pair: same base, then b = a + 0.1 (clipped)."""
     rng = np.random.default_rng(1)
-    a = rng.random(size=(8, 8, 3), dtype=np.float32)
+    a = rng.random(size=(_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float32)
     b = np.clip(a + np.float32(0.1), 0.0, 1.0).astype(np.float32)
     return a, b
 
@@ -133,15 +140,15 @@ def test_ms_ssim_raises_not_implemented() -> None:
 
 @pytest.mark.parametrize("metric", [psnr, ssim, lpips])
 def test_shape_mismatch_raises_value_error(metric: object) -> None:
-    a = np.zeros((8, 8, 3), dtype=np.float32)
-    b = np.zeros((16, 16, 3), dtype=np.float32)
+    a = np.zeros((_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float32)
+    b = np.zeros((_SMOKE_HW * 2, _SMOKE_HW * 2, 3), dtype=np.float32)
     with pytest.raises(ValueError, match=r"shape|size|dimensions"):
         metric(a, b)  # type: ignore[operator]
 
 
 @pytest.mark.parametrize("metric", [psnr, ssim, lpips])
 def test_unsupported_dtype_raises_value_error(metric: object) -> None:
-    a = np.zeros((8, 8, 3), dtype=np.float64)  # float64 not supported
-    b = np.zeros((8, 8, 3), dtype=np.float64)
+    a = np.zeros((_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float64)  # float64 not supported
+    b = np.zeros((_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float64)
     with pytest.raises(ValueError, match=r"dtype|float64|uint8|float32"):
         metric(a, b)  # type: ignore[operator]

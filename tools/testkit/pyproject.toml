@@ -28,6 +28,24 @@ dependencies = [
   "numba>=0.61,<0.66",
   "numpy>=2.0",
   "sympy>=1.13",
+  # Phase-3 sub-phase-phase-3-render-similarity (task-2) Stage 1b
+  # additions per charter § 1.1 item 4 / probe §3.2 (WEB-fetched
+  # 2026-05-28; sub-phase-phase-3-render-similarity-stage-0-2026-05-
+  # 28T12-44-20Z.md §3 verifies un-yanked + 0 advisories).
+  #
+  # lpips 0.1.4 is the only release on the 0.1.x line (2021-08-25);
+  # declares torch>=0.4.0 + torchvision>=0.2.1 + numpy>=1.14.3 +
+  # scipy>=1.0.1 + tqdm>=4.28.1 transitives. Used at CPU-only +
+  # model.eval() + torch.no_grad() + pinned weights per D-DET.
+  "lpips==0.1.4",
+  # scikit-image: SSIM via skimage.metrics.structural_similarity
+  # (Wang 2004 Eq. 13, D-ANCHOR Anchor 2). >=0.26 carries the
+  # current data_range API.
+  "scikit-image>=0.26",
+  # torch declared explicitly (transitive of lpips; pin within the
+  # lpips compat window). >=2.0 keeps wheels available for Py3.12
+  # and stays well inside lpips's broad >=0.4.0 floor.
+  "torch>=2.0",
 ]
 
 [project.optional-dependencies]
