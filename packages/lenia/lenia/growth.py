@@ -1,16 +1,21 @@
-"""Lenia growth function (bell curve around ``mu`` with width ``sigma``).
+"""Quad4 polynomial growth function (Chakazul gn=1).
 
-Stage 1a — shell. The body raises :class:`NotImplementedError`; Stage
-1b lands the implementation cited against the vendored Chakazul source.
+Stage 1b implementation. Closed form grep-cited from the vendored
+Chakazul source at SHA ``adfc542939266de7f4bb7ebb552e8499701ee107``
+(Convention #8, NOT from memory):
 
-Mathematical form (Chan 2019, Complex Systems 28(3) § 2.2; subject to
-Stage-1b grep-cite against Chakazul source):
+- ``references/Chakazul-Lenia/Python/LeniaF.py:500`` —
+  ``1: lambda n, m, s: np.maximum(0, 1 - (n-m)**2 / (9 * s**2) )**4 * 2 - 1``
+- ``references/Chakazul-Lenia/Python/LeniaND.py:279`` — sibling
+  ``0:`` form (same closed expression).
 
-    G(u) = 2 · exp(-((u - mu) / sigma)^2 / 2) - 1
+The Orbium unicaudatus preset at
+``references/Chakazul-Lenia/Python/animals.json:5`` carries
+``"gn": 1`` — i.e., Orbium uses the **Quad4 polynomial growth** form
+(NOT the bell-curve exp form some Lenia variants use). Anchors:
 
-The growth function maps the convolved field ``u`` (output of Quad4
-convolution with the previous state) into the increment for the
-Euler step.
+    G(mu)              = 2·(1 - 0)^4 - 1  = 1   (PEAK at u = mu)
+    G(|u-mu| >> sigma) = 2·0^4 - 1        = -1  (saturation, the max(0, …) clamps the polynomial)
 """
 
 from __future__ import annotations
@@ -18,35 +23,26 @@ from __future__ import annotations
 import numpy as np
 from numpy.typing import NDArray
 
-_STAGE_1A_SHELL = (
-    "Lenia growth function Stage 1a scaffold: implementation lands at "
-    "Stage 1b after grep-citing the formula from vendored Chakazul/Lenia. "
-    "Expected closed form: G(u) = 2·exp(-((u-mu)/sigma)^2 / 2) - 1."
-)
-
 
 def growth_lenia(u: NDArray[np.floating], mu: float, sigma: float) -> NDArray[np.floating]:
-    """Lenia bell-curve growth function.
+    """Quad4 polynomial growth function ``G(u; mu, sigma)``.
 
     Parameters
     ----------
     u
-        Convolved field (output of Quad4 convolution).
+        Convolved field (output of Quad4 convolution); any NumPy shape.
     mu
-        Bell-curve center (preset parameter; Orbium unicaudatus has
-        mu ≈ 0.15 per Chakazul ``animals.json``, subject to Stage-1b
-        grep-cite).
+        Bell-curve center (the Orbium unicaudatus preset has
+        ``mu = 0.15`` per Chakazul ``animals.json:5``).
     sigma
-        Bell-curve width (preset parameter; Orbium unicaudatus has
-        sigma ≈ 0.015 per Chakazul ``animals.json``, subject to
-        Stage-1b grep-cite).
+        Width parameter (the Orbium unicaudatus preset has
+        ``sigma = 0.015`` per Chakazul ``animals.json:5``).
 
     Returns
     -------
-    Growth increment, element-wise.
-
-    Notes
-    -----
-    Stage 1a — shell only. Body raises :class:`NotImplementedError`.
+    Growth increment, element-wise; in ``[-1, 1]``.
     """
-    raise NotImplementedError(_STAGE_1A_SHELL)
+    u_arr = np.asarray(u, dtype=np.float64)
+    base = 1.0 - (u_arr - mu) ** 2 / (9.0 * sigma * sigma)
+    clipped = np.maximum(0.0, base)
+    return clipped**4 * 2.0 - 1.0

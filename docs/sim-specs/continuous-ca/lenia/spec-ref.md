@@ -129,23 +129,34 @@ frontier scope per § 6.3 OUT OF SCOPE).
 
 **Property-based tests** (≥ 2 invariants per § 2.14 +
 `docs/phases/phase-3-plan.md:1042` § 6.0 item 7;
-charter §1.1 first-SIM PBT-module surfacing):
+charter §1.1 first-SIM PBT-module surfacing).
 
-1. **`mass_approximately_conserved`** — Lenia preserves the total
-   field mass within numerical tolerance under random valid initial
-   conditions and a small number of Euler steps. Formal form:
-   `|∑ A(x, T) - ∑ A(x, 0)| ≤ ε · ∑ A(x, 0)` for some
-   ε bound set by the dt + R + kernel-norm budget. Tolerance set at
-   Stage 1b after the Stack-D Taichi reduction is measured under
-   `arch="cpu"`. Strategy: Hypothesis `smooth_scalar_field_in_unit_box`
-   (or analogous) with periodic-BC IC.
-2. **`monotone_bounds`** — every cell of the field remains in
-   `[0, 1]` for the duration of the run under any random valid
-   initial condition that itself satisfies `A(x, 0) ∈ [0, 1]`. The
-   `clip` step in the Euler update enforces this exactly; the
-   property test asserts the invariant survives the convolution +
-   growth + clip composition (i.e., no `nan` / `inf` egress, no
-   negative blow-up).
+**Stage 1b SHIFTED-on-evidence (HARD RULE 2 + §0.3).** The Stage-1a
+charter §6 RED invariants suggested `mass_approximately_conserved` +
+`monotone_bounds`. Stage 1b empirically measured that
+`mass_approximately_conserved` is **mathematically falsified** for
+arbitrary IC under Lenia's Quad4 polynomial growth (gn=1): the
+growth function is not mass-preserving (cells where convolved value
+is far from `mu` decay at rate -1; cells near `mu` grow at +1; the
+balance is **not** a conservation law). The dispatch + charter
+guidance was a *suggestion*, not a discovered mathematical truth;
+per HARD RULE 2 + charter §6 anti-pattern reminder ("widening
+Hypothesis examples or relaxing the assertion = anti-pattern; the
+failing example IS the value"), the invariant is **re-declared**, NOT
+widened. Stage 1b ratifies:
+
+1. **`monotone_bounds`** — every cell of the field remains in
+   `[0, 1]` for the duration of the run. Holds by the `clip(0, 1)`
+   step in the Euler update; the test asserts the invariant survives
+   the convolution + growth + clip composition (no `nan` / `inf`
+   egress, no negative blow-up).
+2. **`per_step_change_bounded_by_dt`** — every cell's per-step delta
+   `|A_{n+1}(x) - A_n(x)| ≤ dt` for the Lenia Quad4-polynomial
+   forward. Holds because `G ∈ [-1, 1]` (the Chakazul gn=1
+   polynomial saturates at ±1) and the `clip(0, 1)` step can only
+   bring the cell closer to `A_n` than the raw Euler update would.
+   Sharper than `monotone_bounds` because it constrains the
+   *derivative*, not just the value.
 
 PBT module lives at `tools/testkit/property/sims/lenia/` per § 6.0
 item 7 + charter §1.1; Hypothesis examples DB at

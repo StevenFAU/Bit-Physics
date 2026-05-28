@@ -1,38 +1,39 @@
 """Quad4 kernel shape function (Chakazul/Lenia).
 
-Stage 1a — shell. The body raises :class:`NotImplementedError`; Stage
-1b lands the Taichi-backed real-space kernel after grep-citing the
-Quad4 formula from the vendored Chakazul source (Convention #8).
+Stage 1b implementation. Closed form grep-cited from the vendored
+Chakazul source at SHA ``adfc542939266de7f4bb7ebb552e8499701ee107``
+(Convention #8, NOT from memory):
 
-Mathematical form (charter §1.2 §0.3 SHIFT — hand-derivable, NOT from
-memory):
+- ``references/Chakazul-Lenia/Python/LeniaF.py:493`` —
+  ``1: lambda r: (r>0)*(r<1) * (4 * r * (1-r))**4,  # polynomial (quad4)``
+- ``references/Chakazul-Lenia/Python/LeniaND.py:273`` —
+  ``0: lambda r: (4 * r * (1-r))**4,  # polynomial (quad4)``
 
-    K(r) = (4 r (1 - r))^4    for r in [0, 1]
-    K(r) = 0                  for r > 1 (compact support)
+The compact-support form (``LeniaF.py:493``) is the implementation
+contract: the kernel is zero strictly outside ``(0, 1)``; the
+``(r>0)*(r<1)`` mask is the citation anchor. We tighten the boundary
+to ``[0, 1]`` (closed interval) here because the three golden anchors
+include ``K(0) = 0`` and ``K(1) = 0`` (boundary values, both equal
+zero anyway by the polynomial form), and the closed mask is more
+intuitive for the canonical-anchor tests.
 
-Three canonical anchors (charter §4 — golden-table values):
+Three canonical anchors (hand-derivable from the closed form +
+verified against the vendored Chakazul polynomial):
 
-    K(0)   = (4 · 0 · 1)^4 = 0           (compact-support boundary, NOT a peak)
+    K(0)   = (4 · 0 · 1)^4 = 0           (compact-support boundary)
     K(0.5) = (4 · 0.5 · 0.5)^4 = 1^4 = 1 (PEAK)
     K(1)   = (4 · 1 · 0)^4 = 0           (compact-support boundary)
 
-The §6.3 prose at `docs/phases/phase-3-plan.md:1351` says "kernel at
-r=0 (peak K(0))" — Quad4 evaluates K(0)=0, NOT a peak; the peak is at
-r=0.5. Stage 1a re-grounds; Stage 1b grounds the three anchors against
-the vendored Chakazul derivation.
+The §6.3 prose at ``docs/phases/phase-3-plan.md:1351`` says "kernel
+at r=0 (peak K(0))" — Quad4 evaluates K(0)=0, NOT a peak; the peak
+is at r=0.5. SHIFTED-surface-only per charter §1.2 + §0.3; NO plan
+edit.
 """
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-
-_STAGE_1A_SHELL = (
-    "Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b "
-    "after grep-citing the formula from vendored Chakazul/Lenia "
-    "(SHA adfc542939266de7f4bb7ebb552e8499701ee107). "
-    "Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0."
-)
 
 
 def quad4_kernel(r: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -41,15 +42,14 @@ def quad4_kernel(r: NDArray[np.floating]) -> NDArray[np.floating]:
     Parameters
     ----------
     r
-        NumPy array of radii in the unit interval (clipped to [0, 1]
-        for compact support).
+        NumPy array of radii (any shape).
 
     Returns
     -------
-    K(r) evaluated element-wise. Zero outside the compact support.
-
-    Notes
-    -----
-    Stage 1a — shell only. Body raises :class:`NotImplementedError`.
+    K(r) evaluated element-wise. Zero outside ``[0, 1]`` (compact
+    support).
     """
-    raise NotImplementedError(_STAGE_1A_SHELL)
+    r_arr = np.asarray(r, dtype=np.float64)
+    inside = (r_arr >= 0.0) & (r_arr <= 1.0)
+    base = 4.0 * r_arr * (1.0 - r_arr)
+    return np.where(inside, base**4, 0.0)
