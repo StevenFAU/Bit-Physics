@@ -1,0 +1,44 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      3
+    ],
+    "dtype": "f32",
+    "params": {
+      "fov_y_deg": 50.0,
+      "n_gaussians": 36,
+      "sh_degree": 3
+    },
+    "seed": 42,
+    "tier": "smoke"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:2087402de9ee2989e991468ec40452cfc3a27e4a68d15adc595a45e7c649f4a9",
+    "format": "hdf5",
+    "path": "phase-3-common-3dgs.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-28T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "neural-rendered",
+    "name": "3dgs-smoke",
+    "variant": "forward-ewa-splatting"
+  },
+  "stack": {
+    "build_id": "sub-phase-phase-3-common-3dgs",
+    "name": "warp-stack-e",
+    "version": "0.1.0"
+  }
+}
