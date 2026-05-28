@@ -3,7 +3,7 @@ date: 2026-05-28T12-09-40Z
 author: phase-3 render-similarity charter-revision (Claude Code)
 subject: Phase 3 render-similarity adversarial-fixture placement — investigation + decision
 verdict: DECIDED — testkit-local (charter-v1 placement REAFFIRMED; rationale REWRITTEN on evidence)
-head_sha: pending
+head_sha: 75b3d36f4d286b92de3391b9b07787d5a74db9e5
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
