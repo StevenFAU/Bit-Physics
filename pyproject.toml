@@ -116,6 +116,15 @@ members = [
   # plan-drafting audit document SHIFTED-surface-only (NO plan edit).
   # Registered at Stage 1a.
   "packages/lenia",
+  # Phase-3 task-3a (sub-phase-phase-3-ising-classical). FOURTH Phase-3
+  # sub-phase + FIRST Stack-B SIM in Phase 3. The 25th workspace member;
+  # reference 2D Ising-classical (Metropolis-Hastings checkerboard Monte
+  # Carlo; NumPy reference oracle + local-only WGSL parallel-Metropolis).
+  # §0.3 SHIFT-from-discovered: §6.3a literal
+  # `lattice-spin/ising-classical/typescript/` superseded by the
+  # existing-convention `packages/<name>/` precedent (D-LAYOUT, mirrors
+  # lenia). Registered at Stage 1a.
+  "packages/ising-classical",
 ]
 exclude = []
 
