@@ -1,0 +1,47 @@
+[upstream]
+name         = "Lenia"
+version      = "default-branch-HEAD-2022-03-15"
+sha          = "adfc542939266de7f4bb7ebb552e8499701ee107"
+url          = "https://github.com/Chakazul/Lenia"
+license      = "MIT"
+license_file = "LICENSE.md"
+
+[scope]
+purpose         = "Reference for the Lenia continuous CA (Chan 2019 + Chakazul extensions) — the Quad4 kernel shape function K(r)=(4·r·(1-r))^4 (LeniaF.py:493 / LeniaND.py:273), the Quad4 polynomial growth function gn=1 (LeniaF.py:500 / LeniaND.py:279), and the Orbium unicaudatus preset (animals.json:5 — R=13, T=10, b=\"1\", m=0.15, s=0.015, kn=1, gn=1). packages/lenia/ derives its Stack-D Taichi reformulation INDEPENDENTLY from these citation anchors per spec § 2.4 + § 2.8 + Convention #8; the vendored material is the anchor + test target, NOT a redistributed dependency. MIT-licensed (permissive); downstream Bit-Physics sims may cite freely without inheriting any non-commercial clause."
+used_by_sims    = ["continuous-ca/lenia"]
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-28T15-28Z"
+fetched_by    = "phase-3 lenia stage-1b (Claude Code)"
+fetch_command = "git clone --depth=1 https://github.com/Chakazul/Lenia Chakazul-Lenia-tmp; cd Chakazul-Lenia-tmp && git rev-parse HEAD == adfc542939266de7f4bb7ebb552e8499701ee107; then copied LICENSE.md, README.md (-> UPSTREAM_README.md), Python/LeniaF.py, Python/LeniaND.py, Python/animals.json into references/Chakazul-Lenia/."
+
+[[citations]]
+file = "Python/LeniaF.py"
+line = 493
+quote = "1: lambda r: (r>0)*(r<1) * (4 * r * (1-r))**4,  # polynomial (quad4)"
+purpose = "Quad4 kernel shape function (compact-support form)."
+
+[[citations]]
+file = "Python/LeniaND.py"
+line = 273
+quote = "0: lambda r: (4 * r * (1-r))**4,  # polynomial (quad4)"
+purpose = "Quad4 kernel shape function (raw polynomial — sibling form)."
+
+[[citations]]
+file = "Python/LeniaF.py"
+line = 500
+quote = "1: lambda n, m, s: np.maximum(0, 1 - (n-m)**2 / (9 * s**2) )**4 * 2 - 1,  # polynomial (quad4)"
+purpose = "Quad4 polynomial growth function gn=1 (Orbium uses gn=1)."
+
+[[citations]]
+file = "Python/LeniaND.py"
+line = 279
+quote = "0: lambda n, m, s: np.maximum(0, 1 - (n-m)**2 / (9 * s**2) )**4 * 2 - 1,  # polynomial (quad4)"
+purpose = "Quad4 polynomial growth function (sibling form)."
+
+[[citations]]
+file = "Python/animals.json"
+line = 5
+quote = "{\"code\":\"O2u\",\"name\":\"Orbium unicaudatus\",\"cname\":\"球虫(單尾)\",\"params\":{\"R\":13,\"T\":10,\"b\":\"1\",\"m\":0.15,\"s\":0.015,\"kn\":1,\"gn\":1}, ...}"
+purpose = "Canonical Orbium unicaudatus preset (the minimum Stage 1b implements per docs/phases/phase-3-plan.md:1347)."
