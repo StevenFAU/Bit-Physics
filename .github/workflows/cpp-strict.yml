@@ -59,14 +59,34 @@ jobs:
       - name: Build
         run: cmake --build build/cpp -j"$(nproc)"
 
-      - name: Selective LFS fetch — RD-2D reference capture (gate-14 cross-stack)
+      - name: Selective LFS fetch — RD-2D reference capture (gate-14 cross-stack, via R2 when wired)
         # Stage-1b finding correction: the RD-2D-Stack-C ctests (rd2d_stack_c_tests,
         # rd2d_stack_c_gate14) DO read a committed canonical capture
         # (captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5)
         # via packages/reaction-diffusion-2d-stack-c/tests/python/test_gate14_cross_stack.py.
         # The probe / charter § 4.1 ("cpp-strict needs zero captures") was wrong. Pull
         # exactly that narrow set (still ~20×+ less than a full lfs: true fetch).
-        run: git lfs pull --include="captures/reaction-diffusion-2d-ref/**"
+        #
+        # R2 routing: when the R2_* secrets reach this job (push + same-repo PRs),
+        # source tools/lfs/setup-lfs-s3.sh so the pull resolves via Cloudflare R2
+        # (lfs-s3 transfer agent — `tools/lfs/README.md` § "trusted-config
+        # (per-job / opt-in) model"). When the secrets are absent (fork PRs), fall
+        # through to plain GitHub LFS (D4 steady-state fallback per
+        # `sub-phase-lfs-architecture.md` AMENDMENT — Stage 1c / M5).
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="captures/reaction-diffusion-2d-ref/**"
 
       - name: ctest (substrate C-3, determinism C-2, capture C-1, smoke C-4, interop C-6)
         # The Vulkan/determinism/smoke tests set the lavapipe env (VK_DRIVER_FILES +

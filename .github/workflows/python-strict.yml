@@ -40,13 +40,34 @@ jobs:
           uv run mypy --strict capture/
           uv run mypy --strict determinism/
 
-      - name: Selective LFS fetch — legacy-captures corpus only
+      - name: Selective LFS fetch — legacy-captures corpus only (via R2 when wired)
         # The only captures-reading test under this pytest run is
         # capture/tests/test_legacy_captures_corpus.py, which reads
-        # tests/fixtures/legacy-captures/**. Pull exactly that set (GitHub LFS;
-        # D4 fallback path — R2 routing of fetches lands at the operator-gated M5
-        # cutover, after the M3 bulk upload populates R2).
-        run: git lfs pull --include="tests/fixtures/legacy-captures/**"
+        # tests/fixtures/legacy-captures/**. Pull exactly that set.
+        #
+        # R2 routing (lfs-architecture M5 re-characterized to opt-in steady-state,
+        # not a one-shot cutover): when the R2_* secrets reach this job (push +
+        # same-repo PRs), source tools/lfs/setup-lfs-s3.sh so the pull resolves
+        # via Cloudflare R2 (lfs-s3 transfer agent) — keeps the LFS-touching
+        # CI off the throttled GitHub-LFS bandwidth (`tools/lfs/README.md` §
+        # "trusted-config (per-job / opt-in) model"). When the secrets are
+        # absent (fork PRs — GitHub does not propagate secrets to forks), fall
+        # through to plain GitHub LFS exactly as before (D4 steady-state
+        # fallback per the lfs-architecture AMENDMENT — Stage 1c / M5 block).
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="tests/fixtures/legacy-captures/**"
 
       - name: pytest -W error + coverage (advisory)
         working-directory: tools/testkit
