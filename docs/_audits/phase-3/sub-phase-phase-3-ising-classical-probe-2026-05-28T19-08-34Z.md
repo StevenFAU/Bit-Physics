@@ -3,7 +3,7 @@ date: 2026-05-28
 author: phase-3 ising-classical plan-drafting (Claude Code)
 subject: probe report — sub-phase-phase-3-ising-classical (task-3a)
 verdict: CONFIRMED
-head_sha: e12685dbbfdc5ae20d5e9137a3fd269670a59139
+head_sha: fa06646
 prior_sub_phase_tag: v0.2.4-sub-phase-phase-3-lenia
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
