@@ -3,7 +3,7 @@ date: 2026-05-28
 author: phase-3 lenia plan-drafting (Claude Code)
 sub_phase: sub-phase-phase-3-lenia
 phase: phase-3
-head_sha_at_draft: d5587b4aa8a24366c21532f0ed8e210a0dba8559
+head_sha_at_draft: 3ca8aa8e904413d7ce332d873698a91bd3502934
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 version: charter-v1 (2026-05-28T14-38-32Z plan-drafting)

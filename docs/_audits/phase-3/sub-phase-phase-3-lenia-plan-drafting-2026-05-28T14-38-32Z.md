@@ -3,7 +3,7 @@ date: 2026-05-28T14-38-32Z
 author: phase-3 lenia plan-drafting (Claude Code)
 subject: Phase 3 third sub-phase plan-drafting — Lenia (task-3, first SIM)
 verdict: CONFIRMED
-head_sha: d5587b4aa8a24366c21532f0ed8e210a0dba8559
+head_sha: 3ca8aa8e904413d7ce332d873698a91bd3502934
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
@@ -22,7 +22,7 @@ evidence_paths:
 evidence_hashes:
   docs/phases/sub-phase-phase-3-lenia.md: sha256:2391728fe616ceaba3c8ddff3ed70b21635427aea488eca9d9d4f1c758714b9a
   docs/_audits/phase-3/sub-phase-phase-3-lenia-db-investigation-2026-05-28T14-38-32Z.md: sha256:1cdd1eb564bff8f2ece8c477afd2d1a7896b24a709afab34621d2a92b44ba111
-  docs/_audits/phase-3/sub-phase-phase-3-lenia-probe-2026-05-28T14-38-32Z.md: sha256:3ea42de404e73d9f67df044e4dfad97fc5bed4920d9b735739a2adbca4d9f14d
+  docs/_audits/phase-3/sub-phase-phase-3-lenia-probe-2026-05-28T14-38-32Z.md: sha256:e3a5a31c5283c500949ef17ff7b5ba37ccb69984e41a384e931a20adbae058f0
 banked_consumed: []
 banked_forward_routed:
   - L-3DGS-1 (carried forward — Lenia is not neural-rendered; bank stays for task-8 / 3DGS-MPM consumer)
