@@ -316,7 +316,7 @@
 ## sub-phase-phase-3-lenia — Stage 2 (sub-phase landing) — 2026-05-28 — closed-with-shifted-2
 
 - **Stage:** Stage 2 (sub-phase landing audit + I7 allowlist extension + closing sweep + tag proposal). Trunk-based to `main`; pushed; agent does NOT tag (I7).
-- **Landed at SHA:** `fcf8546` (I7 allowlist extension for `v0.2.4-sub-phase-phase-3-lenia`) → landing audit + this entry → SHA back-fill (Convention #12, separate commit). Parent `a0fa8f9` (Stage-1c SHA back-fill).
+- **Landed at SHA:** `fcf8546` (I7 allowlist extension for `v0.2.4-sub-phase-phase-3-lenia`) → `49b4123` (landing audit + progress entry) → SHA back-fill (Convention #12, separate commit). Parent `a0fa8f9` (Stage-1c SHA back-fill).
 - **Verdict:** **closed-with-shifted-2** per charter §2.15 graded closing variants. Two SHIFTED items carried from Stage 1b (PBT re-declaration on math evidence; R2 LFS mirror sync EOF). All STOP-D / STOP-H / STOP-LFS-on-GitHub / STOP-I7 / STOP-PBT / STOP-CAT-X / STOP-DET / STOP-D-ANCHOR / STOP-K2-AT-HEAD / STOP-PIN / STOP-TIER3-DIR all NOT fired. STOP-LFS R2-mirror carried, NOT REVERTED.
 - **Anchor probe:** integrity `c19492ad…d22cb52` byte-identical 0 HARD_FAIL / 14 SOFT_WARN; I1–I7 hold; verify_evidence 7/0 across all 7 lenia stage audits; pytest 16/16 GREEN (14 lenia + 2 I7); chain `7a0532e → a0fa8f9 → fcf8546` since Stage 1c.
 - **STEP A — I7 allowlist extension:** `v0.2.4-sub-phase-phase-3-lenia` added to `OPERATOR_NONPHASE_TAGS` (commit `fcf8546`); guard mechanism UNCHANGED (additive entry; frozenset member-check unaffected — a fake `agent/v0.0.42-fake` still HARD_FAILs because it's not in the allowlist); test 2/2 PASS.
