@@ -20,9 +20,9 @@ evidence_paths:
   - docs/_audits/phase-3/progress.md
   - docs/_audits/phase-3/sub-phase-phase-3-rigid-body-preflight-drift-2026-05-28T22-50-13Z.md
 findings:
-  - F1-env: `python3 -m integrity` resolves to a STALE editable install at /home/otacon/Projects/GPU-Sims/GPU-Sims/tools/integrity/integrity (pre-rename project root) which lacks the `--all` flag → preflight's integrity check errors out. Canonical `uv run` resolves to THIS repo and is GREEN.
-  - F2-layout: preflight-phase.py:308-312 checks four phantom category paths (continuous-ca/.../ref-stack-c, particle-fluid/sph-water/ref-stack-d, hybrid-pg/mpm-multimaterial/ref-stack-e) — a never-adopted layout. All four sims EXIST under packages/<sim>-stack-X.
-  - F3-dispatch-framing: dispatch + plan §6.4 (line 1565/1594-95) prescribe a "NEW top-level rigid-body/ folder" mirroring "hybrid-pg/ volumetric-grid/ particle-fluid/" — none of which exist. Live convention = packages/<sim>/. RESOLVED-BY-PRECEDENT (§0.3; lenia/ising D-LAYOUT), NOT a novel STOP.
+  - 'F1-env: python3 -m integrity resolves to a STALE editable install at /home/otacon/Projects/GPU-Sims/GPU-Sims/tools/integrity/integrity (pre-rename project root) which lacks the --all flag, so the preflight integrity check errors out. Canonical uv run resolves to THIS repo and is GREEN.'
+  - 'F2-layout: preflight-phase.py lines 308-312 check four phantom category paths (continuous-ca ref-stack-c/d, particle-fluid sph-water ref-stack-d, hybrid-pg mpm-multimaterial ref-stack-e) — a never-adopted layout. All four sims EXIST under packages/.'
+  - 'F3-dispatch-framing: dispatch + plan 6.4 (line 1565/1594-95) prescribe a NEW top-level rigid-body/ folder mirroring hybrid-pg / volumetric-grid / particle-fluid — none of which exist. Live convention = packages/. RESOLVED-BY-PRECEDENT (0.3; lenia/ising D-LAYOUT), NOT a novel STOP.'
 ---
 
 # Phase 3 task-4 rigid-body-pedagogical — plan-drafting halted at ACTION #1 (preflight exit 1)
