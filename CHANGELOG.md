@@ -1938,6 +1938,74 @@ Intermediate tag `v0.2.2-sub-phase-phase-3-common-3dgs` is the **lean-YES** Stag
 landing tag (D-E: external dependency + durable architecture; operator-pushed, I7).
 Not pushed during Stage 1.
 
+### sub-phase-phase-3-render-similarity
+
+Second Phase-3 sub-phase (task-2, scope item 3.x; HARD-blocks task-6 + task-8).
+Introduces `tools/testkit/render_similarity/` — the render-similarity metric
+module (PSNR / SSIM / LPIPS + `ms_ssim` Phase-4-WU-C shell) — and the
+`equivalence` CLI `--mode render-similarity` dispatch under the matured
+per-sub-phase cadence.
+
+#### Added
+
+- `tools/testkit/render_similarity/` package (`metrics.py` + `harness_mode.py`)
+  exposing the §3.2.2 public surface:
+  `psnr(a, b) -> float` (sentinel `+inf` for identical), `ssim(a, b) -> float`
+  (Wang 2004 via `skimage.metrics.structural_similarity`),
+  `lpips(a, b, net='alex'|'vgg') -> float` (Zhang 2018 via `lpips==0.1.4`),
+  `ms_ssim(a, b) -> float` (SHELL — `NotImplementedError` until Phase 4 WU-C
+  per `docs/phases/phase-3-plan.md:380`). Input contract: `(H, W, 3)` uint8
+  `[0, 255]` OR float32 `[0, 1]` (auto-detect by dtype); shape/dtype/channel
+  mismatch → `ValueError`.
+- `tools/testkit/equivalence/__main__.py` — argparse CLI dispatcher
+  (D-HARNESS-CLI lean (a)) with `--mode render-similarity`. The existing
+  `compare_captures` programmatic surface is unchanged.
+- `tools/testkit/equivalence/tolerance-schema.json` — additive top-level
+  `render_similarity` key (category → sim → `{psnr_min, ssim_min, lpips_max}`;
+  D-SCHEMA lean). Schema only — tasks 6 and 8 add rows.
+- PyPI deps in `tools/testkit/pyproject.toml`: `lpips==0.1.4`,
+  `scikit-image>=0.26`, `torch>=2.0` (declared; transitive of lpips).
+- Adversarial fixtures + meta-test at
+  `tools/testkit/render_similarity/tests/fixtures/adversarial/` (testkit-local
+  per charter-v2 evidence: identical CI breadth/freq + Cat 1-5+Cat-X semantic
+  mis-fit + `docs/architecture.md:673` Layer-0 placement). Two families:
+  `ssim_false_positive` (inverted-checkerboard pair) + `lpips_false_negative`
+  (1/255 single-pixel perturbation).
+- `test-render-similarity` job in `.github/workflows/python-strict.yml`
+  (pytest directly per §2.14, mirroring the `test-common-3dgs` job; bundled
+  lpips linear-head weights pin via R-3 sha256 assertion; CI backbone
+  download cached via `actions/cache`).
+- `docs/testkit/equivalence.md` — render-similarity mode section (Cat-2 doc↔impl
+  contract).
+- `docs/glossary.md` entries: PSNR, SSIM, LPIPS, perceptual loss, MS-SSIM.
+
+#### D-class
+
+- **D-LOC**: `tools/testkit/render_similarity/` package per §3.2.2 (RESOLVED-IN-CHARTER).
+- **D-HARNESS-CLI**: lean (a) — `equivalence/__main__.py` + `--mode` flag
+  (RATIFIED Stage 1a; no destructive refactor → STOP-CLI not fired).
+- **D-SCHEMA**: additive `render_similarity` top-level key in
+  `tolerance-schema.json` (RATIFIED Stage 1a; existing validators unchanged →
+  STOP-SCHEMA not fired).
+- **D-WEIGHTS**: lazy runtime-fetch + CI `actions/cache` + R-3 sha256 assertion
+  on bundled linear-head weights; backbone download per torchvision pin.
+- **D-DET**: **bit-exact / same-stack-same-hw** — MEASURED at Stage 1b across
+  PSNR (pure numpy), SSIM (skimage), LPIPS-alex (CPU + eval + no_grad +
+  pinned weights), LPIPS-vgg. All four bit-exact across two runs → STOP-DET
+  not fired. R-4 (GPU LPIPS diverges from CI CPU) documented in metrics.py
+  docstring + `docs/testkit/equivalence.md`.
+- **D-ANCHOR**: 3 anchors landed at Stage 1b — PSNR hand-derivation
+  (closed-form `10 * log10(MAX_I**2 / MSE)`); SSIM Wang 2004 Eq. 13 on
+  identity + constant-pair luminance term; LPIPS self-consistency
+  (`< 1e-4`) + Zhang 2018 monotonic-under-perturbation property.
+
+#### Tag reservation
+
+Intermediate tag `v0.2.3-sub-phase-phase-3-render-similarity` is the
+**lean-YES** Stage-2 landing tag (§D.2 (a) PyPI deps `lpips` + `scikit-image`
++ `torch` + (b) durable architecture gating all Phase-4 neural sims;
+operator-pushed, I7). Not pushed during Stage 1.
+
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
 Phase 1 lands the reference-sim TDD bootstraps for nine simulation

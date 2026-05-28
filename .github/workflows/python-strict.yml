@@ -94,3 +94,58 @@ jobs:
       - name: pytest -W error
         working-directory: common/common-3dgs
         run: uv run pytest -W error tests/
+
+  # Phase-3 render-similarity (task-2). Net-new tools/testkit/render_similarity/
+  # metric module (PSNR / SSIM / LPIPS / ms_ssim shell) + harness "render-
+  # similarity" mode dispatcher (tools/testkit/equivalence/__main__.py). Per
+  # §2.14, pytest runs directly (no `just` indirection). The bundled lpips
+  # v0.1 linear-head weights ship inside the lpips==0.1.4 wheel and are sha256-
+  # asserted on first call (R-3 mitigation); the AlexNet/VGG backbone weights
+  # download via torchvision into ~/.cache/torch/hub/checkpoints/ on first
+  # call and are cached via actions/cache keyed on Python + lpips version
+  # (D-WEIGHTS lean: lazy runtime-fetch + CI cache, NOT vendored as LFS blobs).
+  test-render-similarity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync testkit workspace deps (with dev extras for pytest + ruff)
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+
+      - name: ruff (render_similarity + equivalence/__main__.py)
+        working-directory: tools/testkit
+        run: |
+          uv run ruff check render_similarity/ equivalence/__main__.py
+          uv run ruff format --check render_similarity/ equivalence/__main__.py
+
+      - name: mypy --strict (render_similarity + equivalence/__main__.py)
+        working-directory: tools/testkit
+        run: uv run mypy --strict render_similarity/ equivalence/__main__.py
+
+      - name: Cache LPIPS / torch.hub pretrained backbone weights
+        # D-WEIGHTS lean — lazy runtime-fetch + actions/cache keyed on Python
+        # + lpips version. AlexNet (~243 MB) + VGG (~528 MB) backbone weights
+        # download via torchvision into ~/.cache/torch/hub/checkpoints/ on
+        # first call; the cache step makes subsequent CI runs skip the
+        # download (cache HIT → ~ms; cache MISS → first run is slow but
+        # not blocking, R-3 mitigation is the bundled-weight sha256 assertion
+        # inside the metric module, not the cache).
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch/hub/checkpoints
+          key: lpips-backbones-py3.12-lpips0.1.4-${{ hashFiles('tools/testkit/uv.lock') }}
+          restore-keys: |
+            lpips-backbones-py3.12-lpips0.1.4-
+
+      - name: pytest -W error (render-similarity suite)
+        working-directory: tools/testkit
+        run: uv run pytest -W error render_similarity/tests/
