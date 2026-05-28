@@ -3,8 +3,8 @@ date: 2026-05-28T18-39-42Z
 author: phase-3 lenia-mypy-strict-fix (Claude Code)
 subject: "Phase 3 focused infrastructure fix — close 13 mypy-strict errors red-lighting the `test-lenia` job's `mypy --strict (lenia)` step (Taichi per-module override + sim.py dtype + dead `type: ignore`), tighten §S.5 post-push CI poll to cover ALL push-to-main workflows"
 verdict: CONFIRMED
-head_sha: a0c03f5ce1c19ec07b282aadc69eb2d4371c4410
-head_sha_at_checkpoint: a0c03f5ce1c19ec07b282aadc69eb2d4371c4410
+head_sha: 13800e841add6e6ad17cff38c031ef560d2d03cd
+head_sha_at_checkpoint: 13800e841add6e6ad17cff38c031ef560d2d03cd
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
