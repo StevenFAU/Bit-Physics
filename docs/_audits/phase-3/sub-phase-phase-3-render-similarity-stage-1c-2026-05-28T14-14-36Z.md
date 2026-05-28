@@ -3,7 +3,7 @@ date: 2026-05-28T14-14-36Z
 author: phase-3 render-similarity stage-1c (Claude Code)
 subject: Phase 3 render-similarity Stage 1c — mutation baseline + verdict
 verdict: SHIFTED
-head_sha: 44101abe0fa2a9870d2c2c4d6c3ec3c5b8e2c7c0  (audit-writing tip; Convention #12 back-fill follows)
+head_sha: f1d7d0218359723a9aa82f705ac8ecf211cf0b26
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
