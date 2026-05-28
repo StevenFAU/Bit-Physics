@@ -99,6 +99,14 @@ members = [
   # own wp.array(dtype=wp.float64, ndim=4) per D8/D15. Registered at Stage 1b (the
   # failing-tests scaffold landed at Stage 1a).
   "packages/lattice-boltzmann-d3q19-stack-e",
+  # Common module — Stack E / Python (NVIDIA Warp-backed) 3D-Gaussian-Splatting
+  # surface (spec § 11.4 item 3.8). The 23rd workspace member; SECOND common-*
+  # Stack-E module (sister to common/common-warp). Introduced by Phase-3 task-1
+  # (sub-phase-phase-3-common-3dgs); produces the GaussianSplatModel / render /
+  # Camera API that task-8 (3dgs-mpm) + Phase-4 WU-C consume unchanged. Vendors the
+  # Inria gaussian-splatting reference (NON-COMMERCIAL research license) under
+  # references/3DGS-reference/. Registered at Stage 1a.
+  "common/common-3dgs",
 ]
 exclude = []
 

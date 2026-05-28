@@ -11,6 +11,7 @@ resolution-markers = [
 [manifest]
 members = [
     "bit-physics",
+    "bit-physics-common-3dgs",
     "bit-physics-common-py",
     "bit-physics-common-warp",
     "bit-physics-diagnostics",
@@ -102,6 +103,38 @@ wheels = [
 name = "bit-physics"
 version = "0.0.0"
 source = { virtual = "." }
+
+[[package]]
+name = "bit-physics-common-3dgs"
+version = "0.1.0"
+source = { editable = "common/common-3dgs" }
+dependencies = [
+    { name = "bit-physics-testkit" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "matplotlib", specifier = ">=3.8" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "bit-physics-common-py"

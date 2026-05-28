@@ -1,0 +1,17 @@
+[upstream]
+name         = "gaussian-splatting"
+version      = "main-HEAD-2024-10-30"
+sha          = "54c035f7834b564019656c3e3fcc3646292f727d"
+url          = "https://github.com/graphdeco-inria/gaussian-splatting"
+license      = "NOASSERTION"
+license_file = "LICENSE.md"
+
+[scope]
+purpose         = "Reference for the Inria 3D-Gaussian-Splatting (Kerbl et al. 2023) .ply scene format and camera / spherical-harmonic / forward-render conventions. common-3dgs (task-1) derives its GaussianSplatModel.load_ply/save_ply, Camera view/projection construction, SH-to-RGB evaluation, and forward EWA-splatting renderer INDEPENDENTLY from these references + the published method (spec § 2.4 symmetric-bug guard); the vendored source is the citation anchor and the test target, NOT a redistributed dependency. NON-COMMERCIAL research license (see LICENSE.md): the vendored material is cited for independent derivation under spec § 2.4 / § 2.8, NOT relicensed or redistributed as a binary; the non-commercial clause is inherited by every downstream 3DGS sub-phase (task-8 3dgs-mpm, Phase-4 WU-C) — NO commercial use, NO relicensing."
+used_by_sims    = ["common-3dgs/3dgs-smoke", "neural-rendered/3dgs-mpm"]
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-28T00-44Z"
+fetched_by    = "phase-3 common-3dgs stage-1a (Claude Code)"
+fetch_command = "git clone --no-checkout --filter=blob:none https://github.com/graphdeco-inria/gaussian-splatting && git -C gaussian-splatting sparse-checkout init --cone && git -C gaussian-splatting sparse-checkout set scene utils gaussian_renderer && git -C gaussian-splatting checkout 54c035f7834b564019656c3e3fcc3646292f727d; then copied LICENSE.md, README.md (-> UPSTREAM_README.md), scene/gaussian_model.py, scene/cameras.py, utils/graphics_utils.py, utils/sh_utils.py, gaussian_renderer/__init__.py into references/3DGS-reference/."

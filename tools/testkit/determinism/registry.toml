@@ -1,0 +1,32 @@
+# Determinism registry (spec § 2.5 / phase-3-plan §3.2.5).
+#
+# Per-sim determinism declarations introduced as a Phase-3 surface
+# (phase-3-plan §3.2.5; docs/phases/phase-3-plan.md:461-505). Prior sims declare
+# determinism in their capture manifests' `determinism` block (see
+# tools/testkit/determinism/policy.md); this registry is the new central,
+# operator-visible table each Phase-3 task appends a row to. Created by Phase-3
+# task-1 (sub-phase-phase-3-common-3dgs) with the first row.
+#
+# Row schema (phase-3-plan §3.2.5):
+#   stack       = "<A|B|C|D|E>"
+#   class       = "<bit-exact | distributional | non-deterministic>"
+#   scope       = "<same-stack-same-hw | same-stack-any-hw | cross-stack | n/a>"
+#   atomic_ops  = "<none | sum-only | full>"
+#   subgroup_ops= "<none | warp-level | full>"
+#   seed_pinned = <true | false>
+#   distributional_bound = "<EFECT | n/a>"   # required iff class = distributional
+
+# common-3dgs forward renderer (task-1). D-C default declaration drafted at
+# Stage 1a; MEASURED at Stage 1b (run render() twice on identical inputs; compare
+# arrays). The renderer composites per-pixel front-to-back over a depth-sorted
+# splat list — no atomic scatter, no subgroup ops — so it is bit-identical
+# run-to-run on the Warp CPU backend (serial wp.launch). If the Stage-1b
+# measurement falsifies bit-exactness, this row is re-characterized to
+# `class = "distributional"` + a measured EFECT `distributional_bound` (D-C / STOP-J).
+[neural-rendered.common-3dgs]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
