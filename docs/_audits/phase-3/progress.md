@@ -288,3 +288,27 @@
 - **First-SIM friction notes (R-11 portfolio-scale signals):** #1 (tolerance-budget golden-cap shape) UNCHANGED; #2 (packages/-vs-continuous-ca/) RESOLVED-ON-EVIDENCE-LANDED; #3 (test_sim_shells rewrite) RESOLVED-ON-EVIDENCE-LANDED; **#4 NEW (PBT invariant ungroundedness for arbitrary IC) RE-DECLARED**; **#5 NEW (R2 LFS mirror sync EOF) SURFACED**.
 - **Artifacts:** Stage-1b audit `docs/_audits/phase-3/sub-phase-phase-3-lenia-stage-1b-2026-05-28T15-51-04Z.md`; vendor commit `989a7b5`; impl commit `11d82b6`; infra-bundle commit `5baf083`.
 - **Next stage = Stage 1c (verdict landing, NO mutation gate).** Re-verify golden anchors + PBT + determinism + legacy-capture + perf + append-only + integrity; surface STOP-LFS to closing-status graded variant; ratify SHIFTED-bank-not-widen postures.
+
+## sub-phase-phase-3-lenia — Stage 1c — 2026-05-28 — SHIFTED (closed-with-shifted-2)
+
+- **Stage:** Stage 1c (verdict landing, NO mutation gate per D-MUT-SCOPE NO RESOLVED-IN-CHARTER). Trunk-based to `main`; pushed to origin/main; no tag (I7).
+- **Landed at SHA:** Stage-1c audit + this entry → SHA back-fill (Convention #12, separate commit). Parent `165c46b` (Stage-1b SHA back-fill).
+- **Verdict:** SHIFTED (closed-with-shifted-2; both Stage-1b SHIFTED items carried forward). No HARD STOP fired.
+- **Anchor probe:** integrity `c19492ad…d22cb52` byte-identical 0 HARD_FAIL / 14 SOFT_WARN; I1–I7 hold; HEAD `165c46b` == origin/main; pytest 14/14 GREEN; I7 2/2 PASS.
+- **Golden-anchor re-verification:** `lenia-kernel.json` 3 hand-derived anchors (r=0/0.5/1) + 6 mid-curve all PASS within `golden_kernel_abs=1e-6 / golden_kernel_rel=1e-5`. `lenia-orbium-trajectory.json` step-0/1/5 aggregates PASS within `golden_trajectory_abs=1e-4`.
+- **PBT re-verification:** `monotone_bounds` + `per_step_change_bounded_by_dt` 2/2 GREEN at HEAD (SHIFTED-on-evidence Stage-1b re-declaration HELD).
+- **Determinism re-verification:** `test_determinism_two_runs_bit_equal` PASSES; D-DET bit-exact same-stack-same-hw HELD.
+- **Legacy-capture .h5 re-verification:** sha256 `6c313a5da5…` byte-stable; LFS-tracked; GitHub-LFS HELD. R2 mirror **STOP-LFS CARRIED** (Stage-1b surfaced; agent env lacks customtransfer agent path + AWS_S3_ENDPOINT/S3_BUCKET creds; sync returned EOF; NOT REVERTED).
+- **Perf-ledger row byte-stable:** `docs/perf-ledger.md` lenia row at line 45 unchanged from Stage 1b; file sha256 `e04fb8f2…` stable.
+- **verify_evidence sweep across 6 lenia stage audits:** 6 PASS / 0 FAIL at HEAD `165c46b`. STOP-H NOT fired.
+- **Append-only sweep:** vs `v0.2.0-phase-2` → 164 A / 45 M / **0 D**; vs `v0.2.3-sub-phase-phase-3-render-similarity` → 44 A / 10 M / **0 D**. Append-only HELD.
+- **Integrity sweep:** 0 HARD_FAIL / 14 SOFT_WARN byte-identical stderr sha256 `c19492ad…d22cb52`.
+- **NO mutation gate** per § 6.0 item 12 testkit-adjacent-only + § 6.3 VERIFICATION POSTURE golden+PBT+determinism. Stage 1c is verdict-landing only.
+- **D-class status:** D-B Stack-D (unchanged); D-MUT-SCOPE NO RESOLVED-IN-CHARTER; D-FFT REAL-SPACE LANDED; D-DET bit-exact MEASURED HELD (re-verified at Stage 1c); D-TAG YES-lean (decision-by Stage 2); D-LAYOUT packages/lenia/ LANDED.
+- **STOP audit:** STOP-D / STOP-H / STOP-D-ANCHOR / STOP-DET / STOP-PBT / STOP-CAT-X / STOP-FFT / STOP-I7 / STOP-TIER3-DIR / STOP-K2-AT-HEAD / STOP-PIN — all NOT fired at Stage 1c. **STOP-LFS** carried from Stage 1b (R2 mirror); GitHub-LFS HELD; NOT REVERTED.
+- **Shifted items carried (operator landing review):**
+  1. **PBT re-declaration on math evidence** — `mass_approximately_conserved` mathematically falsified for arbitrary IC under Quad4 polynomial growth gn=1; re-declared (NOT widened) at Stage 1b to `monotone_bounds` + `per_step_change_bounded_by_dt`. Operator confirms the SHIFTED invariants are the durable spec-ref §6 declaration.
+  2. **R2 LFS mirror sync EOF** — agent env lacks customtransfer path + AWS creds despite dispatch preamble. Resolution requires either (a) operator pushes the OID `6c313a5da5…` via R2-credentialed environment OR (b) operator configures the agent's `lfs.customtransfer.lfs-s3.path` + AWS env.
+- **Banked / forward-routed:** L-3DGS-1 (not relevant — Lenia not neural-rendered); SIBLING-FIXTURE-LFS (carried forward; phase-3-lenia.h5 increments the corpus by one but does NOT close the sibling sub-phase); integrity-meta-test-ci-wiring (carried forward; Lenia rides existing testpaths CI). **First-SIM-friction-portfolio-scale** bank (NEW at plan-drafting): now has 5 friction items (#1 tolerance-budget golden-cap shape; #2 packages/-vs-continuous-ca/; #3 test_sim_shells.py shape; #4 PBT invariant ungroundedness; #5 R2 LFS mirror EOF).
+- **Artifacts:** Stage-1c audit `docs/_audits/phase-3/sub-phase-phase-3-lenia-stage-1c-2026-05-28T15-56-13Z.md`.
+- **Next stage = Stage 2 (sub-phase landing audit + I7 allowlist + closing sweep + operator-tag proposal).** Closes as `closed-with-shifted-1` if operator ratifies SHIFTED-#1 PBT re-declaration as canonical posture at landing OR `closed-with-shifted-2` if both items count separately. Intermediate tag lean = YES `v0.2.4-sub-phase-phase-3-lenia` (D-TAG, charter § 3); annotated, operator-pushed (I7); I7 allowlist extension at Stage 2 mirrors common-3dgs `c761aa9` + render-similarity `596eb73`.
