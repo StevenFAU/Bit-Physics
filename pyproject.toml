@@ -107,6 +107,15 @@ members = [
   # Inria gaussian-splatting reference (NON-COMMERCIAL research license) under
   # references/3DGS-reference/. Registered at Stage 1a.
   "common/common-3dgs",
+  # Phase-3 task-3 (sub-phase-phase-3-lenia). FIRST SIM in Phase 3 (after the
+  # two infrastructure roots common-3dgs at task-1 and render-similarity at
+  # task-2). The 24th workspace member; Stack-D Taichi-backed reference Lenia
+  # (Chan 2019; Chakazul/Lenia vendored at SHA adfc54... MIT). §0.3
+  # SHIFT-from-discovered: plan §6.3 prescribes `continuous-ca/lenia/python/`
+  # at repo root; on-disk convention at HEAD is `packages/<name>/`. Charter +
+  # plan-drafting audit document SHIFTED-surface-only (NO plan edit).
+  # Registered at Stage 1a.
+  "packages/lenia",
 ]
 exclude = []
 
