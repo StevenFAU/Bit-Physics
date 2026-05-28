@@ -3,7 +3,7 @@ date: 2026-05-28T17-45-09Z
 author: phase-3 r2-credentials-durability-fix (Claude Code)
 subject: Phase 3 focused infrastructure fix — R2 LFS credentials durability on both surfaces (CI + local agent), Lenia .h5 R2 back-fill, I5 re-verification, banked convention §Q
 verdict: CONFIRMED
-head_sha: <SHA-back-fill-Convention-12>
+head_sha: ce0d65a06fb86094b6d9693fbb43fe8e8fcea04e
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: 688bc195d8b785753ae9500b4e1d48800ae961dd38ac4410f16fb7446de127ff (0 HARD_FAIL / 14 SOFT_WARN at HEAD beac1fd; see §1.3 for the digest-drift observation)
@@ -337,4 +337,4 @@ SIM tags. Bank for the same generalization pass as §6.2.
 
 ## §9. One-liner verdict
 
-`phase-3 r2-credentials-durability CONFIRMED <SHA-back-fill> docs/_audits/phase-3/r2-credentials-durability-fix-2026-05-28T17-45-09Z.md  I5-at-HEAD: HOLDS | CI-wiring: fixed`
+`phase-3 r2-credentials-durability CONFIRMED ce0d65a06fb86094b6d9693fbb43fe8e8fcea04e docs/_audits/phase-3/r2-credentials-durability-fix-2026-05-28T17-45-09Z.md  I5-at-HEAD: HOLDS | CI-wiring: fixed`
