@@ -12,7 +12,9 @@ evidence_hashes:    # mapping (path → sha256)
   docs/phases/phase-3-plan.md: sha256:baaba7591abc21e83d22d7ff018f1392743725baa7d7b8ae864d61d2c661f759
   docs/phases/sub-phase-phase-3-common-3dgs.md: sha256:baacf95280042684ae38b9336b0a00cab8d582b7eb4514d71bb5c9cdd224f1e4
   docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-probe-2026-05-28T00-05-29Z.md: sha256:571cf15e5749699dff8099ffb82bb8c99f76ceb67fd24722b094189111d830f3
-  docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-stage-0-BLOCKED-2026-05-28T00-35-30Z.md: self
+  # NB: this audit does not self-reference in evidence_hashes — a self sha256 is
+  # uncomputable pre-write, and verify_evidence rejects the dispatch template's
+  # "self" sentinel (matches the plan-drafting audit's practice; HARD RULE 2).
 evidence_paths:     # LIST per verify_evidence schema
   - docs/phases/phase-3-plan.md
   - docs/phases/sub-phase-phase-3-common-3dgs.md
