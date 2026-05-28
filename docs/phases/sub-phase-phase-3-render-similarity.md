@@ -6,7 +6,10 @@ phase: phase-3
 head_sha_at_draft: 01764a6a462e7f15b8a1a68e494744c380c31e86
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
-version: charter-v1 (plan-drafting)
+version: charter-v2 (revised 2026-05-28T12-09-40Z — adversarial-fixture placement REAFFIRMED testkit-local on evidence + rationale REWRITTEN; R-7 evidence_paths-list fix; D-LOC unchanged)
+revisions:
+  - v1 (2026-05-28T11-34-56Z) — plan-drafting; placement testkit-local on the (incorrect) "breaks integrity meta-test contract" rationale.
+  - v2 (2026-05-28T12-09-40Z) — placement REAFFIRMED testkit-local on CORRECT evidence: identical CI breadth/freq + Cat 1-5 semantic-schema mis-fit + `docs/architecture.md:673` Layer-0 placement. R-7 prose corrected (evidence_paths = list; evidence_hashes = mapping). See investigation audit `docs/_audits/phase-3/sub-phase-phase-3-render-similarity-fixture-investigation-2026-05-28T12-09-40Z.md`.
 posture: >
   Second Phase-3 sub-phase. Introduces the render-similarity metric module
   (PSNR / SSIM / LPIPS / `ms_ssim` shell) + harness "render-similarity" mode
@@ -92,9 +95,43 @@ needs LFS cache recovery** in agent sessions ([[replay-needs-lfs-cache-recovery]
 4. `tools/testkit/pyproject.toml` deps pinned (probe §3.2 WEB-fetch values):
    `lpips==0.1.4`, `scikit-image>=0.26`, `torch` (declare; pin within `lpips`'s
    compatibility window).
-5. **Adversarial fixtures** for render-similarity, **DESIGN-SHIFTED** under the
-   testkit module under test (`tools/testkit/render_similarity/tests/fixtures/adversarial/`
-   with a parallel meta-test) — NOT under `tools/integrity/...` (probe §3.5).
+5. **Adversarial fixtures** for render-similarity at
+   `tools/testkit/render_similarity/tests/fixtures/adversarial/` with a
+   parallel meta-test `tools/testkit/render_similarity/tests/test_adversarial_coverage.py`
+   (hand-written test functions per fixture family, mirroring
+   `tools/integrity/tests/test_adversarial_coverage.py:53-180` in form,
+   directly invoking the metric functions on each image pair). Placement
+   evidence (charter-v2, per the investigation audit
+   `docs/_audits/phase-3/sub-phase-phase-3-render-similarity-fixture-investigation-2026-05-28T12-09-40Z.md`):
+   - **Identical CI breadth/frequency** — `.github/workflows/integrity.yml:5-8`
+     and `.github/workflows/python-strict.yml:5-8` both trigger on
+     `push branches:[main]` + `pull_request` with **no path filters**; the
+     future `test-render-similarity` job (modeled on
+     `.github/workflows/python-strict.yml:67-96` (test-common-3dgs job)) inherits this trigger. Indirect regressions
+     (scikit-image / torch bumps, util refactors, any change with no
+     touch to `render_similarity/` files) are caught identically by both
+     workflows. There is **no coverage advantage** to centralizing in
+     integrity.
+   - **Cat 1-5 + Cat-X semantic-schema mis-fit** —
+     `docs/architecture.md:720-770` defines the integrity-toolkit
+     categories semantically: Cat 1 (citations), Cat 2 (contracts), Cat 3
+     **numerical correctness of vendored algorithm implementations
+     against golden tables / MMS** (`docs/architecture.md:724`), Cat 4
+     (draft-time grammars), Cat 5 (audit-link provenance), Cat-X
+     (tolerance-budget). Image-pair classification is not within Cat 3's
+     authoritative scope; the v9 amendment's `cat3_wrong_render_similarity/`
+     naming (`docs/phases/phase-3-plan.md:1250`) is naming-by-analogy
+     drift, not category fit. Wiring would require a new check module,
+     `_REGISTRY` entry (`tools/integrity/integrity/runner.py:28-37`), and
+     a new `tools/integrity → tools/testkit` dependency direction — none
+     architecturally supported.
+   - **Layer-0 architecture placement** — `docs/architecture.md:673`
+     positions `render_similarity/` as a Layer-0 testkit subdir,
+     parallel to `code_verification/`, `golden/`, `determinism/`,
+     `equivalence/`. The fixture pack co-locates with the metric it
+     verifies (architectural symmetry: cat fixtures co-locate with cat
+     handlers under integrity; render-similarity fixtures co-locate with
+     render-similarity under testkit).
 6. **Independent-reference anchors** for the metric implementations (D-ANCHOR):
    PSNR hand-derivation, SSIM Wang 2004 Eq. 13, LPIPS Zhang 2018 BAPPS subset
    (or self-consistency + 1 published reference).
@@ -132,7 +169,7 @@ to the common-3dgs charter's §6.1-internal-drift handling):
 |---|---|---|
 | Module location | `tools/testkit/equivalence/render_similarity.py` (`docs/phases/phase-3-plan.md:1212`, deliverable A `:1254`) + §3.1 row 2 (`:324`) | `tools/testkit/render_similarity/metrics.py` package per §3.2.2 (`:375`) + v8 locked-item-3 (`:64`) + v4 amendment-4 (`:75`) — **§3.2.2 governs on conflict; v8/v4 amendments concur** |
 | Branch / PR ceremony | `BASE BRANCH: phase-3-integration`, `phase-3/task-2-render-similarity`, `gh pr create`, MERGE PROTOCOL (`:1201-1202`, `:1273`) | trunk-based to `main` (v8 amendment `:46`); per-task PR cycle → matured Stage 1a / 1b / 1c / 2 cadence |
-| Adversarial-fixture path | `tools/integrity/tests/fixtures/adversarial/cat3_wrong_render_similarity/` (v9 amendment `:1250`) | testkit-local `tools/testkit/render_similarity/tests/fixtures/adversarial/` with its own meta-test mirroring `tools/integrity/tests/test_adversarial_coverage.py` — render-similarity is not an integrity check; placing the fixture under `tools/integrity/...` would silently break the integrity meta-test contract (probe §3.5) |
+| Adversarial-fixture path | `tools/integrity/tests/fixtures/adversarial/cat3_wrong_render_similarity/` (v9 amendment `:1250`) | testkit-local `tools/testkit/render_similarity/tests/fixtures/adversarial/` with its own meta-test mirroring `tools/integrity/tests/test_adversarial_coverage.py:53-180` in form. **Reframed evidence (charter-v2):** the v9 amendment's `cat3_wrong_` naming applied by analogy to existing cat3 fixtures, but Cat 3 is authoritatively defined at `docs/architecture.md:724` as **golden-value numerical correctness of vendored algorithm implementations** — image-pair classification is NOT within Cat 3's semantic scope. `docs/architecture.md:673` places `render_similarity/` under `tools/testkit/`, parallel to `code_verification/` / `golden/` / `determinism/` / `equivalence/` — i.e., Layer-0 testkit, not Layer-1 integrity. The (incorrect, charter-v1) "would silently break the integrity meta-test contract" rationale is REWRITTEN: the meta-test in `tools/integrity/tests/test_adversarial_coverage.py` is a series of **hand-written** test functions per fixture family with NO auto-discovery — dropping a new fixture directory there would NOT break anything; it would just sit inert. The correct rationale is the three-evidence stack: identical CI breadth/freq + Cat semantic mis-fit + arch.md Layer-0 placement (charter §1.1 item 5). |
 | Pre-dispatch-review gate | required for first dispatch (v9 `:34`) | RATIFIED-REMOVED at common-3dgs Stage 0 (`docs/_audits/phase-3/progress.md:31,36`) — does NOT regate this sub-phase |
 
 ## § 2 — Stage decomposition (matured cadence)
@@ -252,15 +289,27 @@ to the common-3dgs charter's §6.1-internal-drift handling):
       known-textbook pair with citation.
     - **Anchor 3 (LPIPS):** Zhang et al. 2018 BAPPS subset value OR self-
       consistency anchor + one published reference value, fully cited.
-  - **Adversarial fixtures** under `tools/testkit/render_similarity/tests/fixtures/adversarial/`:
+  - **Adversarial fixtures** under `tools/testkit/render_similarity/tests/fixtures/adversarial/`
+    (charter-v2 placement, per §1.1 item 5 evidence + investigation audit
+    `docs/_audits/phase-3/sub-phase-phase-3-render-similarity-fixture-investigation-2026-05-28T12-09-40Z.md`):
     (a) image pair that should be flagged DIFFERENT but where a buggy SSIM
     might pass; (b) image pair that should be flagged IDENTICAL but where a
     buggy LPIPS might fail. Each fixture dir carries a `manifest.json` with
     `{ "metric": "ssim"|"lpips"|..., "expected_classification":
     "different"|"identical", "fixture_files": [...] }`. Meta-test
     `tools/testkit/render_similarity/tests/test_adversarial_coverage.py`
-    iterates fixtures, runs the appropriate metric, asserts the
-    classification.
+    holds **hand-written test functions per fixture family**, mirroring
+    `tools/integrity/tests/test_adversarial_coverage.py:53-180` in form
+    (no auto-discovery loop — the integrity meta-test pattern is
+    hand-written-per-fixture; charter-v2 follows that precedent rather
+    than inventing a new convention). The future `test-render-similarity`
+    CI job (modeled on `.github/workflows/python-strict.yml:67-96` (test-common-3dgs job) in
+    `.github/workflows/python-strict.yml`) runs the meta-test on every
+    push to `main` + every PR — identical trigger / breadth / frequency
+    to what an integrity-homed meta-test would provide (§1.1 item 5
+    evidence; no path filters in either workflow). **No `run_cat3_render_similarity`
+    integrity handler is wired** (would fight the Cat 1-5 + Cat-X semantic
+    schema at `docs/architecture.md:720-770`).
   - Shared-file updates: `CHANGELOG.md` (additive entry under existing or new
     `### sub-phase-phase-3-render-similarity`); `docs/glossary.md` (PSNR /
     SSIM / LPIPS / perceptual loss); `.github/workflows/python-strict.yml`
@@ -572,18 +621,42 @@ File a blocker in the relevant stage audit; do not improvise through.
   perceptual losses for training (vs evaluation), and multi-scale variants
   beyond `ms_ssim` are OUT (`docs/phases/phase-3-plan.md:380`, §1.2). A stage
   tempted to implement them → STOP, defer to Phase 4.
-- **R-7 (integrity cat1/cat4).** This charter + audits are docs (cat4 draft-
-  time path:line); any probe report under `tools/testkit/probes/` is
-  cat1.intra-repo (full repo-relative paths;
-  `evidence_hashes`/`evidence_paths` are YAML **mappings**, not lists —
-  [[cat1-scans-probes-evidence-hashes-mapping]]). Run integrity --all +
-  verify_evidence before each commit; baseline must hold.
-- **R-8 (adversarial-fixture path under integrity/).** v9 amendment
+- **R-7 (integrity cat1/cat4).** This charter + audits are docs (cat4
+  draft-time path:line); any probe report under `tools/testkit/probes/`
+  is cat1.intra-repo (full repo-relative paths). **Front-matter shape
+  (charter-v2 correction):** `evidence_hashes:` is a YAML **MAPPING**
+  (path → sha256); `evidence_paths:` is a YAML **LIST** (of paths). The
+  two slots are distinct shapes and must not be conflated. Charter-v1
+  R-7 claimed both were mappings — that was wrong; verified against the
+  common-3dgs Stage-1c audit
+  (`docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-stage-1c-2026-05-28T03-25-29Z.md:10-22`)
+  which carries the canonical shape and passes verify_evidence
+  (16 pass / 0 fail). Run `integrity --all` + `verify_evidence` before
+  each commit; baseline must hold.
+- **R-8 (naming-convenience drift, NOT a coverage gap).** v9 amendment
   `docs/phases/phase-3-plan.md:1250` proposes `tools/integrity/tests/fixtures/adversarial/cat3_wrong_render_similarity/`.
-  Probe §3.5 finds this would silently break the integrity meta-test
-  contract (no `run_cat3_render_similarity` handler). Charter routes the
-  fixture pack to the testkit module under test (charter § 1.1 item 5);
-  surface only, not a `phase-3-plan.md` edit.
+  **Charter-v2 reframe (per the investigation audit):** the v9 location is
+  naming-convenience drift, not a coverage requirement. Cat 3 is
+  authoritatively defined at `docs/architecture.md:724` as
+  golden-value numerical correctness of vendored algorithm
+  implementations; image-pair classification is outside its semantic
+  scope. The two CI workflows that would gate the fixtures (integrity.yml
+  + python-strict.yml) trigger with **identical** breadth/frequency
+  (`on: push branches:[main], pull_request:`; no path filters in either)
+  — therefore **no coverage gap** is accepted by the testkit-local
+  placement. Risk owned here is small: the `test-render-similarity`
+  meta-test must be CI-wired in Stage 1b (modeled on
+  `.github/workflows/python-strict.yml:67-96` (test-common-3dgs job)); if that wiring is skipped, the fixtures sit
+  inert. Stage 1b's acceptance gate covers this. Surface only, not a
+  `phase-3-plan.md` edit (Convention M — architecture-spec authority
+  governs the location; the v9 amendment names by analogy, not by
+  category-fit). **Pre-existing observation (not introduced by this
+  sub-phase, not owned here):** `docs/architecture.md:768` declares the
+  integrity meta-test "is itself part of CI" but no current workflow
+  invokes `pytest tools/integrity/tests/` — render-similarity's
+  testkit-local meta-test does NOT inherit this gap (it lives in the
+  testkit pytest path, which IS CI-wired). Banked as a candidate
+  sibling sub-phase for future integrity-CI-coverage hygiene.
 
 ## § 8 — Open questions / forward-routing
 
