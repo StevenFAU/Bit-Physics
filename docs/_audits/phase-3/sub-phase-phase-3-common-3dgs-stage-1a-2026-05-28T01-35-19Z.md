@@ -3,7 +3,7 @@ date: 2026-05-28T01-35-19Z
 author: phase-3 common-3dgs stage-1a (Claude Code)
 subject: Phase 3 common-3dgs Stage 1a — scaffold + RED-failing-tests
 verdict: CONFIRMED
-head_sha: ed4e501783ba37cd3ff9664fb73feebfcc0fcde2
+head_sha: f19b525fd986bf4e2061cfb82c4d59bd344e0e90
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
