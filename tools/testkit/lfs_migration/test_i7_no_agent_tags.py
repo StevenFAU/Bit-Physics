@@ -44,7 +44,17 @@ OPERATOR_PHASE_TAGS = frozenset({"v0.0.0-phase-0", "v0.1.0-phase-1", "v0.2.0-pha
 # operator chose to push for a sub-phase meeting a D.2 condition. The agent
 # never adds tags here on its own behalf -- a new entry accompanies an
 # operator-pushed tag only.
-OPERATOR_NONPHASE_TAGS = frozenset({"v0.2.1-sub-phase-lfs-architecture"})
+OPERATOR_NONPHASE_TAGS = frozenset(
+    {
+        "v0.2.1-sub-phase-lfs-architecture",
+        # sub-phase-phase-3-common-3dgs landing (D-E ratified YES per charter
+        # section 3): (a) external dependency vendored at a pinned SHA (Inria
+        # gaussian-splatting at 54c035f7, NON-COMMERCIAL); (b) durable
+        # GaussianSplatModel / render / Camera API consumed unchanged by
+        # task-8 (3dgs-mpm) and Phase-4 WU-C. Operator-pushed at landing.
+        "v0.2.2-sub-phase-phase-3-common-3dgs",
+    }
+)
 
 OPERATOR_SANCTIONED_TAGS = OPERATOR_PHASE_TAGS | OPERATOR_NONPHASE_TAGS
 
