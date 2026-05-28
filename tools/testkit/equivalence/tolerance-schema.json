@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bit-physics.local/schemas/tolerance-v1.json",
   "title": "Equivalence tolerance table",
-  "description": "Cross-stack equivalence tolerance table (spec § 2.6). Per-category defaults + optional per-sim overrides.",
+  "description": "Cross-stack equivalence tolerance table (spec § 2.6). Per-category defaults + optional per-sim overrides. Phase-3 additive extension: render-similarity thresholds per (category, sim) under top-level `render_similarity` (D-SCHEMA Stage-1a lean; schema only, no Phase-3 rows — tasks 6 and 8 add rows).",
   "type": "object",
   "additionalProperties": false,
   "required": ["defaults"],
@@ -30,6 +30,38 @@
           "category": { "type": "string", "minLength": 1 },
           "relative": { "type": "number", "minimum": 0.0 },
           "absolute": { "type": "number", "minimum": 0.0 }
+        }
+      }
+    },
+    "render_similarity": {
+      "type": "object",
+      "description": "Phase-3 additive extension (D-SCHEMA). Render-similarity thresholds per (category, sim). PSNR/SSIM are floor-thresholds (`*_min`; larger = more similar); LPIPS is a ceiling-threshold (`lpips_max`; smaller = more similar). Phase-3 §2.12 quality floors: PSNR ≥ 28 dB, SSIM ≥ 0.85, LPIPS ≤ 0.15. Tasks 6 and 8 add rows; this sub-phase (render-similarity) ships the schema only.",
+      "additionalProperties": {
+        "type": "object",
+        "description": "Per-category render-similarity table (key = sim category, e.g. `continuous-ca` or `neural-rendered`).",
+        "additionalProperties": {
+          "type": "object",
+          "description": "Per-sim render-similarity thresholds (key = sim short-name).",
+          "additionalProperties": false,
+          "required": ["psnr_min", "ssim_min", "lpips_max"],
+          "properties": {
+            "psnr_min": {
+              "type": "number",
+              "minimum": 0.0,
+              "description": "PSNR floor (dB); sim PASSES if measured PSNR >= psnr_min. Phase-3 §2.12 floor = 28 dB."
+            },
+            "ssim_min": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "SSIM floor; sim PASSES if measured SSIM >= ssim_min. Phase-3 §2.12 floor = 0.85."
+            },
+            "lpips_max": {
+              "type": "number",
+              "minimum": 0.0,
+              "description": "LPIPS ceiling; sim PASSES if measured LPIPS <= lpips_max. Phase-3 §2.12 ceiling = 0.15."
+            }
+          }
         }
       }
     }

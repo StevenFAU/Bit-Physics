@@ -93,3 +93,16 @@ category = "smoke"
 # Cross-stack-non-trivial surface: the fixed-cap (n_jacobi=20) Jacobi
 # pressure-projection FP-accumulation (deferred IC-15 aspect #5, in its
 # determinism-safe fixed-iteration-count form — D5).
+
+# -----------------------------------------------------------------------------
+# Phase-3 render-similarity thresholds (D-SCHEMA Stage-1a lean; SCHEMA ONLY).
+# -----------------------------------------------------------------------------
+# Section family: `[render_similarity.<category>.<sim>]` with keys
+# `psnr_min` (dB floor), `ssim_min` ([0,1] floor), `lpips_max` (ceiling, ≥0).
+# §3.2.2 contract; §2.12 quality floors PSNR≥28 / SSIM≥0.85 / LPIPS≤0.15.
+# Validated by `tolerance-schema.json` under top-level `render_similarity`.
+#
+# render-similarity (task-2) ships the SCHEMA only. Per-sim rows are added by
+# the CONSUMING sim sub-phases (task-6 NCA D↔B equivalence; task-8 MPM-3DGS
+# golden-render gate) at their own dispatch. Adding a row here without a
+# consumer is OUT OF SCOPE for this sub-phase (charter § 1.2).
