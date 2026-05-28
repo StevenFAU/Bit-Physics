@@ -6,9 +6,10 @@ phase: phase-3
 head_sha_at_draft: e12685dbbfdc5ae20d5e9137a3fd269670a59139
 prior_sub_phase_tag: v0.2.4-sub-phase-phase-3-lenia
 prior_phase_tag: v0.2.0-phase-2
-version: charter-v1 (2026-05-28T19-08-34Z plan-drafting)
+version: charter-v2 (2026-05-28T21-00-21Z charter-revision)
 revisions:
   - v1 (2026-05-28T19-08-34Z) — second Phase-3 SIM + first Stack-B SIM in Phase 3; D-WEBGPU-DET bit-exact-same-stack-same-hw + D-WIDE-TOL within-budget + D-PBT two-invariants + D-ANCHOR closed-form + D-DET-REGISTRY first-lattice-spin + D-HARNESS-LAYOUT + D-CI + D-LAYOUT + D-TOL-SCHEMA + D-TAG YES leans seated.
+  - v2 (2026-05-28T21-00-21Z) — operator surfaced D-HARNESS-LAYOUT as convention-level (vitest vs pytest-against-captures), not layout-level. Charter-revision investigation (`docs/_audits/phase-3/sub-phase-phase-3-ising-classical-harness-investigation-2026-05-28T21-00-21Z.md`) DECIDED on evidence: **pytest-against-captures per RD-2D Phase-0 precedent**; §6.3a M.4 "pnpm vitest" call recorded as §0.3 SHIFT-from-discovered drift (§3.2.7 prescription's `pnpm -F <sim-package> test` precondition unrealized at HEAD: no root `pnpm-workspace.yaml`; RD-2D has no `package.json`). D-HARNESS-LAYOUT RESOLVED-IN-CHARTER; STOP-HARNESS unreachable; D-CI re-routed to `python-strict.yml/test-ising-classical` (mirror lenia precedent). D-TAG FLIPPED to RESOLVED-IN-CHARTER **NO** per operator routing: per-sub-phase tagging discontinued, phase-close-only going forward; Stage 2 closing-sweep + landing audit stand without tag proposal or I7 allowlist extension. L-ISING-AUDIT-HYGIENE banked (2 session-1 ising audits used literal `at-head` in evidence_hashes; sealed, routed to separate audit-citation-hygiene cluster session).
 posture: >
   Fourth Phase-3 sub-phase. **First Stack-B SIM in Phase 3** (after
   common-3dgs Stack-E infra `v0.2.2`, render-similarity Python testkit
@@ -93,8 +94,8 @@ time end-to-end in Phase 3** — the following Stack-B-specific surfaces:
 | Surface | First-Stack-B exercise | Friction predicts |
 |---|---|---|
 | `packages/ising-classical/` (Stack-B sim package; D-LAYOUT) — RD-2D Stack-B precedent at `packages/reaction-diffusion-2d/` is Phase-0 (Stack-B impl inside a Python pyproject layout with no `package.json`); lenia precedent at `packages/lenia/` is Stack-D | first Phase-3 Stack-B sim package | Stack-B half of task-6 NCA; Phase-5 web-deploy lift of every Phase-3 sim |
-| **vitest discovery scope** (`common/common-ts/vitest.config.ts:6` includes only `src/**/*.test.ts` + `examples/**/*.test.ts` under `common/common-ts/`) — Ising tests at `packages/ising-classical/**/*.test.ts` are **NOT** discovered by `pnpm vitest run` from `common/common-ts/` | first Phase-3 Stack-B sim test suite (RD-2D tests via pytest against captured fixtures; no `*.test.ts` files anywhere under `packages/`) | Stack-B half of task-6 NCA; every Phase-5 sim that lifts to Stack-B |
-| `.github/workflows/ts-strict.yml` `test-ising-classical` job (§6.3a literal calls for `build-ts.yml`; doesn't exist) | first per-sim Stack-B CI job | every later Stack-B SIM CI job |
+| **vitest discovery scope** (`common/common-ts/vitest.config.ts:11` includes only `src/**/*.test.ts` + `examples/**/*.test.ts` under `common/common-ts/`). **Charter-v2 update:** D-HARNESS-LAYOUT resolved — ising follows RD-2D pytest-against-captures precedent, so this surface is observed but NOT consumed (no `*.test.ts` files under `packages/ising-classical/`). | first Phase-3 Stack-B sim test suite (RD-2D tests via pytest against captured fixtures; no `*.test.ts` files anywhere under `packages/`) | Stack-B half of task-6 NCA; every Phase-5 sim that lifts to Stack-B |
+| `python-strict.yml` `test-ising-classical` job per harness DECISION + lenia precedent (charter-v2 routes here, NOT `ts-strict.yml`; §6.3a M.4's `build-ts.yml` literal records as §0.3 SHIFT-from-discovered) | first lattice-spin per-sim CI job | every later lattice-spin SIM CI job |
 | **Stack-B determinism harness** `runTwiceAndDiff` from `common/common-ts/src/determinism/index.ts:1-10` — counterpart of lenia's `np.array_equal` Stage-1b two-run check | first SIM use of `runTwiceAndDiff` in Phase 3 (`hello-physics` example exercises the harness on the common-ts side) | every later Stack-B SIM determinism MEASURE |
 | **WebGPU PCG per-cell PRNG state** — sim ships its own; checkerboard sublattice update has no atomics, no subgroup ops (`packages/reaction-diffusion-2d/src/gray_scott.wgsl:8-9` confirms the bit-exact-same-hw posture for Stack-B) | first SIM PRNG in WGSL | every later Stack-B SIM needs deterministic PRNG |
 | `tools/testkit/golden/tables/ising-{critical-temperature, magnetization-curve}.json` (≥3 independent-reference anchors per §2.4) | first lattice-spin golden table in Phase 3 (lenia has continuous-ca) | every later Stack-B SIM ships golden tables (NCA inference, web-deploy validation) |
@@ -124,8 +125,9 @@ Future Stack-B sub-phases inherit the resolution.
 | § 3.2.6 CLI conventions + § 3.2.7 fixtures + § 3.2.8 spec-sheet + § 3.2.9 tier-3 + § 3.2.10 CI workflow shape + § 5.4 13-gate | `docs/phases/phase-3-plan.md:507-528` + `:530-538` + `:539-555` + `:556-578` + `:580+` + `:988-1007` | inherited unchanged |
 | § 6.3a ANCHOR-PROBE step "BASE BRANCH: phase-3-integration" / "YOUR BRANCH: phase-3/task-3a-ising-classical" / `gh pr create` (if present per task-3 precedent) | `docs/phases/phase-3-plan.md:1393-1396` + `:46` | **v8 trunk-based amendment supersedes** — commit directly to `main`, no PR, no merge step. Surface-only re-frame per Convention M. |
 | § 6.3a ANCHOR-PROBE 5 "File probe at `tools/testkit/probes/reports/ising-classical.md`" | `docs/phases/phase-3-plan.md:1445` | Stage 1a writes the impl-probe at the canonical location; this plan-drafting probe lives in `docs/_audits/phase-3/` and is the plan-time predecessor (lenia precedent). |
-| § 6.3a M.4 `.github/workflows/build-ts.yml (test-ising-classical job)` | `docs/phases/phase-3-plan.md:1516` | **§0.3 SHIFT-from-discovered (surface)**: `build-ts.yml` does NOT exist at HEAD (probe §2.6); active Stack-B workflow is `ts-strict.yml`. **D-CI** resolves at Stage 1b. NO plan edit unilateral. |
+| § 6.3a M.4 `.github/workflows/build-ts.yml (test-ising-classical job)` | `docs/phases/phase-3-plan.md:1516` | **§0.3 SHIFT-from-discovered (surface)** charter-v1: `build-ts.yml` absent. **v2 RE-FRAME:** the right workflow for ising tests is `python-strict.yml` (pytest-against-captures per harness DECISION); `build-ts.yml` would have been the wrong CI surface even if it existed (sim tests don't belong in a TypeScript-strict gate). **D-CI** routes the `test-ising-classical` job into `python-strict.yml` per lenia precedent. NO plan edit unilateral. |
 | § 6.3a B-D literal "lattice-spin/ising-classical/typescript/" | `docs/phases/phase-3-plan.md:1423` + `:1456` + `:1466` | **§0.3 SHIFT-from-discovered (layout)**: lenia hit the same shape (plan §6.3 "continuous-ca/lenia/python/"); D-LAYOUT-resolved-on-evidence to `packages/lenia/` per existing-convention precedence ([[phase-3-lenia-sub-phase-landed]]). **D-LAYOUT** routes the same way for ising; lean `packages/ising-classical/`. NO plan edit unilateral. |
+| § 6.3a C `pnpm vitest run lattice-spin/ising-classical/typescript/tests/` | `docs/phases/phase-3-plan.md:1458` | **§0.3 SHIFT-from-discovered (convention) — charter-v2:** RD-2D (only Stack-B sim at HEAD) ships zero `*.test.ts` under `packages/`; its tests are pytest in `packages/reaction-diffusion-2d/tests/test_*.py` (capture-round-trip vs NumPy reference per `packages/reaction-diffusion-2d/tests/test_code_verification.py:1-5` + `packages/reaction-diffusion-2d/tests/test_determinism.py:1-7`). §6.3a's vitest call inherits plan §3.2.7's per-stack prescription whose `pnpm -F <sim-package> test` precondition is **unrealized at HEAD** (no root `pnpm-workspace.yaml`; RD-2D has no `package.json`). Ising follows RD-2D pytest-against-captures precedent per spec §7.8. D-HARNESS-LAYOUT RESOLVED-IN-CHARTER; NO plan edit unilateral. |
 | § 6.3a M.5 `tools/testkit/equivalence/tolerance.toml (lattice-spin.ising row: critical_temp_rel=1e-3 ..., magnetization_rel=5e-2 ...)` | `docs/phases/phase-3-plan.md:1517-1521` | **§S schema-fit live**: the named keys `critical_temp_rel` + `magnetization_rel` are sim-specific, NOT the generic `relative`+`absolute` override pair. Lenia's prior schema-fix banked `golden_tolerance` as a new branch — **D-TOL-SCHEMA** routes whether ising's MC observables get their own branch or live as additive keys under `overrides.ising-classical`. |
 
 ## § 2 — Stage cadence
@@ -163,9 +165,9 @@ workflow row, intermediate tag.
 | Probe report | `tools/testkit/probes/reports/ising-classical.md` per `tools/testkit/probes/template.md` — enumerate `common/common-ts/` API surfaces consumed (`createContext`, `ComputePipeline`, `makeBindGroup{,Layout}`, `CaptureWriter`, `manifestPathFor`, `runTwiceAndDiff`); WebGPU determinism declaration (no atomics; no subgroup ops; PCG per-cell state); DOI-resolution re-verify at Stage-1a fetch time (Onsager + Yang + Kramers-Wannier; STOP-DOI if any 404) |
 | Spec-ref stub | `docs/sim-specs/lattice-spin/ising-classical/spec-ref.md` — 12-section template per `docs/phases/phase-3-plan.md:539-555` § 3.2.8; § 6 declares ≥ 2 PBT invariants (`magnetization_bounded`: `\|m\| ≤ 1` + `energy_per_spin_bounded`: `E/N ∈ [-2, 2]` per § 6.3a A + I); rest may be stub-filled with `TODO(Stage-1b)` markers |
 | D-LAYOUT decision | **packages/ising-classical/** (lean: existing-convention precedence per [[phase-3-lenia-sub-phase-landed]] D-LAYOUT) — Stage 1a creates the directory skeleton at the resolved location |
-| D-HARNESS-LAYOUT decision | **Lean (A): test files live INSIDE `common/common-ts/src/sims/ising-classical/__tests__/`** — keeps vitest discovery default-config compatible (covered by `src/**/*.test.ts`). Stage 1a probes whether the RD-2D pattern (NO `*.test.ts` under `packages/`; tests via pytest against captured fixtures) is acceptable, or whether a vitest-discoverable layout is required by §6.3a literal "pnpm vitest run lattice-spin/ising-classical/typescript/tests/". STOP-HARNESS if neither RD-2D's pytest-only pattern NOR a vitest-discoverable layout can be reconciled with §6.3a |
-| Failing TDD tests | per harness lean: `pnpm vitest run <resolved-test-path> 2>&1 \| tee tools/testkit/failing-tests-evidence/ising-classical-<UTC>.txt`; failure mode MUST be `Cannot find module …` / `not implemented` (NOT collection error); `sha256sum` the evidence file; commit footer carries `Failing-tests-output: …` + `Failing-tests-output-hash: sha256:…` per § 6.0 item 6 + spec § 1.3 step 4. Recipe per render-similarity Stage 1a (sha256 byte-reproducible recipe: vitest output post-format `sed` for trailing-whitespace normalization) |
-| §0.3 SHIFT-from-discovered carry | Stage-1a audit re-confirms D-CI (`ts-strict.yml` vs `build-ts.yml`) + D-LAYOUT (`packages/ising-classical/` vs §6.3a literal) + D-HARNESS-LAYOUT (vitest discovery scope). Surface for charter §1.2 update at Stage 1b if any reverse-on-evidence |
+| Test harness | **pytest-against-captures per RD-2D Phase-0 precedent — RESOLVED-IN-CHARTER-v2** (`docs/_audits/phase-3/sub-phase-phase-3-ising-classical-harness-investigation-2026-05-28T21-00-21Z.md`). Tests live at `packages/ising-classical/tests/test_*.py` (pytest convention with `conftest.py` + `__init__.py`); each test reads the canonical capture via `load_capture` (mirror `packages/reaction-diffusion-2d/tests/test_code_verification.py:32-50`) and asserts against a NumPy reference Metropolis sim, golden tables, and Hypothesis PBT. **NO `*.test.ts` files under `packages/ising-classical/`.** vitest stays out-of-scope for sim testing in this project (library-only at `common/common-ts/`). |
+| Failing TDD tests | `uv run pytest packages/ising-classical/tests/ -v 2>&1 \| tee tools/testkit/failing-tests-evidence/ising-classical-<UTC>.txt`; failure mode MUST be `ModuleNotFoundError` / `NotImplementedError` (NOT pytest collection error / fixture-import error); `sha256sum` the evidence file; commit footer carries `Failing-tests-output: …` + `Failing-tests-output-hash: sha256:…` per § 6.0 item 6 + spec § 1.3 step 4. Recipe per lenia Stage 1a (sha256 byte-reproducible — pytest output through standard normalization mirror) |
+| §0.3 SHIFT-from-discovered carry | Stage-1a audit re-confirms D-LAYOUT (`packages/ising-classical/` vs §6.3a literal) + D-CI (`python-strict.yml` `test-ising-classical` job per harness DECISION + lenia precedent, NOT `build-ts.yml` or `ts-strict.yml`). D-HARNESS-LAYOUT no longer carried — RESOLVED at charter-v2. Surface for charter §1.2 update at Stage 1b if any reverse-on-evidence |
 | Stage-1a audit + progress entry + SHA back-fill | per Convention #12 |
 
 **RED state expected:** every test in the resolved test-suite location
@@ -177,22 +179,23 @@ captured.
 
 | Surface | Operation |
 |---|---|
-| WebGPU impl | `packages/ising-classical/src/index.ts` + `packages/ising-classical/src/metropolis.wgsl` (or D-LAYOUT-resolved location) — parallel-Metropolis WGSL kernel with **checkerboard sublattice** update (standard parallel-Metropolis preserving detailed balance per Glauber dynamics); 128×128 grid default; periodic boundary conditions; configurable T / J / h via `Params` uniform; **PCG per-cell PRNG state** (no atomics; no subgroup ops); capture I/O via `CaptureWriter`; commit footer carries `Implements-failing-tests-from: <Stage-1a-commit-sha>` + `Failing-tests-output-hash-witnessed: sha256:<same-hex>` |
-| Reference impl | `packages/ising-classical/<sim_underscore>/reference/` Python / NumPy reference for golden-value generation + Tier-3 cross-stack equivalence (RD-2D pattern at `packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/`) |
+| WebGPU impl (local-only per spec §7.8) | `packages/ising-classical/src/index.ts` + `packages/ising-classical/src/metropolis.wgsl` — parallel-Metropolis WGSL kernel with **checkerboard sublattice** update (standard parallel-Metropolis preserving detailed balance per Glauber dynamics); 128×128 grid default; periodic boundary conditions; configurable T / J / h via `Params` uniform; **PCG per-cell PRNG state** (no atomics; no subgroup ops); capture I/O via `CaptureWriter` (`common/common-ts/src/capture.ts`); produces the canonical capture at `captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.{h5,json}` (RD-2D pattern at `packages/reaction-diffusion-2d/src/index.ts:6-8` — "Phase 0 CI excludes WebGPU-device-requiring tests per spec section 7.8"); commit footer carries `Implements-failing-tests-from: <Stage-1a-commit-sha>` + `Failing-tests-output-hash-witnessed: sha256:<same-hex>` |
+| NumPy reference impl (CI oracle) | `packages/ising-classical/ising_classical/reference/` — Python/NumPy reference Metropolis sim for golden-value generation + Tier-3 cross-stack equivalence + pytest oracle. Mirror RD-2D's `packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/`. **This is the CI-visible oracle** (the WGSL impl runs locally only); pytest in `packages/ising-classical/tests/` reads the canonical capture + runs the NumPy reference + asserts via `diff_captures` (mirror `packages/reaction-diffusion-2d/tests/test_code_verification.py:32-50`) |
+| pytest test suite | `packages/ising-classical/tests/` — pytest convention with `conftest.py` + `__init__.py` + `test_code_verification.py` (capture-round-trip vs NumPy reference) + `test_determinism.py` (run_twice_and_diff on NumPy reference per RD-2D `packages/reaction-diffusion-2d/tests/test_determinism.py:5-7`) + `test_pbt_invariants.py` (Hypothesis PBT) + `test_diagnostics.py` (Tier 1/2/3) + `test_reference_sanity.py`. **NO `*.test.ts` files anywhere under `packages/ising-classical/`** (D-HARNESS-LAYOUT RESOLVED-v2 per harness investigation) |
 | Spec-ref full | `docs/sim-specs/lattice-spin/ising-classical/spec-ref.md` — § 6 declares ≥2 PBT invariants per §2.14 |
 | Golden tables (≥3 independent-reference anchors per §2.4) | `tools/testkit/golden/tables/ising-critical-temperature.json` (Onsager exact `T_c = 2/ln(1+√2) ≈ 2.269185`); `tools/testkit/golden/tables/ising-magnetization-curve.json` (Yang exact `m(T) = (1 − sinh⁻⁴(2β))^(1/8)` tabulated at T ∈ {0.5, 1.0, 1.5, 2.0, 2.2, 2.25}). Each anchor carries `independent_reference` JSON field with source + DOI (Crossref-verified, see probe §3) + page. Three anchors per table per § 4 below. STOP-D-ANCHOR if any anchor cannot be grounded without large fetch or fabrication. |
 | Golden derivations | `tools/testkit/golden/derivations/ising-onsager.md` — hand-derivation of Kramers-Wannier duality `sinh(2β_c) = 1` + Onsager closed-form + Yang closed-form citations |
 | Tier-3 diagnostic module | `tools/diagnostics/tier3/ising-classical/__init__.py` per §3.2.9 (RD-2D-stack-d-style `diagnose()` entry consuming a Layer-0 `.h5` capture) — magnetization tracking per step + energy per spin + autocorrelation diagnostic (document critical slowing-down; do not gate per §6.3a H) |
 | PBT | `tools/testkit/property/sims/ising-classical/` — ≥2 invariants per §2.14 + §6.0 item 7 (`magnetization_bounded` + `energy_per_spin_bounded`); Hypothesis examples DB at `.hypothesis/` committed (NOT gitignored) |
 | Tolerance + determinism rows | `tools/testkit/equivalence/tolerance.toml` add `[overrides.ising-classical]` with `category = "lattice-spin"` + `critical_temp_rel = 1e-3` + `magnetization_rel = 5e-2` (per §6.3a M.5); add `[defaults.lattice-spin]` block if needed by the schema validator (D-TOL-SCHEMA decides whether the named tolerances need a new `[overrides.ising-classical.<branch>]` shape per the §S precedent); `tools/testkit/determinism/registry.toml` add `[lattice-spin.ising-classical]` (Stack B, bit-exact, same-stack-same-hw, atomic_ops=none, subgroup_ops=none, seed_pinned=true) |
-| D-DET MEASURE | `runTwiceAndDiff` from `common/common-ts/src/determinism/index.ts:1-10`: run the WebGPU Metropolis sim twice with pinned seed=42 / T=2.27 / steps=10000 / 128² grid → assert byte-identical capture payloads + identical sha256s. Mirrors lenia Stage-1b D-DET measure (`np.array_equal`). **STOP-DET if NOT bit-exact** — surface and re-characterize as `distributional` + EFECT bound (Hard-Rule-2; precedent smoke-stack-e gate-14). Note: WebGPU on CI runners has no GPU per spec §7.8; Stage-1b D-DET MEASURE may need to run against the WGPU node fallback or be deferred to a local-only verification with an in-charter caveat (D-DET-RUNTIME — surfaced at Stage 1b probe) |
+| D-DET MEASURE | **Two-layer determinism oracle per RD-2D precedent.** **Layer 1 (CI-visible, load-bearing oracle):** `run_twice_and_diff(sim_runner=reference.sim_runner_seeded, seed=42, tmp_dir)` on the NumPy reference (mirror `packages/reaction-diffusion-2d/tests/test_determinism.py:24-28`) — `np.array_equal` on the two captures' state arrays + identical sha256s; pytest-asserted in `packages/ising-classical/tests/test_determinism.py`. **Layer 2 (local-only per spec §7.8):** WGSL kernel run twice locally with pinned seed=42 / T=2.27 / steps=10000 / 128² grid → assert byte-identical capture payloads; recorded in the Stage-1b audit but NOT in CI (D-DET-RUNTIME unchanged from charter-v1 — spec §7.8 documents CI no-GPU; RD-2D landed Phase 0 with this same split). **STOP-DET if Layer 1 (NumPy reference) is NOT bit-exact** — surface and re-characterize as `distributional` + EFECT bound (Hard-Rule-2; precedent smoke-stack-e gate-14). |
 | Tolerance-budget compliance (Cat-X) | If `critical_temp_rel=1e-3` or `magnetization_rel=5e-2` exceeds an existing `[budgets.lattice-spin.<axis>]` cap → STOP-CAT-X; surface separate `chore(tolerance-budget): amend …` commit per § 6.0 item 2; do NOT widen unilaterally. **L-LTSF-3 in-scope.** Lean: budget block doesn't exist; per-named-axis tolerance lives off-budget per lenia precedent — no amendment needed. Verify at Stage 1b |
 | Perf-ledger row | `docs/perf-ledger.md` append `\| ising-classical \| typescript (WebGPU) \| metropolis-128sq-T2.27-seed42-step10000 \| <wall-clock> \| <hw-id> \| <commit-sha> \| <date> \| baseline \|` per §6.0 item 9 |
 | Schema-corpus seed | `tests/fixtures/legacy-captures/phase-3-ising-classical.h5` + sidecar `phase-3-ising-classical.json` per §6.0 item 10. **LFS pointer + R2 mirror** — see § 1.1 friction surfacing; **STOP-LFS** if R2-push fails (do NOT revert per [[phase-3-common-3dgs-stage-1c-shifted-stop-lfs]] precedent + [[phase-3-lenia-sub-phase-landed]] STOP-LFS resolution). LFS-push recipe: `git -c lfs.standalonetransferagent= push` + separate `git lfs push --object-id --stdin origin`. §Q bootstrap from Stage 0 expected to make this succeed first try per [[phase-3-r2-credentials-durability-fix-landed]] |
 | Cat 1, 2 gates green + Cat-X tolerance-budget compliance | per §6.3a L + §6.0 item 2 |
-| Shared files | `README.md` (root + `packages/ising-classical/README.md`); `CHANGELOG.md`; `docs/glossary.md` (Ising, Metropolis-Hastings, detailed balance, critical temperature, Onsager solution, Kramers-Wannier duality, parallel-Metropolis checkerboard); `justfile` (`run-ising-classical`, `test-ising-classical`); CI workflow (D-CI: extend `ts-strict.yml` with a `test-ising-classical` job OR create `build-ts.yml` per §6.3a literal — lean: extend `ts-strict.yml` per existing-convention precedence) |
+| Shared files | `README.md` (root + `packages/ising-classical/README.md`); `CHANGELOG.md`; `docs/glossary.md` (Ising, Metropolis-Hastings, detailed balance, critical temperature, Onsager solution, Kramers-Wannier duality, parallel-Metropolis checkerboard); `justfile` (`run-ising-classical`, `test-ising-classical`); CI workflow — **extend `.github/workflows/python-strict.yml` with a `test-ising-classical` job per harness DECISION + lenia precedent** (`python-strict.yml/test-lenia`). `ts-strict.yml` stays out-of-scope (common-ts library only); §6.3a M.4's "build-ts.yml" remains §0.3 SHIFT-from-discovered (would have been the wrong CI surface even if it existed). |
 | Thirteen-gate verdict | per §5.4 / spec §3.5 v2.4 — 1 spec-sheet, 2 probe-report, 3 failing-tests, 4 implementation, 5 tests-pass-anchors, 6 Tier-1/2/3, 7 capture-I/O, 8 perf-bench, 9 Cat-1-5+Cat-X, 10 audit-report, 11 PBT, 12 first-landing-wall-clock-in-perf-ledger, 13 failing-tests-replay-verifiable. **All 13 PASS for sim acceptance.** |
-| §S.5 all-workflow post-push poll | within ~2 min of pushing the chain, `gh run list --commit "$(git rev-parse HEAD)" --limit 30` shows 0 failing required across all push-triggered workflows; STOP-CI-RED otherwise |
+| §S.5 all-workflow post-push poll | within ~2 min of pushing the chain, `gh run list --commit "$(git rev-parse HEAD)" --limit 30` shows 0 failing required across all push-triggered workflows; STOP-S5-CI-RED otherwise. The new `python-strict/test-ising-classical` job is among the required surfaces. |
 | Stage-1b audit + progress entry + SHA back-fill | per Convention #12 |
 
 ### Stage 1c — Verdict landing (NO mutation gate)
@@ -209,56 +212,62 @@ captured.
 | §S.5 all-workflow post-push poll | per Stage 1b |
 | Stage-1c audit + progress entry + SHA back-fill | per Convention #12 |
 
-### Stage 2 — Sub-phase landing audit + I7 allowlist extension + closing sweep + operator-tag proposal
+### Stage 2 — Sub-phase landing audit + closing sweep (NO tag, NO I7 allowlist extension — D-TAG flipped NO in charter-v2)
 
 | Surface | Operation |
 |---|---|
-| Landing audit | `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-landing-<UTC>.md` consolidating plan-drafting + probe + Stage-0/1a/1b/1c via `evidence_hashes:` mapping (does NOT re-narrate). Verdict per §2.15 graded variants (closed-green / closed-with-shifted-N / closed-with-blockers-N) |
-| I7 allowlist extension | append `v0.2.5-sub-phase-phase-3-ising-classical` to `OPERATOR_NONPHASE_TAGS` in `tools/testkit/lfs_migration/test_i7_no_agent_tags.py` (mirror common-3dgs `c761aa9` + render-similarity `596eb73` + lenia `fcf8546`). Guard mechanism UNCHANGED — mutation-probed (fake `agent/v0.0.42-fake` still rejected). Test 2/2 GREEN |
-| Closing sweep | Cat-X tolerance-budget; integrity baseline byte-identical (`688bc195…d22cb52` or its measured-at-landing successor per §R); append-only 0 M/D vs `v0.2.0-phase-2` (sanctioned M against the in-Phase-3 progress.md is allowed per common-3dgs + lenia precedent); failing-tests replay MATCH; perf-ledger present; closing anchor re-check Convention 7.9. Pytest GREEN; vitest GREEN |
-| Tag proposal | `v0.2.5-sub-phase-phase-3-ising-classical` (D-TAG ratified YES; § 3 D-TAG rationale). **Operator-pushed only** (I7); agent does NOT tag. Pre-tag checklist documented in landing audit § 9 mirror. Form: annotated (`git tag -a`), NOT signed |
-| §S.5 all-workflow post-push poll | per Stage 1b/1c |
-| Banks carried forward | L-3DGS-1 (consumed at render-similarity Stage 1c — not relevant here; Ising is not neural-rendered). SIBLING-FIXTURE-LFS (carried forward; Ising's `.h5` push exercises the same LFS/R2 pipeline; if successful, increments the corpus by one — does NOT close the sibling sub-phase). integrity-meta-test-ci-wiring (carried forward; Ising's testkit/property/sims/ising-classical/ rides the existing pytest-testpaths machinery — does NOT inherit the gap). L-LMSF-3 (locale.getdefaultlocale CLI -W friction — Stack-B uses vitest not pytest, so the python-strict `-W` toggle is not exercised; **L-LMSF-3 NOT IN-SCOPE here**). audit-citation-hygiene cluster banks the pre-existing 1-fail on lenia-mypy-strict-fix evidence_hashes |
+| Landing audit | `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-landing-<UTC>.md` consolidating plan-drafting + harness-investigation + probe + Stage-0/1a/1b/1c via `evidence_hashes:` mapping (does NOT re-narrate). Verdict per §2.15 graded variants (closed-green / closed-with-shifted-N / closed-with-blockers-N) |
+| ~~I7 allowlist extension~~ | **REMOVED in charter-v2.** Per operator routing this session: per-sub-phase tagging discontinued going forward; no tag at this landing, so no allowlist entry to add. `test_i7_no_agent_tags.py` is not edited. I7 guard mechanism UNCHANGED at HEAD. |
+| Closing sweep | Cat-X tolerance-budget; integrity baseline byte-identical (`688bc195…d22cb52` or its measured-at-landing successor per §R); append-only 0 M/D vs `v0.2.0-phase-2` (sanctioned M against the in-Phase-3 progress.md is allowed per common-3dgs + lenia precedent); failing-tests replay MATCH; perf-ledger present; closing anchor re-check Convention 7.9. **Pytest GREEN** is the load-bearing assertion (vitest is library-only at `common/common-ts/`; ising adds no `*.test.ts` files so no new vitest surface to assert green). |
+| ~~Tag proposal~~ | **REMOVED in charter-v2.** D-TAG flipped to RESOLVED-IN-CHARTER **NO** per operator routing: per-sub-phase tagging discontinued; phase-close-only going forward. Stage 2 closes without proposing `v0.2.5-sub-phase-phase-3-ising-classical`. The phase-close tag is operator work at Phase 3 close (`v0.3.0-phase-3` or equivalent), not this sub-phase's deliverable. |
+| §S.5 all-workflow post-push poll | per Stage 1b/1c. The closing chain's post-push poll is the same surface — all required workflows green at chain-tip. |
+| Banks carried forward | L-3DGS-1 (consumed at render-similarity Stage 1c — not relevant here; Ising is not neural-rendered). SIBLING-FIXTURE-LFS (carried forward; Ising's `.h5` push exercises the same LFS/R2 pipeline; if successful, increments the corpus by one — does NOT close the sibling sub-phase). integrity-meta-test-ci-wiring (carried forward; Ising's pytest tests at `packages/ising-classical/tests/` ride the existing pytest-testpaths machinery — does NOT inherit the gap). L-LMSF-3 (locale.getdefaultlocale CLI -W friction — Ising IS in scope per harness DECISION, because the new `python-strict/test-ising-classical` job runs pytest just like `test-lenia` did. Lenia's `-W error` fix at commit `228cccd` (dropping CLI -W in favor of pyproject filterwarnings) is the precedent; ising's pyproject inherits the same posture). **L-ISING-AUDIT-HYGIENE** (banked at charter-v2 — 2 session-1 ising audits used literal `at-head` in evidence_hashes; sealed, routed to separate audit-citation-hygiene cluster session). |
 | Stage-2 audit + progress entry + SHA back-fill | per Convention #12 |
 
-## § 3 — D-TAG argument (intermediate tag at Stage 2)
+## § 3 — D-TAG decision (intermediate tag at Stage 2) — RESOLVED NO in charter-v2
 
-**(FACT — `docs/conventions/sub-phase-conventions.md` § D.2)**
+**Charter-v1 lean was YES** (§D.2 (b) durable sim architecture; precedents
+`v0.2.2` / `v0.2.3` / `v0.2.4`). **Charter-v2 flips to RESOLVED-IN-CHARTER
+NO** per operator routing this session:
 
-§D.2 default is **YES** for sub-phases that introduce **(a) external
-vendoring** OR **(b) durable sim architecture**. Ising meets (b)
-strongly and (a) not at all:
+> Per-sub-phase tagging is discontinued going forward. Phase-3 closes with
+> ONE tag at the operator's phase-close pass (`v0.3.0-phase-3` or
+> equivalent), not per-sub-phase. Each remaining Phase-3 sub-phase
+> (ising, rigid-body, cloth, NCA, PINN, 3DGS-MPM, common-warp-maturation)
+> closes its Stage 2 without proposing an intermediate tag and without
+> editing `tools/testkit/lfs_migration/test_i7_no_agent_tags.py`.
 
-- **(a) External vendoring (NONE).** Ising-classical ships **no
-  external vendoring** — no Inria-3DGS, no PhysGaussian, no Chakazul-
-  Lenia. The only external references are the **closed-form anchor
-  citations** (Onsager / Yang / Kramers-Wannier — DOI-verified, see
-  probe §3) and **textbook citations** (Landau & Binder 2014 / Baxter
-  1982 / Newman & Barkema 1999). Neither is repository-vendored.
-- **(b) Durable sim architecture (STRONG).** **First Stack-B SIM in
-  Phase 3** — sets the precedent for the **Phase-5 web-deploy lift of
-  every Phase-3 sim** + the **Stack-B half of task-6 NCA**. First
-  `packages/ising-classical/` package. First `tools/diagnostics/tier3/
-  ising-classical/` Tier-3 module under the existing `tier3/` subtree
-  (which lenia bootstrapped at Stage 1b). First `lattice-spin/ising-
-  classical/` spec-sheet under `docs/sim-specs/lattice-spin/`. First
-  per-sim PBT module under `tools/testkit/property/sims/ising-
-  classical/`. First per-sim Stack-B CI job (D-CI: extension of
-  `ts-strict.yml` or new `build-ts.yml`). First `[lattice-spin.*]`
-  determinism-registry row. First `[overrides.ising-classical]`
-  tolerance row with MC-statistical named tolerances. First Stack-B
-  `runTwiceAndDiff` SIM consumer.
+**Material consequences for ising-classical Stage 2:**
 
-**Lean: YES `v0.2.5-sub-phase-phase-3-ising-classical`.** Operator-
-pushed (I7); I7 allowlist extension at Stage 2 mirrors common-3dgs
-`c761aa9` + render-similarity `596eb73` + lenia `fcf8546`.
+- **No tag proposal.** `v0.2.5-sub-phase-phase-3-ising-classical` is **NOT**
+  proposed at landing. The "Tag proposal" row in §2 Stage 2 is removed
+  (replaced with the explanation above).
+- **No I7 allowlist extension.** `OPERATOR_NONPHASE_TAGS` in
+  `tools/testkit/lfs_migration/test_i7_no_agent_tags.py` is **NOT** edited.
+  The I7 guard mechanism stays unchanged at HEAD; fake `agent/v…` tags
+  remain rejected.
+- **Closing sweep + landing audit stand.** Stage 2 still produces
+  `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-landing-<UTC>.md`
+  consolidating all stage audits; integrity baseline / append-only /
+  failing-tests-replay / perf-ledger checks still fire; §S.5 post-push
+  poll still fires.
+- **STOP-I7 collapses (no remaining surface).** Without an allowlist
+  extension there is no additive-only mutation to guard against. STOP-I7
+  is dropped from §6.
+- **The phase-close tag is operator work** at Phase 3 close, not this
+  sub-phase's deliverable. Convention-level: agent NEVER tags (I7
+  unchanged).
 
-**Operator-pending caveat (surfaced).** If the operator has switched to
-phase-close-only tagging since the lenia Stage-2 close (2026-05-28),
-the lean reverts to **NO intermediate tag** and the Stage-2 landing
-closes without an I7 allowlist extension. The charter defaults the
-lean to YES per the immediate precedents (`v0.2.2`, `v0.2.3`,
-`v0.2.4`). Decision-by Stage 2.
+**(b) Durable sim architecture is still STRONG** — first Stack-B SIM in
+Phase 3, first `packages/ising-classical/`, first `tools/diagnostics/
+tier3/ising-classical/`, first `lattice-spin/ising-classical/` spec-sheet,
+first per-sim Stack-B PBT module, first per-sim `python-strict/
+test-ising-classical` CI job per harness DECISION, first `[lattice-spin.*]`
+determinism-registry row, first `[overrides.ising-classical]` tolerance
+row. **(a) External vendoring NONE.** Both observations stand; the
+tagging policy is what changed, not the architecture.
+
+**Decision:** **RESOLVED-IN-CHARTER NO** (operator-routed this session).
 
 ## § 4 — Anchor-grounding STOP-conditions (Convention #8)
 
@@ -371,44 +380,64 @@ finite_size_window` per § 6 D-WIDE-TOL routing, NOT a tightened bound.
 
 - **Decision-by:** Stage 1b.
 
-### D-HARNESS-LAYOUT — vitest discovery scope for the sim test suite
+### D-HARNESS-LAYOUT — Stack-B sim test harness — RESOLVED-IN-CHARTER-v2 (pytest-against-captures)
 
-- **Question:** §6.3a literal `pnpm vitest run lattice-spin/ising-
-  classical/typescript/tests/` (`docs/phases/phase-3-plan.md:1458`)
-  presumes `*.test.ts` files. Active `common/common-ts/vitest.config.ts:11` includes
-  ONLY `src/**/*.test.ts` + `examples/**/*.test.ts` under
-  `common/common-ts/`. RD-2D exemplar ships **no `*.test.ts` files
-  under `packages/`** (probe §2.5) — Stack-B impl is verified via
-  pytest-against-captured-fixtures from the Python-package layout.
-- **Lean (A) — preferred:** **mirror the RD-2D pattern**: NO
-  `*.test.ts` files under `packages/ising-classical/`; the Stack-B
-  WGSL impl writes a capture, then **pytest** under
-  `packages/ising-classical/tests/` reads the capture and compares to
-  the NumPy reference + asserts the golden anchors + PBT invariants.
-  Re-frame §6.3a C literal "pnpm vitest run lattice-spin/ising-
-  classical/typescript/tests/" as **§0.3 SHIFT-from-discovered**
-  (per RD-2D Stack-B exemplar at `packages/reaction-diffusion-2d/`).
-- **Lean (B) — backup:** add a SECOND vitest config (or extend the
-  common-ts `vitest.config.ts` `include` glob) so `packages/ising-
-  classical/**/*.test.ts` is discovered. Stage 1a probes whether (A)
-  is acceptable to operator review at the charter-landing read; if
-  not, falls back to (B).
-- **STOP-HARNESS** if neither (A) nor (B) is reconcilable with §6.3a
-  C **without** a unilateral plan edit.
-- **Decision-by:** Stage 1a (probe-time resolution under operator
-  review of this charter).
+- **Question (charter-v1 framing):** vitest test-file location under
+  `common/common-ts/` vs `packages/ising-classical/`.
+- **Question (charter-v2 re-framing, operator-surfaced):** Stack-B sim
+  testing — vitest or pytest-against-captures?
+- **Resolution:** **pytest-against-captures per RD-2D Phase-0
+  precedent.** Per the harness-investigation audit
+  (`docs/_audits/phase-3/sub-phase-phase-3-ising-classical-harness-
+  investigation-2026-05-28T21-00-21Z.md`):
+  - **(FACT §3.1)** RD-2D (only Stack-B sim at HEAD) ships zero
+    `*.test.ts` files under `packages/reaction-diffusion-2d/`; tests
+    are pytest in `packages/reaction-diffusion-2d/tests/test_*.py`
+    (capture-round-trip vs NumPy reference per
+    `packages/reaction-diffusion-2d/tests/test_code_verification.py:32-50`).
+  - **(FACT §3.2)** All 8 `*.test.ts` files in the repo live under
+    `common/common-ts/`; vitest is **library-only** in this project,
+    not a sim-testing tool.
+  - **(FACT §3.3)** `.github/workflows/ts-strict.yml` runs `pnpm vitest
+    run` with `working-directory: common/common-ts`; it does NOT
+    discover `packages/**/*.test.ts`.
+  - **(FACT §3.4)** §6.3a's `pnpm vitest …` call inherits plan §3.2.7's
+    per-stack prescription (`docs/phases/phase-3-plan.md:535`) whose
+    precondition (`pnpm -F <sim-package> test` implies an npm workspace
+    with sim packages) is **unrealized at HEAD**: no root
+    `pnpm-workspace.yaml`; RD-2D has no `package.json`.
+  - **(FACT §3.5)** Capture-driven pytest is fully reproducible for
+    ising: same `Writer` API + same HDF5 layout + same `diff_captures`
+    machinery; WGSL impl runs locally only per spec §7.8 (RD-2D
+    Phase-0 precedent unchanged).
+- **§6.3a C literal `pnpm vitest run lattice-spin/ising-classical/
+  typescript/tests/`** (`docs/phases/phase-3-plan.md:1458`) records as
+  **§0.3 SHIFT-from-discovered (convention)**. NO plan edit unilateral.
+- **Lean A (vitest-mirror) + Lean B (extend-vitest-config) + STOP-HARNESS
+  are all collapsed** — both leans presupposed vitest; the precedent
+  says pytest.
+- **Decision-by:** **charter-v2 RESOLVED** (operator's surfaced question
+  forced the convention-level investigation at charter-revision time
+  rather than as a Stage-1a afterthought).
 
-### D-CI — `ts-strict.yml` vs `build-ts.yml`
+### D-CI — workflow + job for ising-classical tests — RESOLVED-IN-CHARTER-v2
 
-- **Question:** §6.3a M.4 names `.github/workflows/build-ts.yml
-  (test-ising-classical job)`; the file does NOT exist at HEAD
-  (probe §2.6). Active Stack-B workflow is `ts-strict.yml`.
-- **Lean:** **extend `ts-strict.yml`** with a `test-ising-classical`
-  job at Stage 1b — existing-convention precedence (same logic
-  used to resolve lenia's D-LAYOUT and ising's D-LAYOUT below). Surface
-  §0.3 SHIFT-from-discovered (build-ts.yml absent); NO plan edit
-  unilateral.
-- **Decision-by:** Stage 1b.
+- **Question (charter-v1 framing):** extend `ts-strict.yml` vs create
+  `build-ts.yml`.
+- **Question (charter-v2 re-framing):** Given D-HARNESS-LAYOUT resolves
+  to pytest-against-captures, where does the `test-ising-classical`
+  job belong?
+- **Resolution:** **extend `.github/workflows/python-strict.yml` with a
+  `test-ising-classical` job, mirroring lenia's
+  `python-strict.yml/test-lenia` job** (which landed at the
+  `90f381e`→`228cccd` chain per `docs/_audits/phase-3/progress.md`
+  lenia-mypy-strict-fix entry). `ts-strict.yml` stays out of scope
+  (common-ts library only per FACT §3.3). §6.3a M.4's "build-ts.yml"
+  remains §0.3 SHIFT-from-discovered — the file's absence at HEAD is
+  not the gap; the gap is that the file would have been the wrong CI
+  surface even if it existed.
+- **Decision-by:** **charter-v2 RESOLVED** (consequence of
+  D-HARNESS-LAYOUT resolution).
 
 ### D-LAYOUT — `lattice-spin/ising-classical/typescript/` vs `packages/ising-classical/`
 
@@ -457,15 +486,20 @@ finite_size_window` per § 6 D-WIDE-TOL routing, NOT a tightened bound.
   confirmed NO mutation gate. Stage 1c is **verdict-landing only**.
 - **Decision-by:** plan-drafting (RESOLVED).
 
-### D-TAG — intermediate tag
+### D-TAG — intermediate tag — RESOLVED-IN-CHARTER-v2 NO
 
 - **Question:** tag at Stage-2 landing or remain untagged?
-- **Lean:** **YES `v0.2.5-sub-phase-phase-3-ising-classical`** per § 3
-  argument (§D.2 (b) durable sim architecture strongly met). Operator-
-  pushed (I7); I7 allowlist extension at Stage 2.
-- **Decision-by:** Stage 2 (operator ratifies). Operator-pending
-  caveat: if phase-close-only tagging is now policy, lean reverts
-  to NO.
+- **Charter-v1 lean:** YES `v0.2.5-sub-phase-phase-3-ising-classical`
+  per §D.2 (b) durable sim architecture; operator-pending caveat that
+  phase-close-only tagging would flip the lean to NO.
+- **Charter-v2 resolution: NO.** Operator routed per-sub-phase tagging
+  as discontinued going forward; phase-close-only tagging is the new
+  cadence (one tag per phase at operator's phase-close pass, not per
+  sub-phase). See §3 for material consequences (no tag proposal at
+  Stage 2 landing; no I7 allowlist extension; STOP-I7 collapses;
+  closing-sweep + landing audit stand).
+- **Decision-by:** **charter-v2 RESOLVED** (operator-routed this
+  session; no further decision at Stage 2).
 
 ## § 6 — HARD RULE 2 STOP conditions (sub-phase-specific)
 
@@ -529,17 +563,18 @@ File a blocker in the relevant stage audit; do not improvise through.
   surface tolerance-budget amendment via separate operator-approved
   `chore(tolerance-budget): amend …` commit per § 6.0 item 2; do NOT
   widen unilaterally. **L-LTSF-3 in-scope.**
-- **STOP-HARNESS.** D-HARNESS-LAYOUT cannot be reconciled with §6.3a
-  C ("pnpm vitest run lattice-spin/ising-classical/typescript/
-  tests/") **without** a unilateral plan edit. **→ surface to
-  operator at Stage 1a**; do NOT improvise.
+- ~~**STOP-HARNESS.**~~ **REMOVED in charter-v2.** D-HARNESS-LAYOUT
+  RESOLVED to pytest-against-captures per the harness-investigation
+  audit; no remaining vitest/pytest reconciliation to gate.
 - **STOP-S.** D-TOL-SCHEMA discovers that the equivalence-table
   schema validator rejects additive keys under `[overrides.<sim>]`
   AND a new top-level branch is needed → operator routes the branch
   name at Stage 1b BEFORE the validator-fix commit (precedent §S).
-- **STOP-I7.** Stage 2 I7 allowlist extension breaks the guard
-  mechanism (fake `agent/v…` no longer rejected after the additive
-  extension). **→ STOP**; the extension must be additive-only.
+- ~~**STOP-I7.**~~ **REMOVED in charter-v2.** D-TAG flipped to NO; no
+  Stage-2 I7 allowlist extension is performed, so there is no additive
+  mutation to guard against in this sub-phase. The I7 guard mechanism
+  itself stays unchanged at HEAD; agent NEVER tags (convention-level
+  I7 is unaffected).
 - **STOP-PROSE-MATH.** Stage 1b discovers that **another** §6.3a prose
   characterization is mathematically wrong (analogous to lenia's
   "K(0) peak" surface). **→ surface** as §0.3 SHIFT-from-discovered
@@ -564,11 +599,19 @@ File a blocker in the relevant stage audit; do not improvise through.
   textbook-grade and can be re-anchored against Landau & Binder /
   Baxter / Newman & Barkema, but the primary citation must be re-
   routed.
-- **R-3 (Stack-B vitest harness shape decision).** D-HARNESS-LAYOUT
-  unresolved at charter-time. The two options (RD-2D-mirror pytest-
-  only vs vitest-discoverable layout) have different ergonomic
-  implications for every later Stack-B SIM. Stage 1a probe + operator
-  charter review settles it.
+- **R-3 (Stack-B sim test-harness convention) — RESOLVED-IN-CHARTER-v2.**
+  D-HARNESS-LAYOUT resolved on evidence to **pytest-against-captures
+  per RD-2D Phase-0 precedent** (`docs/_audits/phase-3/sub-phase-phase-
+  3-ising-classical-harness-investigation-2026-05-28T21-00-21Z.md`).
+  Charter-v1 framed this as layout-level; operator surfaced that it is
+  convention-level. The decision is **load-bearing for every later
+  Stack-B SIM in this project** (Phase-5 web-deploy lift; Stack-B
+  inference half of task-6 NCA): vitest stays library-only at
+  `common/common-ts/`; sim testing lives in pytest under
+  `packages/<sim>/tests/`. The only residual risk is convention drift
+  if a future operator pivot rebuilds the `pnpm -F` workspace
+  precedent — at which point this decision documents the prior choice
+  + the evidence trail and the operator routes the migration.
 - **R-4 (WebGPU determinism on CI runners).** Spec § 7.8 documents
   CI runners have no GPU. Stage-1b D-DET MEASURE may have no in-CI
   verifier; local-only with in-charter caveat is acceptable per
@@ -598,14 +641,15 @@ File a blocker in the relevant stage audit; do not improvise through.
 | L-3DGS-1 (neural-rendered structural ceiling) | NOT IN SCOPE — Ising is not neural-rendered |
 | SIBLING-FIXTURE-LFS | CARRIED FORWARD — Ising's `.h5` push exercises the same R2-backed pipeline + increments the corpus by one; does NOT close the sibling sub-phase |
 | integrity-meta-test-ci-wiring | CARRIED FORWARD — Ising's pytest property + Tier-3 tests ride existing pytest-testpaths machinery; does NOT inherit the gap |
-| R-11 (lenia first-SIM frictions) | TRANSLATED-TO-STACK-B (probe §6.6) — capture-API + manifest-schema + R2-bootstrap inherit verbatim; Taichi-specific items NOT applicable; new Stack-B-specific frictions opened (D-HARNESS-LAYOUT, D-CI, D-DET-RUNTIME) |
+| R-11 (lenia first-SIM frictions) | TRANSLATED-TO-STACK-B (probe §6.6) — capture-API + manifest-schema + R2-bootstrap inherit verbatim; Taichi-specific items NOT applicable. **Charter-v2 update:** D-HARNESS-LAYOUT resolved (pytest-against-captures); D-CI resolved (`python-strict.yml/test-ising-classical`); only D-DET-RUNTIME remains carried (CI no-GPU per spec §7.8, addressed by Layer-1/Layer-2 oracle split). |
 | L-LTSF-3 (tolerance-budget cap-amendment shape) | IN-SCOPE — D-WIDE-TOL; ising's MC tolerances are the second post-§S case |
 | L-LMSF-1 (Taichi + mypy-strict override pattern) | NOT IN SCOPE — Stack B is TypeScript, no Taichi |
-| L-LMSF-3 (locale.getdefaultlocale CLI -W friction) | NOT IN SCOPE — vitest harness, no pytest CLI `-W` toggle |
+| L-LMSF-3 (locale.getdefaultlocale CLI -W friction) | **CHARTER-v2 RE-FRAMING: IN-SCOPE.** Per D-CI resolution, ising's `test-ising-classical` job runs in `python-strict.yml` (NOT `ts-strict.yml`) and exercises pytest, so it inherits the same `-W error` failure mode lenia hit. Mitigation: ising's `pyproject.toml` inherits lenia's `filterwarnings = ["error", …]` posture + the workflow uses `uv run pytest tests/` (NOT `-W error`) per the `228cccd` lenia precedent. |
 | L-LMSF-4 (Phase-1 stack-d unscoped from CI mypy) | NOT IN SCOPE — Stack B not Stack D |
 | L-R2CD-1 (audit-citation-hygiene at integrity-digest carry-forward) | CARRIED FORWARD — Probe §6.3 surfaces pre-existing 1-fail on `lenia-mypy-strict-fix`; routes to the candidate audit-citation-hygiene cluster sub-phase |
+| **L-ISING-AUDIT-HYGIENE** (charter-v2 OPENED) | OPENED — session-1 ising audits (`probe-2026-05-28T19-08-34Z` 14 fails; `plan-drafting-2026-05-28T19-08-34Z` 6 fails) used literal `at-head` instead of measured `sha256:<hex>` in `evidence_hashes`. Sealed at session-1 commits `762424c`→`fa06646`→`ac47074`. Per this dispatch ("DO NOT touch sealed audits") fix is out-of-scope here; routes to the audit-citation-hygiene cluster (sibling of L-R2CD-1). NOT a regression introduced by this session. |
 | L-R2CD-FOLLOWUP (R2 push success at first-attempt-after-§Q) | OPEN — Stage 1b first-try LFS push is the live test of [[phase-3-r2-credentials-durability-fix-landed]] §Q |
-| First-Stack-B-SIM precedent | OPENED-HERE — see § 1.1 (D-HARNESS-LAYOUT + D-CI + D-DET-RUNTIME + `lattice-spin` category bootstrap) |
+| First-Stack-B-SIM precedent | OPENED-HERE — see § 1.1; charter-v2 narrows the open surfaces to D-DET-RUNTIME + the `lattice-spin` category bootstrap (D-HARNESS-LAYOUT + D-CI now resolved). |
 
 ## § 9 — Convention checklist
 
@@ -614,7 +658,9 @@ File a blocker in the relevant stage audit; do not improvise through.
   sources; textbook citations cite-by-edition.
 - **Convention M (re-anchor; match precedent).** RD-2D Stack-B
   exemplar at `packages/reaction-diffusion-2d/` + lenia precedent
-  `packages/lenia/` drive D-LAYOUT + D-CI + D-HARNESS-LAYOUT leans.
+  `packages/lenia/` drive D-LAYOUT + D-CI + D-HARNESS-LAYOUT
+  resolutions. Charter-v2's harness DECISION is Convention M applied
+  to convention-level (vitest vs pytest), not just layout-level.
 - **Convention #12 (SHA back-fill).** Each Stage's audit gets a
   Convention #12 back-fill commit per the §12 default cadence.
 - **Cat 1 (full-path citations).** All `path:line` citations in this
@@ -635,27 +681,35 @@ File a blocker in the relevant stage audit; do not improvise through.
 - **§S.5 (post-push all-workflow poll).** Every stage close fires the
   `gh run list --commit <sha> --limit 30` poll across ALL push-
   triggered workflows, not just sub-phase-touched ones.
-- **I7 (no agent tags).** Agent NEVER pushes a tag; the proposed
-  `v0.2.5-sub-phase-phase-3-ising-classical` is operator-pushed-only.
-- **HARD RULE 2 (reality contradicts plan → STOP).** All ten STOP
-  conditions in § 6 are reality-contradicts-plan triggers.
+- **I7 (no agent tags).** Agent NEVER pushes a tag. **Charter-v2:**
+  D-TAG flipped to NO; no sub-phase tag is proposed at Stage 2; the
+  Phase-3-close tag is operator work at phase close.
+- **HARD RULE 2 (reality contradicts plan → STOP).** All remaining
+  STOP conditions in § 6 are reality-contradicts-plan triggers.
 
 ## § 10 — Provenance
 
-- **Author:** Phase-3 ising-classical plan-drafting (Claude Code,
-  Opus 4.7).
-- **Drafted:** 2026-05-28T19-08-34Z.
-- **HEAD SHA at draft:** `e12685dbbfdc5ae20d5e9137a3fd269670a59139`.
+- **Author (charter-v1):** Phase-3 ising-classical plan-drafting
+  (Claude Code, Opus 4.7), 2026-05-28T19-08-34Z, HEAD `e12685d`.
+- **Author (charter-v2):** Phase-3 ising-classical charter-revision
+  (Claude Code, Opus 4.7), 2026-05-28T21-00-21Z, HEAD `ac47074`.
 - **Prior sub-phase tag (pushed):** `v0.2.4-sub-phase-phase-3-lenia`.
 - **Prior phase tag (pushed):** `v0.2.0-phase-2`.
-- **Proposed sub-phase tag (operator-pushed):**
-  `v0.2.5-sub-phase-phase-3-ising-classical`.
-- **Probe report:** `docs/_audits/phase-3/sub-phase-phase-3-ising-
-  classical-probe-2026-05-28T19-08-34Z.md`.
-- **Plan-drafting audit:** `docs/_audits/phase-3/sub-phase-phase-3-
-  ising-classical-plan-drafting-2026-05-28T19-08-34Z.md`.
+- **Proposed sub-phase tag (charter-v2):** **NONE** — D-TAG flipped to
+  NO per operator routing (per-sub-phase tagging discontinued;
+  phase-close-only going forward).
+- **Probe report (sealed at session 1):**
+  `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-probe-
+  2026-05-28T19-08-34Z.md`.
+- **Plan-drafting audit (sealed at session 1):**
+  `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-plan-
+  drafting-2026-05-28T19-08-34Z.md`.
+- **Harness-investigation audit (this session):**
+  `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-harness-
+  investigation-2026-05-28T21-00-21Z.md`.
 - **Exemplar:** `packages/reaction-diffusion-2d/` (Stack B; Phase 0
-  Gray-Scott WGSL + h5wasm capture).
+  Gray-Scott WGSL + h5wasm capture + pytest-against-captures
+  oracle).
 - **Precedent:** [[phase-3-lenia-sub-phase-landed]] (SIM cadence;
   closed-with-shifted-2 verdict shape; first-SIM friction-surfacing
   section).
