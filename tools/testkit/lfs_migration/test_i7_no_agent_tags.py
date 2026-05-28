@@ -53,6 +53,17 @@ OPERATOR_NONPHASE_TAGS = frozenset(
         # GaussianSplatModel / render / Camera API consumed unchanged by
         # task-8 (3dgs-mpm) and Phase-4 WU-C. Operator-pushed at landing.
         "v0.2.2-sub-phase-phase-3-common-3dgs",
+        # sub-phase-phase-3-render-similarity landing (D-TAG ratified YES per
+        # charter section 3): (a) three new external PyPI dependencies
+        # (lpips==0.1.4, scikit-image>=0.26, torch>=2.0) — stronger than
+        # common-3dgs's single external git dep; (b) durable render-similarity
+        # metric module (psnr/ssim/lpips + ms_ssim Phase-4-WU-C shell) +
+        # equivalence --mode render-similarity CLI dispatch + tolerance-schema
+        # additive extension — gates ALL Phase-4 neural-rendered sims. Closing
+        # status closed-with-shifted-1 (Stage-1c mutation 0.7857 vs 0.85 floor;
+        # threshold UNCHANGED; L-3DGS-1 calibration routes to task-8).
+        # Operator-pushed at landing.
+        "v0.2.3-sub-phase-phase-3-render-similarity",
     }
 )
 
