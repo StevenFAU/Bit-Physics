@@ -7,6 +7,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### sub-phase-phase-3-ising-classical (Phase 3, task-3a — FIRST Stack-B SIM in Phase 3)
+
+Phase-3 task-3a (2D Ising-classical) reference implementation. Fourth
+Phase-3 sub-phase; FIRST Stack-B SIM (after common-3dgs `v0.2.2`,
+render-similarity `v0.2.3`, lenia `v0.2.4`). Metropolis-Hastings Monte
+Carlo with checkerboard (red/black) sublattice update; §6.3a
+deliverables per `docs/phases/phase-3-plan.md:1388-1543`. NO tag at
+landing (D-TAG NO; per-sub-phase tagging discontinued, phase-close-only
+cadence going forward — charter-v2).
+
+#### Added
+
+- `packages/ising-classical/` — 25th workspace member. `ising_classical/`
+  Python package: `reference/ising_numpy.py` (Metropolis checkerboard
+  sweep + Onsager `T_c = 2/ln(1+√2)` + Yang `m(T)` closed forms),
+  `sim.py` (`sim_runner_seeded` + `sim_runner_pbt` testkit adapters),
+  `__main__.py` (CLI). `src/metropolis.wgsl` + `src/index.ts` — Stack-B
+  WGSL parallel-Metropolis (PCG per-cell PRNG, checkerboard, no atomics /
+  subgroup ops; local-only per spec §7.8). pytest-against-captures test
+  suite (6 modules) mirroring RD-2D.
+- `captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.{h5,json}`
+  — committed canonical capture (NumPy reference oracle; LFS + R2).
+- `docs/sim-specs/lattice-spin/ising-classical/spec-ref.md` — 13-section
+  spec sheet (first `lattice-spin` spec).
+- `tools/testkit/golden/tables/ising-classical-{critical-temperature,magnetization}.json`
+  + `tools/testkit/golden/derivations/ising-onsager.md` — 3 independent
+  anchors per table (Onsager / Kramers-Wannier / Landau-Binder;
+  Yang / Baxter / Newman-Barkema).
+- `tools/diagnostics/tier3/ising_classical/` — Tier-3 magnetization +
+  energy-bound + autocorrelation diagnostics (2nd `tier3/` subtree).
+- `tools/testkit/property/sims/ising_classical/` — PBT invariants
+  (`magnetization_bounded` + `energy_per_spin_bounded`).
+- `tools/testkit/determinism/registry.toml` — `[lattice-spin.ising-classical]`
+  (first `lattice-spin.*` row; bit-exact same-stack-same-hw, MEASURED).
+- `tools/testkit/equivalence/tolerance.toml` —
+  `[golden_tolerance.lattice-spin.ising-classical]` (`critical_temp_rel`
+  + `magnetization_rel`; D-TOL-SCHEMA resolved-on-evidence to the
+  `golden_tolerance` branch — `[overrides.<sim>]` rejects the named keys).
+- `.github/workflows/python-strict.yml` — `test-ising-classical` job
+  (mirror `test-lenia`; selective LFS pull of the canonical capture).
+- `docs/perf-ledger.md` row; `docs/glossary.md` entries (Ising model,
+  Metropolis-Hastings, detailed balance, critical temperature, Onsager
+  solution, Kramers-Wannier duality, parallel-Metropolis checkerboard);
+  `justfile` recipes (`run-ising-classical`, `test-ising-classical`).
+
 ### sub-phase-phase-3-lenia (Phase 3, task-3 — FIRST SIM in Phase 3)
 
 Phase-3 task-3 (Lenia) reference implementation. FIRST SIM-task

@@ -215,3 +215,63 @@ jobs:
         # respected. Sister sub-phases that don't need package-
         # specific deprecation ignores keep ``pytest -W error``.
         run: uv run pytest tests/
+
+  # Phase 3 task-3a (sub-phase-phase-3-ising-classical). FIRST Stack-B SIM
+  # in Phase 3 (Metropolis-Hastings checkerboard Monte Carlo; NumPy
+  # reference is the CI-visible oracle, the WGSL parallel-Metropolis kernel
+  # is local-only per spec §7.8). Unlike test-lenia (which instantiates the
+  # sim in-process), ising's acceptance tests read the COMMITTED canonical
+  # capture at captures/ising-classical-ref/** (LFS-tracked, mirror RD-2D),
+  # so this job needs a selective LFS pull of exactly that capture (R2-
+  # routed when the secrets are present; GitHub-LFS fallback on fork PRs).
+  test-ising-classical:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync ising-classical workspace deps (with dev extras for pytest + ruff)
+        working-directory: packages/ising-classical
+        run: uv sync --extra dev
+
+      - name: ruff (ising-classical src + tests)
+        working-directory: packages/ising-classical
+        run: |
+          uv run ruff check ising_classical/ tests/
+          uv run ruff format --check ising_classical/ tests/
+
+      - name: mypy --strict (ising-classical)
+        working-directory: packages/ising-classical
+        run: uv run mypy --strict ising_classical/
+
+      - name: Selective LFS fetch — ising-classical canonical capture only (via R2 when wired)
+        # The acceptance tests read the committed canonical capture at
+        # captures/ising-classical-ref/**; pull exactly that set. R2 routing
+        # mirrors the python-strict legacy-captures step (lfs-architecture
+        # M5 opt-in steady-state); GitHub-LFS fallback when R2 secrets are
+        # absent (fork PRs).
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="captures/ising-classical-ref/**"
+
+      - name: pytest (ising-classical suite)
+        working-directory: packages/ising-classical
+        run: uv run pytest tests/

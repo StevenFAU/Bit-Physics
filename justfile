@@ -87,3 +87,14 @@ run-lenia:
 # Run the Lenia test suite (kernel anchors + growth + sim shells + determinism + PBT).
 test-lenia:
 	uv run --no-sync python -m pytest packages/lenia/tests/ -v
+
+# ---- Phase 3 ising-classical ----
+
+# Run the Ising-classical CLI (writes the canonical capture to captures/ising-classical-ref/).
+run-ising-classical:
+	uv run --no-sync python -m ising_classical --seed 42 --steps 10000 --grid 128 \
+		--temp 2.27 --out captures/ising-classical-ref
+
+# Run the Ising-classical test suite (code-verification + determinism + golden + PBT + diagnostics).
+test-ising-classical:
+	uv run --no-sync python -m pytest packages/ising-classical/tests/ -v
