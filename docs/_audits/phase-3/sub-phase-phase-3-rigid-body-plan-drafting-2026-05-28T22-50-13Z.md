@@ -3,7 +3,7 @@ date: 2026-05-28
 author: phase-3 rigid-body-pedagogical plan-drafting (Claude Code)
 subject: plan-drafting landing audit — sub-phase-phase-3-rigid-body (task-4); first Stack-E sim of Phase 3
 verdict: SHIFTED (charter ready for Stage 0 WITH four operator-pending D-classes)
-head_sha: TO-BACKFILL
+head_sha: 703f816
 prior_sub_phase_landed_at: 2da281a
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
