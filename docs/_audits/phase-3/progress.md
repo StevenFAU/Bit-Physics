@@ -233,7 +233,7 @@
 ## sub-phase-phase-3-lenia — Stage 0 — 2026-05-28 — CONFIRMED
 
 - **Stage:** Stage 0 (pre-flight + integrity baseline + verify_evidence sweep + cross-phase replay + Chakazul SHA re-confirm + tolerance-budget cap probe). Trunk-based to `main`; no PR; no tag (I7).
-- **Landed at SHA:** Stage-0 audit + this entry (single commit) → SHA back-fill (Convention #12, separate commit). Parent `4ee54e8` (lenia plan-drafting chain tip).
+- **Landed at SHA:** `ebb76a5` (docs(phase-3): lenia Stage 0 audit + progress entry) → SHA back-fill (Convention #12, separate commit). Parent `4ee54e8` (lenia plan-drafting chain tip).
 - **Verdict:** CONFIRMED. No STOP fired.
 - **Anchor probe:** `git rev-parse HEAD == origin/main == 4ee54e8`; six phase tags resolve; integrity `c19492ad…d22cb52` byte-identical (0 HARD_FAIL / 14 SOFT_WARN); I7 test 2/2 PASS; `uv sync --all-packages` clean; working tree clean; I1–I7 hold.
 - **verify_evidence sweep:** 19 audits / 0 fail across all `docs/_audits/phase-3/*.md` (excluding `progress.md` which is intentionally non-front-mattered).
