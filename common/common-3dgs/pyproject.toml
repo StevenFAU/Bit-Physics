@@ -45,6 +45,12 @@ strict = true
 python_version = "3.12"
 files = ["src/common_3dgs"]
 mypy_path = "src"
+# NVIDIA Warp ships incomplete type stubs: its public functions (wp.init,
+# wp.array, wp.int32/float32, wp.array.numpy, ...) are unannotated, so calling
+# them trips strict's `no-untyped-call` at the Warp interop boundary. Relax that
+# one code (the rest of --strict — untyped-defs, any-returns in our own code,
+# etc. — stays enforced); mirrors the Stack-E Warp-interop posture.
+disable_error_code = ["no-untyped-call"]
 
 [[tool.mypy.overrides]]
 module = [

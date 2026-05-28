@@ -15,12 +15,23 @@ from pathlib import Path
 
 import numpy as np
 
-_NOT_IMPL = "common-3dgs Stage 1a scaffold: implementation lands at Stage 1b"
-
 
 def save_png(image: np.ndarray, path: str | Path) -> Path:
     """Write an ``(H, W, 3) float32`` image in ``[0, 1]`` to ``path`` as PNG.
 
     Clamps to ``[0, 1]`` before quantizing to 8-bit. Returns the written path.
     """
-    raise NotImplementedError(_NOT_IMPL)
+    arr = np.asarray(image)
+    if arr.ndim != 3 or arr.shape[2] != 3:
+        raise ValueError(f"save_png expects an (H, W, 3) image; got shape {arr.shape}")
+    rgb = np.clip(arr.astype(np.float32), 0.0, 1.0)
+
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
+    out = Path(path)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    plt.imsave(out, rgb)
+    return out
