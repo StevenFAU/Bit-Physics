@@ -1,0 +1,24 @@
+FFFFFFFFFF....                                                           [100%]
+=================================== FAILURES ===================================
+packages/lenia/lenia/sim.py:77: NotImplementedError: LeniaSim Stage 1a scaffold: implementation lands at Stage 1b. Stage 1b consumes common_py.capture.Writer + common_py.determinism.set_taichi_deterministic(arch='cpu') per docs/sim-specs/continuous-ca/lenia/spec-ref.md § 5 + § 8.
+packages/lenia/lenia/growth.py:52: NotImplementedError: Lenia growth function Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia. Expected closed form: G(u) = 2·exp(-((u-mu)/sigma)^2 / 2) - 1.
+packages/lenia/lenia/growth.py:52: NotImplementedError: Lenia growth function Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia. Expected closed form: G(u) = 2·exp(-((u-mu)/sigma)^2 / 2) - 1.
+packages/lenia/lenia/kernel.py:55: NotImplementedError: Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia (SHA adfc542939266de7f4bb7ebb552e8499701ee107). Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0.
+packages/lenia/lenia/kernel.py:55: NotImplementedError: Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia (SHA adfc542939266de7f4bb7ebb552e8499701ee107). Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0.
+packages/lenia/lenia/kernel.py:55: NotImplementedError: Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia (SHA adfc542939266de7f4bb7ebb552e8499701ee107). Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0.
+packages/lenia/lenia/kernel.py:55: NotImplementedError: Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia (SHA adfc542939266de7f4bb7ebb552e8499701ee107). Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0.
+packages/lenia/lenia/kernel.py:55: NotImplementedError: Quad4 kernel Stage 1a scaffold: implementation lands at Stage 1b after grep-citing the formula from vendored Chakazul/Lenia (SHA adfc542939266de7f4bb7ebb552e8499701ee107). Expected closed form: K(r) = (4·r·(1-r))^4 for r in [0, 1], else 0.
+packages/lenia/lenia/sim.py:85: NotImplementedError: LeniaSim Stage 1a scaffold: implementation lands at Stage 1b. Stage 1b consumes common_py.capture.Writer + common_py.determinism.set_taichi_deterministic(arch='cpu') per docs/sim-specs/continuous-ca/lenia/spec-ref.md § 5 + § 8.
+packages/lenia/lenia/sim.py:77: NotImplementedError: LeniaSim Stage 1a scaffold: implementation lands at Stage 1b. Stage 1b consumes common_py.capture.Writer + common_py.determinism.set_taichi_deterministic(arch='cpu') per docs/sim-specs/continuous-ca/lenia/spec-ref.md § 5 + § 8.
+=========================== short test summary info ============================
+FAILED packages/lenia/tests/test_determinism.py::test_determinism_two_runs_bit_equal
+FAILED packages/lenia/tests/test_growth.py::test_growth_at_mu_is_positive_peak
+FAILED packages/lenia/tests/test_growth.py::test_growth_far_from_mu_is_negative
+FAILED packages/lenia/tests/test_kernel_anchors.py::test_quad4_anchor_r_zero_is_boundary
+FAILED packages/lenia/tests/test_kernel_anchors.py::test_quad4_anchor_r_half_is_peak
+FAILED packages/lenia/tests/test_kernel_anchors.py::test_quad4_anchor_r_one_is_boundary
+FAILED packages/lenia/tests/test_kernel_anchors.py::test_quad4_compact_support_outside_unit_interval
+FAILED packages/lenia/tests/test_kernel_anchors.py::test_quad4_three_anchor_vector
+FAILED packages/lenia/tests/test_pbt_invariants.py::test_pbt_mass_approximately_conserved_witness
+FAILED packages/lenia/tests/test_pbt_invariants.py::test_pbt_monotone_bounds_witness
+10 failed, 4 passed
