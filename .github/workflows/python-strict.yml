@@ -202,6 +202,16 @@ jobs:
         working-directory: packages/lenia
         run: uv run mypy --strict lenia/
 
-      - name: pytest -W error (lenia suite)
+      - name: pytest (lenia suite — strict-warnings via pyproject)
         working-directory: packages/lenia
-        run: uv run pytest -W error tests/
+        # CLI `-W error` would override the pyproject's specific
+        # ``ignore:.*locale\.getdefaultlocale.*:DeprecationWarning`` +
+        # ``ignore::DeprecationWarning:taichi.*`` filters (CLI -W has
+        # higher priority than ``[tool.pytest.ini_options]
+        # filterwarnings`` per pytest's reverse-priority warning-filter
+        # model). The pyproject's first entry is ``"error"`` so the
+        # strict-warnings posture is preserved; specific ignores
+        # (locale + taichi DeprecationWarning + SyntaxWarning) are
+        # respected. Sister sub-phases that don't need package-
+        # specific deprecation ignores keep ``pytest -W error``.
+        run: uv run pytest tests/
