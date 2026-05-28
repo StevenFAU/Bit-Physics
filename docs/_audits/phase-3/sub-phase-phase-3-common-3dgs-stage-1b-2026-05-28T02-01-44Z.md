@@ -3,7 +3,7 @@ date: 2026-05-28T02-01-44Z
 author: phase-3 common-3dgs stage-1b (Claude Code)
 subject: Phase 3 common-3dgs Stage 1b — implementation + thirteen-gate + D-C measurement
 verdict: CONFIRMED
-head_sha: dd1c3eca4c73cf73f2b4ca4ea51b3af287bae2da
+head_sha: 9121e31459cc8bc68469e5d9a011ff69a42c5f67
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
