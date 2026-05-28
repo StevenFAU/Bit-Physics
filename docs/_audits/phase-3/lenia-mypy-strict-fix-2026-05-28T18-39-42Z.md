@@ -515,3 +515,78 @@ in-project at `packages/lenia/pyproject.toml`.
 
 `python-strict/test-lenia/mypy --strict (lenia)` red-since-`5baf083`
 is closed.
+
+## §12. Addendum — §S.5 NEW WORDING fired; second commit closes the chain
+
+Per the §S.5 NEW WORDING (this audit's own commit chain's commit 2):
+the SHA-scoped all-workflow poll at chain-tip `a7f7fb2` (this audit
++ Convention #12 back-fill) returned `python-strict/test-lenia/
+pytest -W error (lenia suite)` = **failure**. The mypy gate is
+green, but the next-step pytest step is red — a SECOND red surface
+on the same job that was hidden behind the mypy block.
+
+Root cause (FACT, from `gh run view 26595055405 --log-failed`):
+the test-lenia step `uv run pytest -W error tests/` raises
+`DeprecationWarning: 'locale.getdefaultlocale' is deprecated`
+at CPython stdlib `locale.py` line 544 (NOT a repo file; cat4 hook
+cite-shape is reserved for repo paths), called from `h5py`'s path-encoding internally on
+File-open. The pyproject's
+`ignore:.*locale\.getdefaultlocale.*:DeprecationWarning` filter is
+registered, but CLI `-W error` has HIGHER priority than
+`[tool.pytest.ini_options] filterwarnings` per pytest's reverse-
+priority warning-filter model — so the CLI `error` fires before the
+specific config-level `ignore` is reached.
+
+This is L-LMSF-3 (banked at §7 as "OUT-OF-SCOPE; surfaces or doesn't
+on the post-push poll"). It surfaced. Per §S.5's STOP-CI-RED clause:
+"Any failure conclusion against ANY workflow / job at the chain-tip
+SHA fires STOP-CI-RED, regardless of whether the failing workflow
+is the one the fix targeted." So this fix's CONFIRMED verdict was
+premature; the chain-tip-CI-green obligation requires closing the
+pytest surface too.
+
+**Closure commit `228cccd` `fix(phase-3): drop CLI '-W error' from
+lenia pytest CI step (defer to pyproject)`:** the workflow's
+`run: uv run pytest -W error tests/` becomes `run: uv run pytest
+tests/`. The pyproject's `filterwarnings = ["error", …, "ignore:
+.*locale\.getdefaultlocale.*:DeprecationWarning"]` preserves the
+strict-warnings posture (first entry is `"error"`) while letting the
+specific ignores take their natural reverse-priority precedence.
+Verified locally before push: `pytest -W error tests/` 5 fail / 9
+pass → `pytest tests/` 14/14 PASS.
+
+**Post-`228cccd` §S.5 poll (FACT):** all 9 push-triggered workflows
+GREEN at chain-tip `228cccd`:
+
+| Workflow | Conclusion |
+|---|---|
+| audit-append-only | success |
+| cpp-strict | success |
+| determinism | success |
+| equivalence | success |
+| integrity | success |
+| python-strict | **success** (test-lenia mypy + pytest both green) |
+| structure | success |
+| tolerance-budget-check | success |
+| ts-strict | success |
+
+`mutation-testing` + `r2-sweep-proof` + `r2-roundtrip-proof` are
+path-filtered / workflow_dispatch only and were NOT triggered by
+this chain (correct behavior; not push-to-main required gates).
+
+**STOP-CI-RED NOT FIRED at `228cccd`.** Chain CONFIRMED at `228cccd`.
+
+L-LMSF-3 → **CLOSED-IN-FIX** (not banked-for-later as originally
+routed; the §S.5 NEW WORDING obligation pulled it into scope on the
+spot per the rule's own discipline).
+
+Commit chain updated:
+
+| # | SHA | Type | Subject |
+|---|---|---|---|
+| 1 | `90f381e` | `fix(phase-3)` | resolve mypy-strict friction in lenia (Taichi override + sim.py) |
+| 2 | `a0c03f5` | `docs(phase-3)` | tighten §S.5 post-push CI poll to cover all push-to-main workflows |
+| 3 | `13800e8` | `docs(phase-3)` | lenia-mypy-strict-fix audit + progress entry (pre-poll) |
+| 4 | `a7f7fb2` | `chore(phase-3)` | SHA back-fill lenia-mypy-strict-fix audit (Convention #12) |
+| 5 | `228cccd` | `fix(phase-3)` | drop CLI '-W error' from lenia pytest CI step (defer to pyproject) |
+| 6 | (this commit) | `docs(phase-3)` | §12 addendum + Convention-#12 back-fill for the addendum |
