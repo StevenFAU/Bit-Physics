@@ -1,0 +1,49 @@
+FFF.FFFFFF                                                               [100%]
+=================================== FAILURES ===================================
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_render_output_shape_dtype(
+        # The test always failed when commented parts were varied together.
+        seed=0,  # or any other generated value
+        n=1,  # or any other generated value
+        h=8,  # or any other generated value
+        w=8,  # or any other generated value
+    )
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_render_empty_model_is_background(
+        # The test always failed when commented parts were varied together.
+        h=8,  # or any other generated value
+        w=8,  # or any other generated value
+        bg=(0.0, 0.0, 0.0),  # or any other generated value
+    )
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+    Falsifying example: test_ply_roundtrip_preserves_fields(
+        # The test always failed when commented parts were varied together.
+        seed=0,  # or any other generated value
+        n=1,  # or any other generated value
+    )
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/src/common_3dgs/camera.py:63: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/src/common_3dgs/model.py:62: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/src/common_3dgs/image_io.py:26: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+E   NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+common/common-3dgs/examples/smoke_3dgs/sim.py:50: NotImplementedError: common-3dgs Stage 1a scaffold: implementation lands at Stage 1b
+=========================== short test summary info ============================
+FAILED tests/test_properties.py::test_render_output_shape_dtype - NotImplemen...
+FAILED tests/test_properties.py::test_render_empty_model_is_background - NotI...
+FAILED tests/test_properties.py::test_ply_roundtrip_preserves_fields - NotImp...
+FAILED tests/test_smoke_contract.py::test_gaussian_splat_model_construct - No...
+FAILED tests/test_smoke_contract.py::test_gaussian_splat_model_save_load_ply
+FAILED tests/test_smoke_contract.py::test_camera_look_at - NotImplementedErro...
+FAILED tests/test_smoke_contract.py::test_render_returns_image - NotImplement...
+FAILED tests/test_smoke_contract.py::test_save_png - NotImplementedError: com...
+FAILED tests/test_smoke_contract.py::test_smoke_sim_renders_a_frame - NotImpl...
+9 failed, 1 passed
