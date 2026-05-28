@@ -65,3 +65,30 @@ def test_metropolis_sweep_preserves_shape_and_spin_alphabet() -> None:
     out = metropolis_sweep(spins, p, rng)
     assert out.shape == (p.n, p.n)
     assert set(int(v) for v in np.unique(out)).issubset({-1, 1})
+
+
+def test_aligned_mc_magnetization_matches_yang_within_tolerance() -> None:
+    """MC dynamics reproduce the Onsager/Yang spontaneous magnetization.
+
+    Spontaneous magnetization is the ORDERED-phase order parameter, so it
+    must be measured from an aligned initial condition (all +1) — a random
+    IC at T < T_c forms competing domains whose net |m| is far below m(T)
+    (§0.3 physics note; see tools/testkit/golden/derivations/ising-onsager.md
+    section 4). Aligned-IC warm-up + sample at T=1.5 (deep ordered phase,
+    fast equilibration) lands within magnetization_rel = 5e-2 of Yang.
+    """
+    temperature = 1.5
+    p = IsingParams(n=64, J=1.0, h=0.0, T=temperature)
+    spins = np.ones((p.n, p.n), dtype=np.int8)  # ordered-phase tag
+    rng = np.random.default_rng(3)
+    for _ in range(200):  # warm-up
+        spins = metropolis_sweep(spins, p, rng)
+    samples = []
+    for _ in range(200):  # sample
+        spins = metropolis_sweep(spins, p, rng)
+        samples.append(abs(magnetization_per_spin(spins)))
+    mc_mag = float(np.mean(samples))
+    yang = onsager_magnetization(temperature)
+    assert abs(mc_mag - yang) <= 5e-2 * yang, (
+        f"aligned-MC |m|={mc_mag} vs Yang {yang} exceeds magnetization_rel=5e-2"
+    )
