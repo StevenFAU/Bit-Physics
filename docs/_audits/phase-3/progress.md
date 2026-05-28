@@ -51,3 +51,15 @@
 - **D-C:** DEFAULT `bit-exact / same-stack-same-hw` declared (atomic_ops=none, subgroup_ops=none); MEASURED at Stage 1b. **D-D:** RESOLVED to common-3dgs `save_png` (no common-py RGB-image writer exists; `plot_field_2d` is a colormapped field plot).
 - **§0.3 SHIFTs (follow-discovered, surfaced):** `MANIFEST.toml` not `manifest.yaml`; `python-strict.yml` not `build-py.yml` (test-common-3dgs job at 1b); CHANGELOG `### sub-phase-…` not `## Phase 3`; determinism `registry.toml` is a new surface.
 - **Next stage = Stage 1b (implementation + thirteen-gate + D-C measurement).** Replace every NotImplementedError; vendor already done; run 13 gates (Gate 14 N/A — single-stack); MEASURE D-C; shared-file updates (docs/common/3dgs.md, README, CHANGELOG, glossary, justfile, python-strict.yml test-common-3dgs job, tolerance-budget Phase-3 carryover, perf-ledger, schema-corpus fixture); RED→GREEN witnessing `sha256:f1f80a02…626c84c6`.
+
+## sub-phase-phase-3-common-3dgs — Stage 1b — 2026-05-28 — CONFIRMED
+
+- **Stage:** Stage 1b (implementation + thirteen-gate + D-C measurement). Trunk-based to `main`; pushed; no tag (I7).
+- **Landed at SHA:** `87fe557` (feat: §3.2.1 impl, RED→GREEN, witnesses `sha256:f1f80a02…`) → `d9aa0e7` (docs) → `dd1c3ec` (chore: CI job + recipes + tolerance-budget + registry) → audit + this entry → SHA-back-fill.
+- **Verdict:** CONFIRMED. 10/10 tests GREEN; ruff + mypy --strict clean; integrity `c19492ad…d22cb52` byte-identical 0 HARD_FAIL; testkit regression 34/34; I1–I7 hold.
+- **D-C MEASURED bit-exact (max_abs_diff=0.0, identical sha256 over two renders):** the bit-exact / same-stack-same-hw declaration HOLDS; registry row unchanged; **no STOP-J** (no distributional/EFECT re-characterization).
+- **D-D:** common-3dgs `save_png` (matplotlib imsave). **STOP-E cleared:** §3.2.1 supports task-8's per-frame working-copy mutation pattern.
+- **Thirteen gates:** PASS (sim-specific — golden tables / tier-3 / gate-14 — N/A with §2.11 infra surrogates; gate-14 N/A single-stack). Gate-13 failing-tests replay reproduces the hash byte-identically.
+- **SHIFTED (DEFERRED, operator):** schema-corpus fixture `tests/fixtures/legacy-captures/phase-3-common-3dgs.{h5,json}` GENERATED + corpus-test-GREEN 21/21, but its `.h5` is LFS-routed and BOTH LFS backends are unavailable in agent sessions (push EOF; R2 creds absent + GitHub-LFS budget exhausted). Commit DEFERRED; fixture reproducible via `just run-3dgs-smoke`; `.h5` sha256 `651dbe45…4653f1`. HARD RULE 2 — surfaced, not improvised around.
+- **Artifacts:** impl `common/common-3dgs/src/common_3dgs/{model,camera,render,_kernels,image_io}.py` + `examples/smoke_3dgs/sim.py`; `docs/common/3dgs.md`; CI `test-common-3dgs` in `.github/workflows/python-strict.yml`; audit `docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-stage-1b-2026-05-28T02-01-44Z.md`.
+- **Next stage = Stage 1c (mutation baseline ≥80% + PBT confirmation + verify_evidence + append-only + integrity sweep + landing).** Determinism row locked bit-exact.
