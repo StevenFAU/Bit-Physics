@@ -292,7 +292,7 @@
 ## sub-phase-phase-3-lenia — Stage 1c — 2026-05-28 — SHIFTED (closed-with-shifted-2)
 
 - **Stage:** Stage 1c (verdict landing, NO mutation gate per D-MUT-SCOPE NO RESOLVED-IN-CHARTER). Trunk-based to `main`; pushed to origin/main; no tag (I7).
-- **Landed at SHA:** Stage-1c audit + this entry → SHA back-fill (Convention #12, separate commit). Parent `165c46b` (Stage-1b SHA back-fill).
+- **Landed at SHA:** `7a0532e` (Stage-1c audit + progress entry) → SHA back-fill (Convention #12, separate commit). Parent `165c46b` (Stage-1b SHA back-fill).
 - **Verdict:** SHIFTED (closed-with-shifted-2; both Stage-1b SHIFTED items carried forward). No HARD STOP fired.
 - **Anchor probe:** integrity `c19492ad…d22cb52` byte-identical 0 HARD_FAIL / 14 SOFT_WARN; I1–I7 hold; HEAD `165c46b` == origin/main; pytest 14/14 GREEN; I7 2/2 PASS.
 - **Golden-anchor re-verification:** `lenia-kernel.json` 3 hand-derived anchors (r=0/0.5/1) + 6 mid-curve all PASS within `golden_kernel_abs=1e-6 / golden_kernel_rel=1e-5`. `lenia-orbium-trajectory.json` step-0/1/5 aggregates PASS within `golden_trajectory_abs=1e-4`.
