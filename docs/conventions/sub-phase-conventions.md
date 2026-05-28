@@ -1563,13 +1563,42 @@ Stage 1b push (`5baf083`) red-lit it within ~40s, and every push since
 this very session's anchor probe) failed the same gate. The CI
 infrastructure caught it correctly; **the gap was agent-side polling**.
 
+The `lenia-tolerance-schema-fix` post-push poll watched
+`equivalence.yml` (the workflow the fix touched) and reported green at
+chain-tip `33359fc`, but the `python-strict.yml` workflow's
+`test-lenia` JOB was simultaneously red on `mypy --strict (lenia)` —
+a separate red surface that the narrow per-workflow poll **did not
+look at**. The convention's first wording (`gh run list
+--workflow=<name>`) was too narrow: a post-push poll that watches only
+the workflow the fix is "about" misses red workflows the fix didn't
+touch but that still block main. The `lenia-mypy-strict-fix` is the
+direct dispatch consequence — and tightens this rule below.
+
 > **Post-push CI sweep — every Stage-1b / focused-fix / landing
-> commit chain:** within ~2 minutes of pushing, query
-> `gh run list --limit 10` (or per-workflow `gh run list --workflow=
-> <name> -L 3`) for the just-pushed commit's status. A `failure`
-> against an existing CI gate fires STOP-CI-RED — investigate before
+> commit chain:** within ~2 minutes of pushing, query the FULL set of
+> workflow runs at the **just-pushed commit SHA**, NOT just the
+> workflow the fix touched:
+>
+> ```bash
+> gh run list --commit "$(git rev-parse HEAD)" --limit 30
+> # — or, equivalently, per-job conclusion:
+> for run_id in $(gh run list --commit "$(git rev-parse HEAD)" \
+>     --limit 30 --json databaseId -q '.[].databaseId'); do
+>   gh api repos/{owner}/{repo}/actions/runs/$run_id/jobs \
+>     --jq '.jobs[] | {name, conclusion}'
+> done
+> ```
+>
+> Any **failure** conclusion against ANY workflow / job that runs on
+> push-to-main fires **STOP-CI-RED**, regardless of whether the
+> failing workflow is the one the fix targeted. Investigate before
 > declaring the stage / fix landed, even if local verification was
-> green.
+> green and even if the workflow you "expected" to be the relevant
+> gate is itself green.
+
+`gh run list --workflow=<name>` is a **diagnostic narrowing**, NOT
+the closure check. The closure check is "every workflow at this SHA
+is green" — measured by the full-set query above.
 
 This is the same discipline as integrity-baseline re-measure (§R) —
 **measure, don't assume**.
