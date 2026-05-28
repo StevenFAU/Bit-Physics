@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-28T14-01-50Z",
+  "target": "render_similarity",
+  "target_path": "tools/testkit/render_similarity/metrics.py",
+  "threshold": 0.85,
+  "killed": 66,
+  "survived": 18,
+  "suspicious": 0,
+  "timeout": 0,
+  "skipped": 0,
+  "total_mutants": 84,
+  "kill_rate": 0.7857142857142857,
+  "verdict": "SHIFTED-bank-not-widen",
+  "rationale": "Of the 18 surviving mutants on metrics.py, all are equivalent mutants by structural argument. Eleven are string/fstring message mutations (XX...XX wrappers on error-text or shell raise messages) un-killable without anti-pattern over-assertion on error-message text (#17, #21-23, #34, #37, #42, #44, #46-47, #84). One is the verbose=False -> verbose=True diagnostic-flag toggle on lpips.LPIPS construction (#28; no observable effect). One is requires_grad_(False) -> requires_grad_(True) (#30; no-op under the surrounding torch.no_grad() context). One is  ->  (#31; the underscore is just an unused-marker assignment, no observable effect). Four are LPIPS [0,MAX_I] -> [-1,1] normalization arithmetic mutations that apply identically to both dtype paths so the dtype-invariance test does not separate them, and would require asserting machine-specific numerical LPIPS values to detect \u2014 anti-pattern (#73 *2 -> /2; #74 *2 -> *3; #75 -1 -> +1; #76 -1 -> -2). Threshold UNCHANGED at 0.85 per phase-3-plan.md:1248 neural-sim gate (STOP-I not exercised). Banks calibration evidence into L-3DGS-1 (common-3dgs Stage-1c banking precedent; revisit at task-8 dispatch where the 3DGS-MPM consumer provides additional pixel-exact LPIPS coverage). Tightening passes: (a) test_wrong_channel_count_raises_value_error killed #41 (a.shape[2] -> a.shape[3] in _validate_pair); (b) test_lpips_dtype_invariance_uint8_vs_float32_normalized killed #72 (img/max_i -> img*max_i in the LPIPS normalization; the invariance test on lpips(uint8) == lpips(float32 normalized) catches it because the uint8 path multiplies by 255 (saturates) while the float32 path is unaffected since max_i=1.0).",
+  "by_file": {
+    "tools/testkit/render_similarity/metrics.py": {
+      "bad_survived": 18,
+      "ok_killed": 66
+    }
+  }
+}
