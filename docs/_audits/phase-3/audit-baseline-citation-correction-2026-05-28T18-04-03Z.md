@@ -3,7 +3,7 @@ date: 2026-05-28T18-04-03Z
 author: phase-3 audit-citation-hygiene fix (Claude Code)
 subject: Phase 3 focused INFRASTRUCTURE / hygiene fix — integrity-baseline citation corrigendum + measure-don't-copy convention (§R) + dynamic ref-set generalization in r2-bulk-upload.sh + r2-sweep-proof.yml (L-R2CD-1 / L-R2CD-2 / L-R2CD-3 closure)
 verdict: CONFIRMED
-head_sha: pending
+head_sha: d512382e1d8c4e0e2f465f0280eb01b4e9a561df
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
