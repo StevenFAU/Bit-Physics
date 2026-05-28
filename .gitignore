@@ -56,3 +56,8 @@ imgui.ini
 # junk — remove the matching line if a future operator routing commits them.
 captures/eulerian-smoke-stack-d/taylor-green-128cube-seed42-step500.*
 captures/eulerian-smoke-stack-e/taylor-green-128cube-seed42-step500.*
+
+# common-3dgs 3dgs-smoke local render outputs (PNG/HDF5/PLY). The canonical
+# capture is committed to the schema-corpus at tests/fixtures/legacy-captures/;
+# the examples/smoke_3dgs/out/ dir is a scratch render target.
+common/common-3dgs/examples/smoke_3dgs/out/

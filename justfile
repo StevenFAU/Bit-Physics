@@ -54,6 +54,18 @@ test-sims-all:
 		(cd packages/$$sim && PYTHONPATH=. python3 -m pytest tests/ -q) || true; \
 	done
 
+# ---- Phase 3 common-3dgs ----
+
+# Render one frame of the 3dgs-smoke scene (writes PNG + Layer-0 HDF5 capture
+# under common/common-3dgs/examples/smoke_3dgs/out/).
+run-3dgs-smoke:
+	PYTHONPATH=common/common-3dgs/src:common/common-3dgs/examples \
+		uv run --no-sync python common/common-3dgs/examples/smoke_3dgs/sim.py
+
+# Run the common-3dgs test suite (smoke-contract + property-based).
+test-3dgs:
+	cd common/common-3dgs && uv run --no-sync python -m pytest tests/
+
 # Verify every Phase 1 golden table against its SymPy/closed-form generator.
 verify-goldens:
 	cd tools/testkit && uv run python -m golden.generator.lorenz_structural --verify

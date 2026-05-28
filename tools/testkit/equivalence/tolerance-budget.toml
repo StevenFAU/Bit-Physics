@@ -5,9 +5,12 @@
 # Amendments require a separate operator-approved commit per
 # docs/architecture.md § 2.6.
 
+# Phase-3 carryover (sub-phase-phase-3-common-3dgs Stage 1b; phase-3-plan §6.1).
+# Carry-forward only — NO per-category budget widened. common-3dgs is single-stack
+# (no cross-stack equivalence table) so it adds no override here.
 [phase]
-phase = "sub-phase-mpm-multimaterial-stack-d"
-opened_at = "2026-05-24T12:16:58Z"
+phase = "phase-3"
+opened_at = "2026-05-28T00-59-06Z"
 
 # Defaults from spec § 2.6 default tolerance table.
 

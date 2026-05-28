@@ -17,12 +17,12 @@
 #   distributional_bound = "<EFECT | n/a>"   # required iff class = distributional
 
 # common-3dgs forward renderer (task-1). D-C default declaration drafted at
-# Stage 1a; MEASURED at Stage 1b (run render() twice on identical inputs; compare
-# arrays). The renderer composites per-pixel front-to-back over a depth-sorted
-# splat list — no atomic scatter, no subgroup ops — so it is bit-identical
-# run-to-run on the Warp CPU backend (serial wp.launch). If the Stage-1b
-# measurement falsifies bit-exactness, this row is re-characterized to
-# `class = "distributional"` + a measured EFECT `distributional_bound` (D-C / STOP-J).
+# Stage 1a; MEASURED + CONFIRMED at Stage 1b — render() run twice on identical
+# inputs is byte-identical (max_abs_diff = 0.0, identical sha256). The renderer
+# composites per-pixel front-to-back over a depth-sorted splat list (no atomic
+# scatter, no subgroup ops) → bit-identical run-to-run on the Warp CPU backend
+# (serial wp.launch). The bit-exact declaration HOLDS; not re-characterized
+# (no STOP-J fired). Row locked at Stage 1c.
 [neural-rendered.common-3dgs]
 stack = "E"
 class = "bit-exact"

@@ -59,3 +59,38 @@ jobs:
       - name: Determinism gate (content-equivalent contract)
         working-directory: tools/testkit
         run: uv run pytest -W error determinism/tests/
+
+  # Phase-3 common-3dgs (task-1). Stack-E Warp-backed 3D-Gaussian-Splatting
+  # module; lint + type-check + test in strict mode. No LFS needed — the tests
+  # generate scenes in-memory (they do not read the legacy-captures corpus).
+  # Per § 2.14, pytest runs directly (no `just` indirection).
+  test-common-3dgs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync common-3dgs workspace deps
+        working-directory: common/common-3dgs
+        run: uv sync --extra dev
+
+      - name: ruff (src + tests + examples)
+        working-directory: common/common-3dgs
+        run: |
+          uv run ruff check src/ tests/ examples/
+          uv run ruff format --check src/ tests/ examples/
+
+      - name: mypy --strict (src)
+        working-directory: common/common-3dgs
+        run: uv run mypy --strict src/common_3dgs
+
+      - name: pytest -W error
+        working-directory: common/common-3dgs
+        run: uv run pytest -W error tests/
