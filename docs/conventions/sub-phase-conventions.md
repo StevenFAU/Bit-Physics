@@ -1469,6 +1469,113 @@ landing, sha-back-fill, and focused-fix audit shapes alike.
 
 ---
 
+## § S. Tolerance-schema extensions follow the schema, not the plan prose
+
+### S.1 Why the convention exists
+
+`sub-phase-phase-3-lenia` Stage 1b
+(`docs/_audits/phase-3/sub-phase-phase-3-lenia-stage-1b-2026-05-28T15-51-04Z.md:330`)
+appended a `[continuous-ca.lenia]` block as a NEW top-level table in
+`tools/testkit/equivalence/tolerance.toml`, matching the prose example
+in `docs/phases/phase-3-plan.md:421-433` §3.2.4
+(`[<category>.<sim>] / golden_kernel_abs / golden_kernel_rel /
+golden_trajectory_abs`). But the schema at
+`tools/testkit/equivalence/tolerance-schema.json` has
+`additionalProperties: false` at the root and only permits
+`defaults` / `overrides` / `render_similarity` as top-level keys. The
+push HARD_FAILed `pytest -W error equivalence/tests/test_harness.py`
+(3 of 4) with `jsonschema.ValidationError: Additional properties are
+not allowed ('continuous-ca' was unexpected)` and red-lit
+`equivalence.yml` on every subsequent push to main until the
+`lenia-tolerance-schema-fix` repair commit (this convention's landing).
+
+Root cause: the plan §3.2.4's `[<category>.<sim>]` shape was prose
+prescription only; only the `render_similarity` top-level branch had
+ever been wired into the JSON schema (during
+`sub-phase-phase-3-render-similarity` Stage 1a D-SCHEMA decision).
+The lenia agent followed the plan prose rather than probing the schema
+first.
+
+### S.2 The rule — schema is authoritative; probe it first
+
+> **Stage-1b probe — every sim sub-phase touching `tolerance.toml`:**
+> read `tools/testkit/equivalence/tolerance-schema.json` BEFORE
+> appending any new row, and read AT LEAST ONE existing entry under the
+> closest-fitting top-level branch (`overrides.<sim>` for cross-stack
+> sims; `render_similarity.<category>.<sim>` or
+> `golden_tolerance.<category>.<sim>` for sim-specific anchor
+> tolerances). The schema is the **authoritative shape**; plan prose
+> examples are **starting designs** subject to §0.3 "discovered pattern
+> wins" semantics.
+
+If the per-sim values do NOT fit any existing schema branch, this is a
+**schema extension** decision (analogous to D-SCHEMA at
+sub-phase-phase-3-render-similarity Stage 1a). The Stage 1b agent must
+**surface as STOP-SCHEMA-FIT, not improvise an unschema'd top-level
+block**. The dispatch / sub-phase-plan-drafting hosts that decision as
+a D-class; Stage 1b is not the place to invent new schema shapes.
+
+### S.3 Three legal landing shapes for sim tolerance rows
+
+1. **Cross-stack equivalence sim** (RD-2D, sph-water, lattice-boltzmann-
+   d3q19, mpm-multimaterial, eulerian-smoke): land under
+   `[overrides.<sim>]` with `category = "<numerical-method-taxonomy>"`
+   + optional `relative` / `absolute` overrides on the category default.
+   This is **resolution wiring** (physics-family → numerical-method
+   taxonomy), NOT tolerance widening per spec § 2.6.
+2. **Render-similarity sim** (task-6 NCA D↔B; task-8 3DGS-MPM; future
+   neural-rendered sims): land under
+   `[render_similarity.<category>.<sim>]` with the schema-required
+   triple `psnr_min` / `ssim_min` / `lpips_max`.
+3. **Single-stack golden-table sim** (lenia; future single-stack sims
+   with per-anchor `_abs/_rel` tolerances): land under
+   `[golden_tolerance.<category>.<sim>]`. Per-sim keys are bespoke per
+   anchor family (lenia: `golden_kernel_abs/rel`,
+   `golden_trajectory_abs`; pinn-poisson: `analytical_l2`, `fd_l2`;
+   articulated-pedagogical: `pendulum_period_rel`, `trajectory_abs`,
+   `energy_drift_rel_per_second`; mass-spring-cloth: `position_abs`,
+   `catenary_shape_rel`; neural-ca-python: `golden_checkpoint_match`,
+   `training_loss_distributional_bound`). The schema permits
+   number/boolean/string values under the (category, sim) two-level
+   nesting.
+
+Any FOURTH shape needed by a future sim → new D-class in
+plan-drafting; new top-level branch added under operator routing
+mirroring the `render_similarity` and `golden_tolerance` precedents.
+
+### S.4 Coordinator-dispatch discipline
+
+Coordinator-dispatch wording that mentions "additive extension"
+(borrowing from D-SCHEMA's vocabulary) is at risk of priming the
+sub-agent to invent a new top-level branch by analogy. Dispatches that
+mention additive-extension shapes MUST cite the existing override /
+render_similarity / golden_tolerance branches as the **default landing
+slot** before authorizing a new top-level branch. Convert "additive
+extension" → "existing-slot OR new-branch (D-class)" in dispatch
+language.
+
+### S.5 Post-push CI poll — independent gap, surfaced here
+
+The `equivalence.yml` workflow runs `pytest -W error
+equivalence/tests/` on every push to main and on every PR; the lenia
+Stage 1b push (`5baf083`) red-lit it within ~40s, and every push since
+(landing, R2-credentials-durability fix, audit-citation-hygiene fix,
+this very session's anchor probe) failed the same gate. The CI
+infrastructure caught it correctly; **the gap was agent-side polling**.
+
+> **Post-push CI sweep — every Stage-1b / focused-fix / landing
+> commit chain:** within ~2 minutes of pushing, query
+> `gh run list --limit 10` (or per-workflow `gh run list --workflow=
+> <name> -L 3`) for the just-pushed commit's status. A `failure`
+> against an existing CI gate fires STOP-CI-RED — investigate before
+> declaring the stage / fix landed, even if local verification was
+> green.
+
+This is the same discipline as integrity-baseline re-measure (§R) —
+**measure, don't assume**.
+
+---
+
 ## § O. Coherence note
 
 This document is the consolidation of cross-cutting patterns from the following audit chain (chronological):
