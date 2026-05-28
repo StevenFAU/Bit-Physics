@@ -3,7 +3,7 @@ date: 2026-05-28T12-44-20Z
 author: phase-3 render-similarity stage-0 (Claude Code)
 subject: Phase 3 render-similarity Stage 0 — pre-flight + PyPI verify + cross-phase replay
 verdict: CONFIRMED
-head_sha: 40ce87b70aa7bffc387ebc0d762fbac000e6d027
+head_sha: 463283a (back-fill via Convention #12; the Stage-0 audit commit)
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
@@ -243,4 +243,4 @@ charter-explicit anti-pattern.
 
 Stage 0 CONFIRMED. Anchor probe clean; replay 8/8; PyPI verify clean; D-class
 ratified; tolerance-budget Phase-3 carryover verified-only. Stage 1a dispatch
-READY at HEAD `<this audit commit; back-fill via Convention #12>`.
+READY at HEAD `463283a` (Stage-0 audit commit; back-filled via Convention #12).
