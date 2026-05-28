@@ -8,9 +8,12 @@
 # WHAT IT DOES
 #   Uploads to R2, via the `lfs-s3` standalone transfer agent, exactly the set of
 #   LFS objects "in use" — defined as the union of objects referenced by HEAD and
-#   each prior phase tag (v0.0.0-phase-0, v0.1.0-phase-1, v0.2.0-phase-2). This is
-#   the SAME object set the M4 sweep (.github/workflows/r2-sweep-proof.yml) walks,
-#   so M3's upload surface == M4's verification surface (no asymmetry).
+#   every v0.*-phase-* / v0.*-sub-phase-* tag enumerated dynamically from
+#   `git tag -l` at run time (so a new sub-phase tag is picked up automatically;
+#   the in-use ref set is never a frozen literal — see Convention §R measure-
+#   don't-copy, banked observation L-R2CD-2 in the r2-credentials-durability fix).
+#   This is the SAME object set the M4 sweep (.github/workflows/r2-sweep-proof.yml)
+#   walks, so M3's upload surface == M4's verification surface (no asymmetry).
 #
 #   `git lfs push --all` is deliberately NOT used: an all-refs walk includes
 #   referenced-by-nothing historical degenerates (e.g. the empty-file OID
@@ -66,10 +69,19 @@ REMOTE="origin"
 MANIFEST=""
 
 # The refs whose LFS-object union defines M3's scope (== M4's sweep scope).
-UNION_REFS=(HEAD v0.0.0-phase-0 v0.1.0-phase-1 v0.2.0-phase-2)
-# Refs that actually carry LFS objects (used for the verification re-fetch;
-# v0.0.0-phase-0 / v0.1.0-phase-1 carry zero LFS objects — pre-LFS history).
-FETCH_REFS=(HEAD v0.2.0-phase-2)
+# Dynamic enumeration: HEAD plus every v0.*-phase-* / v0.*-sub-phase-* tag at run
+# time, sorted by `sort -V`. The ref-set was a frozen literal through lfs-architecture
+# Stage 1c (HEAD + v0.0.0-phase-0 + v0.1.0-phase-1 + v0.2.0-phase-2); every later
+# sub-phase tag added the same staleness. The dynamic form picks up
+# v0.2.1-sub-phase-lfs-architecture, v0.2.2-sub-phase-phase-3-common-3dgs, every
+# v0.2.x-sub-phase-* tag, and any future v0.3.x-* / v0.4.x-* phase or sub-phase tag
+# without a script edit (L-R2CD-2 closure; Convention §R measure-don't-copy).
+mapfile -t TAG_REFS < <(git tag -l 'v0.*-phase-*' 'v0.*-sub-phase-*' | sort -V)
+UNION_REFS=(HEAD "${TAG_REFS[@]}")
+# `git -c lfs.storage=<tmp> lfs fetch` on a pre-LFS ref is a no-op (zero objects),
+# so we fetch every UNION_REFS entry rather than maintaining a parallel hand-curated
+# fetch list. This collapses the M3-vs-M4 surface to a single source of truth.
+FETCH_REFS=("${UNION_REFS[@]}")
 
 while [ $# -gt 0 ]; do
   case "$1" in

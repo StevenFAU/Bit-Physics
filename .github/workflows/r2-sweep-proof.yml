@@ -51,12 +51,21 @@ jobs:
           # shellcheck disable=SC1091
           source "${repo_root}/tools/lfs/setup-lfs-s3.sh"
 
-          REFS="HEAD v0.0.0-phase-0 v0.1.0-phase-1 v0.2.0-phase-2"
+          # Dynamic ref-set: HEAD + every v0.*-phase-* / v0.*-sub-phase-* tag
+          # enumerated at run time, sorted by `sort -V`. The ref set was a frozen
+          # literal through lfs-architecture Stage 1c (HEAD + v0.0.0-phase-0 +
+          # v0.1.0-phase-1 + v0.2.0-phase-2); every later sub-phase tag added the
+          # same staleness. The dynamic form picks up future v0.2.x-sub-phase-* /
+          # v0.3.x-* tags without a workflow edit (L-R2CD-3 closure; Convention §R
+          # measure-don't-copy). `fetch-tags: true` above ensures the tags are
+          # present in the runner's clone for `git tag -l` to resolve them.
+          REFS="HEAD $(git tag -l 'v0.*-phase-*' 'v0.*-sub-phase-*' | sort -V | tr '\n' ' ')"
           total_objects=0
           total_pass=0
           total_fail=0
 
           echo "=================== R2 SWEEP ==================="
+          echo "ref set: $REFS"
           for ref in $REFS; do
             echo "--- ref: $ref ---"
             # Enumerate LFS pointers at this ref by reading the tree (no checkout).

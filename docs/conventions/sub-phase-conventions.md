@@ -1366,6 +1366,109 @@ holds when every pointer at every inspected ref resolves *from R2*.
 
 ---
 
+## § R. Integrity-baseline measure-don't-copy (invariant + measured digest)
+
+### R.1 Why the convention exists
+
+`sub-phase-lfs-architecture` Stage 2
+(`docs/_audits/phase-2/sub-phase-lfs-architecture/sub-phase-landing-2026-05-27T18-38-40Z.md:205`)
+established the integrity-baseline contract: at every sub-phase audit
+the `integrity --all --mode strict` report exhibits **0 HARD_FAIL / 14
+SOFT_WARN**, and at that point the full stderr-report sha256 was
+`c19492add530f3a5a0d723777cf818a702b7019ee664c733695364aa6d22cb52`
+(reproduced byte-for-byte across 20+ contiguous sub-phases). The
+two-part claim was carried forward through `phase-2-cleanup`-Stage-2
+(`docs/_audits/phase-2/sub-phase-phase-2-cleanup/sub-phase-landing-2026-05-27T23-16-50Z.md:216`)
+and remained byte-faithful until Phase 3.
+
+In Phase 3 the digest legitimately drifted: every new sim sub-phase
+(`common-3dgs`, `lenia`) adds `cat3.golden-values` entries to the
+report's `[AUDIT_LOG]` lines (one per new golden table), which
+deterministically perturbs the report bytes. The **count invariant
+(0 HF / 14 SW)** is intact at every Phase-3 audit; the **byte digest**
+is not, and the recent landing audits (common-3dgs landing,
+render-similarity landing, lenia landing) each carried forward
+`integrity_baseline: c19492ad…d22cb52` as if byte-identical when it had
+in fact drifted to `688bc195d8b785753ae9500b4e1d48800ae961dd38ac4410f16fb7446de127ff`
+at HEAD `beac1fd` (and the same at HEAD `d546ace`; see
+`docs/_audits/phase-3/r2-credentials-durability-fix-2026-05-28T17-45-09Z.md:91-113`,
+banked observation L-R2CD-1).
+
+Root cause: the digest was a **frozen literal** (copied between
+audits) when it should have been a **point-in-time measurement** (the
+sha256 of the report at this audit's HEAD). Frozen literals about
+content that legitimately changes drift silently.
+
+### R.2 The split — invariant + measured digest
+
+Every sub-phase / sub-phase-Stage / focused-fix audit front-matter
+records the integrity baseline as **two distinct fields** going forward
+from this convention (Phase-3-cleanup onward):
+
+```yaml
+integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
+integrity_digest_at_head: <measured-sha256-of-stderr-report-at-this-head>
+```
+
+- `integrity_invariant` is the **stable cross-audit assertion**: the
+  property conserved across every contiguous sub-phase since
+  lfs-architecture Stage 2. STOP-D fires if this value changes.
+- `integrity_digest_at_head` is a **measured fact at this audit's
+  HEAD**: the sha256 of the `integrity --all --mode strict` stderr
+  report computed in this session, never copied from a prior audit.
+  Drift is informational (per R.1 — new golden tables, new captures,
+  new audit-log lines all legitimately perturb it).
+
+The legacy single field `integrity_baseline:` is **retained as
+read-only on sealed audits** (append-only invariant; not rewritten in
+place except for narrow factual front-matter corrections per the
+established corrigendum mechanism — see Convention B.1 and the
+`render-similarity` plan-drafting corrigendum precedent at commit
+`872e308`). New audits use the two-field shape above.
+
+### R.3 How to measure
+
+In a shell where the workspace is sync'd
+(`uv sync --all-packages`) and `tools/lfs/setup-lfs-s3-local.sh` is
+sourced (§Q.3):
+
+```bash
+uv run --no-sync python -m integrity --all --mode strict \
+  2>/tmp/integ.err 1>/tmp/integ.out
+rc=$?
+grep -E '^summary:' /tmp/integ.err   # must read "summary: 0 HARD_FAIL, 14 SOFT_WARN"
+sha256sum /tmp/integ.err             # this is integrity_digest_at_head
+```
+
+The integrity sweep writes its full report to **stderr**, not stdout
+(`tools/integrity/integrity/__main__.py`). The digest is the sha256 of
+the **full stderr file**, not just the summary line or just the
+SOFT_WARN lines. This matches the lfs-architecture Stage-2
+measurement method.
+
+### R.4 STOP-D semantics under the split
+
+STOP-D is the integrity-baseline-divergence stop. Under the split it
+fires ONLY on a change to `integrity_invariant` (i.e. a HARD_FAIL
+appears, or the SOFT_WARN count changes from 14). A change in
+`integrity_digest_at_head` alone is not STOP-D — it is the expected
+behavior whenever a sub-phase legitimately adds golden tables,
+fixtures, or audit-log emitters.
+
+### R.5 Inheritance — what every future audit does
+
+> **Anchor-probe task — every audit:** measure the digest live (R.3)
+> and record both `integrity_invariant` and `integrity_digest_at_head`
+> in front-matter. Never copy the digest from a prior audit. Cite the
+> prior audit's measured digest only as "prior measurement at HEAD
+> `<sha>`: `<digest>`" with no claim of byte-identity unless re-measured
+> in this session.
+
+This applies to plan-drafting, probe, Stage-0/1a/1b/1c checkpoint,
+landing, sha-back-fill, and focused-fix audit shapes alike.
+
+---
+
 ## § O. Coherence note
 
 This document is the consolidation of cross-cutting patterns from the following audit chain (chronological):
