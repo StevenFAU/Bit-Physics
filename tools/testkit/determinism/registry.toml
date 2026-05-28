@@ -30,3 +30,21 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# lenia (task-3, sub-phase-phase-3-lenia). FIRST SIM in Phase 3 (after the two
+# infrastructure roots common-3dgs at task-1 + render-similarity at task-2).
+# D-DET lean per charter §7.3 + §3.2.5 pre-baked row schema
+# (docs/phases/phase-3-plan.md:479-486): bit-exact same-stack-same-hw via
+# Taichi seed; no atomics in forward conv. **MEASURED at Stage 1b**: two runs
+# at seed=42, grid=64, steps=10 produce np.array_equal field outputs under
+# set_taichi_deterministic(arch='cpu'). The Stack-D Taichi-DSL real-space
+# Quad4 convolution is per-cell (no ti.atomic_*; no cross-cell accumulator;
+# explicit f64 accumulator in lenia_convolve to avoid Taichi 1.7.4's silent
+# f32 downcast). Row locked at Stage 1b.
+[continuous-ca.lenia]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

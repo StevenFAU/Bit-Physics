@@ -33,10 +33,10 @@ def growth_lenia(u: NDArray[np.floating], mu: float, sigma: float) -> NDArray[np
         Convolved field (output of Quad4 convolution); any NumPy shape.
     mu
         Bell-curve center (the Orbium unicaudatus preset has
-        ``mu = 0.15`` per Chakazul ``animals.json:5``).
+        ``mu = 0.15`` per Chakazul ``references/Chakazul-Lenia/Python/animals.json:5``).
     sigma
         Width parameter (the Orbium unicaudatus preset has
-        ``sigma = 0.015`` per Chakazul ``animals.json:5``).
+        ``sigma = 0.015`` per Chakazul ``references/Chakazul-Lenia/Python/animals.json:5``).
 
     Returns
     -------

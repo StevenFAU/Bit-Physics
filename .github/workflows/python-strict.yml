@@ -149,3 +149,38 @@ jobs:
       - name: pytest -W error (render-similarity suite)
         working-directory: tools/testkit
         run: uv run pytest -W error render_similarity/tests/
+
+  # Phase 3 task-3 (sub-phase-phase-3-lenia). FIRST per-sim CI job for a
+  # Phase-3 SIM (the prior two Phase-3 jobs test-common-3dgs + test-render-
+  # similarity are infrastructure). Runs the Stack-D Taichi reference Lenia's
+  # tests directly per § 2.14 + § 6.3 M.
+  test-lenia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync lenia workspace deps (with dev extras for pytest + ruff)
+        working-directory: packages/lenia
+        run: uv sync --extra dev
+
+      - name: ruff (lenia src + tests)
+        working-directory: packages/lenia
+        run: |
+          uv run ruff check lenia/ tests/
+          uv run ruff format --check lenia/ tests/
+
+      - name: mypy --strict (lenia)
+        working-directory: packages/lenia
+        run: uv run mypy --strict lenia/
+
+      - name: pytest -W error (lenia suite)
+        working-directory: packages/lenia
+        run: uv run pytest -W error tests/

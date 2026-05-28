@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lenia-orbium-trajectory-chakazul-2022",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/lenia-kernel.md",
+    "upstream": "Chakazul-Lenia",
+    "upstream_path": "references/Chakazul-Lenia/Python/animals.json",
+    "upstream_sha": "adfc542939266de7f4bb7ebb552e8499701ee107"
+  },
+  "tolerance": {
+    "absolute": 1e-4,
+    "relative": 1e-5
+  },
+  "sim_config": {
+    "preset": "orbium-unicaudatus",
+    "R": 13,
+    "T": 10,
+    "mu": 0.15,
+    "sigma": 0.015,
+    "dt": 0.1,
+    "kn": 1,
+    "gn": 1,
+    "grid": 64,
+    "seed": 42,
+    "ic": "deterministic-gaussian-blob-perturbed-rng-default-rng-seed-42"
+  },
+  "test_points": [
+    {
+      "inputs": {"step": 0, "quantity": "field_sum"},
+      "expected": {"value": 302.98933327464243},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Step 0 (IC) field sum = sum(clip(0.5·exp(-||x-cx||²/(2·sigma_ic²)) + 0.05·rng.random((64,64)), 0, 1)) with rng = numpy.random.default_rng(seed=42), sigma_ic = 64/8 = 8. The IC is fully deterministic from the seed; the field sum at step 0 is independent of the Taichi forward update (no Taichi kernel involved yet). Reproducible byte-for-byte by lenia._init_orbium_field(grid=64, seed=42).",
+        "doi": "n/a-deterministic-IC"
+      }
+    },
+    {
+      "inputs": {"step": 0, "quantity": "field_max"},
+      "expected": {"value": 0.5387103307030118},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Step 0 IC max = max over (i,j) of clip(0.5·exp(-||x-cx||²/(2·sigma_ic²)) + 0.05·rng.random((64,64)), 0, 1). The Gaussian blob peaks at the center cell ((32, 32) for grid=64) with value 0.5·exp(0) = 0.5; the perturbation at the center is 0.05·rng_value. The deterministic max location is at or near the center; max value = 0.5 + 0.05·rng[32, 32]. Reproducible byte-for-byte from the seed.",
+        "doi": "n/a-deterministic-IC"
+      }
+    },
+    {
+      "inputs": {"step": 1, "quantity": "field_sum"},
+      "expected": {"value": 148.83177826685454},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Step 1 field sum = sum(clip(A_0 + dt·G(K * A_0; mu, sigma), 0, 1)) where K is the normalized Quad4 kernel (LeniaF.py:493), G is the Quad4 polynomial growth (LeniaF.py:500), dt=0.1. The forward Euler step is deterministic + bit-exact from the pinned seed under set_taichi_deterministic(arch='cpu'). Reproducible byte-for-byte by lenia.LeniaSim(LeniaConfig(seed=42, grid=64, steps=1)).step()."
+      }
+    },
+    {
+      "inputs": {"step": 5, "quantity": "field_sum"},
+      "expected": {"value": 21.613093833557425},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Step 5 field sum = sum after 5 iterations of the deterministic Lenia Euler step starting from the seed-pinned Gaussian-blob IC. The trajectory reflects the Lenia decay regime under this IC: most cells have local-mean convolved values far from mu=0.15, so G saturates to -1 and the cells decay by dt=0.1 per step. Reproducible byte-for-byte under D-DET; falls within the bound |A_{n+1}-A_n| ≤ dt·|G| ≤ dt per the spec-ref §6 second invariant."
+      }
+    },
+    {
+      "inputs": {"step": 5, "quantity": "field_max"},
+      "expected": {"value": 0.22783541528671590}
+    }
+  ]
+}

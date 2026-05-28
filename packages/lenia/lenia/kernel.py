@@ -9,7 +9,7 @@ Chakazul source at SHA ``adfc542939266de7f4bb7ebb552e8499701ee107``
 - ``references/Chakazul-Lenia/Python/LeniaND.py:273`` —
   ``0: lambda r: (4 * r * (1-r))**4,  # polynomial (quad4)``
 
-The compact-support form (``LeniaF.py:493``) is the implementation
+The compact-support form (``references/Chakazul-Lenia/Python/LeniaF.py:493``) is the implementation
 contract: the kernel is zero strictly outside ``(0, 1)``; the
 ``(r>0)*(r<1)`` mask is the citation anchor. We tighten the boundary
 to ``[0, 1]`` (closed interval) here because the three golden anchors

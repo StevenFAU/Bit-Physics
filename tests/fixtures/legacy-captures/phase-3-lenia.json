@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      32,
+      32
+    ],
+    "dtype": "f64",
+    "params": {
+      "R": 13,
+      "T": 10,
+      "dt": 0.1,
+      "gn": 1,
+      "kn": 1,
+      "mu": 0.15,
+      "preset": "orbium-unicaudatus",
+      "sigma": 0.015
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:6c313a5da53dd341f73accdb7c369564451ccd475fa290c026360e3f39890062",
+    "format": "hdf5",
+    "path": "phase-3-lenia.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-28T15:00:00Z",
+    "step_count": 5,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "lenia",
+    "variant": "lenia"
+  },
+  "stack": {
+    "build_id": "sub-phase-phase-3-lenia",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}

@@ -75,3 +75,15 @@ verify-goldens:
 	cd tools/testkit && uv run python -m golden.generator.dfsph_density_evolution --verify
 	cd tools/testkit && uv run python -m golden.generator.d3q19_equilibrium --verify
 	cd tools/testkit && uv run python -m golden.generator.mls_mpm_quadratic_bspline --verify
+
+# ---- Phase 3 lenia ----
+
+# Run the Lenia CLI (writes the canonical Orbium capture to captures/lenia/).
+run-lenia:
+	uv run --no-sync python -m lenia --seed 42 --steps 1000 --grid 256 \
+		--preset orbium-unicaudatus --out captures/lenia \
+		--tolerance-key continuous-ca.lenia --determinism-arch cpu
+
+# Run the Lenia test suite (kernel anchors + growth + sim shells + determinism + PBT).
+test-lenia:
+	uv run --no-sync python -m pytest packages/lenia/tests/ -v

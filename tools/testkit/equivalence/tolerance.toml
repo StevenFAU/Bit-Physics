@@ -106,3 +106,21 @@ category = "smoke"
 # the CONSUMING sim sub-phases (task-6 NCA D↔B equivalence; task-8 MPM-3DGS
 # golden-render gate) at their own dispatch. Adding a row here without a
 # consumer is OUT OF SCOPE for this sub-phase (charter § 1.2).
+
+# -----------------------------------------------------------------------------
+# Phase-3 lenia (task-3, sub-phase-phase-3-lenia) — golden-table tolerances.
+# -----------------------------------------------------------------------------
+# Single-stack sim (Stack D, Taichi); NO cross-stack equivalence row.
+# Per §3.2.4 pre-baked schema (docs/phases/phase-3-plan.md:426-433):
+#   golden_kernel_abs     = 1e-6  (Quad4 kernel anchor absolute tolerance)
+#   golden_kernel_rel     = 1e-5  (Quad4 kernel anchor relative tolerance)
+#   golden_trajectory_abs = 1e-4  (Orbium trajectory anchor absolute tolerance)
+# tolerance-budget.toml at HEAD has only `cross_stack` budgets; NO
+# `[budgets.<category>.golden]` cap shape exists. Lenia's rows land
+# un-capped-by-design (Stage-0 audit FRICTION #1; STOP-CAT-X NOT fired).
+# Operator routing options at the landing review.
+
+[continuous-ca.lenia]
+golden_kernel_abs = 1e-6
+golden_kernel_rel = 1e-5
+golden_trajectory_abs = 1e-4

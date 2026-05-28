@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lenia-quad4-kernel-chan-2019",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/lenia-kernel.md",
+    "upstream": "Chakazul-Lenia",
+    "upstream_path": "references/Chakazul-Lenia/Python/LeniaF.py",
+    "upstream_sha": "adfc542939266de7f4bb7ebb552e8499701ee107"
+  },
+  "tolerance": {
+    "absolute": 1e-6,
+    "relative": 1e-5
+  },
+  "test_points": [
+    {
+      "inputs": {"r": 0.0},
+      "expected": {"K": 0.0},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "K(0) = (4·0·(1-0))^4 = 0. Compact-support boundary; NOT a peak. Cross-checked against Chakazul/Lenia source at references/Chakazul-Lenia/Python/LeniaF.py:493 (compact-support form (r>0)*(r<1) ensures K(0)=0 trivially) and LeniaND.py:273 (raw polynomial form (4·r·(1-r))^4 evaluates to 0 at r=0). The §6.3 plan-text characterization 'kernel at r=0 (peak K(0))' is mathematically incorrect; charter §1.2 + Stage-1a audit §4.2 record the SHIFTED-on-evidence anchor correction.",
+        "doi": "n/a-hand-derivation",
+        "expected": {"K": 0.0}
+      }
+    },
+    {
+      "inputs": {"r": 0.1},
+      "expected": {"K": 0.016796160000000008}
+    },
+    {
+      "inputs": {"r": 0.25},
+      "expected": {"K": 0.31640625}
+    },
+    {
+      "inputs": {"r": 0.4},
+      "expected": {"K": 0.8493465599999999}
+    },
+    {
+      "inputs": {"r": 0.5},
+      "expected": {"K": 1.0},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "K(0.5) = (4·0.5·0.5)^4 = 1^4 = 1. PEAK of the Quad4 kernel. Cross-checked against Chakazul/Lenia source: references/Chakazul-Lenia/Python/LeniaF.py:493 lambda r: (r>0)*(r<1) * (4*r*(1-r))**4 evaluates to (4·0.5·0.5)**4 = 1.0 at r=0.5. The peak location is hand-derivable: d/dr [(4·r·(1-r))^4] = 0 at r=0.5 since d/dr [4r(1-r)] = 4(1-2r) = 0 at r=0.5, where 4r(1-r) = 1 reaches its own maximum.",
+        "doi": "n/a-hand-derivation",
+        "expected": {"K": 1.0}
+      }
+    },
+    {
+      "inputs": {"r": 0.6},
+      "expected": {"K": 0.8493465599999999}
+    },
+    {
+      "inputs": {"r": 0.75},
+      "expected": {"K": 0.31640625}
+    },
+    {
+      "inputs": {"r": 0.9},
+      "expected": {"K": 0.016796159999999987}
+    },
+    {
+      "inputs": {"r": 1.0},
+      "expected": {"K": 0.0},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "K(1) = (4·1·(1-1))^4 = 0. Compact-support boundary. Cross-checked against Chakazul/Lenia source at references/Chakazul-Lenia/Python/LeniaF.py:493 (the (r<1) mask sets K(r≥1)=0) and LeniaND.py:273 (raw polynomial form evaluates to 0 at r=1). The closed-form kernel has compact support [0, 1] by construction; outside [0, 1] the kernel is zero, and the boundary value is zero by direct evaluation.",
+        "doi": "n/a-hand-derivation",
+        "expected": {"K": 0.0}
+      }
+    }
+  ]
+}

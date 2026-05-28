@@ -7,6 +7,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### sub-phase-phase-3-lenia (Phase 3, task-3 — FIRST SIM in Phase 3)
+
+Phase-3 task-3 (Lenia) reference implementation. FIRST SIM-task
+sub-phase in Phase 3 after the two infrastructure roots common-3dgs
+(`v0.2.2`) + render-similarity (`v0.2.3`). Stack D (Taichi); §6.3
+deliverables A–O per `docs/phases/phase-3-plan.md:1282-1373`. Closes
+with operator-pushed annotated tag `v0.2.4-sub-phase-phase-3-lenia`
+(D-TAG ratified YES — Chakazul external vendoring + durable sim
+architecture both §D.2 conditions strongly met).
+
+#### Added
+
+- `packages/lenia/` — Stack-D Taichi reference Lenia (24th workspace
+  member). `lenia/` Python package: `kernel.py` (Quad4 shape function
+  `K(r) = (4·r·(1-r))^4`), `growth.py` (Quad4 polynomial growth gn=1),
+  `sim.py` (`LeniaConfig` + `LeniaSim` with `step` + `field` +
+  `capture`), `_taichi_kernels.py` (module-level `@ti.kernel`s per
+  IC-12), `__main__.py` (argparse CLI per § 3.2.6). Orbium unicaudatus
+  preset (R=13, T=10, mu=0.15, sigma=0.015) grep-cited from
+  `references/Chakazul-Lenia/Python/animals.json:5`.
+- `references/Chakazul-Lenia/` — Chakazul/Lenia upstream at SHA
+  `adfc542939266de7f4bb7ebb552e8499701ee107` (MIT). Vendored:
+  `LICENSE.md`, `UPSTREAM_README.md`, `Python/LeniaF.py`,
+  `Python/LeniaND.py`, `Python/animals.json`. `MANIFEST.toml` with
+  per-file citations (Convention #8 grep-cite anchors).
+- `docs/sim-specs/continuous-ca/lenia/spec-ref.md` — 13-section spec
+  per `docs/architecture.md` § 8.2. Stage-1b SHIFTED-on-evidence: the
+  Stage-1a charter-suggested `mass_approximately_conserved` PBT
+  invariant is mathematically falsified for arbitrary IC under Quad4
+  polynomial growth gn=1; re-declared (NOT widened, per HARD RULE 2 +
+  charter §6 anti-pattern reminder) to `monotone_bounds` +
+  `per_step_change_bounded_by_dt`.
+- `tools/testkit/golden/tables/lenia-kernel.json` — Quad4 anchors at
+  r=0 (K=0), r=0.5 (K=1, PEAK), r=1 (K=0), plus 6 mid-curve
+  cross-check anchors. Tolerances `golden_kernel_abs=1e-6` /
+  `golden_kernel_rel=1e-5`. **§0.3 SHIFT-on-evidence**: §6.3 plan-prose
+  at `docs/phases/phase-3-plan.md:1351` says "r=0 (peak K(0))" — Quad4
+  evaluates K(0)=0, NOT a peak; the peak is at r=0.5. NO plan edit
+  (Convention M).
+- `tools/testkit/golden/tables/lenia-orbium-trajectory.json` — field
+  aggregate anchors at step 0 / step 1 / step 5 (sum, max).
+- `tools/testkit/golden/derivations/lenia-kernel.md` — hand-derivation
+  of Quad4 + grep-cite map to vendored Chakazul source.
+- `tools/diagnostics/tier3/` — **FIRST ever `tools/diagnostics/tier3/`
+  subtree** (per probe § 3.2 + charter §1.1 first-SIM friction). Lenia
+  Tier-3 module at `tools/diagnostics/tier3/lenia/` with
+  `KernelShapeReport`/`check_kernel_shape` +
+  `GrowthBoundReport`/`check_growth_bound`.
+- `tools/testkit/property/sims/lenia/` — shared PBT-invariant module
+  (`monotone_bounds_invariant` + `per_step_change_bounded_by_dt_invariant`)
+  per §6.0 item 7. **FIRST per-sim PBT module in Phase 3** under the
+  `sims/` subtree.
+- `tools/testkit/equivalence/tolerance.toml` — `[continuous-ca.lenia]`
+  golden tolerances (golden_kernel_abs/rel + golden_trajectory_abs).
+- `tools/testkit/determinism/registry.toml` — `[continuous-ca.lenia]`
+  Stack-D bit-exact-same-stack-same-hw row, MEASURED at Stage 1b.
+- `tests/fixtures/legacy-captures/phase-3-lenia.h5` + sidecar `.json`
+  — schema-corpus seed per §6.0 item 10 (Phase-4 WU-A schema-bump
+  round-trip target). LFS-tracked.
+- `docs/perf-ledger.md` — `lenia | python (Taichi) |
+  orbium-unicaudatus-64sq-seed42-step100 | 0.797s` baseline row.
+- `tools/testkit/probes/reports/lenia.md` — cat1-resident probe per
+  `tools/testkit/probes/template.md`.
+- `tools/testkit/failing-tests-evidence/lenia-2026-05-28T15-24-41Z.txt`
+  — Stage-1a RED witness (`sha256:5ff5e74175e9a5318f3fbed82b494477365eae83dd7e57795305ec81849a51f0`,
+  byte-reproducible).
+- `docs/glossary.md` entries: Lenia, kernel-convolution CA, Quad4,
+  growth function (Lenia).
+- `justfile` recipes: `run-lenia`, `test-lenia`.
+
+#### First-SIM friction notes (R-11 portfolio-scale signals)
+
+- **FRICTION #1.** `tools/testkit/equivalence/tolerance-budget.toml`
+  carries only `cross_stack` budgets at HEAD; no `[budgets.<category>.golden]`
+  cap shape exists. Lenia's `[continuous-ca.lenia] golden_*` rows
+  land un-capped-by-design. STOP-CAT-X NOT fired (no cap to exceed).
+  Every later Phase-3 SIM will encounter the same surface at its
+  first golden-table land.
+- **FRICTION #2.** Plan §6.3 prescribes `continuous-ca/lenia/python/`
+  at repo root; on-disk convention at HEAD is `packages/<name>/` (per
+  9 prior sim packages). Stage 1a ratified `packages/lenia/` per §0.3
+  existing-convention precedence (SHIFTED-surface-only, NO plan edit).
+- **FRICTION #3.** Stage-1a's `test_sim_shells.py` `pytest.raises(
+  NotImplementedError)` assertions needed a Stage-1b rewrite to assert
+  production behavior; an inverse-mirror of render-similarity's
+  `test_ms_ssim_raises_not_implemented` Phase-4-WU-C shell-stays-raise
+  posture.
+
+#### Notes
+
+- **Tag pushing.** `v0.2.4-sub-phase-phase-3-lenia` is pushed by the
+  operator after independent landing-audit review per spec § 7.12 R9
+  amendment + Convention D.2. I7 allowlist extension added at Stage 2.
+- **D-DET.** Bit-exact same-stack-same-hw MEASURED + HELD at Stage 1b
+  (two runs at the same seed produce `np.array_equal` field outputs).
+- **D-FFT.** Real-space Quad4 convolution lands. Stage 1b probe did
+  NOT exercise the Taichi FFT path (D-FFT real-space-default per
+  charter §7.2; the Taichi 1.7+ FFT module is not enumerated in
+  `docs/architecture.md:962` Stack-D determinism notes). Future
+  optimization opportunity at Phase 4+.
+
 ### Added
 
 - Phase 0 Block 1 (FOUNDATION): repo skeleton, vendored design spec at
