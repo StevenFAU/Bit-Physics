@@ -242,3 +242,36 @@ runner    = "uv run --no-sync pytest packages/mpm-multimaterial/tests/ -x -q --t
 path      = "common/common-3dgs/src/common_3dgs"
 threshold = 0.80
 runner    = "uv run --no-sync pytest common/common-3dgs/tests/ -x -q --tb=no"
+
+# Phase-3 sub-phase-phase-3-render-similarity (task-2) — NEW mutation-testing
+# target (spec § 2.13; phase-3-plan §6.0 item 12 / :1248 — neural-sim gate
+# ≥ 0.85, higher than the standard 0.80 because false-negatives here let
+# broken neural sims ship to Phase 4 WU-C). Mirrors the common_3dgs target
+# shape (uv run --no-sync pytest from repo root); the testkit workspace
+# installation makes `render_similarity` importable from any path.
+#
+# Stage-1c-discovered shape: the path points at metrics.py specifically
+# (mirroring common_3dgs's src/common_3dgs source-only convention). The
+# render_similarity package has no src/ subdir — its load-bearing source is
+# metrics.py; harness_mode.py is a NotImplementedError shell with only
+# equivalent-mutant message-string surface; __init__.py is re-exports
+# (non-mutable). Pointing at the package root would include the tests/
+# subdir and pollute the kill-rate with test-file mutation noise (a coverage
+# extension that's not the intended Layer-4 thirteen-gate target). Stage 1c
+# audit records this as the mutmut-target shape decision.
+#
+# Mutation surface covers psnr (closed-form numeric) + ssim (skimage thin
+# wrapper) + lpips (torch / lpips thin wrapper) + ms_ssim (NotImplementedError
+# shell — minimal mutable surface) + _validate_pair shared validator + the
+# R-3 bundled-weight sha256 check + the lazy LPIPS model cache. The kill-
+# signal is the union of:
+#   - smoke contracts (identity / perturbation / error cases);
+#   - 3 D-ANCHOR independent-reference anchors (PSNR hand-derivation,
+#     SSIM Wang 2004, LPIPS Zhang 2018 monotonicity);
+#   - 3 PBT invariants (identity sentinels + PSNR symmetry);
+#   - adversarial meta-test (2 fixture families);
+#   - D-DET bit-exact same-stack-same-hw measurement.
+[targets.render_similarity]
+path      = "tools/testkit/render_similarity/metrics.py"
+threshold = 0.85
+runner    = "uv run --no-sync pytest tools/testkit/render_similarity/tests/ -x -q --tb=no"

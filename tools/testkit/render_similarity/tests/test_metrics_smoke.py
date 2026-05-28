@@ -152,3 +152,71 @@ def test_unsupported_dtype_raises_value_error(metric: object) -> None:
     b = np.zeros((_SMOKE_HW, _SMOKE_HW, 3), dtype=np.float64)
     with pytest.raises(ValueError, match=r"dtype|float64|uint8|float32"):
         metric(a, b)  # type: ignore[operator]
+
+
+# ----------------------------------------------------------------------------
+# Stage-1c tightening (mutmut-survivor kills; charter § 2 Stage 1c). The
+# kept-tight, non-anti-pattern additions that demonstrably kill mutants on
+# `_validate_pair` (channel-count indexing) and on the LPIPS [0, MAX_I] →
+# [-1, 1] normalization arithmetic.
+# ----------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("metric", [psnr, ssim, lpips])
+def test_wrong_channel_count_raises_value_error(metric: object) -> None:
+    """4-channel input → ValueError (RGB-only contract; charter § 1.1).
+
+    Kills mutmut-survivor `_validate_pair` mutation `a.shape[2]` →
+    `a.shape[3]` — without a 4-channel test, mutant survives because
+    existing tests only exercise the 3-channel happy path.
+    """
+    a = np.zeros((_SMOKE_HW, _SMOKE_HW, 4), dtype=np.float32)
+    b = np.zeros((_SMOKE_HW, _SMOKE_HW, 4), dtype=np.float32)
+    with pytest.raises(ValueError, match=r"3-channel|channels|RGB"):
+        metric(a, b)  # type: ignore[operator]
+
+
+def test_lpips_dtype_invariance_uint8_vs_float32_normalized() -> None:
+    """LPIPS(uint8) == LPIPS(float32 normalized) — the dtype-invariance.
+
+    Kills the mutmut survivor that swaps the `[0, MAX_I] → [-1, 1]`
+    normalization `img / max_i` → `img * max_i`. The correct code routes
+    both dtype paths through the SAME `[-1, 1]` representation (uint8
+    `img/255` and float32 `img/1.0` both equal `img` normalized); the
+    forward pass through the AlexNet backbone is bit-identical, so
+    `lpips(uint8_a, uint8_b)` and `lpips(float32_a/255, float32_b/255)`
+    must produce byte-equal floats.
+
+    Under the multiply-instead-of-divide mutation:
+    - float32 path: `img * 1.0` = `img / 1.0` (max_i = 1.0; mutation is
+      a no-op); LPIPS value unchanged.
+    - uint8 path: `img * 255` (instead of `img / 255`) sends inputs to
+      `[0, 65025] * 2 - 1`, far outside the network's expected `[-1, 1]`
+      range; saturation produces a different LPIPS value.
+    The two paths diverge, the assertion fails, the mutation is killed.
+
+    The invariance is bit-exact under D-DET (the dtype conversion is the
+    only source of round-off; an exact `uint8/255` matches a float32
+    computed the same way). The choice of inverted-pair (`b = 255-a`)
+    maximizes signal across the AlexNet backbone so the test is sharp.
+
+    Floating-point note: we assert `== float`, not `approx`, because the
+    inputs to the LPIPS forward pass ARE bit-exactly equal across the
+    two dtype paths (cast `uint8 → float32` then divide by 255 yields
+    the same bit pattern as a pre-normalized float32 fixture; D-DET
+    bit-exactness guarantees the rest).
+    """
+    rng = np.random.default_rng(0)
+    a_u8 = rng.integers(0, 256, size=(_SMOKE_HW, _SMOKE_HW, 3), dtype=np.uint8)
+    b_u8 = (255 - a_u8).astype(np.uint8)  # perceptual inverse maximizes signal
+    a_f32 = a_u8.astype(np.float32) / np.float32(255.0)
+    b_f32 = b_u8.astype(np.float32) / np.float32(255.0)
+    lpips_u8 = lpips(a_u8, b_u8)
+    lpips_f32 = lpips(a_f32, b_f32)
+    assert lpips_u8 == lpips_f32, (
+        f"LPIPS dtype-invariance violated: lpips(uint8)={lpips_u8!r} != "
+        f"lpips(float32)={lpips_f32!r}. The `[0, MAX_I] → [-1, 1]` "
+        "normalization is per-dtype-symmetric; a multiply-instead-of-divide "
+        "swap on `/ max_i` breaks the uint8 path while leaving float32 "
+        "untouched (max_i = 1.0)."
+    )
