@@ -3,7 +3,7 @@ date: 2026-05-28T11-34-56Z
 author: phase-3 render-similarity plan-drafting (Claude Code)
 subject: Phase 3 second sub-phase plan-drafting — render-similarity
 verdict: CONFIRMED
-head_sha: 333dc353d0b3a87b7e54280850dce9e16fbbb843
+head_sha: pending
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
@@ -20,8 +20,8 @@ evidence_paths:
   - tools/testkit/mutation/mutmut-config.toml
   - tools/integrity/tests/test_adversarial_coverage.py
 evidence_hashes:
-  docs/_audits/phase-3/sub-phase-phase-3-render-similarity-probe-2026-05-28T11-34-56Z.md: sha256:7ddd10d4f46ab64e042fd1d0ceb0c6b0877dbbf06684fa32740bd4d449cee923
-  docs/phases/sub-phase-phase-3-render-similarity.md: sha256:9306351c0f1ef67b46b4c41fc4519c776942ffb7d80c987a308838686f7d5d75
+  docs/_audits/phase-3/sub-phase-phase-3-render-similarity-probe-2026-05-28T11-34-56Z.md: sha256:0f4eb0ccc4cab121de6f1213ba2431e8fa26ba3dcaf6bb70afeb663370526fdd
+  docs/phases/sub-phase-phase-3-render-similarity.md: sha256:52d5545071af924259e533f5d6b42cc904cd0c8b369e4ea4b5feb74e888b6df9
 banked_consumed: []
 banked_forward_routed:
   - L-3DGS-1 (common-3dgs Stage 1c — neural-rendered mutation-threshold calibration; render-similarity Stage 1c result feeds the calibration evidence base; final consumer = task-8 / 3dgs-mpm)

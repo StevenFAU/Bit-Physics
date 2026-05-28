@@ -24,7 +24,6 @@ evidence_paths:
   - tools/testkit/equivalence/tolerance-schema.json
   - tools/testkit/pyproject.toml
   - tools/testkit/mutation/mutmut-config.toml
-  - tools/integrity/tests/fixtures/adversarial/
   - tools/integrity/tests/test_adversarial_coverage.py
 evidence_hashes:
   docs/phases/phase-3-plan.md: sha256:f16a4a2e4e093b0f273a9edb6d99c2b9cf3d267892a9f2b1df7ceebeaf6ff3fc
