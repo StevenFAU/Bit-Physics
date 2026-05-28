@@ -3,7 +3,7 @@ date: 2026-05-28T11-12-05Z
 author: phase-3 common-3dgs stage-2 landing (Claude Code)
 subject: Phase 3 common-3dgs — sub-phase landing audit
 verdict: closed-with-shifted-1
-head_sha: c761aa91773a7c96c746f539836cbefcfaa87ee9
+head_sha: e4011f2c0b58791f69f6bd9e6e9e12c5b062d650
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
