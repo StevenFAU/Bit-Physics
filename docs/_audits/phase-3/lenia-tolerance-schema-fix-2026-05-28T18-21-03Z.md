@@ -3,8 +3,8 @@ date: 2026-05-28T18-21-03Z
 author: phase-3 lenia-tolerance-schema-fix (Claude Code)
 subject: Phase 3 focused infrastructure fix — reshape lenia tolerance row to schema-valid form, add `golden_tolerance` top-level branch to `tolerance-schema.json`, bank convention §S, close equivalence.yml red since 5baf083
 verdict: CONFIRMED
-head_sha: 50af66cba7cb0a1f4d447a2024381483db3c9286
-head_sha_at_checkpoint: 50af66cba7cb0a1f4d447a2024381483db3c9286
+head_sha: 27baca9bb1bf1b88fdb6feb943c9e4030565991f
+head_sha_at_checkpoint: 27baca9bb1bf1b88fdb6feb943c9e4030565991f
 prior_sub_phase_tag: v0.2.3-sub-phase-phase-3-render-similarity
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
