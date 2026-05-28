@@ -98,7 +98,7 @@
 ## sub-phase-phase-3-render-similarity — plan-drafting — 2026-05-28
 
 - **Stage:** plan-drafting (second Phase-3 sub-phase; the remaining infrastructure root after task-1 common-3dgs LANDED at `v0.2.2-sub-phase-phase-3-common-3dgs`).
-- **Landed at SHA:** commit chain `<probe-commit>` (probe report) → `<charter-commit>` (charter + audit + this entry) → SHA back-fill (Convention #12, separate commit, never `--amend`). Trunk-based to `main`; no PR; no tag (I7).
+- **Landed at SHA:** commit chain `9a0ebe1` (probe report) → `333dc35` (charter + audit + this entry) → `<back-fill>` SHA back-fill (Convention #12, separate commit, never `--amend`). Trunk-based to `main`; no PR; no tag (I7).
 - **Verdict:** CONFIRMED (no SHIFTED — D-LOC is resolved-in-charter; no operator-pending external gate; pre-dispatch-review RATIFIED-REMOVED at common-3dgs Stage 0 carries forward; no git-upstream SHA pin gates this sub-phase because deps are PyPI).
 - **Artifacts:** charter `docs/phases/sub-phase-phase-3-render-similarity.md`; probe `docs/_audits/phase-3/sub-phase-phase-3-render-similarity-probe-2026-05-28T11-34-56Z.md`; audit `docs/_audits/phase-3/sub-phase-phase-3-render-similarity-plan-drafting-2026-05-28T11-34-56Z.md`.
 - **Second sub-phase = task-2 render-similarity** (§3.1 dep-graph re-anchor: the remaining infrastructure root once task-1 landed; HARD-blocks task-6 + task-8; no different-choice STOP).
