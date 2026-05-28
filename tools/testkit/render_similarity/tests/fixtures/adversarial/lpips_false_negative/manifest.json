@@ -1,0 +1,9 @@
+{
+  "metric": "lpips",
+  "expected_classification": "identical",
+  "rationale": "Near-identical pair: two uint8 images differing by 1/255 at a single pixel (perceptually identical to a human). A buggy LPIPS that fails to normalize inputs from uint8 [0,255] to the network's [-1,1] domain (e.g., feeding raw uint8 to a network trained on float32 [-1,1]) returns a non-trivial score driven by the 100× scale mismatch. The correct LPIPS scores this pair < 0.01 (perceptually identical). The meta-test asserts LPIPS < 0.05 — well below any plausible different-pair score.",
+  "expected_lpips_max": 0.05,
+  "fixture_files": ["image_a.npy", "image_b.npy"],
+  "image_shape": [64, 64, 3],
+  "image_dtype": "uint8"
+}

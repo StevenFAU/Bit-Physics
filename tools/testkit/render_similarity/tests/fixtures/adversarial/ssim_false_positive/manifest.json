@@ -1,0 +1,9 @@
+{
+  "metric": "ssim",
+  "expected_classification": "different",
+  "rationale": "Inverted-checkerboard pair: globally identical luminance / contrast / mean, but pixel-wise wildly different. A buggy SSIM that drops the structure term (Wang 2004 Eq. 13's third factor) or compares only means would score this pair as ~1.0 (false positive). The correct skimage structural_similarity scores it ~0.04 (large structural divergence). The meta-test asserts SSIM < 0.5 — well outside any plausible identity-pair score.",
+  "expected_ssim_max": 0.5,
+  "fixture_files": ["image_a.npy", "image_b.npy"],
+  "image_shape": [64, 64, 3],
+  "image_dtype": "uint8"
+}
