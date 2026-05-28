@@ -3,7 +3,7 @@ date: 2026-05-28
 author: phase-3 ising-classical charter-revision (Claude Code)
 subject: harness-convention investigation — Stack-B sim testing in this project
 verdict: DECIDED — pytest-against-captures (RD-2D Phase-0 precedent); §6.3a "pnpm vitest" call recorded as §0.3 SHIFT-from-discovered drift
-head_sha: ac47074a60783949551033dc61e259129aab371a
+head_sha: c8d8428
 prior_sub_phase_tag: v0.2.4-sub-phase-phase-3-lenia
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
