@@ -534,3 +534,20 @@
 - **L-R2CD-FOLLOWUP RESOLVED (FRICTION #4, load-bearing):** the §Q R2 bootstrap must be re-`source`d IN THE SAME shell command as each LFS push (fresh shells don't inherit creds env) — actual root cause of the recurring "R2 EOF" mis-read as a durability regression of [[phase-3-r2-credentials-durability-fix-landed]]. GitHub push via `git -c lfs.standalonetransferagent= push`; R2 sync via `source setup-lfs-s3-local.sh && git lfs push --object-id --stdin origin`. Both succeeded; STOP-LFS not fired.
 - **Banks:** SIBLING-FIXTURE-LFS +1 corpus (not closed); integrity-meta-test-ci-wiring carried; L-ISING-AUDIT-HYGIENE session-1 sealed audits untouched (this session 0-fail real-hash); R-11 consumed; L-LTSF-3 off-budget.
 - **Cumulative: 25th workspace member.** Unblocks task-4 (rigid-body). NO code dependency from later Phase-3 tasks. Sub-phase **COMPLETE**.
+
+## sub-phase-phase-3-rigid-body-pedagogical — plan-drafting — 2026-05-28
+
+- **Stage:** plan-drafting (task-4, sub-phase 3.3; **first Stack-E (Warp) sim of Phase 3**). Trunk-based to `main`; no PR; no tag (D-TAG NO).
+- **Landed at SHA:** chain `7d52ce1` (preflight-drift audit) → `dc92aec` (drift-audit YAML corrigendum) → `07e6c02` (probe) → `7005e43` (charter) → plan-drafting landing audit + this entry → SHA-back-fill (Convention #12).
+- **Verdict:** SHIFTED (charter ready for Stage 0 *with* four operator-pending D-classes).
+- **Artifacts:** charter `docs/phases/sub-phase-phase-3-rigid-body.md`; probe `docs/_audits/phase-3/sub-phase-phase-3-rigid-body-probe-2026-05-28T22-50-13Z.md`; preflight-drift `docs/_audits/phase-3/sub-phase-phase-3-rigid-body-preflight-drift-2026-05-28T22-50-13Z.md`; landing audit `docs/_audits/phase-3/sub-phase-phase-3-rigid-body-plan-drafting-2026-05-28T22-50-13Z.md`.
+- **ACTION #1 preflight exit-1 = accepted stale-tooling false-positive** (drift audit): F1 `python3 -m integrity` resolves to a stale GPU-Sims editable install lacking `--all` (canonical `uv run` GREEN 0HF/14SW); F2 four port-dir checks use never-adopted `continuous-ca/.../ref-stack-c` paths (real sims under `packages/`). Operator ratified preconditions MET (one-time, evidence-backed). Preflight hardening tracked separately (Convention I).
+- **Four OPEN D-classes (operator routes before Stage 0):**
+  - **D-ALGO** — spec §5.8 (`docs/architecture.md:1175`) "maximal-coordinate" vs plan §6.4 "ABA" (Featherstone Ch.7 = reduced/generalized-coordinate). Lean ABA; surface §5.8 corrigendum.
+  - **D-ANCHOR** — plan §6.4 (`docs/phases/phase-3-plan.md:1605`) Anchor 2 "Goldstein 3rd ed. §4.3" is a WRONG citation (§4.3 = transformation-matrix algebra). Corrected: Marion&Thornton §3.2 + DLMF §19.2/§22.19(i) (+ L&L §11).
+  - **D-TOL** — dispatch asks for a `[budgets.rigid-body.cross_stack]` cap; §S.3 names `articulated-pedagogical` as single-stack `golden_tolerance` (schema branch already enumerates its 3 keys) → NO budget cap, NO schema extension. Lean §S.3.
+  - **D-USD** — spec §2.5 (`docs/architecture.md:1349`) "every Stack E sim ships USD export" vs plan §6.4 silence + zero Stack-E precedent + unbuilt common-warp USD surface. Lean DEFER → task-9 / infra sub-phase.
+- **RESOLVED-IN-CHARTER:** D-LAYOUT `packages/articulated-pedagogical/` (§0.3); D-DET bit-exact same-stack-same-hw (measure 1b); D-CI `python-strict.yml` (`build-py.yml` absent); D-CAPTURE-API common-warp batch `Capture`+`write_capture`; D-PBT `energy_drift_bounded`+`momentum_conservation`; D-TAG NO.
+- **common-warp consumability:** runtime/determinism/capture PRESENT + sufficient; spatial-algebra/quaternion/integrator/CLI ABSENT = sim's own §6.4-E physics deliverable, NOT missing infra (rule-of-three → task-9 inventories). No Hard-Rule-2 block.
+- **Gate map:** 13 gates (charter §7); **no gate-14** (single-stack); **no mutation target** (sim, not testkit). New `.h5` fixture → LFS-touching → §Q Stage-0 bootstrap.
+- **Next:** operator ratifies charter + routes the 4 D-classes → Stage-0 execution dispatch (charter §9 prompts). After task-4: task-5..task-8, task-9 (common-warp maturation), task-10 (close, operator-pushed `v0.3.0-phase-3`).
