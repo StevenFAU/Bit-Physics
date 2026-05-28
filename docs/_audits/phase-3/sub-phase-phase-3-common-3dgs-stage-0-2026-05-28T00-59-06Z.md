@@ -3,7 +3,7 @@ date: 2026-05-28T00-59-06Z
 author: phase-3 common-3dgs stage-0 (Claude Code)
 subject: Phase 3 common-3dgs Stage 0 — pre-flight + SHA pinning
 verdict: CONFIRMED
-head_sha: <PLACEHOLDER — back-filled to the audit-commit SHA per Convention #12>
+head_sha: a376ee2e900e6b2786e9dd9412f368889a19cebb
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
