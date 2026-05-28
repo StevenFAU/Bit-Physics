@@ -249,7 +249,7 @@
 ## sub-phase-phase-3-lenia — Stage 1a — 2026-05-28 — CONFIRMED
 
 - **Stage:** Stage 1a (scaffold + RED + failing-tests-hash + Chakazul anchor probe + §0.3 packages/-vs-continuous-ca/ on-evidence decision). Trunk-based to `main`; no PR; no tag (I7).
-- **Landed at SHA:** `107b9ad` (scaffold: package + spec-ref + probe + workspace registration) → `de92946` (RED tests + failing-tests-evidence) → this audit + progress entry → SHA back-fill (Convention #12, separate commit). Parent `b0efe5e` (Stage-0 SHA back-fill).
+- **Landed at SHA:** `107b9ad` (scaffold: package + spec-ref + probe + workspace registration) → `de92946` (RED tests + failing-tests-evidence) → `10ec46e` (Stage-1a audit + progress entry) → SHA back-fill (Convention #12, separate commit). Parent `b0efe5e` (Stage-0 SHA back-fill).
 - **Verdict:** CONFIRMED. No STOP fired.
 - **RED state:** 10 failed (uniform `NotImplementedError` from packages/lenia/lenia/{kernel.py:55, growth.py:52, sim.py:77,85} shells — NOT collection error per phase-3-plan.md:1337) / 4 passed (test_sim_shells.py asserting shells properly raise — shells ARE the contract; analogous to render-similarity's `test_ms_ssim_raises_not_implemented`).
 - **Failing-tests-output hash:** `sha256:5ff5e74175e9a5318f3fbed82b494477365eae83dd7e57795305ec81849a51f0` (byte-reproducible across 3 captures pre-/at-/post-commit). Evidence at `tools/testkit/failing-tests-evidence/lenia-2026-05-28T15-24-41Z.txt`. Commit footer carries `Failing-tests-output:` + `Failing-tests-output-hash:` per spec § 1.3 step 4 + § 6.0 item 6.
