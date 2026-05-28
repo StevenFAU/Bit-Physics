@@ -3,7 +3,7 @@ date: 2026-05-28T12-44-20Z
 author: phase-3 render-similarity stage-0 (Claude Code)
 subject: Phase 3 render-similarity Stage 0 — pre-flight + PyPI verify + cross-phase replay
 verdict: CONFIRMED
-head_sha: 463283a (back-fill via Convention #12; the Stage-0 audit commit)
+head_sha: 463283aa8415b3b2e27ec7c4e0e7017a97931256
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
