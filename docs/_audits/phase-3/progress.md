@@ -514,3 +514,12 @@
 - **§S.5:** 10/10 workflows GREEN at `d60fe3c` incl. `test-ising-classical` job (success). First-Stack-B pipeline VALIDATED end-to-end in CI (incl. selective R2/GitHub-LFS capture pull — surface lenia never exercised). STOP-S5-CI-RED not fired.
 - **Integrity:** 0 HARD_FAIL / 14 SOFT_WARN at `d60fe3c`.
 - **Next:** Stage 1c — verdict landing (golden re-verify + PBT re-run + determinism re-verify + .h5 resolvable + verify_evidence + append-only + integrity; NO mutation per D-MUT-SCOPE NO).
+
+## sub-phase-phase-3-ising-classical — Stage 1c — 2026-05-28 — CONFIRMED
+
+- **Audit:** `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-stage-1c-2026-05-28T22-30-00Z.md`. HEAD `af209e5`. Verdict **CONFIRMED** (verdict-landing; NO mutation per D-MUT-SCOPE NO — mutmut NOT run).
+- **Golden re-verify:** 9 passed (6 anchors assert). **PBT re-run:** 2 passed (magnetization_bounded + energy_per_spin_bounded, 20 examples). STOP-PBT not fired.
+- **Determinism re-verify:** 2 passed; bit-exact same-stack-same-hw re-confirmed (Layer-1). Registry row byte-stable.
+- **.h5 R2 resolvable:** OID `cf844e5d…` in GitHub LFS + R2; confirmed by green R2-routed `test-ising-classical` CI job at `d60fe3c`. `lfs fsck` flags only the pre-existing 12 SIBLING-FIXTURE-LFS non-pointers (ising's .h5 is a proper pointer). STOP-LFS not fired.
+- **Perf-ledger:** row byte-stable. **verify_evidence:** ising stage audits 16/0, 18/0, 32/0 — all PASS (§S6 real-hash discipline held). **append-only:** clean vs v0.2.0-phase-2 AND v0.2.4-sub-phase-phase-3-lenia (only progress.md sanctioned-M). **integrity:** 0 HARD_FAIL / 14 SOFT_WARN at HEAD.
+- **Next:** Stage 2 — closing sweep + landing audit (NO TAG, NO I7 allowlist extension per D-TAG NO) + §S.5 post-push poll.
