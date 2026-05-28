@@ -3,7 +3,7 @@ date: 2026-05-28T23-55-59Z
 author: tooling-hardening (infra task, outside any sub-phase — Convention I) (Claude Code)
 subject: Harden tools/dispatch/preflight-phase.py against the two stale-tooling false-positives (F1 integrity env-binding; F2 phantom port-dir layout) that tripped ACTION #1 of the rigid-body (task-4) preflight.
 verdict: LANDED — preflight 3 exit 1 -> 0; integrity count invariant unchanged (0 HF / 14 SW); fix at 4bc150c.
-head_sha: 4bc150ca0000000000000000000000000000000000
+head_sha: b741533c22a713200f751d39daa0530eec4da81a
 fix_sha: 4bc150c
 authority_audit: docs/_audits/phase-3/sub-phase-phase-3-rigid-body-preflight-drift-2026-05-28T22-50-13Z.md
 authority_audit_commit: 7d52ce1
