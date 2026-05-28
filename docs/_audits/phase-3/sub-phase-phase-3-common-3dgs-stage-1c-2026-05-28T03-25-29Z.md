@@ -3,7 +3,7 @@ date: 2026-05-28T03-25-29Z
 author: phase-3 common-3dgs stage-1c (Claude Code)
 subject: Phase 3 common-3dgs Stage 1c — mutation baseline + verdict (SHIFTED, 76.10%)
 verdict: SHIFTED
-head_sha: 549c383f33b2ba47018dfffd5283fd4cf8c30e71
+head_sha: d8e4c483b47a9b95a0219d8ce657d1421b359881
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
