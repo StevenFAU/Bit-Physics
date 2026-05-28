@@ -30,7 +30,7 @@ evidence_paths:
   - common/common-py/src/common_py/ggui.py
   - common/common-py/src/common_py/hotreload.py
   - tools/testkit/probes/template.md
-  - tools/testkit/golden/tables/
+  - tools/testkit/golden/tables/cubic-spline-kernel.json
   - docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref.md
 evidence_hashes:
   docs/phases/phase-3-plan.md: sha256:f16a4a2e4e093b0f273a9edb6d99c2b9cf3d267892a9f2b1df7ceebeaf6ff3fc
