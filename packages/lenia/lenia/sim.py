@@ -79,7 +79,11 @@ def _build_kernel_window(R: int) -> NDArray[np.float64]:
     total = float(K.sum())
     if total <= 0.0:
         raise ValueError(f"Quad4 kernel window sum is non-positive ({total})")
-    return K / total
+    # ``K`` is float64; dividing by a Python ``float`` is mathematically
+    # dtype-preserving, but NumPy 2.x stubs widen the result to
+    # ``ndarray[..., floating[Any]]``. Pin the dtype explicitly (no-op copy
+    # since the underlying dtype matches) so the signature stays honest.
+    return (K / total).astype(np.float64, copy=False)
 
 
 def _init_orbium_field(grid: int, seed: int) -> NDArray[np.float64]:
@@ -131,7 +135,7 @@ class LeniaSim:
     def _ensure_taichi(self) -> None:
         if self._taichi_initialized:
             return
-        from common_py.determinism import (  # type: ignore[import-not-found]
+        from common_py.determinism import (
             Config as DeterminismConfig,
         )
         from common_py.determinism import set_taichi_deterministic
@@ -179,7 +183,7 @@ class LeniaSim:
         Consumes :class:`common_py.capture.Writer` with the IC-2 API
         (``write_step(idx, data)`` + ``finalize()``).
         """
-        from common_py.capture import (  # type: ignore[import-not-found]
+        from common_py.capture import (
             ConfigMeta,
             DeterminismMeta,
             Manifest,

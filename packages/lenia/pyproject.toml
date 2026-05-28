@@ -57,6 +57,25 @@ module = [
 ]
 ignore_missing_imports = true
 
+# Taichi + mypy-strict friction (FIRST CI-strict-mypy-vs-Taichi collision in
+# the repo — Phase-1 stack-d kernel packages have the same surface but are
+# NOT CI-strict-mypy'd, so this is a net-new precedent). Taichi's
+# ``@ti.kernel`` decorator is untyped, and the per-arg ``ti.types.ndarray(
+# dtype=ti.f64, ndim=2)`` annotations are function-CALLS not types — both
+# fundamental to Taichi's AST-transformer kernel definition (IC-12) and not
+# replaceable with mypy-friendly syntax (PEP-563 stringification would
+# break ``@ti.kernel`` per IC-12 § 4.2). Per-module narrow disable of the
+# affected codes — keeps the rest of ``lenia/`` under full ``strict = true``
+# while letting the kernel module declare its Taichi shape verbatim.
+[[tool.mypy.overrides]]
+module = ["lenia._taichi_kernels"]
+disable_error_code = [
+  "misc",
+  "no-untyped-def",
+  "untyped-decorator",
+  "valid-type",
+]
+
 [tool.pytest.ini_options]
 filterwarnings = [
   "error",
