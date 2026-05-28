@@ -3,7 +3,7 @@ date: 2026-05-28T14-20-30Z
 author: phase-3 render-similarity landing (Claude Code)
 subject: Phase 3 render-similarity — sub-phase landing audit
 verdict: closed-with-shifted-1
-head_sha: 596eb738e44c4cb4ad0c66b41bd1c0d4a4a4a4a4  (audit-writing tip; Convention #12 back-fill follows)
+head_sha: 28037b118357c571dd54e827885b3f0844fa1495
 closing_status: closed-with-shifted-1
 shifted_items:
   - Stage-1c mutation kill-rate 0.7857 vs 0.85 floor; threshold UNCHANGED; equivalent-mutant catalogue documented; banks calibration evidence into L-3DGS-1 (consumed at task-8 dispatch)
