@@ -3,7 +3,7 @@ date: 2026-05-28T12-56-47Z
 author: phase-3 render-similarity stage-1a (Claude Code)
 subject: Phase 3 render-similarity Stage 1a — scaffold + RED tests + D-HARNESS-CLI / D-SCHEMA probe
 verdict: CONFIRMED
-head_sha: 5e01023 (RED commit; Convention #12 back-fill follows this audit)
+head_sha: d06f975c27e4d43807710630f22e874fcfbb8cc5
 prior_sub_phase_tag: v0.2.2-sub-phase-phase-3-common-3dgs
 prior_phase_tag: v0.2.0-phase-2
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
