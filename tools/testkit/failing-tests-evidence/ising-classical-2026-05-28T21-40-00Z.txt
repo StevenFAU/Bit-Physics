@@ -1,0 +1,467 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/ising-classical
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 17 items
+
+packages/ising-classical/tests/test_code_verification.py::test_canonical_capture_exists FAILED [  5%]
+packages/ising-classical/tests/test_code_verification.py::test_canonical_capture_matches_numpy_reference FAILED [ 11%]
+packages/ising-classical/tests/test_code_verification.py::test_canonical_descriptor_matches_filename PASSED [ 17%]
+packages/ising-classical/tests/test_determinism.py::test_numpy_reference_is_bit_deterministic FAILED [ 23%]
+packages/ising-classical/tests/test_determinism.py::test_different_seeds_diverge FAILED [ 29%]
+packages/ising-classical/tests/test_diagnostics.py::test_canonical_capture_is_healthy FAILED [ 35%]
+packages/ising-classical/tests/test_diagnostics.py::test_canonical_capture_spins_in_pm_one FAILED [ 41%]
+packages/ising-classical/tests/test_golden_anchors.py::test_critical_temperature_table_anchors FAILED [ 47%]
+packages/ising-classical/tests/test_golden_anchors.py::test_magnetization_table_anchors FAILED [ 52%]
+packages/ising-classical/tests/test_pbt_invariants.py::test_pbt_magnetization_bounded FAILED [ 58%]
+packages/ising-classical/tests/test_pbt_invariants.py::test_pbt_energy_per_spin_bounded FAILED [ 64%]
+packages/ising-classical/tests/test_reference_sanity.py::test_critical_temperature_is_onsager_closed_form FAILED [ 70%]
+packages/ising-classical/tests/test_reference_sanity.py::test_onsager_magnetization_zero_at_and_above_tc FAILED [ 76%]
+packages/ising-classical/tests/test_reference_sanity.py::test_onsager_magnetization_near_unity_deep_in_ordered_phase FAILED [ 82%]
+packages/ising-classical/tests/test_reference_sanity.py::test_fully_aligned_lattice_observables FAILED [ 88%]
+packages/ising-classical/tests/test_reference_sanity.py::test_canonical_params_lock PASSED [ 94%]
+packages/ising-classical/tests/test_reference_sanity.py::test_metropolis_sweep_preserves_shape_and_spin_alphabet FAILED [100%]
+
+=================================== FAILURES ===================================
+________________________ test_canonical_capture_exists _________________________
+
+canonical_manifest_path = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+
+    def test_canonical_capture_exists(canonical_manifest_path: Path) -> None:
+        # load_capture raises FileNotFoundError when the manifest/payload is
+        # absent (allowed Stage-1a RED mode — "no captures yet").
+>       capture = load_capture(canonical_manifest_path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_code_verification.py:33:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+________________ test_canonical_capture_matches_numpy_reference ________________
+
+tmp_path = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_canonical_capture_matches0')
+canonical_manifest_path = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+
+    def test_canonical_capture_matches_numpy_reference(
+        tmp_path: Path, canonical_manifest_path: Path
+    ) -> None:
+        """Bit-exact diff against a fresh NumPy reference run at seed 42."""
+        sim = _load_sim()
+>       reference_manifest = sim.sim_runner_seeded(seed=42, out_dir=tmp_path)  # type: ignore[attr-defined]
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_code_verification.py:42:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+seed = 42
+out_dir = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_canonical_capture_matches0')
+
+    def sim_runner_seeded(seed: int, out_dir: Path) -> Path:
+        """testkit ``SimRunner`` — produce the canonical-descriptor Ising capture.
+
+        Runs the locked canonical parameters (n=128, J=1, h=0, T=2.27,
+        10000 sweeps); only ``seed`` and ``out_dir`` vary. The
+        ``determinism.run_twice_and_diff`` harness invokes this twice at the
+        same seed and asserts content-equivalence.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/sim.py:43: NotImplementedError
+__________________ test_numpy_reference_is_bit_deterministic ___________________
+
+tmp_path = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_numpy_reference_is_bit_de0')
+
+    def test_numpy_reference_is_bit_deterministic(tmp_path: Path) -> None:
+        sim = _load_sim()
+>       verdict = run_twice_and_diff(sim.sim_runner_seeded, seed=42, tmp_dir=tmp_path)  # type: ignore[attr-defined]
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_determinism.py:28:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/determinism/harness.py:130: in run_twice_and_diff
+    left_manifest = runner(seed, left_dir)
+                    ^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+seed = 42
+out_dir = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_numpy_reference_is_bit_de0/run-a')
+
+    def sim_runner_seeded(seed: int, out_dir: Path) -> Path:
+        """testkit ``SimRunner`` — produce the canonical-descriptor Ising capture.
+
+        Runs the locked canonical parameters (n=128, J=1, h=0, T=2.27,
+        10000 sweeps); only ``seed`` and ``out_dir`` vary. The
+        ``determinism.run_twice_and_diff`` harness invokes this twice at the
+        same seed and asserts content-equivalence.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/sim.py:43: NotImplementedError
+_________________________ test_different_seeds_diverge _________________________
+
+tmp_path = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_different_seeds_diverge0')
+
+    def test_different_seeds_diverge(tmp_path: Path) -> None:
+        """Sanity: two distinct seeds produce different spin captures."""
+        sim = _load_sim()
+        a_dir = tmp_path / "seed-a"
+        b_dir = tmp_path / "seed-b"
+        a_dir.mkdir()
+        b_dir.mkdir()
+>       a = sim.sim_runner_seeded(seed=42, out_dir=a_dir)  # type: ignore[attr-defined]
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_determinism.py:40:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+seed = 42
+out_dir = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_different_seeds_diverge0/seed-a')
+
+    def sim_runner_seeded(seed: int, out_dir: Path) -> Path:
+        """testkit ``SimRunner`` — produce the canonical-descriptor Ising capture.
+
+        Runs the locked canonical parameters (n=128, J=1, h=0, T=2.27,
+        10000 sweeps); only ``seed`` and ``out_dir`` vary. The
+        ``determinism.run_twice_and_diff`` harness invokes this twice at the
+        same seed and asserts content-equivalence.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/sim.py:43: NotImplementedError
+______________________ test_canonical_capture_is_healthy _______________________
+
+canonical_manifest_path = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+
+    def test_canonical_capture_is_healthy(canonical_manifest_path: Path) -> None:
+>       capture = load_capture(canonical_manifest_path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_diagnostics.py:25:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+____________________ test_canonical_capture_spins_in_pm_one ____________________
+
+canonical_manifest_path = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+
+    def test_canonical_capture_spins_in_pm_one(canonical_manifest_path: Path) -> None:
+>       capture = load_capture(canonical_manifest_path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_diagnostics.py:35:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/capture/reader.py:84: in load_capture
+    with manifest_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = PosixPath('/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json'
+
+/usr/lib/python3.12/pathlib.py:1015: FileNotFoundError
+___________________ test_critical_temperature_table_anchors ____________________
+
+    def test_critical_temperature_table_anchors() -> None:
+        # Call the closed-form first — at Stage 1a this raises NotImplementedError.
+>       tc = critical_temperature()
+             ^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_golden_anchors.py:40:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def critical_temperature() -> float:
+        """Onsager exact 2D critical temperature ``T_c = 2 / ln(1 + √2)`` (J=1)."""
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:79: NotImplementedError
+_______________________ test_magnetization_table_anchors _______________________
+
+    def test_magnetization_table_anchors() -> None:
+        # Call the closed-form first — at Stage 1a this raises NotImplementedError.
+>       _ = onsager_magnetization(1.0)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_golden_anchors.py:54:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+temperature = 1.0
+
+    def onsager_magnetization(temperature: float) -> float:
+        """Yang 1952 spontaneous magnetization ``m(T)`` for ``T < T_c`` (J=1).
+
+        Returns 0.0 for ``T >= T_c`` (paramagnetic phase).
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:87: NotImplementedError
+________________________ test_pbt_magnetization_bounded ________________________
+
+tmp_path = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_pbt_magnetization_bounded0')
+
+    def test_pbt_magnetization_bounded(tmp_path: Path) -> None:
+        sim = _load_sim()
+>       verdict = run_invariants(
+            sim.sim_runner_pbt,  # type: ignore[attr-defined]
+            [magnetization_bounded()],
+            strategy=random_seed(),
+            n_examples=20,
+            tmp_dir=tmp_path,
+        )
+
+packages/ising-classical/tests/test_pbt_invariants.py:94:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/property/harness.py:163: in run_invariants
+    results.append(_runs_for_invariant(sim_runner, inv, effective_strategy, n_examples, base))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/testkit/property/harness.py:122: in _runs_for_invariant
+    _check()
+tools/testkit/property/harness.py:101: in _check
+    max_examples=n_examples,
+           ^^^
+tools/testkit/property/harness.py:111: in _check
+    manifest_path = sim_runner(example, run_dir)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+initial_condition_sample = 0
+out_dir = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_pbt_magnetization_bounded0/magnetization_bounded/ex-0000')
+
+    def sim_runner_pbt(initial_condition_sample: Any, out_dir: Path) -> Path:
+        """testkit ``SimRunnerPBT`` — run a tiny Ising sim from a PBT-sampled seed.
+
+        PBT runs are short (10 sweeps, 32x32) so the property harness can
+        afford ``n_examples = 20`` without burning CI budget. The canonical
+        capture (10000 sweeps, 128x128) is produced exclusively by
+        ``sim_runner_seeded``.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+E       Falsifying example: _check(
+E           example=0,  # or any other generated value
+E       )
+
+packages/ising-classical/ising_classical/sim.py:54: NotImplementedError
+_______________________ test_pbt_energy_per_spin_bounded _______________________
+
+tmp_path = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_pbt_energy_per_spin_bound0')
+
+    def test_pbt_energy_per_spin_bounded(tmp_path: Path) -> None:
+        sim = _load_sim()
+>       verdict = run_invariants(
+            sim.sim_runner_pbt,  # type: ignore[attr-defined]
+            [energy_per_spin_bounded()],
+            strategy=random_seed(),
+            n_examples=20,
+            tmp_dir=tmp_path,
+        )
+
+packages/ising-classical/tests/test_pbt_invariants.py:106:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tools/testkit/property/harness.py:163: in run_invariants
+    results.append(_runs_for_invariant(sim_runner, inv, effective_strategy, n_examples, base))
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tools/testkit/property/harness.py:122: in _runs_for_invariant
+    _check()
+tools/testkit/property/harness.py:101: in _check
+    max_examples=n_examples,
+           ^^^
+tools/testkit/property/harness.py:111: in _check
+    manifest_path = sim_runner(example, run_dir)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+initial_condition_sample = 0
+out_dir = PosixPath('/tmp/claude-1000/pytest-of-otacon/pytest-10/test_pbt_energy_per_spin_bound0/energy_per_spin_bounded/ex-0000')
+
+    def sim_runner_pbt(initial_condition_sample: Any, out_dir: Path) -> Path:
+        """testkit ``SimRunnerPBT`` — run a tiny Ising sim from a PBT-sampled seed.
+
+        PBT runs are short (10 sweeps, 32x32) so the property harness can
+        afford ``n_examples = 20`` without burning CI budget. The canonical
+        capture (10000 sweeps, 128x128) is produced exclusively by
+        ``sim_runner_seeded``.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+E       Falsifying example: _check(
+E           example=0,  # or any other generated value
+E       )
+
+packages/ising-classical/ising_classical/sim.py:54: NotImplementedError
+_______________ test_critical_temperature_is_onsager_closed_form _______________
+
+    def test_critical_temperature_is_onsager_closed_form() -> None:
+>       tc = critical_temperature()
+             ^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_reference_sanity.py:30:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    def critical_temperature() -> float:
+        """Onsager exact 2D critical temperature ``T_c = 2 / ln(1 + √2)`` (J=1)."""
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:79: NotImplementedError
+_______________ test_onsager_magnetization_zero_at_and_above_tc ________________
+
+    def test_onsager_magnetization_zero_at_and_above_tc() -> None:
+>       assert onsager_magnetization(3.0) == 0.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_reference_sanity.py:36:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+temperature = 3.0
+
+    def onsager_magnetization(temperature: float) -> float:
+        """Yang 1952 spontaneous magnetization ``m(T)`` for ``T < T_c`` (J=1).
+
+        Returns 0.0 for ``T >= T_c`` (paramagnetic phase).
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:87: NotImplementedError
+_________ test_onsager_magnetization_near_unity_deep_in_ordered_phase __________
+
+    def test_onsager_magnetization_near_unity_deep_in_ordered_phase() -> None:
+>       m = onsager_magnetization(1.0)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_reference_sanity.py:41:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+temperature = 1.0
+
+    def onsager_magnetization(temperature: float) -> float:
+        """Yang 1952 spontaneous magnetization ``m(T)`` for ``T < T_c`` (J=1).
+
+        Returns 0.0 for ``T >= T_c`` (paramagnetic phase).
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:87: NotImplementedError
+____________________ test_fully_aligned_lattice_observables ____________________
+
+    def test_fully_aligned_lattice_observables() -> None:
+        p = IsingParams(n=8, J=1.0, h=0.0, T=2.27)
+        spins = np.ones((p.n, p.n), dtype=np.int8)
+>       assert magnetization_per_spin(spins) == 1.0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_reference_sanity.py:48:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+spins = array([[1, 1, 1, 1, 1, 1, 1, 1],
+       [1, 1, 1, 1, 1, 1, 1, 1],
+       [1, 1, 1, 1, 1, 1, 1, 1],
+       [1, 1, 1, 1,... 1, 1],
+       [1, 1, 1, 1, 1, 1, 1, 1],
+       [1, 1, 1, 1, 1, 1, 1, 1],
+       [1, 1, 1, 1, 1, 1, 1, 1]], dtype=int8)
+
+    def magnetization_per_spin(spins: np.ndarray) -> float:
+        """Mean spin ``m = (1/N) Σ s_i ∈ [-1, 1]``."""
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:100: NotImplementedError
+___________ test_metropolis_sweep_preserves_shape_and_spin_alphabet ____________
+
+    def test_metropolis_sweep_preserves_shape_and_spin_alphabet() -> None:
+        p = IsingParams(n=16, J=1.0, h=0.0, T=2.27)
+        rng = np.random.default_rng(0)
+>       spins = initial_condition(p, seed=0)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/ising-classical/tests/test_reference_sanity.py:64:
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+p = IsingParams(n=16, J=1.0, h=0.0, T=2.27), seed = 0
+
+    def initial_condition(p: IsingParams, seed: int) -> np.ndarray:
+        """Build the deterministic seeded spin initial condition.
+
+        Returns an ``(n, n)`` int8 array of ``±1`` spins.
+        """
+>       raise NotImplementedError("Stage 1b")
+E       NotImplementedError: Stage 1b
+
+packages/ising-classical/ising_classical/reference/ising_numpy.py:95: NotImplementedError
+=========================== short test summary info ============================
+FAILED packages/ising-classical/tests/test_code_verification.py::test_canonical_capture_exists
+FAILED packages/ising-classical/tests/test_code_verification.py::test_canonical_capture_matches_numpy_reference
+FAILED packages/ising-classical/tests/test_determinism.py::test_numpy_reference_is_bit_deterministic
+FAILED packages/ising-classical/tests/test_determinism.py::test_different_seeds_diverge
+FAILED packages/ising-classical/tests/test_diagnostics.py::test_canonical_capture_is_healthy
+FAILED packages/ising-classical/tests/test_diagnostics.py::test_canonical_capture_spins_in_pm_one
+FAILED packages/ising-classical/tests/test_golden_anchors.py::test_critical_temperature_table_anchors
+FAILED packages/ising-classical/tests/test_golden_anchors.py::test_magnetization_table_anchors
+FAILED packages/ising-classical/tests/test_pbt_invariants.py::test_pbt_magnetization_bounded
+FAILED packages/ising-classical/tests/test_pbt_invariants.py::test_pbt_energy_per_spin_bounded
+FAILED packages/ising-classical/tests/test_reference_sanity.py::test_critical_temperature_is_onsager_closed_form
+FAILED packages/ising-classical/tests/test_reference_sanity.py::test_onsager_magnetization_zero_at_and_above_tc
+FAILED packages/ising-classical/tests/test_reference_sanity.py::test_onsager_magnetization_near_unity_deep_in_ordered_phase
+FAILED packages/ising-classical/tests/test_reference_sanity.py::test_fully_aligned_lattice_observables
+FAILED packages/ising-classical/tests/test_reference_sanity.py::test_metropolis_sweep_preserves_shape_and_spin_alphabet
+========================= 15 failed, 2 passed in 0.58s =========================
