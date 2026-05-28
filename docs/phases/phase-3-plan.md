@@ -252,6 +252,64 @@ Each task pushes branch and opens a PR via `gh pr create`. Owner reviews and mer
 
 Coordinator dispatches `task-N` only after `task-(N-1)` PR is merged (owner-confirmed). No parallelism. Failure of `task-N` halts dispatch until owner decides recovery (§4.4).
 
+### 2.18 External upstream SHA pins (Stage-0 resolved — clears the v8 "EXTERNAL SHAS PINNED PRE-DISPATCH" gate)
+
+Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's preamble) for **all five** Phase-3 external upstreams in one place, per the coordinator-ratified delegation (2026-05-28) that the Stage-0 agent web-fetches + verifies + pins the SHAs (the pre-dispatch-review/STOP-B overhead having been retired in the same chat). Each SHA was web-fetched from the GitHub API and verified; none is fabricated (Convention #8). Pinning rule: latest stable release tag if one exists within the last 12 months (relative to the fetch date 2026-05-28), otherwise default-branch HEAD as of fetch time. Per-upstream `manifest.yaml` (§2.11) is authored by the consuming sub-phase at vendoring time and copies its row's SHA + license verbatim from here.
+
+```
+- Repo: https://github.com/graphdeco-inria/gaussian-splatting          # task-1 common-3dgs (THIS sub-phase)
+  SHA: 54c035f7834b564019656c3e3fcc3646292f727d
+  Released: default-branch HEAD (main; repo has NO tags)
+  License: NOASSERTION (GitHub "Other"); the Gaussian-Splatting research license — NON-COMMERCIAL
+  License-note: FIRST NON-PERMISSIVE upstream in the repo. Vendoring into references/3DGS-reference/
+    is acceptable — references/ holds research material cited for derivation, NOT a redistributed
+    binary or a relicensed component of Bit-Physics's MIT distribution — but the non-commercial
+    clause is load-bearing: NO commercial use, NO relicensing. Every subsequent 3DGS sub-phase
+    (task-8, Phase-4 WU-C) inherits this constraint. Surfaced, NOT a STOP-A (does not materially
+    block research-material vendoring).
+  Security: clean (2026-05-28; repository security-advisories array empty)
+  Fetched: 2026-05-28T00:44Z
+  Citation-pointer: docs/architecture.md §12 (references) + references/3DGS-reference/manifest.yaml (task-1 Stage-1b)
+- Repo: https://github.com/XPandora/PhysGaussian                        # task-8 3dgs-mpm (cite-only here)
+  SHA: 8339ed6aa2cd5d50e1001a254a3d95aea678a956
+  Released: default-branch HEAD (main; repo has NO tags)
+  License: NONE (no LICENSE file; GitHub license=null → all-rights-reserved by default)
+  License-note: NO LICENSE present. Cite-only at this sub-phase (no vendoring of PhysGaussian by
+    task-1). task-8's vendoring sub-phase MUST resolve license posture before vendoring
+    references/PhysGaussian/ (request a license, or vendor cite-only/by-name per §2.2 / spec §2.4
+    independent-derivation discipline). Flagged; not a STOP for common-3dgs Stage 0 (cite-only).
+  Security: clean (2026-05-28; repository security-advisories array empty)
+  Fetched: 2026-05-28T00:35Z
+  Citation-pointer: docs/architecture.md §12 + references/PhysGaussian/manifest.yaml (task-8, later)
+- Repo: https://github.com/InteractiveComputerGraphics/PositionBasedDynamics   # task-5 cloth-xpbd
+  SHA: d0894bdb0190c5f273c0500ecad0e8c2bf21fc5f
+  Released: default-branch HEAD (master). Latest release tag 2.2.0 is 2022-12-13 (>12 months); per
+    the pinning rule, default-branch HEAD is used rather than the stale release.
+  License: MIT
+  License-note: permissive; MIT-compatible with Bit-Physics's MIT distribution posture.
+  Security: clean (2026-05-28; repository security-advisories array empty)
+  Fetched: 2026-05-28T00:50Z
+  Citation-pointer: §2.3 (Macklin 2016, spec §12) + references/PositionBasedDynamics/manifest.yaml (task-5)
+- Repo: https://github.com/NVIDIA/physicsnemo                           # task-7 pinn-poisson
+  SHA: 766e485a4eddf4e5e50d371c87b39e6d4d65ea59
+  Released: v2.1.0 (release published 2026-05-27; within 12 months → release tag pinned, not HEAD)
+  License: Apache-2.0
+  License-note: permissive; Apache-2.0-compatible with Bit-Physics's MIT distribution posture.
+  Security: clean (2026-05-28; repository security-advisories array empty)
+  Fetched: 2026-05-28T00:53Z
+  Citation-pointer: §2.4 (spec §6.4/§12.6) + references/PhysicsNeMo-PINN/manifest.yaml (task-7)
+- Repo: https://github.com/Chakazul/Lenia                               # task-3 lenia
+  SHA: adfc542939266de7f4bb7ebb552e8499701ee107
+  Released: default-branch HEAD (master). Latest release tag v3.5 is 2020-10-13 (>12 months); per
+    the pinning rule, default-branch HEAD is used rather than the stale release.
+  License: MIT
+  License-note: permissive. Vendored at references/Chakazul-Lenia/ per §3.1 deliverable map
+    (task-3 produces it); Chan 2019 cited in spec §12.
+  Security: clean (2026-05-28; repository security-advisories array empty)
+  Fetched: 2026-05-28T00:54Z
+  Citation-pointer: §3.1 references/Chakazul-Lenia/ + references/Chakazul-Lenia/manifest.yaml (task-3)
+```
+
 ---
 
 ## 3. Architecture & interface contracts
