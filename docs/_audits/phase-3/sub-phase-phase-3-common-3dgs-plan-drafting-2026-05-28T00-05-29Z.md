@@ -3,7 +3,7 @@ date: 2026-05-28T00-05-29Z
 author: phase-3 plan-drafting (Claude Code)
 subject: Phase 3 first sub-phase plan-drafting — common-3dgs
 verdict: SHIFTED
-head_sha: BACKFILL-PENDING-commit-3
+head_sha: b6230663b1d674a8114179a4ebf3338bfaf013ca
 prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
@@ -40,7 +40,7 @@ fired against plan-drafting itself; the SHA-pin STOP is filed as a Stage-0-dispa
 |---|---|---|---|
 | 1 | K-2 golden-path fix | `docs/phases/phase-3-plan.md` | `191df7209866c6b178265b7dcc4bc05099f7abd9` |
 | 2 | probe report | `docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-probe-2026-05-28T00-05-29Z.md` | `598de5a81ab1403f5906ecb526d01e54ee35d61b` |
-| 3 | charter + this audit + progress.md init | `docs/phases/sub-phase-phase-3-common-3dgs.md` + this file + `docs/_audits/phase-3/progress.md` | `BACKFILL-PENDING` (back-filled in COMMIT 4, Convention #12) |
+| 3 | charter + this audit + progress.md init | `docs/phases/sub-phase-phase-3-common-3dgs.md` + this file + `docs/_audits/phase-3/progress.md` | `b6230663b1d674a8114179a4ebf3338bfaf013ca` (this commit; head_sha back-filled here in COMMIT 4 per Convention #12) |
 | 4 | SHA back-fill | this audit (`head_sha` + commit-3 row) | terminal artifact (coordinator summary) |
 
 Probe sha256 `571cf15e…30f3`; charter sha256 `baacf952…f1e4` — both recorded in front-matter
