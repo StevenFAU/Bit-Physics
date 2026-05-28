@@ -14,7 +14,12 @@ repos:
       - id: check-yaml
       - id: check-json
       - id: end-of-file-fixer
+        # Vendored upstream sources under references/ are read-only and must
+        # remain byte-identical to upstream (docs/architecture.md Appendix D
+        # § D.8); do not append final newlines to them.
+        exclude: ^references/
       - id: trailing-whitespace
+        exclude: ^references/
       - id: check-added-large-files
         # 2 GB ceiling. Per spec § 2.7, canonical capture HDF5 payloads
         # are committed. Ceiling history: default 500 KB → Phase 0
@@ -43,7 +48,13 @@ repos:
     rev: v0.15.13
     hooks:
       - id: ruff-check
+        # Vendored upstream sources under references/ are read-only
+        # (docs/architecture.md Appendix D § D.8); they must not be linted or
+        # reformatted. First Python vendoring is references/3DGS-reference/
+        # (Inria gaussian-splatting, phase-3 common-3dgs).
+        exclude: ^references/
       - id: ruff-format
+        exclude: ^references/
 
   - repo: https://github.com/compilerla/conventional-pre-commit
     rev: v4.4.0
