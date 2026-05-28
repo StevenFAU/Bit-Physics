@@ -64,6 +64,20 @@ OPERATOR_NONPHASE_TAGS = frozenset(
         # threshold UNCHANGED; L-3DGS-1 calibration routes to task-8).
         # Operator-pushed at landing.
         "v0.2.3-sub-phase-phase-3-render-similarity",
+        # sub-phase-phase-3-lenia landing (D-TAG ratified YES per charter
+        # section 3): (a) external Chakazul/Lenia vendor at pinned SHA
+        # adfc542939266de7f4bb7ebb552e8499701ee107 (MIT, permissive); (b)
+        # durable sim architecture — first SIM in Phase 3, first
+        # `packages/lenia/` package (§0.3 SHIFT from continuous-ca/lenia/
+        # prescription per existing-convention precedence), first ever
+        # `tools/diagnostics/tier3/` subtree, first per-sim PBT module
+        # under `tools/testkit/property/sims/`, first per-sim CI job
+        # `test-lenia`, first SIM golden table + first SIM perf-ledger row
+        # + first SIM `.h5` legacy-capture seed in Phase 3. Closing status
+        # closed-with-shifted-2 (Stage-1b PBT re-declaration on math
+        # evidence — HARD RULE 2; Stage-1b R2 LFS mirror sync EOF — agent
+        # env creds absent). Operator-pushed at landing.
+        "v0.2.4-sub-phase-phase-3-lenia",
     }
 )
 
