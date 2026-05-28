@@ -1243,7 +1243,7 @@ CONTEXT BRIDGE per §3.5:
 
 INTERFACES YOU CONSUME:
 - common/common-py/ (Taichi capture I/O, GGUI, hot-reload).
-- tools/testkit/code_verification/golden/ (golden-table pattern).
+- tools/testkit/golden/ (golden-table pattern).
 
 INTERFACES YOU PRODUCE:
 - continuous-ca/lenia/python/ — terminal sim.
@@ -1260,7 +1260,7 @@ ANCHOR-PROBE STEP per §5.3:
    - common/common-py/ (Taichi capture I/O).
    - Phase 1 docs/sim-specs/continuous-ca/reaction-diffusion-2d/
      (CA spec sheet pattern; copy structure).
-   - tools/testkit/code_verification/golden/.
+   - tools/testkit/golden/.
    - tools/testkit/probes/template.md.
    - references/ (vendoring pattern).
 3. File probe at tools/testkit/probes/reports/lenia.md. Enumerate
@@ -1358,7 +1358,7 @@ CONTEXT BRIDGE per §3.5:
 INTERFACES YOU CONSUME:
 - common/common-ts/ (Phase 0 mature) — WebGPU compute primitives,
   capture I/O via h5wasm.
-- tools/testkit/code_verification/golden/.
+- tools/testkit/golden/.
 - tools/testkit/probes/template.md.
 
 INTERFACES YOU PRODUCE:
@@ -1380,7 +1380,7 @@ ANCHOR-PROBE STEP per §5.3:
 1. Probe common-ts WebGPU compute API: view actual signatures.
 2. Probe Phase 0 RD-2D structure (closest exemplar): file layout,
    spec-ref.md shape, golden-table format.
-3. View tools/testkit/code_verification/golden/ to confirm table schema.
+3. View tools/testkit/golden/ to confirm table schema.
 4. Web-fetch Onsager 1944 (DOI 10.1103/PhysRev.65.117) and Yang 1952
    (DOI 10.1103/PhysRev.85.808) for critical temperature + magnetization
    formula. Cite exactly.
@@ -1515,7 +1515,7 @@ CONTEXT BRIDGE per §3.5:
 
 INTERFACES YOU CONSUME:
 - common/common-warp/ (Phase 2 state).
-- tools/testkit/code_verification/golden/.
+- tools/testkit/golden/.
 
 INTERFACES YOU PRODUCE:
 - rigid-body/articulated-pedagogical/python/ — terminal sim.
@@ -1535,7 +1535,7 @@ ANCHOR-PROBE STEP per §5.3:
    - common/common-warp/ + docs/common/warp.md.
    - Existing per-category folder layouts (hybrid-pg/, volumetric-grid/,
      particle-fluid/) — pattern for new rigid-body/.
-   - tools/testkit/code_verification/golden/.
+   - tools/testkit/golden/.
    - tools/testkit/probes/template.md.
 3. File probe at tools/testkit/probes/reports/rigid-body-pedagogical.md.
 
@@ -1645,7 +1645,7 @@ ANCHOR-PROBE STEP per §5.3:
    - common/common-cpp/ (Vulkan abstractions, capture I/O, ImGui).
    - Phase 1 Stack C sims (eulerian-smoke, sph-water, lattice-
      boltzmann — CMake + folder pattern).
-   - tools/testkit/code_verification/golden/.
+   - tools/testkit/golden/.
    - tools/testkit/probes/template.md.
 3. File probe at tools/testkit/probes/reports/mass-spring-cloth.md.
 
