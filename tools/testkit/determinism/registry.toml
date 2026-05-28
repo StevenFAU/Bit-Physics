@@ -48,3 +48,21 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# ising-classical (task-3a, sub-phase-phase-3-ising-classical). FIRST
+# `lattice-spin.*` row + FIRST Stack-B SIM row in Phase 3 (after lenia's
+# continuous-ca Stack-D row). D-WEBGPU-DET per charter §5 + §3.2.5 schema:
+# bit-exact same-stack-same-hw via PCG per-cell seed + deterministic
+# checkerboard (red/black) update order; no atomics, no subgroup ops.
+# **MEASURED at Stage 1b**: run_twice_and_diff(sim_runner_seeded, seed=42)
+# on the NumPy reference (128sq, T=2.27, 10000 sweeps) produces
+# np.array_equal spin captures (Layer-1 oracle, max_abs_diff = 0.0). The
+# WGSL parallel-Metropolis kernel exercises the same checkerboard PCG
+# posture locally (Layer-2, spec §7.8 CI no-GPU). Row locked at Stage 1b.
+[lattice-spin.ising-classical]
+stack = "B"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

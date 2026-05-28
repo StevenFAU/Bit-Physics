@@ -1,0 +1,43 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "J": 1.0,
+      "T": 2.27,
+      "h": 0.0
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:cf844e5d0485a228f2bf9d7acc738097f6c09f7b5534d76d6dd096feb7ca9cbc",
+    "format": "hdf5",
+    "path": "phase-3-ising-classical.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-05-28T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "lattice-spin",
+    "name": "ising-classical",
+    "variant": "metropolis"
+  },
+  "stack": {
+    "build_id": "phase-3",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

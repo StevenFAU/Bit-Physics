@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "ising-classical-spontaneous-magnetization-yang-1952",
+  "category": "lattice-spin",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/ising-onsager.md",
+    "upstream": "Yang-1952",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-6,
+    "relative": 5e-2
+  },
+  "test_points": [
+    {
+      "inputs": {"T": 0.5},
+      "expected": {"m": 0.9999997746272086}
+    },
+    {
+      "inputs": {"T": 1.0},
+      "expected": {"m": 0.9992757519570612},
+      "independent_reference": {
+        "derived_by": "textbook",
+        "source": "Baxter, R. J. (1982), Exactly Solved Models in Statistical Mechanics, Academic Press, section 7.10 (spontaneous magnetization of the square-lattice Ising model). The Yang closed form m(T) = (1 - sinh^-4(2 beta J))^(1/8) at T = 1.0, J = 1 gives m = 0.99927575...; cite-by-edition.",
+        "doi": "n/a-textbook",
+        "expected": {"m": 0.9992757519570612}
+      }
+    },
+    {
+      "inputs": {"T": 1.5},
+      "expected": {"m": 0.9864996026214945},
+      "independent_reference": {
+        "derived_by": "textbook",
+        "source": "Newman, M. E. J. & Barkema, G. T. (1999), Monte Carlo Methods in Statistical Physics, Oxford University Press, Fig. 3.1 (magnetization curve of the 2D Ising model). The Yang closed form at T = 1.5, J = 1 gives m = 0.98649960...; cite-by-edition (digitized-curve consistency check).",
+        "doi": "n/a-textbook",
+        "expected": {"m": 0.9864996026214945}
+      }
+    },
+    {
+      "inputs": {"T": 2.0},
+      "expected": {"m": 0.911319377877496},
+      "independent_reference": {
+        "derived_by": "closed-form",
+        "source": "Yang, C. N. (1952), The spontaneous magnetization of a two-dimensional Ising model, Phys. Rev. 85, 808, Eq. (96): m(T) = (1 - sinh^-4(2 beta J))^(1/8) for T < T_c. At T = 2.0, J = 1, beta = 0.5: sinh(1.0) = 1.1752011936..., m = 0.911319377877496.",
+        "doi": "10.1103/PhysRev.85.808",
+        "expected": {"m": 0.911319377877496}
+      }
+    },
+    {
+      "inputs": {"T": 2.2},
+      "expected": {"m": 0.7847551313839213}
+    },
+    {
+      "inputs": {"T": 2.25},
+      "expected": {"m": 0.671854026683279}
+    }
+  ]
+}

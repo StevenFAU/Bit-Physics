@@ -1,0 +1,47 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "ising-classical-critical-temperature-onsager-1944",
+  "category": "lattice-spin",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/ising-onsager.md",
+    "upstream": "Onsager-1944",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-3
+  },
+  "test_points": [
+    {
+      "inputs": {"J": 1.0, "anchor": "onsager-exact"},
+      "expected": {"T_c": 2.269185314213022},
+      "independent_reference": {
+        "derived_by": "closed-form",
+        "source": "Onsager, L. (1944), Crystal statistics. I. A two-dimensional model with an order-disorder transition, Phys. Rev. 65, 117, section V. The exact 2D square-lattice critical temperature is T_c = 2 J / ln(1 + sqrt(2)) = 2.269185314213022 for J = 1 (k_B = 1).",
+        "doi": "10.1103/PhysRev.65.117",
+        "expected": {"T_c": 2.269185314213022}
+      }
+    },
+    {
+      "inputs": {"J": 1.0, "anchor": "kramers-wannier-duality"},
+      "expected": {"T_c": 2.269185314213022},
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Kramers, H. A. & Wannier, G. H. (1941), Statistics of the two-dimensional ferromagnet. Part I, Phys. Rev. 60, 252. The self-dual point sinh(2 beta_c J) = 1 gives beta_c = (1/2) asinh(1) = (1/2) ln(1 + sqrt(2)), hence T_c = 1/beta_c = 2/ln(1+sqrt(2)) = 2.269185314213022. Hand-derivation: tools/testkit/golden/derivations/ising-onsager.md section 2.",
+        "doi": "10.1103/PhysRev.60.252",
+        "expected": {"T_c": 2.269185314213022}
+      }
+    },
+    {
+      "inputs": {"J": 1.0, "anchor": "landau-binder-textbook"},
+      "expected": {"T_c": 2.26919},
+      "independent_reference": {
+        "derived_by": "textbook",
+        "source": "Landau, D. P. & Binder, K. (2014), A Guide to Monte Carlo Simulations in Statistical Physics, 4th ed., Cambridge University Press, chapter 4 (2D Ising critical temperature T_c/J = 2.26919...). Cite-by-edition; the five-figure textbook value agrees with the Onsager closed form within the relative tolerance 1e-3 (|2.26919 - 2.269185314| = 4.7e-6).",
+        "doi": "n/a-textbook",
+        "expected": {"T_c": 2.26919}
+      }
+    }
+  ]
+}

@@ -132,3 +132,27 @@ category = "smoke"
 golden_kernel_abs = 1e-6
 golden_kernel_rel = 1e-5
 golden_trajectory_abs = 1e-4
+
+# Phase-3 ising-classical (task-3a, sub-phase-phase-3-ising-classical) —
+# golden-table / MC-observable tolerances. Single-stack sim (Stack B;
+# NumPy reference is the in-stack oracle, NO cross-stack equivalence pair),
+# so the `overrides.<sim>` shape — which is `additionalProperties: false`
+# admitting only category/relative/absolute — REJECTS the sim-specific
+# named keys `critical_temp_rel` + `magnetization_rel` (D-TOL-SCHEMA
+# resolved-on-evidence at Stage 1b: the schema validator forbids additive
+# keys under `[overrides.<sim>]`; STOP-S NOT fired because NO new branch is
+# needed — the existing `golden_tolerance` branch, established by
+# lenia-tolerance-schema-fix, already admits bespoke per-(category, sim)
+# numeric keys for single-stack sims). Mirrors `[golden_tolerance.continuous-ca.lenia]`.
+#
+# Per §6.3a M.5 (docs/phases/phase-3-plan.md:1517-1521):
+#   critical_temp_rel = 1e-3  (finite-size shift ~1/L at L=128; closed-form
+#                              cross-anchor agreement Onsager/KW/textbook)
+#   magnetization_rel = 5e-2  (Monte-Carlo statistical error at ~10^4 sweeps;
+#                              aligned-IC ordered-phase |m| vs Yang m(T))
+# tolerance-budget.toml at HEAD has only `cross_stack` budgets; NO
+# `[budgets.lattice-spin.*]` cap shape exists, so these land off-budget
+# by-design (D-WIDE-TOL lean confirmed; L-LTSF-3; STOP-CAT-X NOT fired).
+[golden_tolerance.lattice-spin.ising-classical]
+critical_temp_rel = 1e-3
+magnetization_rel = 5e-2
