@@ -490,3 +490,13 @@
 - **Tolerance-budget:** Phase-3 carryover open; only `cross_stack` budget blocks exist; NO `[budgets.lattice-spin.*]` cap. Verified-only, not re-opened. First `lattice-spin` per-sim tolerance lands at Stage 1b.
 - **D-class carry:** charter-v2 RESOLVED held (D-HARNESS-LAYOUT pytest-against-captures, D-CI python-strict.yml/test-ising-classical, D-PBT two-invariants, D-MUT-SCOPE NO, D-TAG NO). Open for Stage 1b: D-WEBGPU-DET (MEASURE), D-WIDE-TOL, D-ANCHOR, D-DET-REGISTRY, D-TOL-SCHEMA, D-LAYOUT (lean packages/ising-classical/).
 - **Next:** Stage 1a — probe RD-2D pytest harness + WebGPU runtime, scaffold `packages/ising-classical/`, spec-ref stub, RED tests + failing-tests-hash.
+
+## sub-phase-phase-3-ising-classical — Stage 1a — 2026-05-28 — CONFIRMED
+
+- **Audit:** `docs/_audits/phase-3/sub-phase-phase-3-ising-classical-stage-1a-2026-05-28T21-55-00Z.md`. Chain: `a4e1a20` (scaffold) → `a4d9607` (RED tests + evidence). Verdict **CONFIRMED**.
+- **Harness probe:** RD-2D ships zero `*.test.ts`; pytest-against-captures confirmed (`packages/reaction-diffusion-2d/tests/test_code_verification.py:32-50`, `packages/reaction-diffusion-2d/tests/test_determinism.py:24-28`, `packages/reaction-diffusion-2d/src/index.ts:1-8` local-only WGSL). D-DET-RUNTIME: ising adopts RD-2D's NumPy-oracle-in-CI + WGSL-local split — NO new runtime. STOP-D-RUNTIME not fired.
+- **Scaffold:** `packages/ising-classical/` (25th workspace member) — `reference/ising_numpy.py` + `sim.py` + `__main__.py` shells (NotImplementedError); `src/README.md` (WGSL+index land Stage 1b); spec-ref 13-section stub (§6 PBT FULLY DECLARED); impl-probe report. D-LAYOUT `packages/ising-classical/` resolved-on-evidence (§0.3 SHIFT, mirrors lenia). D-CI → `python-strict.yml/test-ising-classical`.
+- **RED witness:** `15 failed, 2 passed, 0 collection errors`; modes 38 NotImplementedError + 7 FileNotFoundError (no captures yet). 2 passing = pure-constant scaffold tests (not impl gates). Evidence `tools/testkit/failing-tests-evidence/ising-classical-2026-05-28T21-40-00Z.txt` sha256 `572c9e4e…3683` (pre-commit-normalized; footer carries it).
+- **First-Stack-B FRICTION:** #1 RUF002 ambiguous `×`→`x` in docstrings; #2 failing-tests evidence must be hashed AFTER pre-commit normalization (trailing-ws/eof); #3 `uv sync --all-packages --all-extras` needed for pytest (lenia #5 inherited). All pipeline/hygiene, no hard STOP.
+- **Integrity:** 0 HARD_FAIL / 14 SOFT_WARN held at `a4d9607` (no new warnings from scaffold). STOP-D not fired.
+- **Next:** Stage 1b — NumPy reference impl + WGSL + golden tables (6 anchors) + tier-3 + determinism MEASURE + PBT + .h5 seed + perf + tolerance + CI job + shared files + 13-gate. RED→GREEN inversion.
