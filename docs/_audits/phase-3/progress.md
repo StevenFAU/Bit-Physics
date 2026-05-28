@@ -20,3 +20,13 @@
   - §6.1 task prompt uses stale API names (`GaussianSet`/`forward_splat`) + branch ceremony — §3.2.1 `GaussianSplatModel`/`render` + trunk-based govern (charter §1.3).
   - K-2 fixed in `phase-3-plan.md` (7→0 stale golden-paths). S9-PHASE2-1/2/3 encoded into the Stage-2 landing-audit template (charter § 4).
 - **Banked / forward:** Phase-4 pre-dispatch review is a separate operator track. Catalog Lenia B/E-vs-D drift routes at task-3/lenia plan-drafting.
+
+## sub-phase-phase-3-common-3dgs — Stage 0 — 2026-05-28 — BLOCKED (STOP-B)
+
+- **Stage:** Stage 0 (pre-flight + anchor re-check + external-SHA pin) — **halted at FIRST ACTION**.
+- **Landed at SHA:** blocker audit committed to `main` (no PR; no tag, I7). HEAD at session start `da176e3` (== `origin/main`; plan-drafting chain tip, no successor — Convention M).
+- **Verdict:** BLOCKED. **STOP-B** — Phase-3 pre-dispatch-review ABSENT (`docs/_audits/phase-3/pre-dispatch-review-*.md` does not exist; v9 amendment `docs/phases/phase-3-plan.md:34`).
+- **Artifacts:** `docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-stage-0-BLOCKED-2026-05-28T00-35-30Z.md`.
+- **What did NOT run:** anchor probe (integrity Cat 1–5 / I1–I7 / verify_evidence sweeps), cross-phase replay `--prior-phase phase-2`, external-SHA pinning. No `phase-3-plan.md` §2 edit; no vendoring.
+- **Operator action to unblock:** run the Phase-3 phase-plan-review session; land `docs/_audits/phase-3/pre-dispatch-review-<UTC>.md` (spec § 7.4 Convention E-addendum). STOP-A (Inria + 4 other SHAs) is resolved by the agent at Stage-0 resumption per the coordinator-ratified delegation (2026-05-28) — NOT a separate operator commit.
+- **On resumption:** fresh Stage-0 session re-runs FIRST ACTION (STOP-B → PASS), then full anchor probe + replay + 5-upstream SHA pinning per the original dispatch.
