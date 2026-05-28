@@ -8,8 +8,8 @@ prior_phase_tag: v0.2.1-sub-phase-lfs-architecture
 integrity_baseline: c19492ad…d22cb52 (0 HARD_FAIL / 14 SOFT_WARN)
 invariants_at_head: [I1, I2, I3, I4, I5, I6, I7]
 evidence_paths:
-  probe: docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-probe-2026-05-28T00-05-29Z.md
-  charter: docs/phases/sub-phase-phase-3-common-3dgs.md
+  - docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-probe-2026-05-28T00-05-29Z.md
+  - docs/phases/sub-phase-phase-3-common-3dgs.md
 evidence_hashes:
   docs/_audits/phase-3/sub-phase-phase-3-common-3dgs-probe-2026-05-28T00-05-29Z.md: sha256:571cf15e5749699dff8099ffb82bb8c99f76ceb67fd24722b094189111d830f3
   docs/phases/sub-phase-phase-3-common-3dgs.md: sha256:baacf95280042684ae38b9336b0a00cab8d582b7eb4514d71bb5c9cdd224f1e4
