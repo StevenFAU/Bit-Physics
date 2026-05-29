@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 1b-D (Claude Code)
 subject: Phase 3 task-6 neural-ca — STAGE 1b-D PyTorch training (Stack D) + canonical checkpoint + EFECT derivation + D-inference capture + PBT + golden anchor
 verdict: CONFIRMED
-head_sha: PLACEHOLDER-STAGE-1B-D-AUDIT
+head_sha: 31b6531d0820819f1ab3b122f3a940833f1e9492
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
