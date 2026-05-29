@@ -327,3 +327,141 @@ jobs:
       - name: pytest (articulated-pedagogical suite)
         working-directory: packages/articulated-pedagogical
         run: uv run pytest tests/
+
+  # Phase 3 task-6 (sub-phase-phase-3-neural-ca). FIRST dual-stack SIM + FIRST
+  # cross-stack gate-14 (render-similarity, statistical) of Phase 3. Three jobs
+  # per D-CI (charter §6): -train (Stack-D training/golden/PBT), -infer (the
+  # WGSL B-inference NumPy-oracle reproduction, the CI-visible check for the
+  # local-only WGSL §7.8), -equiv (the D↔B render-similarity gate-14). Each does
+  # a selective LFS pull for its capture(s)/artifact(s) (test-ising-classical
+  # precedent). WGSL inference is NEVER run in CI (§7.8) — CI reads committed
+  # captures.
+  test-neural-ca-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync neural-ca workspace deps (with dev extras for pytest + ruff)
+        working-directory: packages/neural-ca/python
+        run: uv sync --extra dev
+
+      - name: ruff (neural-ca src + tests)
+        working-directory: packages/neural-ca/python
+        run: |
+          uv run ruff check neural_ca/ tests/
+          uv run ruff format --check neural_ca/ tests/
+
+      - name: mypy --strict (neural-ca)
+        working-directory: packages/neural-ca/python
+        run: uv run mypy neural_ca/
+
+      - name: Selective LFS fetch — neural-ca checkpoint only (via R2 when wired)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="tools/testkit/golden/checkpoints/**"
+
+      - name: pytest (neural-ca train + golden + PBT)
+        working-directory: packages/neural-ca/python
+        run: uv run pytest tests/test_train_convergence.py tests/test_checkpoint_serialization.py tests/test_golden_anchors.py tests/test_pbt_invariants.py
+
+  test-neural-ca-infer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync neural-ca workspace deps
+        working-directory: packages/neural-ca/python
+        run: uv sync --extra dev
+
+      - name: Selective LFS fetch — WGSL artifact + B-inference capture (via R2 when wired)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="tools/testkit/golden/checkpoints/**"
+          git lfs pull --include="captures/neural-ca-ref/**"
+
+      - name: pytest (neural-ca WGSL-inference reproduction — NumPy oracle vs committed WGSL capture)
+        working-directory: packages/neural-ca/python
+        run: uv run pytest tests/test_wgsl_inference_reproduction.py
+
+  test-neural-ca-equiv:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync neural-ca workspace deps
+        working-directory: packages/neural-ca/python
+        run: uv sync --extra dev
+
+      - name: Cache LPIPS / torch.hub pretrained backbone weights
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/torch/hub/checkpoints
+          key: lpips-backbones-py3.12-lpips0.1.4-${{ hashFiles('tools/testkit/uv.lock') }}
+          restore-keys: |
+            lpips-backbones-py3.12-lpips0.1.4-
+
+      - name: Selective LFS fetch — D + B inference captures (via R2 when wired)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="captures/neural-ca-ref/**"
+
+      - name: pytest (neural-ca gate-14 D↔B render-similarity, statistical)
+        working-directory: packages/neural-ca/python
+        run: uv run pytest tests/test_cross_stack_equivalence.py
