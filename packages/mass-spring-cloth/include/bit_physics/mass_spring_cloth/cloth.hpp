@@ -80,12 +80,20 @@ struct ClothConfig {
 
     std::vector<uint32_t> pinned;            // pinned particle indices (inv_mass = 0)
     std::vector<double>   initial_positions; // optional 3*N override (else grid)
+    std::vector<double>   initial_velocity;  // optional uniform (vx,vy,vz) seed (free-cloth momentum PBT)
+
+    // When true (default), run_cloth runs the trajectory twice and asserts 2-run
+    // bit-exact determinism (the witness). Set false to skip the redundant second
+    // run for large captures / PBT subprocess loops (determinism is MEASURED
+    // separately; the witness is then taken from the single capturing run).
+    bool assert_determinism = true;
 };
 
 struct ClothResult {
-    std::vector<double> final_positions;                 // 3*N, row-major (x,y,z)
+    std::vector<double> final_positions;                  // 3*N, row-major (x,y,z)
     std::vector<uint32_t> captured_steps;
-    std::vector<std::vector<double>> captured_positions; // parallel to captured_steps
+    std::vector<std::vector<double>> captured_positions;  // parallel to captured_steps
+    std::vector<std::vector<double>> captured_velocities; // parallel to captured_steps
     // §11 invariant evidence: max over stretch (structural+shear) constraints of
     // |d - rest| / rest at the final state (length_bounded_above witness).
     double max_stretch_ratio = 0.0;

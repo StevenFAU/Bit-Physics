@@ -167,7 +167,17 @@ ClothResult run_cloth(const ClothConfig& cfg, const std::filesystem::path* captu
         vk::StorageBuffer cr(ctx, m_d_bytes), cco(ctx, m_d_bytes), lam(ctx, m_d_bytes);
         pos.upload(ic.data(), vec_bytes);
         prev.fill_zero();
-        vel.fill_zero();
+        if (cfg.initial_velocity.size() == 3) {
+            std::vector<double> v0(3u * N);
+            for (size_t i = 0; i < N; ++i) {
+                v0[3u * i] = cfg.initial_velocity[0];
+                v0[3u * i + 1u] = cfg.initial_velocity[1];
+                v0[3u * i + 2u] = cfg.initial_velocity[2];
+            }
+            vel.upload(v0.data(), vec_bytes);
+        } else {
+            vel.fill_zero();
+        }
         wbuf.upload(inv_mass.data(), n_bytes);
         if (M > 0) {
             ca.upload(con_a.data(), M * sizeof(uint32_t));
@@ -186,6 +196,7 @@ ClothResult run_cloth(const ClothConfig& cfg, const std::filesystem::path* captu
             vel.download(hv.data(), vec_bytes);
             out->captured_steps.push_back(step);
             out->captured_positions.push_back(hp);
+            out->captured_velocities.push_back(hv);
         };
         snapshot(0);  // IC
         for (uint32_t s = 1; s <= cfg.steps; ++s) {
@@ -223,11 +234,16 @@ ClothResult run_cloth(const ClothConfig& cfg, const std::filesystem::path* captu
     };
 
     ClothResult result;
-    // D-DET: 2-run bit-identical determinism (tolerance 0.0).
-    result.determinism_witness = det::assert_deterministic_run(
-        [&] { return trajectory(nullptr); }, 2, 0.0);
-
-    trajectory(&result);
+    if (cfg.assert_determinism) {
+        // D-DET: 2-run bit-identical determinism (tolerance 0.0).
+        result.determinism_witness = det::assert_deterministic_run(
+            [&] { return trajectory(nullptr); }, 2, 0.0);
+        trajectory(&result);
+    } else {
+        // Single capturing run; witness = sha256 of its final positions.
+        std::vector<unsigned char> wit = trajectory(&result);
+        result.determinism_witness = hsh::sha256_hex(wit);
+    }
 
     // ----- optional capture-v1 .h5 (+ .json) ----------------------------------
     if (capture_manifest) {
@@ -263,6 +279,12 @@ ClothResult run_cloth(const ClothConfig& cfg, const std::filesystem::path* captu
             fp.bytes.resize(vec_bytes);
             std::memcpy(fp.bytes.data(), fr.data(), vec_bytes);
             sd.fields.emplace("positions", std::move(fp));
+            cap::FieldData fv;
+            fv.dtype = "f64";
+            fv.shape = {static_cast<int64_t>(N), 3};
+            fv.bytes.resize(vec_bytes);
+            std::memcpy(fv.bytes.data(), result.captured_velocities[f].data(), vec_bytes);
+            sd.fields.emplace("velocities", std::move(fv));
             writer.write_step(result.captured_steps[f], sd);
         }
         writer.finalize();

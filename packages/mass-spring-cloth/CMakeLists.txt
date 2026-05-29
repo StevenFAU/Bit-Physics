@@ -34,6 +34,10 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
   )
   add_library(bit_physics::mass_spring_cloth ALIAS bit_physics_mass_spring_cloth)
 
+  # --- canonical capture writer + PBT driver executable -----------------------
+  add_executable(bit_physics_mass_spring_cloth_capture src/cloth_capture_main.cpp)
+  target_link_libraries(bit_physics_mass_spring_cloth_capture PRIVATE bit_physics_mass_spring_cloth)
+
   # --- doctest suite (gate-3 acceptance RED -> GREEN + gate-4 golden) ---------
   if (TARGET doctest)
     set(CLOTH_GOLDEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit/golden/tables")
@@ -54,6 +58,22 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
     # no atomics -> bit-identical regardless of thread count.
     set_tests_properties(mass_spring_cloth_tests PROPERTIES
       ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
+  endif()
+
+  # --- PBT (gate-11): Hypothesis -> subprocess capture binary -> read .h5 ------
+  # Cross-language (D-PBT): the Python PBT verifies the declared invariants
+  # post-hoc on captures the C++ binary emits. Driven by uv from the testkit
+  # workspace so `capture` + `property` import (common-cpp C-6 pattern).
+  find_program(UV_EXECUTABLE NAMES uv)
+  if (UV_EXECUTABLE)
+    add_test(NAME mass_spring_cloth_pbt
+      COMMAND ${UV_EXECUTABLE} run --no-sync python
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_pbt_invariants.py
+        $<TARGET_FILE:bit_physics_mass_spring_cloth_capture>)
+    set_tests_properties(mass_spring_cloth_pbt PROPERTIES
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit)
+  else()
+    message(WARNING "uv not found: skipping mass_spring_cloth_pbt ctest.")
   endif()
 else()
   message(STATUS "mass-spring-cloth: Vulkan + HDF5 required; skipping (Stage 1b targets).")
