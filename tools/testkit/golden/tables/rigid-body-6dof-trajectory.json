@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "rigid-body-6dof-rk4-reference",
+  "category": "rigid-body",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/rigid-body-rk4-reference.md",
+    "upstream": "n/a-numerical-baseline",
+    "upstream_path": "n/a",
+    "upstream_sha": "n/a"
+  },
+  "tolerance": {
+    "absolute": 0.01,
+    "relative": 0.0
+  },
+  "baseline_note": "RK4 at dt/100 + energy conservation \u2014 NUMERICAL baseline, NOT an analytic anchor.",
+  "config": {
+    "n_links": 6,
+    "link_length": 1.0,
+    "link_mass": 1.0,
+    "gravity": 9.81,
+    "q0": [
+      0.3,
+      -0.2,
+      0.15,
+      -0.1,
+      0.05,
+      -0.05
+    ]
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "total_energy_at_step",
+        "step": 0,
+        "dt": 0.001
+      },
+      "expected": {
+        "value": -201.08446684020151
+      },
+      "independent_reference": {
+        "derived_by": "conservation of energy (frictionless): E(t) = E(0)",
+        "source": "independent physical invariant; E(0) computed from the IC",
+        "doi": "n/a-conservation-law",
+        "expected": {
+          "value": -201.08446684020151
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "total_energy_at_step",
+        "step": 100,
+        "dt": 0.001
+      },
+      "expected": {
+        "value": -201.08446684020151
+      },
+      "independent_reference": {
+        "derived_by": "conservation of energy (frictionless): E(t) = E(0)",
+        "source": "independent physical invariant; E(0) computed from the IC",
+        "doi": "n/a-conservation-law",
+        "expected": {
+          "value": -201.08446684020151
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "total_energy_at_step",
+        "step": 200,
+        "dt": 0.001
+      },
+      "expected": {
+        "value": -201.08446684020154
+      },
+      "independent_reference": {
+        "derived_by": "conservation of energy (frictionless): E(t) = E(0)",
+        "source": "independent physical invariant; E(0) computed from the IC",
+        "doi": "n/a-conservation-law",
+        "expected": {
+          "value": -201.08446684020151
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "total_energy_at_step",
+        "step": 300,
+        "dt": 0.001
+      },
+      "expected": {
+        "value": -201.0844668402015
+      },
+      "independent_reference": {
+        "derived_by": "conservation of energy (frictionless): E(t) = E(0)",
+        "source": "independent physical invariant; E(0) computed from the IC",
+        "doi": "n/a-conservation-law",
+        "expected": {
+          "value": -201.08446684020151
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "rigid-body-double-pendulum-rk4-reference",
+  "category": "rigid-body",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/rigid-body-rk4-reference.md",
+    "upstream": "n/a-numerical-baseline",
+    "upstream_path": "n/a",
+    "upstream_sha": "n/a"
+  },
+  "tolerance": {
+    "absolute": 0.01,
+    "relative": 0.0
+  },
+  "baseline_note": "RK4 at dt/100 \u2014 a NUMERICAL baseline, NOT an analytic anchor.",
+  "config": {
+    "length1": 1.0,
+    "length2": 1.0,
+    "mass1": 1.0,
+    "mass2": 1.0,
+    "gravity": 9.81,
+    "theta1_0": 0.5,
+    "theta2_0": 0.7
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "link_positions_at_step",
+        "step": 0,
+        "dt": 0.001
+      },
+      "expected": {
+        "mass1_xy": [
+          0.479425538604203,
+          -0.8775825618903728
+        ],
+        "mass2_xy": [
+          1.123643225841894,
+          -1.6424247491748614
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "closed-form double-pendulum EOM (absolute angles), RK4 dt/100",
+        "source": "standard planar double-pendulum equations; independent of the production ABA",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "link_positions_at_step",
+        "step": 100,
+        "dt": 0.001
+      },
+      "expected": {
+        "mass1_xy": [
+          0.465938268573436,
+          -0.884817229646207
+        ],
+        "mass2_xy": [
+          1.0974408933539577,
+          -1.6601909684943266
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "closed-form double-pendulum EOM (absolute angles), RK4 dt/100",
+        "source": "standard planar double-pendulum equations; independent of the production ABA",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "link_positions_at_step",
+        "step": 200,
+        "dt": 0.001
+      },
+      "expected": {
+        "mass1_xy": [
+          0.4263892439469936,
+          -0.9045397794714787
+        ],
+        "mass2_xy": [
+          1.018252465699783,
+          -1.7105781946455996
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "closed-form double-pendulum EOM (absolute angles), RK4 dt/100",
+        "source": "standard planar double-pendulum equations; independent of the production ABA",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "link_positions_at_step",
+        "step": 300,
+        "dt": 0.001
+      },
+      "expected": {
+        "mass1_xy": [
+          0.36363434917963705,
+          -0.9315417650844764
+        ],
+        "mass2_xy": [
+          0.8850389378146706,
+          -1.7848513542432598
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "closed-form double-pendulum EOM (absolute angles), RK4 dt/100",
+        "source": "standard planar double-pendulum equations; independent of the production ABA",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "link_positions_at_step",
+        "step": 400,
+        "dt": 0.001
+      },
+      "expected": {
+        "mass1_xy": [
+          0.2823800060406036,
+          -0.9593026280525394
+        ],
+        "mass2_xy": [
+          0.6983425805879709,
+          -1.8686843611965067
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "closed-form double-pendulum EOM (absolute angles), RK4 dt/100",
+        "source": "standard planar double-pendulum equations; independent of the production ABA",
+        "doi": "n/a-closed-form"
+      }
+    }
+  ]
+}
