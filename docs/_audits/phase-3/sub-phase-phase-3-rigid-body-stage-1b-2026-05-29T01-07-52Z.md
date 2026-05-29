@@ -3,7 +3,7 @@ date: 2026-05-29T01-07-52Z
 author: phase-3 rigid-body-pedagogical stage-1b (Claude Code)
 subject: Phase 3 task-4 rigid-body-pedagogical — STAGE 1b implementation + 13-gate + D-DET MEASURE
 verdict: CONFIRMED
-head_sha: TO-BACKFILL
+head_sha: d1faf0027cfdf5c0b4407c363f39b5ff264ee337
 prior_stage_audit: sub-phase-phase-3-rigid-body-stage-1a-2026-05-29T00-38-00Z.md
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
 integrity_digest_at_head: f5b7eea154e7c369ec74c4ff83d33c3c2f73e297e04240a1a5681fa257070bb3
