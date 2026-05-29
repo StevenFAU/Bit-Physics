@@ -1,0 +1,59 @@
+[upstream]
+name         = "Growing Neural Cellular Automata (self-organising-systems)"
+version      = "default-branch-HEAD-2026-01-09"
+sha          = "3d5547ca48b60ecac459834e2c05c9ff5df87991"
+url          = "https://github.com/google-research/self-organising-systems"
+license      = "Apache-2.0"
+license_file = "LICENSE"
+
+[scope]
+purpose         = "Reference for the growing-neural-ca sim (Mordvintsev et al. 2020, 'Growing Neural Cellular Automata', Distill, https://distill.pub/2020/growing-ca/). Citation anchors for the per-cell update rule: (1) the 16-channel cell state with RGBA + 12 hidden channels (notebooks/growing_ca.ipynb cell 2, CHANNEL_N=16); (2) the fixed depthwise perception kernel = [identity, Sobel-x, Sobel-y] (cell 3, perceive()); (3) the per-cell update MLP Conv2D(128,1,relu) -> Conv2D(channel_n,1,zeros-init) (cell 3, CAModel.dmodel); (4) the stochastic per-cell fire-rate update mask at fire_rate=0.5 (cell 3, call()); (5) alpha-channel alive masking via 3x3 max-pool > 0.1 (cell 3, get_living_mask()); (6) the training objective = pixel-wise L2 / mean-squared-error on RGBA vs a padded target emoji (cell ~ loss_f). The upstream paper publishes NO PSNR/SSIM/LPIPS metrics — evaluation is the L2 loss + qualitative pattern inspection (verified: zero occurrences of psnr/ssim/lpips in the notebook), so the Bit-Physics neural-ca gate-14 cross-stack equivalence is necessarily STATISTICAL (render-similarity, measured-then-locked). packages/neural-ca/ derives its Stack-D PyTorch reformulation INDEPENDENTLY from these citation anchors per spec § 2.4 + § 2.8 + Convention #8; the vendored notebook is the anchor + reference oracle, NOT a redistributed dependency, and is NOT imported or executed (§ H.2). Apache-2.0 (permissive). The repo's only release tag (biomaker-v1.0.0) is a different sub-project; this sim pins default-branch HEAD per Appendix D.3's research-repo policy."
+used_by_sims    = ["continuous-ca/neural-ca"]
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-29T00-26Z"
+fetched_by    = "phase-3 neural-ca stage-0 (Claude Code)"
+fetch_command = "SHA=3d5547ca48b60ecac459834e2c05c9ff5df87991; gh api repos/google-research/self-organising-systems --jq .license.spdx_id == Apache-2.0; gh api repos/google-research/self-organising-systems/commits/$SHA verified; curl raw.githubusercontent.com/google-research/self-organising-systems/$SHA/{LICENSE, README.md -> UPSTREAM_README.md, notebooks/growing_ca.ipynb} into references/growing-neural-ca/."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 159
+quote = "CHANNEL_N = 16        # Number of CA state channels"
+purpose = "16-channel cell state (channels 0-2 RGB, channel 3 alpha, channels 4-15 hidden)."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 164
+quote = "CELL_FIRE_RATE = 0.5"
+purpose = "Stochastic per-cell update fire rate (asynchronous update)."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 217
+quote = "return tf.nn.max_pool2d(alpha, 3, [1, 1, 1, 1], 'SAME') > 0.1"
+purpose = "Alive masking: a cell is alive iff a 3x3 neighbourhood max of the alpha channel exceeds 0.1."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 233
+quote = "Conv2D(128, 1, activation=tf.nn.relu),"
+purpose = "Per-cell update MLP first layer (1x1 conv, 128 hidden, ReLU); second layer Conv2D(channel_n,1) zero-initialised."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 249
+quote = "y = tf.nn.depthwise_conv2d(x, kernel, [1, 1, 1, 1], 'SAME')"
+purpose = "Perception step: fixed depthwise convolution with [identity, Sobel-x, Sobel-y] kernels (Sobel = outer([1,2,1],[-1,0,1])/8)."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 260
+quote = "update_mask = tf.random.uniform(tf.shape(x[:, :, :, :1])) <= fire_rate"
+purpose = "Stochastic update: each cell updates independently with probability fire_rate per step."
+
+[[citations]]
+file = "notebooks/growing_ca.ipynb"
+line = 405
+quote = "return tf.reduce_mean(tf.square(to_rgba(x)-pad_target), [-2, -3, -1])"
+purpose = "Training objective: pixel-wise L2 (MSE) on RGBA vs the padded target emoji. No PSNR/SSIM/LPIPS — the basis for the re-shaped D-ANCHOR (golden_checkpoint_match training-L2 bound; cross-stack gate is statistical render-similarity)."
