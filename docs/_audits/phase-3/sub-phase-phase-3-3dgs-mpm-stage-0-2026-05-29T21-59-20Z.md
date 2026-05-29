@@ -3,7 +3,7 @@ date: 2026-05-29T21-59-20Z
 author: phase-3 3dgs-mpm stage-0 (Claude Code)
 subject: Phase 3 finale (task-8 3dgs-mpm, FIRST neural-rendered CATEGORY) — STAGE 0 preflight + integrity anchor + LFS bootstrap + cross-phase replay + verify_evidence sweep + two-hard-dep re-confirm + Inria-probe + PhysGaussian cite-only MANIFEST + A-7 + spec-ref skeleton + charter D-class flip RESOLVED v2
 verdict: CONFIRMED
-head_sha: 28b005c
+head_sha: 9ab063e8ccf4878d293558bd7363b2fa947c7f0e
 anchor_sha: 28b005c5bf9bd02549204cd3ce5c2d23ed75edda
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
