@@ -3,7 +3,8 @@ date: 2026-05-29T15-18-56Z
 author: phase-3 pinn-poisson stage-1b-pinn (Claude Code)
 subject: Phase 3 task-7 pinn-poisson — STAGE 1b-PINN PINN training + checkpoint + capture + determinism (D-DET measured) + EFECT + PBT + RED->GREEN
 verdict: CONFIRMED
-head_sha: 8481e559547647e4e40e1054b2fd4d2c7c65a288
+head_sha: 4a7f209
+anchor_sha: 8481e559547647e4e40e1054b2fd4d2c7c65a288
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1
