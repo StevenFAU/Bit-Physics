@@ -206,11 +206,13 @@ between the D-inference and B-inference captures, asserted against
 `[render_similarity.continuous-ca.neural-ca]` in
 `tools/testkit/equivalence/tolerance.toml`. NOT `compare_captures`.
 
-`TODO(Stage-1c)`: MEASURE PSNR/SSIM/LPIPS and LOCK `psnr_min` / `ssim_min` /
-`lpips_max` per § 2.12 (measure-then-lock). If a measured value is below the
-§ 2.12 floor (PSNR ≥ 28 / SSIM ≥ 0.85 / LPIPS ≤ 0.15), raise a
-**QUALITY-CONCERN flag** in the report § 6 (NOT auto-fail — learned =
-distributional). Companion doc:
+**MEASURED + LOCKED at Stage 1c** (mean over the 20 non-seed frame pairs):
+PSNR 23.92 (`psnr_min = 23.0`), SSIM 0.824 (`ssim_min = 0.80`), LPIPS_alex
+0.0316 (`lpips_max = 0.05`). **QUALITY-CONCERN flag (NOT auto-fail; learned =
+distributional):** PSNR 23.92 < § 2.12 floor 28 and SSIM 0.824 < floor 0.85 —
+dragged down by the stochastic per-cell fire-mask RNG divergence (`torch.rand` vs
+WGSL PCG). The PERCEPTUAL metric **LPIPS_alex 0.0316 PASSES the floor (≤ 0.15)**:
+the D and B patterns are perceptually equivalent. Companion doc:
 `docs/sim-specs/continuous-ca/neural-ca/equivalence.md` (RD-2D template, marked
 **statistical**).
 
