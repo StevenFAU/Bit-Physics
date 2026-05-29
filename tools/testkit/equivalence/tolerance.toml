@@ -198,3 +198,36 @@ energy_drift_rel_per_second = 1e-3
 [golden_tolerance.soft-body.mass-spring-cloth]
 catenary_shape_rel = 2e-3
 position_abs = 1e-2
+
+# -----------------------------------------------------------------------------
+# Phase-3 neural-ca (task-6, sub-phase-phase-3-neural-ca) — TWO rows, TWO
+# branches (D-TOL, charter §6 RESOLVED). FIRST dual-stack sim; FIRST
+# `render_similarity` per-sim CONSUMER (the render-similarity sub-phase shipped
+# the schema only). §S.2 discharged: read tolerance-schema.json render_similarity
+# + golden_tolerance branches + the lenia/ising/rigid-body/cloth entries first.
+# -----------------------------------------------------------------------------
+
+# Row 1 — the STATISTICAL cross-stack gate-14 (D-inference PyTorch ↔ B-inference
+# WGSL), measured-then-LOCKED at Stage 1c. DEFAULT = the spec §2.12 acceptance
+# floors (PSNR≥28 / SSIM≥0.85 / LPIPS≤0.15); Stage 1c re-locks to the MEASURED
+# D↔B values. A measured value below a §2.12 floor → QUALITY-CONCERN flag in the
+# landing report §6 (NOT auto-fail — learned dynamics are distributional, spec
+# §2.6 `docs/architecture.md:414` + §5.12). NOT a `[budgets.*.cross_stack]`
+# consumer (render-similarity is the wider learned-dynamics budget).
+[render_similarity.continuous-ca.neural-ca]
+psnr_min = 28.0
+ssim_min = 0.85
+lpips_max = 0.15
+
+# Row 2 — the training golden (single-stack Stack-D). `golden_checkpoint_match`
+# (the trained checkpoint reconstructs the target) + the measured training-L2
+# reconstruction bound `golden_checkpoint_l2_max` (DEFAULT 0.02; LOCKED at Stage
+# 1b-D on measurement) + the EFECT training-loss distributional bound (string;
+# DERIVED at Stage 1b-D, or STOP-EFECT). Lands under the existing
+# `[golden_tolerance.<category>.<sim>]` branch (the schema description ENUMERATES
+# exactly `golden_checkpoint_match` + `training_loss_distributional_bound` for
+# this sim); NO new schema branch, NO `[budgets.*]` cap.
+[golden_tolerance.continuous-ca.neural-ca-python]
+golden_checkpoint_match = true
+golden_checkpoint_l2_max = 0.02
+training_loss_distributional_bound = "EFECT"

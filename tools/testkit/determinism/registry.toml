@@ -106,3 +106,39 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# neural-ca (task-6, sub-phase-phase-3-neural-ca). SIXTH Phase-3 sub-phase +
+# FIRST dual-stack + FIRST learned-dynamics sim. D-DET (charter §6, operator-
+# ratified): TWO rows, MEASURE-then-declare. Training and inference are kept
+# SEPARATE — bit-exact fits inference only. DEFAULT rows drafted at Stage 1a;
+# MEASURED + locked at Stage 1b-D (training-loss distribution across pinned
+# seeds derives the EFECT bound; run_twice_and_diff confirms inference
+# bit-exactness). If the EFECT bound is underivable → STOP-EFECT (re-characterize
+# per the ising STOP-DET template). NOTE the registry-schema guideline
+# "distributional_bound required iff class = distributional": training is
+# non-deterministic BY DESIGN (the trained WEIGHTS are not reproducible run-to-run
+# — stochastic fire mask + optimizer atomics), yet the training-LOSS CONVERGENCE
+# is distributionally bounded by EFECT. The class/bound pairing is finalized at
+# Stage 1b-D on measurement (may reconcile class→distributional if a tight band
+# is derived). The EFECT bound characterizes TRAINING-convergence reproducibility
+# — it is NOT the cross-stack gate (that is the D↔B render-similarity, § 9).
+[continuous-ca.neural-ca.training]
+stack = "D"
+class = "non-deterministic"
+scope = "n/a"
+atomic_ops = "full"
+subgroup_ops = "none"
+seed_pinned = true
+distributional_bound = "EFECT"
+
+# Inference (frozen checkpoint forward pass) — bit-exact same-stack-same-hw with
+# a pinned RNG seed for the stochastic fire mask; no atomics, no subgroup ops in
+# the forward convs on the PyTorch CPU backend. This single-stack reproducibility
+# is the FOUNDATION for the D↔B statistical cross-stack gate.
+[continuous-ca.neural-ca.inference]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
