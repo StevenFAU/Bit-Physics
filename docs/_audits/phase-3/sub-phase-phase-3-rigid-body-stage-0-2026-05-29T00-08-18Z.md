@@ -3,7 +3,7 @@ date: 2026-05-29T00-08-18Z
 author: phase-3 rigid-body-pedagogical stage-0 (Claude Code)
 subject: Phase 3 fifth sub-phase (task-4 rigid-body-pedagogical, first Stack-E SIM of Phase 3) — STAGE 0 pre-flight + ratified-D charter flip (OPEN→RESOLVED v2) + §5.8 corrigendum routing + §Q R2 bootstrap + integrity baseline + cross-phase replay + verify_evidence sweep
 verdict: CONFIRMED
-head_sha: TO-BACKFILL
+head_sha: 778551101ee5be00058c82e80e50091046f96af9
 prior_sub_phase_landed_at: 2da281a
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
