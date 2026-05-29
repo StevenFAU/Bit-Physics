@@ -1,0 +1,123 @@
+#version 450
+// Mass-spring cloth XPBD — Stack-C Vulkan/C++ reference (serial Gauss-Seidel).
+//
+// One dispatch advances the cloth by `substeps` semi-implicit-Euler substeps,
+// each with `iters` Gauss-Seidel constraint-projection sweeps. A SINGLE
+// invocation (local_size 1, one workgroup) does ALL the work in a fixed order:
+// predict -> reset lambda -> serial GS sweeps -> velocity update. No atomic
+// scatter, no subgroup ops -> bit-identical run-to-run on lavapipe (charter
+// D-DET). f64 + `precise` (NoContraction; Q-CPP1) -> no FMA fusion.
+//
+// XPBD distance-constraint projection reimplemented from Macklin, Müller,
+// Chentanez 2016 ("XPBD: Position-Based Simulation of Compliant Constrained
+// Dynamics"), cross-checked against the read-only vendored oracle
+// references/PositionBasedDynamics/PositionBasedDynamics/XPBD.cpp:36-58
+// (compliance mapping alpha = compliance/h^2, Eq. 8; Lagrange-multiplier update
+// delta_lambda = -(C + alpha*lambda)/(w_a + w_b + alpha), Eq. 18).
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 1) in;
+
+layout(std430, binding = 0) buffer Pos      { double pos[];      };  // 3*N
+layout(std430, binding = 1) buffer PrevPos  { double prev[];     };  // 3*N (scratch)
+layout(std430, binding = 2) buffer Vel      { double vel[];      };  // 3*N
+layout(std430, binding = 3) readonly buffer InvMass { double inv_mass[]; };  // N
+layout(std430, binding = 4) readonly buffer ConA  { uint con_a[];  };  // M
+layout(std430, binding = 5) readonly buffer ConB  { uint con_b[];  };  // M
+layout(std430, binding = 6) readonly buffer ConR  { double con_rest[];  };  // M
+layout(std430, binding = 7) readonly buffer ConC  { double con_compliance[]; };  // M
+layout(std430, binding = 8) buffer Lambda { double lambda[]; };  // M (scratch)
+
+layout(push_constant) uniform Params {
+    uint   N;
+    uint   M;
+    uint   iters;
+    uint   substeps;
+    double dt;
+    double gx;
+    double gy;
+    double gz;
+    double damping;  // velocity damping fraction per substep [0,1)
+} p;
+
+void main() {
+    if (gl_GlobalInvocationID.x != 0u) return;  // serial: invocation 0 only
+
+    double h = p.dt / double(p.substeps);
+
+    for (uint s = 0u; s < p.substeps; ++s) {
+        // --- predict (integrate gravity + velocity) ---------------------------
+        for (uint i = 0u; i < p.N; ++i) {
+            double w = inv_mass[i];
+            uint b = 3u * i;
+            prev[b]     = pos[b];
+            prev[b + 1u] = pos[b + 1u];
+            prev[b + 2u] = pos[b + 2u];
+            if (w > 0.0lf) {
+                double dfac = 1.0lf - p.damping;
+                vel[b]      = vel[b]      * dfac + h * p.gx;
+                vel[b + 1u] = vel[b + 1u] * dfac + h * p.gy;
+                vel[b + 2u] = vel[b + 2u] * dfac + h * p.gz;
+                pos[b]      += h * vel[b];
+                pos[b + 1u] += h * vel[b + 1u];
+                pos[b + 2u] += h * vel[b + 2u];
+            }
+        }
+
+        // --- reset Lagrange multipliers (XPBD: lambda = 0 at substep start) ----
+        for (uint c = 0u; c < p.M; ++c) lambda[c] = 0.0lf;
+
+        // --- serial Gauss-Seidel constraint projection ------------------------
+        double h2 = h * h;
+        for (uint it = 0u; it < p.iters; ++it) {
+            for (uint c = 0u; c < p.M; ++c) {
+                uint ia = con_a[c];
+                uint ib = con_b[c];
+                double wa = inv_mass[ia];
+                double wb = inv_mass[ib];
+                double wsum = wa + wb;
+                if (wsum <= 0.0lf) continue;  // both pinned
+
+                uint ba = 3u * ia;
+                uint bb = 3u * ib;
+                double nx = pos[ba]      - pos[bb];
+                double ny = pos[ba + 1u] - pos[bb + 1u];
+                double nz = pos[ba + 2u] - pos[bb + 2u];
+                precise double d2 = (nx * nx + ny * ny) + nz * nz;
+                double d = sqrt(d2);
+                if (d <= 1e-12lf) continue;
+                double inv_d = 1.0lf / d;
+                nx *= inv_d; ny *= inv_d; nz *= inv_d;
+
+                precise double C = d - con_rest[c];
+                double alpha = con_compliance[c] / h2;
+                double denom = wsum + alpha;
+                precise double dl = -(C + alpha * lambda[c]) / denom;
+                lambda[c] += dl;
+
+                // corr_a = +w_a * dl * n ; corr_b = -w_b * dl * n  (Bender XPBD.cpp:57-58)
+                double sa = wa * dl;
+                double sb = wb * dl;
+                pos[ba]      += sa * nx;
+                pos[ba + 1u] += sa * ny;
+                pos[ba + 2u] += sa * nz;
+                pos[bb]      -= sb * nx;
+                pos[bb + 1u] -= sb * ny;
+                pos[bb + 2u] -= sb * nz;
+            }
+        }
+
+        // --- velocity update (v = (x - x_prev) / h) ---------------------------
+        double inv_h = 1.0lf / h;
+        for (uint i = 0u; i < p.N; ++i) {
+            uint b = 3u * i;
+            if (inv_mass[i] > 0.0lf) {
+                vel[b]      = (pos[b]      - prev[b])      * inv_h;
+                vel[b + 1u] = (pos[b + 1u] - prev[b + 1u]) * inv_h;
+                vel[b + 2u] = (pos[b + 2u] - prev[b + 2u]) * inv_h;
+            } else {
+                vel[b] = 0.0lf; vel[b + 1u] = 0.0lf; vel[b + 2u] = 0.0lf;
+            }
+        }
+    }
+}

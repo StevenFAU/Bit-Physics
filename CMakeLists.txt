@@ -37,3 +37,9 @@ add_subdirectory(common/common-cpp)
 # bitphysics_embed_compute_shader helper are in scope.
 #   sub-phase-reaction-diffusion-2d-stack-c, Stage 1b (registration).
 add_subdirectory(packages/reaction-diffusion-2d-stack-c)
+
+# Stack-C reference sim — mass-spring cloth (XPBD), Phase 3 task-5. FIRST NEW
+# Stack-C sim + FIRST soft-body category. Added AFTER common/common-cpp (substrate
+# targets + bitphysics_embed_compute_shader helper) per
+# sub-phase-phase-3-mass-spring-cloth § 3 / § 8. NOT a uv member (uv stays 23).
+add_subdirectory(packages/mass-spring-cloth)
