@@ -3,7 +3,8 @@ date: 2026-05-29T13-26-02Z
 author: phase-3 pinn-poisson stage-1b-fd (Claude Code)
 subject: Phase 3 task-7 pinn-poisson — STAGE 1b-FD classical FD reference + analytic golden table + derivation + convergence-order rigor
 verdict: CONFIRMED
-head_sha: 7480ba134c3bfd4ab6eb35d711a0d8662cfc7032
+head_sha: b37b7db
+anchor_sha: 7480ba134c3bfd4ab6eb35d711a0d8662cfc7032
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1
