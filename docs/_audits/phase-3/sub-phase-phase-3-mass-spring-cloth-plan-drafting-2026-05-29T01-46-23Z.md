@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 mass-spring-cloth plan-drafting (Claude Code)
 subject: plan-drafting landing audit — task-5 mass-spring-cloth (sub-phase 3.4); first Stack-C (Vulkan/C++) sim of Phase 3
 verdict: SHIFTED (charter ready for Stage 0 WITH operator routing of 5 D-classes)
-head_sha: be3e468
+head_sha: 047ca2d
 prior_sub_phase_landed_at: be3e468
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
