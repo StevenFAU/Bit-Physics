@@ -33,6 +33,7 @@ members = [
     "mpm-multimaterial-stack-e",
     "neural-ca",
     "physarum",
+    "pinn-poisson",
     "reaction-diffusion-2d",
     "reaction-diffusion-2d-stack-d",
     "reaction-diffusion-3d",
@@ -2099,6 +2100,50 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/ba/13/306d275efd3a3453f72114b7431c877d10b1154014c1ebbedd067770d629/pillow-12.2.0-cp314-cp314t-win_amd64.whl", hash = "sha256:6562ace0d3fb5f20ed7290f1f929cae41b25ae29528f2af1722966a0a02e2aa1", size = 7225152, upload-time = "2026-04-01T14:45:50.032Z" },
     { url = "https://files.pythonhosted.org/packages/ff/6e/cf826fae916b8658848d7b9f38d88da6396895c676e8086fc0988073aaf8/pillow-12.2.0-cp314-cp314t-win_arm64.whl", hash = "sha256:aa88ccfe4e32d362816319ed727a004423aab09c5cea43c01a4b435643fa34eb", size = 2556579, upload-time = "2026-04-01T14:45:52.529Z" },
 ]
+
+[[package]]
+name = "pinn-poisson"
+version = "0.0.0"
+source = { editable = "packages/pinn-poisson" }
+dependencies = [
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "safetensors" },
+    { name = "scipy" },
+    { name = "torch" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "safetensors", specifier = ">=0.4" },
+    { name = "scipy", specifier = ">=1.13" },
+    { name = "torch", specifier = ">=2.2" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "pluggy"

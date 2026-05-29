@@ -149,6 +149,18 @@ members = [
   # et al. 2020 (Distill); vendored oracle references/growing-neural-ca/.
   # Registered at Stage 1a.
   "packages/neural-ca/python",
+
+  # Phase-3 task-7 (sub-phase-phase-3-pinn-poisson). SEVENTH Phase-3 sub-phase +
+  # FIRST learned-dynamics-CATEGORY sim. Stack E (Warp substrate) + PyTorch,
+  # CPU-only. Soft-constraint Raissi-2019 PINN solving the 2D Poisson equation
+  # Du=f on the unit square; verified two-pronged vs analytic anchors (>=3
+  # independent references incl. one inhomogeneous f!=0 MMS case) AND a reusable
+  # classical FD reference (tools/testkit/code_verification/classical-references/
+  # poisson-2d-fd/), plus convergence-with-collocation. D-LAYOUT: flat
+  # `packages/pinn-poisson/` per §0.3 (lenia/articulated-pedagogical precedent).
+  # Reimplements the PINN from Raissi et al. 2019 (J. Comput. Phys. 378:686-707);
+  # read-only oracle references/PhysicsNeMo-PINN/. Registered at Stage 1a.
+  "packages/pinn-poisson",
 ]
 exclude = []
 
