@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      64,
+      64
+    ],
+    "dtype": "f64",
+    "params": {
+      "boundary": "zero-dirichlet",
+      "descriptor": "poisson-sine-source-64sq-seed42-step1",
+      "equation": "poisson-2d",
+      "grid": 64,
+      "problem": "anchor3-mms-sine-source",
+      "source": "-2*pi^2*sin(pi*x)*sin(pi*y)"
+    },
+    "seed": 42,
+    "tier": "single-bvp"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:c935fb586df261b1d6b67f1ab1c04af9b5952a6ed55bae3f4e1d4e9baa7e661d",
+    "format": "hdf5",
+    "path": "phase-3-pinn-poisson.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-29T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0022399960143957287
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "learned-dynamics",
+    "name": "pinn-poisson",
+    "variant": "raissi-2019-soft-constraint-mms-sine-source"
+  },
+  "stack": {
+    "build_id": "sub-phase-phase-3-pinn-poisson",
+    "name": "warp-stack-e",
+    "version": "0.1.0"
+  }
+}
