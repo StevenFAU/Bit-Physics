@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca plan-drafting (Claude Code)
 sub_phase: sub-phase-phase-3-neural-ca
 phase: phase-3
-head_sha_at_draft: PENDING-BACKFILL
+head_sha_at_draft: 36c4eeb
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 version: charter-v1 (2026-05-29T03-43-39Z)

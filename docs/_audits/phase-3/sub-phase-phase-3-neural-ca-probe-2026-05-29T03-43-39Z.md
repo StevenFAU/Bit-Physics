@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca plan-drafting (Claude Code)
 subject: probe report — task-6 neural-ca (sub-phase 3.2); FIRST DUAL-STACK sim of Phase 3 (Stack D PyTorch + Stack B WGSL, tied by a checkpoint)
 verdict: PROBE COMPLETE (charter ready; Stack-B-test-infra BLOCK does NOT fire; 5 D-classes open for operator + 8 resolved-in-charter)
-head_sha: PENDING-BACKFILL
+head_sha: ab5ab58
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN

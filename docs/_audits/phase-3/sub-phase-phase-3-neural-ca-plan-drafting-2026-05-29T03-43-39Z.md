@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca plan-drafting (Claude Code)
 subject: plan-drafting landing audit — task-6 neural-ca (sub-phase 3.2); FIRST DUAL-STACK sim of Phase 3 (D PyTorch + B WGSL)
 verdict: SHIFTED (charter ready for Stage 0 WITH operator routing of 5 D-classes; Stack-B-test-infra BLOCK does NOT fire)
-head_sha: PENDING-BACKFILL
+head_sha: 3b131e6
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
