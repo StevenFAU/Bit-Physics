@@ -640,3 +640,15 @@
 - **integrity** 0 HF / 14 SW (digest `b7460150…` UNCHANGED — new files add no warning).
 - **Commits:** `1880832` (python scaffold) → `a773193` (TS+spec-ref) → `a0ff387` (det+tol rows) → `<tests>` (RED+evidence) → Stage-1a audit+progress → Convention#12 back-fill.
 - **Next:** Stage 1b-D — implement model+train+infer; train to L2 bound → `.safetensors`; MEASURE training-loss distribution → derive EFECT (STOP-EFECT if underivable); D-inference capture; PBT.
+
+## sub-phase-phase-3-neural-ca — Stage 1b-D — 2026-05-29 — CONFIRMED
+
+- **Stage:** execution Stage 1b-D (Stack-D PyTorch training). NCA update rule reimplemented from Distill (perception conv + update MLP + stochastic fire + alive mask); train_to_target (Growing + sample-pool Persistent); run_inference (bit-exact). mypy-strict + ruff clean.
+- **Canonical checkpoint** `neural-ca-emoji-disk.safetensors` (LFS; 64²/1000-step/seed42 **Persistent**). The Growing variant overgrows to cov→1.0 by step 200; the pool variant holds (cov 0.40–0.55 vs target 0.50 through step 1000). Recon L2 0.022@step200 / 0.095@step1000.
+- **§0.3 SHIFT:** target is a procedural two-tone-disk glyph (`target.py`), NOT vendored emoji (noto-emoji = OFL-1.1, MIT-incompatible without operator routing); gate-14 validity unaffected.
+- **EFECT DERIVED — NO STOP-EFECT:** 5 pinned seeds (disk-pool 32²/300step): final-loss CV 0.21, tail-smoothed CV 0.085, 3σ upper 0.0653 → `training_loss_3sigma_upper = 0.07` locked. Distribution bounded (no divergence). Same-seed training reproducible on CPU; EFECT = cross-seed ensemble. **NOT the cross-stack gate.**
+- **D-inference capture** `growing-emoji-64sq-seed42-step1000.{h5,json}` (LFS; 21 frames; common_py.capture; f32; bit-exact-same-hw).
+- **PBT (gate-11):** `field_values_bounded` RE-DECLARED on evidence (full-state finiteness + clamped RGBA∈[0,1]; NOT all-16-ch — hidden drift to ~2.5e7 measured) + `inference_determinism` (bit-exact, 20 seeds). **Golden (gate-4):** `golden_checkpoint_match` recon L2 0.0219@step200 ≤ 0.03 + persistence. All GREEN.
+- **Locked:** `golden_checkpoint_l2_max=0.03`; `training_loss_3sigma_upper=0.07`; spec-ref §8 + registry both determinism rows.
+- **Commits:** `4c86805` (Stack-D impl) → `557d2bb` (PBT+golden tests) → `0fa7511` (checkpoint+D-capture+locked values) → Stage-1b-D audit+progress → back-fill. integrity 0 HF / 14 SW.
+- **Next:** Stage 1b-B — convert_checkpoint (.safetensors→WGSL, round-trip bit-identical) + WGSL inference via wgpu-py on the AMD RX 6800 XT → committed B-inference capture; GREEN the WGSL-reproduction test.
