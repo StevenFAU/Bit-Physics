@@ -3,7 +3,8 @@ date: 2026-05-29T20-47-44Z
 author: phase-3 ci-hardening (Claude Code)
 subject: CI-HARDENING (Convention I infra, OUTSIDE any sub-phase) — two-tier pinn-poisson CI; remove the ~70-min per-push re-train tax (L-PINN-2). NO tag.
 verdict: CONFIRMED
-head_sha: 1aa012bdf9439e6118795d198fccf5b6aac701af
+head_sha: 296dbed
+anchor_sha: 1aa012bdf9439e6118795d198fccf5b6aac701af
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1
