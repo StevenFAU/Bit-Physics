@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import numpy as np
 
-from pinn_poisson import CANONICAL_PROBLEM, PINNConfig, evaluate_on_grid, fd_solve, train_pinn
+from pinn_poisson import CANONICAL_PROBLEM, PINNConfig, evaluate_on_grid, fd_solve
 
 
 def test_pinn_matches_fd_reference_within_tolerance(
-    golden_tolerance: dict[str, float],
+    golden_tolerance: dict[str, float], train_cached
 ) -> None:
     n = 64
-    result = train_pinn(CANONICAL_PROBLEM, PINNConfig(seed=42))
+    result = train_cached(CANONICAL_PROBLEM, PINNConfig())
     pinn_field = evaluate_on_grid(result.model, n)
     fd_field = fd_solve(CANONICAL_PROBLEM, n)
 

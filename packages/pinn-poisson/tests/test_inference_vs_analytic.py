@@ -15,7 +15,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from pinn_poisson import ANCHORS, PINNConfig, evaluate_on_grid, train_pinn
+from pinn_poisson import ANCHORS, PINNConfig, evaluate_on_grid
 
 
 def _relative_l2(approx: np.ndarray, exact: np.ndarray) -> float:
@@ -24,11 +24,10 @@ def _relative_l2(approx: np.ndarray, exact: np.ndarray) -> float:
 
 @pytest.mark.parametrize("problem", ANCHORS, ids=[p.name for p in ANCHORS])
 def test_pinn_matches_analytic_within_tolerance(
-    problem: object, golden_tolerance: dict[str, float]
+    problem: object, golden_tolerance: dict[str, float], train_cached
 ) -> None:
     n = 64
-    config = PINNConfig(seed=42)
-    result = train_pinn(problem, config)  # type: ignore[arg-type]
+    result = train_cached(problem, PINNConfig())  # type: ignore[arg-type]
     field = evaluate_on_grid(result.model, n)
 
     grid = np.linspace(0.0, 1.0, n)
