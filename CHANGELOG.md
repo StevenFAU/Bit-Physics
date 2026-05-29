@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### sub-phase-phase-3-rigid-body (Phase 3, task-4 — FIRST Stack-E SIM in Phase 3)
+
+Reference articulated rigid-body pendulum on Stack E (Python / NVIDIA Warp).
+Featherstone Articulated-Body Algorithm (ABA, reduced/generalized-coordinate
+forward dynamics; Ch. 7 §7.2–§7.3) for a planar revolute serial chain, in a
+single-thread f64 `@wp.kernel`; semi-implicit (symplectic) Euler default + RK4
+option; CLI tiers `single-joint` / `double-pendulum` / `6-dof` / `N-link`.
+
+- `packages/articulated-pedagogical/` — 26th workspace member. `articulated_pedagogical/`
+  (`model`, `aba` Warp kernel, `integrators`, `analytic` scipy elliptic anchors,
+  `dynamics`, `sim`, CLI). 18-test acceptance suite (single-pendulum A1/A2/A3
+  anchors + ABA EOM; double-pendulum vs closed-form RK4 reference; 6-DOF energy
+  conservation; D-DET bit-exact; energy_drift_bounded + angular_momentum-about-
+  pivot PBT; capture round-trip; golden-table + Tier-1 health).
+- `docs/sim-specs/rigid-body/articulated-pedagogical/{spec-ref,algebraic}.md`.
+- `tools/testkit/golden/tables/rigid-body-{pendulum,double-pendulum,6dof}-trajectory.json`
+  + `tools/testkit/golden/derivations/rigid-body-{pendulum,rk4-reference}.md`.
+- `tools/diagnostics/tier3/rigid_body_pedagogical/` (energy-conservation + period-recovery);
+  `tools/testkit/property/sims/rigid_body_pedagogical/` (PBT invariant module).
+- `tools/testkit/determinism/registry.toml` — `[rigid-body.articulated-pedagogical]`
+  (Stack E, bit-exact, same-stack-same-hw; MEASURED).
+- `tools/testkit/equivalence/tolerance.toml` — `[golden_tolerance.rigid-body.articulated-pedagogical]`
+  (`pendulum_period_rel`, `trajectory_abs`, `energy_drift_rel_per_second`); no cross-stack cap.
+- `.github/workflows/python-strict.yml` — `test-rigid-body-pedagogical` job.
+- `.pre-commit-config.yaml` — failing-tests-evidence excluded from trailing-whitespace.
+- `docs/spec-amendments-proposed.md` — A-1: §5.8 maximal→ABA corrigendum (operator-applied).
+
 ### sub-phase-phase-3-ising-classical (Phase 3, task-3a — FIRST Stack-B SIM in Phase 3)
 
 Phase-3 task-3a (2D Ising-classical) reference implementation. Fourth

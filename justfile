@@ -98,3 +98,14 @@ run-ising-classical:
 # Run the Ising-classical test suite (code-verification + determinism + golden + PBT + diagnostics).
 test-ising-classical:
 	uv run --no-sync python -m pytest packages/ising-classical/tests/ -v
+
+# ---- Phase 3 rigid-body-pedagogical ----
+
+# Run the articulated-pedagogical CLI (Featherstone ABA; default single-joint tier).
+run-rigid-body-pedagogical:
+	uv run --no-sync python -m articulated_pedagogical --tier single-joint \
+		--seed 42 --steps 1000 --dt 0.001
+
+# Run the articulated-pedagogical test suite (golden + determinism + PBT + capture + diagnostics).
+test-rigid-body-pedagogical:
+	uv run --no-sync python -m pytest packages/articulated-pedagogical/tests/ -v

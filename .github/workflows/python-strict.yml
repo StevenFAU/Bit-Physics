@@ -275,3 +275,55 @@ jobs:
       - name: pytest (ising-classical suite)
         working-directory: packages/ising-classical
         run: uv run pytest tests/
+
+  test-rigid-body-pedagogical:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync articulated-pedagogical workspace deps (with dev extras for pytest + ruff)
+        working-directory: packages/articulated-pedagogical
+        run: uv sync --extra dev
+
+      - name: ruff (articulated-pedagogical src + tests)
+        working-directory: packages/articulated-pedagogical
+        run: |
+          uv run ruff check articulated_pedagogical/ tests/
+          uv run ruff format --check articulated_pedagogical/ tests/
+
+      - name: mypy --strict (articulated-pedagogical)
+        working-directory: packages/articulated-pedagogical
+        run: uv run mypy --strict articulated_pedagogical/
+
+      - name: Selective LFS fetch — articulated-pedagogical canonical capture only (via R2 when wired)
+        # The acceptance tests generate captures in tmp; the committed canonical
+        # capture at captures/rigid-body-pedagogical-ref/** is pulled targeted for
+        # replay/fixture parity. R2 routing mirrors test-ising-classical
+        # (lfs-architecture M5 opt-in); GitHub-LFS fallback when R2 secrets are
+        # absent (fork PRs).
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="captures/rigid-body-pedagogical-ref/**"
+
+      - name: pytest (articulated-pedagogical suite)
+        working-directory: packages/articulated-pedagogical
+        run: uv run pytest tests/

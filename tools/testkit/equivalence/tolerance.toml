@@ -156,3 +156,23 @@ golden_trajectory_abs = 1e-4
 [golden_tolerance.lattice-spin.ising-classical]
 critical_temp_rel = 1e-3
 magnetization_rel = 5e-2
+
+# Phase-3 articulated-pedagogical (task-4, sub-phase-phase-3-rigid-body) —
+# golden-table tolerances. Single-stack sim (Stack E; first rigid-body sim).
+# D-TOL (charter §6, operator-ratified): land under the existing
+# `[golden_tolerance.<category>.<sim>]` branch per §S.3 — NO new schema branch
+# (the lenia-tolerance-schema-fix branch's description ENUMERATES these exact
+# keys for articulated-pedagogical), NO `[budgets.rigid-body.cross_stack]` cap
+# (single-stack terminal sim, no cross-stack pair — like common-3dgs / lenia /
+# ising), NO §2.6 amendment. §S.2 discharged: read tolerance-schema.json
+# golden_tolerance branch + the lenia/ising entries before writing this row.
+#
+#   pendulum_period_rel        = 1e-3  (large-angle exact period vs analytic
+#                                       elliptic K — A1/A2 anchors)
+#   trajectory_abs             = 1e-2  (theta(t) Jacobi-cn + double-pendulum
+#                                       Cartesian + 6-DOF energy)
+#   energy_drift_rel_per_second = 1e-3 (symplectic-Euler secular drift bound)
+[golden_tolerance.rigid-body.articulated-pedagogical]
+pendulum_period_rel = 1e-3
+trajectory_abs = 1e-2
+energy_drift_rel_per_second = 1e-3
