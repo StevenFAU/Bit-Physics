@@ -138,7 +138,8 @@ evidence_hashes:
 `869bf68` Stage-1a audit · `fdc2543` serial-GS impl (RED→GREEN) · `378e7bc` goldens+gate-4 ·
 `4655621` capture binary+PBT · `8fef4f4` Tier-3 · `8e37521` shared files ·
 `f9d4303` stretched 3-anchor fix · `faf3d88` Stage-1b audit ·
-`c4ba2a1` capture+fixture+perf · `1d52bbd` Stage-1c audit. (+ this landing audit)
+`c4ba2a1` capture+fixture+perf · `1d52bbd` Stage-1c audit · `0d0452e` LANDING audit
++ progress (this audit). (Convention #12: landing SHA back-filled.)
 
 ## Verdict
 
