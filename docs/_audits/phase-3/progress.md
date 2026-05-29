@@ -627,3 +627,16 @@
 - **D-class flip (charter v2):** all five formerly operator-pending D-classes RATIFIED OPEN→RESOLVED in §6/§11: D-STACK-B-TEST-INFRA (not-a-BLOCK / committed-offline-capture); D-XSTACK-METHOD (render-similarity direct-import); D-ANCHOR (re-shaped 3-anchor, L2-only confirmed); D-DET (two rows measure-then-declare EFECT + STOP-EFECT); D-CHECKPOINT-CONVERSION (exact round-trip; lossy → HARD RULE 2). PBT regime-scoping carried (field_values_bounded → visible/clamped RGBA∈[0,1] or finiteness).
 - **Artifacts:** Stage-0 audit `docs/_audits/phase-3/sub-phase-phase-3-neural-ca-stage-0-2026-05-29T04-30-00Z.md`; charter v2 `docs/phases/sub-phase-phase-3-neural-ca.md`; A-4/A-5 `docs/spec-amendments-proposed.md`; vendored `references/growing-neural-ca/`.
 - **Next:** Stage 1a — `packages/neural-ca/{python,typescript}/` scaffold + spec-ref §1-13 + RED TDD (train-converge, ckpt-serialize, WGSL-infer-reproduce) + 2 determinism rows + 2 tolerance rows.
+
+## sub-phase-phase-3-neural-ca — Stage 1a — 2026-05-29 — CONFIRMED
+
+- **Stage:** execution Stage 1a (scaffold + RED, both stacks). FIRST dual-stack SIM of Phase 3.
+- **Scaffold:** `packages/neural-ca/python/` (27th workspace member; Stack-D PyTorch; model/train/infer/convert/cli/reference shells raise NotImplementedError; torch+safetensors; optional local-gpu wgpu extra; mypy strict + ruff clean) + `packages/neural-ca/typescript/` (Stack-B WGSL `nca_inference.wgsl` + common-ts `index.ts` skeleton; local-only §7.8; no package.json, mirrors ising).
+- **D-LAYOUT:** `packages/neural-ca/{python,typescript}/` per charter+dispatch (ising's actual shape is `{src/, flat-pkg}` but the dual co-equal training/inference halves justify the explicit python/+typescript/ split — followed as ratified, recorded as deliberate not drift).
+- **spec-ref §1-13** `docs/sim-specs/continuous-ca/neural-ca/spec-ref.md` — gate declared **STATISTICAL** (§6/§9); two-row mixed determinism (§8); regime-scoped `field_values_bounded` PBT (§6, RGBA∈[0,1] or finiteness, NOT all-16-ch).
+- **Rows:** 2 determinism (`training` non-det+EFECT / `inference` bit-exact) + 2 tolerance (`[render_similarity.continuous-ca.neural-ca]` DEFAULT=§2.12 floors — task-6 = FIRST render_similarity per-sim consumer; `[golden_tolerance.continuous-ca.neural-ca-python]` checkpoint-match+L2+EFECT). tolerance.toml VALIDATES vs schema. §S.2 schema-first discharged.
+- **RED:** 3 pytest modules (train-convergence, checkpoint-serialization, WGSL-inference-reproduction) → 3 failed / 0 passed, all NotImplementedError. Evidence `neural-ca-2026-05-29T05-00-00Z.txt` footer `sha256:9a29410a…2acc4`.
+- **Capability de-risk:** torch CPU-only (CUDA absent — fine for 64² NCA); **wgpu-py runs real WGSL on the AMD RX 6800 XT (RADV/Vulkan)** — the genuine WGSL-on-GPU path for the B-inference capture (no Node WebGPU runtime here; §0.3 SHIFT documented in spec-ref §5).
+- **integrity** 0 HF / 14 SW (digest `b7460150…` UNCHANGED — new files add no warning).
+- **Commits:** `1880832` (python scaffold) → `a773193` (TS+spec-ref) → `a0ff387` (det+tol rows) → `<tests>` (RED+evidence) → Stage-1a audit+progress → Convention#12 back-fill.
+- **Next:** Stage 1b-D — implement model+train+infer; train to L2 bound → `.safetensors`; MEASURE training-loss distribution → derive EFECT (STOP-EFECT if underivable); D-inference capture; PBT.
