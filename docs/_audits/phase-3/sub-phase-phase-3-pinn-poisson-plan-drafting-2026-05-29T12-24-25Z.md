@@ -5,7 +5,8 @@ task: task-7
 stage: plan-drafting
 date: 2026-05-29
 verdict: CONFIRMED-SHIFTED
-head_sha: 5cddb6c8ca88646068af9add2afce3335f63d436
+head_sha: 1c8be4a360dd2cb94d6be138e365e7fbd58e17f2
+anchor_sha: 5cddb6c8ca88646068af9add2afce3335f63d436
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
 integrity_digest_at_head: b7460150b61213bb8909659ffc7b103d846ad782f5062d272f2ce572e6abb15e
