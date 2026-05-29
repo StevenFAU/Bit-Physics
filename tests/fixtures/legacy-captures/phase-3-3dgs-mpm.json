@@ -1,0 +1,47 @@
+{
+  "config": {
+    "dims": [
+      32,
+      32,
+      32
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.001,
+      "floor_z_index": 4,
+      "gravity_z": -9.81,
+      "grid_n": 32,
+      "n_gaussians": 256,
+      "n_particles": 256
+    },
+    "seed": 0,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:44d9b589d08af2276f2c1d966b2be4bf0d3487a9f6fdfa8722d64476deb07986",
+    "format": "hdf5",
+    "path": "phase-3-3dgs-mpm.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-29T00:00:00Z",
+    "step_count": 300,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "neural-rendered",
+    "name": "3dgs-mpm",
+    "variant": "physgaussian-coupling"
+  },
+  "stack": {
+    "build_id": "phase-3",
+    "name": "warp-cpu",
+    "version": "0.0.0"
+  }
+}
