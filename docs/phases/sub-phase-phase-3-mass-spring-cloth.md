@@ -5,8 +5,8 @@ sim_identity: mass-spring-cloth                 # task/sim id — CI job, probe,
 package_leaf: mass-spring-cloth                  # NO separate package-leaf (unlike rigid-body's articulated-pedagogical); flat packages/ per §0.3
 stack: C (Vulkan / C++20)
 category: soft-body                              # NEW category (first soft-body sim); flat packages/ per §0.3
-stage: plan-drafting
-verdict: SHIFTED (charter ready for Stage 0 WITH operator routing of D-VENDOR-ROLE / D-VENDOR-SHA / D-DET / D-ANCHOR / D-PBT)
+stage: execution (Stage 0 → 2 combined)
+verdict: RESOLVED (all five operator-pending D-classes ratified; execution underway)
 author: phase-3 mass-spring-cloth plan-drafting (Claude Code)
 date: 2026-05-29
 prior_sub_phase: sub-phase-phase-3-rigid-body-pedagogical (task-4)
@@ -16,6 +16,16 @@ d_tag: NO (per-sub-phase tagging discontinued mid-Phase-3; one operator-pushed a
 revisions:
   - v1 2026-05-29 — initial charter; FIRST Stack-C (Vulkan/C++) sim of Phase 3; five substantive D-classes surfaced
     (D-VENDOR-ROLE, D-VENDOR-SHA, D-DET, D-ANCHOR, D-PBT). Anchor probe 0 HF / 14 SW, digest f5b7eea1…070bb3 at be3e468.
+  - v2 2026-05-29 — execution Stage 0. Operator RATIFIED all five D-classes (dispatch-locked): D-VENDOR-ROLE =
+    vendored READ-ONLY reference-oracle + reimplement XPBD from Macklin 2016 (no FetchContent/runtime-link);
+    D-VENDOR-SHA = latest STABLE release `2.2.0` (`aa62c44f…`) per spec D.3 (re-verified `gh release view`; MIT),
+    §2.18 master-HEAD discrepancy → spec-amendments A-3 (operator reconciles, NO plan edit); D-DET = MEASURE,
+    default bit-exact / same-stack-same-hw row at 1a, lavapipe serial Gauss-Seidel, re-characterize honestly if
+    intractable; D-ANCHOR = corrected catenary cites grep-verified at 1b + catenary-LIMIT regime note (no widening);
+    D-PBT = `length_bounded_above` + `momentum_conservation_free_no_gravity` (FREE cloth), wiring =
+    Hypothesis→subprocess-capture-binary→.h5→assert. Corrigenda routed: A-2 (cloth-xpbd→mass-spring-cloth),
+    A-3 (§2.18 Bender SHA) appended to `docs/spec-amendments-proposed.md`. Anchor probe re-measured 0 HF / 14 SW,
+    digest f5b7eea1…070bb3 at e9e83a0. Bender 2.2.0 vendored read-only; MANIFEST schema-precedent (Lenia) + license MIT.
 ---
 
 # Sub-phase: Phase-3 mass-spring-cloth (task-5, sub-phase 3.4) — CHARTER
@@ -245,11 +255,13 @@ shared cloth/constraint surface happens only on the rule-of-three).
 
 ## § 6 — D-class decision routing
 
-> **Operator action required on D-VENDOR-ROLE, D-VENDOR-SHA, D-DET, D-ANCHOR,
-> D-PBT before Stage 0.** The rest are RESOLVED-IN-CHARTER (lean stated) per §0.3
-> + precedent. The two load-bearing decisions are **D-VENDOR-ROLE** and **D-DET**.
+> **RESOLVED (v2, operator-ratified Stage 0 2026-05-29).** All five formerly-open
+> D-classes are now operator-locked (dispatch outcomes below). The rest were
+> RESOLVED-IN-CHARTER (lean stated) per §0.3 + precedent. The two load-bearing
+> decisions were **D-VENDOR-ROLE** and **D-DET**. Each lean below was ratified
+> as-stated (with the SHA re-verified live at Stage 0).
 
-### D-VENDOR-ROLE ⚠ — Bender as runtime dependency vs vendored reference-oracle
+### D-VENDOR-ROLE ✅ RESOLVED — vendored READ-ONLY reference-oracle + reimplement XPBD (Macklin 2016)
 **LEAN: vendored READ-ONLY reference-oracle + reimplement XPBD from Macklin 2016.**
 - **Evidence (probe FACT):** all three currently-vendored upstreams
   (`references/SPlisHSPlasH`, `references/3DGS-reference`, `references/Chakazul-Lenia`)
@@ -273,7 +285,7 @@ shared cloth/constraint surface happens only on the rule-of-three).
   (which would re-shape the entire build + introduce an MIT redistribution
   posture — a much larger change; not recommended).
 
-### D-VENDOR-SHA ⚠ — which Bender SHA (spec "Latest stable" vs §2.18 master-HEAD)
+### D-VENDOR-SHA ✅ RESOLVED — Bender `2.2.0` (`aa62c44f…`) latest stable (re-verified Stage 0); §2.18 → A-3
 **LEAN: vendor at the latest STABLE RELEASE `2.2.0` = `aa62c44f0d43956452e1f960a40333ec2d6d3ea5` per spec Appendix D.3.**
 - **Spec Appendix D.3** (`docs/architecture.md:2552`): pin = **"Latest stable"**,
   verification `gh release view -R InteractiveComputerGraphics/PositionBasedDynamics`.
@@ -295,7 +307,7 @@ shared cloth/constraint surface happens only on the rule-of-three).
   intentional deviation from "Latest stable". D.3's reverify rule
   (`docs/architecture.md:2543`) governs at the consuming-stage probe regardless.
 
-### D-DET ⚠ — Vulkan iterative Gauss-Seidel determinism (do NOT pre-declare bit-exact)
+### D-DET ✅ RESOLVED — MEASURE; default bit-exact row at 1a, lavapipe serial GS, re-characterize honestly
 **LEAN: DEFAULT a bit-exact / same-stack-same-hw row at 1a; MEASURE at 1b; characterize honestly.**
 - **Spec §2.5** flags atomics / subgroups / reductions as determinism risks —
   directly relevant to Vulkan compute. Plan §6.5 VERIFICATION POSTURE
@@ -324,7 +336,7 @@ shared cloth/constraint surface happens only on the rule-of-three).
   value; cloth uses `same-stack-same-hw` (the closest enum) with the lavapipe-ICD
   pin documented as the realization mechanism in spec-ref §6 + the capture sidecar.
 
-### D-ANCHOR ⚠ — catenary golden anchors: section-cites SUSPECT (verify, like task-4 Goldstein)
+### D-ANCHOR ✅ RESOLVED — corrected catenary anchors; grep-cite-verify at 1b; catenary-LIMIT regime note; NO plan edit
 **LEAN: catenary equation is correct; CORRECT the section cites; re-verify at Stage 1b (grep-cite); corrected anchors in spec-ref §6 + derivation F; NO plan edit (§0.3).**
 - **Plan §6.5** (`docs/phases/phase-3-plan.md:1715`) proposes: Anchor 1 catenary
   `y(x)=a·cosh(x/a)`, `a=T₀/(ρg)`, cite *Marion & Thornton §6.4* or *Symon
@@ -377,7 +389,7 @@ shared cloth/constraint surface happens only on the rule-of-three).
 - **Operator confirms the corrected anchor set** (and whether to file a plan
   corrigendum at `docs/phases/phase-3-plan.md:1715`).
 
-### D-PBT ⚠ — invariant regime + cross-language wiring
+### D-PBT ✅ RESOLVED — `length_bounded_above` + `momentum_conservation_free_no_gravity`; subprocess-capture-binary wiring
 **LEAN: `length_bounded_above` (any IC) + re-declared `momentum_conservation_free_no_gravity` (FREE cloth only); wiring = Hypothesis→subprocess-capture-binary→read-.h5→assert.**
 - **Regime (resolve-on-evidence, rigid-body D-PBT precedent):** plan §6.5 suggests
   `length_bounded_above` + `momentum_conservation_no_gravity`. The first is valid
@@ -595,20 +607,24 @@ progress.md final entry. Convention-#12 SHA back-fill.
 
 ## § 11 — Closing criteria & operator-ratification items
 
-**Charter verdict (v1): SHIFTED** — ready for Stage 0 *with* five operator-pending
-D-classes:
-1. **D-VENDOR-ROLE** ⚠ — vendored READ-ONLY reference-oracle + reimplement XPBD
-   from Macklin 2016 (lean; drives the whole build).
-2. **D-VENDOR-SHA** ⚠ — Bender `2.2.0` (`aa62c44f`, spec D.3 "Latest stable", MIT)
-   vs §2.18 master-HEAD `d0894bdb`; lean `2.2.0`; operator reconciles §2.18.
-3. **D-DET** ⚠ — Vulkan iterative Gauss-Seidel; do NOT pre-declare bit-exact;
-   DEFAULT row 1a, MEASURE 1b, characterize honestly (first Stack-C registry row).
-4. **D-ANCHOR** ⚠ — catenary equation correct; **Symon §10.2 WRONG (tensors),
-   M&T §6.4 suspect (→ §6.6), Beer "Table 7.2" dubious (→ Ch 7)**; corrected
-   anchor set + catenary-LIMIT regime caveat; grep-cite-re-verify at 1b; NO plan edit.
-5. **D-PBT** ⚠ — `length_bounded_above` + re-declared
-   `momentum_conservation_free_no_gravity` (FREE cloth only); wiring =
-   Hypothesis→subprocess-capture-binary→.h5→assert (first C++-sim Python-PBT).
+**Charter verdict (v2): RESOLVED** — all five formerly-open D-classes operator-
+ratified at execution Stage 0 (2026-05-29); execution underway (Stage 0 → 2
+combined):
+1. **D-VENDOR-ROLE** ✅ — vendored READ-ONLY reference-oracle + reimplement XPBD
+   from Macklin 2016 (no FetchContent/runtime-link). Bender 2.2.0 vendored
+   read-only at Stage 0; cross-check oracle only.
+2. **D-VENDOR-SHA** ✅ — Bender `2.2.0` (`aa62c44f…`, spec D.3 "Latest stable",
+   re-verified live `gh release view`, MIT); §2.18 master-HEAD `d0894bdb`
+   discrepancy → spec-amendments **A-3** (operator reconciles; NO plan edit).
+3. **D-DET** ✅ — MEASURE; DEFAULT bit-exact / same-stack-same-hw row at 1a,
+   lavapipe serial Gauss-Seidel (`LP_NUM_THREADS=0`), MEASURE at 1b, characterize
+   honestly (re-characterization is a legitimate closed-with-shifted outcome).
+4. **D-ANCHOR** ✅ — catenary equation correct; corrected cites grep-verified at
+   1b (Symon §10.2 WRONG, M&T §6.4→§6.6, Beer Ch7 not "Table 7.2"); catenary-LIMIT
+   regime caveat (converge stiffness, NO widening); NO plan edit.
+5. **D-PBT** ✅ — `length_bounded_above` + `momentum_conservation_free_no_gravity`
+   (FREE cloth only); wiring = Hypothesis→subprocess-capture-binary→.h5→assert
+   (first C++-sim Python-PBT). D-NAMING corrigendum → **A-2**.
 
 RESOLVED-IN-CHARTER (no operator action): D-LAYOUT (`packages/mass-spring-cloth/`),
 D-CI (`cpp-strict.yml`), D-MANIFEST-FMT (`MANIFEST.toml`), D-TOL
