@@ -1,0 +1,141 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/3dgs-mpm
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 13 items
+
+tests/test_coupling_correctness.py::test_three_independent_anchors_present PASSED [  7%]
+tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor1-covariance-transform] FAILED [ 15%]
+tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor2-polar-decomposition] FAILED [ 23%]
+tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor3-identity-F] FAILED [ 30%]
+tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor1-covariance-transform] FAILED [ 38%]
+tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor2-polar-decomposition] FAILED [ 46%]
+tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor3-identity-F] FAILED [ 53%]
+tests/test_coupling_correctness.py::test_couple_gaussians_batched_matches_per_gaussian FAILED [ 61%]
+tests/test_coupling_correctness.py::test_identity_F_is_exact_invariance FAILED [ 69%]
+tests/test_pbt_invariants.py::test_gaussian_count_invariant FAILED       [ 76%]
+tests/test_pbt_invariants.py::test_def_grad_determinant_positive_keeps_spd FAILED [ 84%]
+tests/test_render_similarity_golden.py::test_golden_renders_exist FAILED [ 92%]
+tests/test_render_similarity_golden.py::test_render_similarity_clears_floors FAILED [100%]
+
+=================================== FAILURES ===================================
+________ test_anchor_covariance_transform[anchor1-covariance-transform] ________
+tests/test_coupling_correctness.py:61: in test_anchor_covariance_transform
+    cov = reconstruct_covariance(scale, quat)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+________ test_anchor_covariance_transform[anchor2-polar-decomposition] _________
+tests/test_coupling_correctness.py:61: in test_anchor_covariance_transform
+    cov = reconstruct_covariance(scale, quat)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+_____________ test_anchor_covariance_transform[anchor3-identity-F] _____________
+tests/test_coupling_correctness.py:61: in test_anchor_covariance_transform
+    cov = reconstruct_covariance(scale, quat)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+__________ test_anchor_scale_roundtrip[anchor1-covariance-transform] ___________
+tests/test_coupling_correctness.py:83: in test_anchor_scale_roundtrip
+    deformed = apply_deformation(reconstruct_covariance(scale, quat), fgrad)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+___________ test_anchor_scale_roundtrip[anchor2-polar-decomposition] ___________
+tests/test_coupling_correctness.py:83: in test_anchor_scale_roundtrip
+    deformed = apply_deformation(reconstruct_covariance(scale, quat), fgrad)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+_______________ test_anchor_scale_roundtrip[anchor3-identity-F] ________________
+tests/test_coupling_correctness.py:83: in test_anchor_scale_roundtrip
+    deformed = apply_deformation(reconstruct_covariance(scale, quat), fgrad)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+______________ test_couple_gaussians_batched_matches_per_gaussian ______________
+tests/test_coupling_correctness.py:100: in test_couple_gaussians_batched_matches_per_gaussian
+    out_scales, out_quats = couple_gaussians(scales, quats, fgrads)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:67: in couple_gaussians
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+_____________________ test_identity_F_is_exact_invariance ______________________
+tests/test_coupling_correctness.py:115: in test_identity_F_is_exact_invariance
+    cov = reconstruct_covariance(scale, quat)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:34: in reconstruct_covariance
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+________________________ test_gaussian_count_invariant _________________________
+tests/test_pbt_invariants.py:34: in test_gaussian_count_invariant
+    @given(
+            
+tests/test_pbt_invariants.py:44: in test_gaussian_count_invariant
+    out_scales, out_quats = couple_gaussians(scales, quats, fgrads)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:67: in couple_gaussians
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+E   Falsifying example: test_gaussian_count_invariant(
+E       n=1,
+E       s=[1.0, 1.0, 1.0],
+E       q=[0.0, 0.0, 0.0, 0.0],
+E   )
+_________________ test_def_grad_determinant_positive_keeps_spd _________________
+tests/test_pbt_invariants.py:50: in test_def_grad_determinant_positive_keeps_spd
+    @given(
+            
+tests/test_pbt_invariants.py:64: in test_def_grad_determinant_positive_keeps_spd
+    out_scales, out_quats = couple_gaussians(scales, quats, fgrad)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/coupling.py:67: in couple_gaussians
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+E   Falsifying example: test_def_grad_determinant_positive_keeps_spd(
+E       s=[1.0, 1.0, 1.0],
+E       q=[0.0, 0.0, 0.0, 0.0],
+E       diag=[1.0, 1.0, 1.0],
+E   )
+__________________________ test_golden_renders_exist ___________________________
+tests/test_render_similarity_golden.py:52: in test_golden_renders_exist
+    assert len(frames) >= 2, f"expected >= 2 golden renders in {golden_renders_dir}"
+E   AssertionError: expected >= 2 golden renders in /home/otacon/Projects/Bit-Physics/tools/testkit/golden/renders
+E   assert 0 >= 2
+E    +  where 0 = len([])
+_____________________ test_render_similarity_clears_floors _____________________
+tests/test_render_similarity_golden.py:60: in test_render_similarity_clears_floors
+    frames = _render_canonical_frames()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_render_similarity_golden.py:38: in _render_canonical_frames
+    scene = build_canonical_scene(seed=0)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm/scene.py:35: in build_canonical_scene
+    raise NotImplementedError("Stage 1b")
+E   NotImplementedError: Stage 1b
+=========================== short test summary info ============================
+FAILED tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor1-covariance-transform]
+FAILED tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor2-polar-decomposition]
+FAILED tests/test_coupling_correctness.py::test_anchor_covariance_transform[anchor3-identity-F]
+FAILED tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor1-covariance-transform]
+FAILED tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor2-polar-decomposition]
+FAILED tests/test_coupling_correctness.py::test_anchor_scale_roundtrip[anchor3-identity-F]
+FAILED tests/test_coupling_correctness.py::test_couple_gaussians_batched_matches_per_gaussian
+FAILED tests/test_coupling_correctness.py::test_identity_F_is_exact_invariance
+FAILED tests/test_pbt_invariants.py::test_gaussian_count_invariant - NotImple...
+FAILED tests/test_pbt_invariants.py::test_def_grad_determinant_positive_keeps_spd
+FAILED tests/test_render_similarity_golden.py::test_golden_renders_exist - As...
+FAILED tests/test_render_similarity_golden.py::test_render_similarity_clears_floors
+========================= 12 failed, 1 passed in 0.25s =========================

@@ -187,3 +187,20 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# 3dgs-mpm (task-8, sub-phase-phase-3-3dgs-mpm). The Phase-3 FINALE + FIRST
+# `neural-rendered.*` row. D-DET / D-MPM-DET per charter §6: the end-to-end class
+# COMPOSES three bit-exact-same-hw stages — MPM (serial wp.launch f64;
+# mpm-multimaterial-stack-e) -> coupling (deterministic numpy; eigendecomposition
+# sign/handedness fixed in gs_mpm.coupling.extract_scale_rotation) -> render
+# (common-3dgs bit-exact/same-hw, atomic-free serial CPU wp.launch). No atomics, no
+# subgroup ops. Declared at Stage 1a; MEASURED at Stage 1b-2 (run-twice byte/sha
+# compare of the coupled capture + rendered frames). Re-declare on evidence (HARD
+# RULE 2); do NOT widen.
+[neural-rendered.3dgs-mpm]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

@@ -276,3 +276,33 @@ analytical_l2 = 1e-3
 fd_l2 = 1e-2
 training_loss_distributional_bound = "EFECT"
 training_loss_3sigma_upper = 5e-6
+
+# Phase-3 3dgs-mpm (task-8, sub-phase-phase-3-3dgs-mpm) — the Phase-3 FINALE +
+# FIRST `neural-rendered.*` rows. TWO prongs (charter §6 D-TOL), single-stack
+# (Stack E; no cross-stack pair -> NOT `overrides.<sim>`). The schema already names
+# `neural-rendered` for "Tasks 6 and 8" (tolerance-schema.json:38) -> no
+# STOP-SCHEMA-FIT. §S.2 discharged: read tolerance-schema.json golden_tolerance +
+# render_similarity branches + the rigid-body/neural-ca entries before writing.
+#
+# PRONG 1 — NUMERICAL coupling-correctness golden (bespoke per-anchor keys; matches
+# tools/testkit/golden/tables/3dgs-mpm-coupling.json tolerance 1e-9):
+#   covariance_transform_abs  Anchor 1: Sigma'=F A F^T vs hand-derived (Eq. (8))
+#   polar_decomp_scale_abs    Anchor 2: sorted principal scales vs singular(S) (Eq. (9))
+#   identity_invariance_abs   Anchor 3: F=I leaves the Gaussian unchanged (fully indep.)
+[golden_tolerance.neural-rendered.3dgs-mpm]
+covariance_transform_abs = 1e-9
+polar_decomp_scale_abs = 1e-9
+identity_invariance_abs = 1e-12
+
+# PRONG 2 — PERCEPTUAL render-similarity golden. The sim's render vs the project's
+# OWN committed golden renders = a DETERMINISTIC own-pipeline regression (common-3dgs
+# rasterizer is bit-exact/same-hw). Single-stack + NO stochastic mask -> CANNOT
+# invoke NCA's stochastic-RNG-divergence argument. Bounds LOCKED AT-OR-ABOVE the
+# §2.12 floors (PSNR≥28 / SSIM≥0.85 / LPIPS≤0.15); measured value should be far above
+# (byte-identical -> PSNR=inf). Below-floor at measurement = STOP-RENDER-FLOOR (do NOT
+# copy NCA's below-floor 23/0.80/0.05 statistical row). Measured value recorded in
+# spec-ref §9 at Stage 1b-3.
+[render_similarity.neural-rendered.3dgs-mpm]
+psnr_min = 28.0
+ssim_min = 0.85
+lpips_max = 0.15

@@ -161,6 +161,21 @@ members = [
   # Reimplements the PINN from Raissi et al. 2019 (J. Comput. Phys. 378:686-707);
   # read-only oracle references/PhysicsNeMo-PINN/. Registered at Stage 1a.
   "packages/pinn-poisson",
+
+  # Phase-3 task-8 (sub-phase-phase-3-3dgs-mpm). The Phase-3 FINALE + FIRST
+  # neural-rendered-CATEGORY sim. Single-stack Stack E (Warp + Python), CPU-only.
+  # PhysGaussian-style MPM->3DGS coupling: CONSUMES the Phase-2 MPM solver
+  # (packages/mpm-multimaterial-stack-e) + the common-3dgs renderer; the NOVEL work
+  # is the sim-local coupling (per-frame: MPM step -> per-particle deformation
+  # gradient F -> Gaussian covariance Sigma'=F A F^T (PhysGaussian Eq. (8)) ->
+  # scale/rotation; SH frozen for MVP). Verified two-pronged: numerical coupling
+  # golden (>=3 anchors) + perceptual render-similarity vs OWN committed renders
+  # (deterministic own-pipeline regression; MUST clear the §2.12 floors). D-LAYOUT:
+  # flat `packages/3dgs-mpm/` per §0.3; the import package is `gs_mpm` (the dir is
+  # digit-leading; PEP 8 forbids a leading-digit module). PhysGaussian is CITE-ONLY
+  # (no upstream LICENSE); coupling reimplemented from the paper equations.
+  # Registered at Stage 1a.
+  "packages/3dgs-mpm",
 ]
 exclude = []
 

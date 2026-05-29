@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "physgaussian-covariance-coupling",
+  "category": "neural-rendered",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/3dgs-mpm-coupling.md",
+    "upstream": "PhysGaussian Eq. (8) (Xie et al. 2024, arXiv:2311.12198) covariance transform Sigma'=F A F^T; Eq. (9) polar decomposition F=R S (Anchor 2, same-theory caveat); F=I identity (Anchor 3, fully independent)",
+    "upstream_sha": "8339ed6aa2cd5d50e1001a254a3d95aea678a956",
+    "upstream_path": "n/a-cite-only-no-source-vendored"
+  },
+  "tolerance": {
+    "absolute": 1e-09,
+    "relative": 1e-09
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "anchor1-covariance-transform",
+        "scale": [1.0, 2.0, 3.0],
+        "quat_wxyz": [0.7071067811865476, 0.0, 0.0, 0.7071067811865476],
+        "deformation_gradient": [[2.0, 0.0, 0.0], [0.0, 0.5, 0.0], [0.0, 0.0, 1.5]]
+      },
+      "expected": {
+        "cov_deformed": [[16.0, 0.0, 0.0], [0.0, 0.25, 0.0], [0.0, 0.0, 20.25]],
+        "scale_sorted": [0.5, 4.0, 4.5]
+      },
+      "independent_reference": {
+        "source": "PhysGaussian Eq. (8) Sigma'=F A F^T; A=R_z(90deg) diag(1,4,9) R_z(90deg)^T = diag(4,1,9); F=diag(2,0.5,1.5) -> Sigma'=diag(16,0.25,20.25). Closed-form diagonal algebra; see derivation doc Anchor 1.",
+        "derived_by": "hand-derivation (PhysGaussian Eq. (8) + diagonal algebra)",
+        "expected": {
+          "cov_deformed": [[16.0, 0.0, 0.0], [0.0, 0.25, 0.0], [0.0, 0.0, 20.25]],
+          "scale_sorted": [0.5, 4.0, 4.5]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor2-polar-decomposition",
+        "scale": [1.0, 1.0, 1.0],
+        "quat_wxyz": [1.0, 0.0, 0.0, 0.0],
+        "deformation_gradient": [[0.0, -3.0, 0.0], [2.0, 0.0, 0.0], [0.0, 0.0, 4.0]]
+      },
+      "expected": {
+        "cov_deformed": [[9.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 16.0]],
+        "scale_sorted": [2.0, 3.0, 4.0]
+      },
+      "independent_reference": {
+        "source": "PhysGaussian Eq. (9) polar decomp F=R S, R=R_z(90deg), S=diag(2,3,4). A=I -> Sigma'=F F^T = R S^2 R^T = diag(9,4,16); sort(sqrt(diag)) = (2,3,4) = singular values of S. CAVEAT (spec 2.4): same THEORY as PhysGaussian Eq. (9), not impl-independent. See derivation doc Anchor 2.",
+        "derived_by": "hand-derivation (polar decomposition theory)",
+        "expected": {
+          "cov_deformed": [[9.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 16.0]],
+          "scale_sorted": [2.0, 3.0, 4.0]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor3-identity-F",
+        "scale": [1.0, 2.0, 3.0],
+        "quat_wxyz": [1.0, 0.0, 0.0, 0.0],
+        "deformation_gradient": [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]]
+      },
+      "expected": {
+        "cov_deformed": [[1.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 9.0]],
+        "scale_sorted": [1.0, 2.0, 3.0]
+      },
+      "independent_reference": {
+        "source": "F=I leaves a Gaussian unchanged: Sigma'=I A I^T = A = diag(1,4,9). Fully independent of PhysGaussian. See derivation doc Anchor 3.",
+        "derived_by": "pure algebra (identity deformation)",
+        "expected": {
+          "cov_deformed": [[1.0, 0.0, 0.0], [0.0, 4.0, 0.0], [0.0, 0.0, 9.0]],
+          "scale_sorted": [1.0, 2.0, 3.0]
+        }
+      }
+    }
+  ]
+}
