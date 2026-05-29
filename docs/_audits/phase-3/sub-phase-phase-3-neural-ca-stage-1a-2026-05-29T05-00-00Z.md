@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 1a (Claude Code)
 subject: Phase 3 task-6 neural-ca — STAGE 1a scaffold + RED (both stacks) + spec-ref §1-13 + 2 determinism rows + 2 tolerance rows + failing-tests evidence
 verdict: CONFIRMED
-head_sha: PLACEHOLDER-STAGE-1A-AUDIT
+head_sha: 817ee32940f5ce33c059debc79bf3855feee0ee0
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
