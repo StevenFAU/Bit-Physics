@@ -20,7 +20,7 @@ def _relative_l2(approx: np.ndarray, exact: np.ndarray) -> float:
 def test_error_decreases_with_collocation_density() -> None:
     n = 64
     grid = np.linspace(0.0, 1.0, n)
-    gx, gy = np.meshgrid(grid, grid)
+    gx, gy = np.meshgrid(grid, grid, indexing="ij")
     exact = CANONICAL_PROBLEM.u_exact(gx, gy, np)
 
     errors = []

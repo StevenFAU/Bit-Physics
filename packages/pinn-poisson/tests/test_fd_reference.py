@@ -25,7 +25,7 @@ from pinn_poisson import ANCHOR3, ANCHORS, fd_convergence_orders, fd_solve
 def test_fd_matches_analytic_anchors() -> None:
     n = 128
     grid = np.linspace(0.0, 1.0, n)
-    gx, gy = np.meshgrid(grid, grid)
+    gx, gy = np.meshgrid(grid, grid, indexing="ij")
     for problem in ANCHORS:
         fd = fd_solve(problem, n)
         exact = problem.u_exact(gx, gy, np)

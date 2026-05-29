@@ -32,7 +32,7 @@ def test_pinn_matches_analytic_within_tolerance(
     field = evaluate_on_grid(result.model, n)
 
     grid = np.linspace(0.0, 1.0, n)
-    gx, gy = np.meshgrid(grid, grid)
+    gx, gy = np.meshgrid(grid, grid, indexing="ij")
     exact = problem.u_exact(gx, gy, np)  # type: ignore[attr-defined]
 
     rel_l2 = _relative_l2(field, exact)
