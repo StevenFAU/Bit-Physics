@@ -5,7 +5,7 @@ task: task-8
 stage: plan-drafting
 date: 2026-05-29
 verdict: CONFIRMED-SHIFTED
-head_sha: TO-BE-BACKFILLED
+head_sha: 3bc3fe3b667ba2931d81c5c632d7c722de56ac6b
 anchor_sha: 3a2a7aeda23b1952cb9232a95b28f1a78d35571f
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
