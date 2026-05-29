@@ -465,3 +465,41 @@ jobs:
       - name: pytest (neural-ca gate-14 D↔B render-similarity, statistical)
         working-directory: packages/neural-ca/python
         run: uv run pytest tests/test_cross_stack_equivalence.py
+
+  # Phase 3 task-7 (sub-phase-phase-3-pinn-poisson). FIRST learned-dynamics-CATEGORY
+  # sim — a soft-constraint Raissi-2019 PINN solving the 2D Poisson equation, Stack E
+  # (Warp substrate) + PyTorch, CPU-only. The suite trains the PINN from scratch
+  # (Adam -> L-BFGS) at several configs, so it is iteration-heavy by design (gate-12
+  # records training_wall_clock separately — a long run here is EXPECTED, not a
+  # regression). No committed-capture read (the gates train + verify vs the analytic
+  # anchors and the classical FD reference), so lfs:false.
+  test-pinn-poisson:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync pinn-poisson workspace deps (with dev extras for pytest + ruff)
+        working-directory: packages/pinn-poisson
+        run: uv sync --extra dev
+
+      - name: ruff (pinn-poisson src + tests)
+        working-directory: packages/pinn-poisson
+        run: |
+          uv run ruff check pinn_poisson/ tests/
+          uv run ruff format --check pinn_poisson/ tests/
+
+      - name: mypy --strict (pinn-poisson)
+        working-directory: packages/pinn-poisson
+        run: uv run mypy --strict pinn_poisson/
+
+      - name: pytest (pinn-poisson suite — analytic + FD + convergence + PBT)
+        working-directory: packages/pinn-poisson
+        run: uv run pytest tests/
