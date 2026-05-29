@@ -84,3 +84,25 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# mass-spring-cloth (task-5, sub-phase-phase-3-mass-spring-cloth). FIRST
+# `soft-body.*` row + FIRST Stack-C SIM row in Phase 3 (RD-2D-Stack-C is a
+# Phase-1 port, not a new Phase-3 sim). D-DET (charter §6, operator-ratified):
+# do NOT pre-declare bit-exact — MEASURE. The XPBD constraint projection runs as
+# a SERIAL Gauss-Seidel sweep in a SINGLE Vulkan invocation (local_size 1, one
+# workgroup) over a FIXED constraint order — no atomic scatter, no subgroup ops,
+# f64, `precise` (NoContraction). On the lavapipe CPU backend (VK_DRIVER_FILES=
+# lvp_icd.json, LP_NUM_THREADS=0) this is the bit-exact-same-hw realization (the
+# enum has no `same-driver` value; the lavapipe-ICD pin is the realization
+# mechanism, documented in spec-ref §6 + the capture sidecar). **DEFAULT
+# declaration drafted at Stage 1a; MEASURED at Stage 1b** via
+# `assert_deterministic_run(tolerance=0.0)` (two runs byte-equal). If a tractable
+# 128x128 capture forces parallel/atomic GS and bit-exactness breaks, this row is
+# re-characterized honestly (closed-with-shifted) — NOT silently kept.
+[soft-body.mass-spring-cloth]
+stack = "C"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
