@@ -1,0 +1,47 @@
+{
+  "config": {
+    "dims": [
+      1
+    ],
+    "dtype": "f64",
+    "params": {
+      "algorithm": "featherstone-aba-reduced-coordinate",
+      "descriptor": "pendulum-trajectory-seed42-step1000",
+      "dt": 0.001,
+      "gravity": 9.81,
+      "integrator": "semi-implicit-euler",
+      "length": 1.0,
+      "mass": 1.0,
+      "theta0": 2.0
+    },
+    "seed": 42,
+    "tier": "single-joint"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:ac346f22565afe92ac7fab9440352300e6041c24483f6401035d43395ed45fb1",
+    "format": "hdf5",
+    "path": "phase-3-rigid-body-pedagogical.h5"
+  },
+  "run": {
+    "capture_interval": 10,
+    "start_utc": "2026-05-29T00:00:00Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 0.15695043202140369
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "rigid-body",
+    "name": "rigid-body-pedagogical",
+    "variant": "articulated-pedagogical-aba-single-pendulum"
+  },
+  "stack": {
+    "build_id": "sub-phase-phase-3-rigid-body",
+    "name": "warp-stack-e",
+    "version": "0.1.0"
+  }
+}
