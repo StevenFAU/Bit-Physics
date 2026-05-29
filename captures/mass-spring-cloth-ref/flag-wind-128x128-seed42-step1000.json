@@ -1,0 +1,55 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "bend_compliance": 1e-05,
+      "dt": 0.016666666666666666,
+      "gravity": [
+        0.0,
+        -9.81,
+        3.0
+      ],
+      "iterations": 20,
+      "nx": 128,
+      "ny": 128,
+      "spacing": 1.0,
+      "stretch_compliance": 1e-07,
+      "substeps": 1,
+      "velocity_damping": 0.0
+    },
+    "seed": 42,
+    "tier": "ref"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:7954eb6c9407528b5d58470fc1d09f18a89a77540179db48eb0bff9a68cd290b",
+    "format": "hdf5",
+    "path": "flag-wind-128x128-seed42-step1000.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-29T03:04:29Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "soft-body",
+    "name": "mass-spring-cloth",
+    "variant": "ref"
+  },
+  "stack": {
+    "build_id": "stage-1b",
+    "name": "cpp",
+    "version": "0.0.0"
+  }
+}
