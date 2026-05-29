@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 2 — landing (Claude Code)
 subject: Phase 3 task-6 neural-ca — LANDING (whole sub-phase Stages 0→2) — FIRST dual-stack + FIRST cross-stack gate-14 (statistical) + FIRST learned-dynamics SIM of Phase 3
 verdict: closed-with-shifted-6
-head_sha: PLACEHOLDER-LANDING-AUDIT
+head_sha: fcb4c77615f1b6f5b3b398fc9e160fb1431be67f
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
