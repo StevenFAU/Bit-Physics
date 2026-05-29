@@ -1,0 +1,43 @@
+{
+  "config": {
+    "dims": [
+      64,
+      64
+    ],
+    "dtype": "f32",
+    "params": {
+      "capture_every": 50,
+      "channel_n": 16,
+      "steps": 1000
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "epsilon",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:078be96736186fe6c517e6f00c38e85f4d1f9452b3c0a6e55a7544747c13d8c7",
+    "format": "hdf5",
+    "path": "growing-emoji-64sq-seed42-step1000-wgsl.h5"
+  },
+  "run": {
+    "capture_interval": 50,
+    "start_utc": "2026-05-29T06:42:52Z",
+    "step_count": 1000,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "neural-ca",
+    "variant": "growing-neural-ca"
+  },
+  "stack": {
+    "build_id": "wgpu-native-vulkan",
+    "name": "wgsl",
+    "version": "webgpu"
+  }
+}

@@ -1,45 +1,51 @@
-"""Gate-3 / gate-13 RED (Stage 1a): WGSL B-inference reproduction.
+"""Gate-3 / gate-13 (Stage 1b-B): WGSL B-inference reproduction.
 
 The Stack-B WGSL inference runs on a GPU host LOCALLY (spec § 7.8) and writes a
-committed capture; CI never runs WGSL. This test is the CI-visible reproduction
-check (``test-neural-ca-infer``): it loads the converted checkpoint weights,
-re-runs the pure-NumPy NCA forward oracle, and asserts it reproduces the
-committed WGSL B-inference capture to a tolerance — the ising
-pytest-against-committed-capture + NumPy-oracle precedent.
+committed capture; CI never runs WGSL. This is the CI-visible reproduction check
+(``test-neural-ca-infer``): it loads the converted checkpoint weights, re-runs
+the pure-NumPy NCA forward oracle (which shares the WGSL's PCG fire-mask RNG),
+and asserts it reproduces the committed WGSL B-inference capture to a tolerance
+— the ising pytest-against-committed-capture + NumPy-oracle precedent.
 
-RED at Stage 1a (the oracle + conversion raise ``NotImplementedError`` and the
-committed capture does not yet exist); GREEN at Stage 1b-B.
+MEASURED (Stage 1b-B): the oracle reproduces the GPU capture to max_abs_diff =
+3.5e-6 over 1000 steps (the PCG fire masks are bit-identical; the only divergence
+is GPU-vs-CPU f32 conv-reduction order). The tolerance is kept generous (1e-4) for
+CI-CPU/BLAS variance headroom.
 """
 
 from __future__ import annotations
 
-import h5py
 import numpy as np
+from capture import load_capture
 
 from neural_ca.convert_checkpoint import load_wgsl_weights
 from neural_ca.reference import nca_forward_numpy
 
 from .conftest import B_INFERENCE_CAPTURE, WGSL_BUFFER, WGSL_LAYOUT
 
-# WGSL f32 vs NumPy f32 share the same algorithm and the same weights, so the
-# NumPy oracle reproduces the committed WGSL capture to a tight absolute
-# tolerance (conv-reduction order is the only divergence source). MEASURED and
-# LOCKED at Stage 1b-B.
+# Generous bound vs the measured 3.5e-6 (CI-CPU/BLAS headroom).
 WGSL_REPRO_ABS_TOL = 1e-4
+_GRID = 64
+_STEPS = 1000
+_SEED = 42
+_CAPTURE_EVERY = 50
 
 
 def test_numpy_oracle_reproduces_committed_wgsl_capture() -> None:
     weights = load_wgsl_weights(WGSL_BUFFER, WGSL_LAYOUT)
 
-    with h5py.File(B_INFERENCE_CAPTURE, "r") as f:
-        committed = np.asarray(f["frames"][:], dtype=np.float32)
+    cap = load_capture(B_INFERENCE_CAPTURE.with_suffix(".json"))
+    committed = {s.step: np.asarray(s.state["rgba"], dtype=np.float32) for s in cap.steps()}
 
-    n_frames, h, _w, _ = committed.shape
-    oracle = nca_forward_numpy(weights, grid_size=h, steps=n_frames - 1, seed=42)
+    oracle = nca_forward_numpy(
+        weights, grid_size=_GRID, steps=_STEPS, seed=_SEED, capture_every=_CAPTURE_EVERY
+    )
 
-    assert oracle.shape == committed.shape
-    max_abs = float(np.max(np.abs(oracle - committed)))
+    steps = sorted(committed)
+    assert len(steps) == oracle.shape[0], "frame count mismatch oracle vs committed WGSL capture"
+
+    max_abs = max(float(np.max(np.abs(oracle[i] - committed[s]))) for i, s in enumerate(steps))
     assert max_abs <= WGSL_REPRO_ABS_TOL, (
-        f"NumPy oracle diverges from committed WGSL capture: max_abs {max_abs} "
+        f"NumPy oracle diverges from committed WGSL capture: max_abs {max_abs:.2e} "
         f"> {WGSL_REPRO_ABS_TOL}"
     )
