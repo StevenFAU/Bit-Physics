@@ -176,3 +176,25 @@ magnetization_rel = 5e-2
 pendulum_period_rel = 1e-3
 trajectory_abs = 1e-2
 energy_drift_rel_per_second = 1e-3
+
+# Phase-3 mass-spring-cloth (task-5, sub-phase-phase-3-mass-spring-cloth) —
+# golden-table tolerances. FIRST `soft-body.*` row. Single-stack sim (Stack C;
+# Vulkan/C++ XPBD), no cross-stack equivalence pair (no gate-14). D-TOL (charter
+# §6, RESOLVED-IN-CHARTER per §S.3): land under the existing
+# `[golden_tolerance.<category>.<sim>]` branch — §S.3 ENUMERATES exactly these
+# two keys for mass-spring-cloth; NO new schema branch, NO
+# `[budgets.soft-body.cross_stack]` cap, NO §2.6 amendment. §S.2 discharged:
+# read tolerance-schema.json golden_tolerance branch + the lenia/ising/rigid-body
+# entries before writing this row.
+#
+#   catenary_shape_rel = 2e-3  (hanging chain vs the analytic catenary, relative
+#                               to sag depth; MEASURED stiff-limit residual — the
+#                               inextensible-limit XPBD chain matches the analytic
+#                               catenary to 0.119% of sag. Converge `iterations`,
+#                               do NOT widen — spec § 2.6.)
+#   position_abs       = 1e-2  (uniform-stretch interior positions; the two
+#                               pinned-boundary springs carry a documented serial-
+#                               GS non-uniformity excluded from the per-point compare)
+[golden_tolerance.soft-body.mass-spring-cloth]
+catenary_shape_rel = 2e-3
+position_abs = 1e-2

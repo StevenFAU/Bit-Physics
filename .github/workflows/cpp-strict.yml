@@ -86,10 +86,17 @@ jobs:
           else
             echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
           fi
-          git lfs pull --include="captures/reaction-diffusion-2d-ref/**"
+          # mass-spring-cloth (task-5): the cloth ctests (mass_spring_cloth_tests
+          # golden + mass_spring_cloth_pbt) GENERATE their own runs and read no
+          # committed capture; the canonical flag-wind-128x128 capture is pulled
+          # here so a future replay/validation ctest (gate-9) finds it locally.
+          git lfs pull --include="captures/reaction-diffusion-2d-ref/**,captures/mass-spring-cloth-ref/**"
 
-      - name: ctest (substrate C-3, determinism C-2, capture C-1, smoke C-4, interop C-6)
+      - name: ctest (substrate C-3, determinism C-2, capture C-1, smoke C-4, interop C-6, cloth gate-3/4/11)
         # The Vulkan/determinism/smoke tests set the lavapipe env (VK_DRIVER_FILES +
-        # LP_NUM_THREADS=0) via CTest properties; the interop ctest runs uv from
-        # tools/testkit. See the R-CPPB2 caveat in the header for digest-exact tests.
+        # LP_NUM_THREADS=0) via CTest properties; the interop + cloth-PBT ctests run
+        # uv from tools/testkit. The mass-spring-cloth acceptance/golden/PBT ctests
+        # run in this same job (D-CI: mirror the RD-2D-Stack-C shape — ctests in the
+        # one cpp-strict job, no separate per-sim job). See the R-CPPB2 caveat for
+        # digest-exact tests.
         run: ctest --test-dir build/cpp --output-on-failure

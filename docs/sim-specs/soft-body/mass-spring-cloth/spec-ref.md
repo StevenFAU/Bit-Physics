@@ -134,8 +134,9 @@ None — single-stack terminal sim (no cross-stack equivalence pair; no gate-14)
 
 ## 10. Diagnostics
 
-`tools/diagnostics/tier3/mass-spring-cloth/` — `Report` + `check_*` functions
-(constraint-violation bound, energy/momentum sanity), mirroring lenia/ising.
+`tools/diagnostics/tier3/mass_spring_cloth/` — `Report` + `check_*` functions
+(`check_constraint_violation` stretch bound, `check_momentum_drift` free-cloth
+momentum), mirroring lenia/ising (underscore dir per existing convention, §0.3).
 
 ## 11. Build and run
 

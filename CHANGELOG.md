@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### sub-phase-phase-3-mass-spring-cloth (Phase 3, task-5 — FIRST NEW Stack-C SIM + first soft-body category)
+
+Reference mass-spring cloth on Stack C (C++20 / Vulkan compute). XPBD (Macklin,
+Müller, Chentanez 2016) reimplemented from scratch; classic Provot (1995)
+structural/shear/bending springs all as XPBD distance constraints; substepped
+semi-implicit Euler + symmetric serial Gauss-Seidel projection in a single Vulkan
+invocation (bit-exact on lavapipe).
+
+- `packages/mass-spring-cloth/` — `cloth.{hpp,cpp}` host driver + `shaders/cloth_xpbd.comp`
+  serial-GS kernel + `cloth_capture_main.cpp` CLI (capture + PBT driver). Consumes
+  the common-cpp Vulkan/capture/determinism/hash substrate. Registered in the
+  top-level CMake after `reaction-diffusion-2d-stack-c` (not a uv member; uv stays 23).
+- Golden tables `tools/testkit/golden/tables/cloth-{hanging,stretched}.json` from
+  `cloth-catenary-limit.md` (analytic catenary + hand-derivation + variational
+  anchors); the inextensible-limit XPBD chain matches the analytic catenary to
+  0.119% of sag depth (`catenary_shape_rel = 2e-3`).
+- PBT (`tools/testkit/property/sims/mass_spring_cloth/invariants.py` + cross-language
+  Hypothesis→subprocess→`.h5` wiring): `length_bounded_above` +
+  `momentum_conservation_free_no_gravity`.
+- Tier-3 diagnostics `tools/diagnostics/tier3/mass-spring-cloth/`; determinism
+  registry `[soft-body.mass-spring-cloth]` (bit-exact, MEASURED); tolerance
+  `[golden_tolerance.soft-body.mass-spring-cloth]`; cpp-strict.yml runs the cloth
+  ctests; canonical capture `flag-wind-128x128-seed42-step1000`.
+- Vendored read-only oracle `references/PositionBasedDynamics/` (Bender 2.2.0, MIT).
+- Spec corrigenda proposed (A-2 cloth-xpbd→mass-spring-cloth; A-3 §2.18 Bender SHA).
+
 ### sub-phase-phase-3-rigid-body (Phase 3, task-4 — FIRST Stack-E SIM in Phase 3)
 
 Reference articulated rigid-body pendulum on Stack E (Python / NVIDIA Warp).

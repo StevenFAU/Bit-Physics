@@ -109,3 +109,20 @@ run-rigid-body-pedagogical:
 # Run the articulated-pedagogical test suite (golden + determinism + PBT + capture + diagnostics).
 test-rigid-body-pedagogical:
 	uv run --no-sync python -m pytest packages/articulated-pedagogical/tests/ -v
+
+# ---- Phase 3 mass-spring-cloth (Stack C — Vulkan / C++; lavapipe-pinned) ----
+
+# Build + run the mass-spring-cloth capture binary (default: canonical
+# flag-wind-128x128-seed42-step1000 -> captures/mass-spring-cloth-ref/).
+run-cloth:
+	cmake -S . -B build/cpp
+	cmake --build build/cpp --target bit_physics_mass_spring_cloth_capture -j
+	VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json LP_NUM_THREADS=0 \
+		./build/cpp/packages/mass-spring-cloth/bit_physics_mass_spring_cloth_capture \
+		captures/mass-spring-cloth-ref/flag-wind-128x128-seed42-step1000.json
+
+# Build + run the mass-spring-cloth ctests (gate-3 acceptance + gate-4 golden + gate-11 PBT).
+test-cloth:
+	cmake -S . -B build/cpp
+	cmake --build build/cpp -j
+	ctest --test-dir build/cpp -R mass_spring_cloth --output-on-failure
