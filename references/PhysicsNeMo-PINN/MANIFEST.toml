@@ -1,0 +1,47 @@
+[upstream]
+name         = "physicsnemo-sym"
+version      = "v2.4.0"
+sha          = "acaeb6dc38ecda58559b5286d3cb743e8cf930d3"
+url          = "https://github.com/NVIDIA/physicsnemo-sym"
+license      = "Apache-2.0"
+license_file = "LICENSE.txt"
+
+[scope]
+purpose         = "READ-ONLY reference-oracle for the methodology of the soft-constraint Physics-Informed Neural Network (PINN) that packages/pinn-poisson (task-7) reimplements INDEPENDENTLY from Raissi, Perdikaris & Karniadakis (2019) J. Comput. Phys. 378:686-707 (cite-don't-import, Convention #8 / spec §H.2). The vendored examples/helmholtz/helmholtz.py is the NVIDIA-canonical 2D elliptic-Dirichlet PINN: a fully-connected MLP with a PointwiseBoundaryConstraint (soft Dirichlet u=0 on the rectangle walls) + a PointwiseInteriorConstraint enforcing the symbolic PDE residual on collocation points, trained by a composite (boundary + interior) loss. The Helmholtz operator (∇²u + k²u = f) reduces to the Poisson operator (∇²u = f) at k=0, so this example is the closest published 2D-elliptic-Dirichlet PINN to our Δu=f problem; it cross-checks our soft-constraint formulation, our collocation-point interior loss, and our manufactured-source (MMS) construction at derivation time only. physicsnemo-sym is NOT runtime-linked and NOT pip-installed (heavy framework; SPlisHSPlasH / PositionBasedDynamics / growing-neural-ca read-only-vendor precedent) — the vendored material is the citation anchor + methodology cross-check, NOT a redistributed dependency. Apache-2.0 (permissive); downstream Bit-Physics sims may cite freely without inheriting any non-commercial clause. NOTE: the PINN/elliptic-PDE tutorials live in NVIDIA/physicsnemo-sym, NOT the NVIDIA/physicsnemo core repo pinned in plan §2.18 — see corrigendum A-6 in docs/spec-amendments-proposed.md."
+used_by_sims    = ["learned-dynamics/pinn-poisson"]
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-29T12-48Z"
+fetched_by    = "phase-3 pinn-poisson stage-0 (Claude Code)"
+fetch_command = "git clone --no-checkout --filter=blob:none https://github.com/NVIDIA/physicsnemo-sym && git -C physicsnemo-sym sparse-checkout init --cone && git -C physicsnemo-sym sparse-checkout set examples/helmholtz && git -C physicsnemo-sym checkout acaeb6dc38ecda58559b5286d3cb743e8cf930d3; then copied LICENSE.txt, README.md (-> UPSTREAM_README.md), examples/helmholtz/helmholtz.py and examples/helmholtz/helmholtz_hardBC.py into references/PhysicsNeMo-PINN/. LFS data assets (validation CSVs on NGC) deliberately NOT fetched (sparse-checkout omits them; the example warns and skips validators when absent) — vendoring kept minimal to the methodology source only."
+
+[[citations]]
+file = "examples/helmholtz/helmholtz.py"
+line = 40
+quote = "wave = HelmholtzEquation(u=\"u\", k=1.0, dim=2)"
+purpose = "The 2D elliptic PDE operator. Helmholtz (∇²u + k²u = f) at k=0 IS the Poisson operator (∇²u = f) that pinn-poisson solves; this is the reference operator our PDE residual reimplements."
+
+[[citations]]
+file = "examples/helmholtz/helmholtz.py"
+line = 41
+quote = "wave_net = instantiate_arch(input_keys=[Key(\"x\"), Key(\"y\")], output_keys=[Key(\"u\")], cfg=cfg.arch.fully_connected)"
+purpose = "Fully-connected MLP architecture (x,y)->u — the same network family our Raissi-2019 reimplementation uses (cite-don't-import; we build the MLP in PyTorch directly)."
+
+[[citations]]
+file = "examples/helmholtz/helmholtz.py"
+line = 59
+quote = "wall = PointwiseBoundaryConstraint(nodes=nodes, geometry=rec, outvar={\"u\": 0}, ...)"
+purpose = "Soft Dirichlet boundary constraint (u=0 on the walls) — cross-checks our soft-constraint boundary-loss term (Raissi soft-constraint formulation; NOT a hard-BC ansatz)."
+
+[[citations]]
+file = "examples/helmholtz/helmholtz.py"
+line = 68
+quote = "interior = PointwiseInteriorConstraint(nodes=nodes, geometry=rec, outvar={\"helmholtz\": -(...)} , ...)"
+purpose = "Interior PDE-residual constraint evaluated on sampled collocation points with a manufactured source term — cross-checks our collocation-point interior loss and our MMS (method-of-manufactured-solutions) source construction (Anchor 3, f = -2π² sin(πx) sin(πy))."
+
+[[citations]]
+file = "examples/helmholtz/helmholtz_hardBC.py"
+line = 1
+quote = "(hard-boundary-condition variant of the helmholtz PINN)"
+purpose = "Contrast reference: the hard-BC ansatz variant. We deliberately follow the SOFT-constraint formulation (helmholtz.py), matching Raissi-2019; helmholtz_hardBC.py is vendored only to document the alternative we did NOT choose."
