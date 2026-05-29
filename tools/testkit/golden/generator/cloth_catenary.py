@@ -165,19 +165,43 @@ def build_stretched() -> dict:
     expect = GAP / (N_STRETCH - 1)
     pts = [(k * expect, 0.0) for k in range(N_STRETCH)]
     test_points = []
+    # 3 INDEPENDENT-method anchors (spec § 2.4) on distinct interior points, all
+    # agreeing on the uniform-stretch positions x_k = k*GAP/(n-1).
+    a2, a4, a6 = 2, N_STRETCH // 2, N_STRETCH - 2
     for k, (x, y) in enumerate(pts):
         tp = {"inputs": {"k": k}, "expected": {"x": x, "y": y}}
-        if k == N_STRETCH // 2:
+        if k == a2:
             tp["independent_reference"] = {
-                "derived_by": "hand-derivation",
+                "derived_by": "hooke-linear-superposition",
                 "source": (
-                    f"Hooke linear superposition: {N_STRETCH - 1} equal series springs "
-                    f"pinned at (0,0) and ({GAP:.4f},0), gravity off, share tension equally "
-                    f"-> uniform extension. Each spring length = GAP/(n-1) = {expect:.6f} "
-                    f"(> rest {SPACING:.1f}, in tension). The energy-minimising equilibrium "
-                    "is uniform spacing; the single-invocation serial GS solve leaves a "
-                    "small boundary non-uniformity (documented Stage-1b) so the gate-4 "
-                    "compare uses the interior + mean/total, not per-spring uniformity."
+                    f"Anchor 1. Hooke linear superposition: {N_STRETCH - 1} equal series "
+                    f"springs pinned at (0,0) and ({GAP:.4f},0), gravity off, share tension "
+                    f"equally -> uniform extension, each length GAP/(n-1) = {expect:.6f} "
+                    f"(> rest {SPACING:.1f}, in tension). Particle k sits at x=k*GAP/(n-1)."
+                ),
+                "doi": "n/a-hand-derivation",
+                "expected": {"x": x, "y": 0.0},
+            }
+        elif k == a4:
+            tp["independent_reference"] = {
+                "derived_by": "series-spring-equivalent-stiffness",
+                "source": (
+                    "Anchor 2. Series-spring equivalent stiffness: n-1 identical springs "
+                    "of stiffness k in series have k_eq = k/(n-1); under end tension T each "
+                    "carries the SAME T, so each extends by the same T/k -> equal lengths. "
+                    f"Independent of Anchor 1; agrees on x={x:.6f}."
+                ),
+                "doi": "n/a-hand-derivation",
+                "expected": {"x": x, "y": 0.0},
+            }
+        elif k == a6:
+            tp["independent_reference"] = {
+                "derived_by": "energy-minimisation",
+                "source": (
+                    "Anchor 3. Energy minimisation: the elastic energy sum (1/2)k(d_i-rest)^2 "
+                    "at fixed endpoints (sum d_i = GAP) is minimised, by convexity + symmetry, "
+                    "at uniform d_i = GAP/(n-1) (Lagrange multiplier: all d_i equal). "
+                    f"Independent of Anchors 1-2; agrees on x={x:.6f}."
                 ),
                 "doi": "n/a-hand-derivation",
                 "expected": {"x": x, "y": 0.0},

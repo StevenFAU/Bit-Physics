@@ -40,6 +40,15 @@
         "x": 3.0,
         "y": 0.0
       },
+      "independent_reference": {
+        "derived_by": "hooke-linear-superposition",
+        "doi": "n/a-hand-derivation",
+        "expected": {
+          "x": 3.0,
+          "y": 0.0
+        },
+        "source": "Anchor 1. Hooke linear superposition: 7 equal series springs pinned at (0,0) and (10.5000,0), gravity off, share tension equally -> uniform extension, each length GAP/(n-1) = 1.500000 (> rest 1.0, in tension). Particle k sits at x=k*GAP/(n-1)."
+      },
       "inputs": {
         "k": 2
       }
@@ -59,13 +68,13 @@
         "y": 0.0
       },
       "independent_reference": {
-        "derived_by": "hand-derivation",
+        "derived_by": "series-spring-equivalent-stiffness",
         "doi": "n/a-hand-derivation",
         "expected": {
           "x": 6.0,
           "y": 0.0
         },
-        "source": "Hooke linear superposition: 7 equal series springs pinned at (0,0) and (10.5000,0), gravity off, share tension equally -> uniform extension. Each spring length = GAP/(n-1) = 1.500000 (> rest 1.0, in tension). The energy-minimising equilibrium is uniform spacing; the single-invocation serial GS solve leaves a small boundary non-uniformity (documented Stage-1b) so the gate-4 compare uses the interior + mean/total, not per-spring uniformity."
+        "source": "Anchor 2. Series-spring equivalent stiffness: n-1 identical springs of stiffness k in series have k_eq = k/(n-1); under end tension T each carries the SAME T, so each extends by the same T/k -> equal lengths. Independent of Anchor 1; agrees on x=6.000000."
       },
       "inputs": {
         "k": 4
@@ -84,6 +93,15 @@
       "expected": {
         "x": 9.0,
         "y": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "energy-minimisation",
+        "doi": "n/a-hand-derivation",
+        "expected": {
+          "x": 9.0,
+          "y": 0.0
+        },
+        "source": "Anchor 3. Energy minimisation: the elastic energy sum (1/2)k(d_i-rest)^2 at fixed endpoints (sum d_i = GAP) is minimised, by convexity + symmetry, at uniform d_i = GAP/(n-1) (Lagrange multiplier: all d_i equal). Independent of Anchors 1-2; agrees on x=9.000000."
       },
       "inputs": {
         "k": 6
