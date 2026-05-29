@@ -468,11 +468,12 @@ jobs:
 
   # Phase 3 task-7 (sub-phase-phase-3-pinn-poisson). FIRST learned-dynamics-CATEGORY
   # sim — a soft-constraint Raissi-2019 PINN solving the 2D Poisson equation, Stack E
-  # (Warp substrate) + PyTorch, CPU-only. The suite trains the PINN from scratch
-  # (Adam -> L-BFGS) at several configs, so it is iteration-heavy by design (gate-12
-  # records training_wall_clock separately — a long run here is EXPECTED, not a
-  # regression). No committed-capture read (the gates train + verify vs the analytic
-  # anchors and the classical FD reference), so lfs:false.
+  # (Warp substrate) + PyTorch, CPU-only. ALWAYS-ON FAST TIER (CI-hardening, L-PINN-2):
+  # ruff + mypy + the analytic-core, classical-FD, and CHECKPOINT-LOADING gates — these
+  # load the committed checkpoint and prove it reproduces the analytic anchor +
+  # FD reference + PBT envelopes in SECONDS (no re-train), so they gate EVERY push.
+  # The iteration-heavy full re-train + EFECT + cross-hardware convergence is the
+  # path-filtered `pinn-train.yml` job (fires only on PINN training-code changes).
   test-pinn-poisson:
     runs-on: ubuntu-latest
     steps:
@@ -500,6 +501,32 @@ jobs:
         working-directory: packages/pinn-poisson
         run: uv run mypy --strict pinn_poisson/
 
-      - name: pytest (pinn-poisson suite — analytic + FD + convergence + PBT)
+      - name: Selective LFS fetch — committed PINN checkpoint (via R2 when wired)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="tools/testkit/golden/checkpoints/**"
+
+      - name: Assert the committed checkpoint smudged (no silent-skip of the gates)
+        run: |
+          CKPT=tools/testkit/golden/checkpoints/pinn-poisson-mms-seed42.safetensors
+          SZ=$(stat -c%s "$CKPT" 2>/dev/null || echo 0)
+          if [ "$SZ" -le 1024 ]; then
+            echo "::error::checkpoint not smudged ($CKPT is $SZ bytes — LFS pull failed); the always-on inference gates would silently skip"
+            exit 1
+          fi
+          echo "checkpoint smudged: $SZ bytes"
+
+      - name: pytest (always-on fast — analytic + FD + committed-checkpoint inference/PBT)
         working-directory: packages/pinn-poisson
-        run: uv run pytest tests/
+        run: uv run pytest tests/test_analytic_problems.py tests/test_fd_reference.py tests/test_checkpoint_inference.py

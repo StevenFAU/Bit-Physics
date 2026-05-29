@@ -1,0 +1,56 @@
+name: pinn-train
+
+# ON-CHANGE re-train tier (CI-hardening, L-PINN-2). The iteration-heavy full
+# re-train of the Phase-3 task-7 PINN (Adam -> L-BFGS at several configs, ~tens of
+# minutes on the 2-core runner) re-establishes that a FRESH train still converges to
+# the analytic anchors (the cross-hardware guarantee) + the EFECT training-loss
+# distribution. It is NOT needed on every push — the always-on `python-strict`
+# `test-pinn-poisson` job proves the COMMITTED checkpoint is correct in seconds. So
+# this fires ONLY when the PINN training code/config changes (path-filtered on the
+# training SOURCE, not the whole package — inference/test files live alongside and
+# are covered by the always-on job). A training-code change re-validates the
+# train-tier tests; a docs-only / other-sim / fast-test-only push does NOT pay the tax.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/pinn-poisson/pinn_poisson/**"
+      - "packages/pinn-poisson/pyproject.toml"
+  pull_request:
+    paths:
+      - "packages/pinn-poisson/pinn_poisson/**"
+      - "packages/pinn-poisson/pyproject.toml"
+
+jobs:
+  # The fresh-train tier: training-convergence, inference-vs-analytic (A1/A2/A3, the
+  # cross-hardware convergence guarantee), inference-vs-FD, convergence-with-
+  # collocation-density, fresh-train PBT, and fresh-train capture health. Trains from
+  # scratch (lfs:false — no committed-capture/checkpoint read). gate-12's
+  # training_wall_clock is observable here.
+  test-pinn-poisson-train:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync pinn-poisson workspace deps (with dev extras for pytest)
+        working-directory: packages/pinn-poisson
+        run: uv sync --extra dev
+
+      - name: pytest (on-change re-train — convergence + inference-vs-{analytic,FD} + PBT + diagnostics)
+        working-directory: packages/pinn-poisson
+        run: |
+          uv run pytest \
+            tests/test_training_convergence.py \
+            tests/test_inference_vs_analytic.py \
+            tests/test_inference_vs_fd.py \
+            tests/test_convergence_with_collocation.py \
+            tests/test_pbt_invariants.py \
+            tests/test_diagnostics.py
