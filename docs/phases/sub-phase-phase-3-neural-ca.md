@@ -6,7 +6,18 @@ phase: phase-3
 head_sha_at_draft: 36c4eeb
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
-version: charter-v1 (2026-05-29T03-43-39Z)
+version: charter-v2 (2026-05-29 — Stage-0 D-class flip)
+revisions:
+  - charter-v1 (2026-05-29T03-43-39Z) — plan-drafting SHIFTED; 5 operator-pending D-classes.
+  - charter-v2 (2026-05-29 — execution Stage 0) — operator RATIFIED all 5 pending
+    D-classes; flipped OPEN→RESOLVED in §6/§11 with the ratified outcomes
+    (D-STACK-B-TEST-INFRA = not-a-BLOCK / committed-offline-capture; D-XSTACK-METHOD =
+    render-similarity direct-import; D-ANCHOR = re-shaped 3-anchor set, Distill
+    PSNR/SSIM verified non-existent — L2-only; D-DET = two rows measure-then-declare
+    EFECT + STOP-EFECT contingency; D-CHECKPOINT-CONVERSION = exact round-trip
+    weights-equality). PBT regime-scoping carried (field_values_bounded scoped to
+    visible/clamped channels or finiteness). A-4/A-5 corrigenda filed. Vendored
+    references/growing-neural-ca/ @ 3d5547ca… Apache-2.0 (web-re-verified).
 posture: >
   Sixth Phase-3 sub-phase by dispatch order (task-6, sub-phase 3.2).
   **FIRST DUAL-STACK sim of Phase 3** — Stack D (PyTorch training +
@@ -189,11 +200,12 @@ Plan-drafting confirmed exit 0 at `86b0aa5` (probe §0).
 
 ## 6. D-class decision routing
 
-**Operator action required on D-STACK-B-TEST-INFRA (confirm), D-XSTACK-METHOD,
-D-ANCHOR, D-DET, D-CHECKPOINT-CONVERSION before Stage 0. The rest are
-RESOLVED-IN-CHARTER.** Load-bearing pair: **D-XSTACK-METHOD + D-ANCHOR**.
+**RESOLVED (charter-v2, 2026-05-29):** the operator RATIFIED all five formerly
+operator-pending D-classes at the execution dispatch; the leans below are now the
+locked outcomes (OPEN→RESOLVED). Load-bearing pair was **D-XSTACK-METHOD +
+D-ANCHOR**. Remaining D-classes stay RESOLVED-IN-CHARTER.
 
-### D-STACK-B-TEST-INFRA — does CI-testable Stack-B inference exist, or BLOCK? ⚠ → RESOLVED-IN-CHARTER (operator confirm)
+### D-STACK-B-TEST-INFRA — does CI-testable Stack-B inference exist, or BLOCK? → RESOLVED (operator-ratified: NOT a BLOCK)
 
 - **LEAN / resolution:** **NOT a BLOCK.** The §6.6 ANCHOR-PROBE "IF NO PATTERN
   EXISTS: BLOCK per §5.3" clause does not fire. The pattern exists at the
@@ -205,11 +217,12 @@ RESOLVED-IN-CHARTER.** Load-bearing pair: **D-XSTACK-METHOD + D-ANCHOR**.
   render-similarity; CI never runs the WGSL render. Route to
   `python-strict.yml/test-neural-ca-equiv` (+ `test-neural-ca-train`,
   `test-neural-ca-infer`).
-- **Operator confirms:** that the committed-offline-capture realization is the
-  intended satisfaction of gate-14 (vs any expectation that WGSL runs in CI, which
-  §7.8 forbids).
+- **RESOLVED (operator-ratified):** the committed-offline-capture realization IS the
+  intended satisfaction of gate-14; CI never runs WGSL (§7.8). Route to
+  `python-strict.yml/test-neural-ca-equiv` (+ `-train`, `-infer`). Do NOT build
+  Stack-B headless-WebGPU CI infra (Convention I; §7.8).
 
-### D-XSTACK-METHOD — how is gate-14 realized? ⚠ (load-bearing)
+### D-XSTACK-METHOD — how is gate-14 realized? → RESOLVED (operator-ratified: render-similarity direct-import)
 
 - **LEAN:** **render-similarity (D-inference ↔ B-inference), NOT `compare_captures`.**
   Tolerance MEASURED-then-LOCKED per §2.12, declared **statistical-not-analytic** in
@@ -242,9 +255,15 @@ RESOLVED-IN-CHARTER.** Load-bearing pair: **D-XSTACK-METHOD + D-ANCHOR**.
     locked per §2.12, + a hand-derived "patterns visually equivalent" criterion in
     spec-ref §9. Document the gate is **statistical** in spec-ref §6.
   - Grep/web-verify any cite kept; NO plan edit (§0.3).
-- **Operator confirms:** the re-shaped 3-anchor set (no fabricated published metric).
+- **RESOLVED (operator-ratified):** the re-shaped 3-anchor set is locked. Stage-0
+  verification (Convention #8) of the vendored `notebooks/growing_ca.ipynb` CONFIRMS
+  the premise: loss is `tf.reduce_mean(tf.square(to_rgba(x)-pad_target))` (pixel-wise
+  L2 / MSE on RGBA), and the notebook contains **zero** occurrences of
+  psnr/ssim/lpips — the plan's "published Distill PSNR/SSIM anchors" are fabricated
+  (§0.3 SHIFT-from-discovered, documented in report §1). Declare the gate STATISTICAL
+  in spec-ref §6.
 
-### D-DET — mixed posture (training non-det / inference bit-exact) ⚠
+### D-DET — mixed posture (training non-det / inference bit-exact) → RESOLVED (operator-ratified: two rows, measure-then-declare)
 
 - **LEAN:** **two registry rows** (plan §3.2.5 `:487-503`):
   `[continuous-ca.neural-ca.training]` class=`non-deterministic` (by design —
@@ -264,17 +283,27 @@ RESOLVED-IN-CHARTER.** Load-bearing pair: **D-XSTACK-METHOD + D-ANCHOR**.
   trajectory-divergent` (`docs/architecture.md:414`) categorizes the learned SIM
   family's multi-step trajectories; the plan §3.2.5 resolves the single-forward-pass
   inference row as bit-exact. Honor both; MEASURE at 1b, do not pre-declare.
-- **Operator confirms:** two-row mixed posture + the STOP-EFECT contingency.
+- **RESOLVED (operator-ratified):** two-row mixed posture +
+  measure-then-declare-EFECT + the STOP-EFECT contingency. **CRITICAL SEPARATION
+  (dispatch):** the EFECT bound characterizes TRAINING-convergence reproducibility —
+  it is NOT the cross-stack gate. The load-bearing gate is the D↔B render-similarity
+  on the FROZEN checkpoint; a STOP-EFECT does NOT block gate-14. PBT regime-scoping:
+  `field_values_bounded` is scoped to the VISIBLE/clamped channels (RGBA ∈ [0,1])
+  OR full-state finiteness/non-divergence (whichever the implementation supports) —
+  do NOT assert all-16-channels ∈ [0,1] (hidden channels drift); if the strong form
+  falsifies at PBT, RE-DECLARE the regime on evidence (do not widen a tolerance).
 
-### D-CHECKPOINT-CONVERSION — `.safetensors` → WGSL-loadable, exact + tested ⚠
+### D-CHECKPOINT-CONVERSION — `.safetensors` → WGSL-loadable, exact + tested → RESOLVED (operator-ratified: exact round-trip)
 
 - **LEAN (new pipeline, no precedent):** `convert_checkpoint.py` reads the
   `.safetensors`, emits a WGSL-loadable artifact (flat f32 buffer + a documented
   layout doc, or JSON), with a **round-trip weights-equality test** asserting
   bit-identical weight float values pre/post; the converted artifact is verified +
   committed (LFS). A lossy conversion breaks the D↔B gate (load-bearing).
-- **Operator confirms:** the conversion-must-be-exact-and-tested contract + the
-  `tools/testkit/golden/checkpoints/` artifact location (new dir).
+- **RESOLVED (operator-ratified):** the conversion-must-be-exact-and-tested contract
+  + the `tools/testkit/golden/checkpoints/` artifact location (new dir). A lossy
+  conversion → HARD RULE 2 STOP-and-surface (it breaks the D↔B gate — do not paper
+  over it).
 
 ### D-VENDOR-ROLE — RESOLVED-IN-CHARTER
 
@@ -448,22 +477,24 @@ sentinel accepted; §R two-field. Corrigenda → `docs/spec-amendments-proposed.
 
 ## 11. Closing criteria & operator-ratification items
 
-**Charter verdict (v1): SHIFTED — ready for Stage 0 with 5 operator-pending
-D-classes.**
+**Charter verdict (v2): RESOLVED — all 5 formerly operator-pending D-classes
+RATIFIED at the execution dispatch (2026-05-29); Stages 0→2 executing.**
 
-Operator-pending (ratify before Stage 0):
-1. **D-STACK-B-TEST-INFRA** — confirm the committed-offline-capture realization
-   (NOT WGSL-in-CI, which §7.8 forbids) satisfies gate-14. *Lean: RESOLVED — not a
-   BLOCK.*
-2. **D-XSTACK-METHOD** — confirm render-similarity direct-import method (not
-   `compare_captures`, not the deferred harness-mode shell). *Lean: render-similarity.*
-3. **D-ANCHOR** — confirm the re-shaped 3-anchor set (published Distill PSNR/SSIM
-   don't exist). *Lean: training-L2 + §2.12 floors + measured-locked-D↔B.*
-4. **D-DET** — confirm two-row mixed posture (training non-det/EFECT + inference
-   bit-exact) + the STOP-EFECT contingency. *Lean: measure-then-declare.*
-5. **D-CHECKPOINT-CONVERSION** — confirm the exact-and-tested conversion contract +
-   the new `tools/testkit/golden/checkpoints/` artifact location. *Lean: round-trip
-   weights-equality.*
+Operator-ratified (charter-v2, OPEN→RESOLVED — outcomes locked in §6):
+1. **D-STACK-B-TEST-INFRA** — RATIFIED: NOT a BLOCK; committed-offline-capture
+   realization satisfies gate-14 (NO WGSL-in-CI, §7.8). Do not build Stack-B
+   headless-WebGPU CI infra (Convention I).
+2. **D-XSTACK-METHOD** — RATIFIED: render-similarity direct-import
+   (`from render_similarity import psnr, ssim, lpips`, frame-paired by index), NOT
+   `compare_captures`, NOT the deferred harness-mode shell.
+3. **D-ANCHOR** — RATIFIED: re-shaped 3-anchor set (golden_checkpoint_match L2 +
+   §2.12 floors + measured-locked D↔B); Stage-0 verified the Distill PSNR/SSIM
+   anchors are fabricated (notebook = L2 loss, zero psnr/ssim/lpips).
+4. **D-DET** — RATIFIED: two-row mixed posture (training non-det/EFECT + inference
+   bit-exact) measure-then-declare + STOP-EFECT contingency; EFECT is NOT the
+   cross-stack gate.
+5. **D-CHECKPOINT-CONVERSION** — RATIFIED: exact round-trip weights-equality;
+   `tools/testkit/golden/checkpoints/` artifact location; lossy → HARD RULE 2.
 
 RESOLVED-IN-CHARTER (no operator action): D-VENDOR-ROLE, D-VENDOR-SHA, D-LAYOUT,
 D-TOL, D-CI, D-MANIFEST-FMT, D-NAMING, D-TAG.

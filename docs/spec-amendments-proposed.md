@@ -95,3 +95,72 @@
   edit deferred to the operator (the operator decides whether to correct § 2.18 or
   ratify master-HEAD as an intentional deviation; per charter §0.3 the agent does NOT
   edit the plan).
+
+---
+
+## A-4 — Phase-3 plan § 2.18 external-SHA registry: ADD the missing `growing-neural-ca` (task-6) pin row
+
+- **Surfaced by:** sub-phase-phase-3-neural-ca (task-6), execution Stage 0
+  (2026-05-29). D-VENDOR-SHA, operator-ratified `3d5547ca…` Apache-2.0.
+- **Location:** `docs/phases/phase-3-plan.md` § 2.18 (Phase-3 external-SHA registry,
+  the fenced ``` block at `:259-311`).
+- **Current text:** the § 2.18 block enumerates **five** upstreams (Inria
+  gaussian-splatting, PhysGaussian, Bender PositionBasedDynamics, NVIDIA
+  physicsnemo, Chakazul Lenia). **There is NO row for the growing-neural-ca
+  upstream** that task-6 vendors, although § 2.18's preamble (`:257`) claims it
+  resolves "**all five** Phase-3 external upstreams in one place" and task-6's
+  charter §6 (D-VENDOR-SHA) requires a pinned SHA.
+- **Proposed text:** ADD the following row to the § 2.18 fenced block (after the
+  Chakazul/Lenia row at `:301-310`):
+  > ```
+  > - Repo: https://github.com/google-research/self-organising-systems   # task-6 neural-ca (growing-neural-ca)
+  >   SHA: 3d5547ca48b60ecac459834e2c05c9ff5df87991
+  >   Released: default-branch HEAD (main). The only release tag (biomaker-v1.0.0) is a DIFFERENT
+  >     sub-project within this multi-project research monorepo, NOT the growing-CA work; per spec D.3's
+  >     research-repo policy (and the § 2.18 pinning rule's "otherwise default-branch HEAD") HEAD is pinned.
+  >   License: Apache-2.0
+  >   License-note: permissive; Apache-2.0-compatible with Bit-Physics's MIT distribution posture.
+  >   Security: clean (2026-05-29; gh api repos/.../security-advisories not consulted — research monorepo;
+  >     SPDX verified Apache-2.0 via gh api repos/google-research/self-organising-systems --jq .license.spdx_id)
+  >   Fetched: 2026-05-29T00:26Z
+  >   Citation-pointer: §3.2 references/growing-neural-ca/ + references/growing-neural-ca/MANIFEST.toml (task-6)
+  > ```
+- **Verified rationale (Convention #8 — verified at assertion this Stage 0):** the
+  GitHub API confirms `gh api repos/google-research/self-organising-systems --jq
+  .license.spdx_id` → **`Apache-2.0`** and the commit `3d5547ca…` exists on the
+  default branch (authored 2026-01-09, "Replace unicode escaped characters in ipynb
+  files"). The repo is a multi-project research monorepo; the canonical Distill
+  "Growing Neural Cellular Automata" (Mordvintsev et al. 2020) reference is
+  `notebooks/growing_ca.ipynb`. The **principled pin-policy difference vs A-3**
+  (Bender, tagged-stable-release) is intentional, not an inconsistency: a research
+  repo with no applicable release tag pins default-branch HEAD per D.3's research-repo
+  policy (the only tag, `biomaker-v1.0.0`, is a distinct sub-project). task-6 vendored
+  `references/growing-neural-ca/` (LICENSE + UPSTREAM_README.md +
+  `notebooks/growing_ca.ipynb`) + `MANIFEST.toml` at this SHA this Stage 0.
+- **Disposition:** PROPOSED. task-6 vendors at `3d5547ca…` (the SHA is already in the
+  charter §2.18/§6 and the MANIFEST). Plan-registry edit deferred to the operator; per
+  charter §0.3 the agent does NOT edit the plan.
+
+---
+
+## A-5 — Spec Appendix D.3 vendored-dependency-pins table: ADD the `growing-neural-ca` (task-6) row
+
+- **Surfaced by:** sub-phase-phase-3-neural-ca (task-6), execution Stage 0
+  (2026-05-29). D-VENDOR-SHA / D-VENDOR-ROLE, operator-ratified.
+- **Location:** `docs/architecture.md:2545-2553` (Appendix D.3 vendored-dependency
+  pins table).
+- **Current text:** the D.3 table rows cover SPlisHSPlasH, OpenVDB, NVIDIA Newton,
+  Inria gaussian-splatting, PhysGaussian, Bender PositionBasedDynamics, NVIDIA
+  PhysicsNeMo. **There is NO row for the growing-neural-ca upstream** that task-6
+  (neural-ca) vendors.
+- **Proposed text:** ADD a row to the D.3 table (after the PhysicsNeMo row at `:2553`):
+  > `| **Growing Neural CA (self-organising-systems)** | Phase 3 task-6 (neural-ca) | HEAD on main (no applicable release tag; biomaker-v1.0.0 is a different sub-project) | Apache-2.0 | `gh api repos/google-research/self-organising-systems --jq .license.spdx_id` |`
+- **Verified rationale (Convention #8 — grep-checked at assertion):** D.3
+  (`docs/architecture.md:2541-2553`) is the authoritative vendored-dependency-pins
+  table; every Phase-3 vendored upstream has a row (Inria task-1, Bender task-5,
+  PhysicsNeMo task-7). task-6 vendors `references/growing-neural-ca/` but D.3 has no
+  corresponding row. The verification command and license match A-4 (same upstream).
+  The pin policy is HEAD-on-main per D.3's stated research-repo handling, distinct
+  from Bender's "Latest stable" — intentional, not an inconsistency.
+- **Disposition:** PROPOSED. Spec edit deferred to the operator at a phase boundary
+  (spec frozen in Phase 3 per §9.6).
