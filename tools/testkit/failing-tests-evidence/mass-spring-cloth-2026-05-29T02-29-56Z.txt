@@ -1,0 +1,43 @@
+Internal ctest changing into directory: /home/otacon/Projects/Bit-Physics/build/cpp
+Test project /home/otacon/Projects/Bit-Physics/build/cpp
+    Start 8: mass_spring_cloth_tests
+1/1 Test #8: mass_spring_cloth_tests ..........***Failed <NORMALIZED> sec
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:30:
+TEST CASE:  GREEN[gate-3/acceptance] cloth at rest stays at rest (zero-motion)
+
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:30: ERROR: test case THREW exception: mass-spring-cloth: build_grid_positions not implemented (Stage 1a RED)
+
+===============================================================================
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:51:
+TEST CASE:  GREEN[gate-3/acceptance] hanging chain sags symmetrically (catenary-limit)
+
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:51: ERROR: test case THREW exception: mass-spring-cloth: run_cloth not implemented (Stage 1a RED)
+
+===============================================================================
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:96:
+TEST CASE:  GREEN[gate-3/acceptance] stretched chain settles to uniform spacing (linear-elastic)
+
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:96: ERROR: test case THREW exception: mass-spring-cloth: run_cloth not implemented (Stage 1a RED)
+
+===============================================================================
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:134:
+TEST CASE:  GREEN[gate-7] determinism witness is produced (2-run bit-exact)
+
+/home/otacon/Projects/Bit-Physics/packages/mass-spring-cloth/tests/test_cloth.cpp:134: ERROR: test case THREW exception: mass-spring-cloth: run_cloth not implemented (Stage 1a RED)
+
+===============================================================================
+[doctest] test cases: 4 | 0 passed | 4 failed | 0 skipped
+[doctest] assertions: 0 | 0 passed | 0 failed |
+[doctest] Status: FAILURE!
+
+
+0% tests passed, 1 tests failed out of 1
+
+Total Test time (real) = <NORMALIZED> sec
+
+The following tests FAILED:
+	  8 - mass_spring_cloth_tests (Failed)
+Errors while running CTest
