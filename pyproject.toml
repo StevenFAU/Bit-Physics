@@ -136,6 +136,19 @@ members = [
   # "maximal-coordinate" (corrigendum A-1 in docs/spec-amendments-proposed.md).
   # Registered at Stage 1a.
   "packages/articulated-pedagogical",
+
+  # Phase-3 task-6 (sub-phase-phase-3-neural-ca). SIXTH Phase-3 sub-phase +
+  # FIRST dual-stack SIM of Phase 3 (Stack D PyTorch training+inference +
+  # Stack B custom-WGSL inference at packages/neural-ca/typescript/, tied by
+  # ONE trained checkpoint) + FIRST cross-stack gate-14 (render-similarity,
+  # statistical) + FIRST learned-dynamics sim. The 27th workspace member; the
+  # Python (Stack-D) half lives at packages/neural-ca/python/ (D-LAYOUT:
+  # unified packages/neural-ca/{python,typescript}/ per the charter; the TS
+  # half is a local-only deploy deliverable, not a workspace member, mirroring
+  # ising's src/*.{ts,wgsl}). Reimplements the NCA update rule from Mordvintsev
+  # et al. 2020 (Distill); vendored oracle references/growing-neural-ca/.
+  # Registered at Stage 1a.
+  "packages/neural-ca/python",
 ]
 exclude = []
 
