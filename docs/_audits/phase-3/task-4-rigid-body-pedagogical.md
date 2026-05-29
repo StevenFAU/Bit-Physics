@@ -3,7 +3,7 @@ date: 2026-05-29T01-19-26Z
 author: phase-3 rigid-body-pedagogical landing (Claude Code)
 subject: Phase 3 task-4 rigid-body-pedagogical (sub-phase-phase-3-rigid-body) — LANDING AUDIT (first Stack-E SIM of Phase 3)
 verdict: CONFIRMED (closed-with-shifted-6)
-head_sha: TO-BACKFILL
+head_sha: 2f58f666c9eda948925995fa543eaac952304881
 prior_sub_phase_landed_at: 2da281a
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
