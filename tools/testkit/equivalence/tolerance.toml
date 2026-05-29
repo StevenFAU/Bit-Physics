@@ -242,3 +242,29 @@ golden_checkpoint_match = true
 golden_checkpoint_l2_max = 0.03
 training_loss_distributional_bound = "EFECT"
 training_loss_3sigma_upper = 0.07
+
+# -----------------------------------------------------------------------------
+# Phase-3 pinn-poisson (task-7, sub-phase-phase-3-pinn-poisson) — golden-table
+# tolerances. FIRST `learned-dynamics.*` row. Single-stack sim (Stack E Warp
+# substrate + PyTorch, CPU-only), no cross-stack equivalence pair (no gate-14).
+# D-TOL (charter §6 RESOLVED-IN-CHARTER, operator-ratified): land under the
+# existing `[golden_tolerance.<category>.<sim>]` branch — the schema description
+# ENUMERATES exactly `pinn-poisson: analytical_l2, fd_l2`; NO new schema branch,
+# NO `[budgets.learned-dynamics.cross_stack]` cap (single-stack terminal sim,
+# like lenia/ising/rigid-body/cloth), NO §2.6 amendment. §S.2 discharged: read
+# tolerance-schema.json golden_tolerance branch + the lenia/ising/rigid-body/
+# cloth/neural-ca entries before writing this row.
+#
+#   analytical_l2 = 1e-3  (trained-PINN field vs the analytic anchor solution,
+#                          relative discrete-L2 over the eval grid — the
+#                          load-bearing acceptance gate on the frozen network)
+#   fd_l2         = 1e-2  (trained-PINN field vs the classical 5-point-FD
+#                          reference; intentionally WIDER than analytical_l2 — the
+#                          FD baseline carries its own O(h^2) discretization error,
+#                          so PINN-vs-FD agreement is looser than PINN-vs-analytic)
+#
+# The EFECT training-non-determinism bound is the registry row's
+# `distributional_bound` (its primary home, D-DET); it is NOT the acceptance gate.
+[golden_tolerance.learned-dynamics.pinn-poisson]
+analytical_l2 = 1e-3
+fd_l2 = 1e-2

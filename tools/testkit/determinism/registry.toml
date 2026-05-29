@@ -147,3 +147,37 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# pinn-poisson (task-7, sub-phase-phase-3-pinn-poisson). SEVENTH Phase-3 sub-phase
+# + FIRST learned-dynamics-CATEGORY sim. D-DET (charter §6, operator-ratified):
+# TWO rows, MEASURE-then-declare at Stage 1b-PINN. Training and inference are kept
+# SEPARATE — bit-exact fits inference only. DEFAULT rows drafted here at Stage 1a.
+# The env is CPU-only (no CUDA), so the CUDA-atomic non-determinism worry is moot
+# (atomic_ops = "none"). NCA *measured* same-seed CPU training to be bit-identical;
+# that MAY transfer here (different net/optimizer), so the training row's class is
+# the conservative DEFAULT now and is RE-DECLARED on Stage-1b-PINN evidence if
+# same-seed CPU training proves bit-identical. The EFECT bound is DERIVED from the
+# measured training-loss distribution; if underivable -> STOP-EFECT (ising STOP-DET
+# template). CRITICAL: the EFECT bound characterizes TRAINING reproducibility — it
+# is NOT the acceptance gate (the analytic + FD verification on the frozen network
+# are the load-bearing gates; a STOP-EFECT does NOT block them).
+[learned-dynamics.pinn-poisson.training]
+stack = "E"
+class = "non-deterministic"
+scope = "n/a"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+distributional_bound = "EFECT"
+
+# Inference (frozen-network forward evaluation on the eval grid). DEFAULT
+# bit-exact same-stack-same-hw — frozen weights make inference a deterministic
+# function evaluation; no atomics/subgroup ops on the PyTorch+Warp CPU backend.
+# MEASURED at Stage 1b-PINN via run_twice_and_diff on the canonical capture.
+[learned-dynamics.pinn-poisson.inference]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
