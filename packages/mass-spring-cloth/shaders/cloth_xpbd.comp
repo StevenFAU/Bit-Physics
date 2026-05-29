@@ -67,10 +67,17 @@ void main() {
         // --- reset Lagrange multipliers (XPBD: lambda = 0 at substep start) ----
         for (uint c = 0u; c < p.M; ++c) lambda[c] = 0.0lf;
 
-        // --- serial Gauss-Seidel constraint projection ------------------------
+        // --- symmetric serial Gauss-Seidel constraint projection --------------
+        // Alternate sweep direction each iteration (forward on even, backward on
+        // odd). This removes the directional bias of one-directional GS (which
+        // converges to a non-uniform fixed point) so the solve converges to the
+        // symmetric energy-minimising equilibrium — while staying a FIXED,
+        // single-invocation, atomics-free order (bit-exact; charter D-DET).
         double h2 = h * h;
         for (uint it = 0u; it < p.iters; ++it) {
-            for (uint c = 0u; c < p.M; ++c) {
+            bool fwd = (it & 1u) == 0u;
+            for (uint k = 0u; k < p.M; ++k) {
+                uint c = fwd ? k : (p.M - 1u - k);
                 uint ia = con_a[c];
                 uint ib = con_b[c];
                 double wa = inv_mass[ia];
