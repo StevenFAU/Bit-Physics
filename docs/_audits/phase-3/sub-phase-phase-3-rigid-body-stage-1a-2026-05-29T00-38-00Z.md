@@ -3,7 +3,7 @@ date: 2026-05-29T00-38-00Z
 author: phase-3 rigid-body-pedagogical stage-1a (Claude Code)
 subject: Phase 3 task-4 rigid-body-pedagogical — STAGE 1a scaffold + RED (first Stack-E SIM of Phase 3)
 verdict: CONFIRMED
-head_sha: TO-BACKFILL
+head_sha: 170418b8305c8d2f8a70af252eb5c422a30767e3
 prior_stage_audit: sub-phase-phase-3-rigid-body-stage-0-2026-05-29T00-08-18Z.md
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
 integrity_digest_at_head: 6096fa35cc2aa35c82be0ff99613e73f2f8ab027e4df446e02d8e9a190c7e1ac
