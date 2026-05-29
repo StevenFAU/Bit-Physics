@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 0 (Claude Code)
 subject: Phase 3 sixth sub-phase (task-6 neural-ca, FIRST DUAL-STACK + FIRST cross-stack-gate-14 SIM of Phase 3) — STAGE 0 pre-flight + ratified-D charter flip (OPEN→RESOLVED v2) + A-4/A-5 corrigenda + growing-neural-ca vendoring + §Q R2 bootstrap + integrity baseline + cross-phase replay + verify_evidence sweep
 verdict: CONFIRMED
-head_sha: PLACEHOLDER-STAGE-0-AUDIT
+head_sha: fac40a71b69d6373c99c7d1085df38613ade7736
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
