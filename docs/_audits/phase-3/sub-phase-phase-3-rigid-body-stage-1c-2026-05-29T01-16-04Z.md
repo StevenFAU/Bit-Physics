@@ -3,7 +3,7 @@ date: 2026-05-29T01-16-04Z
 author: phase-3 rigid-body-pedagogical stage-1c (Claude Code)
 subject: Phase 3 task-4 rigid-body-pedagogical — STAGE 1c closing sweep (capture + fixture + perf-ledger + §Q.5 R2 push + §S.5 CI green)
 verdict: CONFIRMED
-head_sha: TO-BACKFILL
+head_sha: 941b1b845403609f82123fbc6b43a6aa0c964f82
 prior_stage_audit: sub-phase-phase-3-rigid-body-stage-1b-2026-05-29T01-07-52Z.md
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
 integrity_digest_at_head: f5b7eea154e7c369ec74c4ff83d33c3c2f73e297e04240a1a5681fa257070bb3
