@@ -15,6 +15,15 @@ prior_phase_tag: v0.2.0-phase-2
 d_tag: NO (per-sub-phase tagging discontinued mid-Phase-3; one operator-pushed annotated tag at Phase-3 close)
 revisions:
   - v1 2026-05-28 — initial charter; first Stack-E sim of Phase 3; six substantive D-classes surfaced.
+  - v2 2026-05-28 — execution Stage 0: operator-ratified D-classes flipped OPEN→RESOLVED.
+    D-ALGO=ABA (reduced/generalized-coordinate, Featherstone Ch.7 §7.2–§7.3 pp.123–131);
+    D-ANCHOR=corrected 3-anchor set (A1 Marion&Thornton §3.2; A2 DLMF §19.2 + §22.19(i) / L&L §11;
+    A3 DLMF §22.19(i) + §22.2 Jacobi sn); D-TOL=[golden_tolerance.rigid-body.articulated-pedagogical]
+    per §S.3 (NO cross_stack budget cap, NO §2.6 amendment, NO schema extension);
+    D-USD=DEFER (Phase-3-Stack-E-WIDE; common-warp USD surface built in Phase-4 WU-D).
+    Corrigendum routing: §5.8 maximal→ABA appended to spec-amendments-proposed.md (operator applies
+    at close; spec FROZEN in Phase 3 per §9.6); plan §6.4:1605 Goldstein wrong-cite noted as a
+    Stage-2-landing SHIFT (NO plan edit per §0.3).
 ---
 
 # Sub-phase: Phase-3 rigid-body-pedagogical (task-4) — CHARTER
@@ -206,7 +215,13 @@ this consumer site). **No Hard-Rule-2 missing-surface block.**
 > **Operator action required on D-ALGO, D-ANCHOR, D-TOL, D-USD before Stage 0.**
 > The rest are RESOLVED-IN-CHARTER (lean stated) per §0.3 + precedent.
 
-### D-ALGO — maximal-coordinate (§5.8) vs ABA / reduced-coordinate (§6.4)  ⚠ OPEN
+### D-ALGO — maximal-coordinate (§5.8) vs ABA / reduced-coordinate (§6.4)  ✅ RESOLVED (operator: ABA)
+> **RESOLVED v2 (operator):** ABA, reduced/generalized-coordinate, Featherstone Ch.7
+> (§7.2–§7.3, pp.123–131). §5.8's "maximal-coordinate" is the verified error
+> (maximal-coordinate = the Lagrange-multiplier formulation, a different chapter).
+> Spec §5.8 corrigendum appended to `spec-amendments-proposed.md` (spec FROZEN in
+> Phase 3 per §9.6 — operator applies at close). algebraic.md / goldens / the
+> `momentum_conservation` PBT all follow the ABA reduced-coordinate formulation.
 - **Spec §5.8** (`docs/architecture.md:1175`): *"implementing **maximal-coordinate**
   articulated-body dynamics from scratch. Featherstone 2008 reference."*
 - **Plan §6.4** (`docs/phases/phase-3-plan.md:1567`,`:1613`,`:1625`): *"Algorithm:
@@ -225,7 +240,14 @@ this consumer site). **No Hard-Rule-2 missing-surface block.**
   maximal-coordinate** (which would override §6.4 B/E and re-shape algebraic.md +
   goldens + the `momentum_conservation` PBT formulation — a larger change).
 
-### D-ANCHOR — plan §6.4 golden Anchor 2 (Goldstein §4.3) is a wrong citation  ⚠ OPEN
+### D-ANCHOR — plan §6.4 golden Anchor 2 (Goldstein §4.3) is a wrong citation  ✅ RESOLVED (operator: corrected 3-anchor set)
+> **RESOLVED v2 (operator):** corrected 3-anchor set — A1 Marion & Thornton §3.2
+> (small-angle `T=2π√(L/g)`); A2 large-angle exact `T=4√(L/g)·K(sin(θ₀/2))` via NIST
+> DLMF §19.2 (K(k)) + §22.19(i) and/or Landau & Lifshitz *Mechanics* §11; A3 θ(t)
+> via Jacobi sn, DLMF §22.19(i) + §22.2. RK4-ref is a numerical baseline, NOT an
+> analytic anchor. Goldstein §4.3 (= "Formal Properties of the Transformation
+> Matrix") is the verified wrong cite — noted as a Stage-2 SHIFT (NO plan edit per
+> §0.3; corrected anchors live in spec-ref §6 + golden derivation G).
 - **Plan §6.4** (`docs/phases/phase-3-plan.md:1605`): "Anchor 2: Goldstein
   *Classical Mechanics* (3rd ed.) **§4.3** elliptic-integral large-angle solution."
 - **Verified fact:** Goldstein 3rd ed. §4.3 = *"Formal Properties of the
@@ -247,7 +269,12 @@ this consumer site). **No Hard-Rule-2 missing-surface block.**
 - **Operator confirms the corrected anchor set** (and whether to file a plan
   corrigendum at `docs/phases/phase-3-plan.md:1605`).
 
-### D-TOL — single-stack `golden_tolerance` (§S.3) vs the dispatch's "propose a budget cap"  ⚠ OPEN
+### D-TOL — single-stack `golden_tolerance` (§S.3) vs the dispatch's "propose a budget cap"  ✅ RESOLVED (operator: golden_tolerance, §S.3)
+> **RESOLVED v2 (operator):** land `[golden_tolerance.rigid-body.articulated-pedagogical]`
+> in `tolerance.toml` (`pendulum_period_rel=1e-3`, `trajectory_abs=1e-2`,
+> `energy_drift_rel_per_second=1e-3`) per §S.3. NO `[budgets.rigid-body.cross_stack]`
+> cap, NO §2.6 amendment, NO schema extension. §S.2: read `tolerance-schema.json` +
+> one existing `golden_tolerance` entry BEFORE writing the row (Stage 1b).
 - The dispatch PROBE item 4 + plan §6.4 "Cat-X tolerance-budget compliance"
   (`docs/phases/phase-3-plan.md:1608`) say: if `rigid-body` has no
   `tolerance-budget.toml` cap, Stage 0 adds one (≥ the §6.4 tolerances), operator-
@@ -274,7 +301,12 @@ this consumer site). **No Hard-Rule-2 missing-surface block.**
   §S.3 landing (recommended) OR explicitly overrides §S to require a cross_stack
   budget cap.
 
-### D-USD — §2.5 "every Stack E sim ships USD export" vs defer  ⚠ OPEN
+### D-USD — §2.5 "every Stack E sim ships USD export" vs defer  ✅ RESOLVED (operator: DEFER)
+> **RESOLVED v2 (operator):** DEFER (Phase-3-Stack-E-WIDE policy, not task-4-only).
+> Do NOT build USD export. Document the §2.5 gap in spec-ref §-export; the
+> common-warp USD surface (`common_warp.usd`) is built in **Phase-4 WU-D** — that
+> is the deferral target. Carry the deferred §2.5 item into the
+> `closed-with-shifted-N` close (Stage 2).
 - **Spec §2.5** (`docs/architecture.md:1349`): *"Every Stack E sim ships with USD
   export alongside Alembic / VDB."* common-warp is *spec'd* to provide USD export
   (`docs/architecture.md:974`).
@@ -470,14 +502,17 @@ progress.md final entry. Convention-#12 SHA back-fill.
 
 ## § 11 — Closing criteria & operator-ratification items
 
-**Charter verdict: SHIFTED** — ready for Stage 0 *with* four operator-pending
-D-classes:
-1. **D-ALGO** — confirm ABA/reduced-coordinate (lean) or elect maximal-coordinate.
-2. **D-ANCHOR** — confirm the corrected 3-anchor set (Goldstein §4.3 is wrong).
-3. **D-TOL** — confirm `golden_tolerance` landing (lean, per §S.3) or override §S
-   to require a cross_stack budget cap (the dispatch's literal ask).
-4. **D-USD** — confirm DEFER (lean) or require USD export now (→ common-warp USD
-   dependency first).
+**Charter verdict (v1): SHIFTED** — was ready for Stage 0 *with* four
+operator-pending D-classes. **v2 (execution Stage 0): all four RATIFIED + flipped
+RESOLVED:**
+1. **D-ALGO** — ✅ RESOLVED: ABA / reduced-coordinate, Featherstone Ch.7.
+2. **D-ANCHOR** — ✅ RESOLVED: corrected 3-anchor set (A1 M&T §3.2; A2 DLMF
+   §19.2+§22.19(i) / L&L §11; A3 DLMF §22.19(i)+§22.2 sn). Goldstein §4.3 wrong-cite
+   → Stage-2 SHIFT.
+3. **D-TOL** — ✅ RESOLVED: `[golden_tolerance.rigid-body.articulated-pedagogical]`
+   per §S.3; no cross_stack budget cap, no §2.6 amendment.
+4. **D-USD** — ✅ RESOLVED: DEFER (→ Phase-4 WU-D common-warp USD surface); carried
+   into `closed-with-shifted-N`.
 
 RESOLVED-IN-CHARTER (no operator action): D-LAYOUT, D-DET, D-CI, D-CAPTURE-API,
 D-PBT, D-TAG. No new mutation target. No new tolerance-schema branch. No
