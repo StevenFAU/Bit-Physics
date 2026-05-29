@@ -164,3 +164,52 @@
   from Bender's "Latest stable" — intentional, not an inconsistency.
 - **Disposition:** PROPOSED. Spec edit deferred to the operator at a phase boundary
   (spec frozen in Phase 3 per §9.6).
+
+---
+
+## A-6 — Spec Appendix D.3 PhysicsNeMo row: PINN-tutorial home = `physicsnemo-sym` (not core); `<latest 1.x>` pin text stale
+
+- **Surfaced by:** sub-phase-phase-3-pinn-poisson (task-7), execution Stage 0
+  (2026-05-29). D-VENDOR-SHA/ROLE, operator-ratified: vendor `physicsnemo-sym`
+  read-only (NOT the §2.18-pinned core `physicsnemo`).
+- **Location:** `docs/architecture.md:2553` (Appendix D.3 vendored-dependency-pins
+  table, NVIDIA PhysicsNeMo row).
+- **Current text:**
+  > `| **NVIDIA PhysicsNeMo** | Phase 3 task-7 (PINN); Phase 4 WU-E; Phase 4 Stage 35 | `pip install nvidia-physicsnemo==<latest 1.x>` | Apache-2.0 | `pip index versions nvidia-physicsnemo` |`
+- **Proposed text:**
+  > `| **NVIDIA PhysicsNeMo-Sym** (PINN/elliptic-PDE tutorials) | Phase 3 task-7 (PINN); Phase 4 WU-E; Phase 4 Stage 35 | `physicsnemo-sym` v2.4.0 (`acaeb6dc…`), Apache-2.0, vendored READ-ONLY (NOT pip-installed) | Apache-2.0 | `gh api repos/NVIDIA/physicsnemo-sym/git/refs/tags/v2.4.0` |`
+- **Verified rationale (Convention #8 — verified at assertion this Stage 0):** two
+  defects in the current D.3 row.
+  1. **Wrong repo for the tutorial.** The PINN / elliptic-PDE example tutorials
+     (`examples/helmholtz`, `examples/darcy`, `examples/ldc`, `airfoil_pinn`, …) live
+     in **`NVIDIA/physicsnemo-sym`**, NOT the `NVIDIA/physicsnemo` *core* repo. Verified
+     this Stage 0: `gh api repos/NVIDIA/physicsnemo-sym/contents/examples/helmholtz?ref=acaeb6dc…`
+     returns `helmholtz.py` / `helmholtz_hardBC.py` / `helmholtz_ntk.py`; the core repo
+     has no such PINN examples. task-7's cross-check oracle is the soft-constraint
+     `examples/helmholtz/helmholtz.py` (Helmholtz at k=0 = Poisson).
+  2. **Stale pin text.** `<latest 1.x>` no longer resolves to a current release: core
+     `nvidia-physicsnemo` v1.x **ended at v1.3.0** (verified: `gh api
+     repos/NVIDIA/physicsnemo/releases` → 1.x tags = {v1.0.0, v1.0.1, v1.1.0, v1.1.1,
+     v1.2.0, v1.3.0}; latest = **v2.1.0**). The framework has moved to 2.x, so the 1.x
+     pin is frozen-in-the-past.
+  The spec's §2702 rule "PhysicsNeMo 1.x → 2.0: BLOCKED" is a **runtime-link** /
+  pip-dependency rule; it does **not** bind a **READ-ONLY vendored** reference source
+  (the vendored material is cited for independent derivation under spec §2.4/§2.8 +
+  Convention #8 / §H.2 cite-don't-import, NOT pip-installed or runtime-linked). task-7
+  vendored `references/PhysicsNeMo-PINN/` (LICENSE.txt + UPSTREAM_README.md +
+  `examples/helmholtz/helmholtz.py` + `examples/helmholtz/helmholtz_hardBC.py`) +
+  `MANIFEST.toml` at `physicsnemo-sym` v2.4.0 (`acaeb6dc38ecda58559b5286d3cb743e8cf930d3`,
+  lightweight tag → commit, verified via `gh api
+  repos/NVIDIA/physicsnemo-sym/git/refs/tags/v2.4.0`; Apache-2.0 via vendored
+  `LICENSE.txt`).
+- **Related plan defect (deferred to operator, NOT amended here — A-4 pattern, charter
+  §0.3 no-plan-edit):** `docs/phases/phase-3-plan.md:293-300` (§2.18) pins task-7 at
+  **`https://github.com/NVIDIA/physicsnemo`** (core) SHA `766e485a…` v2.1.0 — the **wrong
+  repo** for the PINN tutorial (same defect as D.3 #1), and `:300` names the manifest
+  `references/PhysicsNeMo-PINN/manifest.yaml` (the vendored manifest is `MANIFEST.toml`
+  per the cloth/lenia/NCA precedent — a §0.3 SHIFT). The operator decides whether to
+  re-point §2.18 to `physicsnemo-sym` `acaeb6dc…` (or ratify the core pin as an
+  intentional record of the framework, with the read-only tutorial vendored separately).
+- **Disposition:** PROPOSED. task-7 vendors `physicsnemo-sym` v2.4.0 (`acaeb6dc…`)
+  read-only. Spec edit + §2.18 plan-registry re-point deferred to the operator at a phase
+  boundary (spec frozen in Phase 3 per §9.6; agent does NOT edit the plan per §0.3).

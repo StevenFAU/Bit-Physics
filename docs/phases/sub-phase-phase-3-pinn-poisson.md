@@ -5,8 +5,8 @@ sim_identity: pinn-poisson
 package_leaf: packages/pinn-poisson
 category: learned-dynamics (NEW category)
 stack: E (Warp substrate) + PyTorch
-stage: plan-drafting
-verdict: CONFIRMED-SHIFTED (plan-drafting; awaits operator ratification of D-classes before Stage 0)
+stage: execution (Stage 0 onward)
+verdict: CONFIRMED-SHIFTED (plan-drafting); D-classes RATIFIED + RESOLVED at execution Stage 0
 date: 2026-05-29
 head_sha: 5cddb6c8ca88646068af9add2afce3335f63d436
 prior_phase_tag: v0.2.0-phase-2
@@ -15,6 +15,11 @@ integrity_digest_at_head: b7460150b61213bb8909659ffc7b103d846ad782f5062d272f2ce5
 revisions:
   - v1 (2026-05-29) — initial charter; Warp↔PyTorch interop probed WORKS (no BLOCK);
     D-classes routed with leans; A-6 staged for Stage 0.
+  - v2 (2026-05-29) — execution Stage 0: operator-ratified D-classes flipped
+    OPERATOR-PENDING → RESOLVED. D-WARP-TORCH-INTEROP re-probed live on Warp 1.13.0 /
+    PyTorch 2.12.0 (CPU zero-copy, f64, round-trip bit-identical — WORKS, no BLOCK).
+    physicsnemo-sym v2.4.0 (acaeb6dc…, Apache-2.0) vendored read-only +
+    references/PhysicsNeMo-PINN/MANIFEST.toml. A-6 filed (spec D.3 + §2.18 plan note).
 ---
 
 # Sub-phase charter — task-7 PINN-Poisson (Phase 3, sub-phase 3.6)
@@ -132,11 +137,15 @@ task-9).
 
 ## 6. D-class decision routing
 
-**Operator-pending (ratify before Stage 0):** D-WARP-TORCH-INTEROP (report-only — works),
-D-ANCHOR-SET, D-DET, D-VENDOR-SHA/ROLE (A-6), D-MUTATION. **Resolved-in-charter** (leans
+**RESOLVED at execution Stage 0 (operator-ratified; v2 — 2026-05-29):**
+D-WARP-TORCH-INTEROP (re-probed WORKS), D-ANCHOR-SET, D-DET, D-VENDOR-SHA/ROLE (A-6 filed),
+D-MUTATION — all flipped OPERATOR-PENDING → **RESOLVED** below. **Resolved-in-charter** (leans
 per §0.3/precedent): D-USD, D-TOL, D-LAYOUT, D-CI, D-MANIFEST-FMT, D-NAMING, D-CAPTURE-DESC, D-TAG.
 
-### D-WARP-TORCH-INTEROP ⚠ (BLOCK gate) — WORKS, no BLOCK
+### D-WARP-TORCH-INTEROP ⚠ (BLOCK gate) — **RESOLVED v2: WORKS, no BLOCK** (re-probed Stage 0)
+**Stage-0 re-probe (2026-05-29):** `wp.from_torch`/`wp.to_torch` round-trip **bit-identical**
+(`torch.equal` True) on the installed **Warp 1.13.0 / PyTorch 2.12.0**; CPU **zero-copy
+confirmed** (`t.data_ptr() == arr.ptr` True); **f64 preserved**. No BLOCK fired.
 **Finding (probed live):** `wp.from_torch`/`wp.to_torch` round-trip bit-identical on the
 installed Warp 1.13.0 / PyTorch 2.12.0; CPU zero-copy confirmed (shared ptr); f64 preserved.
 **Pattern:** PINN computes in torch (autodiff residual); the canonical capture crosses the
@@ -144,7 +153,7 @@ boundary via `wp.from_torch(field_tensor)` → `Capture` payload → `write_capt
 untestable (no CUDA driver) but off the critical path (CPU execution). **No work-around needed.**
 Stage 0 re-probes on the installed versions and BLOCKs only on a genuine break (§6.7).
 
-### D-ANCHOR-SET ⚠ — verification-DESIGN (not just cite-checking)
+### D-ANCHOR-SET ⚠ — **RESOLVED v2** (operator-ratified) — verification-DESIGN (not just cite-checking)
 **Finding:** plan §6.7 Anchor 1 (`u=log|z|`) and Anchor 2 (`u=sinh(πx)sin(πy)`) are **both
 harmonic** (`Δu=0`, i.e. Poisson with `f=0`) — they verify the Laplacian + Dirichlet-BC
 handling but NOT the Poisson **source term**. **LEAN (required):** the anchor set MUST include
@@ -161,7 +170,7 @@ The **FD solver is a high-precision NUMERICAL baseline anchored to the analytic 
 NOT itself independent (it inherits its own discretization error) — document explicitly in
 spec-ref §6. NO plan edit (§0.3); SHIFTs documented in report §1.
 
-### D-DET ⚠ — two rows; measure-then-declare; EFECT not the gate
+### D-DET ⚠ — **RESOLVED v2** (operator-ratified; measure-then-declare at 1b-PINN) — two rows; EFECT not the gate
 Two determinism-registry rows per §3.2.5 (`:487-503`), `[learned-dynamics.pinn-poisson.{training,inference}]`:
 - **training** — DEFAULT non-deterministic-by-design (PyTorch backprop) + `distributional_bound="EFECT"`
   (NCA shape); scope `n/a`.
@@ -179,14 +188,14 @@ the EFECT bound characterizes TRAINING reproducibility — it is **NOT** the acc
 load-bearing gates are the **analytic + FD verification** on the frozen network; a STOP-EFECT
 does NOT block them.
 
-### D-VENDOR-ROLE — read-only reference-oracle (reimplement from Raissi)
+### D-VENDOR-ROLE — **RESOLVED v2** (operator-ratified) — read-only reference-oracle (reimplement from Raissi)
 **LEAN:** `references/PhysicsNeMo-PINN/` vendored **READ-ONLY reference-oracle**; reimplement the
 PINN from **Raissi 2019** (cite by name, §H.2 cite-don't-import); physicsnemo-sym cross-checks at
 derivation time; **do NOT runtime-link / pip-install the framework** (heavy; SPlisHSPlasH / Bender /
 growing-ca precedent). `references/` excluded from end-of-file-fixer / trailing-whitespace / ruff
 hooks + Cat-2 (cloth/NCA precedent).
 
-### D-VENDOR-SHA ⚠ — repo split + version drift (file A-6 at Stage 0)
+### D-VENDOR-SHA ⚠ — **RESOLVED v2** (vendored physicsnemo-sym v2.4.0 `acaeb6dc…`; A-6 filed) — repo split + version drift
 **Finding:** §2.18 (`:293-300`) pinned **`NVIDIA/physicsnemo` (core)** `766e485a` (v2.1.0); spec D.3
 (`:2553`) pins `pip install nvidia-physicsnemo==<latest 1.x>`. But the **PINN / elliptic-PDE
 tutorials live in `NVIDIA/physicsnemo-sym`** (`examples/`: `helmholtz`, `darcy`, `airfoil_pinn`, …);
@@ -199,7 +208,7 @@ example), authors `MANIFEST.toml`, and files **corrigendum A-6** correcting spec
 home = physicsnemo-sym; pin text stale) with the §2.18 plan-registry correction deferred to the
 operator (A-4 pattern). **Surface to operator** (the §2.18 pin points at the wrong repo for the tutorial).
 
-### D-MUTATION ⚠ — classical-FD reference: defer the mutation target
+### D-MUTATION ⚠ — **RESOLVED v2** (operator-ratified DEFER to task-9) — classical-FD reference: defer the mutation target
 task-7 is a **sim** (not a mutation target itself; §6.0 item 12 — mutation = task-1/2/9 testkit
 territory). It ships a NEW reusable testkit surface (`poisson-2d-fd`), which raises the question:
 is the FD reference a mutation target? **LEAN: DEFER** — its correctness is established by the
