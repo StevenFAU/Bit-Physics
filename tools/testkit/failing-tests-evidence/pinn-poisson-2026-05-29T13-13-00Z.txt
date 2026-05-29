@@ -1,0 +1,286 @@
+# pinn-poisson Stage 1a — verbatim failing acceptance suite (TDD RED)
+# captured: 2026-05-29T13-13-00Z
+# command: uv run --no-sync python -m pytest packages/pinn-poisson/tests/ -v
+# 9 acceptance gates FAIL (NotImplementedError — Stage 1b deliverables);
+# 9 analytic-core sanity tests PASS (the verification ground truth).
+#
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/pinn-poisson
+configfile: pyproject.toml
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 18 items
+
+packages/pinn-poisson/tests/test_analytic_problems.py::test_three_independent_anchors PASSED [  5%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_numpy_torch_backend_agreement[anchor1-harmonic-fundamental] PASSED [ 11%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_numpy_torch_backend_agreement[anchor2-harmonic-separation] PASSED [ 16%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_numpy_torch_backend_agreement[anchor3-mms-sine-source] PASSED [ 22%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_source_equals_laplacian[anchor1-harmonic-fundamental] PASSED [ 27%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_source_equals_laplacian[anchor2-harmonic-separation] PASSED [ 33%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_source_equals_laplacian[anchor3-mms-sine-source] PASSED [ 38%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_harmonic_anchors_have_zero_source PASSED [ 44%]
+packages/pinn-poisson/tests/test_analytic_problems.py::test_anchor3_zero_dirichlet_bc PASSED [ 50%]
+packages/pinn-poisson/tests/test_convergence_with_collocation.py::test_error_decreases_with_collocation_density FAILED [ 55%]
+packages/pinn-poisson/tests/test_fd_reference.py::test_fd_matches_analytic_anchors FAILED [ 61%]
+packages/pinn-poisson/tests/test_fd_reference.py::test_fd_convergence_order_is_two FAILED [ 66%]
+packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor1-harmonic-fundamental] FAILED [ 72%]
+packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor2-harmonic-separation] FAILED [ 77%]
+packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor3-mms-sine-source] FAILED [ 83%]
+packages/pinn-poisson/tests/test_inference_vs_fd.py::test_pinn_matches_fd_reference_within_tolerance FAILED [ 88%]
+packages/pinn-poisson/tests/test_training_convergence.py::test_training_loss_decreases FAILED [ 94%]
+packages/pinn-poisson/tests/test_training_convergence.py::test_training_reaches_small_loss FAILED [100%]
+
+=================================== FAILURES ===================================
+________________ test_error_decreases_with_collocation_density _________________
+
+    def test_error_decreases_with_collocation_density() -> None:
+        n = 64
+        grid = np.linspace(0.0, 1.0, n)
+        gx, gy = np.meshgrid(grid, grid)
+        exact = CANONICAL_PROBLEM.u_exact(gx, gy, np)
+    
+        errors = []
+        for n_interior in (256, 1024, 4096):
+            config = PINNConfig(seed=42, n_interior=n_interior)
+>           result = train_pinn(CANONICAL_PROBLEM, config)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_convergence_with_collocation.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=256, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+_______________________ test_fd_matches_analytic_anchors _______________________
+
+    def test_fd_matches_analytic_anchors() -> None:
+        n = 128
+        grid = np.linspace(0.0, 1.0, n)
+        gx, gy = np.meshgrid(grid, grid)
+        for problem in ANCHORS:
+>           fd = fd_solve(problem, n)
+                 ^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_fd_reference.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor1-harmonic-fundamental', reference='Evans PDE 2e § 2.2 (§ 2.2.1 fundamental solution, n=2)', harmonic=True, _u=<function _anchor1_u at 0x7beeb9cb5d00>, _f=<function _zero_source at 0x7beeb9cb65c0>)
+n = 128
+
+    def fd_solve(problem: PoissonProblem, n: int) -> np.ndarray:
+        """Solve ``Du = f`` on an ``nxn`` interior grid (Dirichlet ``g`` from ``problem``).
+    
+        Returns the FD solution sampled on the ``nxn`` interior nodes.
+        """
+>       raise NotImplementedError(
+            "Stage 1b-FD: path-load tools/testkit/code_verification/classical-references/"
+            "poisson-2d-fd/solver.py and delegate to solve_poisson_2d(problem, n)."
+        )
+E       NotImplementedError: Stage 1b-FD: path-load tools/testkit/code_verification/classical-references/poisson-2d-fd/solver.py and delegate to solve_poisson_2d(problem, n).
+
+packages/pinn-poisson/pinn_poisson/fd_reference.py:26: NotImplementedError
+_______________________ test_fd_convergence_order_is_two _______________________
+
+    def test_fd_convergence_order_is_two() -> None:
+>       orders = fd_convergence_orders(ANCHOR3, [16, 32, 64, 128])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_fd_reference.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+ns = [16, 32, 64, 128]
+
+    def fd_convergence_orders(problem: PoissonProblem, ns: list[int]) -> list[float]:
+        """Observed FD convergence orders across grid refinements ``ns`` (expect ≈ 2).
+    
+        For the MMS anchor the discrete-L2 error vs the analytic solution should
+        decrease as ``O(h^2)`` (standard 5-point Laplacian truncation), giving an
+        observed order ``log2(e_coarse / e_fine) ≈ 2`` between successive halvings.
+        """
+>       raise NotImplementedError(
+            "Stage 1b-FD: compute discrete-L2 errors vs problem.u_exact across ns and "
+            "return successive log2 error ratios."
+        )
+E       NotImplementedError: Stage 1b-FD: compute discrete-L2 errors vs problem.u_exact across ns and return successive log2 error ratios.
+
+packages/pinn-poisson/pinn_poisson/fd_reference.py:39: NotImplementedError
+__ test_pinn_matches_analytic_within_tolerance[anchor1-harmonic-fundamental] ___
+
+problem = PoissonProblem(name='anchor1-harmonic-fundamental', reference='Evans PDE 2e § 2.2 (§ 2.2.1 fundamental solution, n=2)', harmonic=True, _u=<function _anchor1_u at 0x7beeb9cb5d00>, _f=<function _zero_source at 0x7beeb9cb65c0>)
+golden_tolerance = {'analytical_l2': 0.001, 'fd_l2': 0.01}
+
+    @pytest.mark.parametrize("problem", ANCHORS, ids=[p.name for p in ANCHORS])
+    def test_pinn_matches_analytic_within_tolerance(
+        problem: object, golden_tolerance: dict[str, float]
+    ) -> None:
+        n = 64
+        config = PINNConfig(seed=42)
+>       result = train_pinn(problem, config)  # type: ignore[arg-type]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_inference_vs_analytic.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor1-harmonic-fundamental', reference='Evans PDE 2e § 2.2 (§ 2.2.1 fundamental solution, n=2)', harmonic=True, _u=<function _anchor1_u at 0x7beeb9cb5d00>, _f=<function _zero_source at 0x7beeb9cb65c0>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+___ test_pinn_matches_analytic_within_tolerance[anchor2-harmonic-separation] ___
+
+problem = PoissonProblem(name='anchor2-harmonic-separation', reference="Strauss PDE 2e § 6.2 'Rectangles and Cubes'", harmonic=True, _u=<function _anchor2_u at 0x7beeb9cb6480>, _f=<function _zero_source at 0x7beeb9cb65c0>)
+golden_tolerance = {'analytical_l2': 0.001, 'fd_l2': 0.01}
+
+    @pytest.mark.parametrize("problem", ANCHORS, ids=[p.name for p in ANCHORS])
+    def test_pinn_matches_analytic_within_tolerance(
+        problem: object, golden_tolerance: dict[str, float]
+    ) -> None:
+        n = 64
+        config = PINNConfig(seed=42)
+>       result = train_pinn(problem, config)  # type: ignore[arg-type]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_inference_vs_analytic.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor2-harmonic-separation', reference="Strauss PDE 2e § 6.2 'Rectangles and Cubes'", harmonic=True, _u=<function _anchor2_u at 0x7beeb9cb6480>, _f=<function _zero_source at 0x7beeb9cb65c0>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+_____ test_pinn_matches_analytic_within_tolerance[anchor3-mms-sine-source] _____
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+golden_tolerance = {'analytical_l2': 0.001, 'fd_l2': 0.01}
+
+    @pytest.mark.parametrize("problem", ANCHORS, ids=[p.name for p in ANCHORS])
+    def test_pinn_matches_analytic_within_tolerance(
+        problem: object, golden_tolerance: dict[str, float]
+    ) -> None:
+        n = 64
+        config = PINNConfig(seed=42)
+>       result = train_pinn(problem, config)  # type: ignore[arg-type]
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_inference_vs_analytic.py:31: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+_______________ test_pinn_matches_fd_reference_within_tolerance ________________
+
+golden_tolerance = {'analytical_l2': 0.001, 'fd_l2': 0.01}
+
+    def test_pinn_matches_fd_reference_within_tolerance(
+        golden_tolerance: dict[str, float],
+    ) -> None:
+        n = 64
+>       result = train_pinn(CANONICAL_PROBLEM, PINNConfig(seed=42))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_inference_vs_fd.py:23: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+_________________________ test_training_loss_decreases _________________________
+
+    def test_training_loss_decreases() -> None:
+        config = PINNConfig(seed=42, iterations=5000)
+>       result = train_pinn(CANONICAL_PROBLEM, config)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_training_convergence.py:15: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+_______________________ test_training_reaches_small_loss _______________________
+
+    def test_training_reaches_small_loss() -> None:
+        config = PINNConfig(seed=42, iterations=5000)
+>       result = train_pinn(CANONICAL_PROBLEM, config)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+packages/pinn-poisson/tests/test_training_convergence.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+problem = PoissonProblem(name='anchor3-mms-sine-source', reference='hand-derived MMS (f = -2 pi^2 sin(pi x) sin(pi y), zero Dirichlet BC)', harmonic=False, _u=<function _anchor3_u at 0x7beeb9cb6520>, _f=<function _anchor3_source at 0x7beeb9cb6660>)
+config = PINNConfig(seed=42, hidden_layers=4, hidden_units=64, activation='tanh', n_interior=2048, n_boundary=256, iterations=5000, learning_rate=0.001, boundary_weight=1.0, device='cpu')
+
+    def train_pinn(problem: PoissonProblem, config: PINNConfig | None = None) -> TrainResult:
+        """Train a soft-constraint PINN on ``problem``; deterministic given ``config.seed``."""
+>       raise NotImplementedError(
+            "Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize "
+            "interior_loss + boundary_weight*boundary_loss for config.iterations."
+        )
+E       NotImplementedError: Stage 1b-PINN: seed RNG, sample collocation+boundary points, Adam-minimize interior_loss + boundary_weight*boundary_loss for config.iterations.
+
+packages/pinn-poisson/pinn_poisson/train.py:30: NotImplementedError
+=========================== short test summary info ============================
+FAILED packages/pinn-poisson/tests/test_convergence_with_collocation.py::test_error_decreases_with_collocation_density
+FAILED packages/pinn-poisson/tests/test_fd_reference.py::test_fd_matches_analytic_anchors
+FAILED packages/pinn-poisson/tests/test_fd_reference.py::test_fd_convergence_order_is_two
+FAILED packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor1-harmonic-fundamental]
+FAILED packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor2-harmonic-separation]
+FAILED packages/pinn-poisson/tests/test_inference_vs_analytic.py::test_pinn_matches_analytic_within_tolerance[anchor3-mms-sine-source]
+FAILED packages/pinn-poisson/tests/test_inference_vs_fd.py::test_pinn_matches_fd_reference_within_tolerance
+FAILED packages/pinn-poisson/tests/test_training_convergence.py::test_training_loss_decreases
+FAILED packages/pinn-poisson/tests/test_training_convergence.py::test_training_reaches_small_loss
+========================= 9 failed, 9 passed in 0.91s ==========================
