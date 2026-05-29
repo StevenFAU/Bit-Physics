@@ -1,6 +1,8 @@
-"""CLI: run the canonical coupled 3dgs-mpm sim -> capture + golden frames (spec-ref § 3.2.6).
+"""CLI: run the canonical coupled 3dgs-mpm sim -> capture + rendered frames (spec-ref § 3.2.6).
 
-Scaffolded at Stage 1a (argparse shell; the run path lands at Stage 1b).
+``python -m gs_mpm run --out <dir>`` runs the canonical schedule, writes the capture
+(``<dir>/3dgs-mpm.{h5,json}``, BOTH MPM + Gaussian state) and the rendered frames
+(``<dir>/3dgs-mpm-canonical-frame-{N}.png``).
 """
 
 from __future__ import annotations
@@ -16,10 +18,20 @@ def main(argv: list[str] | None = None) -> int:
     run = sub.add_parser("run", help="run the canonical coupled sim")
     run.add_argument("--out", type=Path, required=True, help="output directory")
     run.add_argument("--seed", type=int, default=0)
-    run.add_argument("--steps", type=int, default=64)
     args = parser.parse_args(argv)
+
     if args.command == "run":
-        raise NotImplementedError("Stage 1b")
+        from common_3dgs import save_png
+
+        from .sim import run_canonical_sim, write_capture_file
+
+        out: Path = args.out
+        out.mkdir(parents=True, exist_ok=True)
+        frames = run_canonical_sim(seed=args.seed)
+        for fr in frames:
+            save_png(fr.image, out / f"3dgs-mpm-canonical-frame-{fr.step}.png")
+        write_capture_file(frames, out / "3dgs-mpm")
+        print(f"wrote {len(frames)} frames + capture to {out}")
     return 0
 
 

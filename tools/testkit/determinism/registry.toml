@@ -194,9 +194,10 @@ seed_pinned = true
 # mpm-multimaterial-stack-e) -> coupling (deterministic numpy; eigendecomposition
 # sign/handedness fixed in gs_mpm.coupling.extract_scale_rotation) -> render
 # (common-3dgs bit-exact/same-hw, atomic-free serial CPU wp.launch). No atomics, no
-# subgroup ops. Declared at Stage 1a; MEASURED at Stage 1b-2 (run-twice byte/sha
-# compare of the coupled capture + rendered frames). Re-declare on evidence (HARD
-# RULE 2); do NOT widen.
+# subgroup ops. Declared at Stage 1a; **MEASURED at Stage 1b-2 (HELD)**: two runs of
+# run_canonical_sim(seed=0) are byte-identical across every frame image + particle_F +
+# gaussian_scales/rotations/positions (np.array_equal all True), and the written capture
+# .h5 is byte-identical run-to-run (sha256 match). Declaration HOLDS; no re-declaration.
 [neural-rendered.3dgs-mpm]
 stack = "E"
 class = "bit-exact"

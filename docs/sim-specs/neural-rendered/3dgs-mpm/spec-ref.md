@@ -63,10 +63,17 @@ pinn-poisson / neural-ca scope notes). The § 6.8 "GPU memory peak" perf note is
 
 ### 3.1 Canonical scene (D-SCENE: small synthetic)
 
-A **small synthetic 3DGS object** of ~200–500 Gaussians, generated **deterministically**
-(seeded) — e.g. a procedurally-seeded Gaussian blob/cube. NOT a vendored photorealistic Inria
-scene (CPU tractability + render determinism + LFS-lightness). Construction documented here at
-Stage 1b. `TODO(Stage-1b): record the exact generator (seed, N, geometry, SH degree).`
+A **small synthetic 3DGS object** of **256 Gaussians** (`gs_mpm.scene.build_canonical_scene`,
+`seed=0`), NOT a vendored photorealistic Inria scene (CPU tractability + render determinism +
+LFS-lightness). Generator: 256 points sampled **uniformly inside a sphere** (centre
+`(0.5, 0.5, 0.65)`, radius `0.15`; direction = normalized `standard_normal`, radius =
+`0.15·∛U`) under `np.random.default_rng(0)`; per-Gaussian `scale = 0.025` (isotropic),
+`rotation = identity quat`, `opacity = 0.9`, **SH degree 0** (`K=1`, DC term coloured by
+normalized position → deterministic spatial structure; FROZEN in MVP). Each Gaussian is bound
+**1:1** to an MPM particle at the same position. The blob is dropped (initial `v_z = −2`,
+gravity `−9.81`) onto a sticky floor (`floor_z_index = 4`) on a `32³` MPM grid at `dt = 1e-3`
+for `300` steps, captured every `100` (frames `0, 100, 200, 300`) — the blob impacts the
+floor (~step 200) and visibly deforms (`det(F)` dips to `0.08` then relaxes; always `> 0`).
 
 ### 3.2 Per-frame coupling loop
 
@@ -91,12 +98,16 @@ for step in 1..N:
     render(model', camera, ...) → frame
 ```
 
-`TODO(Stage-1b): the Gaussian↔particle binding (1:1 or sampled) + the canonical camera(s).`
+**Binding:** 1:1 (Gaussian `i` ↔ MPM particle `i`); centers ← particle positions each frame;
+scale/rotation ← `couple_gaussians(rest_scales, rest_quats, F)` applied to the **rest**
+covariance. **Camera:** `Camera.look_at(eye=(0.5,0.5,−1.0), target=(0.5,0.5,0.65),
+fov_y=0.8, 96×96)` — looks down +Z at the blob, up=+Y (non-degenerate); black background.
 
 ### 3.2.6 CLI
 
-`packages/3dgs-mpm` exposes a CLI (run canonical sim → write capture + frames).
-`TODO(Stage-1b): finalize argv.`
+`python -m gs_mpm run --out <dir> [--seed N]` runs the canonical schedule and writes
+`<dir>/3dgs-mpm.{h5,json}` (capture, MPM + Gaussian state) + `<dir>/3dgs-mpm-canonical-frame-
+{0,100,200,300}.png` (rendered frames).
 
 ## 4. Algebraic form (coupling-correctness core)
 
@@ -176,30 +187,47 @@ state:
 | `gaussian_scales` | `(N_g, 3) f32` | Gaussian scales (post-coupling) |
 | `gaussian_rotations` | `(N_g, 4) f32` wxyz | Gaussian quaternions (post-coupling) |
 
-manifest: `schema_version="1.0.0"`, `sim="3dgs-mpm"`, `stack="E"`, `config{…}`, `run{…}`,
-`payload{format="hdf5", …}`, `determinism{claimed=…}`. `TODO(Stage-1b): finalize field set +
-descriptor + Appendix-D.2.3 proposal.`
+manifest (capture-v1 schema): `schema_version="1.0.0"`;
+`sim={category="neural-rendered", name="3dgs-mpm", variant="physgaussian-coupling"}`;
+`stack={build_id="phase-3", name="warp-cpu", version="0.0.0"}`;
+`config={dims=[32,32,32], dtype="f64", seed=0, tier="reference", params={n_gaussians,
+n_particles, grid_n, dt, gravity_z, floor_z_index}}`; `run={capture_interval=100,
+start_utc="2026-05-29T00:00:00Z" (FIXED for byte-reproducibility), step_count, wall_clock_
+seconds=0.0}`; `payload={format="hdf5", path, checksum}` (path+checksum filled by the testkit
+writer); `determinism={atomic_ops=false, claimed="bit-exact-same-hw", subgroup_ops=false}`.
+The capture is byte-reproducible (two runs → identical `.h5` sha256). Appendix-D.2.3 descriptor
+proposed at landing (§2 of the report).
 
 ## 8. Determinism
 
 End-to-end registry row `[neural-rendered.3dgs-mpm]` (stack=E) **composes**: MPM
-(`bit-exact-same-hw`, serial `wp.launch`) → coupling (deterministic numpy/Warp; eigendecomp
-sign-fixed) → render (`bit-exact / same-stack-same-hw`). `TODO(Stage-1b-2): MEASURE
-(two-run byte/sha compare); compose the row; re-declare on evidence (HARD RULE 2).`
+(`bit-exact-same-hw`, serial `wp.launch`) → coupling (deterministic numpy; eigendecomp
+sign-fixed `w≥0`, det-`+1`) → render (`bit-exact / same-stack-same-hw`). **MEASURED at Stage
+1b-2 (HELD):** two runs of `run_canonical_sim(seed=0)` are byte-identical across every frame
+image AND `particle_F` / `gaussian_scales` / `gaussian_rotations` / `particle_pos`
+(`np.array_equal` all True); the written capture `.h5` is byte-identical run-to-run (sha256
+match). Class `bit-exact`, scope `same-stack-same-hw` — declaration HOLDS (no re-declaration).
 
 ## 9. Equivalence / render-similarity bounds
 
 Single-stack ⇒ **NO gate-14** (no cross-stack pair). Prong 2 bounds locked to the § 2.12
 floors and measured value recorded:
 
-| Metric | Bound (locked) | Measured | Notes |
-|---|---|---|---|
-| `psnr_min` | ≥ 28 | `TODO(Stage-1b-3)` | should be ∞ (byte-identical) |
-| `ssim_min` | ≥ 0.85 | `TODO(Stage-1b-3)` | should be 1.0 |
-| `lpips_max` | ≤ 0.15 | `TODO(Stage-1b-3)` | should be 0.0 |
+Measured at Stage 1b-3 across the 4 canonical frames (sim render vs the committed PNG
+goldens), bounds LOCKED at the §2.12 floors:
 
-> Bounds are AT-OR-ABOVE the floors (deterministic) — do NOT copy NCA's below-floor
-> (23/0.80/0.05) statistical row. Below-floor at measurement = STOP-RENDER-FLOOR (§ 6).
+| Metric | Bound (locked) | Measured (range over frames 0/100/200/300) | Margin |
+|---|---|---|---|
+| `psnr_min` | ≥ 28 | **59.94 – 63.80 dB** | ≥ +32 dB |
+| `ssim_min` | ≥ 0.85 | **0.99973 – 0.99992** | ≥ +0.15 |
+| `lpips_max` | ≤ 0.15 | **0.00001** | −0.15 |
+
+> Bounds are AT-OR-ABOVE the floors (deterministic) — NOT NCA's below-floor (23/0.80/0.05)
+> statistical row. The measured values clear the floors by a huge margin; the residual (PSNR
+> ~60 dB rather than ∞) is **8-bit PNG quantization only** (the render is float32, the golden
+> is a quantized PNG) — the render itself is byte-identical run-to-run (§8). This is the
+> deterministic own-pipeline regression: a below-floor result would have been a
+> STOP-RENDER-FLOOR (rasterization non-determinism / coupling bug); it is NOT (§ 6).
 
 ## 10. Diagnostics
 

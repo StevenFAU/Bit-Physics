@@ -19,12 +19,7 @@ from pathlib import Path
 import numpy as np
 from render_similarity import lpips, psnr, ssim
 
-from gs_mpm.scene import build_canonical_scene
-from gs_mpm.sim import run_coupled_sim
-
-CANONICAL_STEPS = 64
-CAPTURE_INTERVAL = 32
-IMAGE_HW = 96  # >= 64 so LPIPS-AlexNet accepts the input (render-similarity lesson)
+from gs_mpm.sim import run_canonical_sim
 
 
 def _load_png(path: Path) -> np.ndarray:
@@ -35,15 +30,7 @@ def _load_png(path: Path) -> np.ndarray:
 
 
 def _render_canonical_frames() -> list:
-    scene = build_canonical_scene(seed=0)
-    return run_coupled_sim(
-        scene,
-        n_steps=CANONICAL_STEPS,
-        capture_interval=CAPTURE_INTERVAL,
-        image_height=IMAGE_HW,
-        image_width=IMAGE_HW,
-        seed=0,
-    )
+    return run_canonical_sim(seed=0)
 
 
 def test_golden_renders_exist(golden_renders_dir: Path) -> None:
