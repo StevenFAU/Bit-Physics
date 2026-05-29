@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "poisson-2d-analytic-dirichlet",
+  "category": "learned-dynamics",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/poisson-2d-analytical.md",
+    "upstream": "Evans-\u00a72.2 / Strauss-\u00a76.2 / MMS-hand-derivation",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "anchor1-harmonic-fundamental",
+        "x": 0.5,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 0.34657359027997264
+      },
+      "independent_reference": {
+        "source": "Evans, PDE 2e, \u00a7 2.2 'Laplace's Equation' (\u00a7 2.2.1 fundamental solution Phi=-1/2pi log|x|, n=2). u = 1/2 ln((x+1/2)^2+(y+1/2)^2), singularity at (-1/2,-1/2) OUTSIDE the unit square so u is smooth & harmonic (Delta u = 0) on Omega. Verified symbolically (sympy): Laplacian == 0.",
+        "derived_by": "textbook-derivation (Evans \u00a7 2.2)",
+        "expected": {
+          "u": 0.34657359027997264
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor1-harmonic-fundamental",
+        "x": 0.25,
+        "y": 0.25
+      },
+      "expected": {
+        "u": 0.05889151782819173
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor1-harmonic-fundamental",
+        "x": 0.25,
+        "y": 0.75
+      },
+      "expected": {
+        "u": 0.3768859011881901
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor1-harmonic-fundamental",
+        "x": 0.75,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 0.4704916722322633
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor2-harmonic-separation",
+        "x": 0.5,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 2.3012989023072947
+      },
+      "independent_reference": {
+        "source": "Strauss, PDE 2e, \u00a7 6.2 'Rectangles and Cubes' (separation of variables). u = sinh(pi x) sin(pi y) is harmonic (Delta u = pi^2 sinh sin - pi^2 sinh sin = 0); Dirichlet data nonzero only on the x=1 edge. Verified symbolically (sympy): Laplacian == 0; u=0 on x=0,y=0,y=1.",
+        "derived_by": "textbook-derivation (Strauss \u00a7 6.2)",
+        "expected": {
+          "u": 2.3012989023072947
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor2-harmonic-separation",
+        "x": 0.25,
+        "y": 0.25
+      },
+      "expected": {
+        "u": 0.6142431274865955
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor2-harmonic-separation",
+        "x": 0.25,
+        "y": 0.75
+      },
+      "expected": {
+        "u": 0.6142431274865956
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor2-harmonic-separation",
+        "x": 0.75,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 5.227971924677803
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor3-mms-sine-source",
+        "x": 0.5,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 1.0
+      },
+      "independent_reference": {
+        "source": "Hand-derived method of manufactured solutions. u = sin(pi x) sin(pi y) => f = Delta u = -2 pi^2 sin(pi x) sin(pi y) (the load-bearing inhomogeneous f!=0 Poisson source), with zero Dirichlet BC on [0,1]^2. Verified symbolically (sympy): f == -2 pi^2 u; u=0 on all four edges. The canonical trained/captured instance (descriptor poisson-sine-source-64sq-seed42-step1).",
+        "derived_by": "hand-derivation (MMS)",
+        "expected": {
+          "u": 1.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor3-mms-sine-source",
+        "x": 0.25,
+        "y": 0.25
+      },
+      "expected": {
+        "u": 0.4999999999999999
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor3-mms-sine-source",
+        "x": 0.25,
+        "y": 0.75
+      },
+      "expected": {
+        "u": 0.5
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "anchor3-mms-sine-source",
+        "x": 0.75,
+        "y": 0.5
+      },
+      "expected": {
+        "u": 0.7071067811865476
+      }
+    }
+  ]
+}
