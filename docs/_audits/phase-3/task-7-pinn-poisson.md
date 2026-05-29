@@ -3,7 +3,8 @@ date: 2026-05-29T19-45-09Z
 author: phase-3 pinn-poisson stage-2 landing (Claude Code)
 subject: Phase 3 task-7 pinn-poisson — STAGE 2 LANDING (FIRST learned-dynamics-CATEGORY sim) — 13 gates, D-DET measured, A-6, closed-with-shifted-8, D.2.3 descriptor proposal, NO tag
 verdict: CONFIRMED — closed-with-shifted-8
-head_sha: 2ea3e33fff1b8288d654f5c03b27af5d5eb480fb
+head_sha: b08cfb0
+anchor_sha: 2ea3e33fff1b8288d654f5c03b27af5d5eb480fb
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1
