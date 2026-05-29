@@ -1,0 +1,41 @@
+[upstream]
+name         = "PositionBasedDynamics"
+version      = "2.2.0"
+sha          = "aa62c44f0d43956452e1f960a40333ec2d6d3ea5"
+url          = "https://github.com/InteractiveComputerGraphics/PositionBasedDynamics"
+license      = "MIT"
+license_file = "LICENSE"
+
+[scope]
+purpose         = "Read-only reference oracle for the XPBD cloth constraint formulation (Macklin, Müller, Chentanez 2016, 'XPBD: Position-Based Simulation of Compliant Constrained Dynamics'). packages/mass-spring-cloth/ reimplements XPBD INDEPENDENTLY in its own Vulkan compute shaders + C++20 from the Macklin 2016 paper per spec § 2.3 + § 2.4 + Convention #8; Bender cross-checks the constraint algebra at derivation time only. The vendored material is the citation anchor + cross-check oracle, NOT a build dependency, NOT runtime-linked, NOT FetchContent'd (D-VENDOR-ROLE). Key formulations cited: the XPBD compliance↔stiffness mapping alpha = 1/(k*dt^2) (XPBD.cpp:39 = Macklin 2016 Eq. 8) and the Lagrange-multiplier update delta_lambda = -(C + alpha*lambda)/(K + alpha) (XPBD.cpp:53 = Macklin 2016 Eq. 18); the distance constraint (XPBD.h:28 / PositionBasedDynamics.h:28) and the dihedral / isometric bending constraint (PositionBasedDynamics.h:71 / XPBD.cpp:153). The independent golden anchors for catenary equilibrium are the analytic catenary form + hand-derivation + a textbook value (spec § 2.4) — Bender is NOT a golden source. MIT-licensed (permissive); downstream Bit-Physics sims may cite freely without inheriting any non-commercial clause."
+used_by_sims    = ["soft-body/mass-spring-cloth"]
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-29T02-13Z"
+fetched_by    = "phase-3 mass-spring-cloth stage-0 (Claude Code)"
+fetch_command = "git clone --no-checkout --filter=blob:none https://github.com/InteractiveComputerGraphics/PositionBasedDynamics PBD-tmp; cd PBD-tmp && git sparse-checkout init --cone && git sparse-checkout set PositionBasedDynamics && git checkout aa62c44f0d43956452e1f960a40333ec2d6d3ea5; then copied LICENSE, README.md (-> UPSTREAM_README.md), PositionBasedDynamics/{XPBD.cpp,XPBD.h,PositionBasedDynamics.cpp,PositionBasedDynamics.h} into references/PositionBasedDynamics/. SHA verified == latest stable release tag 2.2.0 via `gh release view -R InteractiveComputerGraphics/PositionBasedDynamics` (published 2022-12-13) per spec Appendix D.3 'Latest stable'; license MIT verified via `gh api .../license --jq .license.spdx_id`."
+
+[[citations]]
+file = "PositionBasedDynamics/XPBD.cpp"
+line = 39
+quote = "alpha = static_cast<Real>(1.0) / (stiffness * dt * dt);"
+purpose = "XPBD compliance↔stiffness mapping alpha = 1/(k*dt^2) (Macklin 2016 Eq. 8). Note Bender's `stiffness` arg is 1/compliance = k; compliance = 1/stiffness."
+
+[[citations]]
+file = "PositionBasedDynamics/XPBD.cpp"
+line = 53
+quote = "const Real delta_lambda = -Kinv * (C + alpha * lambda);"
+purpose = "XPBD Lagrange-multiplier update delta_lambda = -(C + alpha*lambda)/(K + alpha) (Macklin 2016 Eq. 18); K = sum invMass + alpha."
+
+[[citations]]
+file = "PositionBasedDynamics/XPBD.h"
+line = 28
+quote = "static bool solve_DistanceConstraint("
+purpose = "XPBD distance (structural-spring) constraint signature — the cloth structural + shear edge constraints."
+
+[[citations]]
+file = "PositionBasedDynamics/PositionBasedDynamics.h"
+line = 71
+quote = "static bool solve_DihedralConstraint("
+purpose = "PBD dihedral bending constraint — the cloth out-of-plane bending constraint (cross-check for the bending formulation)."
