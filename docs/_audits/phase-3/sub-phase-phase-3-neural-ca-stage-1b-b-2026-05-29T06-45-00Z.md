@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 1b-B (Claude Code)
 subject: Phase 3 task-6 neural-ca — STAGE 1b-B WGSL inference (Stack B) + checkpoint conversion (exact round-trip) + B-inference capture + gate-13 reproduction GREEN
 verdict: CONFIRMED
-head_sha: PLACEHOLDER-STAGE-1B-B-AUDIT
+head_sha: 8970534c5536f5317bd65aa83985d848c7845388
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
