@@ -34,16 +34,21 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
   )
   add_library(bit_physics::mass_spring_cloth ALIAS bit_physics_mass_spring_cloth)
 
-  # --- doctest acceptance suite (gate-3 RED -> GREEN) -------------------------
+  # --- doctest suite (gate-3 acceptance RED -> GREEN + gate-4 golden) ---------
   if (TARGET doctest)
+    set(CLOTH_GOLDEN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit/golden/tables")
     add_executable(bit_physics_mass_spring_cloth_tests
       tests/test_main.cpp
       tests/test_cloth.cpp
+      tests/test_golden.cpp
     )
     target_link_libraries(bit_physics_mass_spring_cloth_tests PRIVATE
       bit_physics_mass_spring_cloth
       doctest
+      nlohmann_json::nlohmann_json
     )
+    target_compile_definitions(bit_physics_mass_spring_cloth_tests PRIVATE
+      CLOTH_GOLDEN_DIR="${CLOTH_GOLDEN_DIR}")
     add_test(NAME mass_spring_cloth_tests COMMAND bit_physics_mass_spring_cloth_tests)
     # Lavapipe pin (D14) + serial-GS determinism lever (D4); single-invocation,
     # no atomics -> bit-identical regardless of thread count.

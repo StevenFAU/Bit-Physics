@@ -1,0 +1,342 @@
+{
+  "algorithm": "mass-spring-cloth-xpbd-catenary-limit",
+  "category": "soft-body",
+  "config": {
+    "catenary_a": 4.730894497759548,
+    "dt": 0.016666666666666666,
+    "gravity_y": -9.81,
+    "iterations": 80,
+    "nx": 32,
+    "ny": 1,
+    "sag_depth": 11.448661993500842,
+    "spacing": 1.0,
+    "span_D": 18.0,
+    "steps": 3000,
+    "stretch_compliance": 0.0,
+    "velocity_damping": 0.1
+  },
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/cloth-catenary-limit.md"
+  },
+  "schema_version": "1.0.0",
+  "test_points": [
+    {
+      "expected": {
+        "x": 0.0,
+        "y": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "analytic-catenary",
+        "doi": "n/a-textbook-Beer-Johnston-Statics-Ch7",
+        "expected": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "source": "Anchor 1. Pinned left endpoint at (0, 0) of the analytic catenary y(x)=a\u00b7cosh(x/a), a=H/w=T0/(rho g) \u2014 Beer & Johnston, Vector Mechanics for Engineers: Statics, Ch. 7 (cables: the catenary). Catenary parameter a=4.7308944978 solved from 2a\u00b7sinh(X/a)=S, X=9.0000, S=31.0000. Independent of the XPBD sim and of the Bender oracle (spec \u00a7 2.4)."
+      },
+      "inputs": {
+        "k": 0
+      }
+    },
+    {
+      "expected": {
+        "x": 0.3008751022827383,
+        "y": -0.9536475534764849
+      },
+      "inputs": {
+        "k": 1
+      }
+    },
+    {
+      "expected": {
+        "x": 0.6211152393686241,
+        "y": -1.9009632818823758
+      },
+      "inputs": {
+        "k": 2
+      }
+    },
+    {
+      "expected": {
+        "x": 0.963212358231953,
+        "y": -2.8406007423459383
+      },
+      "inputs": {
+        "k": 3
+      }
+    },
+    {
+      "expected": {
+        "x": 1.3301266247810908,
+        "y": -3.7708192247762398
+      },
+      "inputs": {
+        "k": 4
+      }
+    },
+    {
+      "expected": {
+        "x": 1.7253933588639434,
+        "y": -4.689336128568145
+      },
+      "inputs": {
+        "k": 5
+      }
+    },
+    {
+      "expected": {
+        "x": 2.153251945491631,
+        "y": -5.593112770885842
+      },
+      "inputs": {
+        "k": 6
+      }
+    },
+    {
+      "expected": {
+        "x": 2.6187935788378667,
+        "y": -6.478039909476823
+      },
+      "inputs": {
+        "k": 7
+      }
+    },
+    {
+      "expected": {
+        "x": 3.128111898777041,
+        "y": -7.338472478034814
+      },
+      "independent_reference": {
+        "derived_by": "variational-and-parabolic-limit",
+        "doi": "n/a-textbook-Marion-Thornton-6.6",
+        "expected": {
+          "x": 3.128111898777041,
+          "y": -7.338472478034814
+        },
+        "source": "Anchor 3. Quarter station \u2014 variational cross-check: minimising gravitational PE at fixed arc length (Lagrange multiplier; Marion & Thornton, Classical Dynamics, \u00a76.6 'Euler's Equations When Auxiliary Conditions Are Imposed') yields the same Euler equation and the same catenary as Anchors 1-2. Parabolic small-sag limit y\u2248a+x'^2/(2a) is the standard consistency check. All three methods agree on (x,y)=(3.128112,-7.338472)."
+      },
+      "inputs": {
+        "k": 8
+      }
+    },
+    {
+      "expected": {
+        "x": 3.6884100241267284,
+        "y": -8.166541851587676
+      },
+      "inputs": {
+        "k": 9
+      }
+    },
+    {
+      "expected": {
+        "x": 4.307949614153559,
+        "y": -8.951157580776622
+      },
+      "inputs": {
+        "k": 10
+      }
+    },
+    {
+      "expected": {
+        "x": 4.995589589939275,
+        "y": -9.676635486497764
+      },
+      "inputs": {
+        "k": 11
+      }
+    },
+    {
+      "expected": {
+        "x": 5.759424721342567,
+        "y": -10.321063403681176
+      },
+      "inputs": {
+        "k": 12
+      }
+    },
+    {
+      "expected": {
+        "x": 6.6037795263676635,
+        "y": -10.855076951228698
+      },
+      "inputs": {
+        "k": 13
+      }
+    },
+    {
+      "expected": {
+        "x": 7.52405925951905,
+        "y": -11.242905811179629
+      },
+      "inputs": {
+        "k": 14
+      }
+    },
+    {
+      "expected": {
+        "x": 8.50092618603021,
+        "y": -11.448661993500842
+      },
+      "inputs": {
+        "k": 15
+      }
+    },
+    {
+      "expected": {
+        "x": 9.499073813969792,
+        "y": -11.448661993500842
+      },
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "doi": "n/a-hand-derivation",
+        "expected": {
+          "x": 9.499073813969792,
+          "y": -11.448661993500842
+        },
+        "source": "Anchor 2. Catenary low point (chain centre), sag depth = 11.448662 below the pins. Hand-derived differential-element force balance (dH=0, dV=w\u00b7ds \u21d2 dy/dx=sinh(x/a) \u21d2 y=a(cosh(x'/a)-cosh(X/a))) in cloth-catenary-limit.md; at x'=0 gives y=a(1-cosh(X/a))=-11.448662. Independent of any textbook table and of the sim."
+      },
+      "inputs": {
+        "k": 16
+      }
+    },
+    {
+      "expected": {
+        "x": 10.47594074048095,
+        "y": -11.242905811179627
+      },
+      "inputs": {
+        "k": 17
+      }
+    },
+    {
+      "expected": {
+        "x": 11.396220473632336,
+        "y": -10.855076951228698
+      },
+      "inputs": {
+        "k": 18
+      }
+    },
+    {
+      "expected": {
+        "x": 12.240575278657433,
+        "y": -10.321063403681176
+      },
+      "inputs": {
+        "k": 19
+      }
+    },
+    {
+      "expected": {
+        "x": 13.004410410060725,
+        "y": -9.676635486497764
+      },
+      "inputs": {
+        "k": 20
+      }
+    },
+    {
+      "expected": {
+        "x": 13.692050385846441,
+        "y": -8.951157580776622
+      },
+      "inputs": {
+        "k": 21
+      }
+    },
+    {
+      "expected": {
+        "x": 14.311589975873272,
+        "y": -8.166541851587676
+      },
+      "inputs": {
+        "k": 22
+      }
+    },
+    {
+      "expected": {
+        "x": 14.87188810122296,
+        "y": -7.338472478034814
+      },
+      "inputs": {
+        "k": 23
+      }
+    },
+    {
+      "expected": {
+        "x": 15.381206421162133,
+        "y": -6.478039909476823
+      },
+      "inputs": {
+        "k": 24
+      }
+    },
+    {
+      "expected": {
+        "x": 15.84674805450837,
+        "y": -5.593112770885842
+      },
+      "inputs": {
+        "k": 25
+      }
+    },
+    {
+      "expected": {
+        "x": 16.274606641136057,
+        "y": -4.689336128568145
+      },
+      "inputs": {
+        "k": 26
+      }
+    },
+    {
+      "expected": {
+        "x": 16.66987337521891,
+        "y": -3.7708192247762398
+      },
+      "inputs": {
+        "k": 27
+      }
+    },
+    {
+      "expected": {
+        "x": 17.036787641768047,
+        "y": -2.8406007423459383
+      },
+      "inputs": {
+        "k": 28
+      }
+    },
+    {
+      "expected": {
+        "x": 17.378884760631376,
+        "y": -1.9009632818823758
+      },
+      "inputs": {
+        "k": 29
+      }
+    },
+    {
+      "expected": {
+        "x": 17.69912489771726,
+        "y": -0.9536475534764849
+      },
+      "inputs": {
+        "k": 30
+      }
+    },
+    {
+      "expected": {
+        "x": 18.0,
+        "y": 0.0
+      },
+      "inputs": {
+        "k": 31
+      }
+    }
+  ],
+  "tolerance": {
+    "catenary_shape_rel": 0.002
+  }
+}
