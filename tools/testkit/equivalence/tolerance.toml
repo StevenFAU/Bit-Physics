@@ -263,8 +263,16 @@ training_loss_3sigma_upper = 0.07
 #                          FD baseline carries its own O(h^2) discretization error,
 #                          so PINN-vs-FD agreement is looser than PINN-vs-analytic)
 #
-# The EFECT training-non-determinism bound is the registry row's
-# `distributional_bound` (its primary home, D-DET); it is NOT the acceptance gate.
+# `training_loss_distributional_bound` + `training_loss_3sigma_upper` are the
+# DERIVED EFECT band (D-DET; primary home is the registry training row). MEASURED at
+# Stage 1b-PINN across 5 pinned seeds {42,11,22,33,44} at the locked config: final
+# losses mean 2.37e-6, std 6.89e-7, CV 0.290, 3σ upper 4.44e-6 (locked 5e-6 with
+# margin). Distribution BOUNDED -> EFECT derivable, NO STOP-EFECT. The EFECT band
+# characterizes TRAINING-convergence reproducibility; it is NOT the acceptance gate
+# (the analytic `analytical_l2` + classical-FD `fd_l2` checks on the frozen network
+# are). Same-seed CPU training MEASURED bit-identical (mirrors neural-ca).
 [golden_tolerance.learned-dynamics.pinn-poisson]
 analytical_l2 = 1e-3
 fd_l2 = 1e-2
+training_loss_distributional_bound = "EFECT"
+training_loss_3sigma_upper = 5e-6

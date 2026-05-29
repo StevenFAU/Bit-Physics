@@ -140,13 +140,16 @@ The MMS (Anchor 3) is the manufactured solution `u=sin(πx)sin(πy) → f=−2π
 Two registry rows `[learned-dynamics.pinn-poisson.{training,inference}]`
 (`tools/testkit/determinism/registry.toml`):
 
-- **training** — DEFAULT `non-deterministic` (by design; Adam on a stochastic
-  collocation sample), `distributional_bound = "EFECT"`, scope `n/a`. CPU-only moots
-  CUDA-atomic non-determinism; `TODO(Stage-1b)`: MEASURE same-seed CPU training —
-  if bit-identical (NCA precedent), RE-DECLARE on evidence. The EFECT band is
-  DERIVED from the measured training-loss distribution; STOP-EFECT if underivable.
-- **inference** — DEFAULT `bit-exact`, scope `same-stack-same-hw` (frozen weights →
-  deterministic function evaluation). MEASURED via `run_twice_and_diff`.
+- **training** — `non-deterministic` (trained WEIGHTS are seed-dependent — the
+  learned-dynamics distributional character), `distributional_bound = "EFECT"`, scope
+  `n/a`. **MEASURED (Stage 1b-PINN):** same-seed CPU training is **bit-identical**
+  (two seed-42 runs → byte-equal field; the NCA finding transfers), captured by
+  `seed_pinned`. The EFECT band is DERIVED from the across-seed training-loss
+  distribution (5 seeds: mean 2.37e-6, CV 0.290, **3σ upper 4.44e-6**, locked 5e-6) —
+  BOUNDED → derivable, **no STOP-EFECT**.
+- **inference** — `bit-exact`, scope `same-stack-same-hw`. **MEASURED bit-identical**
+  (frozen model evaluated twice → byte-equal; the torch→wp→Capture bridge preserves
+  f64 exactly).
 
 **CRITICAL SEPARATION:** the EFECT bound characterizes TRAINING reproducibility — it
 is **NOT** the acceptance gate. The load-bearing gates are the analytic + FD

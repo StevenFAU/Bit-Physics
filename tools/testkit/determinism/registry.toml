@@ -153,14 +153,19 @@ seed_pinned = true
 # TWO rows, MEASURE-then-declare at Stage 1b-PINN. Training and inference are kept
 # SEPARATE — bit-exact fits inference only. DEFAULT rows drafted here at Stage 1a.
 # The env is CPU-only (no CUDA), so the CUDA-atomic non-determinism worry is moot
-# (atomic_ops = "none"). NCA *measured* same-seed CPU training to be bit-identical;
-# that MAY transfer here (different net/optimizer), so the training row's class is
-# the conservative DEFAULT now and is RE-DECLARED on Stage-1b-PINN evidence if
-# same-seed CPU training proves bit-identical. The EFECT bound is DERIVED from the
-# measured training-loss distribution; if underivable -> STOP-EFECT (ising STOP-DET
-# template). CRITICAL: the EFECT bound characterizes TRAINING reproducibility — it
+# (atomic_ops = "none"). MEASURED at Stage 1b-PINN (locked config units=60/n3000/
+# lbfgs2000): same-seed CPU training is BIT-IDENTICAL (two independent seed-42 runs
+# -> byte-equal field, max_abs_diff 0.0; the committed checkpoint reproduces a fresh
+# seed-42 train) — the NCA same-seed-bit-identical finding TRANSFERS. Class kept
+# `non-deterministic` (mirrors neural-ca): the trained WEIGHTS are seed-DEPENDENT
+# (different seeds -> different weights), which is the learned-dynamics distributional
+# character; the same-seed reproducibility is captured by `seed_pinned = true`. The
+# EFECT band is DERIVED from the across-seed training-loss distribution: 5 pinned
+# seeds {42,11,22,33,44} -> mean 2.37e-6, std 6.89e-7, CV 0.290, 3σ upper 4.44e-6
+# (locked 5e-6 in tolerance.toml). Distribution BOUNDED -> EFECT derivable, NO
+# STOP-EFECT. CRITICAL: the EFECT bound characterizes TRAINING reproducibility — it
 # is NOT the acceptance gate (the analytic + FD verification on the frozen network
-# are the load-bearing gates; a STOP-EFECT does NOT block them).
+# are the load-bearing gates; a STOP-EFECT would NOT block them).
 [learned-dynamics.pinn-poisson.training]
 stack = "E"
 class = "non-deterministic"
@@ -170,10 +175,11 @@ subgroup_ops = "none"
 seed_pinned = true
 distributional_bound = "EFECT"
 
-# Inference (frozen-network forward evaluation on the eval grid). DEFAULT
-# bit-exact same-stack-same-hw — frozen weights make inference a deterministic
-# function evaluation; no atomics/subgroup ops on the PyTorch+Warp CPU backend.
-# MEASURED at Stage 1b-PINN via run_twice_and_diff on the canonical capture.
+# Inference (frozen-network forward evaluation on the eval grid). bit-exact
+# same-stack-same-hw — frozen weights make inference a deterministic function
+# evaluation; no atomics/subgroup ops on the PyTorch+Warp CPU backend. MEASURED
+# BIT-IDENTICAL at Stage 1b-PINN (the frozen model evaluated twice -> byte-equal;
+# the torch->wp->Capture bridge preserves f64 exactly). Declaration HOLDS.
 [learned-dynamics.pinn-poisson.inference]
 stack = "E"
 class = "bit-exact"
