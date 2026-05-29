@@ -175,7 +175,22 @@ precedent; § 6.0 item 12 testkit-adjacent-only).
   `same-stack-same-hw`, atomics `none`, seed pinned `true`. `run_twice_and_diff`
   on the PyTorch inference is byte-identical (MEASURED at Stage 1b-D).
 
-`TODO(Stage-1b-D)`: lock both rows on measurement.
+**LOCKED at Stage 1b-D (measured):**
+
+- **EFECT bound DERIVED — no STOP-EFECT.** Across 5 pinned seeds on the
+  representative disk-pool training config (32², 300 steps): final-training-loss
+  mean 0.0403, std 0.0083, range [0.0319, 0.0519], CV 0.21; the tail-smoothed
+  loss (last-20-mean) CV is 0.085. The loss-convergence distribution is BOUNDED
+  (no divergence), so EFECT (distributional-equality) is derivable. The locked
+  bound `training_loss_3sigma_upper = 0.07` (measured 3σ upper = 0.0653 + margin)
+  in `tolerance.toml`. (The earlier 32²-square Growing measurement gave the same
+  qualitative result, CV 0.22 — the boundedness is config-robust.) Note: with a
+  pinned seed, training is in fact reproducible run-to-run on this CPU (seed-42
+  reproduced its final loss exactly); EFECT characterizes the CROSS-SEED ensemble.
+- **Inference bit-exact CONFIRMED.** `run_twice_and_diff` on `run_inference`
+  (same seed) is `np.array_equal` (exercised by the `inference_determinism` PBT,
+  20 sampled seeds). This single-stack reproducibility is the foundation for the
+  statistical D↔B gate.
 
 ## 9. Equivalence — STATISTICAL cross-stack gate-14 (D↔B)
 

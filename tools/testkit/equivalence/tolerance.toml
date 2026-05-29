@@ -219,15 +219,21 @@ psnr_min = 28.0
 ssim_min = 0.85
 lpips_max = 0.15
 
-# Row 2 — the training golden (single-stack Stack-D). `golden_checkpoint_match`
-# (the trained checkpoint reconstructs the target) + the measured training-L2
-# reconstruction bound `golden_checkpoint_l2_max` (DEFAULT 0.02; LOCKED at Stage
-# 1b-D on measurement) + the EFECT training-loss distributional bound (string;
-# DERIVED at Stage 1b-D, or STOP-EFECT). Lands under the existing
-# `[golden_tolerance.<category>.<sim>]` branch (the schema description ENUMERATES
-# exactly `golden_checkpoint_match` + `training_loss_distributional_bound` for
-# this sim); NO new schema branch, NO `[budgets.*]` cap.
+# Row 2 — the training golden (single-stack Stack-D). LOCKED at Stage 1b-D on
+# measurement of the canonical pool-trained checkpoint (neural-ca-emoji-disk):
+# `golden_checkpoint_l2_max = 0.03` — the pixel-wise-L2 reconstruction of the
+# target at the representative horizon (step 200, where the persistent model is
+# stable); MEASURED L2 = 0.0219, locked with margin. `training_loss_3sigma_upper`
+# is the DERIVED EFECT distributional bound (upper 3σ of the final-training-loss
+# distribution across 5 pinned seeds on the representative disk-pool config) —
+# the loss-convergence distribution is BOUNDED (no divergence) → EFECT derivable,
+# NO STOP-EFECT. The EFECT bound characterizes TRAINING-convergence
+# reproducibility; it is NOT the cross-stack gate (that is render_similarity).
+# Lands under `[golden_tolerance.<category>.<sim>]` (the schema description
+# ENUMERATES `golden_checkpoint_match` + `training_loss_distributional_bound`);
+# NO new schema branch, NO `[budgets.*]` cap.
 [golden_tolerance.continuous-ca.neural-ca-python]
 golden_checkpoint_match = true
-golden_checkpoint_l2_max = 0.02
+golden_checkpoint_l2_max = 0.03
 training_loss_distributional_bound = "EFECT"
+training_loss_3sigma_upper = 0.07

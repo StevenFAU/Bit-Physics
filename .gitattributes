@@ -43,3 +43,8 @@ captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text
 # forward only; the existing non-LFS sph-water-stack-d (61 MB) + smaller phase-0/2
 # entries remain as committed historical blobs (not retroactively re-tagged).
 tests/fixtures/legacy-captures/**/*.h5 filter=lfs diff=lfs merge=lfs -text
+
+# Phase-3 task-6 neural-ca: trained checkpoint + converted WGSL artifact (LFS per
+# charter §3 F). Small now (33 KB) but routed through LFS for forward consistency.
+tools/testkit/golden/checkpoints/**/*.safetensors filter=lfs diff=lfs merge=lfs -text
+tools/testkit/golden/checkpoints/**/*.bin filter=lfs diff=lfs merge=lfs -text

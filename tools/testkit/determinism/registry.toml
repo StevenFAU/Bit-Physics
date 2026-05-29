@@ -122,6 +122,11 @@ seed_pinned = true
 # Stage 1b-D on measurement (may reconcile class→distributional if a tight band
 # is derived). The EFECT bound characterizes TRAINING-convergence reproducibility
 # — it is NOT the cross-stack gate (that is the D↔B render-similarity, § 9).
+# MEASURED at Stage 1b-D (5 pinned seeds, representative disk-pool config):
+# final-loss CV 0.21, tail-smoothed CV 0.085, 3σ upper 0.0653 (locked 0.07 in
+# tolerance.toml `training_loss_3sigma_upper`). Distribution BOUNDED → EFECT
+# derivable, NO STOP-EFECT. Class kept `non-deterministic` (trained weights are
+# seed-dependent); the bounded loss is the EFECT band.
 [continuous-ca.neural-ca.training]
 stack = "D"
 class = "non-deterministic"
