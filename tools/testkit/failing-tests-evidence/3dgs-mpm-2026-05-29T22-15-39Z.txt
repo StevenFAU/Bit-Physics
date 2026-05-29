@@ -1,11 +1,11 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
 rootdir: /home/otacon/Projects/Bit-Physics/packages/3dgs-mpm
 configfile: pyproject.toml
 testpaths: tests
-plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+plugins: cov-7.1.0, hypothesis-6.152.8
 collecting ... collected 13 items
 
 tests/test_coupling_correctness.py::test_three_independent_anchors_present PASSED [  7%]
@@ -90,9 +90,10 @@ gs_mpm/coupling.py:67: in couple_gaussians
     raise NotImplementedError("Stage 1b")
 E   NotImplementedError: Stage 1b
 E   Falsifying example: test_gaussian_count_invariant(
-E       n=1,
-E       s=[1.0, 1.0, 1.0],
-E       q=[0.0, 0.0, 0.0, 0.0],
+E       # The test always failed when commented parts were varied together.
+E       n=1,  # or any other generated value
+E       s=[1.0, 1.0, 1.0],  # or any other generated value
+E       q=[0.0, 0.0, 0.0, 0.0],  # or any other generated value
 E   )
 _________________ test_def_grad_determinant_positive_keeps_spd _________________
 tests/test_pbt_invariants.py:50: in test_def_grad_determinant_positive_keeps_spd
@@ -105,9 +106,10 @@ gs_mpm/coupling.py:67: in couple_gaussians
     raise NotImplementedError("Stage 1b")
 E   NotImplementedError: Stage 1b
 E   Falsifying example: test_def_grad_determinant_positive_keeps_spd(
-E       s=[1.0, 1.0, 1.0],
-E       q=[0.0, 0.0, 0.0, 0.0],
-E       diag=[1.0, 1.0, 1.0],
+E       # The test always failed when commented parts were varied together.
+E       s=[1.0, 1.0, 1.0],  # or any other generated value
+E       q=[0.0, 0.0, 0.0, 0.0],  # or any other generated value
+E       diag=[1.0, 1.0, 1.0],  # or any other generated value
 E   )
 __________________________ test_golden_renders_exist ___________________________
 tests/test_render_similarity_golden.py:52: in test_golden_renders_exist
@@ -138,4 +140,4 @@ FAILED tests/test_pbt_invariants.py::test_gaussian_count_invariant - NotImple...
 FAILED tests/test_pbt_invariants.py::test_def_grad_determinant_positive_keeps_spd
 FAILED tests/test_render_similarity_golden.py::test_golden_renders_exist - As...
 FAILED tests/test_render_similarity_golden.py::test_render_similarity_clears_floors
-========================= 12 failed, 1 passed in 0.25s =========================
+========================= 12 failed, 1 passed in 3.30s =========================
