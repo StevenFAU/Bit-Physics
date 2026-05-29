@@ -10,13 +10,13 @@ from numpy.typing import NDArray
 
 # Repo root: packages/neural-ca/python/tests -> up 4.
 REPO_ROOT = Path(__file__).resolve().parents[4]
-CHECKPOINT_PATH = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-lizard.safetensors"
+CHECKPOINT_PATH = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-disk.safetensors"
 D_INFERENCE_CAPTURE = REPO_ROOT / "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000.h5"
 B_INFERENCE_CAPTURE = (
     REPO_ROOT / "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.h5"
 )
-WGSL_BUFFER = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-lizard-wgsl.bin"
-WGSL_LAYOUT = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-lizard-wgsl.layout.json"
+WGSL_BUFFER = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-disk-wgsl.bin"
+WGSL_LAYOUT = REPO_ROOT / "tools/testkit/golden/checkpoints/neural-ca-emoji-disk-wgsl.layout.json"
 
 # A small synthetic 4-channel RGBA target for fast convergence tests (a centered
 # filled square) — independent of any vendored asset.
