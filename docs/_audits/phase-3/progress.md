@@ -672,3 +672,14 @@
 - **Full suite 10/10 GREEN** (train-converge, ckpt-serialize, golden×2, PBT×2, WGSL-repro, cross-stack, diagnostics×2). mypy-strict+ruff clean. integrity 0 HF / 14 SW.
 - **Commits:** `06acd3a` (gate-14) → `9a3b5f9` (tier3+diag) → `2f15b20` (schema-corpus) → `3c1572c` (CI jobs) → `4298c98` (perf) → Stage-1c audit+progress → back-fill.
 - **Next:** Stage 2 — landing audit task-6-neural-ca.md (closed-with-shifted-N, NO tag, Convention #12).
+
+## sub-phase-phase-3-neural-ca — LANDING (Stages 0→2) — 2026-05-29 — closed-with-shifted-6
+
+- **WHOLE SUB-PHASE LANDED.** SIXTH Phase-3 sub-phase; **FIRST dual-stack + FIRST cross-stack gate-14 (STATISTICAL) + FIRST learned-dynamics SIM** of Phase 3. Stack D (PyTorch train+infer) + Stack B (custom WGSL infer) tied by ONE checkpoint. **NO tag** (D-TAG NO). task-6 TERMINAL (task-2 dep SATISFIED).
+- **Landing checks:** integrity 0 HF / 14 SW (digest b7460150… stable whole sub-phase); replay phase-2 ok=True; verify_evidence 5 stage audits 0-fail (20/16/18/14/16); append-only green; **§S.5 10/10 workflows green incl. test-neural-ca-train/infer/equiv all success**.
+- **13 gates/stack + gate-14 satisfied; no mutation (sim).** gate-14 D↔B render-similarity STATISTICAL: mean PSNR 23.92 / SSIM 0.824 / LPIPS_alex 0.0316, locked 23.0/0.80/0.05.
+- **closed-with-shifted-6:** (1) procedural disk target (noto-emoji OFL-1.1 avoided; license-driven); (2) Persistent sample-pool training added (Growing overgrows past trained horizon; step1000 mandated); (3) field_values_bounded RE-DECLARED on evidence (full-state finiteness + clamped RGBA, NOT all-16-ch — hidden drift ~2.5e7); (4) WGSL capture via wgpu-py (no Node WebGPU runtime; index.ts=deploy path; §7.8 preserved); (5) gate-14 §2.12-floor QUALITY-CONCERN (PSNR/SSIM < floors, LPIPS PASSES — statistical, NOT auto-fail); (6) D-ANCHOR re-shape (Distill PSNR/SSIM verified non-existent, L2-only).
+- **QUALITY-CONCERN (operator awareness):** gate-14 mean PSNR 23.92 < 28 + SSIM 0.824 < 0.85 (§2.12 floors); LPIPS 0.0316 ≤ 0.15 PASSES — stochastic-fire-RNG pixel divergence; perceptually equivalent. Flag NOT failure.
+- **Key results:** vendored growing-neural-ca @ 3d5547ca Apache-2.0; A-4/A-5 filed; checkpoint conversion BIT-IDENTICAL round-trip; EFECT DERIVED no STOP-EFECT (CV 0.21, 3σ 0.0653→locked 0.07); same-seed training BIT-IDENTICAL reproduction; WGSL↔NumPy-oracle 3.5e-6.
+- **Artifacts:** `packages/neural-ca/{python,typescript}/`; spec-ref + equivalence.md `docs/sim-specs/continuous-ca/neural-ca/`; checkpoint + WGSL artifact `tools/testkit/golden/checkpoints/neural-ca-emoji-disk*`; D+B captures `captures/neural-ca-ref/`; Tier-3 `tools/diagnostics/tier3/neural_ca/`; landing `docs/_audits/phase-3/task-6-neural-ca.md` (+ 5 stage audits).
+- **Next:** task-7 (PINN-poisson) per phase-3 plan.
