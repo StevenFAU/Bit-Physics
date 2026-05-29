@@ -3,7 +3,8 @@ date: 2026-05-29T12-54-44Z
 author: phase-3 pinn-poisson stage-0 (Claude Code)
 subject: Phase 3 seventh sub-phase (task-7 pinn-poisson, FIRST learned-dynamics CATEGORY) — STAGE 0 preflight + integrity + LFS bootstrap + cross-phase replay + verify_evidence sweep + Warp-PyTorch interop re-probe + physicsnemo-sym vendor + A-6 + charter D-class flip RESOLVED v2
 verdict: CONFIRMED
-head_sha: f3e65f9e9817867454b50423ea7a498d96c9b7d1
+head_sha: 43962c5
+anchor_sha: f3e65f9e9817867454b50423ea7a498d96c9b7d1
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: b7460150b61213bb8909659ffc7b103d846ad782f5062d272f2ce572e6abb15e
