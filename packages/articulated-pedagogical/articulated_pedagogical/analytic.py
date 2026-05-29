@@ -11,44 +11,37 @@ Three independent analytic anchors for the ideal simple pendulum
   ``k = sin(theta0/2)``, ``omega0 = sqrt(g/L)`` — the released-from-rest Jacobi
   solution (DLMF §22.19(i) eq. 22.19.2 + §22.2 definitions).
 
-These are host-side, stack-agnostic oracles (NOT in the Warp hot loop); they use
-``scipy.special.ellipk`` / ``ellipj`` (modulus convention: SciPy takes the
-parameter ``m = k**2``). The ``RK4-reference`` baseline for the chaotic
-double-pendulum / 6-DOF goldens is a *numerical* baseline, NOT an analytic
-anchor — see ``integrators.rk4_reference`` and golden derivation
-``tools/testkit/golden/derivations/rigid-body-rk4-reference.md``.
-
-Stage 1a: every function raises ``NotImplementedError``; the closed forms land
-at Stage 1b. See ``docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md`` §6.
+Host-side, stack-agnostic oracles (NOT in the Warp hot loop), via
+``scipy.special.ellipk`` / ``ellipj`` (SciPy parameter convention ``m = k**2``).
 """
 
 from __future__ import annotations
 
 import numpy as np
 from numpy.typing import NDArray
-
-_STAGE_1B = (
-    "articulated-pedagogical analytic anchor Stage 1a scaffold: closed form lands "
-    "at Stage 1b. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md "
-    "§6 (D-ANCHOR: Marion&Thornton §3.2 / DLMF §19.2+§22.19(i) / L&L §11)."
-)
+from scipy.special import ellipj, ellipk
 
 
 def pendulum_period_small_angle(length: float, gravity: float) -> float:
     """A1 — small-angle period ``T0 = 2*pi*sqrt(L/g)``."""
-    raise NotImplementedError(_STAGE_1B)
+    return float(2.0 * np.pi * np.sqrt(length / gravity))
 
 
 def pendulum_period_large_angle(length: float, gravity: float, theta0: float) -> float:
     """A2 — exact period ``T = 4*sqrt(L/g)*K(sin(theta0/2))`` (complete K)."""
-    raise NotImplementedError(_STAGE_1B)
+    m = float(np.sin(theta0 / 2.0) ** 2)
+    return float(4.0 * np.sqrt(length / gravity) * ellipk(m))
 
 
 def pendulum_angle(
     length: float, gravity: float, theta0: float, t: NDArray[np.floating] | float
 ) -> NDArray[np.floating]:
     """A3 — released-from-rest trajectory ``theta(t)`` via Jacobi ``cn``."""
-    raise NotImplementedError(_STAGE_1B)
+    k = np.sin(theta0 / 2.0)
+    m = float(k * k)
+    omega0 = np.sqrt(gravity / length)
+    _sn, cn, _dn, _ph = ellipj(omega0 * np.asarray(t, dtype=np.float64), m)
+    return np.asarray(2.0 * np.arcsin(k * cn), dtype=np.float64)
 
 
 __all__ = [
