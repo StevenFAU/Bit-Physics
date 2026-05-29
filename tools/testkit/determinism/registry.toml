@@ -66,3 +66,21 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# articulated-pedagogical (task-4, sub-phase-phase-3-rigid-body). FIRST
+# `rigid-body.*` row + FIRST Stack-E SIM row in Phase 3. D-DET per charter §6 +
+# §3.2.5 schema: bit-exact same-stack-same-hw via the Warp CPU serial `wp.launch`
+# (single-threaded reduction order) + `dtype=wp.float64` throughout (no atomics,
+# no subgroup ops) — the Warp analog of Taichi `cpu_max_num_threads=1`, shared
+# with mpm-multimaterial-stack-e / common-3dgs. The ABA forward-dynamics
+# recursion is a fixed-size 3-vector / 3x3-matrix loop over n links; no atomic
+# scatter, no neighbor search. **DEFAULT declaration drafted at Stage 1a;
+# MEASURED at Stage 1b** via `assert_deterministic_run` (two runs byte-equal).
+# Row locked at Stage 1b.
+[rigid-body.articulated-pedagogical]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

@@ -125,6 +125,17 @@ members = [
   # existing-convention `packages/<name>/` precedent (D-LAYOUT, mirrors
   # lenia). Registered at Stage 1a.
   "packages/ising-classical",
+  # Phase-3 task-4 (sub-phase-phase-3-rigid-body). FIFTH Phase-3 sub-phase +
+  # FIRST Stack-E SIM in Phase 3 (after the Phase-2 common-warp Stack-E ports).
+  # The 26th workspace member; reference articulated rigid-body pendulum
+  # (Featherstone ABA reduced-coordinate forward dynamics; planar revolute
+  # serial chain; semi-implicit Euler + RK4). Consumes the common-warp §1.9.1
+  # socket only (Runtime + Capture + Determinism); own wp.array(dtype=
+  # wp.float64). D-LAYOUT: flat `packages/articulated-pedagogical/` per §0.3
+  # (NOT the plan's top-level `rigid-body/`). D-ALGO: ABA, not §5.8's
+  # "maximal-coordinate" (corrigendum A-1 in docs/spec-amendments-proposed.md).
+  # Registered at Stage 1a.
+  "packages/articulated-pedagogical",
 ]
 exclude = []
 
