@@ -3,7 +3,7 @@ date: 2026-05-29
 author: phase-3 neural-ca execution Stage 1c (Claude Code)
 subject: Phase 3 task-6 neural-ca — STAGE 1c gate-14 D↔B render-similarity (measured+locked, statistical) + perf-ledger + schema-corpus + Tier-3 + CI jobs + gate-13 replay
 verdict: CONFIRMED
-head_sha: PLACEHOLDER-STAGE-1C-AUDIT
+head_sha: a92e520e52841114cc32fb5e35657b29b333fc6f
 prior_sub_phase_landed_at: 86b0aa5
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: 0 HARD_FAIL / 14 SOFT_WARN
