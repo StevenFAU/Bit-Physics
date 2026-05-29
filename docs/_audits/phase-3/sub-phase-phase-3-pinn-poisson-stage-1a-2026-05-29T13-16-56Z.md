@@ -3,7 +3,8 @@ date: 2026-05-29T13-16-56Z
 author: phase-3 pinn-poisson stage-1a (Claude Code)
 subject: Phase 3 task-7 pinn-poisson — STAGE 1a scaffold + RED + failing-tests-hash + spec-ref + tolerance + determinism rows
 verdict: CONFIRMED
-head_sha: 239e8a0251db97152220fe32e43a8f96a24171eb
+head_sha: 3e1093e
+anchor_sha: 239e8a0251db97152220fe32e43a8f96a24171eb
 prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: b7460150b61213bb8909659ffc7b103d846ad782f5062d272f2ce572e6abb15e
