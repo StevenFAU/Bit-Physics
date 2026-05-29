@@ -13,6 +13,21 @@ prior_phase_tag: v0.2.0-phase-2
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1
 revisions:
+  - v2 (2026-05-29) — EXECUTION Stage 0 (HEAD 28b005c). Operator RATIFIED all 8
+    §11 items (D-PRECONDITIONS/CPU-RENDER discharge, D-RENDER-DET + the
+    deterministic-golden-render boundary = STOP-RENDER-FLOOR, D-ANCHOR-COUPLING
+    corrected eq numbers + Anchor-2 caveat, D-VENDOR-ROLE/SHA cite-only,
+    D-SCOPE-MVP/STRETCH boundary, D-CI measure-then-split, D-SCENE small-synthetic,
+    A-7). ALL §6 D-classes now RESOLVED (see the per-class "RESOLVED (operator-ratified
+    v2)" markers + §11). Stage-0 live re-verifications (Convention #8): PhysGaussian
+    license=null / no LICENSE / SHA 8339ed6a… (matches §2.18); coupling Eq.(8) covariance+
+    center / Eq.(9) SH-rotation / Eq.(10) rate-form re-fetched verbatim from
+    arXiv:2311.12198v3; MPM kernel sequence + F(N,3,3)f64 re-read; integrity 0HF/14SW
+    (digest 5c7172a2… live); replay phase-2 ok=True. Inria-probe CLEAN (common-3dgs
+    runtime carries NO vendored Inria source — citation comments only; references/3DGS-
+    reference/ is a properly-licensed non-commercial oracle whose clause 3dgs-mpm inherits).
+    A-7 filed in docs/spec-amendments-proposed.md; references/PhysGaussian/MANIFEST.toml
+    cite-only pointer authored (source_vendored=false). NO BLOCK; execution proceeds.
   - v1 (2026-05-29) — initial plan-drafting charter; Phase-3 FINALE. Preconditions probed
     PRESENT (common-3dgs + render_similarity + Phase-2 MPM); CPU-render probed FEASIBLE
     (common-3dgs render() runs Warp-CPU, CI green on ubuntu-latest, no CUDA). common-3dgs
@@ -236,13 +251,13 @@ Leaned per §0.3 + precedent; STOP/BLOCK only on real conflict. Load-bearing:
 **D-PRECONDITIONS/CPU-RENDER**, **D-RENDER-DET** (+ golden-floor boundary),
 **D-ANCHOR-COUPLING**.
 
-### D-PRECONDITIONS / CPU-RENDER ⚠ (BLOCK gate) — **LEAN: proceed (DISCHARGED at probe)**
+### D-PRECONDITIONS / CPU-RENDER ⚠ (BLOCK gate) — **RESOLVED (operator-ratified v2): proceed (DISCHARGED; re-confirmed live Stage 0)**
 Both deps present; common-3dgs renders Warp-CPU (CI green ubuntu-latest; `render()` →
 `wp.launch(device="cpu")`; CI scale 36 Gaussians @ 32²–128²; no CUDA imports/conditionals).
 The MPM is Warp-CPU serial; coupling is numpy/Warp-CPU. → **no feasibility BLOCK.** Re-verify
 live at Stage 0.
 
-### D-RENDER-DET ⚠ — **LEAN: bit-exact → tight regression; below-floor = STOP-to-investigate**
+### D-RENDER-DET ⚠ — **RESOLVED (operator-ratified v2): bit-exact → tight regression; below-floor = STOP-RENDER-FLOOR-to-investigate**
 common-3dgs's rasterizer is declared **`bit-exact / same-stack-same-hw`**
 (`tools/testkit/determinism/registry.toml:49-60` `[neural-rendered.common-3dgs]`;
 `docs/common/3dgs.md:69-82`): "render() run twice on identical inputs is byte-identical
@@ -256,7 +271,7 @@ NCA's statistical quality-flag close (§1.3 boundary; task-6 gate-14 diagnosis `
 established that the stochastic argument required a stochastic mask — absent here). The
 render-similarity bounds are LOCKED from Stage-1b-3 measurement into spec-ref §9.
 
-### D-ANCHOR-COUPLING ⚠ — **LEAN: 3 anchors w/ corrected eq numbers + Anchor-2 caveat**
+### D-ANCHOR-COUPLING ⚠ — **RESOLVED (operator-ratified v2): 3 anchors w/ corrected eq numbers (Eq.(8) re-verified live Stage 0) + Anchor-2 caveat**
 Numerical coupling-correctness golden, ≥3 independent anchors (§2.4):
 - **Anchor 1 — PhysGaussian Eq. (7)-(8)** (web-verified; SHIFT from plan's "(8)-(10)"):
   `Σ' = F·A·Fᵀ` (covariance transform) + `x_p(t) = φ(X_p,t)` (center). The MVP coupling core.
@@ -278,7 +293,7 @@ Lands at `tools/testkit/golden/tables/3dgs-mpm-coupling.json`. NO plan edit (§0
 > re-extract (scale', rotation') from `Σ'` by symmetric eigendecomposition → quaternion. The
 > numerical golden tests this round-trip. SH coefficients FROZEN in MVP.
 
-### D-MPM-DET — **LEAN: end-to-end bit-exact-same-hw (MEASURE); compose each stage**
+### D-MPM-DET — **RESOLVED (operator-ratified v2): end-to-end bit-exact-same-hw (MEASURE at 1b-2); compose each stage**
 The Phase-2 Stack-E MPM declares `bit-exact-same-hw` at `device="cpu"` (serial `wp.launch`;
 `atomic_ops=True` but serialized → bit-exact; `packages/mpm-multimaterial-stack-e/mpm_multimaterial_stack_e/sim.py:213-217` +
 `:1-42`). Particle state: `pos/vel (N,3) f64`, **`F (N,3,3) f64`**, `affine_c (N,3,3) f64`,
@@ -291,7 +306,7 @@ MPM (bit-exact) → coupling (deterministic numpy/Warp) → render (bit-exact). 
 Stage 1b-2; the capture carries BOTH MPM particle state AND Gaussian-set state (document in
 spec-ref §7).
 
-### D-SCOPE-MVP/STRETCH — **LEAN: ship MVP; defer SH-update if >~3 days**
+### D-SCOPE-MVP/STRETCH — **RESOLVED (operator-ratified v2): ship MVP; defer SH-update if >~3 days (execution decides)**
 - **MVP (must-ship):** MPM drives Gaussian centers (translation) + def-grad `F` → Gaussian
   scale/rotation (Eq. (7)-(8)); **SH coefficients FROZEN** at scene-load values.
 - **Stretch (ship if straightforward):** per-frame SH rotation under deformation (Eq. (9),
@@ -311,7 +326,7 @@ derivation time) but does **NOT** commit it. `references/PhysGaussian/manifest.y
 **cite-only pointer** (citation + SHA + NO-LICENSE note); citation also in Cat-1 chain + spec
 Appendix A.2 (`docs/architecture.md:2230`). MANIFEST/manifest format per §6 D-MANIFEST-FMT.
 
-### D-CI — **LEAN: python-strict.yml `test-3dgs-mpm`; two-tier IF measured-expensive**
+### D-CI — **RESOLVED (operator-ratified v2): python-strict.yml `test-3dgs-mpm`; measure-then-split (two-tier IF measured-expensive)**
 SHIFT: build-py.yml does not exist → `.github/workflows/python-strict.yml` (`test-3dgs-mpm`).
 **Apply the L-PINN-2 two-tier pattern (the `3a2a7ae` split) IF** the full
 MPM-sim-from-scratch + re-render is expensive on the CPU runner: always-on fast gate loads a
@@ -459,7 +474,9 @@ Single-stack ⇒ **no gate-14** (no cross-stack pair). Render-similarity is real
 present); CPU-render FEASIBLE; no BLOCK / no HARD-RULE-2 surface. task-8 is **TERMINAL on
 produce**; both hard deps satisfied.
 
-**Operator ratifies before execution Stage 0:**
+**Operator RATIFIED all 8 items before execution Stage 0 (v2, 2026-05-29; see the dispatch
+"RATIFIED D-CLASSES" block). All §6 D-classes are now RESOLVED.** Recorded for the audit
+trail:
 1. **D-PRECONDITIONS/CPU-RENDER** — accept the discharge (proceed, no BLOCK).
 2. **D-RENDER-DET + the deterministic-golden-render boundary** — accept that below-floor =
    STOP-to-investigate (NOT a quality-flag close), grounded in common-3dgs's bit-exact

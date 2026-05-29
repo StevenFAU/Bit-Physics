@@ -213,3 +213,30 @@
 - **Disposition:** PROPOSED. task-7 vendors `physicsnemo-sym` v2.4.0 (`acaeb6dc…`)
   read-only. Spec edit + §2.18 plan-registry re-point deferred to the operator at a phase
   boundary (spec frozen in Phase 3 per §9.6; agent does NOT edit the plan per §0.3).
+
+## A-7 — Spec §2.18 dependency-registry: PhysGaussian License `MIT` → `NONE` (no-license / cite-only)
+
+- **Surfaced by:** sub-phase-phase-3-3dgs-mpm (task-8), execution Stage 0 (2026-05-29).
+  D-VENDOR-ROLE/SHA, operator-ratified: PhysGaussian is **cite-only, NO source vendoring**.
+- **Location:** `docs/architecture.md:2551` (§2.18 dependency-version-pinning-policy table,
+  PhysGaussian row).
+- **Current text:**
+  > `| **PhysGaussian (Xie 2024)** | Phase 4 Stage 19, Stage 22 | Latest stable; paper arXiv:2311.12198 | MIT | Web-fetch latest commit on main |`
+- **Proposed text:**
+  > `| **PhysGaussian (Xie 2024)** | Phase 4 Stage 19, Stage 22; Phase 3 task-8 (cite-only) | Latest stable; paper arXiv:2311.12198 | NONE (no LICENSE → all-rights-reserved; CITE-ONLY, no source vendored) | Web-fetch latest commit on main |`
+- **Verified rationale (Convention #8 — verified at assertion this Stage 0):** the License
+  column claims **MIT**, which is WRONG. Verified live 2026-05-29: `gh api
+  repos/XPandora/PhysGaussian` returns `license: null`; `gh api
+  repos/XPandora/PhysGaussian/contents/LICENSE` returns **404** (no LICENSE file in the root
+  tree). With no license, the source is **all-rights-reserved by default** → it may be
+  **cited** (facts/equations are not copyrightable) but **NOT vendored or redistributed**.
+  task-8 therefore reimplements the coupling from the PAPER's published equations
+  (arXiv:2311.12198) independently (spec §2.4) and records a **cite-only pointer** at
+  `references/PhysGaussian/MANIFEST.toml` (no source tree). The **rest of the §2.18 row is
+  correct**: the SHA pin `8339ed6aa2cd5d50e1001a254a3d95aea678a956` matches the upstream
+  default-branch HEAD byte-for-byte (verified `gh api
+  repos/XPandora/PhysGaussian/commits/main`), and the paper id arXiv:2311.12198 is correct.
+- **Disposition:** PROPOSED. task-8 vendors NO PhysGaussian source (cite-only
+  `references/PhysGaussian/MANIFEST.toml`, `source_vendored = false`). Spec edit deferred to
+  the operator at a phase boundary (spec frozen in Phase 3 per §9.6; agent does NOT edit the
+  plan per §0.3).

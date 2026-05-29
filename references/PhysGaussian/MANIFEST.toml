@@ -1,0 +1,30 @@
+# PhysGaussian — CITE-ONLY POINTER. NO SOURCE VENDORED.
+#
+# Unlike references/3DGS-reference/ (Inria, non-commercial license file present, source
+# vendored as a test oracle), PhysGaussian publishes NO LICENSE → all-rights-reserved by
+# default. We therefore vendor NO source under this directory: this MANIFEST.toml is the
+# ONLY file here. The task-8 coupling is reimplemented from the PAPER's published equations
+# (arXiv:2311.12198 — facts, not copyrighted code) + first-principles continuum mechanics.
+# An executor MAY clone the repo TRANSIENTLY (to a scratch dir OUTSIDE the repo) as a
+# derivation cross-check oracle, but commits NO PhysGaussian source — not even here.
+
+[upstream]
+name         = "PhysGaussian"
+authors      = "Xie, Zong, Qiu, Li, Feng, Yang, Jiang (CVPR 2024)"
+paper        = "arXiv:2311.12198 — PhysGaussian: Physics-Integrated 3D Gaussians for Generative Dynamics"
+version      = "main-HEAD (cite-only; no source vendored)"
+sha          = "8339ed6aa2cd5d50e1001a254a3d95aea678a956"
+url          = "https://github.com/XPandora/PhysGaussian"
+license      = "NONE"  # gh api repos/XPandora/PhysGaussian → license=null; no LICENSE file in root tree (verified 2026-05-29). All-rights-reserved by default.
+license_file = ""      # NONE — no LICENSE in the upstream repo; nothing relicensable.
+source_vendored = false
+
+[scope]
+purpose = "CITE-ONLY citation anchor for the MPM→3DGS coupling kinematics (task-8 3dgs-mpm). The coupling is reimplemented INDEPENDENTLY from the published paper equations (spec §2.4 independent-derivation): Eq. (8) Gaussian covariance + center transform a_p(t)=F_p A_p F_pᵀ / x_p(t)=φ(X_p,t) (MVP); Eq. (9) spherical-harmonic basis rotation f^t(d)=f^0(Rᵀd) via polar decomposition F_p=R_p S_p (stretch); Eq. (10) is the alternative incremental rate-form (NOT used). Equation numbers re-verified verbatim from arXiv:2311.12198v3 at Stage 0 (Convention #8). NO SOURCE is vendored: license=null = all-rights-reserved → cite-only, no redistribution, no relicensing."
+used_by_sims   = ["neural-rendered/3dgs-mpm"]
+used_by_checks = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-29"
+fetched_by    = "phase-3 3dgs-mpm stage-0 (Claude Code)"
+fetch_command = "NONE — no source fetched/committed. License/SHA verified via: gh api repos/XPandora/PhysGaussian (license=null), gh api repos/XPandora/PhysGaussian/commits/main (sha 8339ed6a…), gh api repos/XPandora/PhysGaussian/contents/LICENSE (404). Equations re-verified via arXiv:2311.12198v3. Transient-clone-for-derivation is permitted to a scratch dir OUTSIDE the repo; nothing is committed."

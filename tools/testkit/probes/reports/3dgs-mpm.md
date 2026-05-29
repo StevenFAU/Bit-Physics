@@ -2,16 +2,21 @@
 probe: 3dgs-mpm
 task: task-8
 sub_phase: sub-phase-phase-3-3dgs-mpm
-stage: plan-drafting (pre-dispatch probe; re-run live at execution Stage 0)
+stage: execution Stage 0 (live re-verification; original probe authored at plan-drafting)
 date: 2026-05-29
 head_sha: 3a2a7aeda23b1952cb9232a95b28f1a78d35571f
-verdict: PRECONDITIONS DISCHARGED — both hard deps present; common-3dgs renders CPU-only; NO BLOCK
+reverified_at_head: 28b005c5bf9bd02549204cd3ce5c2d23ed75edda
+verdict: PRECONDITIONS DISCHARGED — both hard deps present + usable; common-3dgs renders CPU-only; Inria-probe clean; NO BLOCK
 ---
 
 # Pre-implementation probe — 3dgs-mpm (task-8, Phase-3 finale)
 
-> Verbatim live-repo probe at HEAD `3a2a7ae`. The executor RE-RUNS this live at Stage 0
-> (§5.3 anchor-probe) — APIs may drift; cite at assertion (Convention #8).
+> Verbatim live-repo probe authored at plan-drafting HEAD `3a2a7ae`. **RE-VERIFIED LIVE at
+> execution Stage 0 (HEAD `28b005c`, 2026-05-29):** every API surface, the MPM kernel
+> sequence, the PhysGaussian license/SHA, and the coupling equation numbers were re-confirmed
+> at assertion (Convention #8) — §§1–5 below hold byte-for-byte; the Eq. numbers were
+> re-fetched verbatim from arXiv:2311.12198v3 (§5 + §7). The Inria-probe (§7) is NEW at
+> Stage 0. Cite at assertion (Convention #8).
 
 ## 0. Preconditions (BLOCK gate) — DISCHARGED
 
@@ -110,7 +115,54 @@ Eq.(7)-(9) + Stomakhin 2013 (MPM). The Kerbl compositing equation number was not
 confirmed here (PDF > fetch limit); not load-bearing for the coupling golden — the executor
 verifies it at derivation time if the spec-ref cites it.
 
-## 6. Routing summary
+## 7. Inria-probe (NEW at Stage 0) — no transitive Inria redistribution
+
+The finale must not silently inherit an unlicensed-Inria-source dependency. Probed:
+
+- **common-3dgs's own runtime source carries NO vendored Inria source.** `grep -rn` over
+  `common/common-3dgs/src/` for `inria|diff.gaussian|graphdeco|gaussian.splatting` returns
+  **docstring/comment citations only** (`common/common-3dgs/src/common_3dgs/model.py:19`,
+  `common/common-3dgs/src/common_3dgs/camera.py:6` — "cited from the vendored
+  `references/3DGS-reference/...`"); there is **no `import references` / `from
+  references`** at runtime. The rasterizer (`common/common-3dgs/src/common_3dgs/render.py`)
+  is an INDEPENDENT EWA-splatting
+  re-derivation (`Σ = R diag(s²) Rᵀ`, EWA Jacobian, front-to-back compositing).
+- **`references/3DGS-reference/` IS a vendored Inria reference oracle, but properly handled**
+  (`references/3DGS-reference/MANIFEST.toml`): `license = "NOASSERTION"`, `license_file =
+  "LICENSE.md"` (Inria **NON-COMMERCIAL research license**, file PRESENT), `sha =
+  "54c035f7…"`. Its scope note states common-3dgs "derives ... INDEPENDENTLY ... the vendored
+  source is the citation anchor and the test target, NOT a redistributed dependency," and the
+  **non-commercial clause is explicitly inherited by `neural-rendered/3dgs-mpm`** (already in
+  `used_by_sims`). This is task-1's vendoring, properly licensed + manifested.
+- **3dgs-mpm depends on common-3dgs's reimplemented renderer, NOT on
+  `references/3DGS-reference/` for redistribution.** ⇒ NO transitive unlicensed-source
+  dependency; NO HARD-RULE-2 "vendored Inria source discovered in common-3dgs" surface. The
+  inherited non-commercial clause is recorded (research-only project; consistent with spec
+  §2.4/§2.8). **NO BLOCK.**
+
+## 8. Stage-0 live re-verifications (Convention #8, at assertion)
+
+- **PhysGaussian license/SHA** (`gh api repos/XPandora/PhysGaussian`, 2026-05-29):
+  `license: None`, `default_branch: main`, HEAD `8339ed6aa2cd5d50e1001a254a3d95aea678a956`
+  (= plan §2.18 pin byte-for-byte), `GET contents/LICENSE` → 404 (no LICENSE file). ⇒
+  all-rights-reserved, cite-only confirmed.
+- **Coupling eq numbers** (arXiv:2311.12198v3, fetched live): **Eq. (8)** `𝒙ₚ(t)=ϕ(𝑿ₚ,t)`,
+  `𝒂ₚ(t)=𝑭ₚ(t)𝑨ₚ𝑭ₚ(t)ᵀ` (§3.4 covariance+center — the MVP core); **Eq. (9)**
+  `fᵗ(𝒅)=f⁰(𝑹ᵀ𝒅)` via polar decomp `𝑭ₚ=𝑹ₚ𝑺ₚ` (§3.5 SH-rotation STRETCH); **Eq. (10)**
+  `𝒂ₚⁿ⁺¹=𝒂ᵢⁿ+Δt(∇𝒗ₚ𝒂ₚⁿ+𝒂ₚⁿ∇𝒗ₚᵀ)` (§3.6 rate-form, NOT used). Eq. (7) = the time-dependent
+  Gaussian-kernel definition that consumes the Eq.(8) covariance (re-confirmed verbatim at
+  the Stage-1b derivation doc per Convention #8).
+- **MPM kernel sequence** re-read live
+  (`packages/mpm-multimaterial-stack-e/mpm_multimaterial_stack_e/sim.py:268-282`,
+  `packages/mpm-multimaterial-stack-e/mpm_multimaterial_stack_e/reference/mls_mpm_warp.py:507-690`):
+  `compute_particle_stresses → (zero grid) → p2g_with_stress → grid_update → g2p →
+  deformation_update (F ← (I+dt·C)·F) → advect_particles`; per-particle `F (N,3,3) f64` read
+  after `deformation_update`. Confirms §3.
+- **Integrity anchor** (§R): `0 HARD_FAIL / 14 SOFT_WARN`; digest measured live
+  `5c7172a2be7872e3fc3f8de049400048d0407e6b68aa3f6273bcc3ebbc7175c1` (do NOT copy — §R).
+- **Cross-phase replay** `--prior-phase phase-2`: `ok=True` (8/8 gates PASS).
+
+## 9. Routing summary
 
 Both hard deps present + CPU-render feasible → **NO BLOCK**. All SHIFTs (API names, paths,
 layout, CI workflow, eq numbers, vendoring posture, below-floor semantics) documented in
