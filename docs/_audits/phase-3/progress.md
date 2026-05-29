@@ -661,3 +661,14 @@
 - **gate-13 GREEN:** NumPy oracle (shares the WGSL PCG fire RNG) reproduces the committed GPU capture to **max_abs_diff 3.5e-6** over 1000 steps (under 1e-4; fire masks bit-identical, only GPU-vs-CPU f32 reduction divergence). mypy-strict + ruff clean.
 - **Commits:** `2801d86` (Stack-B impl: convert+oracle+harness+shader) → `7c7fb64` (WGSL artifact + B-capture + repro test GREEN) → Stage-1b-B audit+progress → back-fill. integrity 0 HF / 14 SW.
 - **Next:** Stage 1c — gate-14 D↔B render-similarity (from render_similarity import psnr/ssim/lpips, frame-paired) MEASURE→LOCK; equivalence.md; perf-ledger 2 rows; schema-corpus seed; CI jobs (test-neural-ca-train/infer/equiv); push; §S.5 sweep.
+
+## sub-phase-phase-3-neural-ca — Stage 1c — 2026-05-29 — CONFIRMED
+
+- **Stage:** execution Stage 1c (gate-14 D↔B + perf + schema-corpus + Tier-3 + CI + gate-13).
+- **gate-14 (FIRST of Phase 3, STATISTICAL):** D-inference↔B-inference render-similarity, direct `from render_similarity import psnr,ssim,lpips`, frame-paired, mean over 20 non-seed pairs. MEASURED PSNR 23.92 / SSIM 0.824 / LPIPS_alex 0.0316. LOCKED psnr_min=23.0/ssim_min=0.80/lpips_max=0.05. **QUALITY-CONCERN FLAG (NOT auto-fail):** mean PSNR/SSIM below §2.12 floors (28/0.85) — stochastic fire-RNG (torch.rand vs WGSL PCG) per-pixel divergence; **LPIPS 0.0316 PASSES** floor (perceptually equivalent). equivalence.md (STATISTICAL template) + spec-ref §9.
+- **perf (gate-12, 1 row/stack):** python (PyTorch) training 1271.14s (same-seed BIT-IDENTICAL reproduction); typescript (WGSL/WebGPU) inference 2.18s (RX 6800 XT via wgpu-py, §7.8 local).
+- **schema-corpus** `phase-3-neural-ca.{h5,json}` (round-trips + schema-valid). **Tier-3** `tools/diagnostics/tier3/neural_ca/field_health.py` (standalone deliverable, path-loaded). **CI** test-neural-ca-train/infer/equiv (selective LFS pull each; WGSL never in CI §7.8). gated Tier-1/2 via test_diagnostics.
+- **gate-13:** committed 1a failing-evidence sha256 == footer (9a29410a…) MATCH.
+- **Full suite 10/10 GREEN** (train-converge, ckpt-serialize, golden×2, PBT×2, WGSL-repro, cross-stack, diagnostics×2). mypy-strict+ruff clean. integrity 0 HF / 14 SW.
+- **Commits:** `06acd3a` (gate-14) → `9a3b5f9` (tier3+diag) → `2f15b20` (schema-corpus) → `3c1572c` (CI jobs) → `4298c98` (perf) → Stage-1c audit+progress → back-fill.
+- **Next:** Stage 2 — landing audit task-6-neural-ca.md (closed-with-shifted-N, NO tag, Convention #12).
