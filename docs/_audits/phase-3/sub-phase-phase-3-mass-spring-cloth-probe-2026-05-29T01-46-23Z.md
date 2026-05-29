@@ -27,7 +27,6 @@ evidence_paths:
   - docs/conventions/sub-phase-conventions.md
   - docs/architecture.md
   - docs/phases/phase-3-plan.md
-  - docs/phases/sub-phase-phase-3-mass-spring-cloth.md
   - docs/_audits/phase-3/sub-phase-phase-3-mass-spring-cloth-probe-2026-05-29T01-46-23Z.md
 ---
 
