@@ -32,6 +32,7 @@ from dataclasses import dataclass
 
 import torch
 from torch import Tensor, nn
+from torch.nn import functional as F
 
 CHANNEL_N = 16
 CELL_FIRE_RATE = 0.5
@@ -72,14 +73,50 @@ class NCAModel(nn.Module):
         self.w1 = nn.Conv2d(3 * c, self.config.hidden_dim, kernel_size=1)
         self.w2 = nn.Conv2d(self.config.hidden_dim, c, kernel_size=1, bias=False)
         nn.init.zeros_(self.w2.weight)
+        self.register_buffer("_perception_kernel", _perception_kernel(c), persistent=False)
 
     def perceive(self, x: Tensor) -> Tensor:
         """Fixed depthwise [identity, Sobel-x, Sobel-y] convolution.
 
-        Stage 1b-D implements this.
+        Input ``(B, C, H, W)`` -> output ``(B, 3C, H, W)`` ordered
+        ``[c0_id, c0_sobel_x, c0_sobel_y, c1_id, ...]``. Zero-padded 'SAME'
+        (``growing_ca.ipynb`` ``perceive``).
         """
-        raise NotImplementedError("neural_ca.model.NCAModel.perceive — Stage 1b-D")
+        kernel = self._perception_kernel
+        assert isinstance(kernel, Tensor)
+        return F.conv2d(x, kernel, padding=1, groups=self.config.channel_n)
+
+    def _alive_mask(self, x: Tensor) -> Tensor:
+        """A cell is alive iff a 3x3 max-pool of the alpha channel (index 3)
+        exceeds ``ALIVE_THRESHOLD`` (``growing_ca.ipynb`` ``get_living_mask``)."""
+        alpha = x[:, 3:4]
+        return F.max_pool2d(alpha, kernel_size=3, stride=1, padding=1) > ALIVE_THRESHOLD
 
     def forward(self, x: Tensor, *, fire_rate: float | None = None) -> Tensor:
-        """One stochastic NCA update step. Stage 1b-D implements this."""
-        raise NotImplementedError("neural_ca.model.NCAModel.forward — Stage 1b-D")
+        """One stochastic NCA update step (``growing_ca.ipynb`` ``call``).
+
+        The stochastic fire mask draws from the ambient ``torch`` RNG; pin
+        ``torch.manual_seed`` upstream for bit-exact same-stack inference.
+        """
+        if fire_rate is None:
+            fire_rate = self.config.fire_rate
+        pre_alive = self._alive_mask(x)
+        dx = self.w2(F.relu(self.w1(self.perceive(x))))
+        fire = (torch.rand(x[:, :1].shape, device=x.device) <= fire_rate).to(x.dtype)
+        x = x + dx * fire
+        post_alive = self._alive_mask(x)
+        alive = (pre_alive & post_alive).to(x.dtype)
+        return x * alive
+
+
+def _perception_kernel(channel_n: int) -> Tensor:
+    """Build the fixed depthwise perception kernel ``(3C, 1, 3, 3)`` with the
+    per-channel filter triple [identity, Sobel-x, Sobel-y]
+    (``Sobel_x = outer([1,2,1], [-1,0,1]) / 8``; ``growing_ca.ipynb`` line 249).
+    """
+    identity = torch.tensor([[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 0.0]])
+    sobel_x = torch.outer(torch.tensor([1.0, 2.0, 1.0]), torch.tensor([-1.0, 0.0, 1.0])) / 8.0
+    sobel_y = sobel_x.t()
+    triple = torch.stack([identity, sobel_x, sobel_y], dim=0)  # (3, 3, 3)
+    kernel = triple.repeat(channel_n, 1, 1)  # (3C, 3, 3)
+    return kernel.unsqueeze(1)  # (3C, 1, 3, 3)

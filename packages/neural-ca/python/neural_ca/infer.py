@@ -19,9 +19,10 @@ Stage 1b-D.
 from __future__ import annotations
 
 import numpy as np
+import torch
 from numpy.typing import NDArray
 
-from .model import NCAModel
+from .model import NCAModel, seed_state
 
 
 def run_inference(
@@ -32,9 +33,25 @@ def run_inference(
     seed: int = 42,
     capture_every: int = 1,
 ) -> NDArray[np.float32]:
-    """Roll ``model`` forward from the seed; return an ``(n_frames, H, W, 4)``
-    RGBA float32 stack in [0, 1].
+    """Roll ``model`` forward from the seed for ``steps`` steps; return an
+    ``(n_frames, H, W, 4)`` RGBA float32 stack clamped to [0, 1]. Frame 0 is the
+    seed; thereafter a frame is captured every ``capture_every`` steps.
 
-    Stage 1b-D implements this.
+    Bit-exact same-stack-same-hw with the pinned ``seed`` (torch RNG drives the
+    stochastic fire mask).
     """
-    raise NotImplementedError("neural_ca.infer.run_inference — Stage 1b-D")
+    torch.manual_seed(seed)
+    model.eval()
+    x = seed_state(grid_size, model.config.channel_n)
+
+    def rgba(state: torch.Tensor) -> NDArray[np.float32]:
+        frame = state[0, :4].clamp(0.0, 1.0).permute(1, 2, 0).contiguous()
+        return frame.numpy().astype(np.float32)
+
+    frames: list[NDArray[np.float32]] = [rgba(x)]
+    with torch.no_grad():
+        for t in range(steps):
+            x = model(x)
+            if (t + 1) % capture_every == 0:
+                frames.append(rgba(x))
+    return np.stack(frames, axis=0)

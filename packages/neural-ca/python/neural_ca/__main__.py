@@ -34,6 +34,7 @@ def main(argv: list[str] | None = None) -> None:
     p_infer.add_argument("--grid", type=int, default=64)
     p_infer.add_argument("--steps", type=int, default=1000)
     p_infer.add_argument("--seed", type=int, default=42)
+    p_infer.add_argument("--capture-every", type=int, default=50)
     p_infer.add_argument("--out", type=Path, required=True)
 
     p_conv = sub.add_parser("convert", help="safetensors -> WGSL-loadable artifact")
