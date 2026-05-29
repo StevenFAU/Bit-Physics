@@ -19,7 +19,14 @@ repos:
         # § D.8); do not append final newlines to them.
         exclude: ^references/
       - id: trailing-whitespace
-        exclude: ^references/
+        # Vendored upstream (references/) must stay byte-identical; AND
+        # failing-tests evidence ledgers (tools/testkit/failing-tests-evidence/)
+        # are VERBATIM pytest captures whose sha256 underwrites gate-3/13 replay
+        # (README step 2 + replay_failing_tests.py). pytest `--tb=short` emits
+        # trailing whitespace on blank traceback context lines; stripping it
+        # diverges the committed evidence from a fresh replay capture. First
+        # surfaced by the first Stack-E Phase-3 sim (task-4 rigid-body-pedagogical).
+        exclude: ^(references/|tools/testkit/failing-tests-evidence/)
       - id: check-added-large-files
         # 2 GB ceiling. Per spec § 2.7, canonical capture HDF5 payloads
         # are committed. Ceiling history: default 500 KB → Phase 0

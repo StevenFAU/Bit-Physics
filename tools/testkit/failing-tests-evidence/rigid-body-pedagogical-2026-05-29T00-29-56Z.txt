@@ -1,0 +1,125 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/articulated-pedagogical
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, timeout-2.4.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 11 items
+
+tests/test_6dof_chain.py::test_6dof_energy_conservation_semi_implicit_euler FAILED [  9%]
+tests/test_6dof_chain.py::test_6dof_rk4_matches_refined_reference FAILED [ 18%]
+tests/test_determinism.py::test_two_runs_bit_equal FAILED                [ 27%]
+tests/test_double_pendulum.py::test_double_pendulum_matches_rk4_reference FAILED [ 36%]
+tests/test_pbt_invariants.py::test_energy_drift_bounded FAILED           [ 45%]
+tests/test_pbt_invariants.py::test_angular_momentum_about_pivot_conserved FAILED [ 54%]
+tests/test_pendulum_golden.py::test_small_angle_period_anchor_A1 FAILED  [ 63%]
+tests/test_pendulum_golden.py::test_large_angle_period_anchor_A2 FAILED  [ 72%]
+tests/test_pendulum_golden.py::test_trajectory_jacobi_cn_anchor_A3 FAILED [ 81%]
+tests/test_pendulum_golden.py::test_aba_single_link_equation_of_motion FAILED [ 90%]
+tests/test_pendulum_golden.py::test_integrated_period_matches_large_angle_anchor FAILED [100%]
+
+=================================== FAILURES ===================================
+______________ test_6dof_energy_conservation_semi_implicit_euler _______________
+tests/test_6dof_chain.py:44: in test_6dof_energy_conservation_semi_implicit_euler
+    q_traj, qd_traj = ap.simulate(chain, q0, qd0, _DT, n_steps)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+___________________ test_6dof_rk4_matches_refined_reference ____________________
+tests/test_6dof_chain.py:61: in test_6dof_rk4_matches_refined_reference
+    q_prod, _ = ap.simulate(chain, q0, qd0, _DT, n_steps, integrator="rk4")
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+___________________________ test_two_runs_bit_equal ____________________________
+tests/test_determinism.py:29: in test_two_runs_bit_equal
+    q_a, qd_a = ap.simulate(chain, q0, qd0, dt, n_steps)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+__________________ test_double_pendulum_matches_rk4_reference __________________
+tests/test_double_pendulum.py:100: in test_double_pendulum_matches_rk4_reference
+    q_traj, _qd_traj = ap.simulate(chain, q0, qd0, _DT, n_steps, integrator="rk4")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+__________________________ test_energy_drift_bounded ___________________________
+tests/test_pbt_invariants.py:41: in test_energy_drift_bounded
+    @given(
+            
+tests/test_pbt_invariants.py:55: in test_energy_drift_bounded
+    q_traj, qd_traj = ap.simulate(chain, q0, qd0, _DT, n_steps)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+E   Falsifying example: test_energy_drift_bounded(
+E       theta=[0.0, 0.0],  # or any other generated value
+E   )
+_________________ test_angular_momentum_about_pivot_conserved __________________
+tests/test_pbt_invariants.py:65: in test_angular_momentum_about_pivot_conserved
+    @given(
+            
+tests/test_pbt_invariants.py:79: in test_angular_momentum_about_pivot_conserved
+    q_traj, qd_traj = ap.simulate(chain, q0, qd0, _DT, n_steps)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+E   Falsifying example: test_angular_momentum_about_pivot_conserved(
+E       omega=[0.0, 0.0],  # or any other generated value
+E   )
+______________________ test_small_angle_period_anchor_A1 _______________________
+tests/test_pendulum_golden.py:45: in test_small_angle_period_anchor_A1
+    got = ap.pendulum_period_small_angle(_L, _G)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/analytic.py:39: in pendulum_period_small_angle
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical analytic anchor Stage 1a scaffold: closed form lands at Stage 1b. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §6 (D-ANCHOR: Marion&Thornton §3.2 / DLMF §19.2+§22.19(i) / L&L §11).
+______________________ test_large_angle_period_anchor_A2 _______________________
+tests/test_pendulum_golden.py:53: in test_large_angle_period_anchor_A2
+    got = ap.pendulum_period_large_angle(_L, _G, _THETA0)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/analytic.py:44: in pendulum_period_large_angle
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical analytic anchor Stage 1a scaffold: closed form lands at Stage 1b. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §6 (D-ANCHOR: Marion&Thornton §3.2 / DLMF §19.2+§22.19(i) / L&L §11).
+_____________________ test_trajectory_jacobi_cn_anchor_A3 ______________________
+tests/test_pendulum_golden.py:64: in test_trajectory_jacobi_cn_anchor_A3
+    got = ap.pendulum_angle(_L, _G, _THETA0, t)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/analytic.py:51: in pendulum_angle
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical analytic anchor Stage 1a scaffold: closed form lands at Stage 1b. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §6 (D-ANCHOR: Marion&Thornton §3.2 / DLMF §19.2+§22.19(i) / L&L §11).
+___________________ test_aba_single_link_equation_of_motion ____________________
+tests/test_pendulum_golden.py:75: in test_aba_single_link_equation_of_motion
+    got = ap.aba_forward_dynamics(pendulum, q, qd)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/aba.py:53: in aba_forward_dynamics
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical ABA forward dynamics Stage 1a scaffold: the planar spatial-vector ABA recursion lands as a Warp @wp.kernel at Stage 1b. See docs/sim-specs/rigid-body/articulated-pedagogical/algebraic.md (Featherstone Ch. 7 §7.3, pp. 123-131) + spec-ref.md §5.
+______________ test_integrated_period_matches_large_angle_anchor _______________
+tests/test_pendulum_golden.py:86: in test_integrated_period_matches_large_angle_anchor
+    q_traj, _qd_traj = ap.simulate(pendulum, q0, qd0, dt, n_steps, integrator="rk4")
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical/integrators.py:64: in simulate
+    raise NotImplementedError(_STAGE_1B)
+E   NotImplementedError: articulated-pedagogical integrator Stage 1a scaffold: implementation lands at Stage 1b atop the Warp ABA forward dynamics. See docs/sim-specs/rigid-body/articulated-pedagogical/spec-ref.md §5.
+=========================== short test summary info ============================
+FAILED tests/test_6dof_chain.py::test_6dof_energy_conservation_semi_implicit_euler
+FAILED tests/test_6dof_chain.py::test_6dof_rk4_matches_refined_reference - No...
+FAILED tests/test_determinism.py::test_two_runs_bit_equal - NotImplementedErr...
+FAILED tests/test_double_pendulum.py::test_double_pendulum_matches_rk4_reference
+FAILED tests/test_pbt_invariants.py::test_energy_drift_bounded - NotImplement...
+FAILED tests/test_pbt_invariants.py::test_angular_momentum_about_pivot_conserved
+FAILED tests/test_pendulum_golden.py::test_small_angle_period_anchor_A1 - Not...
+FAILED tests/test_pendulum_golden.py::test_large_angle_period_anchor_A2 - Not...
+FAILED tests/test_pendulum_golden.py::test_trajectory_jacobi_cn_anchor_A3 - N...
+FAILED tests/test_pendulum_golden.py::test_aba_single_link_equation_of_motion
+FAILED tests/test_pendulum_golden.py::test_integrated_period_matches_large_angle_anchor
+============================== 11 failed in 0.91s ==============================
