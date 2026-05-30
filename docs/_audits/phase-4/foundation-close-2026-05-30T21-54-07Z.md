@@ -4,7 +4,7 @@ author: phase-4 foundation campaign (Claude Code, PHASE B WU-C..WU-G)
 subject: "Phase-4 FOUNDATION CLOSE — WU-C..WU-G completion report (PHASE B)"
 kind: foundation-close
 verdict: FOUNDATION-COMPLETE-WITH-WU-D-CUDA-BLOCKED-CPU-FALLBACK
-head_sha: 9bc92f549ae67a0d6c7e0569c8d6f6ec4ff6ad60
+head_sha: 460ce4df91919fc3ce9e8670e35dec3db553d6cc
 prior_phase_tag: v0.3.0-phase-3
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 45eed4cacb64b711c461f6e3b76958a646e6b0517302c3921bce2f18ef3018d2
