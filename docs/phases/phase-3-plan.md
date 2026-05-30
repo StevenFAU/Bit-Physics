@@ -292,14 +292,17 @@ Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's p
   Security: clean (2026-05-28; repository security-advisories array empty)
   Fetched: 2026-05-28T00:50Z
   Citation-pointer: §2.3 (Macklin 2016, spec §12) + references/PositionBasedDynamics/manifest.yaml (task-5)
-- Repo: https://github.com/NVIDIA/physicsnemo                           # task-7 pinn-poisson
-  SHA: 766e485a4eddf4e5e50d371c87b39e6d4d65ea59
-  Released: v2.1.0 (release published 2026-05-27; within 12 months → release tag pinned, not HEAD)
+- Repo: https://github.com/NVIDIA/physicsnemo-sym                       # task-7 pinn-poisson
+  SHA: acaeb6dc38ecda58559b5286d3cb743e8cf930d3
+  Released: v2.4.0 (re-pointed per applied corrigendum A-6 / spec D.3 at `da61e86`; Phase-4 A4).
+    The PINN/elliptic-PDE tutorials live in NVIDIA/physicsnemo-sym, NOT the core NVIDIA/physicsnemo
+    repo (core 1.x ended at v1.3.0; framework is 2.x; physicsnemo-sym is the read-only PINN reference).
+    The earlier pin `NVIDIA/physicsnemo@766e485a (v2.1.0)` was the wrong repo for this consumer.
   License: Apache-2.0
   License-note: permissive; Apache-2.0-compatible with Bit-Physics's MIT distribution posture.
   Security: clean (2026-05-28; repository security-advisories array empty)
   Fetched: 2026-05-28T00:53Z
-  Citation-pointer: §2.4 (spec §6.4/§12.6) + references/PhysicsNeMo-PINN/manifest.yaml (task-7)
+  Citation-pointer: §2.4 (spec §6.4/§12.6) + references/PhysicsNeMo-PINN/MANIFEST.toml (task-7)
 - Repo: https://github.com/Chakazul/Lenia                               # task-3 lenia
   SHA: adfc542939266de7f4bb7ebb552e8499701ee107
   Released: default-branch HEAD (master). Latest release tag v3.5 is 2020-10-13 (>12 months); per
