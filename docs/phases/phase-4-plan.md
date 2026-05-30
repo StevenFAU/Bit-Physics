@@ -9,13 +9,13 @@
 
 > **v9 verification-hardening amendments (May 18 2026, post-design-spec v2.4):** Normative; supersedes conflicting text below.
 >
-> **CROSS-PHASE AUDIT REPLAY (Stage 1 first action):** Before any Stage 1 work, the agent runs `python -m integrity.scripts.replay_prior_phase --prior-phase phase-3 --audit docs/_audits/phase-3/landing-<UTC>.md --gates integrity,pytest,equivalence,determinism,perf-ledger,property,mutation,tolerance-budget`. Discrepancy → BLOCKED; surface to operator; do not begin Stage 1. Per spec § 7.5.
+> **CROSS-PHASE AUDIT REPLAY (Stage 1 first action):** Before any Stage 1 work, the agent runs `python -m integrity.scripts.replay_prior_phase --prior-phase phase-3 --audit docs/_audits/phase-3/close-R3-R5-task9-20260530T145125Z.md --gates integrity,pytest,equivalence,determinism,perf-ledger,property,mutation,tolerance-budget`. Discrepancy → BLOCKED; surface to operator; do not begin Stage 1. Per spec § 7.5. (Phase-3 close shipped no single `landing-<UTC>.md`; the tag `v0.3.0-phase-3` is resolved from `--prior-phase`, and the `--audit` file is read only for front-matter. The repoint corrects a hard-coded path that would otherwise raise `FileNotFoundError` before any gate runs.)
 >
 > **SCHEMA-VERSION BUMP REGRESSION CORPUS (CRITICAL — WU-A + WU-B):** Per spec § 2.7 + § 2.12, when WU-A (Stage 2) bumps `schema_version` 1.0.0 → 1.1.0 to add `gradient_fields`, AND when WU-B (Stage 3) adds `active_mask` under the same 1.1.0 bump, the post-bump capture reader MUST round-trip every entry in `tests/fixtures/legacy-captures/` without loss. The corpus by Phase 4 open contains: Phase 0's RD-2D, Phase 1's 9 sim TDD-bootstrap captures (where realized via implementation phases, otherwise placeholders), Phase 2's 8 port captures, Phase 3's 7 sim captures — ~25 entries total. WU-A's acceptance test includes the corpus round-trip explicitly; failure → REFUTED, schema bump withdrawn until reader fixed. This is the load-bearing test that makes the "additive schema bumps are non-breaking" claim in spec § 2.7 testable.
 >
 > **GATE COUNT EXPANDED to 13 (sim stages) per spec § 3.5 v2.4:** Stages 9–35 (frontier sims) each pass the 13-gate set: Gates 1–10 (legacy Layer 4), Gate 11 (PBT invariants), Gate 12 (perf-ledger row), Gate 13 (failing-tests replay verifiable). Cross-stack equivalence Gate 14 applies to frontier variants that have cross-stack siblings (most do).
 >
-> **FAILING-TESTS OUTPUT HASH:** Every frontier sim stage's failing-tests commit MUST carry the output-hash footer per spec § 1.3 step 4. The implementation commit witnesses the hash. Stage 35 (closing) replays 3 random sim stages.
+> **FAILING-TESTS OUTPUT HASH:** Every frontier sim stage's failing-tests commit MUST carry the output-hash footer per spec § 1.3 step 4. The implementation commit witnesses the hash. Stage 36 (the closing audit) replays 3 random sim stages.
 >
 > **TOLERANCE-BUDGET COMPLIANCE (WU-F):** Stage 7 (WU-F variant-equivalence) ratifies per-variant tolerances. Every variant tolerance is within `tolerance-budget.toml` cap per spec § 2.6. Variants that need wider tolerance for legitimate numerical reasons (PINN-based sims, gaussian-fluid frontier variants) propose tolerance-budget amendments via separate operator-approved commits; the agent never amends unilaterally.
 >
@@ -29,7 +29,7 @@
 >
 > **PHASE-PLAN REVIEW:** Phase 4 is the highest-stakes plan (27 frontier sims, schema bump, frontier paper consumption). Per spec § 7.4 Convention E-addendum, owner runs phase-plan-review session BEFORE dispatch. Review audit at `docs/_audits/phase-4/pre-dispatch-review-<UTC>.md`.
 >
-> **OPERATOR-ONLY TAG PUSHING:** Closing-audit agent (final stage of stage 35) does not push `v0.4.0-phase-4`. Operator pushes after independent landing-audit review.
+> **OPERATOR-ONLY TAG PUSHING:** Closing-audit agent (Stage 36, after the last frontier sim at Stage 35) does not push `v0.4.0-phase-4`. Operator pushes after independent landing-audit review.
 >
 > **EVIDENCE-PATH VERIFICATION:** Closing audit runs `verify_evidence.py` on every stage report. Failure → REFUTED.
 >
@@ -1441,10 +1441,18 @@ Acceptance criteria:
 
       python -m integrity.scripts.replay_prior_phase \
         --prior-phase phase-3 \
-        --audit docs/_audits/phase-3/landing-<UTC>.md \
+        --audit docs/_audits/phase-3/close-R3-R5-task9-20260530T145125Z.md \
         --gates integrity,pytest,equivalence,determinism,perf-ledger,property,mutation,tolerance-budget
 
   Discrepancy → BLOCKED. Surface to operator. Do NOT begin WU-P work.
+  (Phase-3 close shipped no single `landing-<UTC>.md`; the phase-level close is
+  the three `close-R*.md` audits + the tag annotation. The replay tool derives
+  the prior-phase tag from `--prior-phase phase-3` → `v0.3.0-phase-3`; the
+  `--audit` file is read only for YAML front-matter. `close-R3-R5-task9-…` has
+  valid front-matter whose verdict is not in the {CONFIRMED,PASS,OK} assertion
+  set, so the replay re-runs the eight gates at the tag without a
+  claimed-vs-actual cross-check. See `docs/_audits/phase-4/pre-dispatch-review-*`
+  for the measured replay result.)
 
 - **Tolerance-budget Phase 4 carryover.** Update `tools/testkit/equivalence/tolerance-budget.toml`: `[phase] phase = "phase-4"`, `opened_at = "<UTC>"`. Do NOT widen budgets.
 
