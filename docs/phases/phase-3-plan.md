@@ -45,7 +45,7 @@
 >
 > **TRUNK-BASED DEVELOPMENT (LOCKED):** All references to `phase-3-integration` base branch, `phase-3/task-N-*` sub-branches, `gh pr create`, "MERGE PROTOCOL", `--base phase-3-integration`, and any branch/PR ceremony in §§ 2.16, 4.3, 5.2, and the per-task prompts at §§ 6.1–6.10 are SUPERSEDED. Every commit goes directly to `main` per spec § 7.12. Wherever a task prompt says `BASE BRANCH: phase-3-integration`, read `BASE BRANCH: main`. Wherever it says `YOUR BRANCH: phase-3/task-N-<name>`, ignore that line and commit directly to `main`. Wherever it says `gh pr create ...`, skip — there is no PR. Wherever it says "MERGE PROTOCOL per phase plan §4.3", replace with "COMMIT PROTOCOL: commit directly to `main`; tag at phase landing." An agent encountering branch-ceremony instructions SHOULD follow the trunk-based form per this amendment.
 >
-> **SINGLE-AGENT DISPATCH:** One coordinator chat + one Claude Code agent role for the whole phase. The agent runs auto-accept; reads this whole plan; works through task-1 → task-3 → task-3a → task-4 → … → task-10 sequentially; reports at each task close. Context-spanning sessions supported via `docs/_audits/phase-3/progress.md` per spec Appendix D § D.10.
+> **SINGLE-AGENT DISPATCH:** One coordinator chat + one Claude Code agent role for the whole phase. The agent runs auto-accept; reads this whole plan; works through task-1 → task-3 → task-3a → task-4 → … → task-10 sequentially; reports at each task close. Context-spanning sessions supported via `docs/_audits/phase-3/progress.md` per spec Appendix D § D.9.
 >
 > **ACTION #1:** Every Claude Code session in this phase starts with `python tools/dispatch/preflight-phase.py 3`. Exit 0 → proceed. Exit 1 → BLOCKED.
 >

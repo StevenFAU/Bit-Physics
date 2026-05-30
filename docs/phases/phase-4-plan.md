@@ -67,7 +67,7 @@
 >
 > **FRONTIER PAPERS PRE-VENDORED:** Per spec § 12.9, all 13 load-bearing frontier papers vendored to `references/papers/<paper-slug>/` BEFORE dispatch. § 2 pre-dispatch checklist enforces. § 8.4's "agent's stage start: web-fetch the paper" reads as "consume from `references/papers/`" post-amendment.
 >
-> **SINGLE-AGENT DISPATCH:** Reaffirmed. One coordinator chat + one agent role for all 35 stages. Per spec Appendix D § D.10, context-fill at 70–80% triggers a checkpoint; at >80% a hard stop. The agent's continuation session reads `docs/_audits/phase-4/progress.md` for the `CONTINUE_FROM` cue.
+> **SINGLE-AGENT DISPATCH:** Reaffirmed. One coordinator chat + one agent role for all 35 stages. Per spec Appendix D § D.9, context-fill at 70–80% triggers a checkpoint; at >80% a hard stop. The agent's continuation session reads `docs/_audits/phase-4/progress.md` for the `CONTINUE_FROM` cue.
 >
 > **ACTION #1:** Every Claude Code session starts with `python tools/dispatch/preflight-phase.py 4`. Exit 0 → proceed. Exit 1 → BLOCKED. The script verifies prior-phase tag, common-3dgs presence, frontier paper vendoring, CUDA detection (informational; CPU-fallback is documented).
 >
@@ -143,7 +143,7 @@ Spec § 11.5 Phase 4 (meta-phase)
 
 **Why Foundation lands first.** Each variant-group consumes infrastructure absent at Phase 3 close. Stages 1–8 of this phase build that infrastructure across **eight foundation work units (WUs P/A/B/C/D/E/F/G)**. Stages 9–35 then deploy the 27 frontier variant sims that consume those sockets. The architecture in § 4 specifies what each foundation stage ships; § 5 specifies how each frontier sim consumes; § 7 (foundation stage briefings) and § 8 (frontier-sim stage briefings) give the per-stage agent prompts.
 
-**Phase scope in numbers:** 35 stages, ≥80 commits to `main`, ≥30 audit reports under `docs/_audits/phase-4/`, one closing audit. Pacing per spec § 11.0 and § 12.6 below: hours-to-days bounded by stage count × per-stage agent latency + external-dependency resolution + continuation-session overhead, with continuation sessions on context-fill per spec Appendix D § D.10.
+**Phase scope in numbers:** 35 stages, ≥80 commits to `main`, ≥30 audit reports under `docs/_audits/phase-4/`, one closing audit. Pacing per spec § 11.0 and § 12.6 below: hours-to-days bounded by stage count × per-stage agent latency + external-dependency resolution + continuation-session overhead, with continuation sessions on context-fill per spec Appendix D § D.9.
 
 **Current state.** At authoring time, `Bit-Physics` is empty. This plan presumes Phases 0–3 will have landed per spec when dispatch happens. The pre-dispatch checklist (§ 2) gates on it.
 
@@ -2954,7 +2954,7 @@ Per spec § 11.0 and the v8 amendment block at the top of this document:
 Phase 4 wall-clock under single-agent AI dispatch is bounded by:
 1. 35 stages × per-stage agent latency (each stage is "probe + build + capture + commit + report"; tens of minutes of agent execution under nominal conditions).
 2. External-dependency resolution: paper fetches replaced by pre-vendoring per § 12.9; vendor installs (OpenVDB, Newton, PhysicsNeMo) per § 3.3 pins.
-3. Continuation-session overhead at context fills per spec Appendix D § D.10.
+3. Continuation-session overhead at context fills per spec Appendix D § D.9.
 4. Owner review: at phase landing (CONFIRMED/SHIFTED) or on BLOCKED/HALTED surfaces.
 
 Earlier estimates ("3–5 days of agent execution" in § 1; "12–18 months by spec § 11.8" / "30–95 weeks" in this section's prior content) are SUPERSEDED. Scope is locked at 35 stages; agents complete each stage or surface BLOCKED for owner decision. No "time-box and skip remaining sims" recommendation.

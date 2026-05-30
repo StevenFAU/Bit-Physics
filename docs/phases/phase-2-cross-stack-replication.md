@@ -13,7 +13,7 @@
 >
 > **CROSS-PHASE AUDIT REPLAY (Stage 0 Task X.0):** Stage 0's first action — before any other task — is `python -m integrity.scripts.replay_prior_phase --prior-phase phase-1 --audit docs/_audits/phase-1/landing-<UTC>.md --gates integrity,pytest,equivalence,determinism,perf-ledger,property,mutation,tolerance-budget`. Discrepancy → BLOCKED; surface to operator; do not begin Stage 0 work. Per spec § 7.5 and Appendix G.7.
 >
-> **GATE COUNT EXPANDED FROM 11 TO 14:** Per spec § 3.5 (v2.4 amendment expanding 10 → 13 gates) plus this phase's cross-stack equivalence gate (gate 14 = original gate 11). The eleven-gate acceptance criteria in §1.5.1 below is REPLACED by fourteen gates; see §1.5.1 amendment block.
+> **GATE COUNT EXPANDED FROM 11 TO 14:** Per spec § 3.5 (v2.4 amendment expanding 10 → 13 gates) plus this phase's cross-stack equivalence gate (gate 14 = original gate 11). The fourteen-gate acceptance criteria in §1.5.1 below is REPLACED by fourteen gates; see §1.5.1 amendment block.
 >
 > **FAILING-TESTS OUTPUT HASH:** Phase 1's TDD-bootstrap commits already include the output hash in their footers (per Phase 1 R9 amendments). Phase 2's per-port stages re-verify Gate 3 by replaying one randomly-sampled sim's failing-tests commit (when applicable) and confirming the hash matches the in-repo evidence file. If a per-port stage authors NEW failing tests (Stages 0, 1–8 do not — they consume Phase 1's tests; cross-stack ports re-use the same test surface where possible), the same discipline applies: capture verbatim output, sha256 in commit footer.
 >
@@ -39,7 +39,7 @@
 >
 > **COMMON-WARP TIMING (LOCKED):** common-warp module is bootstrapped in **Phase 2 Stage 0** (per this plan's existing default). The alternative reading of "back-date to Phase 1.8" is REJECTED. Phase 3 task-9 matures common-warp; Phase 4 WU-* extends specific submodules. Founder-decision item 1 in § 3.4.2 is RESOLVED.
 >
-> **SINGLE-AGENT DISPATCH:** One coordinator chat + one Claude Code agent role for the whole phase. The agent runs auto-accept; reads this whole plan; works through Stages 0 → 9 sequentially; reports at each stage close to the coordinator. Context-spanning sessions supported via `docs/_audits/phase-2/progress.md` continuation cues per spec Appendix D § D.10. The coordinator's role: dispatch the phase opener once; dispatch continuation sessions on context-fill; surface BLOCKED reports to the owner.
+> **SINGLE-AGENT DISPATCH:** One coordinator chat + one Claude Code agent role for the whole phase. The agent runs auto-accept; reads this whole plan; works through Stages 0 → 9 sequentially; reports at each stage close to the coordinator. Context-spanning sessions supported via `docs/_audits/phase-2/progress.md` continuation cues per spec Appendix D § D.9. The coordinator's role: dispatch the phase opener once; dispatch continuation sessions on context-fill; surface BLOCKED reports to the owner.
 >
 > **ACTION #1:** Every Claude Code session in this phase starts with `python tools/dispatch/preflight-phase.py 2`. Exit 0 → proceed. Exit 1 → BLOCKED, end session.
 >
@@ -474,7 +474,7 @@ Most of the parallel model's failure modes disappear:
 
 New failure modes that didn't apply to the parallel model:
 
-- **Stage-N defect blocks Stages N+1..9.** If Stage 0 (common-warp) is defective, Stages 5, 7, 8 can't proceed. Mitigation: per-stage gate verification (the §1.5 eleven-gate criteria) catches defects before the next stage starts. The coordinator's job at compile-step is to read the gate-status table and confirm all gates PASS before dispatching the next stage.
+- **Stage-N defect blocks Stages N+1..9.** If Stage 0 (common-warp) is defective, Stages 5, 7, 8 can't proceed. Mitigation: per-stage gate verification (the §1.5 fourteen-gate criteria) catches defects before the next stage starts. The coordinator's job at compile-step is to read the gate-status table and confirm all gates PASS before dispatching the next stage.
 - **Stage-N report is fabricated (Convention #8 risk).** A Claude Code session might claim gates pass without verification. Mitigation: the report's §2 (Gate status) cites evidence paths; the coordinator does not validate, but the founder review at each stage-boundary check spots gross fabrication.
 - **Wall-clock cost.** Serial is slower than parallel by the per-stage ratio. Phase 2's estimated 2–3 months (spec §11.8) becomes the realistic floor under serial execution; with founder review between stages, 3–4 months is more realistic.
 
@@ -1509,7 +1509,7 @@ Phase 2 runs as 10 sequential stages on `main` (trunk-based per spec § 7.12 + v
 
 **Read first** (in order):
 
-1. `docs/phases/phase-2-cross-stack-replication.md` end-to-end. Pay especially close attention to §1.4 (sequential stage model — your place in the queue), §1.5 (eleven-gate acceptance criteria — your pass/fail bar), §1.6 (convention discipline), §1.7 (report-back template — your final deliverable), §1.8 (Rules P1–R3 — your decision-rule playbook for stuck situations), §1.9 (socket specifications — the interfaces you implement to), §3.6 (industry/academic standards anchored — verified citations for verification regimes).
+1. `docs/phases/phase-2-cross-stack-replication.md` end-to-end. Pay especially close attention to §1.4 (sequential stage model — your place in the queue), §1.5 (fourteen-gate acceptance criteria — your pass/fail bar), §1.6 (convention discipline), §1.7 (report-back template — your final deliverable), §1.8 (Rules P1–R3 — your decision-rule playbook for stuck situations), §1.9 (socket specifications — the interfaces you implement to), §3.6 (industry/academic standards anchored — verified citations for verification regimes).
 2. `docs/architecture.md` {ARCHITECTURE_SECTIONS}.
 3. {SOURCE_SPEC_SHEET}
 4. `docs/common/{COMMON_MODULE}.md` — the API surface you consume.
@@ -1694,7 +1694,7 @@ For sim equivalence specifically, stitch your stage's fragment into the canonica
 
 ### Task {STAGE_NUM}.8 — Final report
 
-Author `phase-2-stage-{STAGE_NUM}-report.md` at the repo root, per the §1.7.1 template. Fill in the eleven-gate table with PASS/FAIL + evidence path per gate. Fill in §6 sub-blocks (tolerance.toml entry, CHANGELOG entry, project-state.md row, deferred items, anchor-sketch log) with `(none)` for sub-blocks that don't apply.
+Author `phase-2-stage-{STAGE_NUM}-report.md` at the repo root, per the §1.7.1 template. Fill in the fourteen-gate table with PASS/FAIL + evidence path per gate. Fill in §6 sub-blocks (tolerance.toml entry, CHANGELOG entry, project-state.md row, deferred items, anchor-sketch log) with `(none)` for sub-blocks that don't apply.
 
 Required field: **Branch HEAD SHA** in front-matter. Per Rule R1 (§1.8.4), you MUST push your final commit (the report) to `origin/phase-2/working` BEFORE asserting the SHA. The SHA is `git rev-parse origin/phase-2/working` after push.
 
@@ -1756,7 +1756,7 @@ The coordinator substitutes the bracketed placeholders using the per-stage data 
 - `docs/project-state.md` (add common-warp v0.1.0 row to module-coverage section)
 - `phase-2-stage-0-report.md` (last commit on `phase-2/working`)
 
-**VERIFICATION_REGIME:** Stage 0 is module-build, not sim-port. The Stage 0 "verification" is the smoke simulator at `common/common-warp/examples/hello/` running deterministically and producing a capture diffable against a sibling-module's smoke capture (probe `common-py` for a comparable hello sim). Acceptance is the six-gate criteria at §1.5.2, not the eleven-gate sim-port criteria.
+**VERIFICATION_REGIME:** Stage 0 is module-build, not sim-port. The Stage 0 "verification" is the smoke simulator at `common/common-warp/examples/hello/` running deterministically and producing a capture diffable against a sibling-module's smoke capture (probe `common-py` for a comparable hello sim). Acceptance is the six-gate criteria at §1.5.2, not the fourteen-gate sim-port criteria.
 
 **TIER_2_SUBSTACKS:** scalar-field substack (the smoke sim's grid output).
 
@@ -1786,7 +1786,7 @@ The coordinator substitutes the bracketed placeholders using the per-stage data 
 
 **SOURCE_REF_DIR:** Probe `common-py` for its smoke capture path; that's your source.
 
-Acceptance: §1.5.2 six-gate Stage 0 criteria (not the eleven-gate sim-port set).
+Acceptance: §1.5.2 six-gate Stage 0 criteria (not the fourteen-gate sim-port set).
 
 ---
 
@@ -2279,7 +2279,7 @@ You are the Stage 9 (Landing) session for Phase 2 of the Bit-Physics portfolio. 
 
 **Read first:**
 
-1. `docs/phases/phase-2-cross-stack-replication.md` end-to-end. Pay especially close attention to §1.4 (the stage queue you're closing), §1.5 (the eleven-gate criteria each prior stage gated against), §1.6 (conventions — Convention A new-files-first applies to your convergence commits too), §1.9 (socket specifications — your verification confirms these landed correctly).
+1. `docs/phases/phase-2-cross-stack-replication.md` end-to-end. Pay especially close attention to §1.4 (the stage queue you're closing), §1.5 (the fourteen-gate criteria each prior stage gated against), §1.6 (conventions — Convention A new-files-first applies to your convergence commits too), §1.9 (socket specifications — your verification confirms these landed correctly).
 2. Every prior stage's report at `phase-2-stage-<N>-report.md` for N = 0..8 (on `phase-2/working`). Read all nine; aggregate verdicts.
 3. The full git log of `phase-2/working`: `git log --oneline main..phase-2/working`.
 
@@ -2636,7 +2636,7 @@ Two risks specific to Phase 2's structure are not classical §9.4 categories.
 
 **Risk P2-γ — Serial-execution wall-clock cost.** Sequential stages take longer in wall-clock than parallel ones by roughly the per-stage ratio. Phase 2's spec-§11.8 estimate of 2–3 months becomes a floor under serial execution; 3–4 months with founder review between stages is realistic. Mitigation: this is a deliberate trade-off accepted in §1.4.0 — serial throughput matches solo-developer review throughput, and the compound integration risk savings are large.
 
-**Risk P2-δ — Single point of failure per stage.** If Stage 0 (common-warp) is defective, Stages 5, 7, 8 inherit the defect. If Stage 4 (smoke Stack D) is defective, Stage 5's equivalence diff is against a defective baseline. Mitigation: per-stage gate verification (the §1.5 eleven-gate criteria) catches defects before the next stage starts; the founder review at each stage boundary is the load-bearing quality gate. Under serial execution, defects surface immediately (when only one stage has landed them) rather than at landing time across nine branches.
+**Risk P2-δ — Single point of failure per stage.** If Stage 0 (common-warp) is defective, Stages 5, 7, 8 inherit the defect. If Stage 4 (smoke Stack D) is defective, Stage 5's equivalence diff is against a defective baseline. Mitigation: per-stage gate verification (the §1.5 fourteen-gate criteria) catches defects before the next stage starts; the founder review at each stage boundary is the load-bearing quality gate. Under serial execution, defects surface immediately (when only one stage has landed them) rather than at landing time across nine branches.
 
 **Risk P2-ε — Stage report fabrication (Convention #8 risk).** A Claude Code stage session might claim gates pass without verification. Mitigation: each report's §2 Gate Status table cites evidence paths (capture files, MMS reports, integrity-Cat outputs); the coordinator doesn't validate, but the founder review at each stage boundary checks for evidence-path presence and (sampled) content. If a report cites paths that don't exist, that's a Convention #8 violation surfaced at founder review.
 
@@ -2747,7 +2747,7 @@ The following claims are inferences. Each cites the FACT(s) it reasons from. At 
 - §1.4.1 — Sequential stage ordering. The 10-stage queue is INFERENCE from spec §11.3 work items + sim-port complexity assessment + Stack E common-warp dependency. Alternative orderings exist (e.g., MPM first as the highest-stakes port; or all Stack D before any Stack E) — the current ordering puts common-warp first (genuine dependency), MPM last (heaviest), and keeps related sims adjacent (smoke D before smoke E). The founder may reorder Stages 1–7 freely; Stage 0 must remain first and Stage 8 should remain last.
 - §1.4.5 — Branch naming `phase-2/working`. Inference from trunk-based-development practice (Humble & Farley 2010) plus spec's section §9 convention culture. Phase 1's branch-naming pattern (which would settle the question) does not exist yet; the founder is expected to confirm the pattern matches Phase 1's settled convention before dispatching the coordinator, and update §1.4.5 if Phase 1 chose a different shape.
 - §1.5.1 Gates 11–14 — gates 11/12/13 are spec § 3.5 v2.4 additions (PBT, perf-ledger, failing-tests replay); gate 14 (cross-stack equivalence) is the only Phase-2-specific gate, from spec § 3.6. The "Gate 14" numbering is this document's convention (pre-v6 it was "Gate 11" when spec § 3.5 was at ten gates). Inference holds: equivalence is mandatory per spec § 3.6; PBT / perf-ledger / failing-tests replay are mandatory per spec § 2.14 / § 2.15 / § 1.3 step 4.
-- §1.6.7 — "Stack D ports may use Taichi GGUI; their interactive layers are not CI-gated." Inference from spec §7.8 (runtime-only display surfaces require user-driven gate). The specific claim about Taichi GGUI is FACT (spec §4.4 known-limitations); the inference is that this maps to spec §7.8's runtime-display category.
+- §1.6.6 — "Stack D ports may use Taichi GGUI; their interactive layers are not CI-gated." Inference from spec §7.8 (runtime-only display surfaces require user-driven gate). The specific claim about Taichi GGUI is FACT (spec §4.4 known-limitations); the inference is that this maps to spec §7.8's runtime-display category.
 - §1.7.1 — Report template structure. Inference of a useful structure; the spec does not mandate this specific format. The coordinator may refine.
 - §2.11 task ordering — Convention A new-files-first decomposition applied to landing. Inference. Spec's Convention A is the general principle; the specific commit sequence for Phase 2 landing is this document's translation.
 - §3.2.1 audit-file naming. Inference of a useful naming pattern; the spec does not enumerate audit-file names. Coordinator may align with Phase 0/1's settled naming.

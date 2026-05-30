@@ -37,7 +37,7 @@
 
 > **v2.3 changelog (May 18 2026):** Consolidation pass. Per owner directive, all planning content lives either in this spec or in one of the phase plans. Previously-standalone documents (`shared-invariants.md`, `conventions.md`, `agent-playbook.md`, `dispatch-readiness-checklist.md`) are folded into this spec as Appendices D, E, F, and G respectively. The `preflight-phase.py` script content moves to Phase 0 plan as an embedded code block (Phase 0 Block 1 commits it from the embedded source).
 >
-> - **Appendix D (NEW)** — Shared invariants: cross-phase contracts, naming map, capture descriptors, vendored dependency pins, hardware floors, ten-gate criteria, Tier 2 substack assignments, forbidden actions, context-fill triage.
+> - **Appendix D (NEW)** — Shared invariants: cross-phase contracts, naming map, capture descriptors, vendored dependency pins, hardware floors, gate criteria (ten at v2.3; thirteen at v2.4), Tier 2 substack assignments, forbidden actions, context-fill triage.
 > - **Appendix E (NEW)** — Agent playbook: friction-pattern response catalog (Patterns A–O).
 > - **Appendix F (NEW)** — Operating model + dispatch operations: universal operating model, per-phase preflight sections, press-go criteria.
 > - **Appendix G (NEW)** — Convention catalog (full text, replacing the brief Appendix B table). The Appendix B brief table remains as a quick-lookup index.
@@ -53,7 +53,7 @@
 > - **§ 7.15 (NEW)** — Shared-invariants reference: cross-phase contracts in Appendix D.
 > - **§ 7.16 (NEW)** — Agent playbook: friction-handling decisions in Appendix E.
 > - **§ 8.1** — Confirmed: 13 sections in sim-spec template (was 12 in v2.0; v2.1 added §13; v2.2 makes this explicit at all touch points).
-> - **§ 9.6 (NEW)** — Pre-flight script convention: every phase has `tools/dispatch/preflight-phase-<N>.py`. The script content is committed by Phase 0 from the code block in `phase-0-plan.md`.
+> - **§ 9.6 (NEW)** — Pre-flight script convention: every phase runs `tools/dispatch/preflight-phase.py <N>`. The script content is committed by Phase 0 from the code block in `phase-0-plan.md`.
 > - **§ 11.0 (NEW)** — Pacing recast for AI-agent execution: wall-clock is hours-to-days bounded by external-dependency resolution, not weeks/months.
 > - **§ 11.x estimated-duration lines** — removed in favor of § 11.0's universal AI-execution framing.
 > - **§ 12.7** — License posture locked to MIT.
@@ -853,7 +853,7 @@ One canonical reference sim per category, on one primary stack. Choice of primar
 
 These are gates, not aspirations. A reference sim that doesn't meet all thirteen does not merge.
 
-**Backward compatibility note.** The earlier ten-gate formulation in Appendix D § D.6 is preserved as the historical contract for Phase 0 / Phase 1 sims. Gates 11–13 are introduced with Phase 2 cross-stack replication and apply going forward. Phase 1 sims back-fill gates 11–13 at Phase 2 open as part of the equivalence-readiness pass.
+**Backward compatibility note.** Gates 11–13 are v2.4-new additions to the earlier ten-gate formulation in Appendix D § D.6. Phase 0 RD-2D cleared all 13 gates. Phase 1 sims ship gates 1–3 and back-fill gates 11–13 at Phase 2 open as part of the equivalence-readiness pass.
 
 ## 3.6 Layer 5 — Cross-stack replication
 
@@ -1449,7 +1449,7 @@ The phase plan is not dispatched until the pre-dispatch review verdict is CONFIR
 
 **Ledger files vs cue files.** Audit-trail files under `docs/_audits/` partition into two semantic classes. **Ledger files** (`*.ledger.md`) are append-only: each line records a fact (block close, stage verdict, phase close) that does not change once committed. **Cue files** (no extension, or `*.cue.md`) are mutable transient state — resumption hints, `CONTINUE_FROM` markers, in-flight progress notes — that legitimately get overwritten as the work advances. The append-only CI gate enforces immutability on ledger files only; cue files are explicitly out of scope. Phase progress tracking lives in `docs/_audits/phase-<N>/ledger.md` (the append-only record) and `docs/_audits/phase-<N>/cue` (the mutable single-line continuation marker). This convention applies starting Phase 1; Phase 0's `progress.md` is a historical artifact retained verbatim, and its residual append-only-gate failure against `v0.0.0-phase-0` is documented in `docs/_audits/phase-0/spec-amendments-proposed.md`.
 
-**Evidence-path verification.** Every audit report's front-matter `evidence_paths` field cites repo-relative paths to artifacts that substantiate the report's claims (test outputs, capture files, integrity check outputs, golden tables, CI run URLs). `tools/integrity/scripts/verify_evidence.py` reads an audit report and confirms:
+**Evidence-path verification.** Every audit report's front-matter `evidence_paths` field cites repo-relative paths to artifacts that substantiate the report's claims (test outputs, capture files, integrity check outputs, golden tables, CI run URLs). `tools/integrity/integrity/scripts/verify_evidence.py` reads an audit report and confirms:
 1. Every cited path exists at the audit's `head_sha`.
 2. Every cited path is non-empty.
 3. For paths that the report attests to a hash for (e.g., failing-tests output files), the hash matches.
@@ -1458,7 +1458,7 @@ The phase plan is not dispatched until the pre-dispatch review verdict is CONFIR
 
 The script is run by the founder at each stage boundary before approving dispatch of the next stage, and by the phase-closing-audit agent before writing its CONFIRMED verdict. This converts "founder review samples evidence" from a single-point-of-failure (samples can miss things) to a mechanical pre-filter (every evidence path is checked, every hash is verified, before sampling). The founder still does a content-quality spot check on top, but the floor is mechanical.
 
-**Cross-phase audit replay.** Phase N+1's first stage runs a `tools/integrity/scripts/replay_prior_phase.py` pass that does not trust the prior phase's landing audit text. Instead, it:
+**Cross-phase audit replay.** Phase N+1's first stage runs a `tools/integrity/integrity/scripts/replay_prior_phase.py` pass that does not trust the prior phase's landing audit text. Instead, it:
 1. Checks out the phase-N tag (`v0.<N>.0-phase-<N>`).
 2. Re-runs the entire prior phase's CI gates (integrity Cat 1–5; pytest -W error; cross-stack equivalence; determinism harness; performance ledger).
 3. Compares the result to the verdicts asserted in the phase-N landing audit.
@@ -1837,10 +1837,10 @@ This is operational discipline; some specs go through it, some don't. The decisi
 
 ## 9.6 Pre-flight scripts
 
-Every phase has a pre-flight script at `tools/dispatch/preflight-phase-<N>.py`. The agent's Action #1 in any phase session is to run the relevant preflight:
+Every phase has a pre-flight script at `tools/dispatch/preflight-phase.py` invoked with the phase number `<N>` as a CLI argument. The agent's Action #1 in any phase session is to run the relevant preflight:
 
 ```bash
-python tools/dispatch/preflight-phase-<N>.py
+python tools/dispatch/preflight-phase.py <N>
 ```
 
 Exit 0 → all preconditions met; agent proceeds with phase work. Exit 1 → at least one precondition failed; agent writes BLOCKED report containing the script's output and ends the session.
@@ -2154,7 +2154,7 @@ The spec accommodates both; emphasis is per-coordinator-quarter.
 
 ## 12.8 Phase 4 hardware floor (locked v2.2)
 
-**CUDA 12 + driver 545+** is the hardware floor for Phase 4 Stages 31–33 (Newton-backed rigid sims) and recommended for Stack E across the phase. The hardware floor is verified by `tools/dispatch/preflight-phase-4.py` at phase open.
+**CUDA 12 + driver 545+** is the hardware floor for Phase 4 Stages 31–33 (Newton-backed rigid sims) and recommended for Stack E across the phase. The hardware floor is verified by `tools/dispatch/preflight-phase.py 4` at phase open.
 
 **Fallback (locked):** If CUDA is unavailable at Phase 4 dispatch, Stages 31–33 fall back to CPU-only Newton execution (macOS path) per Appendix D § D.5. Acceptance criteria adjust:
 - Determinism: verifiable on CPU; same-hardware bit-exact still required.
@@ -2846,7 +2846,7 @@ In all other cases, adapt per playbook, document SHIFTED, proceed.
 
 - **One coordinator chat per phase**, opened in the claude.ai project folder so the agent has access to all plan documents.
 - **One Claude Code agent role per phase**, dispatched once at phase open with auto-accept on, working through all stages sequentially.
-- **Action #1 in every session is `python tools/dispatch/preflight-phase-<N>.py`.** Exit 0 → proceed. Exit 1 → BLOCKED, end session, surface to owner.
+- **Action #1 in every session is `python tools/dispatch/preflight-phase.py <N>`.** Exit 0 → proceed. Exit 1 → BLOCKED, end session, surface to owner.
 - **Continuation sessions only on context-fill** per Appendix D § D.9.
 - **Reports at each stage close** per spec § 7.5 canonical front-matter; one line per stage in `docs/_audits/phase-<N>/progress.md`.
 - **Trunk-based commits** direct to `main` per spec § 7.12.
@@ -2874,7 +2874,7 @@ Items still owner-actionable before specific phase dispatches:
 
 ## F.3 — Per-phase preflight summaries
 
-Each phase plan opens with its own preflight section. This appendix gives the owner-facing summary; the agent's preflight is the runnable script in `tools/dispatch/preflight-phase-<N>.py` (committed by Phase 0 from `phase-0-plan.md` § 7.1 Block 1 embedded source).
+Each phase plan opens with its own preflight section. This appendix gives the owner-facing summary; the agent's preflight is the runnable script `tools/dispatch/preflight-phase.py` invoked with the phase number `<N>` (committed by Phase 0 from `phase-0-plan.md` § 7.1 Block 1 embedded source).
 
 ### F.3.1 — Phase 0
 
@@ -2925,7 +2925,7 @@ Owner can dispatch Phase 0 once § F.1 and § F.2 are confirmed. Each subsequent
 
 The press-Go sequence for Phase N:
 
-1. Run `python tools/dispatch/preflight-phase-<N>.py` locally. Confirm exit 0.
+1. Run `python tools/dispatch/preflight-phase.py <N>` locally. Confirm exit 0.
 2. Open a fresh claude.ai chat in this project folder.
 3. Paste the phase plan's coordinator-brief section as the kickoff message.
 4. The coordinator dispatches one Claude Code session with the phase opener prompt; the agent reads the phase plan on disk.
@@ -3130,7 +3130,7 @@ Phase 0 used a single `progress.md` that mixed both kinds; the resulting `EDITED
 
 ### Evidence-path verification (mechanical)
 
-`tools/integrity/scripts/verify_evidence.py` reads any audit report and confirms:
+`tools/integrity/integrity/scripts/verify_evidence.py` reads any audit report and confirms:
 
 1. Every path in front-matter `evidence_paths:` exists at the report's `head_sha`.
 2. Every cited path is non-empty.
@@ -3148,7 +3148,7 @@ This converts "founder samples evidence" from a discretionary safety net into a 
 
 ### Cross-phase audit replay (mechanical)
 
-`tools/integrity/scripts/replay_prior_phase.py` is Phase N+1's first stage's first action. It checks out the phase-N tag, re-runs the entire prior phase's CI gates, and compares the result to the verdicts asserted in the phase-N landing audit. Discrepancies trigger BLOCKED on Phase N+1; operator decides whether to repair Phase N's foundation.
+`tools/integrity/integrity/scripts/replay_prior_phase.py` is Phase N+1's first stage's first action. It checks out the phase-N tag, re-runs the entire prior phase's CI gates, and compares the result to the verdicts asserted in the phase-N landing audit. Discrepancies trigger BLOCKED on Phase N+1; operator decides whether to repair Phase N's foundation.
 
 Sample invocation:
 
@@ -3203,7 +3203,7 @@ At the failing-tests commit (per Convention-A, before the implementation commit)
    Failing-tests-output-hash-witnessed: sha256:<same-hex>
    ```
 
-Phase-closing audits use `tools/integrity/scripts/replay_failing_tests.py` to:
+Phase-closing audits use `tools/integrity/integrity/scripts/replay_failing_tests.py` to:
 1. Check out the failing-tests-commit SHA.
 2. Run the test suite.
 3. Compare the verbatim output to the file at the recorded path.

@@ -1451,9 +1451,9 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
    - Suppression for legitimate amendments: the check reads the most-recent `docs/_audits/tolerance-budget-amendments/*.md` audit and recognizes operator-approved amendments. Amendment-files use the canonical front-matter (verdict CONFIRMED + operator GPG signature in `evidence_paths`).
    - Phase 0 ships the check itself; activated by Block 9. Phase 0's `tolerance.toml` has no per-sim overrides, so the check passes trivially.
 
-8. **Audit-prose freshness script** at `tools/integrity/scripts/audit_prose_freshness.py` — drafter-runs-before-commit re-verification of backtick-fenced citations. Standalone tool.
+8. **Audit-prose freshness script** at `tools/integrity/integrity/scripts/audit_prose_freshness.py` — drafter-runs-before-commit re-verification of backtick-fenced citations. Standalone tool.
 
-9. **Evidence-path verification script** at `tools/integrity/scripts/verify_evidence.py` (new in v0.11; per spec § 7.5 and Appendix G.7):
+9. **Evidence-path verification script** at `tools/integrity/integrity/scripts/verify_evidence.py` (new in v0.11; per spec § 7.5 and Appendix G.7):
    - CLI: `python -m integrity.scripts.verify_evidence --audit <path> [--strict]`.
    - Reads the audit's YAML front-matter.
    - For each path in `evidence_paths:`, asserts the file exists at the audit's `head_sha` (uses `git show <sha>:<path>`) and is non-empty.
@@ -1465,7 +1465,7 @@ You are the Phase 0 build agent. This is Block 5 (INTEGRITY) — the integrity t
      - Cat 5 provenance check (calls into this script for every audit it scans).
    - Tests at `tools/integrity/tests/test_verify_evidence.py`: fixture audit with valid paths (passes); fixture audit with missing path (fails); fixture audit with mismatched hash (fails); fixture audit with deleted file at head_sha (fails).
 
-10. **Cross-phase audit replay script** at `tools/integrity/scripts/replay_prior_phase.py` (new in v0.11; per spec § 7.5 and Appendix G.7):
+10. **Cross-phase audit replay script** at `tools/integrity/integrity/scripts/replay_prior_phase.py` (new in v0.11; per spec § 7.5 and Appendix G.7):
     - CLI: `python -m integrity.scripts.replay_prior_phase --prior-phase <name> --audit <path> --gates <comma-list>`.
     - Acts: (1) checks out the prior-phase tag; (2) re-runs every gate listed in `--gates` (default: `integrity,pytest,equivalence,determinism,perf-ledger`); (3) compares the actual gate results to the verdicts asserted in the prior-phase landing audit; (4) returns a structured report.
     - Exit 0 if all replayed gates match the audit's claims; exit 1 if any discrepancy.
@@ -1777,7 +1777,7 @@ You are the Phase 0 build agent. This is Block 9 (LANDING) — the final block. 
 
 5. **Run the full integrity gate.** `cd tools/integrity && uv run python -m integrity --all`. Any HARD_FAIL blocks landing. SOFT_WARN findings logged in retro. Includes Cat-X tolerance-budget (vacuous on Phase 0; check passes).
 
-6. **Run the audit-prose freshness check.** `uv run python tools/integrity/scripts/audit_prose_freshness.py`. Unresolved citations are defects.
+6. **Run the audit-prose freshness check.** `uv run python tools/integrity/integrity/scripts/audit_prose_freshness.py`. Unresolved citations are defects.
 
 7. **Run Cat 4 draft-time verification** on every spec/audit/retro authored this phase. Flagged assertions are defects.
 
