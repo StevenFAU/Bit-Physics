@@ -45,6 +45,10 @@ WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     # capture (captures/reaction-diffusion-2d-ref/**) — probe § 4.1 "none" was wrong.
     "cpp-strict.yml": "reference-capture",
     "mutation-testing.yml": "none",
+    # Phase-3 task-7 (pinn-poisson) added this per-sim training/inference CI job.
+    # It checks out `lfs: false` and reads no committed capture or checkpoint
+    # (scratch training + gate-12 PBT subprocess), so it needs no LFS object.
+    "pinn-train.yml": "none",
     # Stage 1b: the M2 R2 round-trip proof — operates on a throwaway object,
     # reads no committed capture; checks out lfs: false.
     "r2-roundtrip-proof.yml": "none",
