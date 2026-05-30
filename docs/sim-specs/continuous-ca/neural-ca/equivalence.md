@@ -4,9 +4,9 @@
 > **Pair:** Stack-D (Python / PyTorch / CPU; D-inference) ↔ Stack-B (custom
 > WGSL / WebGPU on a GPU host; B-inference), tied by ONE trained checkpoint.
 > **Method:** **render-similarity** (PSNR / SSIM / LPIPS), NOT `compare_captures`.
-> **Verdict:** STATISTICAL equivalence — locked to MEASURED bounds; the perceptual
-> metric (LPIPS) PASSES the spec § 2.12 floor while the pixel-wise metrics
-> (PSNR/SSIM) are flagged below floor (QUALITY-CONCERN, NOT auto-fail).
+> **Verdict:** STATISTICAL equivalence — locked to MEASURED bounds. Since the
+> **Phase-4 A6 matched-RNG fix**, all three metrics (PSNR/SSIM/LPIPS) CLEAR the
+> spec § 2.12 floors; the earlier below-floor QUALITY-CONCERN is **RESOLVED**.
 
 This is the **FIRST cross-stack gate-14 of Phase 3** and the **FIRST statistical
 (render-similarity) equivalence gate** in the portfolio — every prior Phase-3 sim
@@ -55,23 +55,27 @@ RD-2D-precedented path).
 
 ## 3. Measured + locked bounds
 
-MEASURED (mean over the 20 non-seed frame pairs):
+MEASURED (mean over the 20 non-seed frame pairs), **after the Phase-4 A6
+matched-RNG fix** (`model.forward(..., step, seed)` draws the matched stateless
+PCG fire mask, identical to the WGSL/oracle `pcg_fire`; the D capture regenerated):
 
 | Metric | Measured mean | Locked bound | § 2.12 floor | Floor status |
 |---|---|---|---|---|
-| PSNR (dB) | 23.92 | `psnr_min = 23.0` | ≥ 28 | **below — flagged** |
-| SSIM | 0.824 | `ssim_min = 0.80` | ≥ 0.85 | **below — flagged** |
-| LPIPS (alex) | 0.0316 | `lpips_max = 0.05` | ≤ 0.15 | **PASS** |
+| PSNR (dB) | 144.562 | `psnr_min = 140.0` | ≥ 28 | **PASS** |
+| SSIM | 1.0000 | `ssim_min = 0.99` | ≥ 0.85 | **PASS** |
+| LPIPS (alex) | 0.0000 | `lpips_max = 0.01` | ≤ 0.15 | **PASS** |
 
-**QUALITY-CONCERN flag (NOT auto-fail; spec § 2.6 learned = distributional).**
-The pixel-wise PSNR/SSIM fall below the § 2.12 floors because the stochastic
-fire-mask RNG differs between stacks — the per-cell async-update divergence is a
-property of the learned-dynamics sim, not a port defect. The **perceptual** metric
-LPIPS_alex (0.0316) PASSES the floor with wide margin: the D and B patterns are
-perceptually equivalent (both converge to and hold the target disk). Per-frame,
-similarity peaks in the stable regime (step 500: PSNR 27.4, SSIM 0.90) and dips at
-the transient/late frames (step 100, step 1000) where the RNG divergence is most
-visible.
+**QUALITY-CONCERN RESOLVED (Phase-4 A6).** At Stage 1c the D-path drew its fire
+mask from `torch.rand` while the B-path used the WGSL/oracle `pcg_fire` hash —
+incompatible PRNG streams firing different cell sets, which dragged the
+pixel-wise metrics below the § 2.12 floors (then: mean PSNR 23.92 < 28, SSIM
+0.824 < 0.85; LPIPS 0.0316 ≤ 0.15 already passed). The matched-RNG fix makes both
+stacks consume the SAME per-cell mask, lifting PSNR 23.92 → 144.562 and SSIM
+0.824 → 1.0000. The residual ~144 dB (not ∞) is the GPU-vs-CPU f32
+conv-reduction order alone, so the gate stays **statistical, not bit-exact**
+(spec § 2.6 learned = distributional). Root-cause + per-horizon evidence:
+`docs/_audits/phase-3/neural-ca-gate14-divergence-diagnosis-20260529T120252Z.md`
+(H1 RNG-divergence ≈ 100% of the original shortfall; H2 f32-chaos negligible).
 
 ## 4. Determinism context
 
@@ -83,8 +87,13 @@ training-convergence characterization; it does NOT gate cross-stack equivalence.
 
 ## 5. Disposition
 
-`within_bounds == True` against the locked measured bounds; the § 2.12-floor
-PSNR/SSIM shortfall is recorded as a QUALITY-CONCERN flag in the landing report
-§ 6, NOT a failure. This file is the statistical-cross-stack-gate methodology
-template inherited by task-8 (3DGS-MPM golden-render) and Phase-4 neural-rendered
-sims.
+`within_bounds == True` against the RE-LOCKED measured bounds, and (since A6) all
+three metrics CLEAR the § 2.12 floors — the original QUALITY-CONCERN flag is
+RESOLVED. This file is the statistical-cross-stack-gate methodology template
+inherited by task-8 (3DGS-MPM golden-render) and Phase-4 neural-rendered sims.
+
+> **Note (A6 scope).** The matched-RNG fix is the **inference** fire mask only
+> (`infer.run_inference`); **training** (`train.py`) still uses the ambient
+> `torch.rand` stochastic mask, which is correct — stochasticity drives learning.
+> The diagnosis's "task-9 / Phase-5 candidate" framing was superseded by the
+> operator's Phase-4 A6 directive to land the fix.

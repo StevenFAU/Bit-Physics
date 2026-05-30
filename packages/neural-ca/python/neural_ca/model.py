@@ -30,6 +30,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
@@ -92,21 +93,69 @@ class NCAModel(nn.Module):
         alpha = x[:, 3:4]
         return F.max_pool2d(alpha, kernel_size=3, stride=1, padding=1) > ALIVE_THRESHOLD
 
-    def forward(self, x: Tensor, *, fire_rate: float | None = None) -> Tensor:
+    def forward(
+        self,
+        x: Tensor,
+        *,
+        fire_rate: float | None = None,
+        step: int | None = None,
+        seed: int | None = None,
+    ) -> Tensor:
         """One stochastic NCA update step (``growing_ca.ipynb`` ``call``).
 
-        The stochastic fire mask draws from the ambient ``torch`` RNG; pin
-        ``torch.manual_seed`` upstream for bit-exact same-stack inference.
+        Two fire-mask modes:
+
+        - **Ambient torch RNG** (default; ``step``/``seed`` omitted) — the mask
+          draws from ``torch.rand``; pin ``torch.manual_seed`` upstream for
+          bit-exact same-stack runs. This is the training path (stochasticity
+          drives learning).
+        - **Matched stateless PCG** (``step`` AND ``seed`` given; Phase-4 A6) —
+          the mask is the SAME ``pcg_fire(x, y, step, seed)`` hash that Stack-B
+          (WGSL / the NumPy oracle) uses, so the Stack-D inference consumes an
+          identical per-cell fire mask. This is what the cross-stack D↔B gate-14
+          comparison needs to clear the § 2.12 floor: with matched RNG the gate
+          rises from 23.9 dB → ~144 dB / SSIM 1.0. See
+          ``docs/_audits/phase-3/neural-ca-gate14-divergence-diagnosis-*.md``.
+          Inference (``infer.run_inference``) uses this mode; it is deterministic
+          by construction (independent of the torch RNG state).
         """
         if fire_rate is None:
             fire_rate = self.config.fire_rate
         pre_alive = self._alive_mask(x)
         dx = self.w2(F.relu(self.w1(self.perceive(x))))
-        fire = (torch.rand(x[:, :1].shape, device=x.device) <= fire_rate).to(x.dtype)
+        if step is not None and seed is not None:
+            h, w = int(x.shape[-2]), int(x.shape[-1])
+            fire = _pcg_fire_field(h, w, int(step), int(seed), fire_rate)
+            fire = fire.to(device=x.device, dtype=x.dtype).view(1, 1, h, w)
+        else:
+            fire = (torch.rand(x[:, :1].shape, device=x.device) <= fire_rate).to(x.dtype)
         x = x + dx * fire
         post_alive = self._alive_mask(x)
         alive = (pre_alive & post_alive).to(x.dtype)
         return x * alive
+
+
+def _pcg_fire_field(h: int, w: int, step: int, seed: int, fire_rate: float) -> Tensor:
+    """Matched stateless PCG fire mask (Phase-4 A6) → ``(h, w)`` float32 {0,1}.
+
+    Bit-identical integer arithmetic to the WGSL ``pcg_fire`` and the NumPy
+    oracle ``reference.nca_numpy._fire_field`` (u32 wrap is intentional modular
+    arithmetic; ``cell (x=col, y=row)`` ↦ uniform [0,1), fires iff ≤ ``fire_rate``).
+    Computed in NumPy u32 (PyTorch lacks ergonomic u32-wrap ops) then handed to
+    torch — so the Stack-D inference draws the SAME mask as Stack-B. A meta-test
+    (``test_matched_fire_field_equals_oracle``) locks this equality.
+    """
+    u32 = np.uint32
+    yy, xx = (idx.astype(np.uint32) for idx in np.mgrid[0:h, 0:w])
+    with np.errstate(over="ignore"):
+        v = xx * u32(1973) + yy * u32(9277) + u32(step) * u32(26699)
+        v = v + u32(seed) * u32(2654435761)
+        v = v * u32(747796405) + u32(2891336453)
+        word = ((v >> ((v >> u32(28)) + u32(4))) ^ v) * u32(277803737)
+        word = (word >> u32(22)) ^ word
+    u = word.astype(np.float64) / 4294967296.0
+    fire = (u <= fire_rate).astype(np.float32)
+    return torch.from_numpy(fire)
 
 
 def _perception_kernel(channel_n: int) -> Tensor:

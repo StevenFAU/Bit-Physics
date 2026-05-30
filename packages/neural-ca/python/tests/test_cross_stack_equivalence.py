@@ -51,6 +51,26 @@ def _locked_bounds() -> dict[str, float]:
     return toml["render_similarity"]["continuous-ca"]["neural-ca"]
 
 
+def test_matched_fire_field_equals_oracle() -> None:
+    """Phase-4 A6 lock: the Stack-D matched fire mask is bit-identical to the
+    WGSL/oracle ``pcg_fire`` field.
+
+    ``model.forward(..., step, seed)`` draws the fire mask from
+    ``model._pcg_fire_field``; this asserts it equals the NumPy oracle's
+    ``reference.nca_numpy._fire_field`` element-for-element across a horizon
+    sample. If they ever diverge, the D↔B gate below would silently fall back
+    below the § 2.12 floor — so this is the load-bearing guard that keeps the
+    matched-RNG fix honest.
+    """
+    from neural_ca.model import _pcg_fire_field
+    from neural_ca.reference.nca_numpy import _fire_field
+
+    for step in (0, 1, 7, 50, 200, 999):
+        d = _pcg_fire_field(64, 64, step, 42, 0.5).numpy()
+        b = _fire_field(64, step, 42, 0.5)
+        assert np.array_equal(d, b), f"matched fire field != oracle at step {step}"
+
+
 def test_d_vs_b_render_similarity_within_locked_bounds() -> None:
     d_frames = _rgb_frames(D_INFERENCE_CAPTURE)
     b_frames = _rgb_frames(B_INFERENCE_CAPTURE)

@@ -21,13 +21,13 @@
     "subgroup_ops": false
   },
   "payload": {
-    "checksum": "sha256:345b3ab5f024b46808af553f759c50ff53c43aef59acd0545b4c9610013b9c02",
+    "checksum": "sha256:0bf35df49989abc191857870c1bc3ecf6a84a9e10a94a3a23b5c1180fe4c8234",
     "format": "hdf5",
     "path": "growing-emoji-64sq-seed42-step1000.h5"
   },
   "run": {
     "capture_interval": 50,
-    "start_utc": "2026-05-29T06:26:12Z",
+    "start_utc": "2026-05-30T17:42:51Z",
     "step_count": 1000,
     "wall_clock_seconds": 0.0
   },

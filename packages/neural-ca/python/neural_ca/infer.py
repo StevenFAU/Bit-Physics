@@ -5,12 +5,17 @@ seed for a fixed number of steps, returning the RGB(A) frame stack — the
 payload of the canonical D-inference capture
 ``growing-emoji-64sq-seed42-step1000`` (spec Appendix D.2.3).
 
-Inference is **bit-exact same-stack-same-hw** (with a pinned RNG seed for the
-stochastic fire mask): the same weights + seed + input reproduce byte-identical
-output across runs on the same hardware (determinism registry
-``[continuous-ca.neural-ca.inference]``). This single-stack reproducibility is
-the foundation for the D↔B (PyTorch↔WGSL) cross-stack render-similarity gate —
-which is statistical, NOT bit-exact (different f32 conv reductions).
+Inference is **bit-exact same-stack-same-hw**: the same weights + seed + input
+reproduce byte-identical output across runs on the same hardware (determinism
+registry ``[continuous-ca.neural-ca.inference]``). Since Phase-4 A6 the fire mask
+is the **matched stateless PCG hash** (``model.forward(..., step=t, seed=seed)``,
+identical to the WGSL/oracle ``pcg_fire``), so inference is deterministic by
+construction (independent of the ambient torch RNG state) AND draws the SAME
+per-cell fire mask as Stack-B. That matched mask is what lifts the D↔B
+(PyTorch↔WGSL) cross-stack render-similarity gate over the § 2.12 floor
+(23.9 dB → ~144 dB; see the gate-14 divergence diagnosis audit). The gate stays
+**statistical, NOT bit-exact** (residual is the GPU-vs-CPU f32 conv-reduction
+order only).
 
 Stage 1a: :func:`run_inference` raises ``NotImplementedError``; implemented at
 Stage 1b-D.
@@ -37,8 +42,10 @@ def run_inference(
     ``(n_frames, H, W, 4)`` RGBA float32 stack clamped to [0, 1]. Frame 0 is the
     seed; thereafter a frame is captured every ``capture_every`` steps.
 
-    Bit-exact same-stack-same-hw with the pinned ``seed`` (torch RNG drives the
-    stochastic fire mask).
+    Bit-exact same-stack-same-hw: the fire mask is the matched stateless PCG hash
+    keyed on ``(x, y, step, seed)`` (Phase-4 A6), so the roll is deterministic by
+    construction and draws the same per-cell mask as Stack-B. ``torch.manual_seed``
+    is still pinned for defence-in-depth (no other RNG is consulted in inference).
     """
     torch.manual_seed(seed)
     model.eval()
@@ -51,7 +58,7 @@ def run_inference(
     frames: list[NDArray[np.float32]] = [rgba(x)]
     with torch.no_grad():
         for t in range(steps):
-            x = model(x)
+            x = model(x, step=t, seed=seed)
             if (t + 1) % capture_every == 0:
                 frames.append(rgba(x))
     return np.stack(frames, axis=0)

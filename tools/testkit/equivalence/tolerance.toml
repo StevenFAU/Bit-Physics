@@ -208,21 +208,31 @@ position_abs = 1e-2
 # -----------------------------------------------------------------------------
 
 # Row 1 — the STATISTICAL cross-stack gate-14 (D-inference PyTorch ↔ B-inference
-# WGSL), MEASURED-then-LOCKED at Stage 1c (mean over the 20 non-seed frame pairs
-# of the two committed step-1000 captures): MEASURED mean PSNR 23.92, SSIM 0.824,
-# LPIPS_alex 0.0316. Locked with margin below/above the means.
-#   QUALITY-CONCERN FLAG (landing report §6; NOT auto-fail — learned dynamics are
-#   distributional, spec §2.6 `docs/architecture.md:414` + §5.12): mean PSNR
-#   23.92 < §2.12 floor 28 and mean SSIM 0.824 < floor 0.85 — the pixel-wise
-#   metrics are dragged down by the stochastic per-cell fire-mask RNG divergence
-#   (PyTorch torch.rand vs WGSL PCG), which is exactly why the gate is statistical.
-#   The PERCEPTUAL metric LPIPS_alex 0.0316 PASSES the §2.12 floor (≤ 0.15) — the
-#   D and B patterns ARE perceptually equivalent. NOT a `[budgets.*.cross_stack]`
-#   consumer (render-similarity is the wider learned-dynamics budget).
+# WGSL), RE-LOCKED at Phase-4 A6 after the matched-RNG fix.
+#   HISTORY. At Stage 1c the D-path drew its fire mask from `torch.rand` while the
+#   B-path used the WGSL/oracle `pcg_fire(x,y,step,seed)` hash — incompatible PRNG
+#   streams. The two stacks fired DIFFERENT cell sets, so the pixel-wise metrics
+#   were dragged BELOW the §2.12 floors (MEASURED mean PSNR 23.92 < 28, SSIM
+#   0.824 < 0.85; LPIPS_alex 0.0316 ≤ 0.15 PASSED). That was an honest
+#   QUALITY-CONCERN close, root-caused in
+#   `docs/_audits/phase-3/neural-ca-gate14-divergence-diagnosis-20260529T120252Z.md`
+#   (H1 RNG-divergence ≈ 100% of the shortfall; H2 f32-chaos negligible).
+#   A6 FIX. `model.forward(..., step=t, seed=seed)` now draws the matched stateless
+#   PCG fire mask (identical to WGSL/oracle), and `infer.run_inference` uses it, so
+#   D and B consume the SAME per-cell mask. The D capture was regenerated; the gate
+#   (mean over the 20 non-seed frame pairs of the two committed step-1000 captures)
+#   now MEASURES mean PSNR 144.562, SSIM 1.0000, LPIPS_alex 0.0000 — CLEARING all
+#   three §2.12 floors (28 / 0.85 / 0.15). The residual ~144 dB (not ∞) is the
+#   GPU-vs-CPU f32 conv-reduction order only; the gate stays STATISTICAL, not
+#   bit-exact (spec §2.6 `docs/architecture.md:414` + §5.12). Both captures are
+#   committed/fixed, so the measurement is deterministic. RE-LOCKED with margin
+#   BELOW the measured means (this is a TIGHTENING, not a §2.6 widening). NOT a
+#   `[budgets.*.cross_stack]` consumer (render-similarity is the wider
+#   learned-dynamics budget).
 [render_similarity.continuous-ca.neural-ca]
-psnr_min = 23.0
-ssim_min = 0.80
-lpips_max = 0.05
+psnr_min = 140.0
+ssim_min = 0.99
+lpips_max = 0.01
 
 # Row 2 — the training golden (single-stack Stack-D). LOCKED at Stage 1b-D on
 # measurement of the canonical pool-trained checkpoint (neural-ca-emoji-disk):
