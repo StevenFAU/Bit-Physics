@@ -5,6 +5,34 @@
 > inline, and the operator applies them at a phase boundary. Each entry records the
 > exact location, the current text, the proposed text, and the verified rationale.
 
+## ✅ APPLIED — Phase-3 close campaign, commit `da61e86` (2026-05-30)
+
+The §9.6 freeze lifted at the Phase-3 close boundary; all seven corrigenda were
+applied to their target docs. The proposal entries below are retained as the
+audit trail. Live line numbers had DRIFTED from the proposals — each was
+re-located by content (discipline #8) before editing.
+
+| # | target | applied | note |
+|---|---|---|---|
+| **A-1** | architecture.md §5.8 | ✅ `da61e86` | applied TOGETHER with M-6 (below): maximal→ABA + sim renamed to canonical `articulated-pedagogical`. |
+| **A-2** | architecture.md §D.2.3 + Bender row | ✅ `da61e86` | `cloth-xpbd`→`mass-spring-cloth` (spec now 0 occurrences). |
+| **A-3** | phase-3-plan.md §2.18 Bender | ✅ `da61e86` | d0894bdb→`aa62c44f` (tag 2.2.0) = the SHA task-5 actually vendored (MANIFEST verified) per spec D.3 "Latest stable". |
+| **A-4** | phase-3-plan.md §2.18 | ✅ `da61e86` | ADDED growing-neural-ca row (3d5547ca); preamble "five"→six. |
+| **A-5** | architecture.md D.3 | ✅ `da61e86` | ADDED growing-neural-ca row. |
+| **A-6** | architecture.md D.3 PhysicsNeMo | ✅ `da61e86` | →PhysicsNeMo-Sym v2.4.0 (acaeb6dc), read-only. Plan §2.18 physicsnemo→sym re-point left for operator (A-6's own deferral). |
+| **A-7** | architecture.md D.3 PhysGaussian | ✅ `da61e86` | License MIT→NONE (cite-only). |
+
+**M-6 reconciliation (applied with A-1):** the `articulated-pedagogical` ↔
+`rigid-body-pedagogical` split was resolved to canonical
+**`articulated-pedagogical`** — the LOCKED package leaf
+`packages/articulated-pedagogical/`, the §11.4 category table, the §D.2.3
+descriptor, 30 files. architecture.md is now internally consistent (0
+`rigid-body-pedagogical`). The remaining cross-surface uses (captures dir
+`captures/rigid-body-pedagogical-ref`, CI job `test-rigid-body-pedagogical`, the
+plan sim-name column, the `task-4-rigid-body-pedagogical.md` landing audit) were
+NOT renamed — a heavy LFS-capture + append-only-audit rename (the M-7 class),
+**surfaced for the operator**, not forced.
+
 ---
 
 ## A-1 — §5.8 rigid-body reference-sim algorithm: "maximal-coordinate" → "articulated-body (ABA, reduced-coordinate)"
