@@ -166,6 +166,14 @@ target_link_libraries(bit_physics_common_cpp_smoke_advection_1d PRIVATE
 # ---- Tests -------------------------------------------------------
 
 enable_testing()
+
+# ---- Sparse volumes (Phase 4.0 WU-B; bit_physics::nanovdb) -------
+# Host-only NanoVDB sparse-volume writer/reader. Defined after the core lib
+# (it links bit_physics_common_cpp for sha256_hex), after doctest is
+# available, and after enable_testing() so its add_test registers. Registers
+# its own ctest (common_cpp_nanovdb_tests).
+add_subdirectory(nanovdb)
+
 add_executable(bit_physics_common_cpp_tests
   tests/test_main.cpp
   tests/test_capture.cpp
