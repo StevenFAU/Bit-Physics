@@ -4,7 +4,12 @@
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <doctest/doctest.h>
 
+#include <array>
+#include <cstdint>
 #include <filesystem>
+#include <map>
+#include <random>
+#include <set>
 
 #include "bit_physics/nanovdb/io.hpp"
 
@@ -65,4 +70,49 @@ TEST_CASE("overwriting a voxel does not double-count it") {
     w.set_voxel(1, 1, 1, 1.0F);
     w.set_voxel(1, 1, 1, 9.0F);  // overwrite
     CHECK(w.active_count() == 1);
+}
+
+// Property-based (§ 2.14) — randomized sparsity patterns. The write happens in
+// C++ (Warp grid allocation is CUDA-only, so the host writer owns the write
+// side on CPU), so the two declared sparse-volume invariants are exercised here
+// over many random patterns with a seeded RNG.
+TEST_CASE("PBT: random sparsity write->read round-trips membership + values") {
+    std::mt19937 rng(20260530U);
+    std::uniform_int_distribution<int32_t> coord(-16, 16);
+    std::uniform_real_distribution<float> val(-10.0F, 10.0F);
+    const auto path = tmp_nvdb("bp_wu_b_pbt.nvdb");
+
+    for (int trial = 0; trial < 40; ++trial) {
+        std::map<std::array<int32_t, 3>, float> truth;
+        const int n = 1 + static_cast<int>(rng() % 40);
+        nv::SparseVolumeWriter w(0.0F, "density");
+        for (int i = 0; i < n; ++i) {
+            std::array<int32_t, 3> c{coord(rng), coord(rng), coord(rng)};
+            float v = val(rng);
+            w.set_voxel(c[0], c[1], c[2], v);
+            truth[c] = v;  // last write wins (matches grid semantics)
+        }
+        w.write(path);
+        nv::SparseVolumeReader r(path);
+
+        // Invariant 1: active-mask membership preserved through write->read.
+        const auto mask = nv::extract_active_mask(r);
+        std::set<std::array<int32_t, 3>> read_active(mask.coords.begin(), mask.coords.end());
+        CHECK(read_active.size() == truth.size());
+        for (const auto& [c, v] : truth) {
+            CHECK(r.is_active(c[0], c[1], c[2]));
+            CHECK(r.value_at(c[0], c[1], c[2]) == doctest::Approx(v));
+        }
+
+        // Invariant 2: reads of inactive cells return the documented sparse
+        // default (the grid background). Probe coords NOT in the active set.
+        for (int probe = 0; probe < 20; ++probe) {
+            std::array<int32_t, 3> c{coord(rng), coord(rng), coord(rng)};
+            if (truth.count(c) == 0U) {
+                CHECK_FALSE(r.is_active(c[0], c[1], c[2]));
+                CHECK(r.value_at(c[0], c[1], c[2]) == doctest::Approx(0.0F));
+            }
+        }
+    }
+    std::filesystem::remove(path);
 }
