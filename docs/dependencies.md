@@ -691,3 +691,16 @@ bit-exact / same-stack-same-hw; MEASURED).
 lazy-imports + surfaces the block loudly (operator-ratified CPU-fallback per spec
 §12.8 + plan §7.5). OpenUSD is CPU-only — the USD scene-template + capture-to-USD
 export validate without CUDA.
+
+## Phase 4 WU-E — PyTorch Lightning + PhysicsNeMo (added 2026-05-30)
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| **lightning (PyTorch Lightning)** | `common_py.learned` (DataModule, default_trainer) | `>=2.6,<3.0` (2.6.5; common-py `learned` extra) | Apache-2.0 | `pip index versions lightning` |
+| **nvidia-physicsnemo** | `common_warp.learned.PhysicsNeMoAdapter` (sim 4.27) | `>=2.1` (2.1.0; common-warp `learned` extra) | Apache-2.0 | `pip index versions nvidia-physicsnemo` |
+
+**Pin re-resolved live at the WU-E probe.** The plan's "PhysicsNeMo specific 1.x"
+guidance is STALE (corrigendum A-6): core 1.x ended at v1.3.0; the framework is
+2.x (latest 2.1.0, 2026-05-26). Base `nvidia-physicsnemo` is CPU-installable
+(no cu12/cu13 extras → PyTorch from PyPI, no RAPIDS); GPU acceleration needs the
+CUDA extras. `physicsnemo` is lazy-imported by the adapter (clear error if absent).

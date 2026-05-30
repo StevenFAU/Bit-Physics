@@ -21,6 +21,14 @@ dependencies = [
 plotting = [
   "matplotlib>=3.8",
 ]
+# Phase-4 WU-E: the PyTorch/Lightning learning harness (common_py.learned). NOT
+# eagerly imported by common_py/__init__ — it would force torch+lightning on
+# every common_py consumer (common-py's base stack is Taichi). §0.3 SHIFT from
+# the plan's "register learned submodule"; import on demand as common_py.learned.
+learned = [
+  "torch>=2.0",
+  "lightning>=2.6,<3.0",
+]
 dev = [
   "mypy>=1.10",
   "pytest>=8.0",

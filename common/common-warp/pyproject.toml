@@ -32,6 +32,13 @@ dev = [
 usd = [
   "usd-core>=26.5",
 ]
+# Phase-4 WU-E: the Warp<->PyTorch bridges need torch; PhysicsNeMoAdapter
+# lazy-imports nvidia-physicsnemo 2.1.0 (pin re-resolved live; the plan's "1.x"
+# is stale per A-6). Base physicsnemo is CPU-installable (cu12/cu13 add GPU).
+learned = [
+  "torch>=2.0",
+  "nvidia-physicsnemo>=2.1",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -62,6 +69,8 @@ module = [
   # ships no py.typed) are interop boundaries with no usable stubs.
   "newton", "newton.*",
   "pxr", "pxr.*",
+  # Phase-4 WU-E: NVIDIA PhysicsNeMo (lazy-imported adapter) ships no py.typed.
+  "physicsnemo", "physicsnemo.*",
 ]
 ignore_missing_imports = true
 
