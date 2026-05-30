@@ -37,7 +37,9 @@ from __future__ import annotations
 from lfs_migration._helpers import git
 
 _PHASE_BOUNDARY = "v0.2.0-phase-2"
-OPERATOR_PHASE_TAGS = frozenset({"v0.0.0-phase-0", "v0.1.0-phase-1", "v0.2.0-phase-2"})
+OPERATOR_PHASE_TAGS = frozenset(
+    {"v0.0.0-phase-0", "v0.1.0-phase-1", "v0.2.0-phase-2", "v0.3.0-phase-3"}
+)
 
 # Operator-sanctioned non-phase tags (conventions section D.2). Each entry is a
 # deliberate operator-sanction record: an intermediate non-phase tag the
