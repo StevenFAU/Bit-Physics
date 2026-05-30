@@ -189,16 +189,15 @@ Per §2.13 (SOFT_WARN-advisory) + the A3 / Phase-3-render-sim record-honestly
 precedent: **banked, threshold UNCHANGED at 0.85, NOT widened** — target-specific
 constraining tests are the lever (routed as a Phase-4.1 follow-up).
 
-**WU-C `common-3dgs/src` (threshold 0.80):** the target now spans the whole src
-(~1475 mutants after the WU-C additions — training/coupling/viewer/splatting +
-the Phase-3 model/render/camera/_kernels). Early trend (~32/52 ≈ 0.62) and the
-~440 new lines of behaviorally-tested-but-not-constant-pinned surface (FD
-optimiser internals, quaternion helpers, viewer guards) predict **below the 0.80
-floor**, consistent with render_similarity (0.663) and variant (0.695). Per
-§2.13 + A3: banked, threshold unchanged, not widened. There is no Phase-3
-common-3dgs baseline file, so "no-regression" degenerates to the 0.80 floor.
-**Final measured value folded in via a Convention-#12-style follow-up if the
-batch completes; otherwise this is the honest disposition.**
+**WU-C `common-3dgs/src` (threshold 0.80):** **MEASURED 978/1475 killed = 0.663**
+(481 survived, 16 suspicious). The target spans the whole src (1475 mutants after
+the WU-C additions — training/coupling/viewer/splatting + the Phase-3
+model/render/camera/_kernels); the ~440 new lines of behaviorally-tested-but-not-
+constant-pinned surface (FD optimiser internals, quaternion helpers, viewer
+guards) carry most survivors. BELOW the 0.80 floor. There is no Phase-3
+common-3dgs baseline file, so "no-regression" degenerates to the floor. Per §2.13
++ A3: **banked, threshold unchanged, NOT widened** — target-specific constraining
+tests are the lever (Phase-4.1 follow-up).
 
 **WU-D `newton/usd` + WU-E `learned`:** NOT separately measured — much of their
 surface is CUDA/dep-gated runtime that *raises* rather than executes on CPU
@@ -207,7 +206,7 @@ Banked per §2.13; the runtime mutation lands when a CUDA host runs Stages 31-35
 
 **Campaign-wide mutation posture (honest):** every Phase-4 foundation mutation
 target measured sits below its threshold (render_sim 0.663, variant 0.695,
-common-3dgs ≈0.6-0.7), continuing the ratified Phase-3 pattern (render-sim banked
+common-3dgs 0.663), continuing the ratified Phase-3 pattern (render-sim banked
 0.7857; A3 `code_verification_mms` 0.2243 / `property` 0.3455). §2.13 is
 SOFT_WARN-everywhere (HARD_FAIL is an earned per-target promotion); none widened,
 none faked. The lever across all is target-specific constraining tests — a
