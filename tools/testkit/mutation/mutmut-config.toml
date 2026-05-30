@@ -19,6 +19,13 @@ runner    = "python -m pytest tools/testkit/capture/tests/ -x -q --tb=no"
 path      = "tools/testkit/code_verification/mms"
 threshold = 0.80
 runner    = "python -m pytest tools/testkit/code_verification/mms/tests/ -x -q --tb=no"
+# Phase-4 A3: SOURCE-ONLY. mutmut's default tests-dir guess only excludes a
+# top-level tests/; the nested tools/testkit/code_verification/mms/tests/ was
+# being mutated, diluting the kill rate (test-file literals "survive" with no
+# meta-test). `exclude` is passed to mutmut as --paths-to-exclude (fnmatch on
+# basename), so the nested tests/ subtree is no longer mutated. Threshold and
+# CI posture (SOFT_WARN, advisory) are UNCHANGED — see spec § 2.13.
+exclude   = "tests"
 
 [targets.golden]
 path      = "tools/testkit/golden"
@@ -39,6 +46,10 @@ runner    = "python -m pytest tools/testkit/equivalence/tests/ -x -q --tb=no"
 path      = "tools/testkit/property"
 threshold = 0.80
 runner    = "python -m pytest tools/testkit/property/tests/ -x -q --tb=no"
+# Phase-4 A3: SOURCE-ONLY (see code_verification_mms note above). The nested
+# tools/testkit/property/tests/ subtree is excluded from mutation via
+# --paths-to-exclude. Threshold + CI posture (SOFT_WARN, advisory) UNCHANGED.
+exclude   = "tests"
 
 # R1 (phase-3 close): cat4_draft_time mutates the WHOLE package (path_line +
 # grammars b/c), but the prior runner ran ONE adversarial test exercising only

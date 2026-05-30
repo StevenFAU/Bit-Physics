@@ -62,12 +62,13 @@ with open("tools/testkit/mutation/mutmut-config.toml", "rb") as fh:
     cfg = tomllib.load(fh)
 for name, entry in cfg.get("targets", {}).items():
     runner = entry.get("runner", "")
-    print(f"{name}|{entry['path']}|{entry['threshold']}|{runner}")
+    exclude = entry.get("exclude", "")
+    print(f"{name}|{entry['path']}|{entry['threshold']}|{runner}|{exclude}")
 PY
 )
 
 for line in "${TARGETS[@]}"; do
-  IFS='|' read -r name path threshold runner <<< "${line}"
+  IFS='|' read -r name path threshold runner exclude <<< "${line}"
   # Use ``-e`` (existence) rather than ``-d`` (directory-only) so the
   # validator accepts both file and directory ``path`` shapes. mutmut's
   # ``--paths-to-mutate`` accepts either; the wrapper's pre-check should
@@ -88,17 +89,24 @@ if [[ "${MODE}" == "--target" ]]; then
     exit 2
   fi
   for line in "${TARGETS[@]}"; do
-    IFS='|' read -r name path threshold runner <<< "${line}"
+    IFS='|' read -r name path threshold runner exclude <<< "${line}"
     if [[ "${name}" != "${want}" ]]; then
       continue
     fi
     echo
-    echo "==== mutation: ${name} (${path}; threshold=${threshold}) ===="
+    echo "==== mutation: ${name} (${path}; threshold=${threshold}; exclude='${exclude}') ===="
     RUNNER_ARGS=()
     if [[ -n "${runner}" ]]; then
       RUNNER_ARGS=(--runner "${runner}")
     fi
-    uv run --no-sync mutmut run --paths-to-mutate "${path}" "${RUNNER_ARGS[@]}" \
+    # Phase-4 A3: optional `exclude` (mutmut --paths-to-exclude, fnmatch on
+    # basename) keeps a target SOURCE-ONLY by dropping nested tests/ subtrees
+    # the default tests-dir guess misses.
+    EXCLUDE_ARGS=()
+    if [[ -n "${exclude}" ]]; then
+      EXCLUDE_ARGS=(--paths-to-exclude "${exclude}")
+    fi
+    uv run --no-sync mutmut run --paths-to-mutate "${path}" "${EXCLUDE_ARGS[@]}" "${RUNNER_ARGS[@]}" \
       2>&1 | tee "/tmp/mutmut-${name}.log"
     exit 0
   done
@@ -112,7 +120,7 @@ echo "Producing framework-validated baseline at ${OUT_FILE}"
 
 ENTRIES=""
 for line in "${TARGETS[@]}"; do
-  IFS='|' read -r name path threshold runner <<< "${line}"
+  IFS='|' read -r name path threshold runner exclude <<< "${line}"
   if [[ -n "${ENTRIES}" ]]; then ENTRIES="${ENTRIES},"$'\n'; fi
   ENTRIES="${ENTRIES}    {\"target\": \"${name}\", \"path\": \"${path}\", \"threshold\": ${threshold}, \"score\": 0.0, \"killed\": 0, \"survived\": 0, \"status\": \"framework-validated-baseline-deferred-to-phase-1\"}"
 done
