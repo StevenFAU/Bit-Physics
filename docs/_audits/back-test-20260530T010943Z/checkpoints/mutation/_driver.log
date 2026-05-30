@@ -1,0 +1,35 @@
+=== driver start 2026-05-30T01:22:16Z PER_TARGET_TIMEOUT=2400s ===
+
+==== sph_water_dfsph_generator path=tools/testkit/golden/generator/dfsph_density_evolution.py thr=0.8 start=01:22:16 ====
+sph_water_dfsph_generator -> killed=0 survived=127 score=0.0000 thr=0.8 status=completed rc=2
+
+==== incompressible_ns_2d_mms path=tools/testkit/code_verification/mms/solutions/incompressible_ns_2d thr=0.8 start=01:25:49 ====
+incompressible_ns_2d_mms -> killed=53 survived=29 score=0.6463 thr=0.8 status=completed rc=10
+
+==== reaction_diffusion_3d_mms path=tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d thr=0.8 start=01:29:40 ====
+reaction_diffusion_3d_mms -> killed=107 survived=22 score=0.8295 thr=0.8 status=completed rc=10
+
+==== determinism path=tools/testkit/determinism thr=0.9 start=01:37:04 ====
+determinism -> killed=71 survived=62 score=0.5338 thr=0.9 status=completed rc=2
+
+==== equivalence path=tools/testkit/equivalence thr=0.85 start=01:38:02 ====
+equivalence -> killed=127 survived=137 score=0.4811 thr=0.85 status=completed rc=10
+
+==== render_similarity path=tools/testkit/render_similarity/metrics.py thr=0.85 start=01:41:35 ====
+render_similarity -> killed=66 survived=18 score=0.7857 thr=0.85 status=completed rc=2
+
+==== capture path=tools/testkit/capture thr=0.9 start=01:48:35 ====
+capture -> killed=408 survived=194 score=0.6777 thr=0.9 status=completed rc=6
+
+==== property path=tools/testkit/property thr=0.8 start=02:08:22 ====
+property -> killed=108 survived=423 score=0.2034 thr=0.8 status=completed rc=2
+
+==== cat4_draft_time path=tools/integrity/integrity/cat4_draft_time thr=0.9 start=02:21:04 ====
+cat4_draft_time -> killed=33 survived=460 score=0.0669 thr=0.9 status=completed rc=2
+
+==== code_verification_mms path=tools/testkit/code_verification/mms thr=0.8 start=02:24:20 ====
+code_verification_mms -> killed=194 survived=538 score=0.2650 thr=0.8 status=completed rc=6
+
+==== golden path=tools/testkit/golden thr=0.8 start=02:38:04 ====
+golden -> killed=547 survived=1482 score=0.2696 thr=0.8 status=completed rc=2
+=== driver done 2026-05-30T02:58:34Z ===

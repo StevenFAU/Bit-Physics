@@ -1,0 +1,11 @@
+Pointer-masquerade / h5 content-vs-OID check @ HEAD 4ee0ea9
+The 4 worktree-dirty legacy-capture .h5 (committed as PLAIN placeholders, NOT LFS pointers):
+
+physarum-ref: committed_blob_sha256=acd785887dfd070c1410ff2ec9217a6dfa04244bae9451326451b74a3dd69a64 (81 B) | wt_content_sha256=acd785887dfd070c1410ff2ec9217a6dfa04244bae9451326451b74a3dd69a64 | match=YES
+reaction-diffusion-3d-ref: committed_blob_sha256=5760c1e511d8ea20811fc1fa2a97747ffc2ff0ded1996beac1155e99f00db3ae (109 B) | wt_content_sha256=5760c1e511d8ea20811fc1fa2a97747ffc2ff0ded1996beac1155e99f00db3ae | match=YES
+sph-water-ref: committed_blob_sha256=8b60e76b027f61f0962d928a4072e57b79e57d82fc1e56cf2f65039a43b5ddb8 (97 B) | wt_content_sha256=8b60e76b027f61f0962d928a4072e57b79e57d82fc1e56cf2f65039a43b5ddb8 | match=YES
+strange-attractors-ref: committed_blob_sha256=4e4597af186201d776fc27d4b31acbf449ed732325554c46949eef7497bd5802 (263 B) | wt_content_sha256=4e4597af186201d776fc27d4b31acbf449ed732325554c46949eef7497bd5802 | match=YES
+
+No evidence_hashes-bearing audit references any legacy-captures/*.h5 (git grep over 215 = 0).
+No .h5 appears in ANY evidence_hashes block (audits hash .json sidecars).
+RESULT: pointer-masquerade PASS (no hash over pointer/placeholder where content expected).

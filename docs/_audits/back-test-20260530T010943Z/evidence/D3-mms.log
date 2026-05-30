@@ -1,0 +1,112 @@
+=== D3.2 MMS central framework ===
+........                                                                 [100%]
+8 passed in 1.31s
+CENTRAL EXIT=0
+
+=== D3.2 per-package MMS convergence (per-rootdir) ===
+--- eulerian-smoke ---
+..                                                                       [100%]
+2 passed in 2.72s
+  EXIT=0
+--- eulerian-smoke-stack-d ---
+..                                                                       [100%]
+2 passed in 6.62s
+  EXIT=0
+--- eulerian-smoke-stack-e ---
+..                                                                       [100%]
+2 passed in 4.04s
+  EXIT=0
+--- lattice-boltzmann-d3q19 ---
+.                                                                        [100%]
+1 passed in 3.96s
+  EXIT=0
+--- lattice-boltzmann-d3q19-stack-d ---
+.                                                                        [100%]
+1 passed in 5.66s
+  EXIT=0
+--- lattice-boltzmann-d3q19-stack-e ---
+.                                                                        [100%]
+1 passed in 5.32s
+  EXIT=0
+--- reaction-diffusion-3d ---
+F                                                                        [100%]
+=================================== FAILURES ===================================
+__________ test_mms_observed_ooa_matches_formal_within_half_an_order ___________
+
+    def test_mms_observed_ooa_matches_formal_within_half_an_order() -> None:
+        """3-grid convergence study against GrayScott3DSolution; OOA ≈ 2 ± 0.5.
+    
+        Convergence-rate ladder is recorded inline in the assertion message
+        so the Stage 1 commit footer can quote it verbatim (charter § 4.2
+        step 3 + step 10).
+        """
+        soln = GrayScott3DSolution()
+        rows: list[tuple[int, float, float, int, float, float, float]] = []
+        for N in _LADDER:
+            dx, dt, n_steps, l2_u, l2_v, l2_combined = _run_mms_at_resolution(soln, N)
+            rows.append((N, dx, dt, n_steps, l2_u, l2_v, l2_combined))
+    
+        dxs = np.array([row[1] for row in rows], dtype=np.float64)
+        l2_u_arr = np.array([row[4] for row in rows], dtype=np.float64)
+        l2_v_arr = np.array([row[5] for row in rows], dtype=np.float64)
+        l2_comb = np.array([row[6] for row in rows], dtype=np.float64)
+        observed_ooa_u = _fit_observed_order(dxs, l2_u_arr)
+        observed_ooa_v = _fit_observed_order(dxs, l2_v_arr)
+        observed_ooa_combined = _fit_observed_order(dxs, l2_comb)
+    
+        # Pairwise refinement-rate ladder for the audit footer.
+        ladder_lines: list[str] = []
+        for N, dx, dt, n_steps, l2_u, l2_v, _l2c in rows:
+            ladder_lines.append(
+                f"  N={N:3d}  dx={dx:.6e}  dt={dt:.6e}  n_steps={n_steps:4d}  "
+                f"||e_U||_2={l2_u:.6e}  ||e_V||_2={l2_v:.6e}"
+            )
+        ladder = "\n".join(ladder_lines)
+    
+        diag = (
+            f"\nMMS convergence-rate ladder (RD-3D, t_final={_T_FINAL}):\n"
+            f"{ladder}\n"
+            f"observed OOA: U={observed_ooa_u:.4f}  V={observed_ooa_v:.4f}  "
+            f"combined={observed_ooa_combined:.4f}  (formal={_FORMAL_ORDER:.1f}, "
+            f"tolerance ±{_ORDER_TOLERANCE:.2f})"
+        )
+        # Combined L2 is the primary gate; per-field values are diagnostic.
+>       assert abs(observed_ooa_combined - _FORMAL_ORDER) <= _ORDER_TOLERANCE, diag
+E       AssertionError: 
+E         MMS convergence-rate ladder (RD-3D, t_final=0.05):
+E           N= 16  dx=1.250000e-01  dt=6.250000e-03  n_steps=   8  ||e_U||_2=4.069531e-03  ||e_V||_2=3.596987e-03
+E           N= 32  dx=6.250000e-02  dt=1.612903e-03  n_steps=  31  ||e_U||_2=4.097961e-03  ||e_V||_2=3.597051e-03
+E           N= 64  dx=3.125000e-02  dt=4.065041e-04  n_steps= 123  ||e_U||_2=4.115607e-03  ||e_V||_2=3.597059e-03
+E         observed OOA: U=-0.0081  V=-0.0000  combined=-0.0046  (formal=2.0, tolerance ±0.50)
+E       assert 2.0045880626616763 <= 0.5
+E        +  where 2.0045880626616763 = abs((-0.004588062661676537 - 2.0))
+
+tests/test_mms_convergence.py:183: AssertionError
+=========================== short test summary info ============================
+FAILED tests/test_mms_convergence.py::test_mms_observed_ooa_matches_formal_within_half_an_order
+1 failed in 3.13s
+  EXIT=1
+
+=== rd-3d MMS: working-tree run caught a LIVE mutmut mutant (NOT a repo defect) ===
+The background mutation job mutates tools/.../reaction_diffusion_3d/solution.py in place.
+Working-tree run FAILED on a mutant (e.g. -sin_t -> +sin_t at line 86, or * sin_t -> / sin_t at line 83).
+solution.py.bak == git HEAD byte-for-byte (verified via diff).
+
+=== rd-3d MMS re-run against PRISTINE HEAD solution.py (importlib injection) ===
+N= 16 dx=1.250000e-01 ||e_U||=7.145971e-04 ||e_V||=9.840184e-06
+N= 32 dx=6.250000e-02 ||e_U||=1.775487e-04 ||e_V||=2.699149e-06
+N= 64 dx=3.125000e-02 ||e_U||=4.431470e-05 ||e_V||=6.902295e-07
+observed OOA: U=2.0056 V=1.9168 combined=2.0056 (formal=2.0 tol +/-0.5)  -> PRISTINE PASS
+
+=== Falsifiability control (broken-solver meta-test) ===
+test_broken_solver_observed_order_is_rejected: BROKEN observed_order_l2 = -0.025  passes=False  (CAUGHT)
+positive control: CORRECT FTCS observed_order_l2 = 2.0044  passes=True
+
+=== task-7 pinn-poisson FD-reference + convergence tests ===
+...........                                                              [100%]
+11 passed in 0.81s
+PINN-FD EXIT=0
+
+=== task-6 neural-ca full pytest suite (under live mutation job, slow) ===
+10 passed in 392.84s
+(includes golden-anchor checkpoint L2, cross-stack render-similarity gate-14, train-convergence)

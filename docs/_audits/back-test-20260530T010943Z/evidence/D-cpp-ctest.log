@@ -1,0 +1,138 @@
+=== C++ ctest gate exercise @ HEAD 4ee0ea9 (lavapipe) 2026-05-30T01:59:16Z ===
+VK_ICD_FILENAMES=/usr/share/vulkan/icd.d/lvp_icd.json
+--- configure ---
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Using the multi-header code from /tmp/bp-audit-cpp-build/_deps/nlohmann_json-src/include/
+CMake Deprecation Warning at /tmp/bp-audit-cpp-build/_deps/doctest-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+CMake Deprecation Warning at /tmp/bp-audit-cpp-build/_deps/highfive-src/CMakeLists.txt:1 (cmake_minimum_required):
+  Compatibility with CMake < 3.5 will be removed from a future version of
+  CMake.
+
+  Update the VERSION argument <min> value or use a ...<max> suffix to tell
+  CMake that the project does not need compatibility with older versions.
+
+
+-- The C compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Configuring done (18.5s)
+-- Generating done (0.0s)
+-- Build files have been written to: /tmp/bp-audit-cpp-build
+CONFIGURE_RC=0
+--- build ---
+[  3%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp.dir/src/capture.cpp.o
+[  3%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp.dir/src/hash.cpp.o
+[  5%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp.dir/src/determinism.cpp.o
+[  7%] Linking CXX static library libbit_physics_common_cpp.a
+[  7%] Built target bit_physics_common_cpp
+[ 11%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_tests.dir/tests/test_main.cpp.o
+[ 11%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_advection_1d.dir/smoke/advection_1d.cpp.o
+[ 13%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_vulkan.dir/src/vulkan_compute.cpp.o
+[ 15%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_hdf5.dir/src/capture_hdf5.cpp.o
+[ 17%] Linking CXX static library libbit_physics_common_cpp_vulkan.a
+[ 17%] Built target bit_physics_common_cpp_vulkan
+[ 19%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_tests.dir/tests/test_capture.cpp.o
+[ 21%] Linking CXX executable bit_physics_common_cpp_smoke_advection_1d
+[ 21%] Built target bit_physics_common_cpp_smoke_advection_1d
+[ 23%] common-cpp: shaders/determinism_probe.comp -> SPIR-V embedded header (kDeterminismProbeSpv)
+/home/otacon/Projects/bp-audit-2/common/common-cpp/shaders/determinism_probe.comp
+[ 25%] common-cpp: shaders/determinism_nocontract.comp -> SPIR-V embedded header (kDeterminismNoContractSpv)
+/home/otacon/Projects/bp-audit-2/common/common-cpp/shaders/determinism_nocontract.comp
+[ 26%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_vulkan_tests.dir/tests/test_main.cpp.o
+[ 28%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_tests.dir/tests/test_determinism.cpp.o
+[ 30%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_vulkan_tests.dir/tests/test_vulkan_substrate.cpp.o
+[ 32%] Linking CXX executable bit_physics_common_cpp_tests
+[ 32%] Built target bit_physics_common_cpp_tests
+[ 34%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_vulkan_tests.dir/tests/test_determinism_socket.cpp.o
+[ 36%] Linking CXX static library libbit_physics_common_cpp_hdf5.a
+[ 36%] Built target bit_physics_common_cpp_hdf5
+[ 40%] common-cpp: shaders/advection_diffusion_2d.comp -> SPIR-V embedded header (kAdvectionDiffusion2dSpv)
+[ 40%] common-cpp: shaders/advection_diffusion_2d.comp -> SPIR-V embedded header (kAdvectionDiffusion2dSpv)
+[ 42%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_hdf5_tests.dir/tests/test_main.cpp.o
+/home/otacon/Projects/bp-audit-2/common/common-cpp/shaders/advection_diffusion_2d.comp
+/home/otacon/Projects/bp-audit-2/common/common-cpp/shaders/advection_diffusion_2d.comp
+[ 44%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_advection_diffusion_2d.dir/smoke/advection_diffusion_2d_main.cpp.o
+[ 46%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_tests.dir/tests/test_main.cpp.o
+[ 48%] Linking CXX executable bit_physics_common_cpp_vulkan_tests
+[ 48%] Built target bit_physics_common_cpp_vulkan_tests
+[ 50%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_tests.dir/tests/test_smoke_advection_diffusion.cpp.o
+[ 51%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_advection_diffusion_2d.dir/smoke/advection_diffusion_2d.cpp.o
+[ 53%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_smoke_tests.dir/smoke/advection_diffusion_2d.cpp.o
+[ 55%] Linking CXX executable bit_physics_common_cpp_smoke_advection_diffusion_2d
+[ 55%] Built target bit_physics_common_cpp_smoke_advection_diffusion_2d
+[ 57%] common-cpp: shaders/gray_scott_2d_mms.comp -> SPIR-V embedded header (kGrayScott2dMmsSpv)
+/home/otacon/Projects/bp-audit-2/packages/reaction-diffusion-2d-stack-c/shaders/gray_scott_2d_mms.comp
+[ 59%] common-cpp: shaders/gray_scott_2d.comp -> SPIR-V embedded header (kGrayScott2dSpv)
+/home/otacon/Projects/bp-audit-2/packages/reaction-diffusion-2d-stack-c/shaders/gray_scott_2d.comp
+[ 61%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c.dir/src/gray_scott.cpp.o
+[ 63%] Building CXX object common/common-cpp/CMakeFiles/bit_physics_common_cpp_hdf5_tests.dir/tests/test_capture_hdf5.cpp.o
+[ 65%] common-cpp: shaders/cloth_xpbd.comp -> SPIR-V embedded header (kClothXpbdSpv)
+/home/otacon/Projects/bp-audit-2/packages/mass-spring-cloth/shaders/cloth_xpbd.comp
+[ 67%] Building CXX object packages/mass-spring-cloth/CMakeFiles/bit_physics_mass_spring_cloth.dir/src/cloth.cpp.o
+[ 69%] Linking CXX executable bit_physics_common_cpp_smoke_tests
+[ 69%] Built target bit_physics_common_cpp_smoke_tests
+[ 71%] Linking CXX static library libbit_physics_rd2d_stack_c.a
+[ 71%] Built target bit_physics_rd2d_stack_c
+[ 75%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c_capture.dir/src/gray_scott_capture_main.cpp.o
+[ 75%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c_tests.dir/tests/test_main.cpp.o
+[ 76%] Linking CXX executable bit_physics_common_cpp_hdf5_tests
+[ 76%] Built target bit_physics_common_cpp_hdf5_tests
+[ 78%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c_tests.dir/tests/test_gray_scott.cpp.o
+[ 80%] Linking CXX static library libbit_physics_mass_spring_cloth.a
+[ 80%] Built target bit_physics_mass_spring_cloth
+[ 82%] Linking CXX executable bit_physics_rd2d_stack_c_capture
+[ 84%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c_tests.dir/tests/test_mms_order.cpp.o
+[ 84%] Built target bit_physics_rd2d_stack_c_capture
+[ 86%] Building CXX object packages/mass-spring-cloth/CMakeFiles/bit_physics_mass_spring_cloth_capture.dir/src/cloth_capture_main.cpp.o
+[ 88%] Building CXX object packages/reaction-diffusion-2d-stack-c/CMakeFiles/bit_physics_rd2d_stack_c_tests.dir/tests/test_cross_stack_equivalence.cpp.o
+[ 90%] Building CXX object packages/mass-spring-cloth/CMakeFiles/bit_physics_mass_spring_cloth_tests.dir/tests/test_main.cpp.o
+[ 92%] Linking CXX executable bit_physics_mass_spring_cloth_capture
+[ 92%] Built target bit_physics_mass_spring_cloth_capture
+[ 94%] Building CXX object packages/mass-spring-cloth/CMakeFiles/bit_physics_mass_spring_cloth_tests.dir/tests/test_cloth.cpp.o
+[ 96%] Building CXX object packages/mass-spring-cloth/CMakeFiles/bit_physics_mass_spring_cloth_tests.dir/tests/test_golden.cpp.o
+[ 98%] Linking CXX executable bit_physics_rd2d_stack_c_tests
+[ 98%] Built target bit_physics_rd2d_stack_c_tests
+[100%] Linking CXX executable bit_physics_mass_spring_cloth_tests
+[100%] Built target bit_physics_mass_spring_cloth_tests
+BUILD_RC=0
+--- ctest ---
+Test project /tmp/bp-audit-cpp-build
+    Start 1: common_cpp_tests
+1/9 Test #1: common_cpp_tests ....................   Passed    0.00 sec
+    Start 2: common_cpp_vulkan_tests
+2/9 Test #2: common_cpp_vulkan_tests .............   Passed    0.07 sec
+    Start 3: common_cpp_hdf5_tests
+3/9 Test #3: common_cpp_hdf5_tests ...............   Passed    0.01 sec
+    Start 4: common_cpp_smoke_tests
+4/9 Test #4: common_cpp_smoke_tests ..............   Passed    0.13 sec
+    Start 5: common_cpp_cross_language_interop
+5/9 Test #5: common_cpp_cross_language_interop ...   Passed    0.24 sec
+    Start 6: rd2d_stack_c_tests
+6/9 Test #6: rd2d_stack_c_tests ..................   Passed    2.54 sec
+    Start 7: rd2d_stack_c_gate14
+7/9 Test #7: rd2d_stack_c_gate14 .................   Passed    1.35 sec
+    Start 8: mass_spring_cloth_tests
+8/9 Test #8: mass_spring_cloth_tests .............   Passed    2.00 sec
+    Start 9: mass_spring_cloth_pbt
+9/9 Test #9: mass_spring_cloth_pbt ...............   Passed    1.04 sec
+
+100% tests passed, 0 tests failed out of 9
+
+Total Test time (real) =   7.39 sec
+CTEST_RC=0
+=== done 2026-05-30T02:00:00Z ===

@@ -1,0 +1,25 @@
+=== D3.1 golden --verify (independent recompute vs committed tables) HEAD 4ee0ea9 ===
+--- lorenz_structural ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/closed-form/lorenz-structural.json matches SymPy at canonical parameters.
+  EXIT=0
+--- mandelbulb_de_samples ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/closed-form/mandelbulb-de-samples.json matches SymPy at canonical (p=8, R=2).
+  EXIT=0
+--- boids_3agent_step1 ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/agent-based/boids-3agent-step1.json matches closed-form recomputation.
+  EXIT=0
+--- physarum_deposit_step1 ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/agent-based/physarum-deposit-step1.json matches closed-form recomputation.
+  EXIT=0
+--- dfsph_density_evolution ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json matches closed-form recomputation.
+  EXIT=0
+--- d3q19_equilibrium ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/lattice/d3q19-equilibrium.json matches closed-form recomputation.
+  EXIT=0
+--- mls_mpm_quadratic_bspline ---
+OK — /home/otacon/Projects/bp-audit-2/tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json matches closed-form recomputation.
+  EXIT=0
+--- cloth_catenary ---
+cloth golden tables: VERIFIED
+  EXIT=0

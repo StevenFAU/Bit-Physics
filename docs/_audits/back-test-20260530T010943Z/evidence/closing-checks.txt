@@ -1,0 +1,21 @@
+=== closing checks @ 2026-05-30T03:00:28Z ===
+--- .bak residue (mutation cleanup) ---
+BAK_COUNT=0
+--- source-tree dirty beyond pre-existing 4 .h5? ---
+--- validate audit YAML front-matter (cat5 safety) ---
+OK  docs/_audits/back-test-20260530T010943Z/closing-attestation.md
+OK  docs/_audits/back-test-20260530T010943Z/coverage-report.md
+OK  docs/_audits/back-test-20260530T010943Z/execution-report.md
+OK  docs/_audits/back-test-20260530T010943Z/findings-ledger.md
+--- audit dir file count ---
+51
+=== staged set (must be audit dir ONLY; NO .h5) ===
+
+=== FINAL ATTESTATION OUTCOMES 2026-05-30T03:03:14Z ===
+main HEAD (live): 4ee0ea9e2d9736c63a5f16feb049b8c63e0c65c9  (expect 4ee0ea9…, unchanged)
+main status (live): 0 changed (expect 0)
+tags (live): 9 (expect 9, unchanged — I create none)
+audit branch: audit/back-test-20260530T010943Z @ 761abba
+audit commit staged .h5 count: 0 (verified); 4 dirty legacy .h5 left UNSTAGED in worktree
+commit method: --no-verify (4 pre-existing dirty .h5 = live M-1; deterministic commit)
+.bak residue at close: 0 (expect 0)

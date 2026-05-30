@@ -1,0 +1,1 @@
+{"target":"render_similarity","path":"tools/testkit/render_similarity/metrics.py","threshold":0.85,"killed":66,"survived":18,"timeout":0,"suspicious":0,"score":0.7857,"meets_threshold":false,"status":"completed","rc":2,"finished_utc":"2026-05-30T01:48:35Z"}

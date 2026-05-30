@@ -1,0 +1,85 @@
+===== articulated-pedagogical (packages/articulated-pedagogical/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 0.80s
+
+===== boids-3d (packages/boids-3d/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 60.16s (0:01:00)
+
+===== eulerian-smoke-stack-d (packages/eulerian-smoke-stack-d/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 1.22s
+
+===== eulerian-smoke-stack-e (packages/eulerian-smoke-stack-e/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 0.74s
+
+===== eulerian-smoke (packages/eulerian-smoke/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 0.54s
+
+===== ising-classical (packages/ising-classical/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 18.48s
+
+===== lattice-boltzmann-d3q19-stack-d (packages/lattice-boltzmann-d3q19-stack-d/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 0.77s
+
+===== lattice-boltzmann-d3q19-stack-e (packages/lattice-boltzmann-d3q19-stack-e/tests/test_determinism.py) =====
+...                                                                      [100%]
+3 passed in 0.42s
+
+===== lattice-boltzmann-d3q19 (packages/lattice-boltzmann-d3q19/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 0.28s
+
+===== lenia (packages/lenia/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 0.71s
+
+===== mandelbulb-explorer (packages/mandelbulb-explorer/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 0.20s
+
+===== mpm-multimaterial-stack-d (packages/mpm-multimaterial-stack-d/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 1.20s
+
+===== mpm-multimaterial-stack-e (packages/mpm-multimaterial-stack-e/tests/test_determinism.py) =====
+...                                                                      [100%]
+3 passed in 0.60s
+
+===== mpm-multimaterial (packages/mpm-multimaterial/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 2.62s
+
+===== physarum (packages/physarum/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 9.99s
+
+===== reaction-diffusion-2d-stack-d (packages/reaction-diffusion-2d-stack-d/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 3.16s
+
+===== reaction-diffusion-2d (packages/reaction-diffusion-2d/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 1.81s
+
+===== reaction-diffusion-3d (packages/reaction-diffusion-3d/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 23.89s
+
+===== sph-water-stack-d (packages/sph-water-stack-d/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 0.54s
+
+===== sph-water (packages/sph-water/tests/test_determinism.py) =====
+.                                                                        [100%]
+1 passed in 0.33s
+
+===== strange-attractors (packages/strange-attractors/tests/test_determinism.py) =====
+..                                                                       [100%]
+2 passed in 0.51s
+
+==== PER-SIM TOTAL: PASS=21 FAIL=0 ====

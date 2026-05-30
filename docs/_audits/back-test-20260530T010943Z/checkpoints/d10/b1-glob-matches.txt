@@ -1,0 +1,9 @@
+B-1 glob re-test @ v0.2.4-sub-phase-phase-3-lenia (576 docs/_audits files)
+Glob from audit-append-only.yml:62-63 -> grep -E '\.ledger\.md$'
+
+MATCH_COUNT=0 (of 576)
+STATUS: LIVE / UNRESOLVED (enforcement loop guards empty set)
+
+Real ledger-like files at tag (none match the glob):
+docs/_audits/phase-0/ledger.md
+docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-c/stage-2-evidence/perf-ledger-measurement-2026-05-25T23-30-00Z.txt

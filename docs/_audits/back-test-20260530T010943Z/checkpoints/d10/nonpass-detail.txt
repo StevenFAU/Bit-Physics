@@ -1,0 +1,119 @@
+########## docs/_audits/phase-0/block-1-foundation-2026-05-19T03-27-54Z.md
+  FAIL  evidence_hashes is not a mapping
+summary: 51 pass / 1 fail at head_sha 1f052dfd1006
+
+########## docs/_audits/phase-1/prerequisite-hotfix-2026-05-20T03-49-08Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-1/prerequisite-hotfix-2026-05-20T03-49-08Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-1/stage-1-verification-2026-05-20T12-10-58Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-1/stage-1-verification-2026-05-20T12-10-58Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-1/stage-2-checkpoint-2026-05-20T13-05-30Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-1/stage-2-checkpoint-2026-05-20T13-05-30Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-1/stage-2-checkpoint-final-2026-05-20T13-48-37Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-1/stage-2-checkpoint-final-2026-05-20T13-48-37Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-1/sub-phase-closed-form/stage-0-checkpoint-2026-05-20T15-10-49Z.md
+  FAIL  evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  hashed evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-replay-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+  FAIL  hashed evidence path 'docs/_audits/phase-1/sub-phase-closed-form/stage-0-evidence-reverify-2026-05-20T15-10-49Z.txt' not present at 6d5ac0e2b60de3b668a6e03182dcdb3a12be5140
+summary: 5 pass / 4 fail at head_sha 6d5ac0e2b60d
+
+########## docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-blocked-replay-2026-05-20T18-52-10Z.md
+  FAIL  evidence path 'docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-replay-2026-05-20T18-52-10Z.txt' not present at 90449f45ee5fc3b2b00e1aaa1eec6c10e415c5f4
+  FAIL  hashed evidence path 'docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-0-replay-2026-05-20T18-52-10Z.txt' not present at 90449f45ee5fc3b2b00e1aaa1eec6c10e415c5f4
+summary: 4 pass / 2 fail at head_sha 90449f45ee5f
+
+########## docs/_audits/phase-1/sub-phase-continuous-ca-rd3d/stage-1-checkpoint-2026-05-20T19-42-23Z.md
+  FAIL  sha256 mismatch for 'captures/reaction-diffusion-3d-ref/gray-scott-lambda-64cube-seed42-step2000.json': claimed=sha256:ccd0e4eabf36fba694a5c9bf3817cc470846c6aa2d59e52f7a2c987201475dcb actual=5c64375fb8be154f0de4df999ad9faa2777d969ab6f7e6e636b8b5e0bc3837b9
+summary: 18 pass / 1 fail at head_sha 8c36214b6bf4
+
+########## docs/_audits/phase-1/sub-phase-eulerian-smoke/stage-1-checkpoint-2026-05-22T13-20-00Z.md
+  FAIL  head_sha c20d24d6dd24c92b6d3ab44f6db9be8b48d50824 not present in repo
+summary: 0 pass / 1 fail at head_sha c20d24d6dd24
+
+########## docs/_audits/phase-1/sub-phase-numba-integration/landing-2026-05-21T11-22-24Z.md
+  FAIL  evidence path 'tools/testkit/numba_harness/tests/__init__.py' is empty at aa1fca6f38ca96e692545fd68b9ac054700ed7c4
+summary: 13 pass / 1 fail at head_sha aa1fca6f38ca
+
+########## docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/stage-0-sha-back-fill-2026-05-25T15-45-00Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/stage-0-sha-back-fill-2026-05-25T15-45-00Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/stage-1a-sha-back-fill-2026-05-25T16-00-00Z.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-2/sub-phase-lattice-boltzmann-d3q19-stack-e/stage-1a-sha-back-fill-2026-05-25T16-00-00Z.md front-matter missing valid head_sha
+
+########## docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-c/stage-0-checkpoint-2026-05-25T20-30-00Z.md
+  FAIL  evidence_hashes is not a mapping
+summary: 4 pass / 1 fail at head_sha 04a7d8f02672
+
+########## docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-c/stage-1b-checkpoint-2026-05-25T21-30-00Z.md
+  FAIL  evidence_hashes is not a mapping
+summary: 4 pass / 1 fail at head_sha 39bcb1bc1b8b
+
+########## docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-c/stage-1c-checkpoint-2026-05-25T22-00-00Z.md
+  FAIL  evidence_hashes is not a mapping
+summary: 4 pass / 1 fail at head_sha fa58d8cab602
+
+########## docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1b-checkpoint-2026-05-23T20-35-18Z.md
+  FAIL  sha256 mismatch for 'captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.json': claimed=sha256:a7780645d2159208e281a49c95b9d43c66ffd8b7e6ca3524345be19c468abd68 actual=e1752ceb0e1847bc3c9a82a7eda2486a4418eec0908876ad016c61e5da27e104
+summary: 22 pass / 1 fail at head_sha c36a1b4c7ff8
+
+########## docs/_audits/phase-2/sub-phase-reaction-diffusion-2d-stack-d/stage-1c-checkpoint-2026-05-23T20-53-53Z.md
+  FAIL  sha256 mismatch for 'captures/reaction-diffusion-2d-stack-d/gray-scott-lambda-128sq-seed42-step2000.json': claimed=sha256:a7780645d2159208e281a49c95b9d43c66ffd8b7e6ca3524345be19c468abd68 actual=e1752ceb0e1847bc3c9a82a7eda2486a4418eec0908876ad016c61e5da27e104
+summary: 23 pass / 1 fail at head_sha f863f663cdbd
+
+########## docs/_audits/phase-2/sub-phase-taichi-integration/stage-1-checkpoint-2026-05-23T14-20-17Z.md
+  FAIL  evidence path 'tools/testkit/taichi_harness/tests/__init__.py' is empty at fece9a890171998eb05b006d47f0c3cc0545bf75
+summary: 20 pass / 1 fail at head_sha fece9a890171
+
+########## docs/_audits/phase-3/lenia-mypy-strict-fix-2026-05-28T18-39-42Z.md
+  FAIL  sha256 mismatch for '.github/workflows/python-strict.yml': claimed=sha256:78d1c5030bf58ebb335408bb74f215dd455d8d77e1992238f13b494614db47c7 actual=ebf3e1334adc79c4ca8f712f9d7b08343a0d32e27c41fbdecfc1adb4adf95b64
+summary: 11 pass / 1 fail at head_sha 6b1087684719
+
+########## docs/_audits/phase-3/progress.md
+verify_evidence: audit /home/otacon/Projects/bp-audit-2/docs/_audits/phase-3/progress.md has no YAML front-matter
+
+########## docs/_audits/phase-3/sub-phase-phase-3-ising-classical-harness-investigation-2026-05-28T21-00-21Z.md
+  FAIL  sha256 mismatch for 'packages/reaction-diffusion-2d/tests/test_code_verification.py': claimed=sha256:9d8a8c0b1eb6c0d8d2db7ef39d3b09b15ef2c5cbf9bc04ee6cf6df0e94ce4f7c actual=9ca0bb29a042563405b3fc9c05e7d5a211d365523d6d74ce65558f5643dae844
+  FAIL  sha256 mismatch for 'packages/reaction-diffusion-2d/tests/test_determinism.py': claimed=sha256:9d8a8c0b1eb6c0d8d2db7ef39d3b09b15ef2c5cbf9bc04ee6cf6df0e94ce4f7c actual=ac68a248d6f49b50ccfc3bfb47e229e727d59e4a56997da3f174c91c653f64ff
+  FAIL  sha256 mismatch for 'docs/phases/sub-phase-phase-3-ising-classical.md': claimed=at-head actual=fd62b23d23fd70d1a32d6fcce4e45b9a5888b661baae868bd9ccb39337f7287f
+summary: 24 pass / 3 fail at head_sha c8d8428
+
+########## docs/_audits/phase-3/sub-phase-phase-3-ising-classical-plan-drafting-2026-05-28T19-08-34Z.md
+  FAIL  sha256 mismatch for 'docs/phases/sub-phase-phase-3-ising-classical.md': claimed=at-head actual=fd62b23d23fd70d1a32d6fcce4e45b9a5888b661baae868bd9ccb39337f7287f
+  FAIL  sha256 mismatch for 'docs/_audits/phase-3/sub-phase-phase-3-ising-classical-probe-2026-05-28T19-08-34Z.md': claimed=at-head actual=774af52d96ededc4dd7b8578a73ea94e5fdefd4bef747a594944361aaebb795a
+  FAIL  sha256 mismatch for 'docs/_audits/phase-3/progress.md': claimed=at-head actual=3cb77ae6037cbdf92601003291bad90e160ff5c299a3d944b93ae94ecfbc0ab0
+  FAIL  sha256 mismatch for 'docs/phases/phase-3-plan.md': claimed=at-head actual=f16a4a2e4e093b0f273a9edb6d99c2b9cf3d267892a9f2b1df7ceebeaf6ff3fc
+  FAIL  sha256 mismatch for 'docs/architecture.md': claimed=at-head actual=97e70bad3f82800e0c28fb0d28d98ee81fddc5d504a81d68d66dee03d0e4703a
+  FAIL  sha256 mismatch for 'docs/phases/sub-phase-phase-3-lenia.md': claimed=at-head actual=c232145520a1100302c286a5c9dda4c775477f1db3a3897bbbf97d00075a1742
+summary: 6 pass / 6 fail at head_sha fa06646
+
+########## docs/_audits/phase-3/sub-phase-phase-3-ising-classical-probe-2026-05-28T19-08-34Z.md
+  FAIL  sha256 mismatch for 'docs/phases/phase-3-plan.md': claimed=at-head actual=f16a4a2e4e093b0f273a9edb6d99c2b9cf3d267892a9f2b1df7ceebeaf6ff3fc
+  FAIL  sha256 mismatch for 'docs/architecture.md': claimed=at-head actual=97e70bad3f82800e0c28fb0d28d98ee81fddc5d504a81d68d66dee03d0e4703a
+  FAIL  sha256 mismatch for 'docs/phases/sub-phase-phase-3-lenia.md': claimed=at-head actual=c232145520a1100302c286a5c9dda4c775477f1db3a3897bbbf97d00075a1742
+  FAIL  sha256 mismatch for 'packages/reaction-diffusion-2d/src/index.ts': claimed=at-head actual=2ffd0074fac07a37469013ac448cde6da2e9f3ac0995ee002678b0671b8979c4
+  FAIL  sha256 mismatch for 'packages/reaction-diffusion-2d/src/gray_scott.wgsl': claimed=at-head actual=38facf2c89d86cc1cd7e5244693b033ec58a504cd7b805bdad2d48140404a82d
+  FAIL  sha256 mismatch for 'common/common-ts/vitest.config.ts': claimed=at-head actual=a6849bbbe92aa7906bd0612960ab98fb3a2c7eaa1b0c816cc655f19707583433
+  FAIL  sha256 mismatch for 'common/common-ts/src/capture.ts': claimed=at-head actual=19187ea489359aa0c74a89249c73c48b0ec4b6e77c017174726e569c5e31242b
+  FAIL  sha256 mismatch for 'common/common-ts/src/index.ts': claimed=at-head actual=4d95702737d081aad61eeb6ce601b284e77e20e48f065f57559b267332e941b8
+  FAIL  sha256 mismatch for 'common/common-ts/src/determinism/index.ts': claimed=at-head actual=9e15952c2cf540a02e688c56ecdb1cccee078ca07af2f1770cc24ac178681ce1
+  FAIL  sha256 mismatch for 'common/common-ts/package.json': claimed=at-head actual=b37a0f3ff23191236fc93eb8e11fbc8d094a97ae45014070511c1001f7996218
+  FAIL  sha256 mismatch for '.github/workflows/ts-strict.yml': claimed=at-head actual=b4f64064edf49b362411d1b64b3ddbe3448cb310c03cd6919a8c02651165df20
+  FAIL  sha256 mismatch for 'tools/testkit/equivalence/tolerance.toml': claimed=at-head actual=4b85b31700012b8ddcdae579229edb06de3795b6f7fc78e52fbc195778a4373a
+  FAIL  sha256 mismatch for 'tools/testkit/equivalence/tolerance-budget.toml': claimed=at-head actual=0ecb3f2b25493e0bce552cce6b13f07ee27934971c6c27d31da7d5d7f2b43224
+  FAIL  sha256 mismatch for 'tools/testkit/determinism/registry.toml': claimed=at-head actual=c61a7c381339e0f3b1f248a7dfef73c1d1d1f3e73f3c9da86ce565245c3e725d
+summary: 14 pass / 14 fail at head_sha fa06646
+
+########## docs/_audits/phase-3/sub-phase-phase-3-rigid-body-plan-drafting-2026-05-28T22-50-13Z.md
+  FAIL  sha256 mismatch for 'docs/phases/sub-phase-phase-3-rigid-body.md': claimed=at-head actual=ee4418d0d0eaaa26e441d1c6f737fc0d30bb5476ae3e0170cc3d9421ea683b84
+  FAIL  sha256 mismatch for 'docs/_audits/phase-3/sub-phase-phase-3-rigid-body-probe-2026-05-28T22-50-13Z.md': claimed=at-head actual=c0cc44cf36e5f46fbc6c1782e07b45030c12a50fe2e02573573abcedcc0e1d7f
+  FAIL  sha256 mismatch for 'docs/_audits/phase-3/sub-phase-phase-3-rigid-body-preflight-drift-2026-05-28T22-50-13Z.md': claimed=at-head actual=06ebb7ead442852c37692633ccc610c858f192e5ad0ec3cbfd808521fc673691
+  FAIL  sha256 mismatch for 'docs/_audits/phase-3/progress.md': claimed=at-head actual=1b68e522f4fe81490bad28091ee6457a0b4974cc4556e1627cbd397b8e46ed2e
+  FAIL  sha256 mismatch for 'docs/phases/phase-3-plan.md': claimed=at-head actual=f16a4a2e4e093b0f273a9edb6d99c2b9cf3d267892a9f2b1df7ceebeaf6ff3fc
+  FAIL  sha256 mismatch for 'docs/architecture.md': claimed=at-head actual=97e70bad3f82800e0c28fb0d28d98ee81fddc5d504a81d68d66dee03d0e4703a
+  FAIL  sha256 mismatch for 'docs/conventions/sub-phase-conventions.md': claimed=at-head actual=10734948cd03c4bb5699010063be76e09f307eb33302707c4d4f3652cc829bd7
+summary: 7 pass / 7 fail at head_sha 703f816
+

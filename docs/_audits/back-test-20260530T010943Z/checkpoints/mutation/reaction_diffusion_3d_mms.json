@@ -1,0 +1,1 @@
+{"target":"reaction_diffusion_3d_mms","path":"tools/testkit/code_verification/mms/solutions/reaction_diffusion_3d","threshold":0.8,"killed":107,"survived":22,"timeout":0,"suspicious":1,"score":0.8295,"meets_threshold":true,"status":"completed","rc":10,"finished_utc":"2026-05-30T01:37:04Z"}

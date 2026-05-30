@@ -1,0 +1,1 @@
+{"target":"incompressible_ns_2d_mms","path":"tools/testkit/code_verification/mms/solutions/incompressible_ns_2d","threshold":0.8,"killed":53,"survived":29,"timeout":0,"suspicious":2,"score":0.6463,"meets_threshold":false,"status":"completed","rc":10,"finished_utc":"2026-05-30T01:29:40Z"}

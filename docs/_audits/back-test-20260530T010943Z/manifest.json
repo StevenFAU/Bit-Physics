@@ -1,0 +1,45 @@
+{
+  "audit": "exhaustive-back-test-re-audit",
+  "head_sha": "4ee0ea9e2d9736c63a5f16feb049b8c63e0c65c9",
+  "head_summary": "docs(phase-3): 3dgs-mpm Stage 2 landing audit (task-8, Phase-3 FINALE)",
+  "this_run_utc": "20260530T010943Z",
+  "worktree": "/home/otacon/Projects/bp-audit-2",
+  "audit_branch": "audit/back-test-20260530T010943Z",
+  "prior_run": {
+    "pinned_audit_sha": "869bf68214025169f961a8c138675ed76c47fb75",
+    "pin_note": "mid-task-5 (mass-spring-cloth Stage 1a); FIVE sub-phases stale vs HEAD (tasks 4-8 landed since)",
+    "deliverables": "audit/back-test-20260529T024129Z : docs/_audits/back-test-20260529T124759Z/",
+    "prior_severity": {"BLOCKER": 2, "MAJOR": 16, "MINOR": 19}
+  },
+  "isolation": {
+    "read_only_source": true,
+    "main_untouched": "verified at open + close",
+    "branch_unmerged": true,
+    "tags_created": 0,
+    "live_tree_touched": false,
+    "lfs_remediation": "local-worktree-only (never staged, never pushed)",
+    "mutation_bak_restored": "driver trap restore_bak on EXIT/INT/TERM"
+  },
+  "venv": ".venv (uv sync --all-packages --all-extras; exit 0)",
+  "spec_of_record": {
+    "gpu-sims-design-spec-v2.md_v2.4": "docs/architecture.md (frozen in Phase 3 per §9.6 — confirmed unchanged byte-for-byte vs pin by multiple dims)",
+    "13_gate_list": "docs/architecture.md Appendix D §D.6 (lines ~2585-2608)",
+    "convention_catalog": "docs/bit-physics-master-catalog.md + docs/conventions/sub-phase-conventions.md"
+  },
+  "rerun_note": "Run each command from the worktree root with .venv active (uv run --no-sync). Same HEAD + same commands reach the same verdicts; divergence is itself a finding. Mutation: PER_TARGET_TIMEOUT=2400 bash evidence/run-mutation-driver.sh.",
+  "dimensions": {
+    "D1": "citations — evidence/D1-citations.md",
+    "D2": "reference-graph — evidence/D2-reference-graph.md",
+    "D3": "numerical (BLOCKER) — evidence/D3-numerical.md, D3-golden-verify.log, D3-mms.log",
+    "D4": "testkit self-integrity (BLOCKER) — checkpoints/mutation/*.json, evidence/D4-pbt-gate3.md, evidence/run-mutation-driver.sh",
+    "D5": "determinism (BLOCKER) — evidence/D5-determinism.md (+ .log, per-sim, cross-phase-replay)",
+    "D6": "naming/conventions — evidence/D6-naming-conventions.md",
+    "D7": "gate-count + amendment drift — evidence/D7-gate-count.md, D7-gate-count-raw.txt",
+    "D8": "schema/capture/vendored-SHA — evidence/D8-schema-sha.md",
+    "D9": "doc-internal consistency — evidence/D9-doc-consistency.md",
+    "D10": "evidence-trail (BLOCKER) — evidence/D10-evidence-trail.md, checkpoints/d10/*",
+    "P2": "LFS classification — evidence/P2-lfs-classification.txt",
+    "M2": "branch protection — evidence/M2-branch-protection.txt",
+    "Cpp": "C++ ctest gate (prior-UNKNOWN, now exercised) — evidence/D-cpp-ctest.log"
+  }
+}

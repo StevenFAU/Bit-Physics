@@ -1,0 +1,51 @@
+=== HARNESS: tools/testkit/determinism/tests/ ===
+...                                                                      [100%]
+3 passed in 0.23s
+=== NEW task-6 neural-ca inference determinism (test_pbt_invariants::test_pbt_inference_determinism) ===
+..                                                                       [100%]
+2 passed in 6.78s
+=== task-6 neural-ca training (non-det / EFECT honest) ===
+.                                                                        [100%]
+1 passed in 83.40s (0:01:23)
+=== NEW task-7 pinn checkpoint inference (relies on same-seed byte-for-byte) ===
+....                                                                     [100%]
+4 passed in 0.50s
+=== NEW task-8 3dgs-mpm golden (end-to-end render determinism vs committed goldens) ===
+..                                                                       [100%]
+2 passed in 2.88s
+=== DIRECT: 3dgs-mpm run_canonical_sim(seed=0) twice -> np.array_equal per frame image ===
+Warp CUDA warning: Could not find or load the NVIDIA CUDA driver. GPU execution will not be available.
+Warp 1.13.0 initialized:
+   CUDA Toolkit 12.9, CUDA driver not available (NVRTC compilation available)
+   Devices:
+     "cpu"      : "x86_64"
+   Kernel cache:
+     /home/otacon/.cache/warp/1.13.0
+Module common_3dgs._kernels cf5886f load on device 'cpu' took 0.81 ms  (cached)
+Module mpm_multimaterial_stack_e.reference.mls_mpm_warp 394d6c9 load on device 'cpu' took 0.23 ms  (cached)
+n_frames a/b: 4 4
+ALL FRAMES byte-identical (np.array_equal): True
+=== DIRECT task-7 pinn: (a) inference twice byte-equal; (b) seed-42 retrain reproduces committed checkpoint grid eval byte-for-byte ===
+(a) inference twice byte-equal (np.array_equal): True
+config seed/units/lbfgs: 42 60 2000
+(b) seed-42 retrain grid eval == committed-checkpoint grid eval byte-for-byte: True
+=== NEW task-5 cloth symmetric-GS determinism (doctest gate-7 + full suite) ===
+bin: /tmp/bp-cpp-build/packages/mass-spring-cloth/bit_physics_mass_spring_cloth_tests
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+[doctest] test cases: 1 | 1 passed | 0 failed | 5 skipped
+[doctest] assertions: 1 | 1 passed | 0 failed |
+[doctest] Status: SUCCESS!
+--- full suite ---
+TEST CASE:  GREEN[gate-4] hanging chain matches the analytic catenary golden
+
+/home/otacon/Projects/bp-audit-2/packages/mass-spring-cloth/tests/test_golden.cpp:73: MESSAGE: hanging max deviation / sag = 0.00119105
+
+===============================================================================
+[doctest] test cases:   6 |   6 passed | 0 failed | 0 skipped
+[doctest] assertions: 152 | 152 passed | 0 failed |
+[doctest] Status: SUCCESS!
+=== DIRECT task-7 pinn: inference twice byte-equal=True; seed-42 retrain==committed-checkpoint grid eval byte-for-byte=True (see run output)
+=== DIRECT task-8 3dgs-mpm: run_canonical_sim(seed=0) twice -> all 4 frames np.array_equal=True
+=== registry rows: 11 (neural-rendered.common-3dgs, continuous-ca.lenia, lattice-spin.ising-classical, rigid-body.articulated-pedagogical, soft-body.mass-spring-cloth, continuous-ca.neural-ca.training[non-det/EFECT], continuous-ca.neural-ca.inference[bit-exact], learned-dynamics.pinn-poisson.training[non-det/EFECT], learned-dynamics.pinn-poisson.inference[bit-exact], neural-rendered.3dgs-mpm)

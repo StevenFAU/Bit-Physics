@@ -1,0 +1,12 @@
+Integrity meta-test-in-CI verdict @ HEAD 4ee0ea9
+Claim: docs/architecture.md:770 -- meta-test 'is itself part of CI'.
+Target: tools/integrity/tests/test_adversarial_coverage.py
+
+grep over all .github/workflows/*.yml for tools/integrity/tests | test_adversarial_coverage | adversarial | pytest+integrity:
+  (NO MATCHES)
+
+integrity.yml runs: uv run python -m integrity --all  (Cat-checks, NOT the pytest meta-test)
+python-strict.yml pytest scope: tools/testkit, common/common-3dgs/tests, render_similarity/tests, packages/lenia -- NOT tools/integrity/tests
+
+VERDICT: doc claim FALSE. Meta-test is NOT invoked by any workflow.
+Candidate sibling sub-phase: integrity-meta-test-ci-wiring.
