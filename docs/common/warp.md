@@ -313,6 +313,40 @@ presence (LBM: present). All three f64 Stack-E consumers roll their own
 The § 6 table's LBM row is updated (`SHIFTED`) to the landed socket-only consumption.
 This note is ADDITIVE.
 
+### 6.4 Post-Phase-3 maturation (task-9) — de-facto public surface + stability tiers
+
+Six landed sims now consume common-warp (MPM, smoke, LBM Stack-E; articulated-pedagogical
+task-4; pinn-poisson task-7; 3dgs-mpm task-8). The rule-of-three survey confirms the
+**socket surface is mature** (signature-frozen since Stage 1c, consumed unchanged), so this
+note documents the surface rather than refactoring it. Two corrections to § 3:
+
+- **De-facto public capture-key API (was undocumented).** Every consumer imports
+  `state_key` / `diagnostics_key` / `parse_payload_key` / `STATE` / `DIAGNOSTICS` from
+  `common_warp.capture.model` to build the flat payload (`steps/{N}/state/{field}` /
+  `steps/{N}/diagnostics/{check}`). These are the most-used symbols in the whole library
+  yet were absent from the § 3 table. They are **stable** (used by all six sims, signatures
+  frozen). `parse_payload_key`'s malformed-key `ValueError` contract is now directly tested
+  (`tests/test_capture.py`).
+
+- **Stability tiers.**
+  - **STABLE** (≥2 landed sims, unchanged signature): `init`, `set_warp_deterministic`,
+    `deterministic_context`, `set_seed`/`get_seed`, `assert_deterministic_run`,
+    `Capture`, `write_capture`, `read_capture`, `get_device`/`set_device`/`is_deterministic`,
+    and the `capture.model` keys above.
+  - **EXPERIMENTAL** (0 landed-sim consumers — the f64-socket principle of § 6.1–6.3 means
+    every sim rolls its own `wp.array(dtype=wp.float64)` state rather than using these f32
+    convenience surfaces): `Particles`/`allocate_particles`, `ScalarField3D`/`VectorField3D`/
+    `allocate_scalar_field`/`allocate_vector_field`, `HashGrid`, and `read_manifest`. Port
+    authors should NOT build new Stack-E sims on the experimental surface without first
+    resolving the f64 question; treat their signatures as unstable until a real consumer pins them.
+
+- **Banked (rule-of-three, NOT done here):** the capture payload-build + `write_capture`
+  loop is duplicated across all six consumers (2 byte-identical helpers in smoke/LBM, 3
+  near-identical inline copies) — a STRONG candidate for a `common_warp.capture.write_frames_capture(...)`
+  promotion. Deferred to a dedicated refactor (it rewrites the capture path of six LANDED
+  sims, each gated by gate-4/gate-11/determinism — additive-helper-then-migrate, out of a
+  doc-maturation pass's risk budget). This note is ADDITIVE.
+
 ## 7. Warp upstream references
 
 (FACT — NVIDIA Warp 1.13.0 documentation; Convention C upstream names cited

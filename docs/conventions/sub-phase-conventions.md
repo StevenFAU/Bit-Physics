@@ -1374,6 +1374,40 @@ The R2 sweep (`r2-sweep-proof.yml` / the equivalent local sweep wrapped
 around `git -c lfs.storage=<tmp> lfs fetch`) is the M4 invariant — I5 only
 holds when every pointer at every inspected ref resolves *from R2*.
 
+### Q.6 Push-and-VERIFY — `git push` exit 0 does NOT mean R2 has the OIDs
+
+A plain `git push origin main` **silently no-ops the new LFS objects** when the
+standalone transfer agent is the configured remote (task-8 shift #7; phase-3
+close R0 reproduced it): the commit lands on GitHub but R2 receives nothing, and
+the next CI R2-pull fails until the OIDs are force-pushed. **Exit 0 is not
+evidence of an R2 push.** The required Stage-1c / landing sequence is THREE
+explicit steps, not one:
+
+1. **GitHub (git refs + GitHub-LFS fallback copy):**
+   `git -c lfs.standalonetransferagent= push origin main`
+   (disables the R2 agent so the small objects also land on GitHub-LFS — the
+   fork-PR fallback per Q.4).
+2. **R2 (the durable copy), SAME shell as the bootstrap, `--object-id --stdin`:**
+   ```
+   source tools/lfs/setup-lfs-s3-local.sh
+   printf '%s\n' <oid> [<oid> …] | git lfs push --object-id origin --stdin
+   ```
+   **Use the `--stdin` form.** The positional-args form
+   (`git lfs push --object-id origin <oid> …`) EOFs against the lfs-s3 agent
+   even when the bootstrap reports ready (phase-3 close R0 measured this on the
+   12-fixture migration); `--object-id … --stdin` succeeds for the same OIDs.
+   The `source` MUST be in the same shell command as the push (creds do not
+   survive a fresh shell — the root cause mis-diagnosed at common-3dgs / lenia,
+   corrected at ising-classical).
+3. **VERIFY R2 actually received them (not just exit 0):** probe each OID back
+   from R2 before declaring the push done, e.g.
+   `git -c lfs.storage="$(mktemp -d)" lfs fetch --include="<glob>" origin` then
+   confirm the object is present, or the Q.5 R2 round-trip / `r2-sweep-proof`
+   sweep. A push whose verify step is skipped is treated as a back-fill debt
+   (Q.5), surfaced at the next Stage 0.
+
+The agent pushes refs + objects; it NEVER pushes a tag (I7).
+
 ---
 
 ## § R. Integrity-baseline measure-don't-copy (invariant + measured digest)

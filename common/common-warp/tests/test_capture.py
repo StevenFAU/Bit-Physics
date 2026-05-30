@@ -104,3 +104,42 @@ def test_capture_satisfies_compare_captures_contract(tmp_path) -> None:
     assert not any(k.endswith((":missing", ":shape-mismatch")) for k in verdict.per_field_diff)
     # identical captures -> within tolerance
     assert verdict.within_tolerance is True
+
+
+# --- parse_payload_key: the untested public contract (task-9 maturation, gap c) ---
+
+
+def test_parse_payload_key_round_trips_state_key() -> None:
+    from common_warp.capture.model import STATE, parse_payload_key, state_key
+
+    step, kind, name = parse_payload_key(state_key(7, "density"))
+    assert (step, kind, name) == (7, STATE, "density")
+
+
+def test_parse_payload_key_round_trips_diagnostics_key() -> None:
+    from common_warp.capture.model import DIAGNOSTICS, diagnostics_key, parse_payload_key
+
+    step, kind, name = parse_payload_key(diagnostics_key(3, "mass_drift"))
+    assert (step, kind, name) == (3, DIAGNOSTICS, "mass_drift")
+
+
+def test_parse_payload_key_tolerates_leading_slash() -> None:
+    from common_warp.capture.model import parse_payload_key
+
+    assert parse_payload_key("/steps/0/state/u") == (0, "state", "u")
+
+
+def test_parse_payload_key_rejects_malformed_keys() -> None:
+    import pytest
+
+    from common_warp.capture.model import parse_payload_key
+
+    for bad in (
+        "steps/0/state",  # too short (3 parts)
+        "steps/0/state/u/extra",  # too long (5 parts)
+        "frames/0/state/u",  # wrong root segment
+        "steps/0/velocity/u",  # kind not state|diagnostics
+        "",  # empty
+    ):
+        with pytest.raises(ValueError):
+            parse_payload_key(bad)
