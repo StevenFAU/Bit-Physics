@@ -40,10 +40,16 @@ path      = "tools/testkit/property"
 threshold = 0.80
 runner    = "python -m pytest tools/testkit/property/tests/ -x -q --tb=no"
 
+# R1 (phase-3 close): cat4_draft_time mutates the WHOLE package (path_line +
+# grammars b/c), but the prior runner ran ONE adversarial test exercising only
+# the does-not-exist branch -> 0.0669 (460/493 survived). Broadened to all three
+# grammars' suites (new branch-coverage test_cat4_path_line_assertions for
+# grammar a; the existing phrase_in_file / api_shape suites for b/c) plus the
+# adversarial case.
 [targets.cat4_draft_time]
 path      = "tools/integrity/integrity/cat4_draft_time"
 threshold = 0.90
-runner    = "python -m pytest tools/integrity/tests/test_adversarial_coverage.py::test_cat4_unverified_assertions_detected -x -q --tb=no"
+runner    = "python -m pytest tools/integrity/tests/test_cat4_path_line_assertions.py tools/integrity/tests/test_cat4_phrase_in_file.py tools/integrity/tests/test_cat4_api_shape.py tools/integrity/tests/test_adversarial_coverage.py::test_cat4_unverified_assertions_detected -x -q --tb=no"
 
 # Per-sim sub-phase additive targets (charter § 4.3 Step 2.7 / § 7.3
 # — sub-phase-continuous-ca-rd3d B17 PATH-A first real-baseline).

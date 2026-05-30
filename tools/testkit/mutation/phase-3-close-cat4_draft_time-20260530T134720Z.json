@@ -1,0 +1,12 @@
+{
+  "target": "cat4_draft_time",
+  "path": "tools/integrity/integrity/cat4_draft_time",
+  "threshold": 0.90,
+  "measured_utc": "20260530T134720Z",
+  "head_sha_pre_commit": "dcbce3e5761859a0f5774039406eed82f6d59445",
+  "before": {"killed": 33, "survived": 460, "score": 0.0669, "note": "B-2 audit: runner ran ONE adversarial test (does-not-exist branch only); grammars b/c entirely unexercised"},
+  "after": {"killed": 283, "survived": 203, "timeout": 7, "score": 0.5823, "meets_threshold": false},
+  "changes": "Broadened the mutmut runner from 1 test to all 3 grammars' suites (new test_cat4_path_line_assertions 14 branch tests for grammar a; existing phrase_in_file 6 + api_shape 8 for grammars b/c; + adversarial). Score = killed/(killed+survived) per repo convention; 7 timeouts excluded.",
+  "residual": "203 survivors + 7 timeouts. The biggest lever (runner-breadth: 1->29 tests) is applied. Remaining gap to 0.90 is concentrated in the grammars/ subpackage (phrase_in_file, api_shape) whose existing suites are thin; closing it needs a dedicated grammar-coverage pass. Surfaced as a documented residual (R1) — not test-of-the-artifact weakness; the path_line grammar (grammar a) is now branch-covered.",
+  "tests_added": "tools/integrity/tests/test_cat4_path_line_assertions.py (14 branch tests)"
+}
