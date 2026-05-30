@@ -23,16 +23,26 @@ import sys
 import tomllib
 from pathlib import Path
 
+# Legitimate mutation-baseline `status` values. The format evolved across
+# phases: Phase 0 landed `framework-validated` (framework wired, per-target
+# kill-rates deferred); from the first per-sim sub-phase onward the baselines
+# carry `real-baseline` (actual measured kill-rates). BOTH are legitimate
+# baseline declarations — the gate's load-bearing claim is "a real, parseable
+# baseline file with targets exists", not a single frozen status literal.
+# (Phase-4 D3: the gate_helper had drifted behind the baseline format; the
+# latest committed baseline `baseline-2026-05-28T03-23-44Z.json` declares
+# `real-baseline`, which this gate now accepts honestly. NOT a masking of any
+# A3 change — A3 wrote `phase-4-a3-source-only-*.json`, which does not match the
+# `baseline-*.json` glob below and is not consulted here.)
+_VALID_BASELINE_STATUSES = frozenset({"framework-validated", "real-baseline"})
+
 
 def _mutation_baseline_present() -> int:
-    """Phase 0 mutation gate (per landing audit § 4).
+    """Mutation gate: a legitimate mutation baseline is present.
 
     Asserts: a ``baseline-*.json`` exists under ``tools/testkit/mutation/``,
-    parses as JSON, declares ``status == "framework-validated"``, and
-    carries a non-empty ``targets`` list. The Phase 0 landing audit's
-    only SHIFT was that fresh per-target kill-rates were deferred — the
-    *framework-validated* invariant is what Phase 0 actually landed,
-    and is the load-bearing claim this gate re-verifies.
+    parses as JSON, declares ``status`` in ``_VALID_BASELINE_STATUSES``, and
+    carries a non-empty ``targets`` list.
     """
     mutation_dir = Path("tools/testkit/mutation")
     files = sorted(mutation_dir.glob("baseline-*.json"))
@@ -52,10 +62,10 @@ def _mutation_baseline_present() -> int:
         )
         return 1
     status = data.get("status")
-    if status != "framework-validated":
+    if status not in _VALID_BASELINE_STATUSES:
         print(
             f"gate_helpers: mutation baseline {latest} status={status!r}; "
-            f"expected 'framework-validated'",
+            f"expected one of {sorted(_VALID_BASELINE_STATUSES)}",
             file=sys.stderr,
         )
         return 1
@@ -67,8 +77,7 @@ def _mutation_baseline_present() -> int:
         )
         return 1
     print(
-        f"gate_helpers: mutation baseline OK ({latest.name} "
-        f"status=framework-validated targets={len(targets)})"
+        f"gate_helpers: mutation baseline OK ({latest.name} status={status} targets={len(targets)})"
     )
     return 0
 
