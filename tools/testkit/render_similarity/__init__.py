@@ -9,14 +9,15 @@ Functions:
 - `ssim(a, b) -> float` — structural similarity (Wang 2004) in [0, 1]; 1 = identical.
 - `lpips(a, b, net='alex'|'vgg') -> float` — learned perceptual similarity
   (Zhang 2018); ≥0; 0 = identical.
-- `ms_ssim(a, b) -> float` — multi-scale SSIM shell; `NotImplementedError` until Phase 4 WU-C.
-
-Stage 1a: scaffold + RED tests; bodies raise `NotImplementedError`. Stage 1b
-implements per the §3.2.2 contract.
+- `ms_ssim(a, b) -> float` — multi-scale SSIM (Wang, Simoncelli & Bovik 2003);
+  landed at Phase 4 WU-C. 1.0 = identical.
+- `RenderSimilarityReport` — aggregated four-metric report + threshold verdict
+  (Phase 4 WU-C; §4.2.C).
 """
 
 from __future__ import annotations
 
 from .metrics import lpips, ms_ssim, psnr, ssim
+from .report import RenderSimilarityReport
 
-__all__ = ["lpips", "ms_ssim", "psnr", "ssim"]
+__all__ = ["RenderSimilarityReport", "lpips", "ms_ssim", "psnr", "ssim"]

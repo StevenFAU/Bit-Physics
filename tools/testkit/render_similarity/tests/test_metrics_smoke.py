@@ -123,14 +123,13 @@ def test_lpips_perturbed_pair_positive() -> None:
 
 
 # ----------------------------------------------------------------------------
-# `ms_ssim` shell contract — explicit NotImplementedError until Phase 4 WU-C.
+# `ms_ssim` smoke contract — landed at Phase 4 WU-C (Wang/Simoncelli/Bovik 2003).
 # ----------------------------------------------------------------------------
 
 
-def test_ms_ssim_raises_not_implemented() -> None:
+def test_ms_ssim_identity_is_one() -> None:
     a, b = _identity_pair_float32()
-    with pytest.raises(NotImplementedError, match=r"Phase 4 WU-C|ms_ssim"):
-        ms_ssim(a, b)
+    assert ms_ssim(a, b) == pytest.approx(1.0, abs=1e-6)
 
 
 # ----------------------------------------------------------------------------

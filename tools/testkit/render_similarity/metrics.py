@@ -276,17 +276,90 @@ def lpips(
     return float(out.item())
 
 
-def ms_ssim(image_a: NDArray[np.generic], image_b: NDArray[np.generic]) -> float:
-    """Multi-scale SSIM — SHELL only; lands at Phase 4 WU-C.
+#: Standard MS-SSIM per-scale weights (Wang, Simoncelli & Bovik 2003, Table 1).
+_MS_SSIM_WEIGHTS = (0.0448, 0.2856, 0.3001, 0.2363, 0.1333)
 
-    Per `docs/phases/phase-3-plan.md:380`: task-2 ships the function shell so
-    task-6/task-8 import-paths land here without code change at the Phase 4
-    extension. Stage 1b keeps this raise — consumers using ``ms_ssim`` before
-    Phase 4 fail loudly (no silent fallback to ``ssim``).
 
-    Raises:
-        NotImplementedError: always. Phase 4 WU-C extends.
-    """
-    raise NotImplementedError(
-        "ms_ssim: multi-scale SSIM is a Phase 4 WU-C extension; shell only at Phase 3"
+def _to_luminance(image: NDArray[np.generic]) -> NDArray[np.float64]:
+    """ITU-R BT.601 luminance of an (H, W, 3) image as float64."""
+    rgb = image.astype(np.float64)
+    return rgb[..., 0] * 0.299 + rgb[..., 1] * 0.587 + rgb[..., 2] * 0.114
+
+
+def _downsample_2x(img: NDArray[np.float64]) -> NDArray[np.float64]:
+    """2x2 average-pool then subsample by 2 (MS-SSIM low-pass + decimate)."""
+    h, w = (img.shape[0] // 2) * 2, (img.shape[1] // 2) * 2
+    cropped = img[:h, :w]
+    return 0.25 * (
+        cropped[0::2, 0::2] + cropped[1::2, 0::2] + cropped[0::2, 1::2] + cropped[1::2, 1::2]
     )
+
+
+def _ssim_l_cs(
+    x: NDArray[np.float64], y: NDArray[np.float64], data_range: float
+) -> tuple[float, float]:
+    """Mean luminance·contrast·structure (full SSIM) and mean contrast·structure."""
+    from scipy.ndimage import gaussian_filter
+
+    c1 = (0.01 * data_range) ** 2
+    c2 = (0.03 * data_range) ** 2
+
+    def g(arr: NDArray[np.float64]) -> NDArray[np.float64]:
+        return gaussian_filter(arr, sigma=1.5, truncate=3.5)  # type: ignore[no-any-return]
+
+    mu_x, mu_y = g(x), g(y)
+    mu_xx, mu_yy, mu_xy = mu_x * mu_x, mu_y * mu_y, mu_x * mu_y
+    sigma_xx = g(x * x) - mu_xx
+    sigma_yy = g(y * y) - mu_yy
+    sigma_xy = g(x * y) - mu_xy
+
+    luminance = (2.0 * mu_xy + c1) / (mu_xx + mu_yy + c1)
+    cs = (2.0 * sigma_xy + c2) / (sigma_xx + sigma_yy + c2)
+    return float(np.mean(luminance * cs)), float(np.mean(cs))
+
+
+def ms_ssim(image_a: NDArray[np.generic], image_b: NDArray[np.generic]) -> float:
+    """Multi-scale structural similarity (Wang, Simoncelli & Bovik 2003).
+
+    *"Multiscale structural similarity for image quality assessment"*, IEEE
+    Asilomar 2003 — Eq. (7) and the Table-1 per-scale weights. Computed on BT.601
+    luminance: at each scale the contrast·structure term is accumulated, with the
+    luminance term applied only at the coarsest scale; the result is the weighted
+    geometric mean ``∏ mcs_s^{w_s} · mssim_M^{w_M}``. Returns ``1.0`` for
+    identical inputs.
+
+    The scale count adapts to the image size (the canonical 5 scales need a
+    ~176-px minimum dimension that portfolio smoke renders rarely have):
+    ``M = min(5, floor(log2(min(H, W))) )`` capped to the available weights, with
+    the used weights renormalised. Raises ``ValueError`` if the image is too
+    small for even one scale (``min(H, W) < 2``).
+    """
+    _validate_pair(image_a, image_b)
+    max_i = _max_intensity(image_a.dtype)
+    x = _to_luminance(image_a)
+    y = _to_luminance(image_b)
+
+    min_dim = min(x.shape[0], x.shape[1])
+    if min_dim < 2:
+        raise ValueError(f"ms_ssim: image too small ({x.shape}); need min dimension >= 2")
+    n_scales = min(len(_MS_SSIM_WEIGHTS), math.floor(math.log2(min_dim)))
+    weights = np.array(_MS_SSIM_WEIGHTS[:n_scales], dtype=np.float64)
+    weights = weights / weights.sum()
+
+    mcs_per_scale: list[float] = []
+    mssim_final = 1.0
+    for scale in range(n_scales):
+        mssim, mcs = _ssim_l_cs(x, y, max_i)
+        if scale == n_scales - 1:
+            mssim_final = mssim
+        else:
+            mcs_per_scale.append(mcs)
+            x = _downsample_2x(x)
+            y = _downsample_2x(y)
+
+    # Clamp contrast·structure terms to [0, 1] before the fractional power
+    # (negative cs at a coarse scale would make a real power NaN).
+    cs_clamped = np.clip(np.array(mcs_per_scale, dtype=np.float64), 0.0, 1.0)
+    product = float(np.prod(cs_clamped ** weights[:-1]))
+    product *= float(max(mssim_final, 0.0) ** weights[-1])
+    return product

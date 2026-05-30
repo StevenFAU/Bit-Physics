@@ -103,6 +103,8 @@ module = [
   "lpips", "lpips.*",
   "skimage", "skimage.*",
   "torch", "torch.*",
+  # Phase-4 WU-C ms_ssim multi-scale low-pass uses scipy.ndimage (no py.typed).
+  "scipy", "scipy.*",
 ]
 ignore_missing_imports = true
 
