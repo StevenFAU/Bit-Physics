@@ -293,6 +293,52 @@ gates the replay runs all pass at HEAD; the tag itself cannot be retroactively
 fixed without an operator tag-op or a tool change. Awaiting operator ratification
 before push + PHASE B.
 
+## §13 — Corrected entry-gate definition + per-gate-at-tag proof (operator RESOLUTION, Option A)
+
+The operator ratified **Option A** and **corrected the entry-gate definition**: the
+foundation entry gate is **HEAD-green**, NOT the literal replay `ok=True`. The prior
+"confirm `ok=True`" gate was mis-specified — it assumed HEAD fixes reach the replay,
+which the §D.5 tag-isolation contradicts. The tag is NOT moved (I7 / would falsify
+the phase boundary), no detector is weakened, no history rewritten, and the replay
+tool is NOT changed this run.
+
+**Corrected entry gate — confirmed for the record:**
+
+- **(a) Full `pytest -W error tools/testkit/` GREEN at HEAD** — **271 passed** (HEAD `2a9c642`).
+- **(b) `integrity --all --mode strict` = 0 HARD_FAIL at HEAD** — **0 HARD_FAIL / 14 SOFT_WARN**.
+- **(c) Every replay failure is tag-frozen meta/hygiene touching NO deliverable-correctness gate** — PROVEN by re-running the replay + a diagnostic worktree at the tag `362179f`:
+
+| Replay gate | At tag `362179f` | Class |
+|---|---|---|
+| integrity | **PASS** | correctness ✓ |
+| pytest | FAIL | meta/hygiene (enumerated below) |
+| equivalence | **PASS** | correctness ✓ |
+| determinism | **PASS** | correctness ✓ |
+| perf-ledger | **PASS** | correctness ✓ |
+| **property (PBT gate-11)** | **PASS** (53 passed) | correctness ✓ — the naming-trap gate; GREEN at the tag |
+| mutation | FAIL | meta (gate_helper status + A3-ratified advisory below-floor) |
+| tolerance-budget | **PASS** | correctness ✓ |
+
+  All **six correctness gates PASS at the tag.** The `pytest` red is **exactly three
+  meta tests** (tagged `pytest -W error tools/testkit/` = 3 failed / 267 passed):
+  `test_cost_axis_selective_fetch::test_workflow_capture_requirements_registry_is_complete`,
+  `test_i6_convention_12::test_backfill_commits_are_separate_and_doc_only`,
+  `test_i7_no_agent_tags::test_no_agent_pushed_tag_in_subphase_range`. The `mutation`
+  red is **only** the gate_helper status (`status='real-baseline'; expected
+  'framework-validated'`). NO deliverable-correctness test is red.
+
+**Disposition.** The four residues are **forward-fixed at HEAD** (D1 accepted; D2
+`900b3a4`; D3 `31007c2`; D4 `00d4017`) and **immutably red at the tag by §D.5
+design** (the replay runs the tagged gate logic against tagged content) — not
+weakened, not rewritten. Entry gate = HEAD-green = **MET**. Proceed to push + PHASE B.
+
+**BANKED future refinement (NOT this run).** `replay_prior_phase`'s `ok=`
+computation conflates a frozen *meta/hygiene* red with a *deliverable-correctness*
+failure. A future refinement should classify gates correctness-vs-meta so a
+tag-frozen meta-red does not mask "the prior phase's deliverables are intact." To
+be specced deliberately (weighing the bit-reproducibility tradeoff of §D.5) at the
+Phase-4 close or a dedicated hygiene pass — explicitly out of scope here.
+
 ## Provenance
 
 Convention #12 SHA back-fill applies to `head_sha:` above. The integrity invariant
