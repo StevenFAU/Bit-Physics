@@ -12,7 +12,7 @@
     "absolute": 0.01,
     "relative": 0.0
   },
-  "baseline_note": "RK4 at dt/100 \u2014 a NUMERICAL baseline, NOT an analytic anchor.",
+  "baseline_note": "RK4 at dt/100 \u2014 a NUMERICAL baseline, NOT an analytic anchor. \u00a72.4-exempt (M-5): the double pendulum is chaotic, so no three independent published anchors exist; the independent_reference entries restate the planar EOM as a sanity check, NOT \u00a72.4 anchors. Exemption is keyed off derivation.upstream=n/a-numerical-baseline.",
   "config": {
     "length1": 1.0,
     "length2": 1.0,

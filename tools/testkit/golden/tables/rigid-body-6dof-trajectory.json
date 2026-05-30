@@ -12,7 +12,7 @@
     "absolute": 0.01,
     "relative": 0.0
   },
-  "baseline_note": "RK4 at dt/100 + energy conservation \u2014 NUMERICAL baseline, NOT an analytic anchor.",
+  "baseline_note": "RK4 at dt/100 + energy conservation \u2014 NUMERICAL baseline, NOT an analytic anchor. \u00a72.4-exempt (M-4): the per-point independent_reference entries are the energy-conservation invariant E(t)=E(0) used as a physical sanity check, NOT three independent published anchors; exemption is keyed off derivation.upstream=n/a-numerical-baseline.",
   "config": {
     "n_links": 6,
     "link_length": 1.0,
