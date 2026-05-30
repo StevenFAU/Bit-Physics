@@ -8,7 +8,7 @@ simulator (examples/hello/) + docs/common/warp.md land at Stage 1c.
 
 from __future__ import annotations
 
-from . import autodiff, sparse
+from . import autodiff, newton, sparse, usd
 from .capture import Capture, read_capture, write_capture, write_frames_capture
 from .grids import (
     ScalarField3D,
@@ -45,11 +45,13 @@ __all__ = [
     "get_device",
     "get_seed",
     "init",
+    "newton",
     "read_capture",
     "set_device",
     "set_seed",
     "set_warp_deterministic",
     "sparse",
+    "usd",
     "write_capture",
     "write_frames_capture",
 ]

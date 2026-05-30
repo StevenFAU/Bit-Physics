@@ -26,6 +26,12 @@ dev = [
   "pytest-cov>=5.0",
   "ruff>=0.5",
 ]
+# Phase-4 WU-D: OpenUSD for common_warp.usd (scene template + capture-to-USD
+# export). CPU-only (no CUDA). Optional — consumers that don't touch USD skip it;
+# the usd module lazy-imports `pxr` and raises a clear error if absent.
+usd = [
+  "usd-core>=26.5",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -52,6 +58,10 @@ module = [
   "warp", "warp.*",
   "capture", "capture.*",
   "h5py", "h5py.*",
+  # Phase-4 WU-D: Newton solver (lazy, CUDA-gated runtime) + OpenUSD (usd-core;
+  # ships no py.typed) are interop boundaries with no usable stubs.
+  "newton", "newton.*",
+  "pxr", "pxr.*",
 ]
 ignore_missing_imports = true
 

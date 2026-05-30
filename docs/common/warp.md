@@ -399,3 +399,35 @@ Inherits the determinism contract from spec § 2.5 + § 4.5; declared once
 here so per-port Stack-E adoption stays additive (import + sim-specific
 equivalence test + the sim's determinism.md update). Sister convention to
 docs/common/taichi.md (Stack-D) and docs/common/numba.md (JIT).*
+
+## 9. Phase-4 WU-D — Newton integration + USD export
+
+### 9.1 `common_warp.newton` — NVIDIA Newton 1.0 GA wrapper
+
+`NewtonBackend` (Adapter pattern, `.newton_instance` escape hatch) wraps the
+Newton 1.0 GA solver (vendored `references/newton/` @ `v1.0.0` /
+`d6046f18…`, Apache-2.0). Six solvers in `NewtonBackend.SOLVERS`
+(`mujoco_warp`, `kamino`, `xpbd`, `featherstone`, `semi_implicit`, `vbd`).
+`NewtonState` snapshots body/joint pose+velocity; `DeterminismDeclaration`
+(spec §6.5) carries the per-solver posture (MuJoCo-Warp / Featherstone /
+semi-implicit / XPBD → `bit-exact-same-hw`; Kamino / VBD →
+`non-deterministic-by-design`).
+
+**CUDA-gated runtime (BLOCKED on CPU-only hosts).** The solver runtime
+(`step`/`state`/`newton_instance`/`reset_to_initial`) needs the `newton` package
++ CUDA 12 (driver 545+). On a CPU-only host the wrapper lazy-imports + raises a
+clear `RuntimeError` (surfaced loudly, never a silent no-op) — the
+operator-ratified CPU-fallback posture (spec §12.8 + plan §7.5). The metadata
+surface (SOLVERS, solver validation, `determinism_declaration`) resolves on any
+host. Mirrors the WU-B `SparseVolume.from_voxels` CUDA-gating.
+
+### 9.2 `common_warp.usd` — OpenUSD scene template + capture export
+
+`create_scene_template(*, output_path, ground_plane, gravity, units, up_axis)`
+writes a USD scene with portfolio rigid-body defaults (meters, Y-up; §4.2.P) +
+a `UsdPhysics.Scene` gravity vector. `export_capture_to_usd(capture_path,
+output_path, *, fps)` reads a capture (`read_capture`), discovers a per-body
+position field (`(N, 3)`) + optional orientation (`(N, 4)` wxyz), and writes
+time-sampled `UsdGeom.Xform` transforms. CPU-only (no CUDA); requires the
+`usd-core` pip package (common-warp's `usd` extra; `pxr` lazy-imported with a
+clear error if absent).

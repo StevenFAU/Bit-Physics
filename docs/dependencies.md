@@ -678,3 +678,16 @@ dependency. The non-commercial clause binds task-8 + Phase-4 WU-C. Manifest:
 The use convention is documented at `docs/common/3dgs.md`. Determinism declared in
 `tools/testkit/determinism/registry.toml` (`[neural-rendered.common-3dgs]` =
 bit-exact / same-stack-same-hw; MEASURED).
+
+## Phase 4 WU-D — Newton + OpenUSD (added 2026-05-30)
+
+| Dependency | Used by | Pin | License | Verification command |
+|---|---|---|---|---|
+| **NVIDIA Newton** | `common_warp.newton` (Phase 4.5 rigid-body sims) | `v1.0.0` (`d6046f18…`; vendored `references/newton/`) | Apache-2.0 | `git ls-remote --tags https://github.com/newton-physics/newton.git` |
+| **usd-core (OpenUSD)** | `common_warp.usd` (`create_scene_template`, `export_capture_to_usd`) | `26.5` (pip; common-warp `usd` extra) | LicenseRef-TOST-1.0 (Modified Apache-2.0) | `pip index versions usd-core` |
+
+**Newton runtime is CUDA-gated + BLOCKED on the CPU-only Phase-4.0 host** (needs
+`newton` pkg + CUDA 12 / driver 545+); the `common_warp.newton` wrapper
+lazy-imports + surfaces the block loudly (operator-ratified CPU-fallback per spec
+§12.8 + plan §7.5). OpenUSD is CPU-only — the USD scene-template + capture-to-USD
+export validate without CUDA.
