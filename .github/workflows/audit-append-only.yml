@@ -59,6 +59,12 @@ jobs:
             if ! cmp -s /tmp/__head_prefix /tmp/__prior; then
               echo "EDITED: $path"; fail=1
             fi
-          done < <(git ls-tree -r --name-only "$PRIOR_TAG" -- docs/_audits/ \
-            | grep -E '\.ledger\.md$' || true)
+          # B-1 (back-test re-audit): the prior feed filter `grep -E
+          # '\.ledger\.md$'` matched 0 of 576 audit files (no file is literally
+          # named `*.ledger.md`), so the loop iterated the empty set and the
+          # guard never enforced anything. The header asserts append-only "for
+          # every file under docs/_audits/" — so guard every such file (net-new
+          # files are still allowed: only files PRESENT at the prior tag are
+          # listed by git ls-tree below).
+          done < <(git ls-tree -r --name-only "$PRIOR_TAG" -- docs/_audits/ || true)
           exit "$fail"
