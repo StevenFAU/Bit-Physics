@@ -1,0 +1,39 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-30T19-40-35Z",
+  "status": "real-baseline",
+  "mutmut_version": "2.5.1",
+  "rationale": "Phase-4 Stage 2 / WU-A (Autodiff Infrastructure) mutation baseline. Measured live with mutmut run DIRECTLY (not via run-mutation.sh — the EXIT-trap/.bak race, lenia/render-similarity lesson). The mutation gate is SOFT_WARN everywhere (spec § 2.13, Phase-4 A3 honesty correction); HARD_FAIL-at-landing is an earned future promotion once a target's own constraining tests lift its kill rate to the floor. Scores recorded HONESTLY — NOT widened. The gradient harness was lifted past 0.80 with two genuine constraining tests (empty-points + single-point all-passed guards); the optimizer core (finite_diff.py) sits below floor and is recorded honestly. The Taichi/Warp autodiff backends (inverse_problem.py with ti.ad.Tape / wp.Tape kernels) were NOT mutation-measured this run: per-mutant kernel recompilation makes a clean source-only run impractical, and § 2.13 is advisory — deferred as a banked future per-target measurement.",
+  "targets": [
+    {
+      "target": "wu_a_gradient_harness",
+      "path": "tools/testkit/code_verification/gradient/harness.py",
+      "runner": "python -m pytest tools/testkit/code_verification/gradient/tests/ -x -q --tb=no -p no:cacheprovider",
+      "threshold": 0.8,
+      "score": 0.8421,
+      "killed": 16,
+      "survived": 3,
+      "timeouts": 0,
+      "suspicious": 0,
+      "untested": 0,
+      "total_mutants": 19,
+      "status": "real-baseline-at-or-above-threshold",
+      "delta_note": "Initial measure 0.6842 (13/19); lifted to 0.8421 (16/19) by adding two constraining tests (test_empty_points_is_not_all_passed kills the `len > 0` -> `len >= 0` and `and` -> `or` all_passed mutants; test_single_point_all_passed kills `len > 0` -> `len > 1`). The 3 residual survivors are two string-literal error-message mutants (defensive AttributeError / ValueError text) + the rel_tol default-value mutant — accepted (string-literal / default-arg survivors)."
+    },
+    {
+      "target": "wu_a_autodiff_finite_diff",
+      "path": "common/common-py/src/common_py/autodiff/finite_diff.py",
+      "runner": "python -m pytest common/common-py/tests/test_autodiff.py -x -q --tb=no -p no:cacheprovider",
+      "threshold": 0.8,
+      "score": 0.6719,
+      "killed": 86,
+      "survived": 42,
+      "timeouts": 0,
+      "suspicious": 0,
+      "untested": 0,
+      "total_mutants": 128,
+      "status": "real-baseline-below-threshold-advisory",
+      "delta_note": "The optimizer core (Adam/SGD/L-BFGS + central-difference helper). Survivors concentrate in (a) Adam hyperparameter mutants (beta1/beta2/epsilon constant tweaks that still converge within the test's 1e-3 recovery tolerance) and (b) the L-BFGS two-loop recursion (numerically near-equivalent rearrangements that still converge). Killing these would require over-fitting tests to exact iteration counts / intermediate states — NOT pursued; recorded honestly per A3 precedent. The backend autodiff correctness is independently gated by the FD cross-check (check_gradient) + the PBT invariants, not by these optimizer-internal mutants."
+    }
+  ]
+}
