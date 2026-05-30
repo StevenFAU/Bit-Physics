@@ -66,6 +66,57 @@ PNG (matplotlib `imsave`). Chosen as the D-D capture-writer because no existing
 common-* module exposes an RGB-array PNG writer (common-py's `plot_field_2d` is a
 colormapped single-channel field plot).
 
+## 3a. Phase-4 WU-C extensions (training / splatting / viewer / coupling)
+
+Phase-4 WU-C (plan §4.2.C) matures `common-3dgs` from the Phase-3 introductory
+surface into the infrastructure the Phase-4.3 neural-rendered sims (4.11–4.14)
+consume. The Phase-3 symbols (`GaussianSplatModel`, `Camera`, `render`,
+`save_png`) are imported **unchanged**; WU-C adds new modules. (§0.3: plan
+§4.2.C's idealized signatures — `n_gaussians`, `Camera.fovx`, `(3,H,W)` —
+describe a contract the landed Phase-3 surface never matched; the landed surface
+is authoritative and is the one extended here.)
+
+### `common_3dgs.training` — `TrainingLoop`, `TrainingHistory`
+
+`TrainingLoop(*, model, optimizer="adam"|"sgd", lr_position, lr_color,
+lr_opacity, lr_scale, lr_rotation, max_iter, densify_interval, prune_interval)`
+ships the reusable optimisation-loop scaffold: `fit(*, train_views, callbacks)
+-> TrainingHistory` and `step(batch) -> {"loss", "psnr"}`, with densify/prune
+exposed as interval-fired callbacks. `TrainingHistory` tracks `losses`, `psnr`,
+`n_gaussians`, `iter_count` (distinct from the §4.2.A autodiff `History`).
+
+**Optimiser posture (load-bearing).** The landed `render` is a *forward* Warp
+rasteriser with no differentiable tape wired. Per plan §2523 the differentiable
+rasterizer is an explicit per-sim concern at the neural-rendered stages
+(esp. 4.14, "try gsplat-style first; SHIFTED to FD if blocked"), **not** a WU-C
+foundation deliverable. WU-C therefore ships a genuine **finite-difference
+reference optimiser** over a global appearance offset (DC spherical-harmonic
+colour + opacity logit) that demonstrably reduces render MSE / raises PSNR;
+per-gaussian differentiable-rasterizer training is wired per-sim downstream.
+
+### `common_3dgs.splatting` — `Camera`, `render`
+
+Thin re-export of the landed `camera.py` / `render.py` so the `common_3dgs.splatting`
+import path in the §4.2.C API contract resolves; no re-definition.
+
+### `common_3dgs.viewer` — `render_to_image`, `launch_interactive_viewer`
+
+`render_to_image(model, camera, output_path)` is headless + CI-gated (drives the
+CPU `render` + `save_png`). `launch_interactive_viewer(model, *, initial_camera)`
+is **runtime-only per spec § 7.8** (does NOT gate CI); it raises `RuntimeError`
+when no interactive display (`$DISPLAY` / `$WAYLAND_DISPLAY`) is present rather
+than importing a GUI toolkit at module-import time.
+
+### `common_3dgs.coupling` — `PhysicsCoupling`
+
+`PhysicsCoupling(model)` binds physics state to the Gaussians (one Gaussian per
+primitive; `N == model.num_gaussians`):
+`update_positions_from_particles`, `update_covariance_from_deformation` (PhysGaussian
+Eq. (8) `Σ' = F Σ Fᵀ` via covariance reconstruction → deform → symmetric
+eigendecomposition), and `update_opacity_from_density` (default Beer–Lambert
+`1 - exp(-density)`). Derived independently from the cited PhysGaussian
+formulation (spec § 2.4); not imported from the NON-COMMERCIAL Inria upstream.
+
 ## 4. Determinism contract (D-C)
 
 `render` is declared **`bit-exact / same-stack-same-hw`** in
