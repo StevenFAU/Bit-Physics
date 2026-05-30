@@ -16,7 +16,6 @@ from __future__ import annotations
 import hashlib
 import json
 from collections.abc import Iterable
-from dataclasses import asdict
 from pathlib import Path
 
 import h5py
@@ -77,7 +76,11 @@ def write_capture(
         meta_g.attrs["seed"] = int(manifest_meta.config.get("seed", 0))
 
     checksum = "sha256:" + _sha256_of_file(payload_path)
-    manifest_dict = asdict(manifest_meta)
+    # ``to_dict`` (not ``asdict``) so the optional 1.1.0 fields
+    # (``gradient_fields`` / ``active_mask``) are omitted when ``None`` — an
+    # ``asdict`` would emit ``"gradient_fields": null`` and fail the
+    # array-typed schema property for every legacy (1.0.0) capture.
+    manifest_dict = manifest_meta.to_dict()
     manifest_dict["payload"] = dict(manifest_dict["payload"])
     manifest_dict["payload"]["path"] = payload_path.name
     manifest_dict["payload"]["checksum"] = checksum

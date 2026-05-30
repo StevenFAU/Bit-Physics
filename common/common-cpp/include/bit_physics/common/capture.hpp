@@ -59,8 +59,15 @@ struct DeterminismMeta {
     bool subgroup_ops = false;
 };
 
+// Highest capture-schema version this writer emits / reader accepts. Phase 4.0
+// WU-A bumped the default 1.0.0 -> 1.1.0 (optional gradient_fields; WU-B adds
+// optional active_mask without a further bump). The reader accepts either
+// version (the additions are optional). Future schema versions: bump
+// max_supported in this module-level constant.
+inline constexpr const char* kMaxSupportedSchemaVersion = "1.1.0";
+
 struct Manifest {
-    std::string schema_version = "1.0.0";
+    std::string schema_version = kMaxSupportedSchemaVersion;
     SimMeta sim;
     StackMeta stack;
     ConfigMeta config;

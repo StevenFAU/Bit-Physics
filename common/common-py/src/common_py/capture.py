@@ -30,6 +30,7 @@ from capture import write_capture as _write_capture
 from capture.reader import StepState as _StepState
 
 __all__ = [
+    "MAX_SUPPORTED_VERSION",
     "ConfigMeta",
     "DeterminismMeta",
     "Manifest",
@@ -41,6 +42,14 @@ __all__ = [
     "StepData",
     "Writer",
 ]
+
+#: Highest capture-schema version this module reads / writes. Phase 4.0 WU-A
+#: bumped 1.0.0 → 1.1.0 (optional ``gradient_fields``); WU-B adds optional
+#: ``active_mask`` without a further bump. The schema-version surface in
+#: common-py is the :class:`Manifest` dataclass field ``schema_version`` (the
+#: testkit ``write_capture`` does the emission); this constant documents the
+#: ceiling. Future schema versions: bump this module-level constant.
+MAX_SUPPORTED_VERSION = "1.1.0"
 
 
 # IC-2 dataclass aliases — wrap Phase 0's nested schema, exposed as
@@ -99,6 +108,8 @@ class Manifest:
     run: RunMeta
     payload: PayloadMeta
     determinism: DeterminismMeta
+    #: Optional 1.1.0 addition (WU-A). ``None`` for 1.0.0 captures.
+    gradient_fields: list[dict[str, Any]] | None = None
 
 
 @dataclass
@@ -139,6 +150,7 @@ def _to_phase0_manifest(m: Manifest) -> _CaptureManifest:
             "atomic_ops": bool(m.determinism.atomic_ops),
             "subgroup_ops": bool(m.determinism.subgroup_ops),
         },
+        gradient_fields=m.gradient_fields,
     )
 
 
@@ -155,6 +167,7 @@ def _from_phase0_manifest(m: _CaptureManifest) -> Manifest:
             checksum=m.payload["checksum"],
         ),
         determinism=DeterminismMeta(**m.determinism),
+        gradient_fields=m.gradient_fields,
     )
 
 

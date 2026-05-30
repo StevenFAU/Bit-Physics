@@ -2,6 +2,8 @@
 
 Public surface:
 
+- :mod:`common_py.autodiff` — differentiable-sim infrastructure
+  (Taichi ``ti.ad.Tape`` backend; plan § 4.2.A, Phase 4.0 WU-A).
 - :mod:`common_py.capture` — IC-2 ``Reader`` / ``Writer`` (HDF5
   manifest + payload, delegating to the testkit ``capture`` module).
 - :mod:`common_py.determinism` — IC-4 ``Config`` + argparse glue.
@@ -18,10 +20,11 @@ module at full surface).
 
 from __future__ import annotations
 
-from . import alembic, capture, determinism, ggui, hotreload, plotting, vdb
+from . import alembic, autodiff, capture, determinism, ggui, hotreload, plotting, vdb
 
 __all__ = [
     "alembic",
+    "autodiff",
     "capture",
     "determinism",
     "ggui",

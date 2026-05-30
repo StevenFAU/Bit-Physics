@@ -14,6 +14,12 @@ _SCHEMA_DIR = Path(__file__).resolve().parent.parent / "schemas"
 _CAPTURE_SCHEMA_PATH = _SCHEMA_DIR / "capture-v1.json"
 _REFERENCE_MANIFEST_SCHEMA_PATH = _SCHEMA_DIR / "reference-manifest-v1.json"
 
+#: Highest capture-schema version this reader understands. Phase 4.0 WU-A
+#: bumped 1.0.0 → 1.1.0 (optional ``gradient_fields``); WU-B adds optional
+#: ``active_mask`` without a further bump. Future schema versions: bump this
+#: module-level constant.
+MAX_SUPPORTED_VERSION = "1.1.0"
+
 
 def _load_schema(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as fh:
@@ -37,9 +43,18 @@ class CaptureManifest:
     run: dict[str, Any]
     payload: dict[str, Any]
     determinism: dict[str, Any]
+    #: Optional 1.1.0 addition (WU-A). ``None`` for 1.0.0 captures; omitted
+    #: from :meth:`to_dict` when ``None`` so legacy round-trips stay
+    #: byte-faithful and re-validation never sees a ``null`` for the
+    #: array-typed property. (WU-B adds ``active_mask`` alongside.)
+    gradient_fields: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        data = asdict(self)
+        for optional_key in ("gradient_fields", "active_mask"):
+            if data.get(optional_key) is None:
+                data.pop(optional_key, None)
+        return data
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> CaptureManifest:
@@ -52,6 +67,7 @@ class CaptureManifest:
             run=dict(data["run"]),
             payload=dict(data["payload"]),
             determinism=dict(data["determinism"]),
+            gradient_fields=data.get("gradient_fields"),
         )
 
 

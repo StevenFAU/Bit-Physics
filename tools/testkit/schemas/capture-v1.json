@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://bit-physics.local/schemas/capture-v1.json",
   "title": "Bit-Physics Capture Manifest",
-  "description": "Canonical capture-manifest schema (spec § 2.7). schema_version is initially 1.0.0; bumps governed by spec § 2.12 (Phase 4 WU-A only).",
+  "description": "Canonical capture-manifest schema (spec § 2.7). schema_version is 1.1.0 at Phase 4.0 (WU-A bumped 1.0.0 → 1.1.0 adding the optional `gradient_fields`; WU-B adds the optional `active_mask` without a further bump). Both additions are ADDITIVE and OPTIONAL (absent from `required`), so 1.0.0 captures validate unchanged — the spec § 2.7 backward-compatibility guarantee. The filename stays `capture-v1.json` (major version unchanged). Bumps governed by spec § 2.12.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -95,6 +95,21 @@
         },
         "atomic_ops":   { "type": "boolean" },
         "subgroup_ops": { "type": "boolean" }
+      }
+    },
+    "gradient_fields": {
+      "description": "Optional (WU-A, schema 1.1.0). Per-parameter gradient arrays captured during differentiable simulation. Absent in 1.0.0 captures.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "shape", "dtype", "wrt"],
+        "properties": {
+          "name":  { "type": "string", "minLength": 1 },
+          "shape": { "type": "array", "items": { "type": "integer" } },
+          "dtype": { "type": "string", "enum": ["float32", "float64"] },
+          "wrt":   { "type": "string", "minLength": 1 }
+        }
       }
     }
   }

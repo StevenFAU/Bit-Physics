@@ -12,8 +12,15 @@ alias the two.
 
 from __future__ import annotations
 
+from .frames import write_frames_capture
 from .model import Capture
 from .reader import read_capture, read_manifest
 from .writer import write_capture
 
-__all__ = ["Capture", "read_capture", "read_manifest", "write_capture"]
+__all__ = [
+    "Capture",
+    "read_capture",
+    "read_manifest",
+    "write_capture",
+    "write_frames_capture",
+]

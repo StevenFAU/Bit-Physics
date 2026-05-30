@@ -30,15 +30,35 @@ from .model import DIAGNOSTICS, STATE, Capture, parse_payload_key
 #: payload sha256 over the written HDF5 file.
 _PLACEHOLDER_CHECKSUM = "sha256:" + "0" * 64
 
+#: Highest capture-schema version this writer emits / accepts. Phase 4.0 WU-A
+#: bumped the default 1.0.0 → 1.1.0 (optional ``gradient_fields``); WU-B adds
+#: optional ``active_mask`` without a further bump. Future schema versions:
+#: bump max_supported in this module-level constant.
+MAX_SUPPORTED_VERSION = "1.1.0"
 
-def write_capture(capture: Capture, path: str | Path, *, schema_version: str = "1.0.0") -> None:
+
+def _version_tuple(version: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def write_capture(
+    capture: Capture, path: str | Path, *, schema_version: str = MAX_SUPPORTED_VERSION
+) -> None:
     """Write ``capture`` to ``<path>.h5`` + ``<path>.json`` (§1.9.1).
 
     ``path`` is a base path; ``.h5`` / ``.json`` suffixes are added
     automatically (a ``.h5``/``.json`` suffix on ``path`` is treated as the
-    base stem). Raises ``ValueError`` if the manifest fails schema
+    base stem). ``schema_version`` defaults to :data:`MAX_SUPPORTED_VERSION`
+    and must not exceed it (spec § 2.7 additive-compatibility policy — a writer
+    never emits a schema it cannot itself read back). Raises ``ValueError`` if
+    the requested version is unsupported or if the manifest fails schema
     validation (surfaced by the testkit writer).
     """
+    if _version_tuple(schema_version) > _version_tuple(MAX_SUPPORTED_VERSION):
+        raise ValueError(
+            f"schema_version {schema_version!r} exceeds MAX_SUPPORTED_VERSION "
+            f"{MAX_SUPPORTED_VERSION!r}"
+        )
     base = Path(path)
     stem = base.stem if base.suffix in (".h5", ".json") else base.name
     out_dir = base.parent
