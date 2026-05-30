@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-30T20-13-17Z",
+  "status": "real-baseline",
+  "mutmut_version": "2.5.1",
+  "rationale": "Phase-4 Stage 3 / WU-B (Sparse Volumes) mutation baseline. Run DIRECTLY (not via run-mutation.sh). The mutation gate is SOFT_WARN-advisory (spec § 2.13, Phase-4 A3 honesty correction). The sparse-volume LOGIC lives in common_warp.sparse.mask (the dense active-cell mask + topology hash + manifest projection); common_warp.sparse.volume / _kernels are thin Warp glue (wp.Volume load + a lookup kernel) that mutmut cannot mutate meaningfully (Any-typed Warp surface, no branching logic) and whose correctness is gated by the load/lookup tests against the committed .nvdb fixture. The C++ bit_physics::nanovdb writer/reader (where the write actually happens — Warp grid allocation is CUDA-only) is exercised by its doctest ctest including a 40-trial randomized property test.",
+  "targets": [
+    {
+      "target": "wu_b_sparse_mask",
+      "path": "common/common-warp/src/common_warp/sparse/mask.py",
+      "runner": "python -m pytest common/common-warp/tests/test_sparse.py -x -q --tb=no -p no:cacheprovider",
+      "threshold": 0.8,
+      "score": 0.8684,
+      "killed": 33,
+      "survived": 5,
+      "timeouts": 0,
+      "suspicious": 0,
+      "untested": 0,
+      "total_mutants": 38,
+      "status": "real-baseline-at-or-above-threshold",
+      "delta_note": "Initial measure 0.6316 (24/38); lifted to 0.8684 (33/38) with constraining tests that exercise the default origin (no-origin == explicit (0,0,0)), the absolute-coord shift (coords = idx + origin, killing the +/- mutant), and the nanovdb encoding branch. The 5 residual survivors are the dataclass `origin` field-default mutants that `ActiveMask.from_dense` bypasses (it always passes origin explicitly) plus equivalent default-arg mutants — accepted (default-arg survivors on a path the primary constructor does not exercise)."
+    }
+  ]
+}
