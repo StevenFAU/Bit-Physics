@@ -64,3 +64,26 @@ def test_canonicalizes_repo_paths() -> None:
     paths = (real_root, worktree)
     assert normalize_pytest_output(real, paths) == normalize_pytest_output(fresh, paths)
     assert b"<REPO>" in normalize_pytest_output(real, paths)
+
+
+def test_pytest_version_trio_is_normalized_away() -> None:
+    """R3: a pytest/pluggy/Python upgrade must not change the hash."""
+    a = b"platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /v/bin/python\n"
+    b = b"platform linux -- Python 3.13.1, pytest-9.2.0, pluggy-1.7.1 -- /w/bin/python3\n"
+    assert a != b
+    assert normalize_pytest_output(a) == normalize_pytest_output(b)
+    assert b"<VER>" in normalize_pytest_output(a)
+    assert b"<PYVER>" in normalize_pytest_output(a)
+
+
+def test_rootdir_collapses_without_a_matching_paths_arg() -> None:
+    """R3: rootdir/cachedir from a DIFFERENT original checkout still matches.
+
+    No `paths_to_canonicalize` is supplied — the generic rootdir/cachedir
+    regex must collapse both lines so evidence recorded elsewhere replays.
+    """
+    a = b"rootdir: /home/alice/Bit-Physics\ncachedir: /home/alice/Bit-Physics/.pytest_cache\n"
+    b = b"rootdir: /tmp/.replay-deadbeef00\ncachedir: /tmp/.replay-deadbeef00/.pytest_cache\n"
+    assert a != b
+    assert normalize_pytest_output(a) == normalize_pytest_output(b)
+    assert b"rootdir: <REPO>" in normalize_pytest_output(a)

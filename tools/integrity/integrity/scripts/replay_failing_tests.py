@@ -24,7 +24,15 @@ neutralized before sha256 computation:
 2. **Absolute repo path**. The recorded evidence cites paths under the
    real checkout (``/home/.../Bit-Physics``); the replay runs in a
    temporary worktree (``/tmp/.replay-<sha12>``). The two roots are both
-   collapsed to ``<REPO>`` so paths line up.
+   collapsed to ``<REPO>`` so paths line up. The ``rootdir:`` / ``cachedir:``
+   header lines are collapsed generically so evidence recorded under a
+   DIFFERENT original checkout still matches.
+
+3. **Pytest / pluggy / Python version trio + interpreter path** in the
+   ``platform ...`` header. These vary with a toolchain upgrade or a
+   differently-named venv; the raw evidence keeps them, but the hashed form
+   replaces the version numbers and interpreter path with placeholders so a
+   replay after a pytest bump is still byte-stable (R3, back-test re-audit).
 
 Together these reduce comparison to a structural test: per-test outcomes,
 error types, traceback lines, captured-output excerpts all stay intact.
@@ -74,11 +82,23 @@ _PYTEST_SUMMARY_PLACEHOLDER = rb"\1in NN.NNs \2"
 # The interpreter-path suffix varies with the venv name and whether the
 # binary symlink is `python` or `python3`; the version trio left of `--`
 # is the load-bearing reproducibility claim.
+# R3 (back-test re-audit): byte-exact replay was sensitive to the pytest /
+# pluggy / Python VERSION trio and to the interpreter path. The raw evidence
+# keeps these for human inspection, but the HASHED form canonicalizes them so
+# gate-3/13 replay is byte-stable across a pytest upgrade or a different venv —
+# the structural RED (per-test outcomes, tracebacks) is what the hash attests.
 _PYTEST_PLATFORM = re.compile(
-    rb"^(platform\s+\S+\s+--\s+Python\s+\S+,\s+pytest-\S+,\s+pluggy-\S+)\s+--\s+\S+$",
+    rb"^(platform\s+\S+\s+--\s+Python)\s+\S+(,\s+pytest-)\S+(,\s+pluggy-)\S+\s+--\s+\S+$",
     re.MULTILINE,
 )
-_PYTEST_PLATFORM_PLACEHOLDER = rb"\1 -- <INTERPRETER>"
+_PYTEST_PLATFORM_PLACEHOLDER = rb"\1 <PYVER>\2<VER>\3<VER> -- <INTERPRETER>"
+
+# rootdir/cachedir carry an absolute path that varies with the checkout
+# location. The `paths_to_canonicalize` substitution only collapses the CURRENT
+# root + worktree, so a rootdir line recorded under a DIFFERENT original
+# checkout survives and breaks the match. Collapse them generically.
+_PYTEST_ROOTDIR = re.compile(rb"^(rootdir|cachedir):\s+.*$", re.MULTILINE)
+_PYTEST_ROOTDIR_PLACEHOLDER = rb"\1: <REPO>"
 
 
 _REPO_PLACEHOLDER = b"<REPO>"
@@ -100,6 +120,7 @@ def normalize_pytest_output(
     """
     out = _PYTEST_SUMMARY.sub(_PYTEST_SUMMARY_PLACEHOLDER, raw)
     out = _PYTEST_PLATFORM.sub(_PYTEST_PLATFORM_PLACEHOLDER, out)
+    out = _PYTEST_ROOTDIR.sub(_PYTEST_ROOTDIR_PLACEHOLDER, out)
     # Substitute longer paths first so worktree paths (which may share a
     # prefix with the real root in some setups) collapse before the root
     # substitution shadows them.
