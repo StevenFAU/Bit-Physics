@@ -3,7 +3,7 @@ date: 2026-05-30T17-04-02Z
 subject: "Phase-4 pre-dispatch foundation-readiness reconnaissance (ground-truth + mechanical-completeness probes, consolidated)"
 kind: pre-dispatch-reconnaissance
 verdict: INFORMATIONAL
-head_sha: <PLACEHOLDER — back-filled per Convention #12>
+head_sha: fc30a9887db41b82363d5f38a913d1911645f5ba
 prior_phase_tag: v0.3.0-phase-3
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 author: phase-4 pre-dispatch reconnaissance (Claude Code, read-only probe)
