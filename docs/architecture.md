@@ -1174,7 +1174,7 @@ Lattice Boltzmann.
 
 Articulated bodies, contact mechanics, locomotion, manipulation.
 
-**Reference sim:** **rigid-body-pedagogical** — Stack E (Warp), implementing maximal-coordinate articulated-body dynamics from scratch. Featherstone 2008 reference. Demonstrates what physics engines do under the hood.
+**Reference sim:** **articulated-pedagogical** — Stack E (Warp), implementing articulated-body dynamics (ABA, reduced/generalized-coordinate) from scratch. Featherstone 2008 reference (Ch. 7, §7.2–§7.3, pp. 123–131). Demonstrates what physics engines do under the hood.
 
 **Frontier variants:**
 - **Newton-backed sim** — drives NVIDIA Newton 1.0 from Python for a sim-to-real demonstration. Newton solvers: MuJoCo-Warp (locomotion), Kamino (contact-rich manipulation), Vertex Block Descent (deformables), SDF collision, hydroelastic contact.
@@ -2508,7 +2508,7 @@ Authoritative descriptor for every sim capture across every phase.
 | `neural-ca` | `frontier-difflogic` | `growing-emoji-64sq-seed42-step1000` | Phase 4 Stage 28 |
 | `articulated-pedagogical` | `ref` | `pendulum-trajectory-seed42-step1000` | Phase 3 task-4 |
 | `articulated-pedagogical` | `diff` | `pendulum-trajectory-seed42-step1000` | Phase 4 Stage 14 |
-| `cloth-xpbd` | `ref` | `flag-wind-128x128-seed42-step1000` | Phase 3 task-5 |
+| `mass-spring-cloth` | `ref` | `flag-wind-128x128-seed42-step1000` | Phase 3 task-5 |
 | `strange-attractors` | `ref` | `lorenz-trajectory-seed42-step10000` | Phase 1 Stage 2 |
 | `mandelbulb-explorer` | `ref` | `de-probe-points-seed42` | Phase 1 Stage 2 |
 | `boids-3d` | `ref` | `flock-3agents-canonical-seed42-step1000` + `flock-1000agents-seed42-step1000` | Phase 1 Stage 2 |
@@ -2550,9 +2550,10 @@ These SHAs are pinned at planning time and reverified at each consuming stage's 
 | **OpenVDB (incl. NanoVDB)** | Phase 4 WU-B; Phase 4 Stages 15, 16, 18 | Latest stable at WU-B time (expect v12.x+ as of May 2026) | **MPL-2.0** | `gh release view -R AcademySoftwareFoundation/openvdb` |
 | **NVIDIA Newton 1.0 GA** | Phase 4 WU-D; Phase 4 Stages 31, 32, 33 | Pin to specific 1.0.x release (NOT 2.0) | Apache-2.0 | `gh release view -R newton-physics/newton --pattern 'v1.0.*'` |
 | **Inria gaussian-splatting** | Phase 3 task-1; Phase 4 WU-C; Phase 4 Stages 19–22 | Latest stable at Phase 3 task-1 time | Inria research license | Web-fetch latest commit on main |
-| **PhysGaussian (Xie 2024)** | Phase 4 Stage 19, Stage 22 | Latest stable; paper arXiv:2311.12198 | MIT | Web-fetch latest commit on main |
-| **Bender PositionBasedDynamics** | Phase 3 task-5 (cloth-xpbd) | Latest stable | MIT | `gh release view -R InteractiveComputerGraphics/PositionBasedDynamics` |
-| **NVIDIA PhysicsNeMo** | Phase 3 task-7 (PINN); Phase 4 WU-E; Phase 4 Stage 35 | `pip install nvidia-physicsnemo==<latest 1.x>` | Apache-2.0 | `pip index versions nvidia-physicsnemo` |
+| **PhysGaussian (Xie 2024)** | Phase 4 Stage 19, Stage 22; Phase 3 task-8 (cite-only) | Latest stable; paper arXiv:2311.12198 | NONE (no LICENSE → all-rights-reserved; CITE-ONLY, no source vendored) | Web-fetch latest commit on main |
+| **Bender PositionBasedDynamics** | Phase 3 task-5 (mass-spring-cloth) | Latest stable | MIT | `gh release view -R InteractiveComputerGraphics/PositionBasedDynamics` |
+| **NVIDIA PhysicsNeMo-Sym** (PINN/elliptic-PDE tutorials) | Phase 3 task-7 (PINN); Phase 4 WU-E; Phase 4 Stage 35 | physicsnemo-sym v2.4.0 (acaeb6dc38ecda58559b5286d3cb743e8cf930d3), Apache-2.0, vendored READ-ONLY (NOT pip-installed) | Apache-2.0 | `gh api repos/NVIDIA/physicsnemo-sym/git/refs/tags/v2.4.0` |
+| **Growing Neural CA (self-organising-systems)** | Phase 3 task-6 (neural-ca) | HEAD on main (no applicable release tag; biomaker-v1.0.0 is a different sub-project) | Apache-2.0 | `gh api repos/google-research/self-organising-systems --jq .license.spdx_id` |
 
 ## D.4 — External dependency pins (non-vendored)
 

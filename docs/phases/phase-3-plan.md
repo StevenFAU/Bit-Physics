@@ -254,7 +254,7 @@ Coordinator dispatches `task-N` only after `task-(N-1)` PR is merged (owner-conf
 
 ### 2.18 External upstream SHA pins (Stage-0 resolved — clears the v8 "EXTERNAL SHAS PINNED PRE-DISPATCH" gate)
 
-Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's preamble) for **all five** Phase-3 external upstreams in one place, per the coordinator-ratified delegation (2026-05-28) that the Stage-0 agent web-fetches + verifies + pins the SHAs (the pre-dispatch-review/STOP-B overhead having been retired in the same chat). Each SHA was web-fetched from the GitHub API and verified; none is fabricated (Convention #8). Pinning rule: latest stable release tag if one exists within the last 12 months (relative to the fetch date 2026-05-28), otherwise default-branch HEAD as of fetch time. Per-upstream `manifest.yaml` (§2.11) is authored by the consuming sub-phase at vendoring time and copies its row's SHA + license verbatim from here.
+Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's preamble) for the Phase-3 external upstreams in one place (originally five; the task-6 growing-neural-ca row was added by A-4 at phase-3 close), per the coordinator-ratified delegation (2026-05-28) that the Stage-0 agent web-fetches + verifies + pins the SHAs (the pre-dispatch-review/STOP-B overhead having been retired in the same chat). Each SHA was web-fetched from the GitHub API and verified; none is fabricated (Convention #8). Pinning rule: latest stable release tag if one exists within the last 12 months (relative to the fetch date 2026-05-28), otherwise default-branch HEAD as of fetch time. Per-upstream `manifest.yaml` (§2.11) is authored by the consuming sub-phase at vendoring time and copies its row's SHA + license verbatim from here.
 
 ```
 - Repo: https://github.com/graphdeco-inria/gaussian-splatting          # task-1 common-3dgs (THIS sub-phase)
@@ -281,10 +281,12 @@ Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's p
   Security: clean (2026-05-28; repository security-advisories array empty)
   Fetched: 2026-05-28T00:35Z
   Citation-pointer: docs/architecture.md §12 + references/PhysGaussian/manifest.yaml (task-8, later)
-- Repo: https://github.com/InteractiveComputerGraphics/PositionBasedDynamics   # task-5 cloth-xpbd
-  SHA: d0894bdb0190c5f273c0500ecad0e8c2bf21fc5f
-  Released: default-branch HEAD (master). Latest release tag 2.2.0 is 2022-12-13 (>12 months); per
-    the pinning rule, default-branch HEAD is used rather than the stale release.
+- Repo: https://github.com/InteractiveComputerGraphics/PositionBasedDynamics   # task-5 mass-spring-cloth
+  SHA: aa62c44f0d43956452e1f960a40333ec2d6d3ea5
+  Released: v2.2.0 (tag aa62c44f, published 2022-12-13). A-3 (back-test re-audit): task-5 vendored
+    the TAGGED release per spec Appendix D.3 "Latest stable" (the top authority), which overrides
+    this registry's >12-month default-branch-HEAD heuristic for the Bender row. references/
+    PositionBasedDynamics/MANIFEST.toml is at aa62c44f == 2.2.0.
   License: MIT
   License-note: permissive; MIT-compatible with Bit-Physics's MIT distribution posture.
   Security: clean (2026-05-28; repository security-advisories array empty)
@@ -308,6 +310,18 @@ Resolves the v8 amendment (§ "EXTERNAL SHAS PINNED PRE-DISPATCH", this file's p
   Security: clean (2026-05-28; repository security-advisories array empty)
   Fetched: 2026-05-28T00:54Z
   Citation-pointer: §3.1 references/Chakazul-Lenia/ + references/Chakazul-Lenia/manifest.yaml (task-3)
+- Repo: https://github.com/google-research/self-organising-systems   # task-6 neural-ca (growing-neural-ca)
+  SHA: 3d5547ca48b60ecac459834e2c05c9ff5df87991
+  Released: default-branch HEAD (main). A-4 (back-test re-audit): the only release tag
+    (biomaker-v1.0.0) is a DIFFERENT sub-project within this multi-project research monorepo, NOT the
+    growing-CA work; per spec D.3's research-repo policy (and this registry's "otherwise
+    default-branch HEAD" rule) HEAD is pinned. Distinct-on-purpose from the Bender tagged-release pin.
+  License: Apache-2.0
+  License-note: permissive; Apache-2.0-compatible with Bit-Physics's MIT distribution posture.
+  Security: clean (2026-05-29; SPDX verified Apache-2.0 via
+    gh api repos/google-research/self-organising-systems --jq .license.spdx_id)
+  Fetched: 2026-05-29T00:26Z
+  Citation-pointer: §3.2 references/growing-neural-ca/ + references/growing-neural-ca/MANIFEST.toml (task-6)
 ```
 
 ---
