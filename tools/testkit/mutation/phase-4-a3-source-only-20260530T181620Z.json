@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.1.0",
+  "produced_utc": "2026-05-30T18-16-20Z",
+  "status": "real-baseline",
+  "mutmut_version": "2.5.1",
+  "rationale": "Phase-4 PHASE-A item A3: honest SOURCE-ONLY re-measure of the two mutation targets whose `path` historically included a nested tests/ subtree (mutmut's default tests-dir guess only excludes a top-level tests/, so the nested tools/testkit/{code_verification/mms,property}/tests/ subtrees were being mutated and skewing the kill rate). mutmut-config.toml now carries `exclude = \"tests\"` for both targets (passed as `mutmut --paths-to-exclude tests`). Both scores remain BELOW the 0.80 advisory floor and are recorded HONESTLY — NOT widened. The mutation gate stays SOFT_WARN everywhere (spec § 2.13, Phase-4 A3 honesty correction); HARD_FAIL-at-landing is an earned future promotion once a target's own constraining tests lift its source-only kill rate to the floor. See docs/_audits/phase-4/pre-dispatch-review-2026-05-30T17-54-54Z.md.",
+  "targets": [
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "exclude": "tests",
+      "runner": "python -m pytest tools/testkit/code_verification/mms/tests/ -x -q --tb=no",
+      "threshold": 0.8,
+      "score": 0.2243,
+      "killed": 138,
+      "survived": 498,
+      "timeouts": 6,
+      "suspicious": 0,
+      "untested": 0,
+      "total_mutants": 642,
+      "status": "real-baseline-below-threshold-advisory",
+      "prior_score_tests_included": 0.265,
+      "delta_note": "source-only DROPPED vs tests-included (0.265 -> 0.2243): the prior figure was partly INFLATED by killed test-file mutants. The dominant residual dilutant is source the mms/tests/ runner does not exercise (solutions/{incompressible_ns_2d,reaction_diffusion_2d,reaction_diffusion_3d} are driven by other sims' runners, not by mms/tests/). NOT widened."
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "exclude": "tests",
+      "runner": "python -m pytest tools/testkit/property/tests/ -x -q --tb=no",
+      "threshold": 0.8,
+      "score": 0.3455,
+      "killed": 151,
+      "survived": 286,
+      "timeouts": 0,
+      "suspicious": 0,
+      "untested": 0,
+      "total_mutants": 437,
+      "status": "real-baseline-below-threshold-advisory",
+      "prior_score_tests_included": 0.2034,
+      "delta_note": "source-only ROSE vs tests-included (0.2034 -> 0.3455, +0.14): here the nested tests/ subtree was genuinely diluting (surviving test-file mutants). The residual shortfall is source the property/tests/ runner does not exercise (sims/*/invariants.py + invariants/ are driven by per-sim package tests, not by property/tests/). NOT widened."
+    }
+  ]
+}
