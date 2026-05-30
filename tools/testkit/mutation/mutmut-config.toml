@@ -298,3 +298,16 @@ runner    = "uv run --no-sync pytest common/common-3dgs/tests/ -x -q --tb=no"
 path      = "tools/testkit/render_similarity/metrics.py"
 threshold = 0.85
 runner    = "uv run --no-sync pytest tools/testkit/render_similarity/tests/ -x -q --tb=no"
+
+# Phase-4 WU-F (variant-equivalence; plan §7.7). NEW mutation-testing target.
+# Threshold 0.85 (higher than the standard 0.80) because this harness gates
+# correctness for ALL 27 Phase-4 frontier variants (Stages 9-35). The source is
+# tolerance.py (budget logic) + harness.py (matched-time per-norm comparison) +
+# report.py (dataclass); `exclude = "tests"` keeps the nested tests/ subtree out
+# of the kill-rate (A3 source-only convention). Measured in a consolidated
+# mutation batch (§2.13 SOFT_WARN-advisory); recorded in the WU-F audit.
+[targets.variant]
+path      = "tools/testkit/equivalence/variant"
+exclude   = "tests"
+threshold = 0.85
+runner    = "uv run --no-sync pytest tools/testkit/equivalence/variant/tests/ -x -q --tb=no"
