@@ -218,6 +218,81 @@ All on `main`, local (NOT pushed):
 close-R3-R5 measurement — the PHASE-A edits added no golden tables / audit-log
 emitters that perturb the report).
 
+## §11 — Residue addendum (post-ratification; D1–D4 + the structural replay finding)
+
+> Added after the operator ratified PHASE A and dispositioned the four
+> replay-residue items (D1–D4). Records the dispositions, their execution, and a
+> **structural finding measured live**: the HEAD fixes do **not** green the
+> cross-phase replay, because the replay re-runs the prior phase's gates against a
+> **worktree checked out at the tag, using the tagged `.venv`/source** — the four
+> failures are frozen in commit `362179f`, unreachable by any HEAD change.
+
+**Dispositions executed (all green at HEAD `00d4017`):**
+
+| D | Disposition | Action | Result |
+|---|---|---|---|
+| D1 `test_i7` | ACCEPTED benign | none | passes at HEAD (allowlist entry post-tag). |
+| D2 `test_cost_axis` | clean fix | `900b3a4` — registered `pinn-train.yml` = `"none"` in `WORKFLOW_CAPTURE_REQUIREMENT` (it checks out `lfs: false`, reads no committed capture). | green. |
+| D3 mutation gate_helper | clean fix | `31007c2` — `_VALID_BASELINE_STATUSES = {framework-validated, real-baseline}`. **Confirmed independent of A3** (helper globs `baseline-*.json`; A3 ledger is `phase-4-a3-source-only-*.json`, never consulted — masks no A3 change). | green (rc=0). |
+| D4 `test_i6` | SHA-keyed exception | `00d4017` — `_CITATION_EXEMPT_SHAS` keyed to the full SHA `abf1d46…2feaee` with a required reason; doc-only invariant still enforced; new meta-test proves a synthetic uncited back-fill from any other SHA is still flagged. NOT a re-scope, NOT a history rewrite. | green (2 passed). |
+
+At HEAD the full `pytest -W error tools/testkit/` suite is **271 passed** (was 2
+failed); the gate_helper returns rc=0; integrity **0 HF / 14 SW**.
+
+**Learning (operator-requested record).** The Phase-3 close's pytest gate did NOT
+run `-W error` over the whole `tools/testkit/` tree (it ran narrower per-package
+suites), so three latent-red hygiene meta-tests (`test_i6`, `test_cost_axis`,
+`test_i7`) and the gate_helper status drift were tagged into `v0.3.0-phase-3`
+undetected. The Phase-4 replay entry gate — correctly stricter (`pytest -W error
+tools/testkit/`) — is what surfaced them. **Going-forward:** a phase close should
+run the same strict suite the next phase's replay will run, so latent residue is
+caught at close, not frozen into the tag.
+
+## §12 — STRUCTURAL: the replay cannot be greened at HEAD (STOP-AND-SURFACE)
+
+**FACT (measured live, after D2/D3/D4 committed):** re-running the full
+cross-phase replay STILL returns `ok=False` — pytest FAIL + mutation FAIL, the
+**same** four reasons, **no new reason**:
+
+```
+PASS integrity | FAIL pytest | PASS equivalence | PASS determinism
+PASS perf-ledger | PASS property | FAIL mutation | PASS tolerance-budget
+summary: prior_phase=v0.3.0-phase-3 ok=False
+```
+
+**Root cause (FACT, from `replay_prior_phase.py`):** the tool materialises a
+worktree at `v0.3.0-phase-3` (commit `362179f`), `uv sync`s the **tagged**
+workspace, and runs each gate with the **worktree's `.venv/bin/python`** against
+the **tagged** `tools/testkit/` tests (this tag-isolation is deliberate per
+Convention § D.5 — replay uses the tagged gate logic, not HEAD's). So at the tag:
+`test_i6` (no exception in tagged source) + `test_cost_axis` (tagged registry
+lacks `pinn-train.yml`, which IS present at the tag) + `test_i7` (tagged allowlist
+lacks `v0.3.0-phase-3`) all fail, and the mutation gate_helper (tagged, expects
+`framework-validated`) fails against the tagged `real-baseline`. **My HEAD fixes
+do not — cannot — change the tagged commit.**
+
+**Therefore the operator's GATE-BEFORE-PUSH ("confirm `ok=True`") is unmet, and
+unmeetable by any HEAD change.** Per "do not force", PUSH and PHASE B are **held**.
+Honest options (operator decides — I will NOT re-point a tag (I7), weaken a
+detector, or hack the replay tool):
+
+- **Option A — accept HEAD-green as the meaningful entry state (recommended).** The
+  live repo's full `tools/testkit/` suite + gate_helper are green at HEAD; the
+  replay's `ok=False` is a documented **tag-frozen artifact** (phase-3 was tagged
+  with latent-red tests its close didn't run). Operator ratifies "proceed on
+  HEAD-green"; the replay tag-red is recorded here, not forced green.
+- **Option B — operator re-points `v0.3.0-phase-3`** to a commit containing
+  D2/D3/D4 (operator-only tag op). Greens the replay, but moves the phase-boundary
+  tag off the actual phase-3 close commit — semantically lossy.
+- **Option C — a focused replay-tool/`replay_prior_phase` enhancement** to run
+  HEAD's meta-test code against tagged content (changes the tool's deliberate
+  tag-isolation; a separate audited sub-phase).
+
+**Recommendation: Option A.** It is the honest reading of "entry gate green": the
+gates the replay runs all pass at HEAD; the tag itself cannot be retroactively
+fixed without an operator tag-op or a tool change. Awaiting operator ratification
+before push + PHASE B.
+
 ## Provenance
 
 Convention #12 SHA back-fill applies to `head_sha:` above. The integrity invariant
