@@ -4,7 +4,7 @@ author: phase-4 pre-dispatch reconciliation (Claude Code, PHASE A)
 subject: "Phase-4 PHASE-A pre-dispatch reconciliation (A1–A7) + foundation-entry gate verdict — operator-ratified go/no-go disposition"
 kind: pre-dispatch-review
 verdict: PHASE-A-COMPLETE-WITH-ENTRY-GATE-BLOCKED
-head_sha: 4c92133477d83e7cd47e3cd4774d4db99aa741e0
+head_sha: f962ff2ef06abbfffaebc4ed879dbe302b71e7e5
 prior_phase_tag: v0.3.0-phase-3
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 integrity_digest_at_head: 45eed4cacb64b711c461f6e3b76958a646e6b0517302c3921bce2f18ef3018d2
