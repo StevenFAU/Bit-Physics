@@ -1,0 +1,25 @@
+[upstream]
+name         = "newton"
+version      = "1.0.0"
+sha          = "d6046f187f1f6c6b8f8da98c5d0f93b8944eb5f0"
+url          = "https://github.com/newton-physics/newton"
+license      = "Apache-2.0"
+license_file = "LICENSE.md"
+
+[scope]
+purpose         = "NVIDIA Newton 1.0 GA physics engine (Linux Foundation project; built on NVIDIA Warp + OpenUSD; co-developed with Google DeepMind + Disney Research). Phase-4.0 WU-D consumes it as the backend wrapped by `common_warp.newton.NewtonBackend`; Phase-4.5 rigid-body sims (4.23-4.25) consume the wrapper. Newton runtime (solver stepping) requires CUDA 12 / driver 545+ — the Phase-4.0 build host is CPU-only, so the runtime is BLOCKED and the wrapper lazy-imports + CUDA-gates it (operator-ratified CPU-fallback per spec §12.8 + plan §7.5 v9 addendum). The reference is consumed by independent derivation (spec §2.4), not redistributed: only LICENSE.md + this manifest + the fetch script are vendored (the full Python source is fetch-on-demand at the pinned SHA, mirroring the WU-B host-only subset posture). v1.0.0 is the 1.0.x pin (NOT 2.0); latest upstream is v1.2.0 (2026-05-12)."
+used_by_sims    = []  # Phase 4.5 rigid-body sims (none landed at WU-D)
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-30T21-10-00Z"
+fetched_by    = "phase-4-wu-d-newton agent"
+fetch_command = "curl -sL https://raw.githubusercontent.com/newton-physics/newton/v1.0.0/LICENSE.md -o references/newton/LICENSE.md ; full source fetch-on-demand: git clone --depth 1 --branch v1.0.0 https://github.com/newton-physics/newton.git (SHA d6046f187f1f6c6b8f8da98c5d0f93b8944eb5f0). See references/newton/fetch.sh."
+
+# §0.3 NOTE (WU-D vendoring shape). Newton is a large Python package and its
+# runtime needs CUDA 12 (absent on the Phase-4.0 CPU-only host). Per plan §7.5 C1
+# ("references/newton/ (source OR fetch script)") this vendoring records the pin
+# (v1.0.0 / d6046f18 / Apache-2.0) + LICENSE + a fetch script, NOT a full-source
+# dump (which would be large, LFS-bound, and unrunnable here). The reference is
+# cited for independent derivation, not redistributed. The A4 MANIFEST guard
+# checks structure + repo + license (SHA-exempt for probe-then-pin deps).
