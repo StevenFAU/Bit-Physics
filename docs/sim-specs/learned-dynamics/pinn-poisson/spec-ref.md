@@ -4,11 +4,6 @@
 > deliverable A per `docs/phases/phase-3-plan.md` § 6.7. FIRST
 > learned-dynamics-CATEGORY sim.
 >
-> **Stage 1a posture:** STUB with `TODO(Stage-1b)` markers where values are
-> measured (training-loss EFECT band, perf wall-clock). § 6 (verification posture
-> + PBT invariants) is FULLY DECLARED at Stage 1a per spec § 2.14 — the failing
-> TDD tests need the invariant declarations to exist.
->
 > **§0.3 SHIFTs (plan § 6.7; documented, no plan edit):** layout
 > `packages/pinn-poisson/` (flat, not `learned-dynamics/pinn-poisson/python/`); CI
 > `python-strict.yml` (`test-pinn-poisson`, not `build-py.yml`); vendor manifest

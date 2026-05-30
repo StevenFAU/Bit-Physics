@@ -29,9 +29,19 @@ Every per-sim implementation sub-phase ships under three stages:
 |---|---|---|
 | **Stage 0 — Pre-flight** | Single Claude Code session | Cross-phase replay PASS; tolerance-budget carryover; failing-tests-evidence sha256 re-verify; sub-phase-specific Task 0.3 (e.g., RD-2D MMS scope, SPlisHSPlasH manifest, canonical-descriptor analysis per § N); Stage 0 checkpoint audit. |
 | **Stage 1 — Per-sim implementation** | One Claude Code session per sim; partial-checkpoint pattern permitted | 13-gate GREEN for the sim(s); per-sim sub-bundle commit (gates 4–13); Stage 1 checkpoint audit. |
-| **Stage 2 — Landing** | Single Claude Code session if Stage 1 was clean | Convergence-file edits (CHANGELOG additive, integrity registries if any); integrity sweep; gate-13 replay verification per sim; mutation-score artifact; sub-phase landing audit; Convention #12 SHA back-fill. |
+| **Stage 2 — Landing** | Single Claude Code session if Stage 1 was clean | Convergence-file edits (CHANGELOG additive, integrity registries if any); integrity sweep; gate-13 replay verification per sim; mutation-score artifact; **spec-ref de-stub check (see below)**; sub-phase landing audit; Convention #12 SHA back-fill. |
 
 (FACT — three-stage cadence declared at `sub-phase-closed-form.md` § 1.5; inherited verbatim at `sub-phase-agent-based.md`, `sub-phase-continuous-ca-rd3d.md`, `sub-phase-particle-fluids-sph-water.md` with at most a per-sub-phase delta — e.g., RD-3D's 10-step sequence vs closed-form's 8-step sequence to absorb MMS gate-5 + commit-footer ladder.)
+
+**Spec-ref de-stub check (Stage 2, mandatory).** A landing seals the sim, so no
+Stage-1a freeze artifact may survive in its `docs/sim-specs/.../spec-ref.md`:
+`grep -niE "stub|skeleton|TODO\(Stage" <spec-ref>` must be clean (or only match
+genuine spec prose, e.g. "test stubs"). N-1 (Phase-3 back-test re-audit) found
+this freeze recurred on 5 of 7 Phase-3 sims (lenia, ising, neural-ca, pinn,
+3dgs-mpm) — the landing audits never caught it because the check was implicit.
+Make it explicit: the `Stage 1a posture: STUB` banner, the `— Spec stub ends —`
+footer, and every resolved `TODO(Stage-*)` marker are removed (or rewritten as
+present-tense landed fact) before the landing audit is written.
 
 **Gate-11 (determinism) mechanism.** Within the Stage 1 13-gate GREEN target, gate-11 is witnessed by `tools/testkit/determinism::run_twice_and_diff` (Python) or `@bit-physics/common-ts::runTwiceAndDiff` (TypeScript). The harness compares parsed Capture projections (every state array + every diagnostic entry element-wise) under the content-equivalent contract established at `sub-phase-capture-determinism-contract` per spec § 2.5. See § F.3 for the Content-equivalent vs FP-equivalent contract distinction.
 

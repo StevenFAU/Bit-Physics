@@ -5,11 +5,6 @@
 > `docs/phases/sub-phase-phase-3-3dgs-mpm.md`. **FIRST neural-rendered-CATEGORY sim** and
 > the **Phase-3 FINALE**.
 >
-> **Stage 0 posture:** SKELETON with `TODO(Stage-1b)` markers where values are MEASURED
-> (render-similarity bounds, end-to-end determinism class, perf wall-clock + CPU memory).
-> § 6 (verification posture + PBT invariants) is FULLY DECLARED at Stage 0/1a per spec
-> § 2.14 — the failing TDD tests need the invariant declarations to exist.
->
 > **§0.3 SHIFTs (plan § 6.8; documented here, no plan edit — charter § 1.3):** layout
 > `packages/3dgs-mpm/` (flat, not `neural-rendered/3dgs-mpm/python/`); API
 > `GaussianSplatModel`/`render` (not `GaussianSet`/`forward_splat`); render-similarity
@@ -132,8 +127,9 @@ raw covariance. The coupling therefore round-trips:
   reference. Flagged here + in the golden-table provenance.
 - **Anchor 3 — trivial case `F = I`**: `Σ' = Σ`, scale/rotation unchanged. Fully independent.
 
-`TODO(Stage-1b): per-anchor numeric values → tools/testkit/golden/tables/3dgs-mpm-coupling.json
-+ a poisson-style derivation doc citing the verified PhysGaussian eq numbers.`
+Per-anchor numeric values land in
+`tools/testkit/golden/tables/3dgs-mpm-coupling.json`, alongside a
+poisson-style derivation doc citing the verified PhysGaussian eq numbers.
 
 ## 5. Implementation
 
@@ -232,14 +228,13 @@ goldens), bounds LOCKED at the §2.12 floors:
 ## 10. Diagnostics
 
 Tier-1: NaN/Inf on positions/covariances; `det(F) > 0`. Tier-3 coupling diagnostic at
-`tools/diagnostics/tier3/3dgs-mpm/`. `TODO(Stage-1c).`
+`tools/diagnostics/tier3/3dgs-mpm/`.
 
 ## 11. Build and run
 
 `uv run --directory packages/3dgs-mpm …`; CI `test-3dgs-mpm` in
 `.github/workflows/python-strict.yml` (selective `git lfs pull` for committed captures +
 goldens). Two-tier split decided at Stage 1c on measured cost (charter § D-CI).
-`TODO(Stage-1c): final argv + CI shape + cost basis.`
 
 ## 12. References
 
@@ -249,4 +244,4 @@ common-3dgs); Stomakhin 2013 / Hu 2018 MLS-MPM (via mpm-multimaterial-stack-e).
 ## 13. Productization status
 
 `coupling.py` SIM-LOCAL (promotion candidacy → Phase-4 WU-C). task-8 is TERMINAL on produce.
-NO tag (D-TAG NO). `TODO(Stage-2): final reconciliation.`
+NO tag (D-TAG NO).

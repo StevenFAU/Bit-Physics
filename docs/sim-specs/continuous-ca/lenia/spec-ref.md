@@ -3,13 +3,6 @@
 > 13-section template per `docs/architecture.md` § 8.2. Phase 3 task-3
 > deliverable A per `docs/phases/phase-3-plan.md:1331`.
 >
-> **Stage 1a posture:** STUB with `TODO(Stage-1b)` markers in the
-> sections that require grep-cited values from the vendored Chakazul
-> source. §6 (PBT invariants) is FULLY DECLARED at Stage 1a per
-> spec § 2.14 + `docs/phases/phase-3-plan.md:1042` (§ 6.0 item 7) —
-> the failing TDD tests at Stage 1a need the invariant declarations to
-> exist.
->
 > **§0.3 SHIFT-from-discovered (mathematical, carried from charter
 > §1.2):** §6.3 prose at `docs/phases/phase-3-plan.md:1351` says
 > "kernel at r=0 (peak K(0))". Quad4 evaluates `K(0) = (4·0·1)^4 = 0`
@@ -67,15 +60,16 @@ real-space-default lean). FFT opt-in only if Stage 1b probe finds a
 stable AND bit-exact same-stack-same-hw Taichi-compatible FFT path
 (charter §6 R-4 STOP-FFT for silent non-determinism).
 
-TODO(Stage-1b): grep-cite the exact Quad4 + growth formulas to the
-vendored Chakazul source file:line.
+The exact Quad4 + growth formulas are grep-cited to the vendored
+Chakazul source file:line in the derivation
+`tools/testkit/golden/derivations/lenia-kernel.md`.
 
 ## 4. Algebraic form
 
-TODO(Stage-1b): land `tools/testkit/golden/derivations/lenia-kernel.md`
-+ hand-derivation of `K(r) = (4 r (1 - r))^4` (charter §4 anchors).
+The hand-derivation of `K(r) = (4 r (1 - r))^4` (charter §4 anchors)
+lands at `tools/testkit/golden/derivations/lenia-kernel.md`.
 
-Verifiable form at Stage 1a (charter §1.2 + §0.3):
+Verifiable form (charter §1.2 + §0.3):
 
 ```
 K(r) = (4 r (1 - r))^4    for r ∈ [0, 1]
@@ -234,9 +228,8 @@ Tier 1 / Tier 2 surfaces consumed:
 - `diagnostics.check_bounds` (Tier 2 scalar_field) — field ∈ [0, 1]
   verification.
 
-TODO(Stage-1b): list the Tier-3 specific diagnostics
-(Lenia-specific creature-mass / creature-velocity / kernel-shape
-sanity checks).
+Tier-3 specific diagnostics: Lenia-specific creature-mass /
+creature-velocity / kernel-shape sanity checks.
 
 ## 11. Build and run
 
@@ -278,6 +271,3 @@ Reference. Phase 3 task-3 is **terminal** in Phase 3
 (`docs/phases/phase-3-plan.md:325`). Phase 4+ may port to Stack B,
 add 3-D / particle / flow variants, polyring kernels, save-creature
 UX — out of scope here.
-
-— Spec stub ends — Stage 1b fills the `TODO(Stage-1b)` markers and
-lands the Quad4 + growth + Orbium grep-cites.

@@ -2,13 +2,6 @@
 
 > 13-section template per `docs/architecture.md` § 8.2. Phase 3 task-3a
 > deliverable A per `docs/phases/phase-3-plan.md:1388-1543` (§6.3a).
->
-> **Stage 1a posture:** STUB with `TODO(Stage-1b)` markers in the
-> sections that require grep-cited closed-form values + measured
-> determinism. §6 (PBT invariants) is FULLY DECLARED at Stage 1a per
-> spec § 2.14 + `docs/phases/phase-3-plan.md:1042` (§ 6.0 item 7) — the
-> failing TDD tests at Stage 1a need the invariant declarations to
-> exist.
 
 ## 1. Scope
 
@@ -68,7 +61,8 @@ within-colour update is embarrassingly parallel and preserves detailed
 balance — this is the structure the WGSL kernel exploits (no atomics,
 no subgroup ops; PCG per-cell PRNG).
 
-TODO(Stage-1b): grep-cite the ΔE derivation to the golden derivation.
+The ΔE derivation is grep-cited to the golden derivation
+`tools/testkit/golden/derivations/ising-onsager.md`.
 
 ## 4. Algebraic form
 
@@ -86,8 +80,8 @@ Spontaneous magnetization (Yang 1952, T < T_c, J=1, β = 1/T):
   m(T) = 0                          for T ≥ T_c
 ```
 
-TODO(Stage-1b): land `tools/testkit/golden/derivations/ising-onsager.md`
-with the Kramers-Wannier duality hand-derivation.
+The Kramers-Wannier duality hand-derivation lands at
+`tools/testkit/golden/derivations/ising-onsager.md`.
 
 ## 5. Implementation
 
@@ -223,6 +217,3 @@ Reference. Phase 3 task-3a unblocks task-4 onwards but no later Phase-3
 task imports `packages/ising-classical/` as a code dependency. Phase 6
 ising-dwave inherits the spec-sheet + glossary as documentation
 precedent.
-
-— Spec stub ends — Stage 1b fills the `TODO(Stage-1b)` markers and
-lands the closed-form grep-cites + golden derivation.
