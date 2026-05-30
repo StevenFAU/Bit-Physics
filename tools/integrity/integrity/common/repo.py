@@ -16,6 +16,16 @@ from pathlib import Path
 EXCLUDED_PREFIXES: tuple[str, ...] = (
     "tools/integrity/tests/fixtures/",
     "references/",  # vendored upstreams are read-only; not Cat 2's domain
+    # Exhaustive back-test re-audit deliverables: by construction these quote
+    # citations-to-defects (stale names, removed targets, wrong line numbers)
+    # as the SUBJECT of study — a finding that a cited path+line "target does
+    # not exist" is correct precisely because the target is gone. Scanning
+    # them as live citations (cat1/cat4) or as audit records needing
+    # front-matter (cat5) is a false positive on read-only findings data.
+    # Same class as the fixtures above. Landing audits (docs/_audits/phase-*)
+    # are NOT excluded — their FACT-tagged citations are real claims and
+    # stay checked.
+    "docs/_audits/back-test-",
 )
 
 
