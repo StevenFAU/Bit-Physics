@@ -1,0 +1,25 @@
+[upstream]
+name         = "openvdb"
+version      = "13.0.0"
+sha          = "7c03e1f084873cd1b3422c7ff7aec6ee681b3b38"
+url          = "https://github.com/AcademySoftwareFoundation/openvdb"
+license      = "Apache-2.0"
+license_file = "LICENSE"
+
+[scope]
+purpose         = "NanoVDB sparse-volume header-only library (the nanovdb/ subtree of OpenVDB). Phase 4.0 WU-B consumes it for the bit_physics::nanovdb C++ sparse-volume writer/reader and the active_mask capture surface; Phase 4.2 sparse-variant sims consume it at sim scale. Header-only, dependency-light — only the non-CUDA host headers are vendored (cuda/, examples/, unittest/, python/, docs/, cmd/, putil/ trimmed). The reference is consumed, not modified."
+used_by_sims    = []  # Phase 4.2 sparse-variant sims (none landed at WU-B); WU-B ships the common-cpp + common-warp + tier2 sparse infrastructure they plug into.
+used_by_checks  = ["cat1.upstream-citation"]
+
+[vendoring]
+fetched_utc   = "2026-05-30T19-40-35Z"
+fetched_by    = "phase-4-wu-b-sparse agent"
+fetch_command = "git clone --no-checkout --filter=blob:none --depth 1 --branch v13.0.0 https://github.com/AcademySoftwareFoundation/openvdb.git && git -C openvdb sparse-checkout init --cone && git -C openvdb sparse-checkout set nanovdb/nanovdb LICENSE && git -C openvdb checkout v13.0.0; then copied nanovdb/nanovdb -> references/openvdb/nanovdb and LICENSE, and trimmed cuda/ examples/ unittest/ python/ docs/ cmd/ putil/ tools/cuda util/cuda (host-only consumption)."
+
+# CORRIGENDUM (WU-B §0.3, license drift): docs/phases/phase-4-plan.md §3.3 lists
+# OpenVDB as MPL-2.0. OpenVDB relicensed to Apache-2.0 (the as-vendored v13.0.0
+# LICENSE is Apache-2.0; nanovdb/NanoVDB.h carries `SPDX-License-Identifier:
+# Apache-2.0`). The manifest records the as-vendored truth; the §3.3 MPL-2.0
+# entry is stale and is surfaced as a proposed corrigendum (A-8) in the WU-B
+# audit. The A4 MANIFEST pin-consistency guard SOFT_WARNs license drift vs the
+# architecture.md §D.3 registry; it does not HARD_FAIL on it.
