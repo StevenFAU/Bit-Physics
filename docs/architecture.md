@@ -15,7 +15,7 @@
 > - **§ 2.4 (REVISED)** — Independent-reference anchors mandatory: ≥ 3 anchors per golden table from sources independent of the vendored upstream. Cat 3 HARD_FAILs tables without anchors.
 > - **§ 2.6 (REVISED)** — Tolerance budget mechanism: `tolerance-budget.toml` caps per-category cross-stack tolerance; `tolerance.toml` overrides exceeding budget trigger Cat-X HARD_FAIL. Amendments require separate operator-approved commits.
 > - **§ 2.7 + § 2.12 (REVISED)** — Schema-version backward-compat regression corpus at `tests/fixtures/legacy-captures/`. Phase 4 WU-A round-trips every prior-phase capture through the post-bump reader.
-> - **§ 2.13 (NEW)** — Mutation testing for testkit and integrity tooling. Per-target thresholds (80–95%); SOFT_WARN in CI, HARD_FAIL at phase landings.
+> - **§ 2.13 (NEW; Phase-4 A3 honesty correction)** — Mutation testing for testkit and integrity tooling. Per-target thresholds (80–95%); **SOFT_WARN everywhere today** (CI pushes AND phase landings). HARD_FAIL-at-landing is an earned future promotion per-target, NOT a present gate (two spec-floored targets sit below floor; floors are not widened to fake a pass).
 > - **§ 2.14 (NEW)** — Property-based testing for invariants via Hypothesis at `tools/testkit/property/`. Each sim declares ≥ 2 PBT-covered invariants in spec § 6.
 > - **§ 2.15 (NEW)** — Performance regression ledger at `docs/perf-ledger.md`. First-landing wall-clock recorded per sim; > 2× regressions flagged at landing-audit review.
 > - **§ 3.2 (REVISED)** — Adversarial-fixture corpus at `tools/integrity/tests/fixtures/adversarial/` plus a meta-test asserting every adversarial fixture is detected by the corresponding Cat check.
@@ -23,14 +23,14 @@
 > - **§ 3.8 (REVISED)** — Bootstrap-style verification for productization: artifacts re-emit canonical captures through the testkit equivalence harness in fresh isolated environments.
 > - **§ 7.4 (REVISED)** — Convention E-addendum: phase-plan review by a separate Claude session before dispatch for high-stakes plans (Phase 2 / Phase 4 / Phase 5 / any track whose outputs feed ≥ 3 downstream phases).
 > - **§ 7.5 (REVISED)** — Three mechanical audit-trail anchors: `audit-append-only.yml` CI workflow; `verify_evidence.py` (mechanical pre-filter for evidence_paths + evidence_hashes); `replay_prior_phase.py` (cross-phase audit replay as Phase N+1's first action).
-> - **§ 7.12 (REVISED)** — Operator-only phase-tag pushing. Agents prepare tags but never push; operator pushes after independent landing-audit review. Server-side git hooks (force-push, branch-creation, history-rewrite, tag-signer-identity, audit-append-only) convert convention into git mechanics.
+> - **§ 7.12 (REVISED; Phase-4 A2 honesty correction)** — Operator-only phase-tag pushing. Agents prepare tags but never push; operator pushes after independent landing-audit review. **The "server-side git hooks" described in earlier text do NOT exist** (no branch protection configured — `branches/main/protection` → 404; github.com has no custom pre-receive hooks; rulesets cannot verify tag signatures; phase tags are annotated-UNSIGNED). The real posture is single-operator trunk + post-hoc CI / regression-test detection (`audit-append-only.yml`, `test_i7_no_agent_tags.py`). See § 7.12.
 > - **§ 7.13 (REVISED)** — Auto-accept and the agent-grades-own-homework risk: the mitigation is the mechanical floor above, not self-report.
 > - **Appendix B (REVISED)** — Convention catalog quick-lookup extended with new mechanical conventions.
 > - **Appendix D § D.6 (REVISED)** — Layer 4 acceptance gates list expanded to 13.
 > - **Appendix D § D.8 (REVISED)** — Forbidden agent actions extended: items 13–17 cover tag-pushing, force-push, non-main branches, audit-file edits, over-budget tolerances.
 > - **Appendix G § G.7 (REVISED)** — Mechanical audit-trail conventions (append-only CI, evidence verification, cross-phase replay).
 > - **Appendix G § G.7.5 (NEW)** — TDD discipline mechanical anchors (failing-tests output hash, operator-only tag pushing).
-> - **Appendix G § G.10 (REVISED)** — Trunk-based development with server-side hooks table.
+> - **Appendix G § G.10 (REVISED; Phase-4 A2 honesty correction)** — Trunk-based development. The "server-side hooks table" is corrected to an enforcement-posture table: rows 1–4 are desired-not-configured; rows 5–7 are the real post-hoc CI / replay floor.
 > - **§ 11.1 acceptance language** — Phase 0 acceptance updated from "ten Layer 4 gates" to "thirteen Layer 4 gates" (§ 3.5).
 >
 > v2.4 does not reverse any v2.3 commitment; it adds the mechanical floor. Phase plans inherit v2.4 by reference (each phase plan has its own per-phase amendment block consuming v2.4 — see phase-0 deliverables 21–23, phase-1 R9, phase-2 v6, phase-3 v9, phase-4 v9, phase-5 v8, phase-6 v2).
@@ -593,7 +593,9 @@ The testkit (Layer 0) and integrity toolkit (Layer 1) are load-bearing for every
 - `tools/testkit/capture/` — capture reader/writer/diff. ≥ 90%.
 - `tools/integrity/integrity/cat4_draft_time/` — Cat 4 grammar checker. ≥ 90% (false-negatives here let fabrication through).
 
-Mutation-test runs are a weekly **T4** tier (catalog `docs/planning/bit-physics-master-catalog.md:3489` § 41.4 — "weekly mutation / fuzz / long-running stability"): a scheduled weekly cron plus `workflow_dispatch`, plus a SOFT_WARN run on pushes that touch the modules under test (informational; do not block). They remain HARD_FAIL on phase landings (the phase cannot tag if mutation score has regressed below threshold for any in-scope module). Phase 0 lands the initial mutation-testing harness and baselines; subsequent phases inherit the thresholds. Phase 4 elevates `cat4_draft_time` to 95% after schema-bump traffic has stress-tested its grammars.
+Mutation-test runs are a weekly **T4** tier (catalog `docs/planning/bit-physics-master-catalog.md:3489` § 41.4 — "weekly mutation / fuzz / long-running stability"): a scheduled weekly cron plus `workflow_dispatch`, plus a SOFT_WARN run on pushes that touch the modules under test (informational; do not block).
+
+**Enforcement posture — SOFT_WARN now; HARD_FAIL is an earned future promotion (Phase-4 A3 honesty correction).** The mutation gate is **SOFT_WARN everywhere today — CI pushes AND phase landings alike** — not HARD_FAIL at landings. Earlier text claimed "HARD_FAIL on phase landings (the phase cannot tag if mutation score has regressed below threshold)." That claim was **aspirational, not wired**, and could not be honoured: two spec-floored targets sit well below floor on their own merits — `property` and `code_verification_mms` — so a real HARD_FAIL-at-landing gate would block every phase landing. (Their `path` historically included a nested `tests/` subtree that diluted the score; A3 corrected the config to SOURCE-ONLY and re-measured honestly — the corrected scores are recorded in `tools/testkit/mutation/` and the Phase-4 pre-dispatch-review, and the floors are **not** widened to manufacture a pass.) **Promotion to HARD_FAIL is earned per-target:** a module's floor becomes landing-blocking only once that module's own constraining tests lift its source-only kill rate to the floor. Until then the score is reported (SOFT_WARN) and the regression is visible, but it does not block a tag. Phase 0 lands the initial mutation-testing harness and baselines; subsequent phases inherit the thresholds. Phase 4 elevates `cat4_draft_time` to 95% after schema-bump traffic has stress-tested its grammars.
 
 **Configuration:** `tools/testkit/mutation/mutmut-config.toml` for Python; `tools/testkit/mutation/stryker.conf.json` for TS. Both committed alongside `tools/testkit/` so the configuration is co-versioned with the modules it tests.
 
@@ -1550,19 +1552,15 @@ Phase tags (`v0.<N>.0-phase-<N>`) are **never** pushed by an agent. The closing-
 3. The agent ends the session WITHOUT pushing the tag.
 4. The operator reads the landing audit, runs `verify_evidence.py` against it, optionally runs the next phase's `replay_prior_phase.py` as a pre-check, and pushes the tag manually: `git tag <name> <sha> && git push origin <name>`.
 
-A tag pushed by an agent (verifiable from the committer identity on the tag object) is rejected by branch-protection rules as a HARD_FAIL. The agent's identity is `claude-code-<role>@bit-physics.local`; tag-pushing requires the operator's GPG-signed identity. The mechanical separation is what prevents a fabricated phase from ever earning a tag.
+The separation is a **convention backed by post-hoc detection**, not a server-side rejection. The operator pushes one annotated tag per phase close after independently reviewing the landing audit; the agent never runs `git tag` / `git push origin <tag>`. A tag pushed in the operator-sanctioned range but absent from the I7 allowlist is caught by the `test_i7_no_agent_tags.py` regression test (`tools/testkit/lfs_migration/`), and audit-file edits are caught by the `audit-append-only.yml` CI check. These run at PR / push time, after the push — they detect, they do not pre-empt.
 
-### Server-side git hooks (mechanical enforcement)
+**FACT note (Phase-4 A2 honesty correction).** Earlier revisions of this section described *server-side* / pre-receive enforcement (branch-protection HARD_FAIL on agent tag-pushes, a `git verify-tag` signer-identity moat, a pre-receive audit-append-only hook). **No such server-side enforcement exists or is configured**, and the claim is withdrawn:
 
-The forbidden actions in Appendix D § D.8 are convention, not git mechanics, by default. A determined or misbehaving agent could violate them; only post-hoc detection would catch it. To mechanically prevent the highest-stakes violations, the repo configures server-side hooks (via GitHub branch protection rules or equivalent):
+- The GitHub remote has **no branch-protection rules configured** — `GET /repos/{owner}/{repo}/branches/main/protection` returns **404** (measured at the Phase-2 LFS-architecture back-test and unchanged since).
+- **github.com offers no custom pre-receive hooks**, and GitHub **rulesets cannot verify tag GPG signatures**. The phase tags that exist (`v0.0.0-phase-0` … `v0.3.0-phase-3`) are **annotated but UNSIGNED** (no PGP block).
+- The agent identity (`claude-code-<role>@bit-physics.local`) is therefore **not** mechanically rejected by any server; the protection is the single-operator trunk model plus the post-hoc CI / regression-test detection above.
 
-1. **No force-push to `main`.** `git push --force` and `git push --force-with-lease` to `main` are rejected.
-2. **No history rewrite.** Pushes that change the SHA of any commit already present on `main` are rejected. This blocks `git --amend` followed by `git push` for any post-publication commit.
-3. **No feature branches pushed to remote.** Any push to a branch other than `main` is rejected. Long-lived working branches are local only.
-4. **Tag pushing gated by signer identity.** Phase tags (`v*-phase-*`) accept pushes only from the operator's GPG-signed identity, per the operator-only tag-pushing rule above.
-5. **Audit-file modification blocked.** A pre-receive hook (or `audit-append-only.yml` CI check, whichever the platform supports) verifies that every file under `docs/_audits/` already present on `main` has only grown, not shrunk or been edited (per § 7.5 append-only CI enforcement).
-
-These are not new requirements — every prohibition above is already in Appendix D § D.8 — but they convert convention into mechanism. Phase 0 Block 1 lands the configuration; subsequent phases inherit it.
+The actual posture is: **single-operator trunk-based development** (one developer-operator in the loop). The agent commits and pushes **refs + LFS objects to `main`** directly (trunk-based, per § Q.6 of the sub-phase conventions); what the agent never does is push a **phase tag** (operator-only, I7), push a **non-`main` branch**, or **force-push**. The forbidden actions in Appendix D § D.8 are enforced by convention + audit trail + the post-hoc CI checks named above, NOT by server-side git mechanics. Stronger mechanical enforcement (branch protection, signed-tag rulesets on a platform that supports them) remains a desirable future hardening, not a present fact.
 
 ## 7.13 Sequential single-agent execution
 
@@ -1570,7 +1568,7 @@ All phase plans use sequential single-agent execution. Each phase dispatches one
 
 This convention emerged independently across all six phase plans (Phase 0 nine blocks, Phase 1 three stages, Phase 2 ten stages, Phase 3 eleven tasks, Phase 4 thirty-five stages, Phase 5 five sub-phases). It is banked here as a program-level principle so future phases (6+) inherit it without re-deriving.
 
-**Auto-accept and the agent-grades-own-homework risk.** Auto-accept means the agent runs shell commands without interactive confirmation. The mitigation is *not* "trust the agent's self-report"; it is the mechanical floor laid out across § 1.3 (failing-tests output hash), § 7.5 (evidence-path verification + cross-phase audit replay), and § 7.12 (operator-only tag pushing + server-side hooks). The agent's self-report is one input; the verification scripts are the floor. The operator's review reads both and reconciles.
+**Auto-accept and the agent-grades-own-homework risk.** Auto-accept means the agent runs shell commands without interactive confirmation. The mitigation is *not* "trust the agent's self-report"; it is the **post-hoc** mechanical floor laid out across § 1.3 (failing-tests output hash), § 7.5 (evidence-path verification + cross-phase audit replay), and § 7.12 (operator-only tag pushing + post-hoc CI / regression-test detection — *not* server-side hooks; see the § 7.12 A2 FACT note). The agent's self-report is one input; the verification scripts are the floor. The operator's review reads both and reconciles.
 
 Wall-clock under this model is bounded by:
 1. Stage count × per-stage agent latency.
@@ -2643,9 +2641,9 @@ These prohibitions apply to every phase agent. Items 1–12 are convention-enfor
 11. **Do NOT write code from memory for an API surface.** Probe or check `docs/common/<stack>.md`.
 12. **Do NOT modify vendored source under `references/`.** Read-only.
 13. **Do NOT push phase tags.** Tags `v0.<N>.0-phase-<N>` are pushed only by the operator after landing-audit review, per spec § 7.12.
-14. **Do NOT push to any branch other than `main`.** Server-side hook rejects.
-15. **Do NOT `git push --force` or `git push --force-with-lease`.** Server-side hook rejects.
-16. **Do NOT edit or shorten any file under `docs/_audits/`** that is already present on `main` at any prior tag. Append-only. Server-side hook rejects.
+14. **Do NOT push to any branch other than `main`.** The agent pushes refs + LFS objects to `main` only (trunk-based, § Q.6); pushing any non-`main` branch is forbidden. Convention (single-operator trunk); *no server-side hook enforces this* (see § 7.12 A2 FACT note; branch-protection is unconfigured — `branches/main/protection` → 404).
+15. **Do NOT `git push --force` or `git push --force-with-lease`.** Convention + post-hoc detection: a history rewrite is caught by the cross-phase replay's bit-identity invariant and the audit chain. *No server-side hook enforces this* (branch-protection unconfigured).
+16. **Do NOT edit or shorten any file under `docs/_audits/`** that is already present on `main` at any prior tag. Append-only. Caught **post-hoc** by the `audit-append-only.yml` CI check (PR / push time), *not* by a pre-receive server-side hook.
 17. **Do NOT widen a tolerance in `tolerance.toml` beyond the `tolerance-budget.toml` cap** without first landing an operator-approved tolerance-budget-amendment commit. Cat-X HARD_FAIL otherwise. Per § 2.6.
 
 ## D.9 — Context-fill triage discipline
@@ -3248,20 +3246,21 @@ Soft-warn exceptions: noisy checks may run in soft-warn for one rule-of-three cy
 
 All commits go directly to `main`. No protected branches, no feature branches, no long-lived development branches. Tag each phase-landing commit `v0.<N>.0-phase-<N>`. No `git rebase main` (nothing to rebase against). No `git push --force`.
 
-### Server-side hooks (mechanical enforcement)
+### Enforcement posture (single-operator trunk + post-hoc CI)
 
-The convention items in D.8 are reinforced by server-side hooks (GitHub branch protection or platform equivalent). All HARD_FAIL:
+**FACT correction (Phase-4 A2).** Earlier text claimed the D.8 convention items were "reinforced by server-side hooks (GitHub branch protection or platform equivalent), all HARD_FAIL." **That is not the case.** github.com offers no custom pre-receive hooks, GitHub rulesets cannot verify tag GPG signatures, and this repo has **no branch-protection configured** (`branches/main/protection` → 404, measured). Rows 1–4 below describe *desired future hardening*, not present mechanism; rows 5–7 are the **real, present** post-hoc CI / regression-test floor. The actual model is **single-operator trunk**: the agent commits and pushes refs + LFS objects to `main` directly (§ Q.6); only **phase tags** are operator-only (I7), and non-`main` branches / force-pushes are forbidden by convention.
 
-| # | Rule | Implementation |
-|---|---|---|
-| 1 | No force-push to `main` | Branch protection: disallow force-push |
-| 2 | No post-publication history rewrite | Branch protection: disallow non-fast-forward updates |
-| 3 | No remote branches except `main` | Pre-receive hook rejects refs/heads/* other than main |
-| 4 | Phase tags signed by operator only | Pre-receive hook checks `git verify-tag`; agent identity rejected |
-| 5 | Audit append-only | `.github/workflows/audit-append-only.yml` per G.7 |
-| 6 | Tolerance overrides within budget | `.github/workflows/tolerance-budget-check.yml` runs on every PR to `tolerance.toml` |
+| # | Rule | Status | Mechanism |
+|---|---|---|---|
+| 1 | No force-push to `main` | **NOT configured** (desired) | Would need branch protection; currently convention + replay bit-identity detection |
+| 2 | No post-publication history rewrite | **NOT configured** (desired) | Convention + cross-phase replay invariant + audit chain |
+| 3 | No remote branches except `main` | **NOT configured** (desired) | Convention (agent pushes `main` only; non-`main` branches forbidden) |
+| 4 | Phase tags pushed by operator only | **NOT a signer moat** | Tags are operator-pushed but **annotated-UNSIGNED**; no `git verify-tag` pre-receive hook exists. Post-hoc: `test_i7_no_agent_tags.py` allowlist regression test flags any unsanctioned in-range tag |
+| 5 | Audit append-only | **PRESENT (post-hoc CI)** | `.github/workflows/audit-append-only.yml` per G.7 |
+| 6 | Tolerance overrides within budget | **PRESENT (post-hoc CI)** | Cat-X in `integrity --all`; runs on every PR touching `tolerance.toml` |
+| 7 | Cross-phase integrity replay | **PRESENT (operator pre-check)** | `replay_prior_phase.py` re-runs the prior phase's gate set at its tag |
 
-The mechanical floor reduces "trust the agent's report" to "trust the agent for things the floor doesn't catch." The list of things the floor catches grows phase by phase.
+The post-hoc floor reduces "trust the agent's report" to "trust the agent for things the floor doesn't catch" — but it **detects after the fact**, it does not pre-empt at the server. The list of things the floor catches grows phase by phase.
 
 ## G.11 — Sequential single-agent execution (spec § 7.13)
 
