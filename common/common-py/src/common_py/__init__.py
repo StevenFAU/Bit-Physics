@@ -20,6 +20,24 @@ module at full surface).
 
 from __future__ import annotations
 
+import warnings
+
+# Pre-import Taichi (the autodiff backend) with its known import-time
+# `locale.getdefaultlocale` DeprecationWarning (a Taichi-1.7.4 quirk — see this
+# package's pyproject `filterwarnings`) suppressed. The eager `autodiff` import
+# below imports Taichi from cache (silent), so importing `common_py` — including
+# a consumer's `from common_py.capture import ...` under strict
+# `filterwarnings=["error"]` (e.g. neural-ca) — does NOT leak that third-party
+# warning. The suppression is scoped (catch_warnings restores filters) and
+# message-specific, so it hides nothing else. (WU-A regression fix.)
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        message=r".*locale\.getdefaultlocale.*",
+        category=DeprecationWarning,
+    )
+    import taichi  # noqa: F401  — pre-warm under suppression; autodiff imports it cached.
+
 from . import alembic, autodiff, capture, determinism, ggui, hotreload, plotting, vdb
 
 __all__ = [
