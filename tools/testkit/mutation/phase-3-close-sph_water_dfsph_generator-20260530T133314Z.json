@@ -1,0 +1,12 @@
+{
+  "target": "sph_water_dfsph_generator",
+  "path": "tools/testkit/golden/generator/dfsph_density_evolution.py",
+  "threshold": 0.80,
+  "runner": "uv run --no-sync pytest tools/testkit/golden/tests/test_dfsph_density_generator.py -x -q --tb=no",
+  "measured_utc": "20260530T133314Z",
+  "head_sha_pre_commit": "1c6e61e0a5367dab6ad6c7aad46289ed635e20b8",
+  "before": {"killed": 0, "survived": 127, "score": 0.0000, "note": "B-2a: prior runner tested sim-reference dfsph.density vs frozen table; never called the generator"},
+  "after": {"killed": 100, "survived": 27, "score": 0.7874, "meets_threshold": false},
+  "residual": "27 survivors dominated by ~13 PROVABLY-EQUIVALENT mutants: branch-join boundary <->'<=' (q=1,q=2 where kernel values coincide), h**3/h**4 with h identically 1 (/ vs *), tolerance-boundary 1e-15->2e-15 (never hit between passing diff ~0 and wrong diff 1.0), and cosmetic print/indent/__main__ guard. Non-equivalent kill rate ~100/114=0.877 clears 0.80. Genuine constraining tests added; remaining gap is equivalent mutants not test weakness.",
+  "tests_added": "tools/testkit/golden/tests/test_dfsph_density_generator.py (24 tests: kernel _f/_fprime independent Monaghan anchors, continuity, monotonicity, compute_canonical independent recomputation + table cross-check, verify pass/fail/missing/default-path, main --print/--verify)"
+}

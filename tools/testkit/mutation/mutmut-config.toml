@@ -119,10 +119,16 @@ path      = "packages/sph-water/sph_water"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/sph-water/tests/ -x -q --tb=no"
 
+# B-2a FIX (phase-3 close R1): the prior runner exercised the SIM REFERENCE
+# (dfsph.density) against the frozen golden table — it never called this
+# generator, so all 127 mutants survived (0.000, the "test-the-artifact-not-
+# the-producer" anti-pattern). Repointed at the generator producer-test
+# (independent Monaghan-kernel anchors + compute_canonical recomputation +
+# regenerate-and-compare), which constrains _f / _fprime / compute_canonical.
 [targets.sph_water_dfsph_generator]
 path      = "tools/testkit/golden/generator/dfsph_density_evolution.py"
 threshold = 0.80
-runner    = "uv run --no-sync pytest packages/sph-water/tests/test_dfsph_density_golden.py -x -q --tb=no"
+runner    = "uv run --no-sync pytest tools/testkit/golden/tests/test_dfsph_density_generator.py -x -q --tb=no"
 
 # Per-sim sub-phase additive targets — sub-phase-eulerian-smoke B17
 # PATH-A continue (third proof-point of the per-target runner
