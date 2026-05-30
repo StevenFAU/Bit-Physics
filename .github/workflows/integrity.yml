@@ -20,6 +20,12 @@ jobs:
       - name: Sync integrity deps
         working-directory: tools/integrity
         run: uv sync --extra dev
+      - name: Run integrity meta-test
+        # n-7 (back-test re-audit): the meta-test invokes every Cat check
+        # against the adversarial fixture trees. architecture.md states the
+        # meta-test is part of CI; this step makes that claim true.
+        working-directory: tools/integrity
+        run: uv run pytest tests/ -q
       - name: Run integrity --all
         working-directory: tools/integrity
         run: uv run python -m integrity --all

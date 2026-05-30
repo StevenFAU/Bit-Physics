@@ -597,6 +597,8 @@ Mutation-test runs are a weekly **T4** tier (catalog `docs/planning/bit-physics-
 
 **Configuration:** `tools/testkit/mutation/mutmut-config.toml` for Python; `tools/testkit/mutation/stryker.conf.json` for TS. Both committed alongside `tools/testkit/` so the configuration is co-versioned with the modules it tests.
 
+**Advisory sim/satellite targets.** Beyond the six spec-floored testkit/integrity modules above, `mutmut-config.toml` also carries additional per-sim and satellite targets (per-sim reference solvers and MMS solutions, the golden-table generators, render-similarity, etc.). These are **advisory, non-blocking** — they exist to accumulate a first real per-target baseline as each sub-phase lands, are not part of the §2.13 gate, and CI's mutation job excludes `packages/**`. A sub-phase may raise one to a gate by stating so in its plan; absent that, they carry the 0.80 advisory floor inherited from the MMS solution target and never block a landing.
+
 ## 2.14 Property-based testing for invariants
 
 MMS is one form of analytical property test — it verifies the solver satisfies a manufactured property (the manufactured solution). It does not cover the full surface of invariants a sim must satisfy: boundary conditions, symmetries, conservation laws, particle-system integrity under random initial conditions, monotone bounds under random parameters, etc. These edge cases are missed by both MMS and golden values.
