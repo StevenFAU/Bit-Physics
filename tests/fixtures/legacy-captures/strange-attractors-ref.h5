@@ -1,4 +1,3 @@
-PHASE-1-STAGE-2 PLACEHOLDER — not an HDF5 file.
-See the sidecar manifest at strange-attractors-ref.json for the canonical
-capture descriptor (lorenz-canonical-seed42-step10000). The per-sim
-implementation phase will replace this file with the real .h5 payload.
+version https://git-lfs.github.com/spec/v1
+oid sha256:4e4597af186201d776fc27d4b31acbf449ed732325554c46949eef7497bd5802
+size 263
