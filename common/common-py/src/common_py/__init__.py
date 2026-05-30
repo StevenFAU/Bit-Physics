@@ -22,20 +22,19 @@ from __future__ import annotations
 
 import warnings
 
-# Pre-import Taichi (the autodiff backend) with its known import-time
-# `locale.getdefaultlocale` DeprecationWarning (a Taichi-1.7.4 quirk — see this
-# package's pyproject `filterwarnings`) suppressed. The eager `autodiff` import
-# below imports Taichi from cache (silent), so importing `common_py` — including
-# a consumer's `from common_py.capture import ...` under strict
-# `filterwarnings=["error"]` (e.g. neural-ca) — does NOT leak that third-party
-# warning. The suppression is scoped (catch_warnings restores filters) and
-# message-specific, so it hides nothing else. (WU-A regression fix.)
+# Pre-import Taichi (the autodiff backend) with ITS import-time warnings
+# suppressed. Importing Taichi 1.7.4 emits at least two third-party warnings the
+# project cannot fix: a `locale.getdefaultlocale` DeprecationWarning and a
+# `SyntaxWarning: invalid escape sequence` from `taichi/tools/image.py` (the
+# latter fires only on a fresh .pyc compile, e.g. a CI runner). The eager
+# `autodiff` import below imports Taichi from cache (silent), so importing
+# `common_py` — including a consumer's `from common_py.capture import ...` under
+# strict `filterwarnings=["error"]` (e.g. neural-ca) — does NOT leak Taichi's
+# import-time warnings. Suppression is scoped to this single import statement
+# (catch_warnings restores filters immediately after), so it hides nothing from
+# common_py's own code or from consumers. (WU-A regression fix.)
 with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore",
-        message=r".*locale\.getdefaultlocale.*",
-        category=DeprecationWarning,
-    )
+    warnings.simplefilter("ignore")
     import taichi  # noqa: F401  — pre-warm under suppression; autodiff imports it cached.
 
 from . import alembic, autodiff, capture, determinism, ggui, hotreload, plotting, vdb
