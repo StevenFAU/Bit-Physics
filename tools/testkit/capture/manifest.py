@@ -43,11 +43,12 @@ class CaptureManifest:
     run: dict[str, Any]
     payload: dict[str, Any]
     determinism: dict[str, Any]
-    #: Optional 1.1.0 addition (WU-A). ``None`` for 1.0.0 captures; omitted
-    #: from :meth:`to_dict` when ``None`` so legacy round-trips stay
-    #: byte-faithful and re-validation never sees a ``null`` for the
-    #: array-typed property. (WU-B adds ``active_mask`` alongside.)
+    #: Optional 1.1.0 additions. ``None`` for 1.0.0 captures; omitted from
+    #: :meth:`to_dict` when ``None`` so legacy round-trips stay byte-faithful and
+    #: re-validation never sees a ``null`` for the array/object-typed property.
+    #: ``gradient_fields`` added by WU-A; ``active_mask`` by WU-B (same 1.1.0 bump).
     gradient_fields: list[dict[str, Any]] | None = None
+    active_mask: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         data = asdict(self)
@@ -68,6 +69,7 @@ class CaptureManifest:
             payload=dict(data["payload"]),
             determinism=dict(data["determinism"]),
             gradient_fields=data.get("gradient_fields"),
+            active_mask=data.get("active_mask"),
         )
 
 

@@ -111,6 +111,18 @@
           "wrt":   { "type": "string", "minLength": 1 }
         }
       }
+    },
+    "active_mask": {
+      "description": "Optional (WU-B, schema 1.1.0 — same bump as gradient_fields, no further version increment). Active-cell mask for sparse-encoded volumetric state. Absent in 1.0.0 captures.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["encoding", "dtype", "shape", "topology_hash"],
+      "properties": {
+        "encoding":      { "type": "string", "enum": ["dense", "nanovdb"] },
+        "dtype":         { "type": "string", "enum": ["uint8"] },
+        "shape":         { "type": "array", "items": { "type": "integer" } },
+        "topology_hash": { "type": "string", "minLength": 1 }
+      }
     }
   }
 }
