@@ -19,7 +19,7 @@
 | 10 | 4.2 | particle-fluids/sph-water | diff | D | § 4.2.A | (none) | — | docs/sim-specs/particle-fluids/sph-water/spec-diff.md | TODO (≥2) | no | — | planned |
 | 11 | 4.3 | hybrid-pg/mpm-multimaterial | diff | D | § 4.2.A | (none) | — | docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-diff.md | 2 (gradient_matches_finite_difference + momentum_change_bounded_by_impulse) | yes | batch-1-close | **landed** |
 | 12 | 4.4 | continuous-ca/lenia | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-diff.md | 2 (gradient_matches_finite_difference + field_bounded) | yes | batch-1-close | **landed** |
-| 13 | 4.5 | volumetric-grid/eulerian-smoke | diff | E | § 4.2.A | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-diff.md | TODO (≥2) | no | — | planned |
+| 13 | 4.5 | volumetric-grid/eulerian-smoke | diff | E | § 4.2.A | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-diff.md | 2 (gradient_matches_finite_difference + advect_field_bounded_by_input_range) | yes | batch-1-close | **landed** |
 | 14 | 4.6 | rigid-body/articulated-pedagogical | diff | E | § 4.2.A | Phase 3 task-4 | — | docs/sim-specs/rigid-body/articulated-pedagogical/spec-diff.md | TODO (≥2) | no | — | planned |
 | 15 | 4.7 | volumetric-grid/eulerian-smoke | sparse-nanovdb | C+E | § 4.2.B | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-sparse.md | TODO (≥2) | no | — | planned |
 | 16 | 4.8 | hybrid-pg/mpm-multimaterial | sparse-nanovdb | E | § 4.2.B | (none) | — | docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-sparse.md | TODO (≥2) | no | — | planned |

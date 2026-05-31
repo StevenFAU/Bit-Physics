@@ -90,7 +90,8 @@ The **Warp** backend (sim 4 is the FIRST Stack-E consumer of WU-A; sims 1–3 we
 `common_warp.autodiff.{InverseProblem, InitialStateRecoveryProblem, ControlProblem, ParamSpec,
 finite_difference_gradient, GradientCheckReport, make_optimizer}` + `new_tape`
 (`common/common-warp/src/common_warp/autodiff/inverse_problem.py:73,268,272`,
-`.../param_spec.py:22`, `.../finite_diff.py:26,156`), the `gradient_fields` capture key (schema
+`common/common-warp/src/common_warp/autodiff/param_spec.py:22`,
+`common/common-warp/src/common_warp/autodiff/finite_diff.py:26,156`), the `gradient_fields` key (schema
 1.1.0, `tools/testkit/schemas/capture-v1.json:100`), `common_warp.capture.write_frames_capture`
 (`common/common-warp/src/common_warp/capture/frames.py:29`), the WU-F `differentiable` axis
 (`tools/testkit/equivalence/variant/tolerance.py`).
