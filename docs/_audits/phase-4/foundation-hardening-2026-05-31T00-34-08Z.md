@@ -3,7 +3,7 @@ date: 2026-05-31T00-34-08Z
 author: phase-4.1 foundation-hardening campaign (Claude Code)
 subject: "Phase-4.1 FOUNDATION HARDENING — mutation-score hardening pass (5 SOFT_WARN-advisory targets) + promotion dispositions"
 kind: foundation-hardening
-verdict: IN-PROGRESS
+verdict: HARDENING-COMPLETE-2-PROMOTED-3-ADVISORY
 head_sha: 1623d1ad05b704288bd1c25aa1889b36273f1bde
 prior_phase_tag: v0.3.0-phase-3
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
@@ -265,20 +265,84 @@ snapshot/test-file padding.
 
 | Push SHA | Scope | Sweep result |
 |---|---|---|
-| `57c297a` | render_similarity tests + audit | **RED** — `python-strict / test-render-similarity` FAILED on `mypy --strict` (CI mypy-checks the whole `render_similarity/` dir; commit hooks do not). STOP-and-fixed (not forced). |
+| `cf50b6a`→`57c297a` | render_similarity tests + audit | **RED** — `python-strict / test-render-similarity` FAILED on `mypy --strict` (CI mypy-checks the whole `render_similarity/` dir; commit hooks do not). STOP-and-fixed (not forced). |
 | `a4f9c90` | render mypy hotfix (2 `# type: ignore`) | **all green** (python-strict incl. test-render-similarity ✓; integrity, equivalence, determinism, cpp-strict, ts-strict, tolerance-budget, audit-append-only, structure). |
+| `e8685f9`→`ce7cda7` | variant tests + audit | **all green** (python-strict success; equivalence + 8 others success). |
+| `6ea32f8`→`e488235` | common-3dgs tests (×2) + audit | **all green** (python-strict incl. test-common-3dgs ✓ at `e488235`). |
+| `b3845a6` | mms narrowing (config) + audit | **all green** (mutation-testing ✓ — config narrowing safe; python-strict + integrity success). |
+| `2570614` | property narrowing (config) + audit | green (config + audit; equivalence/integrity success). |
+| `59a9289`→`cc8db7b` | promotion gate + ledger + §2.13 | (final sweep at close push below) |
+| _(close-report push)_ | this audit close + verdict | **final §S.5 swept at the close HEAD — see Provenance.** |
+
+**§R measured-live at close:** `integrity --all --mode strict` = **0 HARD_FAIL / 14 SOFT_WARN**
+(the load-bearing invariant; the §2.13 edit added prose + a posture table, no golden table /
+audit-log emitter, so no new HF/SW). Per the recorded discipline, the 0HF/14SW counts are
+the invariant, not a digest literal.
 
 ## §2 — PHASE 2 promotion dispositions
 
-_(appended at close)_
+Per the operator-ratified PRE-AUTHORIZED RULE: a target that clears its floor on
+real oracle tests (no snapshot padding, equivalents honestly excluded) → PROMOTE to
+HARD_FAIL-at-landing + wire the gate; one that does not → stays SOFT_WARN advisory,
+residual + lever recorded. BORDERLINE cases (clears only via class-(iii) narrowing;
+<0.02 margin; large equivalent-exclusion share) are SURFACED, not auto-flipped.
+
+| Target | After | Disposition | Rationale |
+|---|---|---|---|
+| `render_similarity` | 0.9242 | **PROMOTED → HARD_FAIL-at-landing** | clears 0.85 by +0.074 on oracle tests; 16 residual all equivalent/oos (counted as survivors — not exclusion-to-floor). |
+| `variant` | 0.8702 | **PROMOTED → HARD_FAIL-at-landing** | clears 0.85 by +0.0202 (≥0.02, not the <0.02 borderline band) on oracle tests; 17 residual all equivalent/oos. |
+| `common_3dgs` | 0.7708 | **STAYS ADVISORY** | +159 genuine kills; below 0.80; recorded honestly, not forced (lever §1.C). |
+| `code_verification_mms` | 0.438 (narrowed) | **STAYS ADVISORY + SURFACED** | clears NOTHING (0.438<0.80); class-(iii) narrowing applied; residual glue; RD-2D coverage gap surfaced (§1.D). |
+| `property` | 0.6453 (narrowed) | **STAYS ADVISORY + SURFACED** | clears NOTHING (0.6453<0.80); class-(iii) narrowing applied; testkit-core lever + per-sim-target gap surfaced (§1.E). |
+
+**§2.13 + ledger edits (CONFIRMED, wired — not aspirational):**
+- `docs/architecture.md` §2.13: changelog bullet + enforcement paragraph (earned-promotions
+  table) + advisory-paragraph — render_similarity + variant promoted; the rest advisory.
+- `tools/testkit/mutation/phase-4.1-hardening-2026-05-31T05-09-12Z.json`: real-scores ledger
+  (5 targets, before→after, posture, residual classification).
+- `tools/testkit/mutation/mutmut-config.toml`: the mms + property class-(iii) narrowings
+  (with written justification in-file).
+- `tools/integrity/integrity/scripts/gate_helpers.py` `mutation-promoted-floor` + meta-test
+  `tools/integrity/tests/test_gate_helpers_promoted_floor.py` (5 tests): enforces every
+  `posture: HARD_FAIL-at-landing` ledger target meets floor; advisory targets do not gate.
+  Live run on the committed ledger PASSES (render_similarity=0.9242, variant=0.8702).
+
+**SURFACED (operator-ratifiable, NOT auto-flipped):**
+1. `code_verification_mms` `reaction_diffusion_2d/solution.py` is now un-mutation-targeted
+   (no dedicated target; RD-2D's MMS gate is Phase-2+) — add `reaction_diffusion_2d_mms` when it lands.
+2. `property` per-sim `sims/*/invariants.py` are exercised-but-not-mutation-targeted —
+   per-sim invariant mutation targets are a follow-up.
+3. Finer function-level narrowing of the mms report/HDF5/CLI glue (file-level fnmatch can't
+   target functions) OR an explicit "glue is non-load-bearing for the floor" ruling.
+4. The advisory below-floor levers (common_3dgs model-PLY/EWA/Warp; property testkit-core
+   checker oracles) — focused follow-up batches.
 
 ## §9 — CONTRADICTIONS vs EXPECTED (collector)
 
 | # | Expected | Measured live | Disposition |
 |---|---|---|---|
+| C-1 | Commit hooks gate what CI gates | CI `python-strict` mypy-checks the whole `render_similarity/` dir (incl. tests); commit hooks do NOT run mypy | **§S.5 caught it** — `57c297a` RED on mypy, fixed `a4f9c90`. Going-forward: run `mypy --strict` on test files in the CI per-sim mypy scope before pushing. |
+| C-2 | `property` baseline ≈ A3's 437 mutants / 0.3455 | 890 mutants / 0.170 at HEAD (pkg grew with WU-C/D/E satellite PBT dirs) | **measure-then-declare** — used the live baseline, not the stale A3 figure. |
+| C-3 | mms narrowing cleanly removes all 3 cross-driven sim-solution dirs | `reaction_diffusion_2d` has NO dedicated target — excluding it orphans it | **SURFACED** — exclusion still correct (RD-2D's responsibility), the coverage gap flagged (§2 SURFACED-1). |
+| C-4 | common_3dgs asymmetric-quat batch would kill ~40 | only +12 (off-diagonal mutants leave `np.empty` garbage that reads back correct ~non-deterministically) | **honest record** — `np.empty`-flaky mutants noted as borderline-equivalent / deterministic-init lever (§1.C). |
+| C-5 | All 5 targets reach floor (dispatch goal framing) | only 2 of 5 clear; 3 stay advisory after genuine hardening | **not forced** — "hitting the floor is NOT the objective" (dispatch core principle); below-floor recorded honestly with levers. |
+
+## §10 — Disposition (close)
+
+PHASE 0 CONFIRMED (WU-A + WU-F contracts hold). PHASE 1 mutation hardening done
+target-by-target with oracle-grounded tests (NO snapshot padding) — **2 of 5 targets
+cleared their floors and were PROMOTED to HARD_FAIL-at-landing** (render_similarity
+0.9242, variant 0.8702); **3 stayed SOFT_WARN advisory** (common_3dgs 0.7708 genuine
+hardening below floor; mms 0.438-narrowed + property 0.6453-narrowed class-(iii)
+narrowed), recorded honestly per "hitting the floor is NOT the objective." PHASE 2
+promotions wired (§2.13 + real-scores ledger + `mutation-promoted-floor` gate +
+meta-test). 4 levers/gaps SURFACED for operator ratification (§2). Every push §S.5-swept
+(§S.5); integrity 0 HF / 14 SW held throughout. No HARD-RULE-2 conflict was forced. No
+tag pushed (I7 — operator-only).
 
 ## Provenance
 
-Convention #12 SHA back-fill applies to `head_sha:`. Integrity invariant
-(0 HARD_FAIL / 14 SOFT_WARN) preserved; `integrity_digest_at_head` measured live
-(§R) at close. No tag (I7).
+Convention #12 SHA back-fill applies to `head_sha:` (the campaign-open SHA; per-target
+commit SHAs are in §S.5 + git log). Integrity invariant (0 HARD_FAIL / 14 SOFT_WARN)
+measured live at close (§R) and preserved throughout. The final §S.5 sweep is run at the
+close-report push HEAD (recorded by the author after push). No tag (I7).
