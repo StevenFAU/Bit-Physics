@@ -1,0 +1,329 @@
+{
+ "schema_version": "1.0.0",
+ "algorithm": "physgaussian-sh-rotation-degree1",
+ "category": "neural-rendered",
+ "derivation": {
+  "doc": "tools/testkit/golden/derivations/3dgs-mpm-sh-rotation.md",
+  "upstream": "PhysGaussian Eq. (9) SH rotation under deformation (Xie et al. 2024, arXiv:2311.12198); rotate SH coeffs by R from the polar decomposition F=R S. Degree-1 Wigner-D in the common-3dgs real-SH basis (-y,+z,-x) is D1(R)=P R P^T, P=[[0,-1,0],[0,0,1],[-1,0,0]].",
+  "upstream_sha": "8339ed6aa2cd5d50e1001a254a3d95aea678a956",
+  "upstream_path": "n/a-cite-only-no-source-vendored"
+ },
+ "tolerance": {
+  "absolute": 1e-12,
+  "relative": 1e-12
+ },
+ "test_points": [
+  {
+   "inputs": {
+    "anchor": "anchor1-closed-form",
+    "sh_coefficients": [
+     [
+      [
+       0.3,
+       -0.1,
+       0.2
+      ],
+      [
+       1.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0
+      ]
+     ]
+    ],
+    "rotation": [
+     [
+      [
+       6.123233995736766e-17,
+       -1.0,
+       0.0
+      ],
+      [
+       1.0,
+       6.123233995736766e-17,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "expected": {
+    "sh_rotated": [
+     [
+      [
+       0.3,
+       -0.1,
+       0.2
+      ],
+      [
+       6.123233995736766e-17,
+       -0.0,
+       -0.0
+      ],
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       -1.0,
+       -0.0,
+       -0.0
+      ]
+     ]
+    ]
+   },
+   "independent_reference": {
+    "source": "anchor1-closed-form: degree-1 Wigner-D D1(R)=P R P^T (matrix algebra), renderer (-y,+z,-x) basis; hand-verified c=(1,0,0)@R_z(90deg)->(0,0,-1)",
+    "derived_by": "hand-derivation (P R P^T closed form)",
+    "expected": {
+     "sh_rotated": [
+      [
+       [
+        0.3,
+        -0.1,
+        0.2
+       ],
+       [
+        6.123233995736766e-17,
+        -0.0,
+        -0.0
+       ],
+       [
+        0.0,
+        0.0,
+        0.0
+       ],
+       [
+        -1.0,
+        -0.0,
+        -0.0
+       ]
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "inputs": {
+    "anchor": "anchor2-dipole-rotation",
+    "sh_coefficients": [
+     [
+      [
+       0.5,
+       0.5,
+       0.5
+      ],
+      [
+       0.2,
+       0.1,
+       -0.4
+      ],
+      [
+       -0.5,
+       0.1,
+       0.2
+      ],
+      [
+       0.3,
+       0.1,
+       0.0
+      ]
+     ]
+    ],
+    "rotation": [
+     [
+      [
+       1.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       6.123233995736766e-17,
+       -1.0
+      ],
+      [
+       0.0,
+       1.0,
+       6.123233995736766e-17
+      ]
+     ]
+    ]
+   },
+   "expected": {
+    "sh_rotated": [
+     [
+      [
+       0.5,
+       0.5,
+       0.5
+      ],
+      [
+       -0.5,
+       0.1,
+       0.19999999999999998
+      ],
+      [
+       -0.20000000000000004,
+       -0.1,
+       0.4
+      ],
+      [
+       0.3,
+       0.1,
+       -0.0
+      ]
+     ]
+    ]
+   },
+   "independent_reference": {
+    "source": "anchor2-dipole-rotation: band-1 linear functional gradient a=(-c3,-c1,c2) rotated by R (same-theory caveat: reduces to D1); R_x(90deg)",
+    "derived_by": "hand-derivation (dipole-vector rotation; independent of the P R P^T code path)",
+    "expected": {
+     "sh_rotated": [
+      [
+       [
+        0.5,
+        0.5,
+        0.5
+       ],
+       [
+        -0.5,
+        0.1,
+        0.19999999999999998
+       ],
+       [
+        -0.20000000000000004,
+        -0.1,
+        0.4
+       ],
+       [
+        0.3,
+        0.1,
+        -0.0
+       ]
+      ]
+     ]
+    }
+   }
+  },
+  {
+   "inputs": {
+    "anchor": "anchor3-identity-frozen",
+    "sh_coefficients": [
+     [
+      [
+       0.5,
+       0.5,
+       0.5
+      ],
+      [
+       0.2,
+       0.1,
+       -0.4
+      ],
+      [
+       -0.5,
+       0.1,
+       0.2
+      ],
+      [
+       0.3,
+       0.1,
+       0.0
+      ]
+     ]
+    ],
+    "rotation": [
+     [
+      [
+       1.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.0,
+       1.0,
+       0.0
+      ],
+      [
+       0.0,
+       0.0,
+       1.0
+      ]
+     ]
+    ]
+   },
+   "expected": {
+    "sh_rotated": [
+     [
+      [
+       0.5,
+       0.5,
+       0.5
+      ],
+      [
+       0.2,
+       0.1,
+       -0.4
+      ],
+      [
+       -0.5,
+       0.1,
+       0.2
+      ],
+      [
+       0.3,
+       0.1,
+       -0.0
+      ]
+     ]
+    ]
+   },
+   "independent_reference": {
+    "source": "anchor3-identity-frozen: R=I leaves SH unchanged (recovers the task-8 MVP SH-frozen); fully independent",
+    "derived_by": "hand-derivation (degenerate identity)",
+    "expected": {
+     "sh_rotated": [
+      [
+       [
+        0.5,
+        0.5,
+        0.5
+       ],
+       [
+        0.2,
+        0.1,
+        -0.4
+       ],
+       [
+        -0.5,
+        0.1,
+        0.2
+       ],
+       [
+        0.3,
+        0.1,
+        -0.0
+       ]
+      ]
+     ]
+    }
+   }
+  }
+ ]
+}

@@ -45,7 +45,30 @@ def build_sh_update_scene(*, seed: int = 0, n_gaussians: int = 256) -> SHUpdateS
     position-coloured DC; the degree-1 band encodes a directional gradient so rotation is
     observable.
     """
-    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+    from gs_mpm.scene import build_canonical_scene
+
+    base = build_canonical_scene(seed=seed, n_gaussians=n_gaussians)
+    n = base.n
+    dc = base.sh_coefficients.reshape(n, 1, 3).astype(np.float32)  # parent degree-0 DC
+
+    # Degree-1 directional band (K=4): per Gaussian a dipole aligned with its offset from the
+    # blob centre, so the body's rotation under the MPM deformation visibly rotates the
+    # view-dependent colour (the Prong-2 render-similarity gate is non-vacuous). The same
+    # dipole on all three channels (a luminance gradient) keeps the colour in range.
+    offset = base.mpm_positions - base.mpm_positions.mean(axis=0)
+    dirs = offset / np.clip(np.linalg.norm(offset, axis=1, keepdims=True), 1e-9, None)
+    amp = np.float32(0.5)
+    band1 = np.repeat((amp * dirs).astype(np.float32)[:, :, None], 3, axis=2)  # (n, 3, 3)
+    sh = np.concatenate([dc, band1], axis=1)  # (n, 4, 3): DC + degree-1
+
+    return SHUpdateScene(
+        positions=base.positions,
+        scales=base.scales,
+        rotations=base.rotations,
+        opacities=base.opacities,
+        sh_coefficients=sh,
+        mpm_positions=base.mpm_positions,
+    )
 
 
 __all__ = ["SHUpdateScene", "build_sh_update_scene"]

@@ -42,7 +42,14 @@ def polar_rotation(deformation_gradient: NDArray[np.floating]) -> NDArray[np.flo
     ``U`` where ``det(U V^T) < 0`` (the standard nearest-rotation correction). For a pure
     stretch (``F`` SPD) ``R = I``; for a pure rotation (``F`` orthogonal) ``R = F``.
     """
-    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+    f = np.asarray(deformation_gradient, dtype=np.float64).reshape(-1, 3, 3)
+    u, _s, vt = np.linalg.svd(f)
+    r = u @ vt
+    # Nearest PROPER rotation: where det(U V^T) < 0, flip the last column of U.
+    flip = np.linalg.det(r) < 0.0
+    u[flip, :, 2] *= -1.0
+    r = u @ vt
+    return np.ascontiguousarray(r, dtype=np.float64)
 
 
 def rotate_sh_degree1(
@@ -54,7 +61,26 @@ def rotate_sh_degree1(
     present when ``K >= 4``) is rotated per channel by ``D1(R) = P R P^T``. ``K`` must be 1
     (DC-only) or 4 (degree 1); ``K`` implying degree >= 2 raises ``NotImplementedError``.
     """
-    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+    sh = np.asarray(sh_coefficients, dtype=np.float64)
+    if sh.ndim != 3 or sh.shape[2] != 3:
+        raise ValueError(f"sh_coefficients must be (N, K, 3); got {sh.shape}")
+    k = sh.shape[1]
+    out = sh.copy()
+    if k == 1:
+        return out  # DC-only (degree 0) — rotation-invariant
+    if k != 4:
+        raise NotImplementedError(
+            f"SH degree >= 2 (K={k}) rotation is out of scope (degree <= 1 only); "
+            "higher-band real-SH Wigner-D is a documented further extension"
+        )
+    r = np.asarray(rotation, dtype=np.float64).reshape(-1, 3, 3)
+    if r.shape[0] != sh.shape[0]:
+        raise ValueError(f"rotation leading dim {r.shape[0]} != N {sh.shape[0]}")
+    # Degree-1 Wigner-D in the renderer's (-y,+z,-x) basis: D1(R) = P R P^T.
+    d1 = np.einsum("ij,njk,lk->nil", _P, r, _P)
+    # Rotate the 3 band-1 coefficients (axis 1) per channel: c'[n,i,ch] = D1[n,i,j] c[n,j,ch].
+    out[:, 1:4, :] = np.einsum("nij,njc->nic", d1, sh[:, 1:4, :])
+    return out
 
 
 __all__ = ["polar_rotation", "rotate_sh_degree1"]
