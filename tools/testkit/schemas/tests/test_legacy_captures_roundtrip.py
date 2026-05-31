@@ -58,8 +58,9 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # gradient_fields capture (the corpus grows deliberately — each addition bumps
 # this count, so a silent drop/add still fails loudly). Phase-4 batch-1 sim 1
 # (reaction-diffusion-2d-diff) is the first 1.1.0 entry → 27 (18 real + 9 placeholder);
-# batch-1 sim 2 (lenia-diff) is the second 1.1.0 entry → 28 (19 real + 9 placeholder).
-_EXPECTED_TOTAL = 28
+# batch-1 sim 2 (lenia-diff) is the second 1.1.0 entry → 28 (19 real + 9 placeholder);
+# batch-1 sim 3 (mpm-multimaterial-diff) is the third 1.1.0 entry → 29 (20 real + 9 placeholder).
+_EXPECTED_TOTAL = 29
 _EXPECTED_PLACEHOLDERS = 9
 
 

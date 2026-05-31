@@ -666,3 +666,40 @@ jobs:
       - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + PBT + capture)
         working-directory: packages/lenia-diff
         run: uv run pytest tests/
+
+  # Phase-4 batch-1 sim 3/4 (mpm-multimaterial-diff). Differentiable 3D APIC neo-Hookean
+  # MLS-MPM (Stack D / Taichi ti.ad.Tape) on the WU-A autodiff substrate. Tests instantiate
+  # the sim in-process (the forward-equivalence test imports the mpm-multimaterial-stack-d
+  # reference, pulled in via the dev extra) — no committed LFS capture is read (the
+  # schema-corpus legacy-capture fixture this sim ships is consumed by the WU-A corpus
+  # round-trip jobs, not here), so no selective LFS pull step.
+  test-mpm-multimaterial-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync mpm-multimaterial-diff workspace deps (with dev extras)
+        working-directory: packages/mpm-multimaterial-diff
+        run: uv sync --extra dev
+
+      - name: ruff (src + tests)
+        working-directory: packages/mpm-multimaterial-diff
+        run: |
+          uv run ruff check mpm_multimaterial_diff/ tests/
+          uv run ruff format --check mpm_multimaterial_diff/ tests/
+
+      - name: mypy --strict (src)
+        working-directory: packages/mpm-multimaterial-diff
+        run: uv run mypy --strict mpm_multimaterial_diff/
+
+      - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + PBT + capture)
+        working-directory: packages/mpm-multimaterial-diff
+        run: uv run pytest tests/

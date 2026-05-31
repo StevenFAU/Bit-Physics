@@ -1,0 +1,61 @@
+{
+  "config": {
+    "dims": [
+      6,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "iterations": 29,
+      "planted_v0": [
+        0.3,
+        0.1,
+        -0.2
+      ],
+      "recovered_v0": [
+        0.2999999997764462,
+        0.10000000022351116,
+        -0.19999999970196697
+      ]
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "gradient_fields": [
+    {
+      "dtype": "float64",
+      "name": "dLoss_dv0",
+      "shape": [
+        3
+      ],
+      "wrt": "v0"
+    }
+  ],
+  "payload": {
+    "checksum": "sha256:87ce64dd46a8a275833dd8afea653e2849fef9f6965b20098b9dd3293903ff62",
+    "format": "hdf5",
+    "path": "phase-4-mpm-multimaterial-diff.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-31T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.1.0",
+  "sim": {
+    "category": "hybrid-pg",
+    "name": "mpm-multimaterial-diff",
+    "variant": "diff"
+  },
+  "stack": {
+    "build_id": "cpu-det",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}
