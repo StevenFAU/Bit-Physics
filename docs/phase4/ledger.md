@@ -27,7 +27,7 @@
 | 18 | 4.10 | lattice/lattice-boltzmann-d3q19 | sparse-amr | C+E | § 4.2.B | (none) | — | docs/sim-specs/lattice/lattice-boltzmann-d3q19/spec-sparse.md | TODO (≥2) | no | — | planned |
 | 19 | 4.11 | hybrid-pg/mpm-multimaterial | neural (sh-update) | E | § 4.2.C | Phase 3 task-1 + task-8 | — | docs/sim-specs/neural-rendered/3dgs-mpm/spec-sh-update.md | 2 (sh_rotation_equivariant + covariance_spd_preserved) | yes | batch-2-close | **landed** |
 | 20 | 4.12 | particle-fluids/sph-water | neural | E | § 4.2.C | Phase 3 task-1 | — | docs/sim-specs/particle-fluids/sph-water/spec-neural.md | TODO (≥2) | no | — | planned |
-| 21 | 4.13 | volumetric-grid/eulerian-smoke | neural | E | § 4.2.C | Phase 3 task-1 | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-neural.md | TODO (≥2) | no | — | planned |
+| 21 | 4.13 | volumetric-grid/eulerian-smoke | neural | E | § 4.2.C | Phase 3 task-1 | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-neural.md | 2 (opacity_monotone_bounded + render_similarity_self_identity) | yes | batch-2-close | **landed** |
 | 22 | 4.14 | hybrid-pg/mpm-multimaterial | neural-iterative | E | § 4.2.C | Phase 3 task-1 + task-8 | § 4.2.A (if diff render) | docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-neural.md | TODO (≥2) | no | — | planned |
 | 23 | 4.15 | volumetric-grid/eulerian-smoke | frontier-clebsch-pfm | C | — | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier.md | TODO (≥2) | no | — | planned |
 | 24 | 4.16 | volumetric-grid/eulerian-smoke | frontier-edge | C | — | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier.md | TODO (≥2) | no | — | planned |
