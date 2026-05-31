@@ -177,6 +177,19 @@ pendulum_period_rel = 1e-3
 trajectory_abs = 1e-2
 energy_drift_rel_per_second = 1e-3
 
+# Phase-4 batch-3 articulated-pedagogical-diff (sim 1; Stack E / Warp wp.Tape — the differentiable
+# carry). Gradient-golden tolerances for the single-pendulum scope (Stage-0 WARP-NATIVE-TAPE probe).
+# Single-stack (gate-14 N/A); bespoke per-anchor numeric keys (golden_tolerance branch,
+# lenia-tolerance-schema-fix). MEASURED at Stage 1b: the wp.Tape adjoint matches the closed forms to
+# machine precision, central FD to the truncation floor.
+#   dqddot_dq_analytic_rel  = 1e-9  (A1: autodiff d q_ddot/d q vs analytic -(g/L)cos q — exact)
+#   dqddot_dq_fd_rel        = 1e-5  (A2: autodiff vs central-FD baseline — FD truncation floor)
+#   dqddot_dtau_analytic_rel= 1e-9  (A3: autodiff d q_ddot/d tau vs analytic 1/(mL^2) — exact)
+[golden_tolerance.rigid-body.articulated-pedagogical-diff]
+dqddot_dq_analytic_rel = 1e-9
+dqddot_dq_fd_rel = 1e-5
+dqddot_dtau_analytic_rel = 1e-9
+
 # Phase-3 mass-spring-cloth (task-5, sub-phase-phase-3-mass-spring-cloth) —
 # golden-table tolerances. FIRST `soft-body.*` row. Single-stack sim (Stack C;
 # Vulkan/C++ XPBD), no cross-stack equivalence pair (no gate-14). D-TOL (charter

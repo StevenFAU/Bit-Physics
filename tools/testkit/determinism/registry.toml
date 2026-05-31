@@ -85,6 +85,33 @@ atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
 
+# articulated-pedagogical-diff (phase-4 batch-3 sim 1; Stack E / NVIDIA Warp wp.Tape — the
+# differentiable carry of the task-4 ABA). The landed parent aba_kernel is launched on-device
+# inside a wp.Tape with requires_grad arrays (no .numpy() tape-sever); single-pendulum scope
+# (Stage-0 WARP-NATIVE-TAPE probe). Two surfaces, both MEASURED bit-identical run-to-run at Stage
+# 1b (Warp CPU single-thread serial wp.launch, f64, fixed config; tests/test_determinism.py:
+# np.array_equal forward final-state True + gradient scalar == True). The forward ABA recursion is
+# a fixed-size 3-vector/3x3 per-link loop — NO atomic scatter -> `forward` atomic_ops = "none". The
+# `gradient` row's wp.Tape adjoint of the length-1 backward seed (pick_scalar) is a pure copy, but
+# the L2-loss path of the inverse-problem gradient uses wp.atomic_add (sum reduction) -> the diff
+# `gradient` surface is declared sum-only (mirrors eulerian-smoke-diff). Serial CPU launch makes
+# even the reductions order-exact. No EFECT (no training-loss distribution). MEASURED at Stage 1b.
+[rigid-body.articulated-pedagogical-diff.forward]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
+[rigid-body.articulated-pedagogical-diff.gradient]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true
+
 # mass-spring-cloth (task-5, sub-phase-phase-3-mass-spring-cloth). FIRST
 # `soft-body.*` row + FIRST Stack-C SIM row in Phase 3 (RD-2D-Stack-C is a
 # Phase-1 port, not a new Phase-3 sim). D-DET (charter §6, operator-ratified):
