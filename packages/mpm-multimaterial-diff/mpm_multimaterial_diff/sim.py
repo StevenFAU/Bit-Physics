@@ -104,7 +104,14 @@ class MpmInitialVelocityID(InitialStateRecoveryProblem):  # type: ignore[misc]
         ``params`` is the ``(3,)`` ``needs_grad`` ``v0`` field. The grid is re-zeroed by a
         kernel (tape-safe) and ``v0`` loaded into ``v[0]`` inside the tape so the gradient
         flows back to ``params``; x[0]/F[0]/C[0] are the constants set in :meth:`set_initial`."""
-        raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+        k = self._ker
+        k["clear_grid"](self.gm, self.gv, self.go)
+        k["load_velocity"](self.v, params)
+        for f in range(self.cfg.steps):
+            k["p2g"](f, self.x, self.v, self.C, self.F, self.gm, self.gv)
+            k["grid_op"](f, self.gm, self.gv, self.go)
+            k["g2p"](f, self.x, self.v, self.C, self.F, self.go)
+        return self.x
 
     def loss(self, predicted: Any, target: Any) -> Any:
         self._ker["comp_loss"](self.x, target, self.loss_field)

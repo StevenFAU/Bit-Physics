@@ -1,0 +1,240 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "mpm-multimaterial-diff-gradient",
+  "category": "hybrid-pg",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/mpm-multimaterial-diff-gradient.md",
+    "upstream": "DiffTaichi-Hu-2020-ICLR / Stomakhin-2013 / Jiang-2016-MPM-course / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-ballistic",
+        "grid_n": 16,
+        "n_particles": 1,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          0.4,
+          -0.3,
+          0.2
+        ],
+        "v0_target": [
+          0.5,
+          -0.2,
+          0.1
+        ]
+      },
+      "expected": {
+        "grad_vx": -1.2799999999999996e-05,
+        "grad_vy": -1.2799999999999996e-05,
+        "grad_vz": 1.28e-05
+      },
+      "independent_reference": {
+        "source": "Ballistic kinematic limit of differentiable MLS-MPM: a single particle with F=I, C=0 has zero neo-Hookean stress and zero APIC first moment (Sum w*dpos == 0 for the quadratic B-spline), so the APIC round-trip degenerates to PIC free-flight x(T)=x0+dt*Sum v_t with dx(T)/dv0=dt*STEPS*I; the one-target L2 loss gives dLoss/dv0 = 2(dt*STEPS)^2 (v0 - v0_target), EXACT. Hand-derived kinematics; DiffTaichi (Hu et al., ICLR 2020, arXiv:1910.00935) is the differentiable-MPM method citation.",
+        "derived_by": "closed-form-analytic (ballistic kinematics)",
+        "expected": {
+          "grad_vx": -1.2799999999999996e-05,
+          "grad_vy": -1.2799999999999996e-05,
+          "grad_vz": 1.28e-05
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-ballistic",
+        "grid_n": 16,
+        "n_particles": 1,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          0.2,
+          0.3,
+          -0.1
+        ],
+        "v0_target": [
+          0.25,
+          0.2,
+          -0.05
+        ]
+      },
+      "expected": {
+        "grad_vx": -6.399999999999998e-06,
+        "grad_vy": 1.2799999999999996e-05,
+        "grad_vz": -6.4e-06
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-ballistic",
+        "grid_n": 16,
+        "n_particles": 1,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          -0.15,
+          0.1,
+          0.25
+        ],
+        "v0_target": [
+          -0.1,
+          0.05,
+          0.3
+        ]
+      },
+      "expected": {
+        "grad_vx": -6.399999999999998e-06,
+        "grad_vy": 6.4e-06,
+        "grad_vz": -6.399999999999998e-06
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          0.3,
+          0.1,
+          -0.2
+        ],
+        "v0_target": [
+          0.315,
+          0.10500000000000001,
+          -0.21000000000000002
+        ]
+      },
+      "expected": {
+        "grad_vx": -1.1520000220393566e-05,
+        "grad_vy": -3.839999944711102e-06,
+        "grad_vz": 7.679999969308e-06
+      },
+      "independent_reference": {
+        "source": "Central finite-difference gradient (eps=1e-6, O(eps^2)) of the L2 final-position loss for the full multi-particle grid-coupled APIC neo-Hookean forward; an independent numerical method (parameter perturbation) distinct from the ti.ad.Tape adjoint. Numerical baseline (close-R2 exemption).",
+        "derived_by": "central-finite-difference (numerical baseline)",
+        "expected": {
+          "grad_vx": -1.1520000220393566e-05,
+          "grad_vy": -3.839999944711102e-06,
+          "grad_vz": 7.679999969308e-06
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          0.25,
+          -0.15,
+          0.1
+        ],
+        "v0_target": [
+          0.2625,
+          -0.1575,
+          0.10500000000000001
+        ]
+      },
+      "expected": {
+        "grad_vx": -9.600000194807288e-06,
+        "grad_vy": 5.759999917040184e-06,
+        "grad_vz": -3.839999944697867e-06
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3,
+        "v0": [
+          -0.2,
+          0.2,
+          -0.05
+        ],
+        "v0_target": [
+          -0.21000000000000002,
+          0.21000000000000002,
+          -0.052500000000000005
+        ]
+      },
+      "expected": {
+        "grad_vx": 7.67999985387329e-06,
+        "grad_vy": -7.679999889389118e-06,
+        "grad_vz": 1.9199999723423162e-06
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-neohookean",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 4000.0,
+        "nu": 0.3
+      },
+      "expected": {
+        "dstress00_dstrain": 5384.615384615385
+      },
+      "independent_reference": {
+        "source": "Neo-Hookean small-strain constitutive linearization: at F=diag(1+eps,1,1), sigma00 = mu((1+eps)^2 - 1) + lam*log(1+eps), so d(sigma00)/d(eps)|0 = 2mu+lam. Distinct from A1/A2 in physical term (constitutive, not kinematic), parameter (strain, not v0), and method (elastic linearization). Hand-derived; Stomakhin 2013 / Jiang 2016 MPM course (the reference's constitutive cites).",
+        "derived_by": "closed-form-analytic (neo-Hookean linearization)",
+        "expected": {
+          "dstress00_dstrain": 5384.615384615385
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-neohookean",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 10000.0,
+        "nu": 0.25
+      },
+      "expected": {
+        "dstress00_dstrain": 12000.0
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-neohookean",
+        "grid_n": 16,
+        "n_particles": 6,
+        "steps": 8,
+        "dt": 0.001,
+        "E": 2000.0,
+        "nu": 0.35
+      },
+      "expected": {
+        "dstress00_dstrain": 3209.876543209876
+      }
+    }
+  ]
+}
