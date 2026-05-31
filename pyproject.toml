@@ -248,6 +248,17 @@ members = [
   # forward-equivalence to the landed parent). Depends on the parent workspace package.
   # D-LAYOUT: flat `packages/articulated-pedagogical-diff/` per §0.3. Registered at Stage 1a.
   "packages/articulated-pedagogical-diff",
+
+  # Phase-4 batch-3 sim 2/3 (frontier-algorithm batch). Energy-based Particle Lenia (Stack D /
+  # Taichi; Mordvintsev/Niklasson/Randazzo 2022, Google Research Self-Organising Systems): particles
+  # descend their OWN local energy field E(x)=R(x)-G(U(x)) (the canonical LOCAL rule
+  # dp_i/dt=-grad E(p_i); total energy NOT monotonic). Taichi analytic-force engine; gradient golden
+  # >=3 independent anchors (A1 analytic -grad E NumPy mirror / A2 central FD / A3 total-energy
+  # translation symmetry). Energy monotonicity NOT asserted (unsound for the LOCAL rule). Single-stack
+  # (gate-14 N/A; parent-vs-frontier REFRAMED to invariant posture — particle-based, not
+  # pointwise-comparable to grid Lenia). D-LAYOUT: flat `packages/particle-lenia/` per §0.3.
+  # Registered at Stage 1a.
+  "packages/particle-lenia",
 ]
 exclude = []
 

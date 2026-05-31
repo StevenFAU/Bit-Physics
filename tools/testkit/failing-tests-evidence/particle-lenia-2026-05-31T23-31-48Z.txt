@@ -1,0 +1,137 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/particle-lenia
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 14 items
+
+tests/test_capture.py::test_capture_roundtrips FAILED                    [  7%]
+tests/test_capture.py::test_capture_manifest_fields FAILED               [ 14%]
+tests/test_capture.py::test_canonical_capture_committed FAILED           [ 21%]
+tests/test_determinism.py::test_force_bit_identical_across_runs FAILED   [ 28%]
+tests/test_determinism.py::test_rollout_bit_identical_across_runs FAILED [ 35%]
+tests/test_determinism.py::test_determinism_registry_row_present FAILED  [ 42%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 50%]
+tests/test_diagnostics.py::test_positions_bounded FAILED                 [ 57%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 64%]
+tests/test_gradient_golden.py::test_a1_engine_matches_analytic FAILED    [ 71%]
+tests/test_gradient_golden.py::test_a2_engine_matches_finite_difference FAILED [ 78%]
+tests/test_gradient_golden.py::test_a3_total_energy_translation_invariant PASSED [ 85%]
+tests/test_pbt_invariants.py::test_force_matches_finite_difference_pbt FAILED [ 92%]
+tests/test_pbt_invariants.py::test_total_energy_translation_invariant_pbt PASSED [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:17: in test_capture_roundtrips
+    manifest_path = ParticleLeniaSim(_CANON).capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:48: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_________________________ test_capture_manifest_fields _________________________
+tests/test_capture.py:26: in test_capture_manifest_fields
+    manifest_path = ParticleLeniaSim(_CANON).capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:48: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_______________________ test_canonical_capture_committed _______________________
+tests/test_capture.py:39: in test_canonical_capture_committed
+    assert canonical_manifest_path.exists(), canonical_manifest_path
+E   AssertionError: PosixPath('/home/otacon/Projects/Bit-Physics/captures/particle-lenia-ref/particle-lenia-64p-seed42-step40.json')
+E   assert False
+E    +  where False = exists()
+E    +    where exists = PosixPath('/home/otacon/Projects/Bit-Physics/captures/particle-lenia-ref/particle-lenia-64p-seed42-step40.json').exists
+_____________________ test_force_bit_identical_across_runs _____________________
+tests/test_determinism.py:33: in test_force_bit_identical_across_runs
+    f1 = ParticleLeniaSim(cfg).compute_force(pos)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:36: in compute_force
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________ test_rollout_bit_identical_across_runs ____________________
+tests/test_determinism.py:39: in test_rollout_bit_identical_across_runs
+    assert np.array_equal(_rollout(10), _rollout(10))
+                          ^^^^^^^^^^^^
+tests/test_determinism.py:26: in _rollout
+    sim.step()
+particle_lenia/sim.py:40: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________ test_determinism_registry_row_present _____________________
+tests/test_determinism.py:47: in test_determinism_registry_row_present
+    row = data["continuous-ca"]["particle-lenia"]
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'particle-lenia'
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:18: in test_capture_is_healthy
+    manifest = ParticleLeniaSim(_CANON).capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:48: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________________ test_positions_bounded ____________________________
+tests/test_diagnostics.py:30: in test_positions_bounded
+    manifest = ParticleLeniaSim(_CANON).capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:48: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:71: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/particle-lenia-gradient.json'
+_______________________ test_a1_engine_matches_analytic ________________________
+tests/test_gradient_golden.py:83: in test_a1_engine_matches_analytic
+    force = ParticleLeniaSim(cfg).compute_force(pos)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:36: in compute_force
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________ test_a2_engine_matches_finite_difference ___________________
+tests/test_gradient_golden.py:93: in test_a2_engine_matches_finite_difference
+    force = ParticleLeniaSim(cfg).compute_force(pos)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:36: in compute_force
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________ test_force_matches_finite_difference_pbt ___________________
+tests/test_pbt_invariants.py:36: in test_force_matches_finite_difference_pbt
+    @_SETTINGS
+               
+tests/test_pbt_invariants.py:39: in test_force_matches_finite_difference_pbt
+    assert force_matches_finite_difference(cfg, _positions(seed), rel_tol=1e-5)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/invariants.py:36: in force_matches_finite_difference
+    force = sim.compute_force(np.ascontiguousarray(positions, dtype=np.float64))
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+particle_lenia/sim.py:36: in compute_force
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+E   Falsifying example: test_force_matches_finite_difference_pbt(
+E       seed=0,
+E   )
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_capture.py::test_capture_manifest_fields - NotImplementedEr...
+FAILED tests/test_capture.py::test_canonical_capture_committed - AssertionErr...
+FAILED tests/test_determinism.py::test_force_bit_identical_across_runs - NotI...
+FAILED tests/test_determinism.py::test_rollout_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_determinism_registry_row_present - Key...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_positions_bounded - NotImplementedErro...
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_engine_matches_analytic - NotIm...
+FAILED tests/test_gradient_golden.py::test_a2_engine_matches_finite_difference
+FAILED tests/test_pbt_invariants.py::test_force_matches_finite_difference_pbt
+========================= 12 failed, 2 passed in 0.29s =========================

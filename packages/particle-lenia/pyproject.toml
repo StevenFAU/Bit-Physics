@@ -1,0 +1,84 @@
+[project]
+name = "particle-lenia"
+version = "0.0.0"
+description = "Phase 4 batch-3 sim 2 — energy-based Particle Lenia (Stack D / Taichi). Mordvintsev/Niklasson/Randazzo 2022 (Google Research Self-Organising Systems): particles descend their OWN local energy field E(x)=R(x)-G(U(x)) (canonical LOCAL rule dp_i/dt=-grad E(p_i)). Taichi analytic-force engine; gradient golden (A1 analytic -grad E mirror / A2 central FD / A3 total-energy translation symmetry; >=3 independent anchors). Energy monotonicity NOT asserted (unsound for the LOCAL rule). bit-exact same-stack-same-hw."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "bit-physics-common-py",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+  "taichi>=1.7,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["particle_lenia"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["particle_lenia"]
+mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = [
+  "capture", "capture.*",
+  "common_py", "common_py.*",
+  "determinism", "determinism.*",
+  "diagnostics", "diagnostics.*",
+  "golden", "golden.*",
+  "property", "property.*",
+  "h5py", "h5py.*",
+  "hypothesis", "hypothesis.*",
+  "taichi", "taichi.*",
+]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["particle_lenia._taichi_kernels"]
+disable_error_code = [
+  "misc",
+  "no-untyped-def",
+  "untyped-decorator",
+  "valid-type",
+]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "error",
+  # Taichi 1.7.x internally calls `locale.getdefaultlocale()` (Python 3.12 deprecates) + a cold-pyc
+  # SyntaxWarning; filter per docs/common/taichi.md §4.5 (sister: packages/lenia).
+  "ignore::DeprecationWarning:taichi.*",
+  "ignore::SyntaxWarning",
+  "ignore:.*locale\\.getdefaultlocale.*:DeprecationWarning",
+]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
+bit-physics-common-py = { workspace = true }

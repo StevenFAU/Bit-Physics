@@ -59,6 +59,7 @@ members = [
     "mpm-multimaterial-stack-d",
     "mpm-multimaterial-stack-e",
     "neural-ca",
+    "particle-lenia",
     "physarum",
     "pinn-poisson",
     "reaction-diffusion-2d",
@@ -3279,6 +3280,44 @@ sdist = { url = "https://files.pythonhosted.org/packages/30/4b/90c937815137d43ce
 wheels = [
     { url = "https://files.pythonhosted.org/packages/99/5d/8268b644392ee874ee82a635cd0df1773de230bde356c38de28e298392cc/parso-0.8.7-py2.py3-none-any.whl", hash = "sha256:a8926eb2a1b915486941fdbd31e86a4baf88fe8c210f25f2f35ecec5b574ca1c", size = 107025, upload-time = "2026-05-01T23:12:58.867Z" },
 ]
+
+[[package]]
+name = "particle-lenia"
+version = "0.0.0"
+source = { editable = "packages/particle-lenia" }
+dependencies = [
+    { name = "bit-physics-common-py" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "taichi" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-py", editable = "common/common-py" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "taichi", specifier = ">=1.7,<2.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "pathspec"
