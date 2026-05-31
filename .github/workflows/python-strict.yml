@@ -703,3 +703,40 @@ jobs:
       - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + PBT + capture)
         working-directory: packages/mpm-multimaterial-diff
         run: uv run pytest tests/
+
+  # Phase-4 batch-1 sim 4/4 (eulerian-smoke-diff; FINAL). Differentiable Eulerian smoke
+  # (Stack E / NVIDIA Warp wp.Tape) on the WU-A autodiff substrate — the FIRST Stack-E
+  # consumer. Tests instantiate the sim in-process (the forward-equivalence test imports the
+  # eulerian-smoke-stack-e reference, pulled in via the dev extra) — no committed LFS capture
+  # is read (the schema-corpus legacy-capture fixture this sim ships is consumed by the WU-A
+  # corpus round-trip jobs, not here), so no selective LFS pull step.
+  test-eulerian-smoke-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync eulerian-smoke-diff workspace deps (with dev extras)
+        working-directory: packages/eulerian-smoke-diff
+        run: uv sync --extra dev
+
+      - name: ruff (src + tests)
+        working-directory: packages/eulerian-smoke-diff
+        run: |
+          uv run ruff check eulerian_smoke_diff/ tests/
+          uv run ruff format --check eulerian_smoke_diff/ tests/
+
+      - name: mypy --strict (src)
+        working-directory: packages/eulerian-smoke-diff
+        run: uv run mypy --strict eulerian_smoke_diff/
+
+      - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + PBT + capture)
+        working-directory: packages/eulerian-smoke-diff
+        run: uv run pytest tests/

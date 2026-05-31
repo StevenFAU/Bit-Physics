@@ -367,3 +367,13 @@ runner    = "uv run --no-sync pytest packages/lenia-diff/tests/ -x -q --tb=no"
 path      = "packages/mpm-multimaterial-diff/mpm_multimaterial_diff"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/mpm-multimaterial-diff/tests/ -x -q --tb=no"
+
+# Phase-4 batch-1 sim 4/4 (eulerian-smoke-diff; FINAL). Per-sim mutation target (charter §8.7).
+# ADVISORY (§2.13) — measured, not gating; oracle-grounded tests only (the gradient golden's A1
+# linear-advection-operator + A3 discrete-diffusion closed-form anchors + the forward-equivalence
+# vs the eulerian-smoke-stack-e reference primitives; snapshots forbidden). No MMS (the analytic
+# advection + diffusion limits play the manufactured-anchor role), so there is no `*_mms` target.
+[targets.eulerian_smoke_diff]
+path      = "packages/eulerian-smoke-diff/eulerian_smoke_diff"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/eulerian-smoke-diff/tests/ -x -q --tb=no"

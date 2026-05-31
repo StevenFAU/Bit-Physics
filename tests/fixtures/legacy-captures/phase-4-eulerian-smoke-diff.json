@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dims": [
+      16,
+      16
+    ],
+    "dtype": "f64",
+    "params": {
+      "final_loss": 9.976931766574175e-15,
+      "iterations": 1412
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "gradient_fields": [
+    {
+      "dtype": "float64",
+      "name": "dLoss_du0",
+      "shape": [
+        16,
+        16
+      ],
+      "wrt": "u0"
+    }
+  ],
+  "payload": {
+    "checksum": "sha256:2ca92cda2f8a5548e7f6efc057ce1dd817e4d4f7875e83003bfde85fab769707",
+    "format": "hdf5",
+    "path": "phase-4-eulerian-smoke-diff.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-31T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.1.0",
+  "sim": {
+    "category": "volumetric-grid",
+    "name": "eulerian-smoke-diff",
+    "variant": "diff"
+  },
+  "stack": {
+    "build_id": "phase-4-batch-1-smoke-diff",
+    "name": "warp-stack-e",
+    "version": "1.13"
+  }
+}
