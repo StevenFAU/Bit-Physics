@@ -187,6 +187,13 @@ members = [
   # equivalence applies). D-LAYOUT: flat `packages/reaction-diffusion-2d-diff/`
   # per §0.3. Registered at Stage 1a.
   "packages/reaction-diffusion-2d-diff",
+  # Spec-Phase-4 batch-1 differentiable variant of lenia (sim 2/4; Stack D / Taichi
+  # ti.ad.Tape). Tape-differentiable Quad4-Lenia forward on the WU-A autodiff substrate;
+  # growth-parameter (μ,σ) + initial-field inverse problems + gradient golden table with
+  # ≥3 independent anchors (A1 Quad4 growth-deriv / A2 central FD / A3 convolution-Jacobian
+  # field gradient). Single-stack (gate-14 N/A; WU-F differentiable-axis equivalence
+  # applies). D-LAYOUT: flat `packages/lenia-diff/` per §0.3. Registered at Stage 1a.
+  "packages/lenia-diff",
 ]
 exclude = []
 

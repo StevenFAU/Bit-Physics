@@ -1,0 +1,270 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/lenia-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hydra-core-1.3.2, timeout-2.4.0, hypothesis-6.152.8, jaxtyping-0.3.10, anyio-4.13.0
+collecting ... collected 17 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [ 11%]
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [ 17%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 23%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 29%]
+tests/test_diagnostics.py::test_recovered_field_bounded FAILED           [ 35%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_field FAILED [ 41%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close FAILED [ 47%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 52%]
+tests/test_gradient_golden.py::test_a1_growth_exact_closed_form FAILED   [ 58%]
+tests/test_gradient_golden.py::test_a3_field_conv_exact_closed_form FAILED [ 64%]
+tests/test_gradient_golden.py::test_gradient_matches_finite_difference_report FAILED [ 70%]
+tests/test_inverse_recovery.py::test_recover_planted_growth_params FAILED [ 76%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 82%]
+tests/test_inverse_recovery.py::test_recovery_from_higher_init FAILED    [ 88%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 94%]
+tests/test_pbt_invariants.py::test_field_bounded_pbt FAILED              [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/capture.py:116: in default_capture
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.26, 0.13), seed=42)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:30: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/capture.py:116: in default_capture
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.26, 0.13), seed=42)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:30: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = truth.final_field(cfg.mu * 1.05, cfg.sigma * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:37: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = truth.final_field(cfg.mu * 1.05, cfg.sigma * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/capture.py:116: in default_capture
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.26, 0.13), seed=42)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________________ test_recovered_field_bounded _________________________
+tests/test_diagnostics.py:27: in test_recovered_field_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/capture.py:116: in default_capture
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.26, 0.13), seed=42)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________ test_diff_forward_matches_reference_final_field ________________
+tests/test_forward_equivalence.py:41: in test_diff_forward_matches_reference_final_field
+    diff_final = prob.final_field(cfg.mu, cfg.sigma)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_diff_forward_matches_reference_bit_close _________________
+tests/test_forward_equivalence.py:51: in test_diff_forward_matches_reference_bit_close
+    diff_final = prob.final_field(cfg.mu, cfg.sigma)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:93: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/lenia-diff-gradient.json'
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________________ test_a1_growth_exact_closed_form _______________________
+tests/test_gradient_golden.py:105: in test_a1_growth_exact_closed_form
+    target = truth.final_field(cfg.mu * 1.05, cfg.sigma * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_____________________ test_a3_field_conv_exact_closed_form _____________________
+tests/test_gradient_golden.py:126: in test_a3_field_conv_exact_closed_form
+    grad = prob.grad_wrt_field(a0, target)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:165: in grad_wrt_field
+    _, grad = self._loss_and_grad(spec, np.ascontiguousarray(a0, dtype=np.float64).ravel())
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../common/common-py/src/common_py/autodiff/inverse_problem.py:141: in _loss_and_grad
+    predicted = self.forward(flat, self.state)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:155: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia field forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia field forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_gradient_matches_finite_difference_report ________________
+tests/test_gradient_golden.py:148: in test_gradient_matches_finite_difference_report
+    target = truth.final_field(cfg.mu * 1.05, cfg.sigma * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________________ test_recover_planted_growth_params ______________________
+tests/test_inverse_recovery.py:13: in test_recover_planted_growth_params
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.26, 0.13))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:23: in test_gradient_fields_populated
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.27, 0.14))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_higher_init ________________________
+tests/test_inverse_recovery.py:36: in test_recovery_from_higher_init
+    sol = solve_growth_id(cfg, planted=(0.30, 0.15), init=(0.34, 0.17))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:199: in solve_growth_id
+    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
+E   NotImplementedError: Stage 1b: growth-parameter inverse recovery
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:28: in test_gradient_matches_finite_difference_pbt
+    mu=st.floats(min_value=0.25, max_value=0.35), sigma=st.floats(min_value=0.12, max_value=0.20)
+               ^^^
+tests/test_pbt_invariants.py:46: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, a0, mu=mu, sigma=sigma, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/invariants.py:37: in gradient_matches_finite_difference
+    target = prob.final_field(mu * 1.02, sigma * 1.02)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       mu=0.25,
+E       sigma=0.12,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+____________________________ test_field_bounded_pbt ____________________________
+tests/test_pbt_invariants.py:50: in test_field_bounded_pbt
+    mu=st.floats(min_value=0.20, max_value=0.40), sigma=st.floats(min_value=0.10, max_value=0.25)
+               ^^^
+tests/test_pbt_invariants.py:68: in test_field_bounded_pbt
+    assert field_bounded(cfg, a0, mu=mu, sigma=sigma)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lenia_diff/invariants.py:58: in field_bounded
+    prob.final_field(mu, sigma)
+lenia_diff/sim.py:108: in final_field
+    self.forward(spec.flat, self.state)
+lenia_diff/sim.py:98: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Quad4-Lenia growth forward
+E   Falsifying example: test_field_bounded_pbt(
+E       mu=0.2,
+E       sigma=0.1,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_field_bounded - NotImplement...
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_field
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_growth_exact_closed_form - NotI...
+FAILED tests/test_gradient_golden.py::test_a3_field_conv_exact_closed_form - ...
+FAILED tests/test_gradient_golden.py::test_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_growth_params - N...
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_higher_init - NotIm...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_field_bounded_pbt - NotImplementedE...
+============================== 17 failed in 2.48s ==============================

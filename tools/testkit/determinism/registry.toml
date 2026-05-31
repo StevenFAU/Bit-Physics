@@ -229,3 +229,27 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# lenia-diff (Stack D / Taichi ti.ad.Tape; phase-4 batch-1 sim 2). Differentiable Quad4
+# Lenia (ti.static-unrolled real-space conv + Quad4 polynomial growth + clip-Euler). Two
+# surfaces, both MEASURED bit-identical run-to-run at Stage 1b (single-thread CPU f64,
+# seed-pinned smooth IC; tests/test_determinism.py: np.array_equal final-field + gradient
+# both True). No EFECT (no training-loss distribution). `gradient` carries atomic_ops =
+# "sum-only" (the L2 loss reduction loss[None] += dd*dd + the tape adjoint), deterministic
+# under single-thread serialization; `forward` is reduction-free (the conv accumulator is a
+# per-cell local, not a cross-cell atomic). Declared + MEASURED at Stage 1b; HOLDS.
+[continuous-ca.lenia-diff.forward]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
+[continuous-ca.lenia-diff.gradient]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true
