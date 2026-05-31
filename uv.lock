@@ -43,6 +43,7 @@ members = [
     "boids-3d",
     "eulerian-smoke",
     "eulerian-smoke-diff",
+    "eulerian-smoke-neural",
     "eulerian-smoke-stack-d",
     "eulerian-smoke-stack-e",
     "ising-classical",
@@ -1194,6 +1195,56 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "eulerian-smoke-neural"
+version = "0.0.0"
+source = { editable = "packages/eulerian-smoke-neural" }
+dependencies = [
+    { name = "bit-physics-common-3dgs" },
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "eulerian-smoke-stack-e" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "lpips" },
+    { name = "mypy" },
+    { name = "pillow" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "torch" },
+    { name = "torchvision" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "eulerian-smoke-stack-e", editable = "packages/eulerian-smoke-stack-e" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "lpips", marker = "extra == 'dev'", specifier = "==0.1.4" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pillow", marker = "extra == 'dev'", specifier = ">=10.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "torch", marker = "extra == 'dev'", specifier = ">=2.2" },
+    { name = "torchvision", marker = "extra == 'dev'", specifier = ">=0.13" },
     { name = "warp-lang", specifier = ">=1.13,<2.0" },
 ]
 provides-extras = ["dev"]

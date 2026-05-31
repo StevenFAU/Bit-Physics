@@ -1,0 +1,97 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'bitphysics_det' -> database=None, phases=(Phase.explicit, Phase.reuse, Phase.generate, Phase.target, Phase.shrink)
+rootdir: /home/otacon/Projects/Bit-Physics/packages/eulerian-smoke-neural
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 9 items
+
+tests/test_coupling_golden.py::test_a1_beer_lambert_opacity FAILED       [ 11%]
+tests/test_coupling_golden.py::test_a2_kerbl_single_gaussian_compositing PASSED [ 22%]
+tests/test_coupling_golden.py::test_a3_zero_density_background FAILED    [ 33%]
+tests/test_coupling_golden.py::test_golden_table_anchors ERROR           [ 44%]
+tests/test_pbt_invariants.py::test_opacity_monotone_bounded FAILED       [ 55%]
+tests/test_pbt_invariants.py::test_render_similarity_self_identity FAILED [ 66%]
+tests/test_physics_equivalence.py::test_density_matches_parent_rollout FAILED [ 77%]
+tests/test_render_similarity_golden.py::test_golden_renders_exist FAILED [ 88%]
+tests/test_render_similarity_golden.py::test_render_similarity_clears_floors FAILED [100%]
+
+==================================== ERRORS ====================================
+_________________ ERROR at setup of test_golden_table_anchors __________________
+tests/conftest.py:67: in coupling_golden
+    return json.loads(_COUPLING_GOLDEN.read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/eulerian-smoke-neural-coupling.json'
+=================================== FAILURES ===================================
+_________________________ test_a1_beer_lambert_opacity _________________________
+tests/test_coupling_golden.py:31: in test_a1_beer_lambert_opacity
+    model = build_smoke_gaussians(density, max_gaussians=3)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/coupling.py:35: in build_smoke_gaussians
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+_______________________ test_a3_zero_density_background ________________________
+tests/test_coupling_golden.py:73: in test_a3_zero_density_background
+    model = build_smoke_gaussians(density, max_gaussians=8)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/coupling.py:35: in build_smoke_gaussians
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+________________________ test_opacity_monotone_bounded _________________________
+tests/test_pbt_invariants.py:34: in test_opacity_monotone_bounded
+    @given(vals=st.lists(_dens, min_size=1, max_size=27))
+                   ^^^
+tests/test_pbt_invariants.py:38: in test_opacity_monotone_bounded
+    model = build_smoke_gaussians(density, max_gaussians=n)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/coupling.py:35: in build_smoke_gaussians
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+E   Falsifying example: test_opacity_monotone_bounded(
+E       vals=[0.0],
+E   )
+_____________________ test_render_similarity_self_identity _____________________
+tests/test_pbt_invariants.py:53: in test_render_similarity_self_identity
+    frames = run_canonical_smoke_neural_sim(seed=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/sim.py:56: in run_canonical_smoke_neural_sim
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+_____________________ test_density_matches_parent_rollout ______________________
+tests/test_physics_equivalence.py:38: in test_density_matches_parent_rollout
+    frames = run_canonical_smoke_neural_sim(seed=CANONICAL_SEED)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/sim.py:56: in run_canonical_smoke_neural_sim
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+__________________________ test_golden_renders_exist ___________________________
+tests/test_render_similarity_golden.py:31: in test_golden_renders_exist
+    assert len(frames) >= 2, f"expected >= 2 golden renders in {golden_renders_dir}"
+E   AssertionError: expected >= 2 golden renders in /home/otacon/Projects/Bit-Physics/tools/testkit/golden/renders
+E   assert 0 >= 2
+E    +  where 0 = len([])
+_____________________ test_render_similarity_clears_floors _____________________
+tests/test_render_similarity_golden.py:37: in test_render_similarity_clears_floors
+    frames = run_canonical_smoke_neural_sim(seed=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_neural/sim.py:56: in run_canonical_smoke_neural_sim
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+=========================== short test summary info ============================
+FAILED tests/test_coupling_golden.py::test_a1_beer_lambert_opacity - NotImple...
+FAILED tests/test_coupling_golden.py::test_a3_zero_density_background - NotIm...
+FAILED tests/test_pbt_invariants.py::test_opacity_monotone_bounded - NotImple...
+FAILED tests/test_pbt_invariants.py::test_render_similarity_self_identity - N...
+FAILED tests/test_physics_equivalence.py::test_density_matches_parent_rollout
+FAILED tests/test_render_similarity_golden.py::test_golden_renders_exist - As...
+FAILED tests/test_render_similarity_golden.py::test_render_similarity_clears_floors
+ERROR tests/test_coupling_golden.py::test_golden_table_anchors - FileNotFound...
+===================== 7 failed, 1 passed, 1 error in 0.50s =====================

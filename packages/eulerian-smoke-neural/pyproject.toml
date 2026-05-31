@@ -1,0 +1,84 @@
+[project]
+name = "eulerian-smoke-neural"
+version = "0.0.0"
+description = "Phase-4 batch-2 Sim B — spec § 5.11 '3dgs-smoke'. Couples the landed eulerian-smoke-stack-e volumetric smoke (Stam/Fedkiw stable fluids; the 3D density field) to a Gaussian cloud via the WU-C density->opacity Beer-Lambert hook (common_3dgs.default_density_to_opacity) and renders it (common_3dgs.render). Reuses stable_fluids_step_3d by import (physics-equivalence-vs-parent holds by construction). Two-pronged: coupling-correctness numerical golden (>=3 anchors: Beer-Lambert / Kerbl 2023 Eq.6 / zero-density background) + perceptual render-similarity vs OWN committed renders. Single-stack Stack E (Warp + Python), CPU-only."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "bit-physics-common-warp",
+  "bit-physics-common-3dgs",
+  "eulerian-smoke-stack-e",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+  "warp-lang>=1.13,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+  "lpips==0.1.4",
+  "torch>=2.2",
+  "torchvision>=0.13",
+  "Pillow>=10.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["eulerian_smoke_neural"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["eulerian_smoke_neural"]
+mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = [
+  "capture", "capture.*",
+  "common_warp", "common_warp.*",
+  "common_3dgs", "common_3dgs.*",
+  "eulerian_smoke_stack_e", "eulerian_smoke_stack_e.*",
+  "determinism", "determinism.*",
+  "diagnostics", "diagnostics.*",
+  "property", "property.*",
+  "render_similarity", "render_similarity.*",
+  "h5py", "h5py.*",
+  "hypothesis", "hypothesis.*",
+  "warp", "warp.*",
+  "lpips", "lpips.*",
+  "torch", "torch.*",
+  "torchvision", "torchvision.*",
+  "PIL", "PIL.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "error",
+]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
+bit-physics-common-warp = { workspace = true }
+bit-physics-common-3dgs = { workspace = true }
+eulerian-smoke-stack-e = { workspace = true }

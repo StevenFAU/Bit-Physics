@@ -225,6 +225,17 @@ members = [
   # floor applies). Import package `gs_mpm_sh_update` (digit-leading dir). Registered at
   # Stage 1a.
   "packages/3dgs-mpm-sh-update",
+
+  # Phase-4 batch-2 Sim B (neural-rendered frontier; spec § 5.11 "3dgs-smoke"). Couples the
+  # landed eulerian-smoke-stack-e volumetric smoke (Stam/Fedkiw stable fluids; the 3D density
+  # field) to a Gaussian cloud via the WU-C density->opacity Beer-Lambert hook
+  # (common_3dgs.default_density_to_opacity) and renders it. Two-pronged: coupling-correctness
+  # numerical golden (>=3 anchors: A1 Beer-Lambert 1-exp(-d) / A2 Kerbl Eq.6 alpha-compositing /
+  # A3 zero-density background) + perceptual render-similarity vs OWN committed renders. Reuses
+  # stable_fluids_step_3d by import (physics-equivalence-vs-parent holds by construction). Small
+  # grid for CPU-tractable render. Single-stack (gate-14 N/A; WU-C neural-axis floor). Import
+  # package `eulerian_smoke_neural`. Registered at Stage 1a.
+  "packages/eulerian-smoke-neural",
 ]
 exclude = []
 

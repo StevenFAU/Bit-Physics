@@ -329,10 +329,27 @@ lpips_max = 0.15
 [golden_tolerance.neural-rendered.3dgs-mpm-sh-update]
 sh_rotation_abs = 1e-12
 
+# Phase-4 batch-2 Sim B (eulerian-smoke-neural; spec § 5.11 3dgs-smoke). SINGLE-stack (Stack E);
+# gate-14 N/A. Additive under the existing branches (the 3dgs-mpm precedent). PRONG 1 —
+# coupling golden (bespoke keys): `opacity_abs` (Beer-Lambert 1-exp(-d), f64-exact) +
+# `compositing_abs` (Kerbl Eq.6 single-Gaussian centre pixel ~= alpha*c; render is f32 + EWA
+# peak, so looser — MEASURED + tightened at Stage 1b).
+[golden_tolerance.neural-rendered.eulerian-smoke-neural]
+opacity_abs = 1e-12
+compositing_abs = 2e-2
+
 # PRONG 2 — PERCEPTUAL render-similarity golden on the degree-1 directional-SH scene
 # (deterministic own-pipeline regression). Bounds LOCKED AT-OR-ABOVE the §2.12 floors;
 # below-floor at measurement = STOP-RENDER-FLOOR. Measured value recorded at Stage 1b-3.
 [render_similarity.neural-rendered.3dgs-mpm-sh-update]
+psnr_min = 28.0
+ssim_min = 0.85
+lpips_max = 0.15
+
+# Phase-4 batch-2 Sim B (eulerian-smoke-neural) — PRONG 2 perceptual render-similarity on the
+# 3dgs-smoke render (deterministic own-pipeline regression). Bounds AT-OR-ABOVE the § 2.12 floors;
+# below-floor at measurement = STOP-RENDER-FLOOR. Measured value recorded at Stage 1b.
+[render_similarity.neural-rendered.eulerian-smoke-neural]
 psnr_min = 28.0
 ssim_min = 0.85
 lpips_max = 0.15

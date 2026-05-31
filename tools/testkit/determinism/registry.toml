@@ -320,3 +320,17 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# Phase-4 batch-2 Sim B (eulerian-smoke-neural; spec § 5.11 3dgs-smoke). Composes three
+# bit-exact-same-hw stages — the smoke step (eulerian-smoke-stack-e stable_fluids_step_3d, serial
+# wp.launch f64) -> density->Gaussian coupling (deterministic NumPy: argsort + Beer-Lambert) ->
+# render (common-3dgs atomic-free serial CPU wp.launch). No atomics, no subgroup ops. Declared at
+# Stage 1a; MEASURED at Stage 1b (run_twice_and_diff on the full pipeline -> np.array_equal frames +
+# capture sha256). Rasterization atomic-ordering is the determinism-sensitive surface — MEASURED.
+[neural-rendered.eulerian-smoke-neural]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
