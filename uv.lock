@@ -33,6 +33,7 @@ members = [
     "3dgs-mpm",
     "3dgs-mpm-sh-update",
     "articulated-pedagogical",
+    "articulated-pedagogical-diff",
     "bit-physics",
     "bit-physics-common-3dgs",
     "bit-physics-common-py",
@@ -369,6 +370,46 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
     { name = "scipy", specifier = ">=1.13" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "articulated-pedagogical-diff"
+version = "0.0.0"
+source = { editable = "packages/articulated-pedagogical-diff" }
+dependencies = [
+    { name = "articulated-pedagogical" },
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "articulated-pedagogical", editable = "packages/articulated-pedagogical" },
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
     { name = "warp-lang", specifier = ">=1.13,<2.0" },
 ]
 provides-extras = ["dev"]

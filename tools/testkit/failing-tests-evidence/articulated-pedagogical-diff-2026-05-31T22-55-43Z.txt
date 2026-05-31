@@ -1,0 +1,237 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/articulated-pedagogical-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 20 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [ 10%]
+tests/test_capture.py::test_canonical_capture_committed FAILED           [ 15%]
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [ 20%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 25%]
+tests/test_determinism.py::test_determinism_registry_rows_present FAILED [ 30%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 35%]
+tests/test_diagnostics.py::test_recovered_state_bounded FAILED           [ 40%]
+tests/test_forward_equivalence.py::test_forward_equivalence_single_pendulum FAILED [ 45%]
+tests/test_forward_equivalence.py::test_forward_equivalence_double_pendulum FAILED [ 50%]
+tests/test_forward_equivalence.py::test_forward_equivalence_with_torque FAILED [ 55%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 60%]
+tests/test_gradient_golden.py::test_a1_dqddot_dq_analytic_exact FAILED   [ 65%]
+tests/test_gradient_golden.py::test_a2_dqddot_dq_matches_finite_difference FAILED [ 70%]
+tests/test_gradient_golden.py::test_a3_dqddot_dtau_analytic_exact FAILED [ 75%]
+tests/test_inverse_recovery.py::test_recover_initial_state_converges FAILED [ 80%]
+tests/test_inverse_recovery.py::test_recover_nonzero_velocity FAILED     [ 85%]
+tests/test_inverse_recovery.py::test_gradient_check_report_passes FAILED [ 90%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 95%]
+tests/test_pbt_invariants.py::test_energy_drift_bounded_pbt FAILED       [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/capture.py:90: in default_capture
+    sol = solve_recovery(chain, ArticulatedDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:28: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/capture.py:90: in default_capture
+    sol = solve_recovery(chain, ArticulatedDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_______________________ test_canonical_capture_committed _______________________
+tests/test_capture.py:41: in test_canonical_capture_committed
+    assert canonical_manifest_path.exists(), canonical_manifest_path
+E   AssertionError: PosixPath('/home/otacon/Projects/Bit-Physics/captures/articulated-pedagogical-diff-ref/articulated-pedagogical-diff-recover-state-seed42.json')
+E   assert False
+E    +  where False = exists()
+E    +    where exists = PosixPath('/home/otacon/Projects/Bit-Physics/captures/articulated-pedagogical-diff-ref/articulated-pedagogical-diff-recover-state-seed42.json').exists
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:32: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad()
+            ^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:25: in _forward_and_grad
+    prob = PendulumStateRecovery(chain, cfg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:75: in __init__
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:38: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad()
+            ^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:25: in _forward_and_grad
+    prob = PendulumStateRecovery(chain, cfg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:75: in __init__
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________ test_determinism_registry_rows_present ____________________
+tests/test_determinism.py:54: in test_determinism_registry_rows_present
+    row = rb[head][tail]
+          ^^^^^^^^
+E   KeyError: 'articulated-pedagogical-diff'
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/capture.py:90: in default_capture
+    sol = solve_recovery(chain, ArticulatedDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_________________________ test_recovered_state_bounded _________________________
+tests/test_diagnostics.py:27: in test_recovered_state_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/capture.py:90: in default_capture
+    sol = solve_recovery(chain, ArticulatedDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________ test_forward_equivalence_single_pendulum ___________________
+tests/test_forward_equivalence.py:24: in test_forward_equivalence_single_pendulum
+    differentiable_qddot(chain, q, qd), aba_forward_dynamics(chain, q, qd)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:41: in differentiable_qddot
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+___________________ test_forward_equivalence_double_pendulum ___________________
+tests/test_forward_equivalence.py:35: in test_forward_equivalence_double_pendulum
+    differentiable_qddot(chain, q, qd), aba_forward_dynamics(chain, q, qd)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:41: in differentiable_qddot
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_____________________ test_forward_equivalence_with_torque _____________________
+tests/test_forward_equivalence.py:45: in test_forward_equivalence_with_torque
+    differentiable_qddot(chain, q, qd, tau), aba_forward_dynamics(chain, q, qd, tau)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:41: in differentiable_qddot
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:48: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/articulated-pedagogical-diff-gradient.json'
+_______________________ test_a1_dqddot_dq_analytic_exact _______________________
+tests/test_gradient_golden.py:61: in test_a1_dqddot_dq_analytic_exact
+    _, ad = qddot_gradient(chain, q, qd, wrt="q")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:54: in qddot_gradient
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_________________ test_a2_dqddot_dq_matches_finite_difference __________________
+tests/test_gradient_golden.py:72: in test_a2_dqddot_dq_matches_finite_difference
+    _, ad = qddot_gradient(chain, q, qd, wrt="q")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:54: in qddot_gradient
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+______________________ test_a3_dqddot_dtau_analytic_exact ______________________
+tests/test_gradient_golden.py:83: in test_a3_dqddot_dtau_analytic_exact
+    _, ad = qddot_gradient(chain, q, qd, wrt="tau")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:54: in qddot_gradient
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_____________________ test_recover_initial_state_converges _____________________
+tests/test_inverse_recovery.py:20: in test_recover_initial_state_converges
+    sol = solve_recovery(chain, cfg, max_iter=4000)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+________________________ test_recover_nonzero_velocity _________________________
+tests/test_inverse_recovery.py:29: in test_recover_nonzero_velocity
+    sol = solve_recovery(chain, cfg, max_iter=4000)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:95: in solve_recovery
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+______________________ test_gradient_check_report_passes _______________________
+tests/test_inverse_recovery.py:38: in test_gradient_check_report_passes
+    prob = PendulumStateRecovery(chain, cfg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:75: in __init__
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:36: in test_gradient_matches_finite_difference_pbt
+    @_SETTINGS
+               
+tests/test_pbt_invariants.py:41: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(chain, q, qd, wrt="q", rel_tol=1e-5)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/invariants.py:43: in gradient_matches_finite_difference
+    _, g_ad = qddot_gradient(chain, q, qd, wrt=wrt, idx=idx)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:54: in qddot_gradient
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       q0=0.2,
+E       sign=-1.0,
+E   )
+________________________ test_energy_drift_bounded_pbt _________________________
+tests/test_pbt_invariants.py:45: in test_energy_drift_bounded_pbt
+    @_SETTINGS
+               
+tests/test_pbt_invariants.py:56: in test_energy_drift_bounded_pbt
+    assert energy_drift_bounded(chain, cfg, np.array([q0]), np.array([qd0]))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/invariants.py:76: in energy_drift_bounded
+    energies = _rollout_energy(chain, q0, qd0, cfg.dt, cfg.steps)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/invariants.py:57: in _rollout_energy
+    qdd = differentiable_qddot(chain, q, qd)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+articulated_pedagogical_diff/sim.py:41: in differentiable_qddot
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+E   Falsifying example: test_energy_drift_bounded_pbt(
+E       q0=0.2,
+E       qd0=0.0,
+E   )
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_capture.py::test_canonical_capture_committed - AssertionErr...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_determinism.py::test_determinism_registry_rows_present - Ke...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_state_bounded - NotImplement...
+FAILED tests/test_forward_equivalence.py::test_forward_equivalence_single_pendulum
+FAILED tests/test_forward_equivalence.py::test_forward_equivalence_double_pendulum
+FAILED tests/test_forward_equivalence.py::test_forward_equivalence_with_torque
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_dqddot_dq_analytic_exact - NotI...
+FAILED tests/test_gradient_golden.py::test_a2_dqddot_dq_matches_finite_difference
+FAILED tests/test_gradient_golden.py::test_a3_dqddot_dtau_analytic_exact - No...
+FAILED tests/test_inverse_recovery.py::test_recover_initial_state_converges
+FAILED tests/test_inverse_recovery.py::test_recover_nonzero_velocity - NotImp...
+FAILED tests/test_inverse_recovery.py::test_gradient_check_report_passes - No...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_energy_drift_bounded_pbt - NotImple...
+============================== 20 failed in 0.59s ==============================

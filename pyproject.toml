@@ -236,6 +236,18 @@ members = [
   # grid for CPU-tractable render. Single-stack (gate-14 N/A; WU-C neural-axis floor). Import
   # package `eulerian_smoke_neural`. Registered at Stage 1a.
   "packages/eulerian-smoke-neural",
+
+  # Phase-4 batch-3 sim 1/3 (frontier-algorithm batch; the differentiable carry). The
+  # differentiable sibling of the Phase-3 task-4 Featherstone ABA (Stack E / NVIDIA Warp
+  # wp.Tape): the landed parent aba_kernel is launched on-device inside a wp.Tape (no .numpy()
+  # tape-sever) so the single-pendulum gradient is machine-exact (Stage-0 WARP-NATIVE-TAPE
+  # probe: d q_ddot/d q == -(g/L)cos q to 1.9e-16; the n>=2 coupled adjoint is deferred).
+  # Gradient golden table (>=3 independent anchors: A1 d q_ddot/d q analytic / A2 central FD /
+  # A3 d q_ddot/d tau = 1/(mL^2) analytic) + initial-state-recovery inverse problem +
+  # gradient_fields capture. Single-stack (gate-14 N/A; WU-F differentiable-axis
+  # forward-equivalence to the landed parent). Depends on the parent workspace package.
+  # D-LAYOUT: flat `packages/articulated-pedagogical-diff/` per §0.3. Registered at Stage 1a.
+  "packages/articulated-pedagogical-diff",
 ]
 exclude = []
 
