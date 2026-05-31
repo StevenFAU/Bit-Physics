@@ -23,13 +23,18 @@ CANONICAL_DESCRIPTOR = "rd2d-diff-recover-Du-16sq-seed42"
 
 
 def write_inverse_capture(
-    solution: InverseSolution, out_dir: str | Path, *, descriptor: str = CANONICAL_DESCRIPTOR
+    solution: InverseSolution,
+    out_dir: str | Path,
+    *,
+    descriptor: str = CANONICAL_DESCRIPTOR,
+    start_utc: str | None = None,
 ) -> Path:
     """Write the inverse-solution capture (recovered field + ``gradient_fields``).
 
     Returns the manifest ``.json`` path. The payload ``.h5`` carries the recovered
     final ``u`` field and the ``dLoss_dDu`` gradient array; the manifest declares the
-    gradient via the schema-1.1.0 ``gradient_fields`` key.
+    gradient via the schema-1.1.0 ``gradient_fields`` key. Pass a fixed ``start_utc``
+    for a byte-reproducible committed fixture (lenia precedent).
     """
     from common_py.capture import (
         ConfigMeta,
@@ -70,7 +75,7 @@ def write_inverse_capture(
             step_count=1,
             capture_interval=1,
             wall_clock_seconds=0.0,
-            start_utc=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            start_utc=start_utc or time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         ),
         payload=PayloadMeta(format="hdf5", path=payload_path, checksum=""),
         determinism=DeterminismMeta(

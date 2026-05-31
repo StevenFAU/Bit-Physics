@@ -333,3 +333,18 @@ path      = "tools/testkit/equivalence/variant"
 exclude   = "tests"
 threshold = 0.85
 runner    = "uv run --no-sync pytest tools/testkit/equivalence/variant/tests/ -x -q --tb=no"
+
+# Phase-4 batch-1 sim 1/4 (reaction-diffusion-2d-diff). Per-sim mutation targets
+# (charter §8.7; 4.1 narrowing excluded sims/*/invariants.py + per-sim MMS from the
+# shared targets, so each new sim re-establishes its own). ADVISORY (§2.13) — measured,
+# not gating; oracle-grounded tests only (snapshots forbidden). The `mms` target closes
+# the 4.1 §1.D coverage gap surfaced un-built at the hardening audit.
+[targets.reaction_diffusion_2d_diff]
+path      = "packages/reaction-diffusion-2d-diff/reaction_diffusion_2d_diff"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/reaction-diffusion-2d-diff/tests/ -x -q --tb=no"
+
+[targets.reaction_diffusion_2d_mms]
+path      = "tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/reaction-diffusion-2d-diff/tests/test_mms.py -x -q --tb=no"

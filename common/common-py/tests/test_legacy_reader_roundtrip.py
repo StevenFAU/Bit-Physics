@@ -40,7 +40,12 @@ def test_common_py_reader_round_trips_legacy(sidecar: Path):
     data = json.loads(sidecar.read_text(encoding="utf-8"))
     reader = cpy_capture.Reader(sidecar)
     manifest = reader.manifest
-    assert manifest.gradient_fields is None  # absent → None under 1.1.0
+    if data["schema_version"] == "1.1.0":
+        # Phase-4 differentiable captures carry gradient_fields through the
+        # Taichi-stack reader too (the 1.1.0 forward direction).
+        assert manifest.gradient_fields is not None
+    else:
+        assert manifest.gradient_fields is None  # 1.0.0: absent → None under 1.1.0
     assert manifest.schema_version == data["schema_version"]
     assert reader.step_count >= 1
     # Every state array reads back without error.

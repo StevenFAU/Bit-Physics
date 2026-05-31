@@ -54,7 +54,11 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # Expected partition (measured at WU-A). Asserted so the corpus can't silently
 # drift: a new placeholder without a payload, or a real capture losing its
 # payload, changes these counts and fails loudly.
-_EXPECTED_TOTAL = 26
+# 26 at WU-A; +1 per Phase-4 differentiable sim that appends a 1.1.0
+# gradient_fields capture (the corpus grows deliberately — each addition bumps
+# this count, so a silent drop/add still fails loudly). Phase-4 batch-1 sim 1
+# (reaction-diffusion-2d-diff) is the first 1.1.0 entry → 27 (18 real + 9 placeholder).
+_EXPECTED_TOTAL = 27
 _EXPECTED_PLACEHOLDERS = 9
 
 
@@ -91,14 +95,20 @@ def test_max_supported_version_is_1_1_0():
 
 @pytest.mark.parametrize("sidecar", _REAL, ids=[p.stem for p in _REAL])
 def test_real_capture_round_trips_through_1_1_0(sidecar: Path):
-    """A real 1.0.0 capture validates, loads, and round-trips its manifest
-    under the 1.1.0 schema, with gradient_fields absent → None (not KeyError)."""
+    """A real capture validates, loads, and round-trips its manifest under the
+    1.1.0 schema. A 1.0.0 capture carries gradient_fields absent → None (not
+    KeyError); a 1.1.0 capture (Phase-4 differentiable) carries it present and
+    round-trips it without loss."""
     data = json.loads(sidecar.read_text(encoding="utf-8"))
 
     # Manifest round-trips: from_dict (schema-validates against 1.1.0) → to_dict
-    # reproduces the original sidecar exactly (gradient_fields omitted when None).
+    # reproduces the original sidecar exactly (gradient_fields omitted when None,
+    # preserved when present).
     manifest = CaptureManifest.from_dict(data)
-    assert manifest.gradient_fields is None  # absent → None, never KeyError
+    if data["schema_version"] == "1.1.0":
+        assert manifest.gradient_fields is not None  # Phase-4 forward consumer
+    else:
+        assert manifest.gradient_fields is None  # 1.0.0: absent → None, never KeyError
     assert manifest.to_dict() == data
 
     # Payload loads through the canonical reader; every state array reads back.
@@ -116,7 +126,10 @@ def test_real_capture_round_trips_through_1_1_0(sidecar: Path):
     # common-warp reader (delegating to the same testkit layer) sees the same
     # manifest with gradient_fields None and the original schema_version.
     cap = cwarp_capture.read_capture(sidecar)
-    assert cap.manifest["gradient_fields"] is None
+    if data["schema_version"] == "1.1.0":
+        assert cap.manifest["gradient_fields"] is not None
+    else:
+        assert cap.manifest["gradient_fields"] is None
     assert cap.manifest["schema_version"] == data["schema_version"]
 
 
