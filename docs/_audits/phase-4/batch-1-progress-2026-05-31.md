@@ -119,7 +119,17 @@ forward+golden+GREEN) -> `66c8ec1` (S1c perf/CI/LFS/mutation) -> `<S2>` (landing
 - **§R at landing:** 0 HF / 14 SW (integrity --all --mode strict, rc 0).
 - gate-13 worktree replay at `f4bafa9` VERIFIED match=True (norm sha256 e7140424…).
 - Corpus roundtrip 31 passed (`_EXPECTED_TOTAL` 28->29; the 3rd 1.1.0 gradient_fields entry).
-- **§S.5 sweep + LFS R2 push:** at push (this section updated to record the result).
+- **§S.5 sweep + LFS R2 push (RECORDED):** pushed `cb5c817..4a05ca3` to origin/main. GitHub
+  push uploaded the LFS object to GitHub-LFS (1/1) but GitHub-LFS budget is exhausted, so CI's
+  "Selective LFS fetch" returned "No downloadable version" → python-strict initially RED. ROOT
+  CAUSE: the R2 single-object push had the WRONG arg order (`git lfs push --object-id --stdin
+  origin`, remote AFTER --stdin) → silent EOF, so the object never reached R2. FIX (F-MPM-3): the
+  documented order `git lfs push --object-id origin --stdin <<<"$OID"` (remote BEFORE --stdin)
+  pushed it to R2 cleanly (1/1). Re-ran the failed python-strict job → **completed success**.
+  Final §S.5: 10/10 workflows GREEN at `4a05ca3` (python-strict incl. test-mpm-multimaterial-diff
+  + test-lenia-diff + test-reaction-diffusion-2d-diff + the corpus-roundtrip LFS-fetch, integrity,
+  determinism, equivalence, structure, mutation-testing, audit-append-only, tolerance-budget,
+  ts-strict, cpp-strict). render_similarity + variant jobs GREEN. **Sim 3 CONFIRMED CI-GREEN.**
 
 ### Banked frictions (carry to sim 4)
 - **F-MPM-1 (cross-reference f32 re-init):** any test mixing the diff with a landed
@@ -130,6 +140,10 @@ forward+golden+GREEN) -> `66c8ec1` (S1c perf/CI/LFS/mutation) -> `<S2>` (landing
 - **F-MPM-2 (base-node discontinuity):** `base=floor(fx+0.5)-1` is discontinuous; keep particles
   away from cell boundaries throughout the horizon (interior cluster, blob_radius < dx) so a tiny
   op-order difference never flips a stencil cell.
+- **F-MPM-3 (R2 single-object push arg order):** `git lfs push --object-id origin --stdin`
+  (remote BEFORE `--stdin`) works; `git lfs push --object-id --stdin origin` (remote AFTER)
+  silently EOFs and the object never reaches R2 → CI LFS-fetch fails since GitHub-LFS budget is
+  exhausted. Use the documented heredoc form. This refines the §Q invocation for sim 4.
 - The sim-2 banked frictions (lean-venv evidence, derandomize+phases, LFS same-shell R2 push,
   eof-fixer on .json sidecars) all RE-CONFIRMED here.
 
