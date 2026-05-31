@@ -1,0 +1,44 @@
+{
+  "config": {
+    "dims": [
+      32,
+      32,
+      32
+    ],
+    "dtype": "f64",
+    "params": {
+      "grid_n": 32,
+      "n_gaussians": 256,
+      "n_particles": 256
+    },
+    "seed": 0,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:92fc1ff4333b3cc436689bb0ea02d87ab1845b02a8d32e96057f959be27f30d1",
+    "format": "hdf5",
+    "path": "phase-4-3dgs-mpm-sh-update.h5"
+  },
+  "run": {
+    "capture_interval": 100,
+    "start_utc": "2026-05-31T00:00:00Z",
+    "step_count": 300,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "neural-rendered",
+    "name": "3dgs-mpm-sh-update",
+    "variant": "physgaussian-sh-update"
+  },
+  "stack": {
+    "build_id": "phase-4-batch-2",
+    "name": "warp-cpu",
+    "version": "0.0.0"
+  }
+}

@@ -595,6 +595,66 @@ jobs:
         working-directory: packages/3dgs-mpm
         run: uv run pytest -q
 
+  # Phase-4 batch-2 Sim A (3dgs-mpm-sh-update). The SH-update deferred from task-8.
+  # Reads committed golden render PNGs (Prong 2) -> needs the selective LFS pull. Imports
+  # gs_mpm (the parent) + the MPM kernels; the full coupled sim runs from scratch.
+  test-3dgs-mpm-sh-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync 3dgs-mpm-sh-update workspace deps (dev extras for pytest + ruff + LPIPS)
+        working-directory: packages/3dgs-mpm-sh-update
+        run: uv sync --extra dev
+
+      - name: ruff (3dgs-mpm-sh-update src + tests)
+        working-directory: packages/3dgs-mpm-sh-update
+        run: |
+          uv run ruff check gs_mpm_sh_update/ tests/
+          uv run ruff format --check gs_mpm_sh_update/ tests/
+
+      - name: mypy --strict (3dgs-mpm-sh-update)
+        working-directory: packages/3dgs-mpm-sh-update
+        run: uv run mypy --strict gs_mpm_sh_update/
+
+      - name: Selective LFS fetch — committed golden render PNGs (via R2 when wired)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2 (lfs-s3 standalone transfer agent)"
+          else
+            echo "lfs fetch route: GitHub LFS (R2 secrets absent — fork PR or unconfigured)"
+          fi
+          git lfs pull --include="tools/testkit/golden/renders/**"
+
+      - name: Assert the committed golden renders smudged (no silent-skip of Prong 2)
+        run: |
+          PNG=tools/testkit/golden/renders/3dgs-mpm-sh-update-canonical-frame-0.png
+          SZ=$(stat -c%s "$PNG" 2>/dev/null || echo 0)
+          if [ "$SZ" -le 256 ]; then
+            echo "::error::golden render not smudged ($PNG is $SZ bytes — LFS pull failed)"
+            exit 1
+          fi
+          echo "golden render smudged: $SZ bytes"
+
+      - name: pytest (both gate-4 prongs + gate-11 PBT + physics-equivalence-vs-parent)
+        working-directory: packages/3dgs-mpm-sh-update
+        run: uv run pytest -q
+
   # Phase-4 batch-1 sim 1/4 (reaction-diffusion-2d-diff). Differentiable Gray-Scott
   # (Stack D / Taichi ti.ad.Tape) on the WU-A autodiff substrate. Tests instantiate
   # the sim in-process (like test-lenia) — no committed LFS capture is read (the

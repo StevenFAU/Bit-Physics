@@ -61,7 +61,8 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # batch-1 sim 2 (lenia-diff) is the second 1.1.0 entry → 28 (19 real + 9 placeholder);
 # batch-1 sim 3 (mpm-multimaterial-diff) is the third 1.1.0 entry → 29 (20 real + 9 placeholder);
 # batch-1 sim 4 (eulerian-smoke-diff; FINAL) is the fourth 1.1.0 entry → 30 (21 real + 9 ph).
-_EXPECTED_TOTAL = 30
+# batch-2 Sim A (3dgs-mpm-sh-update) adds a real schema-1.0.0 capture → 31 (22 real + 9 ph).
+_EXPECTED_TOTAL = 31
 _EXPECTED_PLACEHOLDERS = 9
 
 

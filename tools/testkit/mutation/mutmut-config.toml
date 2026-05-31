@@ -377,3 +377,13 @@ runner    = "uv run --no-sync pytest packages/mpm-multimaterial-diff/tests/ -x -
 path      = "packages/eulerian-smoke-diff/eulerian_smoke_diff"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/eulerian-smoke-diff/tests/ -x -q --tb=no"
+
+# Phase-4 batch-2 Sim A (3dgs-mpm-sh-update). The SH-rotation source (polar_rotation +
+# rotate_sh_degree1 + the degree-1 scene + the driver). Oracle-grounded test surface only
+# (A1 closed-form P R P^T / A2 equivariance vs renderer / A3 frozen + golden table +
+# physics-equivalence); snapshots FORBIDDEN. ADVISORY (§2.13); the HARD-gated
+# render_similarity / variant targets are untouched (this sim is a render_similarity consumer).
+[targets.gs_mpm_sh_update]
+path      = "packages/3dgs-mpm-sh-update/gs_mpm_sh_update"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/3dgs-mpm-sh-update/tests/ -x -q --tb=no"
