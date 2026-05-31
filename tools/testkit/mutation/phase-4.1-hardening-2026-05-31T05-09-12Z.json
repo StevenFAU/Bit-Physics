@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "produced_utc": "2026-05-31T05-09-12Z",
+  "kind": "phase-4.1-foundation-hardening",
+  "status": "real-baseline",
+  "mutmut_version": "2.5.1",
+  "rationale": "Phase-4.1 foundation-hardening pass (spec §2.13). Oracle-grounded mutation hardening of the five SOFT_WARN-advisory targets. render_similarity + variant cleared their floors on oracle-grounded tests (no snapshot padding) and are PROMOTED to HARD_FAIL-at-landing. common_3dgs / code_verification_mms / property stay SOFT_WARN advisory (recorded honestly below floor; mms + property class-(iii) narrowed). The gate_helpers `mutation-promoted-floor` check enforces that every posture=HARD_FAIL-at-landing target here meets its threshold. Full classification + levers: docs/_audits/phase-4/foundation-hardening-2026-05-31T00-34-08Z.md.",
+  "targets": [
+    {
+      "target": "render_similarity",
+      "path": "tools/testkit/render_similarity/metrics.py",
+      "threshold": 0.85,
+      "score_before": 0.663,
+      "score": 0.9242,
+      "killed": 195,
+      "total": 211,
+      "survived": 16,
+      "posture": "HARD_FAIL-at-landing",
+      "residual_classification": {"real_gap": 0, "equivalent": 5, "out_of_scope": 11}
+    },
+    {
+      "target": "variant",
+      "path": "tools/testkit/equivalence/variant",
+      "threshold": 0.85,
+      "score_before": 0.695,
+      "score": 0.8702,
+      "killed": 114,
+      "total": 131,
+      "survived": 17,
+      "posture": "HARD_FAIL-at-landing",
+      "residual_classification": {"real_gap": 0, "equivalent": 6, "out_of_scope": 11}
+    },
+    {
+      "target": "common_3dgs",
+      "path": "common/common-3dgs/src/common_3dgs",
+      "threshold": 0.80,
+      "score_before": 0.663,
+      "score": 0.7708,
+      "killed": 1137,
+      "total": 1475,
+      "survived": 326,
+      "posture": "SOFT_WARN-advisory",
+      "note": "+159 genuine oracle kills; below floor, recorded honestly (not forced). Lever: model-PLY known-byte fixtures + render EWA covariance value tests + np.empty deterministic-init + Warp single-splat compositing oracles."
+    },
+    {
+      "target": "code_verification_mms",
+      "path": "tools/testkit/code_verification/mms",
+      "threshold": 0.80,
+      "score_before": 0.215,
+      "score_before_total": 642,
+      "score": 0.438,
+      "killed": 138,
+      "total": 315,
+      "survived": 171,
+      "posture": "SOFT_WARN-advisory",
+      "note": "class-(iii) NARROWED: excluded 3 cross-driven sim-solution dirs (incompressible_ns_2d, reaction_diffusion_2d, reaction_diffusion_3d = 327/498 baseline survivors). Residual = report/HDF5/CLI glue. SURFACED: reaction_diffusion_2d now un-targeted (add reaction_diffusion_2d_mms when RD-2D MMS lands)."
+    },
+    {
+      "target": "property",
+      "path": "tools/testkit/property",
+      "threshold": 0.80,
+      "score_before": 0.170,
+      "score_before_total": 890,
+      "score": 0.6453,
+      "killed": 151,
+      "total": 234,
+      "survived": 83,
+      "posture": "SOFT_WARN-advisory",
+      "note": "class-(iii) NARROWED: excluded satellite PBT test-files (453) + per-sim invariant modules (203) = 656/739 baseline survivors. Residual 83 = real-gap testkit core (invariant checkers + strategies). Lever: property-checker oracle tests (deferred follow-up). SURFACED: per-sim invariant modules un-mutation-targeted."
+    }
+  ]
+}

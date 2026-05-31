@@ -82,6 +82,60 @@ def _mutation_baseline_present() -> int:
     return 0
 
 
+def _mutation_promoted_floor() -> int:
+    """Mutation gate: every PROMOTED target in the latest hardening ledger meets floor.
+
+    The Phase-4.1 hardening pass earned the first per-target HARD_FAIL-at-landing
+    promotions (spec § 2.13). This gate reads the latest
+    ``tools/testkit/mutation/phase-*-hardening-*.json`` ledger and asserts that
+    every target declaring ``posture == "HARD_FAIL-at-landing"`` records a
+    ``score >= threshold``. A regression that drops a promoted target below floor
+    cannot land without updating — and thus re-justifying — the ledger.
+
+    No hardening ledger ⇒ no promotions to enforce ⇒ pass (additive gate).
+    """
+    mutation_dir = Path("tools/testkit/mutation")
+    files = sorted(mutation_dir.glob("phase-*-hardening-*.json"))
+    if not files:
+        print("gate_helpers: no mutation-hardening ledger; no promoted targets to enforce")
+        return 0
+    latest = files[-1]
+    try:
+        data = json.loads(latest.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"gate_helpers: hardening ledger {latest} unreadable: {exc}", file=sys.stderr)
+        return 1
+    targets = data.get("targets")
+    if not isinstance(targets, list) or not targets:
+        print(
+            f"gate_helpers: hardening ledger {latest} 'targets' missing or empty", file=sys.stderr
+        )
+        return 1
+    promoted = [t for t in targets if t.get("posture") == "HARD_FAIL-at-landing"]
+    failures: list[str] = []
+    for t in promoted:
+        score, threshold = t.get("score"), t.get("threshold")
+        if not isinstance(score, (int, float)) or not isinstance(threshold, (int, float)):
+            failures.append(
+                f"{t.get('target')!r}: non-numeric score/threshold ({score}/{threshold})"
+            )
+        elif score < threshold:
+            failures.append(f"{t.get('target')!r}: score {score} < floor {threshold}")
+    if failures:
+        print(
+            f"gate_helpers: promoted-target floor violated in {latest.name}: "
+            + "; ".join(failures),
+            file=sys.stderr,
+        )
+        return 1
+    names = ", ".join(f"{t['target']}={t['score']}" for t in promoted)
+    print(
+        f"gate_helpers: mutation promoted-floor OK ({latest.name}; "
+        f"{len(promoted)} promoted: {names or 'none'})"
+    )
+    return 0
+
+
 def _tolerance_budget_trivial() -> int:
     """Phase 0 tolerance-budget gate (per Phase-1 plan R9 amendment).
 
@@ -131,6 +185,7 @@ def _tolerance_budget_trivial() -> int:
 
 _SUBCOMMANDS = {
     "mutation-baseline-present": _mutation_baseline_present,
+    "mutation-promoted-floor": _mutation_promoted_floor,
     "tolerance-budget-trivial": _tolerance_budget_trivial,
 }
 
