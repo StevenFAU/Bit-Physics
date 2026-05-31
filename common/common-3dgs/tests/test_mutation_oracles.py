@@ -269,6 +269,103 @@ def test_render_quaternions_to_matrices_matches_scipy(
     assert np.allclose(got, _scipy_matrix(q_wxyz), atol=1e-9)
 
 
+# Generic ASYMMETRIC rotations (all off-diagonals non-zero) — the symmetric
+# 90/180° quaternions above leave many off-diagonal matrix entries at 0, so a
+# mutation that mis-assigns an off-diagonal (leaving np.empty garbage that often
+# reads 0) survives. Euler-derived rotations populate every entry distinctly.
+_GENERIC_ROTS_XYZ_DEG = [(30.0, 45.0, 60.0), (15.0, -50.0, 80.0), (-25.0, 70.0, -40.0)]
+
+
+def _euler_quat_wxyz(angles_deg: tuple[float, float, float]) -> np.ndarray:
+    x, y, z, w = Rotation.from_euler("xyz", angles_deg, degrees=True).as_quat()
+    return np.array([w, x, y, z], dtype=np.float64)
+
+
+@pytest.mark.parametrize("angles", _GENERIC_ROTS_XYZ_DEG)
+def test_quat_to_matrix_generic_asymmetric_matches_scipy(
+    angles: tuple[float, float, float],
+) -> None:
+    """Forward quaternion->matrix on a fully-populated rotation (coupling + render).
+
+    Every off-diagonal entry is distinct and non-zero, so an off-diagonal
+    mis-assignment (which leaves uninitialised np.empty memory) diverges.
+    """
+    q = _euler_quat_wxyz(angles)
+    ref = Rotation.from_euler("xyz", angles, degrees=True).as_matrix()
+    assert np.allclose(_quat_wxyz_to_matrix(q[None, :])[0], ref, atol=1e-9)
+    assert np.allclose(_quaternions_to_matrices(q[None, :])[0], ref, atol=1e-9)
+
+
+@pytest.mark.parametrize("angles", _GENERIC_ROTS_XYZ_DEG)
+def test_matrix_to_quat_generic_asymmetric_recovers(
+    angles: tuple[float, float, float],
+) -> None:
+    """Recovery on a fully-populated rotation matrix (all four branches sharpened)."""
+    q = _euler_quat_wxyz(angles)
+    m = Rotation.from_euler("xyz", angles, degrees=True).as_matrix()
+    q_rec = _matrix_to_quat_wxyz(m[None, :, :])[0]
+    assert abs(float(q_rec @ q)) == pytest.approx(1.0, abs=1e-7)
+
+
+# ----------------------------------------------------------------------------
+# render — SH degree 1/2/3 evaluated at specific directions (analytic).
+# ----------------------------------------------------------------------------
+
+_C1 = 0.4886025119029199
+_C2 = (
+    1.0925484305920792,
+    -1.0925484305920792,
+    0.31539156525252005,
+    -1.0925484305920792,
+    0.5462742152960396,
+)
+_C3 = (
+    -0.5900435899266435,
+    2.890611442640554,
+    -0.4570457994644658,
+    0.3731763325901154,
+    -0.4570457994644658,
+    1.445305721320277,
+    -0.5900435899266435,
+)
+
+
+def _one_band(band: int, channel: int = 0) -> np.ndarray:
+    sh = np.zeros((1, K, 3), dtype=np.float64)
+    sh[0, band, channel] = 1.0
+    return sh
+
+
+@pytest.mark.parametrize(
+    ("band", "direction", "expected_coeff_fn"),
+    [
+        # Degree-1: result = -C1*y*sh1 + C1*z*sh2 - C1*x*sh3  (+0.5 bias)
+        (1, (0.0, 1.0, 0.0), lambda d: -_C1 * d[1]),  # band 1 ~ -C1*y
+        (2, (0.0, 0.0, 1.0), lambda d: _C1 * d[2]),  # band 2 ~ +C1*z
+        (3, (1.0, 0.0, 0.0), lambda d: -_C1 * d[0]),  # band 3 ~ -C1*x
+    ],
+)
+def test_eval_sh_degree1_terms(band, direction, expected_coeff_fn) -> None:  # type: ignore[no-untyped-def]
+    """Each degree-1 band carries its signed C1 * component (Inria sh_utils)."""
+    d = np.array(direction, dtype=np.float64)
+    out = _eval_sh(1, _one_band(band), d[None, :])[0]
+    assert out[0] == pytest.approx(expected_coeff_fn(d) + 0.5, abs=1e-12)
+
+
+def test_eval_sh_degree2_z_lobe_sign() -> None:
+    """Band-6 degree-2 term = C2[2] * (2z^2 - x^2 - y^2) (+0.5). At z-axis = +2*C2[2]."""
+    out = _eval_sh(2, _one_band(6), np.array([[0.0, 0.0, 1.0]]))[0]
+    assert out[0] == pytest.approx(_C2[2] * (2.0) + 0.5, abs=1e-12)
+
+
+def test_eval_sh_degree3_band12_z_cubic_sign() -> None:
+    """Band-12 degree-3 term = C3[3] * z*(2z^2 - 3x^2 - 3y^2) (+0.5). At z-axis: C3[3]*(-1)*... ."""
+    z = 1.0
+    poly = z * (2.0 * z * z - 3.0 * 0.0 - 3.0 * 0.0)  # = 2
+    out = _eval_sh(3, _one_band(12), np.array([[0.0, 0.0, 1.0]]))[0]
+    assert out[0] == pytest.approx(_C3[3] * poly + 0.5, abs=1e-12)
+
+
 def test_on_axis_point_projects_to_principal_point() -> None:
     """A Gaussian on the camera's view axis renders brightest at the image centre.
 
