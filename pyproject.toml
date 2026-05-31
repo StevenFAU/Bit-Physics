@@ -211,6 +211,20 @@ members = [
   # differentiable-axis equivalence applies). D-LAYOUT: flat `packages/eulerian-smoke-diff/`
   # per §0.3. Registered at Stage 1a.
   "packages/eulerian-smoke-diff",
+
+  # Phase-4 batch-2 Sim A (neural-rendered frontier). The SH-update deferred from
+  # Phase-3 task-8: per-frame spherical-harmonic rotation under the MPM deformation's
+  # rotation part (polar decomposition F=R S; PhysGaussian Eq. (9)). SIBLING package —
+  # does NOT mutate the frozen packages/3dgs-mpm/ MVP; reuses gs_mpm.couple_gaussians
+  # (covariance, UNCHANGED) + the MPM kernels by import, and ADDS the degree-1 Wigner-D
+  # SH rotation D1(R)=P R P^T (P from the landed common-3dgs real-SH basis). A NEW
+  # degree-1 directional-SH scene (the landed scene is degree-0/DC-only -> rotation is a
+  # no-op). Two-pronged: SH-rotation numerical golden (>=3 anchors: A1 P R P^T closed
+  # form / A2 rotation-equivariance vs the renderer / A3 pure-stretch frozen) + perceptual
+  # render-similarity vs OWN committed renders. Single-stack (gate-14 N/A; WU-F neural-axis
+  # floor applies). Import package `gs_mpm_sh_update` (digit-leading dir). Registered at
+  # Stage 1a.
+  "packages/3dgs-mpm-sh-update",
 ]
 exclude = []
 

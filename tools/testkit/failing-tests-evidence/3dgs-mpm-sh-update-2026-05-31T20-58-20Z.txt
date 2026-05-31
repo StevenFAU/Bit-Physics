@@ -1,0 +1,112 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/3dgs-mpm-sh-update
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 11 items
+
+tests/test_pbt_invariants.py::test_sh_rotation_equivariant FAILED        [  9%]
+tests/test_pbt_invariants.py::test_covariance_spd_preserved PASSED       [ 18%]
+tests/test_physics_equivalence.py::test_mpm_trajectory_matches_parent FAILED [ 27%]
+tests/test_render_similarity_golden.py::test_golden_renders_exist FAILED [ 36%]
+tests/test_render_similarity_golden.py::test_render_similarity_clears_floors FAILED [ 45%]
+tests/test_sh_rotation_golden.py::test_a1_degree1_hand_derived_value FAILED [ 54%]
+tests/test_sh_rotation_golden.py::test_a2_rotation_equivariance_vs_renderer FAILED [ 63%]
+tests/test_sh_rotation_golden.py::test_a3_pure_stretch_frozen_and_pure_rotation FAILED [ 72%]
+tests/test_sh_rotation_golden.py::test_golden_table_anchors ERROR        [ 81%]
+tests/test_sh_rotation_golden.py::test_degree_ge_2_raises[9] PASSED      [ 90%]
+tests/test_sh_rotation_golden.py::test_degree_ge_2_raises[16] PASSED     [100%]
+
+==================================== ERRORS ====================================
+_________________ ERROR at setup of test_golden_table_anchors __________________
+tests/conftest.py:53: in sh_rotation_golden
+    return json.loads(_SH_GOLDEN.read_text())
+                      ^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1029: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/3dgs-mpm-sh-rotation.json'
+=================================== FAILURES ===================================
+_________________________ test_sh_rotation_equivariant _________________________
+tests/test_pbt_invariants.py:40: in test_sh_rotation_equivariant
+    @given(
+            
+tests/test_pbt_invariants.py:57: in test_sh_rotation_equivariant
+    rotated = _eval_sh(1, rotate_sh_degree1(sh, rot), rd)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/sh_rotation.py:57: in rotate_sh_degree1
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+E   Falsifying example: test_sh_rotation_equivariant(
+E       # The test always failed when commented parts were varied together.
+E       quat=[0.0, 0.0, 0.0, 1.0],  # or any other generated value
+E       coeffs=[0.0,
+E        0.0,
+E        0.0,
+E        0.0,
+E        0.0,
+E        0.0,
+E        0.0,
+E        0.0,
+E        0.0],  # or any other generated value
+E       direction=[0.0, 0.0, 1.0],  # or any other generated value
+E   )
+______________________ test_mpm_trajectory_matches_parent ______________________
+tests/test_physics_equivalence.py:29: in test_mpm_trajectory_matches_parent
+    build_sh_update_scene(seed=0),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/scene.py:48: in build_sh_update_scene
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+----------------------------- Captured stderr call -----------------------------
+Warp CUDA warning: Could not find or load the NVIDIA CUDA driver. GPU execution will not be available.
+__________________________ test_golden_renders_exist ___________________________
+tests/test_render_similarity_golden.py:33: in test_golden_renders_exist
+    assert len(frames) >= 2, f"expected >= 2 golden renders in {golden_renders_dir}"
+E   AssertionError: expected >= 2 golden renders in /home/otacon/Projects/Bit-Physics/tools/testkit/golden/renders
+E   assert 0 >= 2
+E    +  where 0 = len([])
+_____________________ test_render_similarity_clears_floors _____________________
+tests/test_render_similarity_golden.py:39: in test_render_similarity_clears_floors
+    frames = run_canonical_sh_update_sim(seed=0)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/sim.py:62: in run_canonical_sh_update_sim
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+______________________ test_a1_degree1_hand_derived_value ______________________
+tests/test_sh_rotation_golden.py:53: in test_a1_degree1_hand_derived_value
+    out = rotate_sh_degree1(sh, rot)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/sh_rotation.py:57: in rotate_sh_degree1
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+__________________ test_a2_rotation_equivariance_vs_renderer ___________________
+tests/test_sh_rotation_golden.py:71: in test_a2_rotation_equivariance_vs_renderer
+    rotated = _eval_sh(1, rotate_sh_degree1(sh, rot), rd)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/sh_rotation.py:57: in rotate_sh_degree1
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+________________ test_a3_pure_stretch_frozen_and_pure_rotation _________________
+tests/test_sh_rotation_golden.py:81: in test_a3_pure_stretch_frozen_and_pure_rotation
+    r_stretch = polar_rotation(stretch)
+                ^^^^^^^^^^^^^^^^^^^^^^^
+gs_mpm_sh_update/sh_rotation.py:45: in polar_rotation
+    raise NotImplementedError("Stage 1b — implemented after the failing-tests commit")
+E   NotImplementedError: Stage 1b — implemented after the failing-tests commit
+=========================== short test summary info ============================
+FAILED tests/test_pbt_invariants.py::test_sh_rotation_equivariant - NotImplem...
+FAILED tests/test_physics_equivalence.py::test_mpm_trajectory_matches_parent
+FAILED tests/test_render_similarity_golden.py::test_golden_renders_exist - As...
+FAILED tests/test_render_similarity_golden.py::test_render_similarity_clears_floors
+FAILED tests/test_sh_rotation_golden.py::test_a1_degree1_hand_derived_value
+FAILED tests/test_sh_rotation_golden.py::test_a2_rotation_equivariance_vs_renderer
+FAILED tests/test_sh_rotation_golden.py::test_a3_pure_stretch_frozen_and_pure_rotation
+ERROR tests/test_sh_rotation_golden.py::test_golden_table_anchors - FileNotFo...
+===================== 7 failed, 3 passed, 1 error in 2.39s =====================

@@ -304,3 +304,19 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# Phase-4 batch-2 Sim A (3dgs-mpm-sh-update). The SH-update deferred from task-8.
+# Composes the SAME three bit-exact-same-hw stages as [neural-rendered.3dgs-mpm] — MPM
+# (serial wp.launch f64) -> covariance coupling (deterministic numpy; reuses
+# gs_mpm.couple_gaussians) -> render (common-3dgs atomic-free serial CPU wp.launch) — plus
+# the deterministic NumPy SH rotation (SVD polar decomposition + D1(R)=P R P^T). No atomics,
+# no subgroup ops. Declared at Stage 1a; MEASURED at Stage 1b (run_twice_and_diff on the full
+# pipeline -> np.array_equal frames + capture sha256 match). Rasterization atomic-ordering is
+# the determinism-sensitive surface (the MPM-scatter lesson) — MEASURED, not assumed.
+[neural-rendered.3dgs-mpm-sh-update]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

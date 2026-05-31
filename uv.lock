@@ -31,6 +31,7 @@ resolution-markers = [
 [manifest]
 members = [
     "3dgs-mpm",
+    "3dgs-mpm-sh-update",
     "articulated-pedagogical",
     "bit-physics",
     "bit-physics-common-3dgs",
@@ -97,6 +98,58 @@ dev = [
 
 [package.metadata]
 requires-dist = [
+    { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "lpips", marker = "extra == 'dev'", specifier = "==0.1.4" },
+    { name = "mpm-multimaterial-stack-e", editable = "packages/mpm-multimaterial-stack-e" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pillow", marker = "extra == 'dev'", specifier = ">=10.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "torch", marker = "extra == 'dev'", specifier = ">=2.2" },
+    { name = "torchvision", marker = "extra == 'dev'", specifier = ">=0.13" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "3dgs-mpm-sh-update"
+version = "0.0.0"
+source = { editable = "packages/3dgs-mpm-sh-update" }
+dependencies = [
+    { name = "3dgs-mpm" },
+    { name = "bit-physics-common-3dgs" },
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "mpm-multimaterial-stack-e" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "lpips" },
+    { name = "mypy" },
+    { name = "pillow" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+    { name = "torch" },
+    { name = "torchvision" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "3dgs-mpm", editable = "packages/3dgs-mpm" },
     { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
     { name = "bit-physics-common-warp", editable = "common/common-warp" },
     { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
