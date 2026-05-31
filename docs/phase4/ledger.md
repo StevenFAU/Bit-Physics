@@ -15,7 +15,7 @@
 
 | Stage | Spec item | Sim ID | Variant | Stack | Primary infra | Phase-3 carry-in | Hidden deps | Spec path | PBT invariants declared | Perf-ledger row | Audit | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| 9 | 4.1 | continuous-ca/reaction-diffusion-2d | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-diff.md | TODO (≥2) | no | — | planned |
+| 9 | 4.1 | continuous-ca/reaction-diffusion-2d | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-diff.md | 2 (gradient_matches_finite_difference + concentration_change_bounded) | yes | batch-1-close | **landed** |
 | 10 | 4.2 | particle-fluids/sph-water | diff | D | § 4.2.A | (none) | — | docs/sim-specs/particle-fluids/sph-water/spec-diff.md | TODO (≥2) | no | — | planned |
 | 11 | 4.3 | hybrid-pg/mpm-multimaterial | diff | D | § 4.2.A | (none) | — | docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-diff.md | TODO (≥2) | no | — | planned |
 | 12 | 4.4 | continuous-ca/lenia | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-diff.md | TODO (≥2) | no | — | planned |
