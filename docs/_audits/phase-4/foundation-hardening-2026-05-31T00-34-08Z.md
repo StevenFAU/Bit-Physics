@@ -67,7 +67,7 @@ Five SOFT_WARN-advisory targets (foundation-native first, then carryovers):
 | Target | Threshold | Pre (measured at close) | After | Survivor classes (i gap / ii equiv / iii oos) | Disposition |
 |---|---|---|---|---|---|
 | `render_similarity` (metrics.py) | 0.85 | 0.663 (140/211) | **0.9242 (195/211)** | killed 55 gaps; residual 16 = 5 equiv + 11 oos | **CLEARS → PROMOTE** |
-| `variant` | 0.85 | 0.695 (91/131) | _pending_ | _pending_ | _pending_ |
+| `variant` | 0.85 | 0.695 (91/131) | **0.8702 (114/131)** | killed 23 gaps; residual 17 = 6 equiv + 11 oos | **CLEARS → PROMOTE** |
 | `common_3dgs` (src) | 0.80 | 0.663 (978/1475) | _pending_ | _pending_ | _pending_ |
 | `code_verification_mms` | 0.80 | 0.2243 (A3 carryover) | _pending_ | _pending_ | _pending_ |
 | `property` | 0.80 | 0.3455 (A3 carryover) | _pending_ | _pending_ | _pending_ |
@@ -102,9 +102,51 @@ survivors, so the clear is genuine (NOT reached via equivalent-exclusion).
 **Disposition: PROMOTE to HARD_FAIL-at-landing (§2.13).** Clears 0.85 by +0.074 on
 real oracle tests, no snapshot padding, equivalents counted as survivors.
 
+### §1.B — `variant` (tolerance.py + harness.py) — CLEARS 0.85, PROMOTE
+
+**Before → after: 0.695 (91/131) → 0.8702 (114/131)** (measured live; baseline
+re-confirmed with the new tests moved aside = exactly the foundation-close 91/131).
+New tests in `tools/testkit/equivalence/variant/tests/test_harness_oracles.py` (12)
++ `tools/testkit/equivalence/variant/tests/test_tolerance_oracles.py` (4). The 40
+baseline survivors concentrated in `harness.py` (the relative-tol term, the
+Wasserstein branch, time/sim_time frame-matching — `test_compare.py` only ever
+used `relative_tol=0.0`, the L2/Linf norms, and step-index matching) + tolerance
+edge cases. Clears 0.85 by **+0.0202** (NOT the <0.02 borderline band).
+
+**23 REAL-GAP mutants killed (class i) — oracle per group:**
+
+| Mutants | Surface | Oracle |
+|---|---|---|
+| 34, 36, 47 | L2 norm order, ref_norm order, threshold `abs + rel·‖ref‖` (`+`→`-`) | hand-computed ‖[3,4]‖₂=5, error 0.5, threshold boundary (rel=0.11 pass / 0.05 fail). |
+| 44, 76 | Wasserstein branch + `_NORMS` membership | W1([0,0,0,0],[1,1,1,1])=1.0 (every unit of mass moves distance 1); abs=1.5 pass / 0.5 fail. |
+| 40 | Linf empty-field error fallback | empty (size-0) field → Linf error 0.0 (mutated 1.0 would exceed a 0.5 budget). |
+| 4, 6, 11, 13 | `"time"`/`"sim_time"` diagnostic frame-matching | time/sim_time-keyed match (vs step index) — distinguishing IC where time-match ≠ step-match. |
+| 8?,9,10,16,17 | `reshape(-1)[0]` index / `t=None` | the time/sim_time tests exercise the reshape+index (None / out-of-range index raise). |
+| 23 | `min(.., key=abs(t - at_sim_time))` (`-`→`+`) | nearest-time selection: times{10,20,30}, at_sim_time=21 → picks 20 (mutated `+` picks 10). |
+| 67 | pass criterion `error <= threshold` (`<=`→`<`) | error EXACTLY == threshold (0.5==0.5) must pass (inclusive). |
+| 95, 129 | neural psnr floor value 25.0 + floor `<` inclusivity | psnr_min=25.0 (exactly at the plan-§7.7 floor) must pass; 24.999 raises. |
+| 108–111 | `neural-rendered` / `newton-backed` axis aliases | the aliases resolve to neural/newton budgets (untested — only `diff` was). |
+
+**17 residual survivors (HONESTLY excluded; entirely equivalent / out-of-scope — NO real gaps left):**
+- **6 class-(ii) EQUIVALENT**: `7,8,14,15` `reshape(-1)`→`reshape(+1)`/`reshape(-2)` on the
+  scalar (size-1) time/sim_time diagnostic — all reshape variants yield the same scalar;
+  `42,45` Linf/Wasserstein `ref_norm` empty-array fallback (`0.0`→`1.0`/`None`) — on an empty
+  field the error is necessarily 0, so the ref_norm fallback can never flip a verdict (and
+  Wasserstein raises on an empty distribution, so that branch is unreachable for empty input).
+- **11 class-(iii) OUT-OF-SCOPE**: error-MESSAGE string wording (`22,29,58,59,61,62` in harness;
+  `80,86,115,126,131` in tolerance) — the exception TYPE + firing is tested via `pytest.raises(match=…)`;
+  only the human-readable text mutates. Killing needs brittle exact-string assertions (snapshot anti-pattern, forbidden).
+
+**Disposition: PROMOTE to HARD_FAIL-at-landing (§2.13).** Clears 0.85 by +0.0202 on
+real oracle tests; all 17 residual are equivalent / out-of-scope (counted as
+survivors — no exclusion-to-reach-floor).
+
 ## §S.5 — workflow sweeps per push
 
-_(appended per push)_
+| Push SHA | Scope | Sweep result |
+|---|---|---|
+| `57c297a` | render_similarity tests + audit | **RED** — `python-strict / test-render-similarity` FAILED on `mypy --strict` (CI mypy-checks the whole `render_similarity/` dir; commit hooks do not). STOP-and-fixed (not forced). |
+| `a4f9c90` | render mypy hotfix (2 `# type: ignore`) | **all green** (python-strict incl. test-render-similarity ✓; integrity, equivalence, determinism, cpp-strict, ts-strict, tolerance-budget, audit-append-only, structure). |
 
 ## §2 — PHASE 2 promotion dispositions
 
