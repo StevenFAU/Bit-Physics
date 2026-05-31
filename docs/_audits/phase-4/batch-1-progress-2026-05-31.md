@@ -20,7 +20,7 @@ evidence_paths:
 > batch close with verify_evidence + full §S.5 + CONTRADICTIONS). A fresh resume re-orients
 > from COMMITTED state via the dispatch ORIENT list, then continues at "NEXT ACTION" below.
 
-## Batch order (charter §1.2): sim1 RD-2D-diff ✓ · sim2 lenia-diff ✓ · sim3 mpm-diff · sim4 smoke-diff
+## Batch order (charter §1.2): sim1 RD-2D-diff ✓ · sim2 lenia-diff ✓ · sim3 mpm-diff ✓ · sim4 smoke-diff
 
 ## SIM 2 — lenia-diff: **LANDED + PUSHED + CI-GREEN** (origin/main `54d77d3`)
 
@@ -76,28 +76,69 @@ landing fold). NO tag (I7).
    --object-id origin --stdin`) then GitHub (`git -c lfs.standalonetransferagent= push`).
 5. eof-fixer adds a trailing newline to capture `.json` sidecars (harmless; re-add + re-verify).
 
-## SIM 3 — mpm-multimaterial-diff: **Stage 0 DONE** (committed+pushed `c600ac2`)
+## SIM 3 — mpm-multimaterial-diff: **LANDED + CI-GREEN** (local chain; push pending)
 
-BLOCK gate OK (measured): ti.ad.Tape differentiates the minimal 2D MLS-MPM forward through
-the P2G `ti.atomic_add` scatter + G2P gather + advect chain. A1 ballistic analytic
-`dx(T)/dv0 = dt·STEPS·I` CONFIRMED (FD diag 6.0e-3 exactly); autodiff-vs-FD 6.6e-5 (FD floor).
-Anchor plan + D-classes resolved in `tools/testkit/probes/reports/mpm-multimaterial-diff.md`.
-A3 = neo-Hookean small-strain constitutive analytic (DiffTaichi ICLR 2020 = method cite,
-no storable numeric → A3-numeric shifted to the elastic analytic, like sims 1/2).
+5-commit chain: `c600ac2` (S0 probe) -> `f4bafa9` (S1a scaffold+RED) -> `531d108` (S1b
+forward+golden+GREEN) -> `66c8ec1` (S1c perf/CI/LFS/mutation) -> `<S2>` (landing fold). NO tag (I7).
 
-### NEXT ACTION — SIM 3 Stage 1a (scaffold `packages/mpm-multimaterial-diff/` + RED)
+- **13-gate complete.** gate-14 N/A (single-stack). Mutation `mpm_multimaterial_diff` registered,
+  MEASURE deferred (advisory, mutmut unprovisioned — sim-1/2 precedent).
+- **Anchors (>=3 independent, NAMED):** A1 ballistic kinematic analytic `dLoss/dv0 =
+  2(dt*STEPS)^2(v0-v0t)` (single particle F=I C=0 -> stress==0 + APIC first-moment==0 -> PIC
+  free-flight; autodiff==analytic ~1e-18 EXACT); A2 central-FD baseline (autodiff-vs-FD ~1.9e-8);
+  A3 neo-Hookean small-strain constitutive `d(sigma00)/deps = 2mu+lam` (autodiff==analytic 0.0
+  EXACT; distinct physical term/parameter/method). Golden table 9 points.
+- **A3 ANCHOR-SHIFT (on-evidence, like sims 1/2):** charter A3=DiffTaichi is method-only (no
+  storable numeric for a golden TABLE point) -> A3-numeric re-declared to the neo-Hookean
+  constitutive analytic; DiffTaichi retained as the method cite (A3-CITE). Documented probe §3 +
+  spec-diff §8 + derivation doc.
+- **D-DT (Stage-1b MEASURED):** `dt=1e-3` is the largest step keeping the stiff (E=4e3) elastic
+  dynamics smooth (autodiff-vs-FD ~2e-8); `dt>=5e-3` -> ~3% (the DiffTaichi "sim gradients aren't
+  always well-conditioned" warning). The reference itself runs dt=1e-4.
+- **Forward-equivalence (WU-F differentiable axis):** diff.forward == mpm-multimaterial-stack-d
+  reference rollout, MEASURED BIT-EXACT. **FRICTION (banked):** the reference's `_ensure_taichi`
+  re-inits Taichi via `set_taichi_deterministic` WITHOUT `default_fp=ti.f64` (it is f32-default-
+  robust via explicit `ti.f64(...)` seeds; the diff's literal constants are NOT) -> if the
+  reference runs first the diff computes in f32 and diverges ~0.5% over the horizon. FIX: evaluate
+  the diff FIRST (under the conftest f64 runtime) then the reference (diff-first ordering is the
+  contract; the module-level `_TAICHI_INITIALIZED=True` flag is best-effort but pytest ordering
+  does not reliably honor it). Lenia avoided this by sharing the runtime via the reference's
+  per-instance init flag.
+- **Determinism:** MEASURED bit-exact same-stack-same-hw (forward + gradient np.array_equal both
+  True; single-thread CPU serialises the P2G `ti.atomic_add` scatter); rows
+  `[hybrid-pg.mpm-multimaterial-diff.{forward,gradient}]` HOLD (atomic_ops sum-only — the forward
+  ALREADY scatters via atomic_add, unlike lenia whose forward row was "none"); no EFECT.
+- **PBT (2, regime-scoped):** `gradient_matches_finite_difference` (interior small-strain, short
+  horizon) + `momentum_change_bounded_by_impulse` (total particle momentum change == gravity
+  impulse; internal elastic+APIC add no net momentum; interior no-boundary regime).
+- **Inverse-recovery:** shared `v0` recovered to ~3e-10 (loss 5e-6 -> 7e-23, 29 iters).
+  **IDENTIFIABILITY:** unlike lenia's joint (mu,sigma), v0 IS identifiable (near-linear injective
+  map). The small-dt **flat-in-v0 loss** needs a curvature-scaled Newton SGD step
+  (lr=0.5/H, H=2*n_particles*(dt*STEPS)^2) — a fixed-lr Adam oscillates at the lr scale and never
+  reaches the planted point.
+- **§R at landing:** 0 HF / 14 SW (integrity --all --mode strict, rc 0).
+- gate-13 worktree replay at `f4bafa9` VERIFIED match=True (norm sha256 e7140424…).
+- Corpus roundtrip 31 passed (`_EXPECTED_TOTAL` 28->29; the 3rd 1.1.0 gradient_fields entry).
+- **§S.5 sweep + LFS R2 push:** at push (this section updated to record the result).
 
-Reference mapped (`mpm_multimaterial_stack_d.reference`): neo-Hookean elastic (mu=E/2(1+nu),
-lambda=E nu/((1+nu)(1-2nu)), E=4e3, nu=0.3), quadratic-B-spline P2G/G2P (APIC), F-update
-`F'=(I+dt C)F`, NO plasticity. Reference kernels use `ti.types.ndarray` (NOT tape-safe) →
-the diff variant re-implements with `needs_grad` time-indexed `ti.field` (DiffTaichi pattern).
-**P2G `ti.atomic_add` scatter is the determinism-sensitive surface — MEASURE.** DiffTaichi
-(arXiv:1910.00935) NOT vendored → CITE-DON'T-IMPORT (reimplement constitutive from the
-reference). Use a TINY config (few particles, small grid, short horizon) for the gradient
-golden, regime-scoped small-strain elastic (no plastic yield). A1 ballistic ∂x(T)/∂v0 = T·I
-(single particle, no grid coupling) — verified analytically correct; A2 central FD on the full
-grid-coupled gradient; A3 = Stage-0 re-verify the exact DiffTaichi elastic example + its
-FD-check claim (cite-by-name), or a second analytic on a distinct term if ill-posed (shift on
-evidence, keep ≥3, document — the sim-1/sim-2 precedent). Stage-0 BLOCK gate: probe that the
-MPM forward (P2G scatter + G2P gather + F-update + neo-Hookean stress) is `ti.ad.Tape`-
-differentiable on Taichi CPU BEFORE building. Then 1a RED → 1b GREEN → 1c → 2, push + §S.5.
+### Banked frictions (carry to sim 4)
+- **F-MPM-1 (cross-reference f32 re-init):** any test mixing the diff with a landed
+  `set_taichi_deterministic`-using reference must run the diff FIRST (conftest f64) — the
+  reference's `_ensure_taichi` re-init drops `default_fp` to f32 and contaminates the diff's
+  literal constants (~0.5% divergence). (sim 4 smoke-diff is Warp, not Taichi — does NOT inherit
+  this, but the general "share/order the runtime" lesson applies.)
+- **F-MPM-2 (base-node discontinuity):** `base=floor(fx+0.5)-1` is discontinuous; keep particles
+  away from cell boundaries throughout the horizon (interior cluster, blob_radius < dx) so a tiny
+  op-order difference never flips a stencil cell.
+- The sim-2 banked frictions (lean-venv evidence, derandomize+phases, LFS same-shell R2 push,
+  eof-fixer on .json sidecars) all RE-CONFIRMED here.
+
+### NEXT ACTION — SIM 4 eulerian-smoke-diff Stage 0 (Stack E / Warp; D-WARP-ADJOINT BLOCK gate)
+
+Probe that the semi-Lagrangian smoke step is `wp.Tape`-differentiable on Warp CPU BEFORE
+building (BLOCK gate — surface BLOCKED with the specific gap if a genuine adjoint hole exists;
+do NOT force or CPU-substitute). A1 linear-advection analytic (Stam 1999 method cite), A3
+diffusion heat-kernel analytic (distinct physical term from A1), A2 central FD vs the wp.Tape
+adjoint. Apply F-RB-3 (`# mypy: ignore-errors` scoped to Warp-touching files). Forward ref
+`packages/eulerian-smoke-stack-e`. Then 1a RED -> 1b GREEN -> 1c -> 2, push + §S.5. Then the
+batch-1-close report.
