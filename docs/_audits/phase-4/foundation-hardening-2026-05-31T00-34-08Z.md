@@ -4,7 +4,7 @@ author: phase-4.1 foundation-hardening campaign (Claude Code)
 subject: "Phase-4.1 FOUNDATION HARDENING — mutation-score hardening pass (5 SOFT_WARN-advisory targets) + promotion dispositions"
 kind: foundation-hardening
 verdict: HARDENING-COMPLETE-2-PROMOTED-3-ADVISORY
-head_sha: 1623d1ad05b704288bd1c25aa1889b36273f1bde
+head_sha: 07667e5c53d94224485cc803a7148fc9e6d67771
 prior_phase_tag: v0.3.0-phase-3
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
