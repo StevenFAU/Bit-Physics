@@ -19,13 +19,22 @@ runner    = "python -m pytest tools/testkit/capture/tests/ -x -q --tb=no"
 path      = "tools/testkit/code_verification/mms"
 threshold = 0.80
 runner    = "python -m pytest tools/testkit/code_verification/mms/tests/ -x -q --tb=no"
-# Phase-4 A3: SOURCE-ONLY. mutmut's default tests-dir guess only excludes a
-# top-level tests/; the nested tools/testkit/code_verification/mms/tests/ was
-# being mutated, diluting the kill rate (test-file literals "survive" with no
-# meta-test). `exclude` is passed to mutmut as --paths-to-exclude (fnmatch on
-# basename), so the nested tests/ subtree is no longer mutated. Threshold and
-# CI posture (SOFT_WARN, advisory) are UNCHANGED — see spec § 2.13.
-exclude   = "tests"
+# Phase-4 A3: SOURCE-ONLY (exclude the nested tests/ subtree).
+#
+# Phase-4.1 foundation-hardening: NARROWED to the heat-1d MMS pipeline this
+# target's runner (mms/tests/) actually exercises — derive/analyze/runner/solvers
+# + solutions/heat_1d. The three sibling sim-solution dirs (incompressible_ns_2d,
+# reaction_diffusion_2d, reaction_diffusion_3d) are class-(iii) OUT-OF-SCOPE here:
+# they are driven by their OWN sim packages' runners (packages/eulerian-smoke,
+# packages/reaction-diffusion-*), NOT by mms/tests/, and they already carry their
+# own dedicated mutmut targets (incompressible_ns_2d_mms, reaction_diffusion_3d_mms).
+# Including them double-counted ~327 unkillable mutants (66% of the survivor pool),
+# deflating the kill-rate against source this runner cannot exercise. mutmut's
+# --paths-to-exclude (mutmut/__main__.py:423 splits on comma; __init__.py:1273
+# fnmatches against DIRECTORY names + basenames during the walk) prunes those dirs.
+# `tests` stays excluded (A3 source-only). CI posture UNCHANGED (SOFT_WARN advisory,
+# spec §2.13); recorded in docs/_audits/phase-4/foundation-hardening-*.md §1.D.
+exclude   = "tests,incompressible_ns_2d,reaction_diffusion_2d,reaction_diffusion_3d"
 
 [targets.golden]
 path      = "tools/testkit/golden"

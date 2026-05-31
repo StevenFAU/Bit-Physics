@@ -69,7 +69,7 @@ Five SOFT_WARN-advisory targets (foundation-native first, then carryovers):
 | `render_similarity` (metrics.py) | 0.85 | 0.663 (140/211) | **0.9242 (195/211)** | killed 55 gaps; residual 16 = 5 equiv + 11 oos | **CLEARS → PROMOTE** |
 | `variant` | 0.85 | 0.695 (91/131) | **0.8702 (114/131)** | killed 23 gaps; residual 17 = 6 equiv + 11 oos | **CLEARS → PROMOTE** |
 | `common_3dgs` (src) | 0.80 | 0.663 (978/1475) | **0.7708 (1137/1475)** | +159 killed; 326 residual (mixed real-gap + np.empty-flaky + oos) | **STAYS ADVISORY** (genuine hardening, below floor — not forced) |
-| `code_verification_mms` | 0.80 | 0.2243 (A3 carryover) | _pending_ | _pending_ | _pending_ |
+| `code_verification_mms` | 0.80 | 0.215 (138/642) | **0.438 (138/315) narrowed** | class-(iii) narrowed (−327 cross-driven); residual = report/HDF5/CLI glue | **STAYS ADVISORY + SURFACED** (narrowing + RD-2D coverage gap) |
 | `property` | 0.80 | 0.3455 (A3 carryover) | _pending_ | _pending_ | _pending_ |
 
 (Per-target detail sections appended below as each lands.)
@@ -181,6 +181,43 @@ six spec-floored testkit/integrity modules).
 remaining lever (model PLY known-byte fixtures + render covariance value tests +
 deterministic-init for the `np.empty` mutants + Warp single-splat compositing oracles)
 is a follow-up, surfaced not forced.
+
+### §1.D — `code_verification_mms` (Phase-3 carryover) — class-(iii) NARROWED, STAYS ADVISORY + SURFACED
+
+**Measured 0.215 (138/642, 6 timeout)** at HEAD (matches the A3 0.2243 carryover).
+The dispatch's mms oracle — "a manufactured solution with KNOWN convergence order;
+a deliberately-wrong term is DETECTED" — **already exists** (`test_convergence`,
+`test_broken_solver`, the 422-line `test_analyze_constraining`, `test_derive`,
+`test_eigenfunction_decay`); the MMS-pipeline VERIFICATION math is well-constrained.
+The low kill-rate is the class-(iii) artifact A3 anticipated.
+
+**Survivor diagnosis (FACT, measured):** of 498 baseline survivors, **327 (66%)**
+are three sibling sim-solution dirs the `mms/tests/` runner never imports —
+`solutions/incompressible_ns_2d` (84), `solutions/reaction_diffusion_2d` (113),
+`solutions/reaction_diffusion_3d` (130). They are driven by their OWN sim packages'
+runners. **class-(iii) NARROWING applied** (`mutmut-config.toml`, with written
+justification): exclude those three dirs (mutmut prunes them by directory name —
+mutmut comma-splits the exclude list and fnmatches each pattern against directory names during its source walk). Narrowed
+re-measure: **138/315 = 0.438** (pool 642→315, confirming the exclusion).
+
+**Coverage-integrity check (FACT):** `incompressible_ns_2d` and `reaction_diffusion_3d`
+retain dedicated mutmut targets (`incompressible_ns_2d_mms`, `reaction_diffusion_3d_mms`),
+so excluding them de-duplicates rather than orphans. **`reaction_diffusion_2d` has NO
+dedicated target** — its MMS verification belongs to RD-2D's (not-yet-landed, Phase-2+)
+MMS gate, so it is currently un-targeted. **SURFACED for ratification:** add a
+`reaction_diffusion_2d_mms` target (+ a RD-2D MMS convergence test) when that gate lands.
+
+**Residual 171 narrowed survivors — classification (FACT, sampled):** dominated by
+NON-VERIFICATION glue — `derive.render_markdown` (markdown report ~L88-126),
+`analyze.render_acceptance_markdown` (markdown), `runner.persist_runner_result`
+(HDF5 attrs/datasets) + `main` (CLI). These are class-(iii) (report/persistence/CLI),
+not MMS-verification logic. NO snapshot tests added (forbidden anti-pattern).
+
+**Disposition: STAYS SOFT_WARN advisory (§2.13); SURFACED, not promoted.** 0.438 < 0.80
+recorded honestly. Two SURFACED levers (operator-ratifiable): (1) the
+`reaction_diffusion_2d_mms` coverage gap; (2) a finer function-level narrowing of the
+report/HDF5/CLI glue (file-level fnmatch cannot target functions) OR an explicit
+"glue is non-load-bearing for the MMS-verification floor" ruling.
 
 ## §S.5 — workflow sweeps per push
 
