@@ -348,3 +348,12 @@ runner    = "uv run --no-sync pytest packages/reaction-diffusion-2d-diff/tests/ 
 path      = "tools/testkit/code_verification/mms/solutions/reaction_diffusion_2d"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/reaction-diffusion-2d-diff/tests/test_mms.py -x -q --tb=no"
+
+# Phase-4 batch-1 sim 2/4 (lenia-diff). Per-sim mutation target (charter §8.7). ADVISORY
+# (§2.13) — measured, not gating; oracle-grounded tests only (the gradient golden's A1/A3
+# closed-form anchors + the forward-equivalence vs the lenia reference; snapshots forbidden).
+# Lenia has no MMS, so (unlike sim 1) there is no `*_mms` target.
+[targets.lenia_diff]
+path      = "packages/lenia-diff/lenia_diff"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/lenia-diff/tests/ -x -q --tb=no"

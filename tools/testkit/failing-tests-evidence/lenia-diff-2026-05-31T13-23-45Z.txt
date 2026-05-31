@@ -1,11 +1,11 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
 rootdir: /home/otacon/Projects/Bit-Physics/packages/lenia-diff
 configfile: pyproject.toml
 testpaths: tests
-plugins: cov-7.1.0, hydra-core-1.3.2, timeout-2.4.0, hypothesis-6.152.8, jaxtyping-0.3.10, anyio-4.13.0
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
 collecting ... collected 17 items
 
 tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
@@ -267,4 +267,4 @@ FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
 FAILED tests/test_inverse_recovery.py::test_recovery_from_higher_init - NotIm...
 FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
 FAILED tests/test_pbt_invariants.py::test_field_bounded_pbt - NotImplementedE...
-============================== 17 failed in 2.48s ==============================
+============================== 17 failed in 2.92s ==============================
