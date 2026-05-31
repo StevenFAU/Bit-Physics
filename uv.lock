@@ -47,6 +47,7 @@ members = [
     "eulerian-smoke-neural",
     "eulerian-smoke-stack-d",
     "eulerian-smoke-stack-e",
+    "flow-lenia",
     "ising-classical",
     "lattice-boltzmann-d3q19",
     "lattice-boltzmann-d3q19-stack-d",
@@ -1375,6 +1376,44 @@ sdist = { url = "https://files.pythonhosted.org/packages/b5/fe/997687a931ab51049
 wheels = [
     { url = "https://files.pythonhosted.org/packages/81/47/dd9a212ef6e343a6857485ffe25bba537304f1913bdbed446a23f7f592e1/filelock-3.29.0-py3-none-any.whl", hash = "sha256:96f5f6344709aa1572bbf631c640e4ebeeb519e08da902c39a001882f30ac258", size = 39812, upload-time = "2026-04-19T15:39:08.752Z" },
 ]
+
+[[package]]
+name = "flow-lenia"
+version = "0.0.0"
+source = { editable = "packages/flow-lenia" }
+dependencies = [
+    { name = "bit-physics-common-py" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "taichi" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-py", editable = "common/common-py" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "taichi", specifier = ">=1.7,<2.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "fonttools"

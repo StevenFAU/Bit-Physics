@@ -259,6 +259,16 @@ members = [
   # pointwise-comparable to grid Lenia). D-LAYOUT: flat `packages/particle-lenia/` per §0.3.
   # Registered at Stage 1a.
   "packages/particle-lenia",
+
+  # Phase-4 batch-3 sim 3/3 (frontier-algorithm batch; FINAL). Mass-conservative Flow Lenia (Stack D
+  # / Taichi; Plantec et al. ALIFE 2022, arXiv:2212.07906): matter transported by reintegration
+  # tracking so total mass Sigma A is conserved by construction (to summation roundoff ~N*eps, NOT
+  # bit-exact). Taichi convolve->flow->reintegration-scatter engine; golden >=3 independent anchors
+  # (A1 mass conservation honest summation tolerance / A2 non-negativity / A3 zero-flow identity).
+  # The SOUND home of the Phase-3 plain-Lenia mass_approximately_conserved invariant FALSIFIED under
+  # Quad4 (re-routed, not widened). Single-stack (gate-14 N/A; parent-vs-frontier REFRAMED to
+  # invariant posture). D-LAYOUT: flat `packages/flow-lenia/` per §0.3. Registered at Stage 1a.
+  "packages/flow-lenia",
 ]
 exclude = []
 

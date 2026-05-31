@@ -1,0 +1,160 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/flow-lenia
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 14 items
+
+tests/test_capture.py::test_capture_roundtrips FAILED                    [  7%]
+tests/test_capture.py::test_capture_manifest_fields FAILED               [ 14%]
+tests/test_capture.py::test_canonical_capture_committed FAILED           [ 21%]
+tests/test_conservation_golden.py::test_conservation_golden_table FAILED [ 28%]
+tests/test_conservation_golden.py::test_a1_mass_conserved_to_summation_roundoff FAILED [ 35%]
+tests/test_conservation_golden.py::test_a2_mass_non_negative FAILED      [ 42%]
+tests/test_conservation_golden.py::test_a3_zero_flow_identity_exact PASSED [ 50%]
+tests/test_determinism.py::test_step_bit_identical_across_runs FAILED    [ 57%]
+tests/test_determinism.py::test_rollout_bit_identical_across_runs FAILED [ 64%]
+tests/test_determinism.py::test_determinism_registry_row_present FAILED  [ 71%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 78%]
+tests/test_diagnostics.py::test_mass_non_negative_bounded FAILED         [ 85%]
+tests/test_pbt_invariants.py::test_total_mass_conserved_pbt FAILED       [ 92%]
+tests/test_pbt_invariants.py::test_mass_non_negative_pbt FAILED          [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:17: in test_capture_roundtrips
+    manifest_path = FlowLeniaSim(_CANON).capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/sim.py:42: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________________ test_capture_manifest_fields _________________________
+tests/test_capture.py:26: in test_capture_manifest_fields
+    manifest_path = FlowLeniaSim(_CANON).capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/sim.py:42: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_______________________ test_canonical_capture_committed _______________________
+tests/test_capture.py:39: in test_canonical_capture_committed
+    assert canonical_manifest_path.exists(), canonical_manifest_path
+E   AssertionError: PosixPath('/home/otacon/Projects/Bit-Physics/captures/flow-lenia-ref/flow-lenia-32sq-seed42-step40.json')
+E   assert False
+E    +  where False = exists()
+E    +    where exists = PosixPath('/home/otacon/Projects/Bit-Physics/captures/flow-lenia-ref/flow-lenia-32sq-seed42-step40.json').exists
+________________________ test_conservation_golden_table ________________________
+tests/test_conservation_golden.py:57: in test_conservation_golden_table
+    result = verify_against_table(golden_table, conservation_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/flow-lenia-conservation.json'
+_________________ test_a1_mass_conserved_to_summation_roundoff _________________
+tests/test_conservation_golden.py:70: in test_a1_mass_conserved_to_summation_roundoff
+    sim.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+__________________________ test_a2_mass_non_negative ___________________________
+tests/test_conservation_golden.py:78: in test_a2_mass_non_negative
+    assert float(np.min(_engine_step(cfg, initial_mass(cfg)))) >= 0.0
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests/test_conservation_golden.py:32: in _engine_step
+    sim.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+_____________________ test_step_bit_identical_across_runs ______________________
+tests/test_determinism.py:31: in test_step_bit_identical_across_runs
+    a.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________ test_rollout_bit_identical_across_runs ____________________
+tests/test_determinism.py:37: in test_rollout_bit_identical_across_runs
+    assert np.array_equal(_rollout(10), _rollout(10))
+                          ^^^^^^^^^^^^
+tests/test_determinism.py:24: in _rollout
+    sim.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+____________________ test_determinism_registry_row_present _____________________
+tests/test_determinism.py:45: in test_determinism_registry_row_present
+    row = data["continuous-ca"]["flow-lenia"]
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'flow-lenia'
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:18: in test_capture_is_healthy
+    manifest = FlowLeniaSim(_CANON).capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/sim.py:42: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+________________________ test_mass_non_negative_bounded ________________________
+tests/test_diagnostics.py:30: in test_mass_non_negative_bounded
+    manifest = FlowLeniaSim(_CANON).capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/sim.py:42: in capture
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+________________________ test_total_mass_conserved_pbt _________________________
+tests/test_pbt_invariants.py:33: in test_total_mass_conserved_pbt
+    @_SETTINGS
+               
+tests/test_pbt_invariants.py:36: in test_total_mass_conserved_pbt
+    assert total_mass_conserved(cfg, _mass(seed), rel_tol=1e-12)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/invariants.py:39: in total_mass_conserved
+    m1 = total_mass(_step_once(cfg, a))
+                    ^^^^^^^^^^^^^^^^^^
+flow_lenia/invariants.py:26: in _step_once
+    sim.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+E   Falsifying example: test_total_mass_conserved_pbt(
+E       seed=0,
+E   )
+__________________________ test_mass_non_negative_pbt __________________________
+tests/test_pbt_invariants.py:40: in test_mass_non_negative_pbt
+    @_SETTINGS
+               
+tests/test_pbt_invariants.py:43: in test_mass_non_negative_pbt
+    assert mass_non_negative(cfg, _mass(seed))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+flow_lenia/invariants.py:46: in mass_non_negative
+    return bool(float(np.min(_step_once(cfg, a))) >= -slack)
+                             ^^^^^^^^^^^^^^^^^^
+flow_lenia/invariants.py:26: in _step_once
+    sim.step()
+flow_lenia/sim.py:34: in step
+    raise NotImplementedError(_NI)
+E   NotImplementedError: Stage 1a scaffold — implemented at Stage 1b
+E   Falsifying example: test_mass_non_negative_pbt(
+E       seed=0,
+E   )
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_capture.py::test_capture_manifest_fields - NotImplementedEr...
+FAILED tests/test_capture.py::test_canonical_capture_committed - AssertionErr...
+FAILED tests/test_conservation_golden.py::test_conservation_golden_table - Fi...
+FAILED tests/test_conservation_golden.py::test_a1_mass_conserved_to_summation_roundoff
+FAILED tests/test_conservation_golden.py::test_a2_mass_non_negative - NotImpl...
+FAILED tests/test_determinism.py::test_step_bit_identical_across_runs - NotIm...
+FAILED tests/test_determinism.py::test_rollout_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_determinism_registry_row_present - Key...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_mass_non_negative_bounded - NotImpleme...
+FAILED tests/test_pbt_invariants.py::test_total_mass_conserved_pbt - NotImple...
+FAILED tests/test_pbt_invariants.py::test_mass_non_negative_pbt - NotImplemen...
+========================= 13 failed, 1 passed in 0.44s =========================
