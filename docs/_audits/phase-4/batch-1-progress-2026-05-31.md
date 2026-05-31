@@ -76,7 +76,16 @@ landing fold). NO tag (I7).
    --object-id origin --stdin`) then GitHub (`git -c lfs.standalonetransferagent= push`).
 5. eof-fixer adds a trailing newline to capture `.json` sidecars (harmless; re-add + re-verify).
 
-## NEXT ACTION — SIM 3: mpm-multimaterial-diff, Stage 0
+## SIM 3 — mpm-multimaterial-diff: **Stage 0 DONE** (committed+pushed `c600ac2`)
+
+BLOCK gate OK (measured): ti.ad.Tape differentiates the minimal 2D MLS-MPM forward through
+the P2G `ti.atomic_add` scatter + G2P gather + advect chain. A1 ballistic analytic
+`dx(T)/dv0 = dt·STEPS·I` CONFIRMED (FD diag 6.0e-3 exactly); autodiff-vs-FD 6.6e-5 (FD floor).
+Anchor plan + D-classes resolved in `tools/testkit/probes/reports/mpm-multimaterial-diff.md`.
+A3 = neo-Hookean small-strain constitutive analytic (DiffTaichi ICLR 2020 = method cite,
+no storable numeric → A3-numeric shifted to the elastic analytic, like sims 1/2).
+
+### NEXT ACTION — SIM 3 Stage 1a (scaffold `packages/mpm-multimaterial-diff/` + RED)
 
 Reference mapped (`mpm_multimaterial_stack_d.reference`): neo-Hookean elastic (mu=E/2(1+nu),
 lambda=E nu/((1+nu)(1-2nu)), E=4e3, nu=0.3), quadratic-B-spline P2G/G2P (APIC), F-update
