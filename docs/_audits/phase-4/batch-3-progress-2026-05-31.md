@@ -49,5 +49,25 @@ determinism bit-identical (forward + gradient); PBT energy_drift re-scoped to ho
 - **B-5 (carry from dispatch):** C-1 papers-not-vendored + the batch-2 replay worktree uv-sync
   tooling fix — banked for the Phase-4 close.
 
-## Sim 2 — particle-lenia (S26) — pending
+## Sim 2 — particle-lenia (S26) — **LANDED (local)**
+
+Energy-based Particle Lenia (Stack D / Taichi). Stages: 0 (web-fetch + physics probe) folded into
+1a; 1a `cde3306d` (scaffold + 12-RED); 1b `…` (Taichi force engine + goldens + capture, 14/14);
+1c (perf 0.101s + CI + mutation + corpus 33→34 + gate-13 MATCHED at cde3306d); 2 (this — spec
+`spec-frontier-particle.md`, ledger row 26 → landed).
+
+**OPERATOR ANCHOR CORRECTION applied (load-bearing):** the canonical model uses the **LOCAL** rule
+(web-confirmed: the SOS article uses local energy minimisation, contrasts with global descent) →
+`E_total` is NOT monotonic → A1 shifted from energy-Lyapunov to the **force = −∇E identity** (NumPy
+analytic mirror), with **NO Lyapunov/monotonicity golden** (it would be unsound). A2 central FD, A3
+total-energy translation symmetry. Cited the **Google Research Self-Organising Systems** article
+(NOT Distill). **Key results (FACT):** A1 engine-vs-mirror ~1e-22; A2 engine-vs-FD ~2.4e-10; A3
+residual ~1e-16; determinism bit-identical (force + rollout); the LOCAL force sum ≠ 0 (confirms the
+local rule does not conserve momentum → A3 is the global-energy symmetry, not the force sum);
+parent-vs-frontier REFRAMED to invariant posture (particle-based, not pointwise vs grid Lenia).
+
+**Banked:** D-SPEC-SPLIT resolved — split the shared `spec-frontier.md` stub into per-variant
+`spec-frontier-particle.md` / `spec-frontier-flow.md` (flow stub remains until sim 3). gate-13
+evidence rule refined: generate FROM the worktree (the replay's env) → guaranteed match.
+
 ## Sim 3 — flow-lenia (S27) — pending
