@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "eulerian-smoke-diff-gradient",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/eulerian-smoke-diff-gradient.md",
+    "upstream": "Stam-1999-SIGGRAPH-Stable-Fluids / heat-equation-analytic / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-advection",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 11,
+        "target_factor": 1.05
+      },
+      "expected": {
+        "grad_00": -0.019117890361380598,
+        "grad_22": 0.027271078163826304,
+        "grad_13": 0.11394121654697328,
+        "grad_55": 0.018481504434092216
+      },
+      "independent_reference": {
+        "source": "Linear semi-Lagrangian advection-operator gradient: for a constant velocity the bilinear backtrace map is the exact sparse linear operator M (advect(u0)=M u0), so for the K-step rollout dLoss/du0 = 2 (M^K)^T (M^K u0 - target), EXACT. The NumPy advect mirror replicates the reference _sl_advect_2d_k op-order so M is bit-faithful to the Warp engine (CPU f64); autodiff matches the analytic operator to ~4e-15. Hand-derived; semi-Lagrangian backtrace per Stam, J. (1999), 'Stable Fluids', SIGGRAPH '99, 121-128 (DOI 10.1145/311535.311548).",
+        "derived_by": "closed-form-analytic (linear-advection operator)",
+        "expected": {
+          "grad_00": -0.019117890361380598,
+          "grad_22": 0.027271078163826304,
+          "grad_13": 0.11394121654697328,
+          "grad_55": 0.018481504434092216
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-advection",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 23,
+        "target_factor": 1.1
+      },
+      "expected": {
+        "grad_00": -0.049819222387032396,
+        "grad_22": 0.054977826161195655,
+        "grad_13": -0.08153601616593432,
+        "grad_55": 0.14473100921026694
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-advection",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 37,
+        "target_factor": 0.92
+      },
+      "expected": {
+        "grad_00": 0.0663801271167521,
+        "grad_22": -0.14735768695217347,
+        "grad_13": 0.1549474873058117,
+        "grad_55": 0.04355874022852857
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 41,
+        "target_factor": 1.07
+      },
+      "expected": {
+        "grad_00": 0.10497779659446316,
+        "grad_22": 0.0584687796165162,
+        "grad_13": 0.11389650046017552,
+        "grad_55": -0.14946243741958964
+      },
+      "independent_reference": {
+        "source": "Central finite-difference gradient (eps=1e-6, O(eps^2)) of the L2 final-frame loss at the named cells; an independent computational path (parameter perturbation) from the wp.Tape adjoint. Autodiff matches FD to ~3e-10 rel. Numerical baseline (close-R2 exemption).",
+        "derived_by": "central-finite-difference (numerical baseline)",
+        "expected": {
+          "grad_00": 0.10497779659446316,
+          "grad_22": 0.0584687796165162,
+          "grad_13": 0.11389650046017552,
+          "grad_55": -0.14946243741958964
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 53,
+        "target_factor": 0.95
+      },
+      "expected": {
+        "grad_00": -0.00581946633243513,
+        "grad_22": -0.02103476496456702,
+        "grad_13": 0.02338339136903622,
+        "grad_55": -0.07159422989871933
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "grid_n": 6,
+        "steps": 1,
+        "seed": 67,
+        "target_factor": 1.13
+      },
+      "expected": {
+        "grad_00": 0.08789745825632522,
+        "grad_22": 0.38164991186806496,
+        "grad_13": -0.11362408819381997,
+        "grad_55": 0.053758130086345446
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-diffusion",
+        "grid_n": 6,
+        "seed": 71,
+        "target_seed": 72,
+        "nu": 0.05
+      },
+      "expected": {
+        "dLoss_dnu": -110.10401640884572
+      },
+      "independent_reference": {
+        "source": "Discrete-diffusion analytic: one explicit step u' = u0 + dt*nu*Lap(u0) is exactly linear in nu, so dLoss/dnu = 2 (u' - target) . (dt * Lap(u0)), closed-form. Distinct from A1/A2 in physical term (diffusion, not advection), parameter (the coefficient nu, not the field u0), and method (heat-operator linearization, not the advection adjoint). Hand-derived; the heat equation d_t u = nu Lap(u) is the physical source. autodiff == analytic EXACT (0.0).",
+        "derived_by": "closed-form-analytic (discrete diffusion dLoss/dnu)",
+        "expected": {
+          "dLoss_dnu": -110.10401640884572
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-diffusion",
+        "grid_n": 6,
+        "seed": 83,
+        "target_seed": 84,
+        "nu": 0.12
+      },
+      "expected": {
+        "dLoss_dnu": 20.079505997731285
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-diffusion",
+        "grid_n": 6,
+        "seed": 91,
+        "target_seed": 92,
+        "nu": 0.03
+      },
+      "expected": {
+        "dLoss_dnu": -151.90716359480547
+      }
+    }
+  ]
+}

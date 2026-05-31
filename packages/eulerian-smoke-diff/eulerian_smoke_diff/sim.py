@@ -26,7 +26,7 @@ import warp as wp
 from common_warp.autodiff import InitialStateRecoveryProblem, ParamSpec
 from common_warp.autodiff.finite_diff import make_optimizer
 
-from ._kernels import accumulate_l2_2d, diffuse_2d
+from ._kernels import accumulate_l2_2d, diffuse_2d, load_field_2d, sl_advect_2d
 from .forward import SmokeDiffConfig, constant_velocity_fields, smooth_initial_field
 
 wp.init()
@@ -83,9 +83,31 @@ class SmokeInitialFieldID(InitialStateRecoveryProblem):  # type: ignore[misc]
         """Tape-differentiable constant-velocity SL-advect rollout; return the final 2D field.
 
         ``params`` is the ``(n*n,)`` ``requires_grad`` ``u₀`` vector. Field-0 is loaded from it
-        inside the tape (linear copy); each advect step writes a fresh ``requires_grad`` 2D array so
-        the tape records the chain. **Implemented at Stage 1b.**"""
-        raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+        inside the tape (linear copy → the gradient flows to ``params``); each advect step writes a
+        fresh ``requires_grad`` 2D array so the tape records the chain."""
+        (n,) = state
+        cfg = self.cfg
+        field = wp.zeros((n, n), dtype=wp.float64, requires_grad=True, device=_DEVICE)
+        wp.launch(load_field_2d, dim=(n, n), inputs=[params, wp.int32(n), field], device=_DEVICE)
+        for _ in range(cfg.steps):
+            nxt = wp.zeros((n, n), dtype=wp.float64, requires_grad=True, device=_DEVICE)
+            wp.launch(
+                sl_advect_2d,
+                dim=(n, n),
+                inputs=[
+                    field,
+                    self._uw,
+                    self._vw,
+                    wp.float64(cfg.dt),
+                    wp.float64(cfg.dx),
+                    wp.int32(n),
+                    wp.int32(n),
+                    nxt,
+                ],
+                device=_DEVICE,
+            )
+            field = nxt
+        return field
 
     def loss(self, predicted: Any, target: Any) -> Any:
         """2D L2 loss (the base ``common_warp`` ``accumulate_l2`` is 1-D; smoke fields are 2D)."""
