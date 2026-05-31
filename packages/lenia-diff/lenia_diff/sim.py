@@ -12,14 +12,21 @@ The canonical capture is the inverse-problem solution (recovered field + the opt
 trajectory) with the ``gradient_fields`` key populated (schema 1.1.0).
 """
 
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 import taichi as ti
 from common_py.autodiff import InitialStateRecoveryProblem, ParameterIDProblem, ParamSpec
+from common_py.autodiff.finite_diff import make_optimizer
 
-from ._kernels import lenia_load_initial, lenia_loss_l2
+from ._kernels import (
+    lenia_convolve_diff,
+    lenia_load_field_from_flat,
+    lenia_load_initial,
+    lenia_loss_l2,
+    lenia_update_diff,
+)
 from .forward import LeniaDiffConfig, quad4_kernel_window
 
 __all__ = [
@@ -95,7 +102,11 @@ class LeniaGrowthID(ParameterIDProblem):  # type: ignore[misc]
         )
 
     def forward(self, params: Any, state: Any) -> Any:
-        raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia growth forward")
+        cfg = self.cfg
+        for t in range(cfg.steps):
+            lenia_convolve_diff(t, self.field, self._kwin, self.conv, cfg.grid, cfg.R)
+            lenia_update_diff(t, self.field, self.conv, params, cfg.dt, cfg.grid)
+        return self.field
 
     def loss(self, predicted: Any, target: Any) -> Any:
         lenia_loss_l2(self.field, target, self.loss_field, self.cfg.steps, self.cfg.grid)
@@ -126,12 +137,11 @@ class LeniaInitialFieldID(InitialStateRecoveryProblem):  # type: ignore[misc]
         self.field = ti.field(ti.f64, shape=(steps + 1, n, n), needs_grad=True)
         self.conv = ti.field(ti.f64, shape=(steps, n, n), needs_grad=True)
         self._kwin = ti.field(ti.f64, shape=(2 * R + 1, 2 * R + 1))
-        self._mu = ti.field(ti.f64, shape=1, needs_grad=True)
-        self._sigma = ti.field(ti.f64, shape=1, needs_grad=True)
+        self._growth = ti.field(ti.f64, shape=2, needs_grad=True)
         self._flat = ti.field(ti.f64, shape=n * n, needs_grad=True)
         self._kwin.from_numpy(quad4_kernel_window(R))
-        self._mu[0] = cfg.mu
-        self._sigma[0] = cfg.sigma
+        self._growth[0] = cfg.mu
+        self._growth[1] = cfg.sigma
         self.state = None
 
     def params_spec(self) -> ParamSpec:
@@ -152,7 +162,14 @@ class LeniaInitialFieldID(InitialStateRecoveryProblem):  # type: ignore[misc]
         )
 
     def forward(self, params: Any, state: Any) -> Any:
-        raise NotImplementedError("Stage 1b: tape-differentiable Quad4-Lenia field forward")
+        cfg = self.cfg
+        # ``params`` is the (n*n,) needs_grad initial field; load it into field[0] inside
+        # the tape (single-write, tape-recordable) so ∂Loss/∂field[0] backprops to params.
+        lenia_load_field_from_flat(self.field, params, cfg.grid)
+        for t in range(cfg.steps):
+            lenia_convolve_diff(t, self.field, self._kwin, self.conv, cfg.grid, cfg.R)
+            lenia_update_diff(t, self.field, self.conv, self._growth, cfg.dt, cfg.grid)
+        return self.field
 
     def loss(self, predicted: Any, target: Any) -> Any:
         lenia_loss_l2(self.field, target, self.loss_field, self.cfg.steps, self.cfg.grid)
@@ -191,10 +208,58 @@ def solve_growth_id(
     init: tuple[float, float],
     seed: int = 42,
     optimizer: str = "adam",
-    lr: float = 5e-3,
-    max_iter: int = 600,
+    lr: float = 2e-2,
+    max_iter: int = 1500,
     tol: float = 1e-14,
 ) -> InverseSolution:
-    """Plant ``(mu,sigma)``, synthesize a target, then recover by optimization."""
-    raise NotImplementedError("Stage 1b: growth-parameter inverse recovery")
-    _ = (cfg, planted, init, seed, optimizer, lr, max_iter, tol, replace)  # pragma: no cover
+    """Plant ``mu`` (with ``sigma`` known/fixed at ``planted[1]``), then recover ``mu``.
+
+    **Identifiability (on-evidence Stage-1b finding):** the *joint* ``(mu, sigma)`` inverse is
+    NON-identifiable in the smooth short-horizon regime — ``sigma`` can compensate for ``mu``
+    (a perturbed-``sigma`` solution drives the field to within ~1e-6 of the target at a
+    *different* ``mu``). So the field is recoverable but the params are not unique. The clean,
+    identifiable demonstrative inverse recovers ``mu`` with ``sigma`` held at its known value
+    (``planted[1]``) — ``mu`` then recovers to machine precision (loss < 1e-15). The init
+    ``sigma`` (``init[1]``) is unused (``sigma`` is the known parameter).
+
+    Returns the recovered params, the optimization trajectory, the final field, and the
+    autodiff ``gradient_fields`` (``∂Loss/∂mu``, ``∂Loss/∂sigma`` at the recovered point —
+    both ~0 since the recovery lands on the planted point) for the schema-1.1.0 capture.
+    """
+    sigma_known = float(planted[1])
+    a0 = smooth_initial_condition(cfg.grid, cfg.mu, seed=seed)
+    truth = LeniaGrowthID(cfg, a0)
+    target = truth.final_field(planted[0], sigma_known)
+
+    prob = LeniaGrowthID(cfg, a0)
+    prob.set_target(target)
+    spec = prob.params_spec()
+    opt = make_optimizer(optimizer, lr, (1,))
+
+    x = np.array([float(init[0])], dtype=np.float64)  # the free mu
+    losses: list[float] = []
+    mu_traj: list[float] = []
+    for _ in range(max_iter):
+        loss, grad = prob._loss_and_grad(spec, np.array([x[0], sigma_known]))
+        losses.append(loss)
+        mu_traj.append(float(x[0]))
+        if loss < tol:
+            break
+        x = opt.step(x, np.array([grad[0]]))  # step mu only; sigma stays known
+    rec_mu = float(x[0])
+
+    _, grad = prob._loss_and_grad(spec, np.array([rec_mu, sigma_known]))
+    return InverseSolution(
+        recovered_mu=rec_mu,
+        recovered_sigma=sigma_known,
+        planted_mu=float(planted[0]),
+        planted_sigma=sigma_known,
+        loss_trajectory=losses,
+        mu_trajectory=mu_traj,
+        sigma_trajectory=[sigma_known] * len(mu_traj),
+        final_field=prob.field.to_numpy()[cfg.steps],
+        grad_fields={
+            "dLoss_dmu": np.array([float(grad[0])], dtype=np.float64),
+            "dLoss_dsigma": np.array([float(grad[1])], dtype=np.float64),
+        },
+    )

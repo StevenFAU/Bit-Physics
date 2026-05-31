@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lenia-diff-gradient",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/lenia-diff-gradient.md",
+    "upstream": "Chan-2019-Complex-Systems-28-3 / Chakazul-Lenia-adfc542 / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.3,
+        "sigma": 0.15,
+        "target_factor": 1.05
+      },
+      "expected": {
+        "grad_mu": -0.1076901202461841,
+        "grad_sigma": 0.011201466212478237
+      },
+      "independent_reference": {
+        "source": "Closed-form Quad4 polynomial growth-parameter gradient in the smooth interior (base = 1-(u-mu)^2/(9 sigma^2) > 0): dG/dmu = 16 base^3 (u-mu)/(9 sigma^2), dG/dsigma = 16 base^3 (u-mu)^2/(9 sigma^3); one step gives dLoss/dparam = sum 2(A1-target) dt dG/dparam, EXACT. Chan 2019 Complex Systems 28(3):251-286 growth family; vendored Chakazul LeniaF.py:500.",
+        "derived_by": "closed-form-analytic (Quad4 growth)",
+        "expected": {
+          "grad_mu": -0.1076901202461841,
+          "grad_sigma": 0.011201466212478237
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.28,
+        "sigma": 0.16,
+        "target_factor": 1.1
+      },
+      "expected": {
+        "grad_mu": -0.177755370043703,
+        "grad_sigma": 0.017891024348632024
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.32,
+        "sigma": 0.14,
+        "target_factor": 0.95
+      },
+      "expected": {
+        "grad_mu": 0.06947102762733516,
+        "grad_sigma": -0.005761178125933585
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 2,
+        "dt": 0.1,
+        "mu": 0.3,
+        "sigma": 0.15,
+        "target_factor": 1.05
+      },
+      "expected": {
+        "grad_mu": -2.9684879074671002,
+        "grad_sigma": -1.91047230936707
+      },
+      "independent_reference": {
+        "source": "Central finite-difference gradient (eps=1e-5, O(eps^2)) of Loss(mu,sigma) for the multi-step Quad4-Lenia forward; an independent numerical method (parameter perturbation) distinct from the tape adjoint. Numerical baseline (close-R2 exemption).",
+        "derived_by": "central-finite-difference (numerical baseline)",
+        "expected": {
+          "grad_mu": -2.9684879074671002,
+          "grad_sigma": -1.91047230936707
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 2,
+        "dt": 0.1,
+        "mu": 0.29,
+        "sigma": 0.16,
+        "target_factor": 1.08
+      },
+      "expected": {
+        "grad_mu": -3.21756969208567,
+        "grad_sigma": -1.961019881802431
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-growth",
+        "grid": 16,
+        "R": 3,
+        "steps": 2,
+        "dt": 0.1,
+        "mu": 0.31,
+        "sigma": 0.15,
+        "target_factor": 0.94
+      },
+      "expected": {
+        "grad_mu": 5.309891084872425,
+        "grad_sigma": 3.4068592876738966
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-field-conv",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.3,
+        "sigma": 0.15,
+        "target_factor": 1.03
+      },
+      "expected": {
+        "grad_A0_center": -0.015014606692696126,
+        "grad_A0_corner": -0.021685482690981632
+      },
+      "independent_reference": {
+        "source": "Convolution-Jacobian + growth-derivative adjoint dLoss/dA0: U=K*A0 is linear with Jacobian K, so dA1_i/dA0_j = delta_ij + dt G'(U_i) K_{i-j}, G'(u) = -16 base^3 (u-mu)/(9 sigma^2), giving dLoss/dA0 = resid + adjoint_K(resid dt G'). Distinct from A1 in physical term (spatial convolution/kernel), parameter class (the field), and method (convolution adjoint). Hand-derived; Chakazul Quad4 kernel LeniaF.py:493.",
+        "derived_by": "closed-form-analytic (convolution-Jacobian adjoint)",
+        "expected": {
+          "grad_A0_center": -0.015014606692696126,
+          "grad_A0_corner": -0.021685482690981632
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-field-conv",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.28,
+        "sigma": 0.17,
+        "target_factor": 1.06
+      },
+      "expected": {
+        "grad_A0_center": -0.02897848777728538,
+        "grad_A0_corner": -0.03741015131014436
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-field-conv",
+        "grid": 16,
+        "R": 3,
+        "steps": 1,
+        "dt": 0.1,
+        "mu": 0.31,
+        "sigma": 0.14,
+        "target_factor": 0.96
+      },
+      "expected": {
+        "grad_A0_center": 0.02222031953914098,
+        "grad_A0_corner": 0.033428238726450905
+      }
+    }
+  ]
+}

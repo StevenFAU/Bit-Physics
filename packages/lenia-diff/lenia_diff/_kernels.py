@@ -23,6 +23,8 @@ The convolution tap order (di outer, dj inner) matches both the landed ``lenia``
 (``forward.periodic_conv``), preserving bit-faithful agreement.
 """
 
+from typing import Any
+
 import taichi as ti
 
 # Cache of radius-specialised convolution kernels (ti.static needs a compile-time R).
@@ -56,8 +58,8 @@ def convolve_for_radius(R: int):
     return _convolve
 
 
-def lenia_convolve_diff(t, field, kernel, conv, n, R):
-    """Dispatch to the radius-``R`` specialised convolution kernel."""
+def lenia_convolve_diff(t: int, field: Any, kernel: Any, conv: Any, n: int, R: int) -> None:
+    """Dispatch to the radius-``R`` specialised convolution kernel (typed wrapper)."""
     convolve_for_radius(int(R))(t, field, kernel, conv, n)
 
 
@@ -66,26 +68,41 @@ def lenia_update_diff(
     t: ti.i32,
     field: ti.template(),  # (steps+1, n, n) needs_grad
     conv: ti.template(),  # (steps, n, n) needs_grad
-    mu_param: ti.template(),  # (1,) needs_grad — the differentiated mu
-    sigma_param: ti.template(),  # (1,) needs_grad — the differentiated sigma
+    growth: ti.template(),  # (2,) [mu, sigma] needs_grad (LeniaGrowthID differentiates these)
     dt: ti.f64,
     n: ti.i32,
 ):
     """Quad4 growth + clip-Euler update ``field[t+1]=clip(field[t]+dt·G(conv[t]),0,1)``.
 
-    ``mu``/``sigma`` are read from ``needs_grad`` flat fields so the tape records the
-    dependency. The ``ti.max(0,base)`` and clip are inactive in the smooth-interior regime
-    (probe §1) — there the gradient is exact; the branches are kept for forward-faithfulness
-    to the reference. Per-cell constants computed inside the loop (kernel-structure rule).
+    ``mu = growth[0]``, ``sigma = growth[1]`` are read from a ``needs_grad`` 2-vector field so
+    the tape records the dependency (LeniaGrowthID differentiates these; LeniaInitialFieldID
+    holds them fixed and differentiates ``field[0]`` instead). The ``ti.max(0,base)`` and clip
+    are inactive in the smooth-interior regime (probe §1) — there the gradient is exact; the
+    branches are kept for forward-faithfulness. Constants computed in-loop (kernel-structure).
     """
     for i, j in ti.ndrange(n, n):
-        d = conv[t, i, j] - mu_param[0]
-        base = 1.0 - d * d / (9.0 * sigma_param[0] * sigma_param[0])
+        d = conv[t, i, j] - growth[0]
+        base = 1.0 - d * d / (9.0 * growth[1] * growth[1])
         base = ti.max(0.0, base)
         g = base * base * base * base * 2.0 - 1.0
         val = field[t, i, j] + dt * g
         val = ti.min(1.0, ti.max(0.0, val))
         field[t + 1, i, j] = val
+
+
+@ti.kernel
+def lenia_load_field_from_flat(
+    field: ti.template(),  # (steps+1, n, n) needs_grad
+    flat: ti.template(),  # (n*n,) needs_grad — the recovered initial field
+    n: ti.i32,
+):
+    """Load the flattened (``needs_grad``) initial field into ``field[0]`` (inside the tape).
+
+    A single-write copy so ``ti.ad.Tape`` backprops ``∂Loss/∂field[0]`` to ``flat`` (the A3
+    initial-field gradient). Unlike ``from_numpy``, a kernel write IS tape-recordable.
+    """
+    for i, j in ti.ndrange(n, n):
+        field[0, i, j] = flat[i * n + j]
 
 
 @ti.kernel
