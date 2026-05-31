@@ -23,12 +23,7 @@ import numpy as np
 import taichi as ti
 from common_py.autodiff import ParameterIDProblem, ParamSpec
 
-from ._kernels import (  # noqa: F401  (gray_scott_step/well_mixed_step wired at Stage 1b)
-    gray_scott_step,
-    load_initial,
-    loss_l2_final_u,
-    well_mixed_step,
-)
+from ._kernels import gray_scott_step, load_initial, loss_l2_final_u, well_mixed_step
 from .forward import RD2DDiffConfig
 
 __all__ = [
@@ -113,7 +108,23 @@ class RD2DDiffusionID(ParameterIDProblem):  # type: ignore[misc]
         )
 
     def forward(self, params: Any, state: Any) -> Any:
-        raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+        cfg = self.cfg
+        react = 1 if cfg.reaction else 0
+        for t in range(cfg.steps):
+            gray_scott_step(
+                t,
+                self.u,
+                self.v,
+                params,
+                cfg.Dv,
+                cfg.F,
+                cfg.k,
+                cfg.dt,
+                self._inv_dx2,
+                react,
+                cfg.n,
+            )
+        return self.u
 
     def loss(self, predicted: Any, target: Any) -> Any:
         loss_l2_final_u(self.u, target, self.loss_field, self.cfg.steps, self.cfg.n)
@@ -169,7 +180,10 @@ class WellMixedFID(ParameterIDProblem):  # type: ignore[misc]
         )
 
     def forward(self, params: Any, state: Any) -> Any:
-        raise NotImplementedError("Stage 1b: tape-differentiable well-mixed forward")
+        cfg = self.cfg
+        for t in range(cfg.steps):
+            well_mixed_step(t, self.u, self.v, params, cfg.k, cfg.dt, cfg.n)
+        return self.u
 
     def loss(self, predicted: Any, target: Any) -> Any:
         loss_l2_final_u(self.u, target, self.loss_field, self.cfg.steps, self.cfg.n)

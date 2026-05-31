@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "reaction-diffusion-2d-diff-gradient",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/reaction-diffusion-2d-diff-gradient.md",
+    "upstream": "Strauss-PDE-2e-\u00a74.1+Ch.5 / Pearson-Science-261-189-1993 / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-eigenmode-diffusion",
+        "mx": 1,
+        "my": 2,
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0
+      },
+      "expected": {
+        "grad_Du": -241.06487045544108
+      },
+      "independent_reference": {
+        "source": "Discrete Fourier eigenmode of the periodic 5-point Laplacian: phi is an exact eigenvector (eigenvalue lambda<0), so u(T)=(1+dt*Du*lambda)^T*phi and dLoss/dDu = 2T(1+dt*Du*lambda)^(2T-1)(dt*lambda)*sum(phi^2), exact for the discrete operator. Strauss PDE 2e \u00a74.1 + Ch.5 (separation-of-variables eigenmode decay); Evans PDE 2e \u00a72.3.",
+        "derived_by": "closed-form-analytic (discrete Fourier eigenmode)",
+        "expected": {
+          "grad_Du": -241.06487045544108
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-eigenmode-diffusion",
+        "mx": 2,
+        "my": 1,
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0
+      },
+      "expected": {
+        "grad_Du": -241.06487045544108
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-eigenmode-diffusion",
+        "mx": 1,
+        "my": 1,
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0
+      },
+      "expected": {
+        "grad_Du": -129.7189441825152
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-eigenmode-diffusion",
+        "mx": 2,
+        "my": 3,
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0
+      },
+      "expected": {
+        "grad_Du": -299.8643835669562
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-full-gs",
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0,
+        "target_factor": 1.05
+      },
+      "expected": {
+        "grad_Du": -0.010245467079508987
+      },
+      "independent_reference": {
+        "source": "Central finite-difference gradient (common_py.autodiff.finite_difference_gradient, eps=1e-5, O(eps^2)) of Loss(Du) for the full Gray-Scott forward; an independent numerical method (parameter perturbation) distinct from the tape adjoint. Numerical baseline (close-R2 exemption).",
+        "derived_by": "central-finite-difference (numerical baseline)",
+        "expected": {
+          "grad_Du": -0.010245467079508987
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-full-gs",
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0,
+        "target_factor": 1.1
+      },
+      "expected": {
+        "grad_Du": -0.020438979865144598
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-full-gs",
+        "Du": 0.16,
+        "n": 16,
+        "steps": 8,
+        "dt": 0.25,
+        "dx": 1.0,
+        "target_factor": 0.95
+      },
+      "expected": {
+        "grad_Du": 0.010297742418144457
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-wellmixed-reaction",
+        "F": 0.0367,
+        "u_val": 0.5,
+        "v_val": 0.25,
+        "n": 8,
+        "steps": 1,
+        "dt": 0.25,
+        "k": 0.0649,
+        "target_factor": 1.1
+      },
+      "expected": {
+        "grad_F": -0.007339999999999236
+      },
+      "independent_reference": {
+        "source": "Well-mixed (spatially-uniform, Laplacian=0) Gray-Scott reaction ODE u' = -u v^2 + F(1-u). One explicit-Euler step: u1 = u0 + dt(-u0 v0^2 + F(1-u0)); Loss = n^2 (u1-target)^2, so dLoss/dF = n^2 * 2(u1-target) dt (1-u0), closed-form. Pearson Science 261:189 (1993) Gray-Scott kinetics; hand-derivation.",
+        "derived_by": "closed-form-analytic (reaction ODE limit)",
+        "expected": {
+          "grad_F": -0.007339999999999236
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-wellmixed-reaction",
+        "F": 0.0367,
+        "u_val": 0.6,
+        "v_val": 0.2,
+        "n": 8,
+        "steps": 1,
+        "dt": 0.25,
+        "k": 0.0649,
+        "target_factor": 1.2
+      },
+      "expected": {
+        "grad_F": -0.009395200000000159
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-wellmixed-reaction",
+        "F": 0.0367,
+        "u_val": 0.4,
+        "v_val": 0.3,
+        "n": 8,
+        "steps": 1,
+        "dt": 0.25,
+        "k": 0.0649,
+        "target_factor": 0.9
+      },
+      "expected": {
+        "grad_F": 0.010569599999999112
+      }
+    }
+  ]
+}

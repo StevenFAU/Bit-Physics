@@ -60,7 +60,7 @@ discovered (carry into Stage 1a):
    loop body, not at kernel scope. (FACT — reproduced + fixed in the probe.)
 2. **Single-write-per-element:** time-stepping uses a time-indexed field
    `u[t+1,…] = f(u[t,…])` so each element is written once (DiffTaichi pattern). The
-   reference's ping-pong `ndarray` kernels (`gray_scott_taichi.py:133`) are NOT
+   reference's ping-pong `ndarray` kernels (`packages/reaction-diffusion-2d-stack-d/reaction_diffusion_2d_stack_d/reference/gray_scott_taichi.py:133`) are NOT
    tape-safe as-is → the diff variant **re-implements** the forward with `ti.field`
    + `needs_grad=True`. (INFERENCE from Taichi-AD docs + the kernel-structure FACT.)
 
@@ -73,7 +73,7 @@ All at HEAD `9fcce33`:
   default L2 `loss(predicted, target)` `:114`; `fit(*, params_init, target, callbacks=None) -> History` `:154`;
   `check_gradient(*, params, n_samples=10, eps=1e-4, rel_tol=1e-5) -> GradientCheckReport` `:199`.
 - `GradientCheckReport` dataclass (`per_param_relative_error`, `per_param_absolute_error`,
-  `max_relative_error`, `passed`, `tolerance`) — `inverse_problem.py:60`.
+  `max_relative_error`, `passed`, `tolerance`) — `common/common-py/src/common_py/autodiff/inverse_problem.py:60`.
 - `ParamSpec` (`flat`, `pack`, `unpack`, `structure`) — `common/common-py/src/common_py/autodiff/param_spec.py:22`.
 - `finite_difference_gradient(objective, x, *, eps=1e-4) -> FloatArray` (central, O(ε²)) —
   `common/common-py/src/common_py/autodiff/finite_diff.py:26`; `make_optimizer(name, lr, _shape)` `:156`.
