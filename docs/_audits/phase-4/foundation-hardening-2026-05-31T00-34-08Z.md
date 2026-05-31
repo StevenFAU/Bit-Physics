@@ -70,7 +70,10 @@ Five SOFT_WARN-advisory targets (foundation-native first, then carryovers):
 | `variant` | 0.85 | 0.695 (91/131) | **0.8702 (114/131)** | killed 23 gaps; residual 17 = 6 equiv + 11 oos | **CLEARS → PROMOTE** |
 | `common_3dgs` (src) | 0.80 | 0.663 (978/1475) | **0.7708 (1137/1475)** | +159 killed; 326 residual (mixed real-gap + np.empty-flaky + oos) | **STAYS ADVISORY** (genuine hardening, below floor — not forced) |
 | `code_verification_mms` | 0.80 | 0.215 (138/642) | **0.438 (138/315) narrowed** | class-(iii) narrowed (−327 cross-driven); residual = report/HDF5/CLI glue | **STAYS ADVISORY + SURFACED** (narrowing + RD-2D coverage gap) |
-| `property` | 0.80 | 0.3455 (A3 carryover) | _pending_ | _pending_ | _pending_ |
+| `property` | 0.80 | 0.170 (151/890) ¹ | **0.6453 (151/234) narrowed** | class-(iii) narrowed (−656 test-files + per-sim); residual 83 = core real-gap | **STAYS ADVISORY + SURFACED** (narrowing + core-oracle lever) |
+
+¹ Re-measured live at HEAD (890 mutants — the `property` package GREW with WU-C/D/E
+satellite PBT test-dirs since the A3 437-mutant figure; A3's 0.3455 is stale).
 
 (Per-target detail sections appended below as each lands.)
 
@@ -218,6 +221,45 @@ recorded honestly. Two SURFACED levers (operator-ratifiable): (1) the
 `reaction_diffusion_2d_mms` coverage gap; (2) a finer function-level narrowing of the
 report/HDF5/CLI glue (file-level fnmatch cannot target functions) OR an explicit
 "glue is non-load-bearing for the MMS-verification floor" ruling.
+
+### §1.E — `property` (Phase-3 carryover) — class-(iii) NARROWED, STAYS ADVISORY + SURFACED
+
+**Measured 0.170 (151/890)** at HEAD (the package grew to 890 mutants with the WU-C/D/E
+satellite PBT dirs; A3's 0.3455/437 is stale). **656/739 = 89%** of survivors are
+class-(iii) OUT-OF-SCOPE for the property-TESTKIT target:
+- **453 in satellite PBT TEST files** — `common_3dgs/test_common_3dgs_pbt.py` (93),
+  `common_py_learned/test_learned_pbt.py` (117), `common_warp_newton/test_newton_pbt.py`
+  (108), `variant_equivalence/test_variant_equivalence_pbt.py` (135). These are TEST
+  files (not under `tests/`, so A3's `tests` glob missed them) — mutating test files is
+  the tests-mutation anti-pattern.
+- **203 in per-sim invariant modules** — `sims/{gs_mpm,ising_classical,lenia,mass_spring_cloth,neural_ca,pinn_poisson,rigid_body_pedagogical}/invariants.py`.
+  Each is exercised by its OWN package's PBT test (`packages/<sim>/tests/test_pbt_invariants.py`),
+  NOT by `property/tests/` (confirmed: `property/sims/lenia/invariants.py` docstring cites
+  `packages/lenia/tests/test_pbt_invariants.py`).
+
+**class-(iii) NARROWING applied** (`mutmut-config.toml`, written justification): exclude
+`sims` + the 4 satellite dirs (dir-name fnmatch) + keep `tests`. Narrowed re-measure:
+**151/234 = 0.6453** (pool 890→234, confirming the exclusion).
+
+**SURFACED (operator-ratifiable):** the per-sim `sims/*/invariants.py` are
+exercised-but-not-mutation-targeted (the per-sim package mutmut targets mutate
+`packages/<sim>/<sim>`, not these shared invariant modules) — per-sim invariant mutation
+targets are a follow-up.
+
+**83 narrowed survivors — class (i) REAL GAP in the testkit core (the remaining lever):**
+`invariants/scalar_field.py` (25), `strategies.py` (25), `invariants/conservation.py` (13),
+`invariants/geometry.py` (13), `harness.py` (7). The existing `test_harness_constraining.py`
+covers `conservation_mass`/`overlap`/`monotone_bounds`/`divergence_free` boundaries, but
+other invariant-checker functions + the Hypothesis strategy internals are unpinned. The
+lever is the dispatch's **property-checker oracle** — inputs KNOWN to satisfy/violate each
+declared invariant, asserting the checker's verdict (+ the strategy shape/bound contracts).
+A focused follow-up batch (deliberately NOT written here: reserving the pass's remaining
+budget for the PHASE-2 promotion dispositions + §2.13 + close report, which are the
+required closing deliverables — property is an advisory, non-spec-floored target).
+
+**Disposition: STAYS SOFT_WARN advisory (§2.13); SURFACED, not promoted.** 0.6453 < 0.80
+recorded honestly; narrowing applied; core-gap lever + per-sim-target gap surfaced. No
+snapshot/test-file padding.
 
 ## §S.5 — workflow sweeps per push
 

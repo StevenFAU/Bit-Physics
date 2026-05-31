@@ -55,10 +55,23 @@ runner    = "python -m pytest tools/testkit/equivalence/tests/ -x -q --tb=no"
 path      = "tools/testkit/property"
 threshold = 0.80
 runner    = "python -m pytest tools/testkit/property/tests/ -x -q --tb=no"
-# Phase-4 A3: SOURCE-ONLY (see code_verification_mms note above). The nested
-# tools/testkit/property/tests/ subtree is excluded from mutation via
-# --paths-to-exclude. Threshold + CI posture (SOFT_WARN, advisory) UNCHANGED.
-exclude   = "tests"
+# Phase-4 A3: SOURCE-ONLY (exclude the nested tests/ subtree).
+#
+# Phase-4.1 foundation-hardening: NARROWED to the property-TESTKIT surface this
+# target's runner (property/tests/) exercises — harness.py + invariants/ +
+# strategies.py. Two class-(iii) OUT-OF-SCOPE buckets (656/739 = 89% of the
+# baseline survivors) are excluded:
+#  (a) the satellite PBT TEST files (common_3dgs/test_*_pbt.py,
+#      common_py_learned/, common_warp_newton/, variant_equivalence/) — these are
+#      TEST files (not under tests/, so A3's `tests` glob missed them); mutating
+#      test files is the tests-mutation anti-pattern.
+#  (b) the per-sim invariant modules (sims/*/invariants.py) — driven by their OWN
+#      packages' PBT tests (packages/<sim>/tests/test_pbt_invariants.py), NOT by
+#      property/tests/. (SURFACED: these are exercised-but-not-mutation-targeted;
+#      per-sim invariant mutation targets are a follow-up.)
+# mutmut prunes them by directory name during its walk. CI posture UNCHANGED
+# (SOFT_WARN advisory, §2.13); recorded in docs/_audits/phase-4/foundation-hardening-*.md §1.E.
+exclude   = "tests,sims,common_3dgs,common_py_learned,common_warp_newton,variant_equivalence"
 
 # R1 (phase-3 close): cat4_draft_time mutates the WHOLE package (path_line +
 # grammars b/c), but the prior runner ran ONE adversarial test exercising only
