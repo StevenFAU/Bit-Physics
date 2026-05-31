@@ -205,3 +205,27 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# Phase-4 batch-1 sim 1/4 (CPU-side differentiable). Differentiable Gray-Scott
+# reaction-diffusion-2d (Stack D / Taichi ti.ad.Tape). Two surfaces, both MEASURED
+# bit-identical run-to-run at Stage 1b (single-thread CPU f64, seed-pinned smooth IC;
+# tests/test_determinism.py: np.array_equal final-field True, gradient float-equal
+# True). No EFECT (no training-loss distribution — the key relief vs learned-dynamics).
+# `gradient` carries atomic_ops = "sum-only" (the L2 loss reduction loss[None] += d*d +
+# the tape adjoint), deterministic under single-thread serialization; `forward` is
+# reduction-free (atomic_ops = "none"). Declared + MEASURED at Stage 1b; HOLDS.
+[continuous-ca.reaction-diffusion-2d-diff.forward]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
+[continuous-ca.reaction-diffusion-2d-diff.gradient]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true

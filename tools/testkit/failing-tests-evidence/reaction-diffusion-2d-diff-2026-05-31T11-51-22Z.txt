@@ -1,0 +1,421 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/reaction-diffusion-2d-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 16 items
+
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [  6%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 12%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_field FAILED [ 18%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close FAILED [ 25%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 31%]
+tests/test_gradient_golden.py::test_a1_eigenmode_exact_closed_form FAILED [ 37%]
+tests/test_gradient_golden.py::test_a3_wellmixed_exact_closed_form FAILED [ 43%]
+tests/test_gradient_golden.py::test_gradient_matches_finite_difference_report FAILED [ 50%]
+tests/test_inverse_recovery.py::test_recover_planted_diffusion_coefficient FAILED [ 56%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 62%]
+tests/test_inverse_recovery.py::test_recovery_from_higher_init FAILED    [ 68%]
+tests/test_mms.py::test_manufactured_solution_bounded PASSED             [ 75%]
+tests/test_mms.py::test_canonical_point_values PASSED                    [ 81%]
+tests/test_mms.py::test_source_term_matches_finite_difference_residual PASSED [ 87%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 93%]
+tests/test_pbt_invariants.py::test_concentration_change_bounded_pbt FAILED [100%]
+
+=================================== FAILURES ===================================
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:30: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = truth.final_u(cfg.Du * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:37: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = truth.final_u(cfg.Du * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________ test_diff_forward_matches_reference_final_field ________________
+tests/test_forward_equivalence.py:28: in test_diff_forward_matches_reference_final_field
+    diff_u = prob.final_u(cfg.Du)
+             ^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_diff_forward_matches_reference_bit_close _________________
+tests/test_forward_equivalence.py:47: in test_diff_forward_matches_reference_bit_close
+    diff_u = prob.final_u(cfg.Du)
+             ^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:99: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/reaction-diffusion-2d-diff-gradient.json'
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_____________________ test_a1_eigenmode_exact_closed_form ______________________
+tests/test_gradient_golden.py:114: in test_a1_eigenmode_exact_closed_form
+    _, grad = prob._loss_and_grad(prob.params_spec(), np.array([cfg.Du]))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../common/common-py/src/common_py/autodiff/inverse_problem.py:141: in _loss_and_grad
+    predicted = self.forward(flat, self.state)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_____________________ test_a3_wellmixed_exact_closed_form ______________________
+tests/test_gradient_golden.py:128: in test_a3_wellmixed_exact_closed_form
+    truth.forward(spec.flat, None)
+reaction_diffusion_2d_diff/sim.py:172: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable well-mixed forward")
+E   NotImplementedError: Stage 1b: tape-differentiable well-mixed forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_gradient_matches_finite_difference_report ________________
+tests/test_gradient_golden.py:146: in test_gradient_matches_finite_difference_report
+    target = truth.final_u(cfg.Du * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________ test_recover_planted_diffusion_coefficient __________________
+tests/test_inverse_recovery.py:13: in test_recover_planted_diffusion_coefficient
+    sol = solve_diffusion_id(cfg, planted_du=0.16, init_du=0.10)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:213: in solve_diffusion_id
+    target = truth.final_u(planted_du)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:23: in test_gradient_fields_populated
+    sol = solve_diffusion_id(cfg, planted_du=0.16, init_du=0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:213: in solve_diffusion_id
+    target = truth.final_u(planted_du)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_higher_init ________________________
+tests/test_inverse_recovery.py:34: in test_recovery_from_higher_init
+    sol = solve_diffusion_id(cfg, planted_du=0.16, init_du=0.22)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:213: in solve_diffusion_id
+    target = truth.final_u(planted_du)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:30: in test_gradient_matches_finite_difference_pbt
+    @settings(max_examples=12, deadline=None)
+                   ^^^
+tests/test_pbt_invariants.py:35: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, u0, v0, du=du, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/invariants.py:46: in gradient_matches_finite_difference
+    target = prob.final_u(du * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       du=0.25,  # or any other generated value
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+____________________ test_concentration_change_bounded_pbt _____________________
+tests/test_pbt_invariants.py:39: in test_concentration_change_bounded_pbt
+    @settings(max_examples=12, deadline=None)
+                   ^^^
+tests/test_pbt_invariants.py:44: in test_concentration_change_bounded_pbt
+    assert concentration_change_bounded(cfg, u0, v0, du=du)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+reaction_diffusion_2d_diff/invariants.py:69: in concentration_change_bounded
+    prob.final_u(du)
+reaction_diffusion_2d_diff/sim.py:126: in final_u
+    self.forward(spec.flat, self.state)
+reaction_diffusion_2d_diff/sim.py:116: in forward
+    raise NotImplementedError("Stage 1b: tape-differentiable Gray-Scott forward")
+E   NotImplementedError: Stage 1b: tape-differentiable Gray-Scott forward
+E   Falsifying example: test_concentration_change_bounded_pbt(
+E       du=0.25,  # or any other generated value
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_field
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_eigenmode_exact_closed_form - N...
+FAILED tests/test_gradient_golden.py::test_a3_wellmixed_exact_closed_form - N...
+FAILED tests/test_gradient_golden.py::test_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_diffusion_coefficient
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_higher_init - NotIm...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_concentration_change_bounded_pbt - ...
+======================== 13 failed, 3 passed in 32.02s =========================
