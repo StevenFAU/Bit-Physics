@@ -68,7 +68,7 @@ Five SOFT_WARN-advisory targets (foundation-native first, then carryovers):
 |---|---|---|---|---|---|
 | `render_similarity` (metrics.py) | 0.85 | 0.663 (140/211) | **0.9242 (195/211)** | killed 55 gaps; residual 16 = 5 equiv + 11 oos | **CLEARS → PROMOTE** |
 | `variant` | 0.85 | 0.695 (91/131) | **0.8702 (114/131)** | killed 23 gaps; residual 17 = 6 equiv + 11 oos | **CLEARS → PROMOTE** |
-| `common_3dgs` (src) | 0.80 | 0.663 (978/1475) | _pending_ | _pending_ | _pending_ |
+| `common_3dgs` (src) | 0.80 | 0.663 (978/1475) | **0.7708 (1137/1475)** | +159 killed; 326 residual (mixed real-gap + np.empty-flaky + oos) | **STAYS ADVISORY** (genuine hardening, below floor — not forced) |
 | `code_verification_mms` | 0.80 | 0.2243 (A3 carryover) | _pending_ | _pending_ | _pending_ |
 | `property` | 0.80 | 0.3455 (A3 carryover) | _pending_ | _pending_ | _pending_ |
 
@@ -140,6 +140,47 @@ edge cases. Clears 0.85 by **+0.0202** (NOT the <0.02 borderline band).
 **Disposition: PROMOTE to HARD_FAIL-at-landing (§2.13).** Clears 0.85 by +0.0202 on
 real oracle tests; all 17 residual are equivalent / out-of-scope (counted as
 survivors — no exclusion-to-reach-floor).
+
+### §1.C — `common_3dgs` (src) — genuine hardening below floor, STAYS ADVISORY
+
+**Before → after: 0.663 (978/1475) → 0.7708 (1137/1475)** (+159 killed, two oracle
+batches; measured live). New tests in `common/common-3dgs/tests/test_mutation_oracles.py`
+(54 tests). **Does NOT reach the 0.80 floor → recorded honestly (measure-then-declare),
+NOT forced.** `common_3dgs` is a §2.13 **advisory satellite target** (not one of the
+six spec-floored testkit/integrity modules).
+
+**Genuine oracle kills (class i) — by group:**
+- **coupling 197→88** (−109): scipy quaternion↔matrix round-trip across all 4
+  `_matrix_to_quat_wxyz` trace/diagonal branches (forward + recovery); PhysGaussian
+  Eq.8 eigenvalue preservation under a pure rotation; the `(N,3,3)` shape-guard `or`.
+- **render 138→106** (−32): real-SH DC + degree-1/2/3 signed-coefficient terms at
+  specific directions; `_quaternions_to_matrices` vs scipy; on-axis perspective
+  projection to the principal point.
+- **training 64→47** (−17): Adam first-step bias-corrected update (Kingma & Ba 2015,
+  hand-evaluated at t=1, m=v=0); SGD `θ -= lr·g`; PSNR `10·log10(1/MSE)` closed form.
+
+**326 residual survivors — classification (honest):**
+- **class (iii) OUT-OF-SCOPE (~12+)**: `viewer.py` (10) — `launch_interactive_viewer`
+  is **runtime-only per spec §7.8, explicitly NOT CI-gated**; `image_io.py` (1) —
+  matplotlib `save_png` glue; plus error-MESSAGE-string mutants scattered across files.
+- **class (ii)/borderline `np.empty`-flaky**: several off-diagonal rotation-matrix
+  mutants redirect an assignment, leaving a cell as uninitialised `np.empty` memory
+  that frequently reads back as the correct value (often 0) — non-deterministically
+  killable; a deterministic-init (`np.zeros`) refactor of the source would make them
+  reliably killable (a source change, out of scope for a test-only hardening pass).
+- **class (i) REAL GAP — the remaining lever (documented, not yet closed)**: `model.py`
+  (45) PLY binary parser/writer — symmetric save→load round-trips hide many offset/loop
+  mutants; killing them needs **known-byte-layout** fixtures (assert against a
+  hand-authored `.ply`), not a round-trip. `render.py` EWA covariance/Jacobian/conic
+  determinant value tests. `training.py` FD-gradient / `_loss_for` / `_apply_theta`
+  internals. `_kernels.py` (19) Warp compositing — single-splat Kerbl-Eq.6 hand-derived
+  pixel oracles (Warp recompiles per mutation; integration-heavy).
+
+**Disposition: STAYS SOFT_WARN advisory (§2.13).** +159 genuine oracle kills banked;
+0.7708 < 0.80 recorded honestly; NOT promoted, NOT widened, NOT snapshot-padded. The
+remaining lever (model PLY known-byte fixtures + render covariance value tests +
+deterministic-init for the `np.empty` mutants + Warp single-splat compositing oracles)
+is a follow-up, surfaced not forced.
 
 ## §S.5 — workflow sweeps per push
 
