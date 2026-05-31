@@ -253,3 +253,29 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# mpm-multimaterial-diff (Stack D / Taichi ti.ad.Tape; phase-4 batch-1 sim 3). Differentiable
+# 3D APIC neo-Hookean MLS-MPM (time-indexed needs_grad fields; ti.static-unrolled 27-cell
+# stencil; P2G ti.atomic_add scatter -> grid update -> G2P gather -> F-update -> advect). Two
+# surfaces, both MEASURED bit-identical run-to-run at Stage 1b (single-thread CPU f64,
+# seed-pinned interior cluster IC; tests/test_determinism.py: np.array_equal final-positions +
+# gradient both True). The P2G atomic_add scatter is the determinism-sensitive surface,
+# serialised bit-exact under cpu_max_num_threads=1 (the reference posture). No EFECT (no
+# training-loss distribution). BOTH rows carry atomic_ops = "sum-only": `forward` already
+# scatters mass+momentum via ti.atomic_add (sum reduction into grid nodes); `gradient` adds
+# the tape adjoint of that scatter + the L2 loss reduction. Declared + MEASURED at Stage 1b; HOLDS.
+[hybrid-pg.mpm-multimaterial-diff.forward]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true
+
+[hybrid-pg.mpm-multimaterial-diff.gradient]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true

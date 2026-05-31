@@ -1,0 +1,291 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/mpm-multimaterial-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+collecting ... collected 17 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [ 11%]
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [ 17%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 23%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 29%]
+tests/test_diagnostics.py::test_recovered_positions_bounded FAILED       [ 35%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_positions FAILED [ 41%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close FAILED [ 47%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 52%]
+tests/test_gradient_golden.py::test_a1_ballistic_exact_closed_form FAILED [ 58%]
+tests/test_gradient_golden.py::test_a3_neohookean_exact_closed_form PASSED [ 64%]
+tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report FAILED [ 70%]
+tests/test_inverse_recovery.py::test_recover_planted_initial_velocity FAILED [ 76%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 82%]
+tests/test_inverse_recovery.py::test_recovery_from_other_init FAILED     [ 88%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 94%]
+tests/test_pbt_invariants.py::test_momentum_change_bounded_by_impulse_pbt FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/capture.py:100: in default_capture
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.24, 0.16, -0.12))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:30: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/capture.py:100: in default_capture
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.24, 0.16, -0.12))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:30: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:21: in _forward_and_grad
+    target = prob.final_positions(v0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:37: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:21: in _forward_and_grad
+    target = prob.final_positions(v0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/capture.py:100: in default_capture
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.24, 0.16, -0.12))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________________ test_recovered_positions_bounded _______________________
+tests/test_diagnostics.py:27: in test_recovered_positions_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/capture.py:100: in default_capture
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.24, 0.16, -0.12))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_____________ test_diff_forward_matches_reference_final_positions ______________
+tests/test_forward_equivalence.py:86: in test_diff_forward_matches_reference_final_positions
+    diff = prob.final_positions(v0)  # diff FIRST (f64), before the reference re-init
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_diff_forward_matches_reference_bit_close _________________
+tests/test_forward_equivalence.py:97: in test_diff_forward_matches_reference_bit_close
+    diff = prob.final_positions(v0)  # diff FIRST (f64), before the reference re-init
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:80: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/mpm-multimaterial-diff-gradient.json'
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_____________________ test_a1_ballistic_exact_closed_form ______________________
+tests/test_gradient_golden.py:94: in test_a1_ballistic_exact_closed_form
+    target = prob.final_positions(v0t)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________ test_a2_gradient_matches_finite_difference_report _______________
+tests/test_gradient_golden.py:114: in test_a2_gradient_matches_finite_difference_report
+    target = prob.final_positions(v0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_recover_planted_initial_velocity _____________________
+tests/test_inverse_recovery.py:17: in test_recover_planted_initial_velocity
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.24, 0.16, -0.12))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:26: in test_gradient_fields_populated
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.25, 0.15, -0.13))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_other_init _________________________
+tests/test_inverse_recovery.py:37: in test_recovery_from_other_init
+    sol = solve_recovery(cfg, planted=(0.30, 0.10, -0.20), init=(0.36, 0.04, -0.27))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:183: in solve_recovery
+    target = truth.final_positions(np.asarray(planted, dtype=np.float64))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:31: in test_gradient_matches_finite_difference_pbt
+    vx=st.floats(min_value=-0.4, max_value=0.4),
+               ^^^
+tests/test_pbt_invariants.py:50: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, x0, v0=v0, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/invariants.py:37: in gradient_matches_finite_difference
+    target = prob.final_positions(np.asarray(v0, dtype=np.float64) * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       vx=0.0,
+E       vy=0.0,
+E       vz=0.0,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+_________________ test_momentum_change_bounded_by_impulse_pbt __________________
+tests/test_pbt_invariants.py:54: in test_momentum_change_bounded_by_impulse_pbt
+    vx=st.floats(min_value=-0.5, max_value=0.5),
+               ^^^
+tests/test_pbt_invariants.py:69: in test_momentum_change_bounded_by_impulse_pbt
+    assert momentum_change_bounded_by_impulse(cfg, x0, v0=v0)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mpm_multimaterial_diff/invariants.py:58: in momentum_change_bounded_by_impulse
+    prob.final_positions(np.asarray(v0, dtype=np.float64))
+mpm_multimaterial_diff/sim.py:117: in final_positions
+    self.forward(self._v0, self.state)
+mpm_multimaterial_diff/sim.py:107: in forward
+    raise NotImplementedError("Stage 1a scaffold: forward implemented at Stage 1b")
+E   NotImplementedError: Stage 1a scaffold: forward implemented at Stage 1b
+E   Falsifying example: test_momentum_change_bounded_by_impulse_pbt(
+E       vx=0.0,
+E       vy=0.0,
+E       vz=0.0,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_positions_bounded - NotImple...
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_final_positions
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_reference_bit_close
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_ballistic_exact_closed_form - N...
+FAILED tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_initial_velocity
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_other_init - NotImp...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_momentum_change_bounded_by_impulse_pbt
+========================= 16 failed, 1 passed in 3.19s =========================

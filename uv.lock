@@ -51,6 +51,7 @@ members = [
     "lenia-diff",
     "mandelbulb-explorer",
     "mpm-multimaterial",
+    "mpm-multimaterial-diff",
     "mpm-multimaterial-stack-d",
     "mpm-multimaterial-stack-e",
     "neural-ca",
@@ -2283,6 +2284,46 @@ dev = [
 
 [package.metadata]
 requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
+name = "mpm-multimaterial-diff"
+version = "0.0.0"
+source = { editable = "packages/mpm-multimaterial-diff" }
+dependencies = [
+    { name = "bit-physics-common-py" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "taichi" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mpm-multimaterial-stack-d" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-py", editable = "common/common-py" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mpm-multimaterial-stack-d", marker = "extra == 'dev'", editable = "packages/mpm-multimaterial-stack-d" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "taichi", specifier = ">=1.7,<2.0" },
+]
 provides-extras = ["dev"]
 
 [[package]]

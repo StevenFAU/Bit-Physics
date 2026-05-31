@@ -194,6 +194,14 @@ members = [
   # field gradient). Single-stack (gate-14 N/A; WU-F differentiable-axis equivalence
   # applies). D-LAYOUT: flat `packages/lenia-diff/` per §0.3. Registered at Stage 1a.
   "packages/lenia-diff",
+  # Spec-Phase-4 batch-1 differentiable variant of mpm-multimaterial (sim 3/4; Stack D /
+  # Taichi ti.ad.Tape). Tape-differentiable 3D APIC neo-Hookean MLS-MPM forward on the WU-A
+  # autodiff substrate; initial-velocity inverse problem (DiffTaichi throw-to-target) +
+  # gradient golden table with ≥3 independent anchors (A1 ballistic kinematic / A2 central FD
+  # / A3 neo-Hookean small-strain constitutive). Single-stack (gate-14 N/A; WU-F
+  # differentiable-axis equivalence applies). D-LAYOUT: flat `packages/mpm-multimaterial-diff/`
+  # per §0.3. Registered at Stage 1a.
+  "packages/mpm-multimaterial-diff",
 ]
 exclude = []
 
