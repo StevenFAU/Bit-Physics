@@ -147,12 +147,70 @@ forward+golden+GREEN) -> `66c8ec1` (S1c perf/CI/LFS/mutation) -> `<S2>` (landing
 - The sim-2 banked frictions (lean-venv evidence, derandomize+phases, LFS same-shell R2 push,
   eof-fixer on .json sidecars) all RE-CONFIRMED here.
 
-### NEXT ACTION — SIM 4 eulerian-smoke-diff Stage 0 (Stack E / Warp; D-WARP-ADJOINT BLOCK gate)
+## SIM 4 — eulerian-smoke-diff: **LANDED + PUSHED + CI-GREEN** (origin/main `dfe80e1`) — FINAL
 
-Probe that the semi-Lagrangian smoke step is `wp.Tape`-differentiable on Warp CPU BEFORE
-building (BLOCK gate — surface BLOCKED with the specific gap if a genuine adjoint hole exists;
-do NOT force or CPU-substitute). A1 linear-advection analytic (Stam 1999 method cite), A3
-diffusion heat-kernel analytic (distinct physical term from A1), A2 central FD vs the wp.Tape
-adjoint. Apply F-RB-3 (`# mypy: ignore-errors` scoped to Warp-touching files). Forward ref
-`packages/eulerian-smoke-stack-e`. Then 1a RED -> 1b GREEN -> 1c -> 2, push + §S.5. Then the
-batch-1-close report.
+5-commit chain: `f5c1fef` (S0 probe) -> `6f909d0` (S1a scaffold+RED) -> `ab86e6c` (S1b
+forward+golden+GREEN) -> `240c27e` (S1c perf/CI/LFS/mutation/replay) -> `dfe80e1` (S2 landing
+fold + cat1 citation fix). NO tag (I7). **FIRST Stack-E consumer of WU-A; first Warp diff sim.**
+
+- **13-gate complete.** gate-14 N/A (single-stack). Mutation `eulerian_smoke_diff` registered,
+  MEASURE deferred (advisory; sim-1/2/3 precedent).
+- **D-WARP-ADJOINT (Stage-0 BLOCK gate): CONFIRMED differentiable, NO BLOCK.** The reference's
+  NumPy-marshalling primitives (`wp.from_numpy`→`.numpy()`) sever the `wp.Tape` → re-implement the
+  smoke step on-device (`requires_grad` kernels: `load_field_2d` + `sl_advect_2d` gather chain;
+  `diffuse_2d`). autodiff == exact analytic operator 1.1e-16; == analytic `dLoss/dnu` 0.0.
+- **Anchors (>=3 independent, NAMED):** A1 linear-advection-operator analytic
+  `2(M^K)^T(M^K u0 - target)` (Stam 1999; autodiff == analytic ~4e-15 EXACT; NumPy M mirror
+  bit-faithful to the Warp engine); A2 central-FD (~3e-10); A3 discrete-diffusion
+  `dLoss/dnu = 2(u'-t).(dt*Lap(u0))` (autodiff == analytic 0.0 EXACT; distinct term/param/method).
+- **A3 ANCHOR-SHIFT (on-evidence, like sims 1/2/3):** charter A3 = continuous heat-kernel
+  Gaussian-spread is only first-order-accurate to the discrete step -> re-declared to the EXACT
+  discrete-diffusion `dLoss/dnu` analytic; heat-equation retained as source.
+- **Forward-equivalence (WU-F differentiable axis):** diff advect/diffuse primitives ==
+  eulerian-smoke-stack-e reference primitives, MEASURED BIT-EXACT (`max|diff-ref| == 0.0`).
+- **Determinism:** MEASURED bit-exact same-stack-same-hw (Warp CPU single-thread serial; forward +
+  gradient np.array_equal both True); rows `[volumetric-grid.eulerian-smoke-diff.{forward,gradient}]`
+  HOLD (forward atomic_ops none = pure gather; gradient sum-only); no EFECT.
+- **PBT (2, regime-scoped):** `gradient_matches_finite_difference` (constant velocity, short
+  horizon, small grid) + `advect_field_bounded_by_input_range` (pure advection; bilinear advect is a
+  convex combination -> range-preserving; smoke-E `field_values_bounded` re-scoped).
+- **Inverse-recovery:** initial smoke field u0 recovered err ~6.5e-7 (loss 24.4 -> ~1e-14, 1412
+  Adam iters). **IDENTIFIABILITY:** u0 IS identifiable in the constant-velocity regime (M full-rank
+  well-conditioned -> strictly-convex quadratic). **D-INVERSE-SCOPE:** diffusion is a low-pass
+  operator -> recovery from a diffused target is ill-posed (backward heat) -> canonical recovery
+  scoped to pure advection; diffusion exercised by the A3 anchor + a PBT.
+- **gate-13 worktree replay** VERIFIED match=True at `6f909d0` (norm sha256 `a91155155dd8fe87…79eeb44`).
+- **LFS R2 (§Q.6 VERIFIED):** fixture OID `2ca92cda…707` pushed R2-first (F-MPM-3 arg order, same
+  shell) — present in `bit-physics-lfs` as `2ca92cda…707.zstd` (boto3 HEAD pre-push). GitHub push
+  `git -c lfs.standalonetransferagent= push`. Corpus `_EXPECTED_TOTAL` 29 -> 30 (4th 1.1.0 entry).
+- **§S.5 sweep:** **10/10 workflows GREEN at `dfe80e1`** (python-strict incl. test-eulerian-smoke-diff
+  + all prior test-*-diff + corpus-roundtrip R2-fetch, integrity, determinism, equivalence,
+  structure, audit-append-only, tolerance-budget, mutation-testing, cpp-strict, ts-strict).
+  render_similarity (test-render-similarity SUCCESS) + variant (mutation-testing HARD-gate) PASS.
+- **§R at `dfe80e1`:** 0 HF / 14 SW; digest `0ed0f924…656254559`.
+- **One HARD_FAIL caught + fixed at landing:** the Stage-0 probe §2 had ellipsis-abbreviated
+  dotted citations (a leading triple-dot instead of the full `common/common-warp/src/common_warp/autodiff/`
+  path) — cat1 (integrity --all) scans probes/ and needs the FULL repo-relative path:line (the cat4
+  commit-hook does NOT). Fixed at the landing fold; §R re-verified 0 HF.
+
+### Banked frictions (Stack-E / Warp diff sims)
+- **F-SMOKE-1 (reference wrappers sever the tape):** the landed Stack-E reference's public
+  primitives marshal to NumPy at every boundary (`wp.from_numpy`→`.numpy()`), which breaks
+  `wp.Tape`. A Warp diff sim must RE-IMPLEMENT the step as on-device `requires_grad` kernels inside
+  one `wp.Tape`, NOT wrap the reference. (Taichi analog: sim-3's reference `ti.types.ndarray`
+  kernels are not tape-markable.)
+- **F-SMOKE-2 (cat1 scans probes for FULL path:line):** abbreviated `.../foo.py:N` citations in a
+  `tools/testkit/probes/reports/*.md` pass the cat4 commit-hook but HARD_FAIL cat1 (integrity --all)
+  at landing §R. Use full repo-relative paths in probe reports.
+- **F-SMOKE-3 (override `loss()` for 2D fields):** the common_warp base `accumulate_l2` is 1-D;
+  smoke fields are 2D → override `InverseProblem.loss` with a 2D L2 kernel (`set_target` stores the
+  2D target as-is — do NOT `.ravel()` it).
+- The sim-1/2/3 banked frictions (lean-venv evidence, derandomize+phases PBT, same-shell R2 push,
+  F-MPM-3 arg order, eof-fixer on .json sidecars, `uv sync --all-packages` to restore the cat4 hook
+  venv) all RE-CONFIRMED here.
+
+### BATCH-1 COMPLETE — all 4 sims LANDED + CI-GREEN
+Close report: `docs/_audits/phase-4/batch-1-close-2026-05-31T19-42-00Z.md` (membership + per-sim
+verdicts + tip SHAs + 13-gate + anchors-to-source + identifiability + determinism + PBT + mutation
++ WU-F equivalence + sim-4 D-WARP-ADJOINT + §S.5 sweeps + §R digest + render/variant + CONTRADICTIONS).
+NO tag (I7, operator-only).
