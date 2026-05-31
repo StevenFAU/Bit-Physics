@@ -1,0 +1,43 @@
+{
+  "config": {
+    "dims": [
+      24,
+      24,
+      24
+    ],
+    "dtype": "f64",
+    "params": {
+      "grid_n": 24,
+      "n_gaussians": 256
+    },
+    "seed": 0,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:588a0c48c59d8e41a70f0fe86e31b8a181d627fd58b6abc760430c9b3fee5d75",
+    "format": "hdf5",
+    "path": "phase-4-eulerian-smoke-neural.h5"
+  },
+  "run": {
+    "capture_interval": 20,
+    "start_utc": "2026-05-31T00:00:00Z",
+    "step_count": 40,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "neural-rendered",
+    "name": "eulerian-smoke-neural",
+    "variant": "3dgs-smoke"
+  },
+  "stack": {
+    "build_id": "phase-4-batch-2",
+    "name": "warp-cpu",
+    "version": "0.0.0"
+  }
+}

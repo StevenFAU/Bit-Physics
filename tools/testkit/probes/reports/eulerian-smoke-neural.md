@@ -31,7 +31,7 @@ evidence_paths:
 | Integrity | 0 HARD_FAIL / 14 SOFT_WARN, rc 0, digest `32848bd8…b944b4c` (drifts as golden tables land; COUNTS are the invariant) | this session (FACT) |
 | Cross-phase replay | base `v0.3.0-phase-3`; ok=False = the two known environmental artifacts (pytest `-W error timeout` config + mutmut unprovisioned), 6/8 substantive gates PASS → phase-3 intact (same disposition as the Sim-A probe §0.1) | Sim-A probe (FACT) |
 | LFS bootstrap | `source tools/lfs/setup-lfs-s3-local.sh` → exit 0 (R2 live; Sim-A R2 push + CI R2-fetch verified) | this session (FACT) |
-| Parent physics (smoke) | `packages/eulerian-smoke-stack-e/` — `stable_fluids_step_3d` + `_taylor_green_initial_condition` + `canonical_params_3d` (`eulerian_smoke_stack_e/sim.py:60-72`); the 3D `density` field is the smoke (`eulerian_smoke_stack_e/sim.py:218`) | read (FACT) |
+| Parent physics (smoke) | `packages/eulerian-smoke-stack-e/` — `stable_fluids_step_3d` + `_taylor_green_initial_condition` + `canonical_params_3d` (`packages/eulerian-smoke-stack-e/eulerian_smoke_stack_e/sim.py:60-72`); the 3D `density` field is the smoke (`packages/eulerian-smoke-stack-e/eulerian_smoke_stack_e/sim.py:218`) | read (FACT) |
 | WU-C hooks | `common/common-3dgs/src/common_3dgs/coupling.py:97` `default_density_to_opacity` (`1−exp(−d)`), `:163` `PhysicsCoupling.update_opacity_from_density`; `common/common-3dgs/src/common_3dgs/render.py:116` `render` | read (FACT) |
 
 ## 1. Design (Stage-1a/1b plan)

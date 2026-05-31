@@ -387,3 +387,12 @@ runner    = "uv run --no-sync pytest packages/eulerian-smoke-diff/tests/ -x -q -
 path      = "packages/3dgs-mpm-sh-update/gs_mpm_sh_update"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/3dgs-mpm-sh-update/tests/ -x -q --tb=no"
+
+# Phase-4 batch-2 Sim B (eulerian-smoke-neural; spec § 5.11 3dgs-smoke). The coupling source
+# (build_smoke_gaussians + select_active_voxels + the driver). Oracle-grounded test surface
+# (A1 Beer-Lambert / A2 Kerbl Eq.6 / A3 zero-density + physics-equivalence + PBT); snapshots
+# FORBIDDEN. ADVISORY (§2.13); render_similarity / variant HARD targets untouched (consumer).
+[targets.eulerian_smoke_neural]
+path      = "packages/eulerian-smoke-neural/eulerian_smoke_neural"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/eulerian-smoke-neural/tests/ -x -q --tb=no"
