@@ -145,7 +145,7 @@ def test_ssim_l_cs_matches_wang2004_rederivation(data_range: float) -> None:
     c2 = (0.03 * data_range) ** 2  # Wang 2004 §3.B, K2 = 0.03
 
     def g(arr: np.ndarray) -> np.ndarray:
-        return gaussian_filter(arr, sigma=1.5, truncate=3.5)
+        return gaussian_filter(arr, sigma=1.5, truncate=3.5)  # type: ignore[no-any-return]
 
     mu_x, mu_y = g(x), g(y)
     sigma_xx = g(x * x) - mu_x * mu_x
@@ -257,7 +257,7 @@ def test_lpips_input_normalization_matches_zhang_convention() -> None:
 
     model = _load_lpips_model("alex")
     with torch.no_grad():
-        expected = float(model(convention_correct(a), convention_correct(b)).item())
+        expected = float(model(convention_correct(a), convention_correct(b)).item())  # type: ignore[operator]
     assert lpips(a, b) == expected
 
 
