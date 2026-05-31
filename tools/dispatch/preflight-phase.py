@@ -351,19 +351,17 @@ def phase_4_preflight() -> PreflightReport:
         # Phase 3 sims. NOTE — repointed from the never-adopted category-folder
         # layout (continuous-ca/, rigid-body/, soft-body/) to packages/<sim>,
         # the live convention (tooling-hardening 2026-05-28, forward-looking).
-        # Only the layout ROOT was corrected: sims not yet built (neural-ca,
-        # articulated-pedagogical, cloth-xpbd) still FAIL — correctly — against
-        # their real target path, preserving the precondition's intent.
+        # RESOLVED (phase-4 batch-1 Stage 0, 2026-05-31): the two sims the
+        # 2026-05-28 comment left to "FAIL — correctly — until that sim lands"
+        # have now landed under their real package names. Repointed:
+        #   cloth-xpbd        -> mass-spring-cloth (Phase-3 mass-spring-cloth, 86b0aa5)
+        #   learned-dynamics  -> pinn-poisson       (Phase-3 task-7 learned-dynamics, c4c3f43)
+        # This is the "Resolve when that sim lands" the prior comment directed.
         Path("packages/lenia"),
         Path("packages/neural-ca"),
         Path("packages/articulated-pedagogical"),
-        Path("packages/cloth-xpbd"),
-        # SURFACED (tooling-hardening 2026-05-28): `learned-dynamics` is a bare
-        # category segment, not a category/sim pair, so there is no mechanical
-        # layout-root swap. The concrete Phase-3 learned-dynamics sim folder
-        # name under packages/ is not yet built and not knowable from here;
-        # left unchanged rather than guessed. Resolve when that sim lands.
-        Path("learned-dynamics"),
+        Path("packages/mass-spring-cloth"),
+        Path("packages/pinn-poisson"),
         # Pre-vendored frontier papers
         Path("references/papers"),
     ]:
