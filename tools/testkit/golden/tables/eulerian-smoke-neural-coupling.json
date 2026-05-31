@@ -1,0 +1,72 @@
+{
+ "schema_version": "1.0.0",
+ "algorithm": "smoke-density-gaussian-coupling",
+ "category": "neural-rendered",
+ "derivation": {
+  "doc": "tools/testkit/golden/derivations/eulerian-smoke-neural-coupling.md",
+  "upstream": "Beer-Lambert volume opacity alpha=1-exp(-density) (WU-C default_density_to_opacity); Kerbl 2023 Eq.6 emission-absorption alpha-compositing (ACM TOG 42(4)); zero-density degenerate.",
+  "upstream_sha": "n/a-textbook-and-kerbl-cite-only",
+  "upstream_path": "n/a-cite-only-no-source-vendored"
+ },
+ "tolerance": {
+  "absolute": 1e-12,
+  "relative": 1e-12
+ },
+ "test_points": [
+  {
+   "inputs": {
+    "anchor": "anchor1-beer-lambert",
+    "density_values": [
+     0.0,
+     0.6931471805599453,
+     5.0
+    ]
+   },
+   "expected": {
+    "opacities": [
+     0.0,
+     0.5,
+     0.9932620530009145
+    ]
+   },
+   "independent_reference": {
+    "source": "Beer-Lambert volume-rendering opacity 1-exp(-d) (WU-C default_density_to_opacity); hand-derivation",
+    "derived_by": "hand-derivation (Beer-Lambert)"
+   }
+  },
+  {
+   "inputs": {
+    "anchor": "anchor2-kerbl-compositing",
+    "opacity": 0.8,
+    "color": [
+     0.6,
+     0.7,
+     0.8
+    ]
+   },
+   "expected": {
+    "center_pixel": [
+     0.48,
+     0.56,
+     0.64
+    ]
+   },
+   "independent_reference": {
+    "source": "Kerbl et al. 2023 ACM TOG 42(4) Eq.6 emission-absorption alpha-compositing: single centred Gaussian -> centre pixel = alpha*c",
+    "derived_by": "hand-derivation (Kerbl Eq.6 + Gaussian peak=1)"
+   }
+  },
+  {
+   "inputs": {
+    "anchor": "anchor3-zero-density"
+   },
+   "expected": {
+    "all_opacities_zero": true
+   },
+   "independent_reference": {
+    "source": "zero-density degenerate: density=0 -> alpha=0 -> background (fully independent)",
+    "derived_by": "hand-derivation (degenerate)"
+   }
+  }
+ ]
+}
