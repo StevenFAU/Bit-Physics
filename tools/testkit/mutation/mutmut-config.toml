@@ -417,3 +417,12 @@ runner    = "uv run --no-sync pytest packages/articulated-pedagogical-diff/tests
 path      = "packages/particle-lenia/particle_lenia"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/particle-lenia/tests/ -x -q --tb=no"
+
+# Phase-4 batch-3 sim 3/3 (flow-lenia; mass-conservative Flow Lenia, reintegration tracking). Per-sim
+# mutation target (charter §6 mutation row). ADVISORY (§2.13) — oracle-grounded tests only (the
+# conservation golden's A1 mass-balance / A2 non-negativity / A3 zero-flow anchors + the PBTs;
+# snapshots FORBIDDEN). No render coupling -> render_similarity / variant HARD targets untouched.
+[targets.flow_lenia]
+path      = "packages/flow-lenia/flow_lenia"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/flow-lenia/tests/ -x -q --tb=no"

@@ -146,6 +146,19 @@ force_analytic_abs = 1e-9
 force_fd_rel = 1e-5
 energy_translation_abs = 1e-8
 
+# Phase-4 batch-3 flow-lenia (sim 3; Stack D / Taichi — mass-conservative Flow Lenia, reintegration
+# tracking). Conservation-golden tolerances (bespoke per-anchor numeric keys; golden_tolerance
+# branch). Single-stack (gate-14 N/A; parent-vs-frontier REFRAMED to invariant posture). MEASURED at
+# Stage 1b. The mass-conservation tolerance is the HONEST summation-roundoff bound (~Nε), NOT
+# bit-exact (operator instruction).
+#   mass_conservation_rel  = 1e-9  (A1: Sigma A_{t+dt} vs Sigma A_t per step — summation roundoff ~Nε)
+#   mass_nonneg_abs        = 0.0   (A2: min mass >= 0 — bilinear-splat non-negativity, exact)
+#   zeroflow_residual_abs  = 0.0   (A3: F==0 -> A unchanged pointwise, EXACT)
+[golden_tolerance.continuous-ca.lenia-flow]
+mass_conservation_rel = 1e-9
+mass_nonneg_abs = 0.0
+zeroflow_residual_abs = 0.0
+
 # Phase-3 ising-classical (task-3a, sub-phase-phase-3-ising-classical) —
 # golden-table / MC-observable tolerances. Single-stack sim (Stack B;
 # NumPy reference is the in-stack oracle, NO cross-stack equivalence pair),

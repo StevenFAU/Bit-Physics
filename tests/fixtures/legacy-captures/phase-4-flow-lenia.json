@@ -1,0 +1,44 @@
+{
+  "config": {
+    "dims": [
+      32,
+      32
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.2,
+      "kernel_radius": 4,
+      "kernel_sigma": 2.0,
+      "scheme": "reintegration-tracking"
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:1a222b973e8c1ca5d8a7bf046b4f10de259af5f15fda3594f3ebf546a957738e",
+    "format": "hdf5",
+    "path": "phase-4-flow-lenia.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-31T23:51:18Z",
+    "step_count": 40,
+    "wall_clock_seconds": 0.15002379700308666
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "flow-lenia",
+    "variant": "frontier-flow-lenia"
+  },
+  "stack": {
+    "build_id": "cpu-det",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}

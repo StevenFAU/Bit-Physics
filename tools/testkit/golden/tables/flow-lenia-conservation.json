@@ -1,0 +1,102 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "flow-lenia-conservation",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/flow-lenia-conservation.md",
+    "upstream": "Flow-Lenia-ALIFE-2022-arXiv-2212.07906 / reintegration-mass-balance / zero-flow-identity",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-09,
+    "relative": 1e-07
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-mass",
+        "grid": 32,
+        "seed": 42
+      },
+      "expected": {
+        "mass_rel_drift": 0.0
+      },
+      "independent_reference": {
+        "source": "Exact mass conservation by the reintegration-tracking construction: each cell redistributes its FULL mass to flow-displaced neighbours via bilinear weights that sum to 1, so Sigma A_{t+dt} == Sigma A_t. Conserved to floating-point SUMMATION roundoff (~N*eps) \u2014 NOT bit-exact (the weights sum to 1 algebraically; their float sum carries roundoff). Source: Plantec et al., Flow-Lenia, ALIFE 2022 (arXiv:2212.07906); the reintegration mass balance Sum_p I(p',p)=1. Hand-derived.",
+        "derived_by": "closed-form-analytic (reintegration mass balance)",
+        "expected": {
+          "mass_rel_drift": 0.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-mass",
+        "grid": 32,
+        "seed": 7
+      },
+      "expected": {
+        "mass_rel_drift": 0.0
+      },
+      "independent_reference": {
+        "source": "Exact mass conservation by the reintegration-tracking construction: each cell redistributes its FULL mass to flow-displaced neighbours via bilinear weights that sum to 1, so Sigma A_{t+dt} == Sigma A_t. Conserved to floating-point SUMMATION roundoff (~N*eps) \u2014 NOT bit-exact (the weights sum to 1 algebraically; their float sum carries roundoff). Source: Plantec et al., Flow-Lenia, ALIFE 2022 (arXiv:2212.07906); the reintegration mass balance Sum_p I(p',p)=1. Hand-derived.",
+        "derived_by": "closed-form-analytic (reintegration mass balance)",
+        "expected": {
+          "mass_rel_drift": 0.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-nonneg",
+        "grid": 32,
+        "seed": 42
+      },
+      "expected": {
+        "min_mass": 0.0018082480482782702
+      },
+      "independent_reference": {
+        "source": "Non-negativity: the forward bilinear splat redistributes NON-NEGATIVE mass with NON-NEGATIVE weights (1-wi)(1-wj),...,wi*wj (each in [0,1]) -> the output mass field is >= 0 everywhere. A distinct invariant (range, not sum) and method (sign analysis of the splat weights). Hand-derived; arXiv:2212.07906.",
+        "derived_by": "closed-form-analytic (bilinear-splat non-negativity)",
+        "expected": {
+          "min_mass": 0.0018082480482782702
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-zeroflow",
+        "grid": 32,
+        "seed": 42
+      },
+      "expected": {
+        "zeroflow_residual": 0.0
+      },
+      "independent_reference": {
+        "source": "Zero-flow identity: with F == 0 the target (i+dt*0, j+dt*0)=(i,j) and the bilinear weights collapse to (1,0,0,0), so each cell maps to itself with weight 1 -> the mass field is UNCHANGED pointwise (EXACT). The advection-by-zero-velocity degenerate case; distinct from A1/A2 in being a pointwise identity. Hand-derived.",
+        "derived_by": "closed-form-analytic (advection by zero velocity)",
+        "expected": {
+          "zeroflow_residual": 0.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-zeroflow",
+        "grid": 32,
+        "seed": 7
+      },
+      "expected": {
+        "zeroflow_residual": 0.0
+      },
+      "independent_reference": {
+        "source": "Zero-flow identity: with F == 0 the target (i+dt*0, j+dt*0)=(i,j) and the bilinear weights collapse to (1,0,0,0), so each cell maps to itself with weight 1 -> the mass field is UNCHANGED pointwise (EXACT). The advection-by-zero-velocity degenerate case; distinct from A1/A2 in being a pointwise identity. Hand-derived.",
+        "derived_by": "closed-form-analytic (advection by zero velocity)",
+        "expected": {
+          "zeroflow_residual": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -65,6 +65,23 @@ atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
 
+# flow-lenia (phase-4 batch-3 sim 3; Stack D / Taichi — mass-conservative Flow Lenia, reintegration
+# tracking). The convolve + flow kernels are pure per-cell gathers (no atomics); the reintegration
+# scatter accumulates each source cell's mass into its 4 flow-displaced target cells via
+# ti.atomic_add (the mass-conservation mechanism) -> atomic_ops = "sum-only". Under
+# cpu_max_num_threads=1 the scatter order is FIXED, giving bit-identical run-to-run output (MEASURED
+# at Stage 1b: step + 10-step rollout np.array_equal True). **DISTINCT from the mass INVARIANT**,
+# which is conserved only to summation roundoff (~Nε); the run-to-run determinism is bit-exact while
+# the physical mass conservation is summation-tolerance — declared separately. No EFECT. Row locked
+# at Stage 1b.
+[continuous-ca.flow-lenia]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true
+
 # ising-classical (task-3a, sub-phase-phase-3-ising-classical). FIRST
 # `lattice-spin.*` row + FIRST Stack-B SIM row in Phase 3 (after lenia's
 # continuous-ca Stack-D row). D-WEBGPU-DET per charter §5 + §3.2.5 schema:
