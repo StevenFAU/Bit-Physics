@@ -1,5 +1,5 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
 rootdir: /home/otacon/Projects/Bit-Physics/packages/particle-lenia
@@ -134,4 +134,4 @@ FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
 FAILED tests/test_gradient_golden.py::test_a1_engine_matches_analytic - NotIm...
 FAILED tests/test_gradient_golden.py::test_a2_engine_matches_finite_difference
 FAILED tests/test_pbt_invariants.py::test_force_matches_finite_difference_pbt
-========================= 12 failed, 2 passed in 0.29s =========================
+========================= 12 failed, 2 passed in 0.72s =========================

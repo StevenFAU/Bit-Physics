@@ -891,3 +891,34 @@ jobs:
       - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + determinism + PBT + capture)
         working-directory: packages/articulated-pedagogical-diff
         run: uv run pytest tests/
+
+  test-particle-lenia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync particle-lenia workspace deps (with dev extras)
+        working-directory: packages/particle-lenia
+        run: uv sync --extra dev
+
+      - name: ruff (src + tests)
+        working-directory: packages/particle-lenia
+        run: |
+          uv run ruff check particle_lenia/ tests/
+          uv run ruff format --check particle_lenia/ tests/
+
+      - name: mypy --strict (src)
+        working-directory: packages/particle-lenia
+        run: uv run mypy --strict particle_lenia/
+
+      - name: pytest (gradient golden 3 anchors + determinism + PBT + capture + diagnostics)
+        working-directory: packages/particle-lenia
+        run: uv run pytest tests/

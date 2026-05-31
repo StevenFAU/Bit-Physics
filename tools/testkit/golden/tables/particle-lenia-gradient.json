@@ -1,0 +1,136 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "particle-lenia-gradient",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/particle-lenia-gradient.md",
+    "upstream": "Particle-Lenia-SOS-2022 / central-FD-baseline / translation-symmetry-analytic",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-analytic",
+        "seed": 42,
+        "n": 16
+      },
+      "expected": {
+        "f0_x": -1.1775398661125028e-06,
+        "f0_y": 9.68516718259334e-07,
+        "f3_x": 1.080667291728408e-06,
+        "f3_y": -1.3468891199034635e-08,
+        "f7_x": 1.0556804745742489e-07,
+        "f7_y": -1.0187522279467768e-07
+      },
+      "independent_reference": {
+        "source": "Analytic closed-form per-particle force -grad E(p_i), E(x)=R(x)-G(U(x)), hand-derived chain rule through K(r)=w_k exp(-(r-mu_k)^2/sigma_k^2), G(u)=exp(-(u-mu_g)^2/sigma_g^2), R(x)=(c_rep/2) sum max(1-r,0)^2 (sum over j!=i). The Taichi engine implements the same analytic gradient; this NumPy mirror is the independent bit-faithful cross-implementation (the smoke-diff mirror pattern). Source: Mordvintsev/Niklasson/Randazzo 2022, Google Research Self-Organising Systems, 'Particle Lenia and the energy-based formulation' (https://google-research.github.io/self-organising-systems/particle-lenia/). Canonical LOCAL rule.",
+        "derived_by": "closed-form-analytic (energy gradient)",
+        "expected": {
+          "f0_x": -1.1775398661125028e-06,
+          "f0_y": 9.68516718259334e-07,
+          "f3_x": 1.080667291728408e-06,
+          "f3_y": -1.3468891199034635e-08,
+          "f7_x": 1.0556804745742489e-07,
+          "f7_y": -1.0187522279467768e-07
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-analytic",
+        "seed": 7,
+        "n": 16
+      },
+      "expected": {
+        "f0_x": 2.3296080130604395e-11,
+        "f0_y": 5.363592535194305e-11,
+        "f3_x": 4.488591324637781e-07,
+        "f3_y": 3.850304442376082e-07,
+        "f7_x": 0.5461102025746244,
+        "f7_y": -0.12690516584292955
+      },
+      "independent_reference": {
+        "source": "Analytic closed-form per-particle force -grad E(p_i), E(x)=R(x)-G(U(x)), hand-derived chain rule through K(r)=w_k exp(-(r-mu_k)^2/sigma_k^2), G(u)=exp(-(u-mu_g)^2/sigma_g^2), R(x)=(c_rep/2) sum max(1-r,0)^2 (sum over j!=i). The Taichi engine implements the same analytic gradient; this NumPy mirror is the independent bit-faithful cross-implementation (the smoke-diff mirror pattern). Source: Mordvintsev/Niklasson/Randazzo 2022, Google Research Self-Organising Systems, 'Particle Lenia and the energy-based formulation' (https://google-research.github.io/self-organising-systems/particle-lenia/). Canonical LOCAL rule.",
+        "derived_by": "closed-form-analytic (energy gradient)",
+        "expected": {
+          "f0_x": 2.3296080130604395e-11,
+          "f0_y": 5.363592535194305e-11,
+          "f3_x": 4.488591324637781e-07,
+          "f3_y": 3.850304442376082e-07,
+          "f7_x": 0.5461102025746244,
+          "f7_y": -0.12690516584292955
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd",
+        "seed": 11,
+        "n": 16
+      },
+      "expected": {
+        "f0_x": -9.073933684613361e-08,
+        "f0_y": 1.2574464358157088e-07,
+        "f3_x": -4.093625433905915e-07,
+        "f3_y": -2.135161936092017e-07,
+        "f7_x": 0.506187953816517,
+        "f7_y": -0.21617814521812662
+      },
+      "independent_reference": {
+        "source": "Central finite-difference baseline -grad E(p_i) ~ -(E(x+eps)-E(x-eps))/(2eps), eps=1e-6, O(eps^2). Independent numerical method (parameter perturbation of the energy field) cross-checking the engine force. close-R2 numerical-baseline exemption.",
+        "derived_by": "central-finite-difference (numerical baseline)",
+        "expected": {
+          "f0_x": -9.073933684613361e-08,
+          "f0_y": 1.2574464358157088e-07,
+          "f3_x": -4.093625433905915e-07,
+          "f3_y": -2.135161936092017e-07,
+          "f7_x": 0.506187953816517,
+          "f7_y": -0.21617814521812662
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-translation",
+        "seed": 42,
+        "n": 24,
+        "dx": 3.7,
+        "dy": -2.1
+      },
+      "expected": {
+        "e_total_translation_residual": 0.0
+      },
+      "independent_reference": {
+        "source": "Translation invariance of the TOTAL energy: E_total(P+delta) == E_total(P) exactly (E depends only on pairwise distances; equivalently sum_i grad_{p_i} E_total = 0, a Noether-like momentum identity). NOTE the LOCAL force sum is NOT zero (the local rule does not conserve momentum); the sound symmetry anchor is the global-energy invariance. Hand-derived.",
+        "derived_by": "closed-form-analytic (translation symmetry)",
+        "expected": {
+          "e_total_translation_residual": 0.0
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-translation",
+        "seed": 7,
+        "n": 24,
+        "dx": -5.0,
+        "dy": 8.3
+      },
+      "expected": {
+        "e_total_translation_residual": 0.0
+      },
+      "independent_reference": {
+        "source": "Translation invariance of the TOTAL energy: E_total(P+delta) == E_total(P) exactly (E depends only on pairwise distances; equivalently sum_i grad_{p_i} E_total = 0, a Noether-like momentum identity). NOTE the LOCAL force sum is NOT zero (the local rule does not conserve momentum); the sound symmetry anchor is the global-energy invariance. Hand-derived.",
+        "derived_by": "closed-form-analytic (translation symmetry)",
+        "expected": {
+          "e_total_translation_residual": 0.0
+        }
+      }
+    }
+  ]
+}

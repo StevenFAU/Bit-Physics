@@ -133,6 +133,19 @@ golden_kernel_abs = 1e-6
 golden_kernel_rel = 1e-5
 golden_trajectory_abs = 1e-4
 
+# Phase-4 batch-3 particle-lenia (sim 2; Stack D / Taichi — energy-based Particle Lenia, LOCAL rule).
+# Gradient-golden tolerances (bespoke per-anchor numeric keys; golden_tolerance branch). Single-stack
+# (gate-14 N/A; parent-vs-frontier REFRAMED to invariant posture). MEASURED at Stage 1b. NO energy-
+# monotonicity tolerance — energy monotonicity is UNSOUND for the canonical LOCAL rule (operator
+# anchor correction).
+#   force_analytic_abs       = 1e-9  (A1: Taichi engine force vs the NumPy analytic -grad E mirror — exact)
+#   force_fd_rel             = 1e-5  (A2: engine force vs central-FD baseline — FD truncation floor)
+#   energy_translation_abs   = 1e-8  (A3: E_total(P+delta) - E_total(P) — exact translation symmetry)
+[golden_tolerance.continuous-ca.lenia-particle]
+force_analytic_abs = 1e-9
+force_fd_rel = 1e-5
+energy_translation_abs = 1e-8
+
 # Phase-3 ising-classical (task-3a, sub-phase-phase-3-ising-classical) —
 # golden-table / MC-observable tolerances. Single-stack sim (Stack B;
 # NumPy reference is the in-stack oracle, NO cross-stack equivalence pair),

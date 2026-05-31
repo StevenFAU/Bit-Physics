@@ -49,6 +49,22 @@ atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
 
+# particle-lenia (phase-4 batch-3 sim 2; Stack D / Taichi — energy-based Particle Lenia, the
+# canonical LOCAL rule). The per-particle force kernel particle_force is the analytic -grad E(p_i):
+# the outer `for i in range(n)` is serialised by cpu_max_num_threads=1; each i writes a unique
+# force[i,:] (NO ti.atomic_*); the inner j accumulation uses explicit f64 locals (the lenia
+# f32-downcast lesson). MEASURED at Stage 1b bit-identical run-to-run (force np.array_equal True +
+# a 10-step rollout np.array_equal True). No EFECT (no training-loss distribution). POINTWISE-vs-
+# TRAJECTORY: pointwise determinism holds run-to-run; the GOLDEN is the force/symmetry INVARIANT,
+# not the trajectory (Particle Lenia rollouts can be sensitive). Row locked at Stage 1b.
+[continuous-ca.particle-lenia]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
 # ising-classical (task-3a, sub-phase-phase-3-ising-classical). FIRST
 # `lattice-spin.*` row + FIRST Stack-B SIM row in Phase 3 (after lenia's
 # continuous-ca Stack-D row). D-WEBGPU-DET per charter §5 + §3.2.5 schema:

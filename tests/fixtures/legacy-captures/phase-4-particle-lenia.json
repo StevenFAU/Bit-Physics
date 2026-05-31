@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      64,
+      2
+    ],
+    "dtype": "f64",
+    "params": {
+      "c_rep": 1.0,
+      "dt": 0.1,
+      "mu_g": 0.6,
+      "mu_k": 4.0,
+      "rule": "local",
+      "sigma_g": 0.15,
+      "sigma_k": 1.0,
+      "w_k": 0.022
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:522dd3dcd4706d975850ed438adfa72b1a665b13eb3f26ee7f1adfb898b2ef04",
+    "format": "hdf5",
+    "path": "phase-4-particle-lenia.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-05-31T23:34:05Z",
+    "step_count": 40,
+    "wall_clock_seconds": 0.11494375002803281
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "particle-lenia",
+    "variant": "frontier-particle-lenia"
+  },
+  "stack": {
+    "build_id": "cpu-det",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}

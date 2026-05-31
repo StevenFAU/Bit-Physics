@@ -407,3 +407,13 @@ runner    = "uv run --no-sync pytest packages/eulerian-smoke-neural/tests/ -x -q
 path      = "packages/articulated-pedagogical-diff/articulated_pedagogical_diff"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/articulated-pedagogical-diff/tests/ -x -q --tb=no"
+
+# Phase-4 batch-3 sim 2/3 (particle-lenia; energy-based Particle Lenia, LOCAL rule). Per-sim mutation
+# target (charter §6 mutation row). ADVISORY (§2.13) — measured, not gating; oracle-grounded tests
+# only (the gradient golden's A1 analytic -grad E mirror + A2 central FD + A3 translation symmetry +
+# the force/symmetry PBTs; snapshots FORBIDDEN). No render coupling -> the HARD-gated
+# render_similarity / variant targets are untouched.
+[targets.particle_lenia]
+path      = "packages/particle-lenia/particle_lenia"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/particle-lenia/tests/ -x -q --tb=no"
