@@ -70,4 +70,25 @@ parent-vs-frontier REFRAMED to invariant posture (particle-based, not pointwise 
 `spec-frontier-particle.md` / `spec-frontier-flow.md` (flow stub remains until sim 3). gate-13
 evidence rule refined: generate FROM the worktree (the replay's env) → guaranteed match.
 
-## Sim 3 — flow-lenia (S27) — pending
+## Sim 3 — flow-lenia (S27) — **LANDED (local)**
+
+Mass-conservative Flow Lenia (Stack D / Taichi; reintegration tracking). Stages: 0 (web-fetch
+arXiv:2212.07906 + reintegration probe) folded into 1a; 1a `b1af459` (scaffold + 13-RED); 1b
+(Taichi convolve→flow→reintegration-scatter engine + goldens + capture, 14/14); 1c (perf 0.130s +
+CI + mutation + corpus 34→35 + gate-13 MATCHED at b1af459); 2 (this — spec `spec-frontier-flow.md`
++ REMOVE the shared `spec-frontier.md` stub, ledger row 27 → landed).
+
+**OPERATOR HONEST-TOLERANCE applied (load-bearing):** mass conserved to **summation roundoff (~Nε),
+NOT bit-exact** (MEASURED rel drift ~1e-16/step; regime-scoped to periodic BC). The **bit-exact
+run-to-run determinism is DISTINCT** from the summation-tolerance mass invariant (declared
+separately). A1 mass conservation (reintegration mass-balance Σ_p I=1), A2 non-negativity
+(bilinear-splat), A3 zero-flow identity (EXACT 0.0). **SOUND HOME of the Phase-3 plain-Lenia
+`mass_approximately_conserved` invariant FALSIFIED under Quad4** — re-routed here, NOT widened.
+Parent-vs-frontier REFRAMED to invariant posture (Flow Lenia intentionally not pointwise-equal to
+grid Lenia). The flow `F=∇U` is the affinity gradient; the invariants are flow-agnostic (full
+α-weighted flow + square-distribution-`D` are documented extensions).
+
+**Banked:** D-SPEC-SPLIT completed (both Lenia sims now own per-variant spec sheets; shared stub
+removed). gate-13 evidence-from-worktree rule held.
+
+## BATCH 3 — 3/3 CORE SIMS LANDED (local). Batch close report next.

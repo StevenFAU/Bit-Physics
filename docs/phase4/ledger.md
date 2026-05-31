@@ -33,7 +33,7 @@
 | 24 | 4.16 | volumetric-grid/eulerian-smoke | frontier-edge | C | — | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier.md | TODO (≥2) | no | — | planned |
 | 25 | 4.17 | volumetric-grid/eulerian-smoke | frontier-vpfm | C | — | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier.md | TODO (≥2) | no | — | planned |
 | 26 | 4.18 | continuous-ca/lenia | frontier-particle-lenia | D | — | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-frontier-particle.md | 2 (force_matches_finite_difference + total_energy_translation_invariant) | yes | batch-3-close | **landed** |
-| 27 | 4.19 | continuous-ca/lenia | frontier-flow-lenia | D | — | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-frontier.md | TODO (≥2) | no | — | planned |
+| 27 | 4.19 | continuous-ca/lenia | frontier-flow-lenia | D | — | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-frontier-flow.md | 2 (total_mass_conserved + mass_non_negative) | yes | batch-3-close | **landed** |
 | 28 | 4.20 | continuous-ca/neural-ca | frontier-difflogic-ca | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/neural-ca/spec-frontier.md | TODO (≥2) | no | — | planned |
 | 29 | 4.21 | lattice/lattice-boltzmann-d3q19 | frontier-moment-encoded | C | § 4.2.B | (none) | — | docs/sim-specs/lattice/lattice-boltzmann-d3q19/spec-frontier.md | TODO (≥2) | no | — | planned |
 | 30 | 4.22 | volumetric-grid/eulerian-smoke | frontier-gaussian-fluids | E | § 4.2.B + § 4.2.C | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier.md | TODO (≥2) | no | — | planned |
