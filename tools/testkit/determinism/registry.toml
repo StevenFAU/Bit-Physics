@@ -279,3 +279,28 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# eulerian-smoke-diff (Stack E / NVIDIA Warp wp.Tape; phase-4 batch-1 sim 4 — the FIRST Stack-E
+# consumer of WU-A). Tape-differentiable semi-Lagrangian smoke step (on-device requires_grad
+# kernels: load_field -> SL-advect backtrace gather chain -> L2). Two surfaces, both MEASURED
+# bit-identical run-to-run at Stage 1b (Warp CPU single-thread serial wp.launch, f64, seed-pinned
+# smooth IC; tests/test_determinism.py: np.array_equal forward final-frame + gradient both True).
+# The forward advect is a PURE per-cell gather (NO atomic scatter -> atomic_ops = "none"); the
+# `gradient` row's adjoint of that gather + the L2 loss reduction use wp.atomic_add (sum reduction
+# -> atomic_ops = "sum-only"). Serial CPU launch makes even the atomic reductions order-exact. No
+# EFECT (no training-loss distribution). Declared + MEASURED at Stage 1b; HOLDS.
+[volumetric-grid.eulerian-smoke-diff.forward]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
+[volumetric-grid.eulerian-smoke-diff.gradient]
+stack = "E"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true

@@ -202,6 +202,15 @@ members = [
   # differentiable-axis equivalence applies). D-LAYOUT: flat `packages/mpm-multimaterial-diff/`
   # per §0.3. Registered at Stage 1a.
   "packages/mpm-multimaterial-diff",
+  # Spec-Phase-4 batch-1 differentiable variant of eulerian-smoke (sim 4/4; FINAL; Stack E /
+  # NVIDIA Warp wp.Tape — the FIRST Stack-E consumer of WU-A). Tape-differentiable
+  # semi-Lagrangian smoke step (SL backtrace + bilinear gather + explicit diffusion) on the WU-A
+  # autodiff substrate (common_warp.autodiff); initial-smoke-field inverse problem + gradient
+  # golden table with ≥3 independent anchors (A1 linear-advection-operator analytic / A2 central
+  # FD / A3 discrete-diffusion ∂Loss/∂ν analytic). Single-stack (gate-14 N/A; WU-F
+  # differentiable-axis equivalence applies). D-LAYOUT: flat `packages/eulerian-smoke-diff/`
+  # per §0.3. Registered at Stage 1a.
+  "packages/eulerian-smoke-diff",
 ]
 exclude = []
 

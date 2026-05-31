@@ -41,6 +41,7 @@ members = [
     "bit-physics-testkit",
     "boids-3d",
     "eulerian-smoke",
+    "eulerian-smoke-diff",
     "eulerian-smoke-stack-d",
     "eulerian-smoke-stack-e",
     "ising-classical",
@@ -1102,6 +1103,46 @@ dev = [
 
 [package.metadata]
 requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+provides-extras = ["dev"]
+
+[[package]]
+name = "eulerian-smoke-diff"
+version = "0.0.0"
+source = { editable = "packages/eulerian-smoke-diff" }
+dependencies = [
+    { name = "bit-physics-common-warp" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "warp-lang" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "eulerian-smoke-stack-e" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-warp", editable = "common/common-warp" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "eulerian-smoke-stack-e", marker = "extra == 'dev'", editable = "packages/eulerian-smoke-stack-e" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
 provides-extras = ["dev"]
 
 [[package]]

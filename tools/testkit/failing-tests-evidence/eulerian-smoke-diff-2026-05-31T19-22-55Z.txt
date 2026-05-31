@@ -1,0 +1,270 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/otacon/Projects/Bit-Physics/packages/eulerian-smoke-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: cov-7.1.0, hypothesis-6.152.8
+collecting ... collected 18 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [ 11%]
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [ 16%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 22%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 27%]
+tests/test_diagnostics.py::test_recovered_field_bounded FAILED           [ 33%]
+tests/test_forward_equivalence.py::test_diff_advect_matches_reference FAILED [ 38%]
+tests/test_forward_equivalence.py::test_diff_advect_matches_reference_bit_exact FAILED [ 44%]
+tests/test_forward_equivalence.py::test_diff_diffusion_matches_reference_laplacian PASSED [ 50%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 55%]
+tests/test_gradient_golden.py::test_a1_advection_operator_exact FAILED   [ 61%]
+tests/test_gradient_golden.py::test_a3_diffusion_dloss_dnu_exact PASSED  [ 66%]
+tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report FAILED [ 72%]
+tests/test_inverse_recovery.py::test_recover_planted_initial_field FAILED [ 77%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 83%]
+tests/test_inverse_recovery.py::test_recovery_is_smooth_planted_field FAILED [ 88%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 94%]
+tests/test_pbt_invariants.py::test_advect_field_bounded_by_input_range_pbt FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/capture.py:79: in default_capture
+    sol = solve_recovery(SmokeDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:30: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/capture.py:79: in default_capture
+    sol = solve_recovery(SmokeDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:29: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:21: in _forward_and_grad
+    target = prob.final_field(u0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:36: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:21: in _forward_and_grad
+    target = prob.final_field(u0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/capture.py:79: in default_capture
+    sol = solve_recovery(SmokeDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+_________________________ test_recovered_field_bounded _________________________
+tests/test_diagnostics.py:27: in test_recovered_field_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/capture.py:79: in default_capture
+    sol = solve_recovery(SmokeDiffConfig())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+______________________ test_diff_advect_matches_reference ______________________
+tests/test_forward_equivalence.py:35: in test_diff_advect_matches_reference
+    diff = prob.final_field(u0)
+           ^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+_________________ test_diff_advect_matches_reference_bit_exact _________________
+tests/test_forward_equivalence.py:46: in test_diff_advect_matches_reference_bit_exact
+    diff = prob.final_field(u0)
+           ^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:73: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/usr/lib/python3.12/pathlib.py:1015: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/otacon/Projects/Bit-Physics/tools/testkit/golden/tables/eulerian-smoke-diff-gradient.json'
+_______________________ test_a1_advection_operator_exact _______________________
+tests/test_gradient_golden.py:86: in test_a1_advection_operator_exact
+    target = prob.final_field(u0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+______________ test_a2_gradient_matches_finite_difference_report _______________
+tests/test_gradient_golden.py:108: in test_a2_gradient_matches_finite_difference_report
+    target = prob.final_field(u0 * 1.07)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+______________________ test_recover_planted_initial_field ______________________
+tests/test_inverse_recovery.py:18: in test_recover_planted_initial_field
+    sol = solve_recovery(cfg)
+          ^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:27: in test_gradient_fields_populated
+    sol = solve_recovery(cfg)
+          ^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+____________________ test_recovery_is_smooth_planted_field _____________________
+tests/test_inverse_recovery.py:39: in test_recovery_is_smooth_planted_field
+    sol = solve_recovery(cfg)
+          ^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:183: in solve_recovery
+    target = truth.final_field(planted)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:31: in test_gradient_matches_finite_difference_pbt
+    amp=st.floats(min_value=0.3, max_value=2.0),
+               ^^^
+tests/test_pbt_invariants.py:48: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, u0, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/invariants.py:37: in gradient_matches_finite_difference
+    target = prob.final_field(u0 * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       amp=0.3,
+E       sx=0.3,
+E       sy=0.3,
+E   )
+_________________ test_advect_field_bounded_by_input_range_pbt _________________
+tests/test_pbt_invariants.py:52: in test_advect_field_bounded_by_input_range_pbt
+    amp=st.floats(min_value=0.3, max_value=2.0),
+               ^^^
+tests/test_pbt_invariants.py:65: in test_advect_field_bounded_by_input_range_pbt
+    assert advect_field_bounded_by_input_range(cfg, u0)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/invariants.py:56: in advect_field_bounded_by_input_range
+    final = prob.final_field(u0)
+            ^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:106: in final_field
+    out = self.forward(self._u0, self.state)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+eulerian_smoke_diff/sim.py:88: in forward
+    raise NotImplementedError("tape-differentiable SL-advect forward - implemented at Stage 1b")
+E   NotImplementedError: tape-differentiable SL-advect forward - implemented at Stage 1b
+E   Falsifying example: test_advect_field_bounded_by_input_range_pbt(
+E       amp=0.3,
+E       sx=0.3,
+E       sy=0.3,
+E   )
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_field_bounded - NotImplement...
+FAILED tests/test_forward_equivalence.py::test_diff_advect_matches_reference
+FAILED tests/test_forward_equivalence.py::test_diff_advect_matches_reference_bit_exact
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_advection_operator_exact - NotI...
+FAILED tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_initial_field - N...
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_is_smooth_planted_field
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_advect_field_bounded_by_input_range_pbt
+========================= 16 failed, 2 passed in 0.50s =========================
