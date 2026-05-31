@@ -63,7 +63,9 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # batch-1 sim 4 (eulerian-smoke-diff; FINAL) is the fourth 1.1.0 entry → 30 (21 real + 9 ph).
 # batch-2 Sim A (3dgs-mpm-sh-update) adds a real schema-1.0.0 capture → 31 (22 real + 9 ph).
 # batch-2 Sim B (eulerian-smoke-neural) adds a real schema-1.0.0 capture → 32 (23 real + 9 ph).
-_EXPECTED_TOTAL = 32
+# batch-3 sim 1 (articulated-pedagogical-diff) adds a real 1.1.0 gradient_fields capture
+# → 33 (24 real + 9 ph).
+_EXPECTED_TOTAL = 33
 _EXPECTED_PLACEHOLDERS = 9
 
 

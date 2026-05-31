@@ -1,11 +1,11 @@
 ============================= test session starts ==============================
-platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python3
+platform linux -- Python 3.12.3, pytest-9.0.3, pluggy-1.6.0 -- /home/otacon/Projects/Bit-Physics/.venv/bin/python
 cachedir: .pytest_cache
 hypothesis profile 'default'
 rootdir: /home/otacon/Projects/Bit-Physics/packages/articulated-pedagogical-diff
 configfile: pyproject.toml
 testpaths: tests
-plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0
+plugins: cov-7.1.0, hypothesis-6.152.8
 collecting ... collected 20 items
 
 tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
@@ -234,4 +234,4 @@ FAILED tests/test_inverse_recovery.py::test_recover_nonzero_velocity - NotImp...
 FAILED tests/test_inverse_recovery.py::test_gradient_check_report_passes - No...
 FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
 FAILED tests/test_pbt_invariants.py::test_energy_drift_bounded_pbt - NotImple...
-============================== 20 failed in 0.59s ==============================
+============================== 20 failed in 1.47s ==============================

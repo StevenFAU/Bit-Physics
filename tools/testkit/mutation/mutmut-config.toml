@@ -396,3 +396,14 @@ runner    = "uv run --no-sync pytest packages/3dgs-mpm-sh-update/tests/ -x -q --
 path      = "packages/eulerian-smoke-neural/eulerian_smoke_neural"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/eulerian-smoke-neural/tests/ -x -q --tb=no"
+
+# Phase-4 batch-3 sim 1/3 (articulated-pedagogical-diff; the differentiable carry). Per-sim
+# mutation target (charter §6 mutation row). ADVISORY (§2.13) — measured, not gating;
+# oracle-grounded tests only (the gradient golden's A1 -(g/L)cos q + A3 1/(mL^2) closed-form
+# anchors + central-FD baseline + the forward-equivalence vs the landed parent aba_forward_dynamics
+# + the inverse-recovery + the PBTs; snapshots FORBIDDEN). Single-pendulum scope. The HARD-gated
+# render_similarity / variant targets are untouched (this batch ships no render coupling).
+[targets.articulated_pedagogical_diff]
+path      = "packages/articulated-pedagogical-diff/articulated_pedagogical_diff"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/articulated-pedagogical-diff/tests/ -x -q --tb=no"
