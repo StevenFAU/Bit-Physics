@@ -1,0 +1,35 @@
+{
+  "schema_version": "1.0.0",
+  "produced_utc": "2026-06-01T00-32-58Z",
+  "kind": "phase-4-consolidation-c4-mutation",
+  "status": "real-measured",
+  "mutmut_version": "2.5.1",
+  "rationale": "Phase-4 consolidation pass C4. CORRECTION (load-bearing): mutmut 2.5.1 IS provisioned and runs end-to-end in the root .venv via run-mutation.sh --target; the batch-1/2/3 'MEASURE deferred — mutmut unprovisioned' rationale was WRONG. The TRUE constraint is wall-clock (~hours/sim; each mutant re-runs the per-sim suite + Taichi/Warp recompile). One representative per-sim target (flow_lenia) was fully measured this pass; classified honestly; below floor recorded (NOT forced, NOT widened, snapshots FORBIDDEN — 4.1 rules). The other 8 per-sim targets + the 3 foundation advisory targets (common_3dgs ~1475 mutants, code_verification_mms 315, property 234) are measurement-deferred-on-wall-clock with the SAME named lever. NO new promotions (flow_lenia does not clear 0.80; the generalizable lever is per-sim NumPy-reference oracle tests). The 2 HARD-promoted targets (render_similarity 0.9242, variant 0.8702) HELD (CI mutation-testing GREEN; gate_helpers mutation-promoted-floor OK). This ledger is NOT matched by the `phase-*-hardening-*.json` promoted-floor glob (advisory must not gate). Full classification: docs/_audits/phase-4/mid-phase-state-2026-06-01T00-32-58Z.md §3.1.",
+  "targets": [
+    {
+      "target": "flow_lenia",
+      "path": "packages/flow-lenia/flow_lenia",
+      "threshold": 0.80,
+      "score_before": null,
+      "score_before_note": "batch-3-close recorded 'MEASURE deferred (advisory)' — no prior number; this is the FIRST real measurement",
+      "score": 0.478,
+      "killed": 154,
+      "total": 322,
+      "survived": 168,
+      "posture": "SOFT_WARN-advisory",
+      "survivors_by_file": {
+        "forward.py": 98,
+        "sim.py": 28,
+        "__main__.py": 26,
+        "_taichi_kernels.py": 9,
+        "invariants.py": 7
+      },
+      "survivor_classification": {
+        "real_gap_test_lever": "forward.py NumPy-reference moat (_convolve_periodic / affinity_gradient flow / NumPy reintegrate) — asserted 'verified vs the NumPy reference' in sim.py but the runner (pytest packages/flow-lenia/tests/) exercises the Taichi engine _k.reintegrate + invariants, importing forward.py only for FlowLeniaConfig/initial_mass/total_mass. The NumPy reference functions are not directly unit-tested -> their mutants (e.g. fx=None, m*(1-wi)->m/(1-wi)) survive. LEVER: add NumPy-reference oracle tests (closed-form / vs-Taichi-engine).",
+        "out_of_scope": "__main__.py (26) CLI entry glue — not unit-tested; killing needs snapshot/exact-output assertions (FORBIDDEN anti-pattern). sim.py orchestration/capture-writing (subset of the 28).",
+        "equivalent": "k.shape[0]->k.shape[1] on a square kernel (radius identical); FloatArray=None type-alias (runtime no-op)."
+      },
+      "note": "0.478 < 0.80 recorded honestly. NOT promoted, NOT widened, NOT snapshot-padded. The forward.py NumPy-reference-moat + CLI + orchestration survivor pattern is INFERRED to generalize across the 9 per-sim targets (all carry a NumPy/closed-form reference moat + __main__ CLI the runner does not directly test) — so the per-sim 0.80 floor needs per-sim NumPy-reference oracle tests, the named lever. Measuring the other 8 (each 470-774 src lines -> ~300-500 mutants -> ~1-2.5h) is deferred-on-wall-clock."
+    }
+  ]
+}
