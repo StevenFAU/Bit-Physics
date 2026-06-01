@@ -93,12 +93,60 @@ GATE_COMMANDS: dict[str, list[str]] = {
 }
 
 
+# Gate classification (Phase-4 consolidation C3). A gate is "correctness" if it
+# attests the prior phase's DELIVERABLES reproduce (the sims/tools still behave);
+# it is "meta" if it only checks tooling / ledger / budget hygiene that
+# legitimately drifts across a frozen phase boundary (§D.5 tag-isolation: the
+# replay runs the TAGGED gate logic against TAGGED content, so a meta-ledger that
+# advanced post-tag reads red at the tag by design). `ReplayResult.ok` (and the
+# CLI exit code) reflect the deliverable-correctness verdict; meta reds are
+# reported SEPARATELY so a tag-frozen meta-red does not mask "the prior phase's
+# deliverables are intact."
+#
+# The motivating finding (Phase-4 foundation-entry gate, pre-dispatch-review §13):
+# replaying v0.3.0-phase-3 returned ok=False on TWO reds, neither a
+# deliverable-correctness failure — the `mutation` baseline-present status string
+# (framework-validated -> real-baseline) and three META tests bundled into the
+# `pytest -W error tools/testkit/` run (i6/i7/cost-axis). This edit cleanly
+# reclassifies the PURE-meta gates (mutation/tolerance-budget/perf-ledger). The
+# `pytest`-gate-bundles-meta-tests case needs sub-test granularity and is SURFACED,
+# not forced (a meta-marker / deselection on the testkit meta-tests).
+#
+# Bit-reproducibility tradeoff (weighed explicitly per the banked refinement): the
+# strict "every gate replays identically" signal is NOT lost — it is retained as
+# `strict_ok`. Only the default `ok` narrows to correctness. Unlisted gates
+# default to "correctness" (fail-safe: a newly-added gate gates phase entry until
+# it is deliberately reclassified).
+GATE_CLASS: dict[str, str] = {
+    "integrity": "correctness",
+    "pytest": "correctness",
+    "equivalence": "correctness",
+    "determinism": "correctness",
+    "property": "correctness",
+    "perf-ledger": "meta",  # phase-1+ placeholder print — not a deliverable check
+    "mutation": "meta",  # gate_helper baseline/ledger status + advisory below-floor
+    "tolerance-budget": "meta",  # file-shape / trivially-passes hygiene check
+}
+_DEFAULT_GATE_CLASS = "correctness"
+
+
+def classify_gate(name: str) -> str:
+    """Return 'correctness' or 'meta' for a gate (default correctness — fail-safe)."""
+    return GATE_CLASS.get(name, _DEFAULT_GATE_CLASS)
+
+
 @dataclass
 class GateResult:
     name: str
     passed: bool
     audit_verdict: str | None
     discrepancy: str | None = None
+    gate_class: str = _DEFAULT_GATE_CLASS
+
+    @property
+    def clean(self) -> bool:
+        """The gate ran green AND matched the audit verdict."""
+        return self.passed and self.discrepancy is None
 
 
 @dataclass
@@ -110,7 +158,31 @@ class ReplayResult:
 
     @property
     def ok(self) -> bool:
-        return all(g.passed and g.discrepancy is None for g in self.gates)
+        """Deliverable-correctness verdict: every CORRECTNESS gate is clean.
+
+        A tag-frozen META-red (see GATE_CLASS) does NOT fail this — that is the
+        C3 refinement. Use `strict_ok` for the all-gates-bit-identical signal.
+        """
+        correctness = [g for g in self.gates if g.gate_class == "correctness"]
+        return all(g.clean for g in correctness)
+
+    @property
+    def strict_ok(self) -> bool:
+        """Legacy semantics: EVERY gate (correctness + meta) is clean.
+
+        Retained so the strong bit-reproducibility signal (§D.5) is not lost.
+        """
+        return all(g.clean for g in self.gates)
+
+    @property
+    def meta_ok(self) -> bool:
+        """Every META gate is clean (reported separately from `ok`)."""
+        return all(g.clean for g in self.gates if g.gate_class == "meta")
+
+    @property
+    def meta_discrepancies(self) -> list[GateResult]:
+        """META gates that ran red or mismatched (surfaced, do not fail `ok`)."""
+        return [g for g in self.gates if g.gate_class == "meta" and not g.clean]
 
 
 def _read_front_matter(audit_path: Path) -> dict[str, object]:
@@ -291,6 +363,7 @@ def replay(
                         passed=False,
                         audit_verdict=audit_verdict,
                         discrepancy=f"unknown gate {gate!r}",
+                        gate_class=classify_gate(gate),
                     )
                 )
                 continue
@@ -315,6 +388,7 @@ def replay(
                     passed=passed,
                     audit_verdict=audit_verdict,
                     discrepancy=discrepancy,
+                    gate_class=classify_gate(gate),
                 )
             )
     finally:
@@ -351,10 +425,21 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     for g in result.gates:
         status = "PASS" if g.passed else "FAIL"
-        print(f"  {status}  gate={g.name} audit_verdict={g.audit_verdict}")
+        print(f"  {status}  gate={g.name} [{g.gate_class}] audit_verdict={g.audit_verdict}")
         if g.discrepancy:
             print(f"        discrepancy: {g.discrepancy}", file=sys.stderr)
-    print(f"summary: prior_phase={result.prior_phase} ok={result.ok}")
+    # Surface meta-reds separately: they do NOT fail `ok` (C3) but must be visible.
+    if result.meta_discrepancies:
+        names = ", ".join(g.name for g in result.meta_discrepancies)
+        print(
+            f"  NOTE: {len(result.meta_discrepancies)} META gate(s) red "
+            f"({names}) — tag-frozen hygiene, does NOT fail correctness ok= (C3).",
+            file=sys.stderr,
+        )
+    print(
+        f"summary: prior_phase={result.prior_phase} ok={result.ok} "
+        f"(correctness) strict_ok={result.strict_ok} meta_ok={result.meta_ok}"
+    )
     return 0 if result.ok else 1
 
 

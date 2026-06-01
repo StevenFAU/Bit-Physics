@@ -13,9 +13,11 @@ from pathlib import Path
 import pytest
 
 from integrity.scripts.replay_prior_phase import (
+    GATE_CLASS,
     GATE_COMMANDS,
     GateResult,
     _resolve_cmd_for_worktree,
+    classify_gate,
     replay,
 )
 
@@ -250,3 +252,76 @@ def test_replay_fails_when_audit_claims_pass_but_gate_fails(
     assert not g.passed
     assert g.discrepancy is not None
     assert "audit claimed" in g.discrepancy
+
+
+# --- C3: correctness-vs-meta gate classification -----------------------------
+
+
+def test_known_gates_are_classified() -> None:
+    """The pure-meta gates are meta; deliverable gates default correctness."""
+    assert classify_gate("mutation") == "meta"
+    assert classify_gate("tolerance-budget") == "meta"
+    assert classify_gate("perf-ledger") == "meta"
+    assert classify_gate("integrity") == "correctness"
+    assert classify_gate("pytest") == "correctness"
+    assert classify_gate("equivalence") == "correctness"
+    assert classify_gate("determinism") == "correctness"
+    assert classify_gate("property") == "correctness"
+    # fail-safe: an unknown gate gates phase entry (counts as correctness)
+    assert classify_gate("brand-new-gate") == "correctness"
+
+
+def test_meta_gate_red_is_reported_but_does_not_fail_ok(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """C3 core: a frozen META-red is surfaced separately, NOT folded into ok=.
+
+    Mirrors the Phase-4 entry-gate finding (the `mutation` baseline-status red):
+    the prior phase's DELIVERABLES are intact (no correctness gate red), so the
+    deliverable-correctness verdict `ok` is True — while `strict_ok` is False and
+    the meta-red is reported in `meta_discrepancies`.
+    """
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo_with_tag(repo, gate_passes=False)  # always.sh exits 1
+    audit = _write_landing_audit(repo, "CONFIRMED")
+    monkeypatch.setitem(GATE_COMMANDS, "meta-stub", ["sh", "always.sh"])
+    monkeypatch.setitem(GATE_CLASS, "meta-stub", "meta")
+
+    result = replay("v0-stub-phase", audit, ["meta-stub"], repo_root=repo)
+
+    assert result.ok, "a meta-red must NOT fail the deliverable-correctness ok="
+    assert not result.strict_ok, "the all-gates strict signal must still see the red"
+    assert not result.meta_ok
+    assert [g.name for g in result.meta_discrepancies] == ["meta-stub"]
+    assert result.gates[0].gate_class == "meta"
+
+
+def test_correctness_gate_red_fails_ok_even_with_meta_green(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """C3 contra: a correctness-gate red STILL fails ok= (deliverables broken).
+
+    A green meta gate must not rescue a red correctness gate.
+    """
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _init_repo_with_tag(repo, gate_passes=True)  # always.sh exits 0
+    # A failing correctness gate (exit 1) + a passing meta gate (exit 0).
+    fail = repo / "fail.sh"
+    fail.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    fail.chmod(0o755)
+    subprocess.run(["git", "add", "."], cwd=repo, check=True)
+    subprocess.run(
+        ["git", "commit", "--amend", "--no-edit"], cwd=repo, capture_output=True, check=True
+    )
+    subprocess.run(["git", "tag", "-f", "v0-stub-phase"], cwd=repo, check=True)
+    audit = _write_landing_audit(repo, "CONFIRMED")
+    monkeypatch.setitem(GATE_COMMANDS, "corr-stub", ["sh", "fail.sh"])  # default correctness
+    monkeypatch.setitem(GATE_COMMANDS, "meta-stub", ["sh", "always.sh"])
+    monkeypatch.setitem(GATE_CLASS, "meta-stub", "meta")
+
+    result = replay("v0-stub-phase", audit, ["corr-stub", "meta-stub"], repo_root=repo)
+
+    assert not result.ok, "a red correctness gate must fail ok= regardless of meta"
+    assert result.meta_ok, "the meta gate is green here"
