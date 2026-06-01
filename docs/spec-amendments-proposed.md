@@ -392,3 +392,42 @@ anchor, not a vendored PDF). Recorded in
   landed sims already comply (cite-at-Stage-0; cat1 GREEN). Spec + plan edits deferred
   to the operator at the Phase-4 close (spec frozen mid-phase per §9.6; agent does NOT
   edit the plan per §0.3).
+
+## A-9 — OpenVDB license `MPL-2.0` → **`Apache-2.0`** (as-vendored v13.0.0; formalizes the WU-B inline corrigendum)
+
+- **Surfaced by:** WU-B sparse-volume Stage 0 (2026-05-30), recorded INLINE in
+  `references/openvdb/MANIFEST.toml:19-25` as "proposed corrigendum (A-8) in the WU-B
+  audit" but **never transcribed to this central registry** — re-confirmed + filed by
+  the Phase-4 consolidation pass C5 (2026-05-31). **Numbering note:** the WU-B audit's
+  informal forward-reference "A-8" predates this central Phase-4 registry, where C1's
+  papers corrigendum already took A-8; OpenVDB is **A-9** here. Both are Phase-4
+  corrigenda applied together at the close.
+- **Verified rationale (Convention #8 — verified at assertion, FACT):** OpenVDB
+  **relicensed from MPL-2.0 to Apache-2.0** (effective OpenVDB 12.0, 2025). The
+  **as-vendored v13.0.0** proves it: `references/openvdb/LICENSE` is the Apache-2.0
+  text, and `references/openvdb/nanovdb/.../NanoVDB.h` carries
+  `SPDX-License-Identifier: Apache-2.0`. `references/openvdb/MANIFEST.toml:6` records
+  `license = "Apache-2.0"` (the as-vendored truth). The spec/plan's `MPL-2.0` is stale.
+  The integrity A4 MANIFEST-pin-consistency guard **SOFT_WARNs** this drift on every
+  `pytest tools/integrity/tests/` run (`references/openvdb/MANIFEST.toml: license drift
+  — MANIFEST [upstream].license='Apache-2.0' but architecture.md § D.3 says 'MPL-2.0'`);
+  applying this corrigendum clears the warning. **License-risk delta: NONE** — Apache-2.0
+  is strictly MORE permissive than MPL-2.0 and MIT-compatible (the §12.7 portfolio-MIT
+  posture is unaffected; the §F.3.5 "non-modification" MPL caveat becomes moot).
+- **Primary location — `docs/architecture.md:2560`** (Appendix D.3 vendored-pins table):
+  - **Current:** `| **OpenVDB (incl. NanoVDB)** | Phase 4 WU-B; Phase 4 Stages 15, 16, 18 | Latest stable at WU-B time (expect v12.x+ as of May 2026) | **MPL-2.0** | `gh release view -R AcademySoftwareFoundation/openvdb` |`
+  - **Proposed:** same row with `**MPL-2.0**` → `**Apache-2.0** (relicensed from MPL-2.0 at OpenVDB 12.0; as-vendored v13.0.0 LICENSE + NanoVDB.h SPDX = Apache-2.0)`.
+- **Dependent occurrences (grep-verified; reconcile to Apache-2.0):**
+  - `docs/architecture.md:1672` — "License note: OpenVDB is MPL-2.0 (Mozilla Public License v2.0)."
+  - `docs/architecture.md:2920` — the §12.7 "OpenVDB MPL-2.0 license implications" para
+    (the MPL weak-copyleft caveat becomes a no-op under Apache-2.0; RETAIN the
+    "don't-modify-vendored-source" rule on general grounds).
+  - `docs/phases/phase-4-plan.md` lines 61, 249, 529, 1713, 2897 — the plan's repeated
+    "MPL-2.0" / "MPL-2.0 (not Apache-2.0)" entries. **NB `docs/phases/phase-4-plan.md:2881`**
+    (the v6.0 changelog) reads "OpenVDB license corrected (MPL-2.0, not Apache-2.0)" — that
+    earlier "correction" is now itself stale (the relicense went MPL→Apache); the operator
+    should annotate, not delete, the changelog line (audit trail). Per §0.3 the agent does
+    NOT edit the plan; the operator reconciles at the close.
+- **Disposition:** PROPOSED + cheap/verified. The MANIFEST already records the
+  as-vendored truth (Apache-2.0); this only re-points the spec/plan registry. Spec edit
+  deferred to the operator at the Phase-4 close (spec frozen mid-phase per §9.6).
