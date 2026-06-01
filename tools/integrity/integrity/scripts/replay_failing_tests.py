@@ -34,6 +34,14 @@ neutralized before sha256 computation:
    replaces the version numbers and interpreter path with placeholders so a
    replay after a pytest bump is still byte-stable (R3, back-test re-audit).
 
+4. **The ``plugins:`` line** (Phase-4 consolidation C2). The installed-plugin
+   list is env-dependent: the evidence is captured in the author's active venv
+   (often a narrow root ``.venv``) while the replay runs in a worktree synced
+   ``--all-packages --all-extras`` (a superset). The differing list is the sole
+   cause of normalized-hash drift once paths/versions/timing collapse (the
+   "anyio / plugin-set leak", batch-2/3-close §6); it is collapsed so the hash
+   attests the structural RED, not the venv's plugin inventory.
+
 Together these reduce comparison to a structural test: per-test outcomes,
 error types, traceback lines, captured-output excerpts all stay intact.
 
@@ -100,6 +108,20 @@ _PYTEST_PLATFORM_PLACEHOLDER = rb"\1 <PYVER>\2<VER>\3<VER> -- <INTERPRETER>"
 _PYTEST_ROOTDIR = re.compile(rb"^(rootdir|cachedir):\s+.*$", re.MULTILINE)
 _PYTEST_ROOTDIR_PLACEHOLDER = rb"\1: <REPO>"
 
+# Pytest's `plugins:` line enumerates the plugins installed in the ACTIVE venv:
+#   "plugins: cov-7.1.0, hypothesis-6.152.8, anyio-4.13.0"
+# This set is env-dependent, NOT a property of the structural RED. The committed
+# evidence is captured in whatever venv the author had active (often a narrow root
+# `.venv`), while the replay runs in a worktree synced `--all-packages --all-extras`
+# (a SUPERSET — e.g. + hydra-core, pytest-timeout, jaxtyping pulled by sibling
+# members' dev extras). The differing plugin list is the sole load-bearing cause of
+# normalized-hash drift once paths/versions/timing are collapsed (the "anyio /
+# plugin-set leak", batch-2/3-close §6). Collapse the whole list so gate-3/13 attest
+# the structural RED (per-test outcomes, error types, tracebacks) regardless of which
+# venv produced the evidence — the same rationale as the version-trio/rootdir lines.
+_PYTEST_PLUGINS = re.compile(rb"^(plugins:)\s+.*$", re.MULTILINE)
+_PYTEST_PLUGINS_PLACEHOLDER = rb"\1 <PLUGINS>"
+
 
 _REPO_PLACEHOLDER = b"<REPO>"
 
@@ -121,6 +143,7 @@ def normalize_pytest_output(
     out = _PYTEST_SUMMARY.sub(_PYTEST_SUMMARY_PLACEHOLDER, raw)
     out = _PYTEST_PLATFORM.sub(_PYTEST_PLATFORM_PLACEHOLDER, out)
     out = _PYTEST_ROOTDIR.sub(_PYTEST_ROOTDIR_PLACEHOLDER, out)
+    out = _PYTEST_PLUGINS.sub(_PYTEST_PLUGINS_PLACEHOLDER, out)
     # Substitute longer paths first so worktree paths (which may share a
     # prefix with the real root in some setups) collapse before the root
     # substitution shadows them.
@@ -146,6 +169,39 @@ class ReplayResult:
         return self.expected_normalized_sha256 == self.actual_normalized_sha256
 
 
+def _sync_worktree(target: Path) -> None:
+    """`uv sync` the checked-out worktree so the replay runs against a built env.
+
+    Mirrors ``replay_prior_phase._checkout_worktree``'s sync. Two reasons this
+    is load-bearing for gate-13 byte-stability (batch-2-close §6 findings #3/#4):
+
+    1. **Plugin-set parity.** The committed failing-tests-evidence is captured in
+       the project's standard root ``.venv`` (``uv sync --all-packages``), whose
+       pytest ``plugins:`` line is the superset (e.g. ``cov, hypothesis, anyio``).
+       A freshly-checked-out worktree run through a per-package ``uv run`` would
+       otherwise resolve a NARROWER plugin set, changing the ``plugins:`` line and
+       breaking the normalized-hash match. Syncing with the SAME
+       ``--all-packages --all-extras`` reproduces the capture env's plugin set.
+    2. **No first-run build stdout.** ``uv run`` in an unsynced worktree emits
+       uv's first-run build output intermittently onto stdout (finding #4),
+       perturbing the hash. Pre-syncing (then running the pytest step
+       ``--no-sync``) removes that race.
+
+    Best-effort + guarded exactly like ``replay_prior_phase``: stub fixtures
+    (the unit tests under ``tools/integrity/tests/``) ship a bare git repo with
+    no ``pyproject.toml``/``uv.lock`` — for those the sync is skipped so the
+    stub path stays exercisable.
+    """
+    if (target / "pyproject.toml").exists() and (target / "uv.lock").exists():
+        subprocess.run(
+            ["uv", "sync", "--frozen", "--all-packages", "--all-extras"],
+            cwd=target,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+
 def _checkout_worktree(repo_root: Path, sha: str) -> Path:
     # Place the worktree OUTSIDE repo_root so the root substitution in
     # normalize_pytest_output() doesn't shadow the (longer) worktree path
@@ -162,6 +218,7 @@ def _checkout_worktree(repo_root: Path, sha: str) -> Path:
         text=True,
         check=True,
     )
+    _sync_worktree(target)
     return target
 
 
@@ -175,6 +232,78 @@ def _remove_worktree(repo_root: Path, target: Path) -> None:
     )
     if target.exists():
         shutil.rmtree(target, ignore_errors=True)
+
+
+def _run_target_in_worktree(root: Path, commit: str, pytest_target: str) -> tuple[bytes, Path]:
+    """Check out ``commit`` (synced), run the canonical pytest, clean up.
+
+    Returns ``(stdout_bytes, worktree_path)``. The worktree is removed before
+    return; the path string is still needed by callers for the ``<REPO>``
+    canonicalization substitution. ``--no-sync`` on the run leans on the
+    ``_sync_worktree`` step in ``_checkout_worktree`` so uv does not re-resolve
+    (and so the run emits no first-run build stdout — batch-2-close §6 #4).
+
+    This single code path is shared by ``replay`` (compare) and
+    ``generate_evidence`` (emit) so the recorded evidence and the replay it is
+    checked against are produced in the SAME worktree env (B-2: no
+    root-.venv-vs-worktree plugin-set drift).
+    """
+    worktree = _checkout_worktree(root, commit)
+    try:
+        # Run pytest in the worktree against the same target the original
+        # evidence captured. The pytest_target argument is interpreted
+        # relative to the worktree (e.g., `packages/reaction-diffusion-2d`).
+        # `--extra dev` pulls in pytest itself per the workspace member's
+        # optional-dependencies group; `--no-sync` uses the already-synced
+        # `.venv` so no first-run build output lands on stdout.
+        proc = subprocess.run(
+            [
+                "uv",
+                "run",
+                "--no-sync",
+                "--directory",
+                pytest_target,
+                "--extra",
+                "dev",
+                "pytest",
+                "-v",
+                "--tb=short",
+            ],
+            cwd=worktree,
+            capture_output=True,
+            check=False,
+        )
+        # stdout only: uv emits environment-setup notices on stderr
+        # ("Creating virtual environment at ...", "VIRTUAL_ENV does not
+        # match...") which are tooling noise, not pytest's report.
+        return proc.stdout, worktree
+    finally:
+        _remove_worktree(root, worktree)
+
+
+def generate_evidence(
+    commit: str,
+    pytest_target: str,
+    output_path: Path,
+    repo_root: Path | None = None,
+) -> Path:
+    """Emit a failing-tests-evidence file from the worktree the replay uses.
+
+    The B-2 evidence-from-worktree refinement: rather than capturing evidence
+    in the developer's ambient root ``.venv`` (which can leak a different plugin
+    set than the synced replay worktree), generate it by checking out the
+    failing-tests commit, syncing the worktree, and capturing that worktree's
+    raw pytest stdout. ``replay`` then re-runs the IDENTICAL path → byte-stable
+    by construction. Writes RAW (un-normalized) bytes; normalization happens
+    only at hash time, matching every other committed evidence file.
+    """
+    root = repo_root or find_repo_root()
+    if not output_path.is_absolute():
+        output_path = (root / output_path).resolve()
+    actual_raw, _worktree = _run_target_in_worktree(root, commit, pytest_target)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_bytes(actual_raw)
+    return output_path
 
 
 def replay(
@@ -191,35 +320,7 @@ def replay(
 
     expected_raw = evidence_path.read_bytes()
 
-    worktree = _checkout_worktree(root, commit)
-    try:
-        # Run pytest in the worktree against the same target the original
-        # evidence captured. The pytest_target argument is interpreted
-        # relative to the worktree (e.g., `packages/reaction-diffusion-2d`).
-        # `--extra dev` pulls in pytest itself per the workspace member's
-        # optional-dependencies group.
-        proc = subprocess.run(
-            [
-                "uv",
-                "run",
-                "--directory",
-                pytest_target,
-                "--extra",
-                "dev",
-                "pytest",
-                "-v",
-                "--tb=short",
-            ],
-            cwd=worktree,
-            capture_output=True,
-            check=False,
-        )
-        # stdout only: uv emits environment-setup notices on stderr
-        # ("Creating virtual environment at ...", "VIRTUAL_ENV does not
-        # match...") which are tooling noise, not pytest's report.
-        actual_raw = proc.stdout
-    finally:
-        _remove_worktree(root, worktree)
+    actual_raw, worktree = _run_target_in_worktree(root, commit, pytest_target)
 
     paths = (bytes(str(root), "utf-8"), bytes(str(worktree), "utf-8"))
     expected_norm = normalize_pytest_output(expected_raw, paths)
@@ -262,7 +363,27 @@ def main(argv: list[str] | None = None) -> int:
         required=True,
         help="Path to the package directory pytest runs against (uv run --directory).",
     )
+    parser.add_argument(
+        "--generate",
+        action="store_true",
+        help=(
+            "Emit (instead of compare) the evidence file at --evidence by running "
+            "the failing tests in the synced replay worktree (B-2 evidence-from-"
+            "worktree refinement). Use this to author a byte-stable evidence file."
+        ),
+    )
     args = parser.parse_args(list(argv) if argv is not None else sys.argv[1:])
+
+    if args.generate:
+        try:
+            out = generate_evidence(args.commit, args.pytest_target, args.evidence)
+        except subprocess.CalledProcessError as exc:
+            print(f"replay_failing_tests: {exc}", file=sys.stderr)
+            return 1
+        print(f"  generated evidence      {out}")
+        print(f"  commit                  {args.commit}")
+        print(f"  pytest_target           {args.pytest_target}")
+        return 0
 
     try:
         result = replay(args.commit, args.evidence, args.pytest_target)
