@@ -9,9 +9,12 @@ Vendored upstream sources. Read-only per `docs/architecture.md` Appendix D
 ```
 references/
 ├── README.md                  # this file
-├── papers/                    # frontier paper PDFs + cite.bib + repo-sha.txt
-│                              # (Phase 4 pre-dispatch vendors these per
-│                              # docs/architecture.md § 12.9).
+├── papers/                    # (empty; .gitkeep only). Phase 4 sims CITE frontier
+│                              # papers at Stage-0 (web-fetch + DOI/arXiv-id) per
+│                              # docs/architecture.md § 12.9 (amended A-8). Paper
+│                              # PDFs are NOT vendored (public-MIT redistribution
+│                              # risk). Reference-impl repos are vendored only
+│                              # where their LICENSE permits (Appendix D.3).
 └── <UpstreamName>/            # one directory per vendored upstream
     ├── LICENSE
     ├── MANIFEST.toml

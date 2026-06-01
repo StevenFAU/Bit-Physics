@@ -271,13 +271,43 @@ NOT renamed — a heavy LFS-capture + append-only-audit rename (the M-7 class),
 
 ---
 
-# PROPOSED — Phase-4 corrigenda (operator applies at the Phase-4 close)
+# ✅ APPLIED — Phase-4 close campaign (2026-05-31)
 
-> The spec remains FROZEN mid-Phase-4 (`docs/architecture.md` §9.6). Phase-4
-> corrigenda are proposed here and applied by the operator at the Phase-4 close
-> boundary (the same mechanism that applied A-1..A-7 at the Phase-3 close). The
-> entries below are surfaced by the Phase-4 consolidation pass; the agent does NOT
-> direct-edit `docs/architecture.md` or the plan now.
+The §9.6 freeze lifted at the Phase-4 close boundary; both Phase-4 corrigenda
+were applied to their target docs (the same mechanism that applied A-1..A-7 at
+the Phase-3 close). The proposal entries below are retained as the audit trail.
+Each target was re-located by content (discipline #8) before editing — the A-9
+"`docs/architecture.md:1672` / `:2920`" dependent-occurrence refs were found to be
+**mislabeled** (that content lives in `docs/phases/phase-4-plan.md`, not
+architecture.md); architecture.md carried exactly one `MPL-2.0` occurrence (the
+§D.3 row). The underlying fact of each was VERIFIED at application (verify-don't-trust):
+OpenVDB `references/openvdb/LICENSE` = Apache-2.0 + NanoVDB SPDX = Apache-2.0;
+`references/papers/` holds only `.gitkeep` (0 papers) + cat1 citation-chain GREEN.
+
+| # | target(s) | applied | note |
+|---|---|---|---|
+| **A-8** | architecture.md § 12.9 + §61/§1866/Pattern-C/§F.3.5 entry-gate/LES-row; phase-4-plan.md §54/§68/§72/§2542/§2610/§2964; references/README.md | ✅ Phase-4 close | papers are CITED at Stage-0, NOT vendored (public-MIT IP). §2649 checklist RETAINED (papers pre-*identified* in §12.9 roster, *resolved* at Stage-0 — no vendoring implied). phase-0-plan.md historical scaffold prose left as landed-history record. |
+| **A-9** | architecture.md §D.3 OpenVDB row; phase-4-plan.md §61/§249/§529/§1672/§1713/§1760/§2897/§2920 (+ §2881 changelog ANNOTATED not deleted); references/openvdb/MANIFEST.toml inline | ✅ Phase-4 close | OpenVDB `MPL-2.0` → `Apache-2.0` (relicensed at OpenVDB 12.0; as-vendored v13.0.0). Clears the A4 MANIFEST pin-consistency SOFT_WARN (MANIFEST + §D.3 now agree). |
+
+**NUMBERING RECONCILIATION (one collision, reconciled forward).** The WU-B
+sparse-volume foundation report + the `references/openvdb/MANIFEST.toml` inline note
+recorded the OpenVDB-license corrigendum as an informal forward-reference **"A-8"**
+(predating this central registry). The consolidation pass then filed the
+papers-citation corrigendum as **A-8** and bumped OpenVDB to **A-9** here. The
+chosen consistent numbering is the registry's: **A-8 = papers-citation, A-9 =
+OpenVDB-license.** The `MANIFEST.toml` inline reference is reconciled forward to
+A-9 (done at this close; no collision remains). The append-only-locked WU-B /
+foundation-close / consolidation sealed audits that wrote "A-8" for OpenVDB are
+**NOT retro-edited** (Convention A + D5); this note + the close landing audit are
+the canonical going-forward record of the reconciliation.
+
+---
+
+# PROPOSED — Phase-4 corrigenda (entries retained as audit trail; APPLIED above)
+
+> These entries were PROPOSED during Phase-4 execution while the spec was FROZEN
+> mid-phase (`docs/architecture.md` §9.6); they were APPLIED at the Phase-4 close
+> per the block above. Retained verbatim as the proposal/rationale record.
 
 ## A-8 — §12.9 frontier-paper vendoring → **CITED references resolved at sim Stage-0, NOT vendored binaries** (IP/redistribution correction)
 

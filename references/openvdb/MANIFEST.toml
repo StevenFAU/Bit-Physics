@@ -16,10 +16,15 @@ fetched_utc   = "2026-05-30T19-40-35Z"
 fetched_by    = "phase-4-wu-b-sparse agent"
 fetch_command = "git clone --no-checkout --filter=blob:none --depth 1 --branch v13.0.0 https://github.com/AcademySoftwareFoundation/openvdb.git && git -C openvdb sparse-checkout init --cone && git -C openvdb sparse-checkout set nanovdb/nanovdb LICENSE && git -C openvdb checkout v13.0.0; then copied nanovdb/nanovdb -> references/openvdb/nanovdb and LICENSE, and trimmed cuda/ examples/ unittest/ python/ docs/ cmd/ putil/ tools/cuda util/cuda (host-only consumption)."
 
-# CORRIGENDUM (WU-B §0.3, license drift): docs/phases/phase-4-plan.md §3.3 lists
-# OpenVDB as MPL-2.0. OpenVDB relicensed to Apache-2.0 (the as-vendored v13.0.0
-# LICENSE is Apache-2.0; nanovdb/NanoVDB.h carries `SPDX-License-Identifier:
-# Apache-2.0`). The manifest records the as-vendored truth; the §3.3 MPL-2.0
-# entry is stale and is surfaced as a proposed corrigendum (A-8) in the WU-B
-# audit. The A4 MANIFEST pin-consistency guard SOFT_WARNs license drift vs the
-# architecture.md §D.3 registry; it does not HARD_FAIL on it.
+# CORRIGENDUM A-9 (APPLIED at Phase-4 close): docs/phases/phase-4-plan.md §3.3 +
+# architecture.md §D.3 listed OpenVDB as MPL-2.0. OpenVDB relicensed to Apache-2.0
+# at OpenVDB 12.0 (the as-vendored v13.0.0 LICENSE is Apache-2.0; nanovdb/NanoVDB.h
+# carries `SPDX-License-Identifier: Apache-2.0`). The manifest records the
+# as-vendored truth (license = "Apache-2.0"); the spec/plan MPL-2.0 entries were
+# stale and are corrected to Apache-2.0 at the Phase-4 close.
+# NUMBERING NOTE: the WU-B audit's informal forward-reference "A-8" predates the
+# central docs/spec-amendments-proposed.md Phase-4 registry, where A-8 is the
+# papers-citation corrigendum and OpenVDB is **A-9**. This inline reference is
+# reconciled forward to A-9 (no collision remains).
+# Once §D.3 reads Apache-2.0 the A4 MANIFEST pin-consistency guard no longer
+# SOFT_WARNs this drift (MANIFEST and §D.3 now agree).

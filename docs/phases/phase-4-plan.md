@@ -51,25 +51,25 @@
 >
 > **STAGE 10 LOCKED:** SPH-diff stack pick: **Stack D (DiffTaichi)**. The "founder picks at stage start" language in § 8.1 stage 10 is RESOLVED.
 >
-> **STAGE 35 LES-CLOSURE PAPER LOCKED:** Owner pre-vendors specific paper at `references/papers/learned-les-closure/` per spec § 12.9. The "web-fetch the most-cited 2024–2025 learned-LES paper at stage start" language in § 8.6 is RESOLVED.
+> **STAGE 35 LES-CLOSURE PAPER LOCKED (amended A-8):** Owner pre-IDENTIFIES the specific LES paper; the agent CITES it at Stage 35 Stage-0 (web-fetch + DOI/arXiv-id) — papers are not vendored to `references/papers/` (public-MIT redistribution risk; spec § 12.9 as amended A-8). The "web-fetch the most-cited 2024–2025 learned-LES paper at stage start" language in § 8.6 is RESOLVED to a pre-identified citation.
 >
 > **TRUNK-BASED DEVELOPMENT (LOCKED):** All references in § 7 (foundation stage briefings) to feature branches (`phase4.0/wu-<letter>-<short>`), fast-forward merges, and branch deletion are SUPERSEDED per spec § 7.12. The single Phase 4 agent commits directly to `main` for every stage. § 7's common preamble is updated below to be trunk-based; the per-stage prompts' "Branch:" / "(merged, deleted)" lines are stale and should be ignored. § 8 stage briefings are already trunk-based.
 >
 > **HARDWARE FLOOR + FALLBACK LOCKED:** CUDA 12 / driver 545+ required for Stages 31–33; if unavailable, CPU-only Newton fallback per spec § 12.8. Acceptance criteria adjust to "CPU determinism + USD export validates"; benchmark numbers tag `CPU-only` rather than compared to GPU baselines. The agent does NOT silently fall back without owner ratification at Phase 4 dispatch (per § 2 pre-dispatch checklist).
 >
 > **EXTERNAL SHAS PRE-PINNED:** Owner web-fetches and pins the following BEFORE Phase 4 dispatches (§ 2 pre-dispatch checklist enforces):
-> - OpenVDB latest release tag (for WU-B; expect v12.x+; MPL-2.0)
+> - OpenVDB latest release tag (for WU-B; expect v12.x+; Apache-2.0 — relicensed from MPL-2.0 at OpenVDB 12.0; A-9)
 > - Newton 1.0 GA specific 1.0.x release (NOT 2.0; for WU-D; Apache-2.0)
 > - PhysicsNeMo specific 1.x version (for WU-E; Apache-2.0)
 > - PyTorch Lightning 2.x latest (for WU-E; `lightning.pytorch.LightningModule` import path)
 > - Inria gaussian-splatting SHA (inherited from Phase 3 task-1's pin)
 > - PhysGaussian SHA (inherited from Phase 3 task-8's pin)
 >
-> **FRONTIER PAPERS PRE-VENDORED:** Per spec § 12.9, all 13 load-bearing frontier papers vendored to `references/papers/<paper-slug>/` BEFORE dispatch. § 2 pre-dispatch checklist enforces. § 8.4's "agent's stage start: web-fetch the paper" reads as "consume from `references/papers/`" post-amendment.
+> **FRONTIER PAPERS CITED AT STAGE-0 (amended A-8):** Per spec § 12.9 (as amended A-8), all 13 load-bearing frontier papers are CITED at each sim's Stage-0 probe (web-fetch + DOI/arXiv-id), NOT vendored to `references/papers/` (public-MIT redistribution risk; spec § 2.4 mandates independent derivation, so the paper is a citation, never a build/runtime dependency). § 8.4's "agent's stage start: web-fetch the paper" is the established, working practice (cat1 citation-chain GREEN for all 9 landed sims).
 >
 > **SINGLE-AGENT DISPATCH:** Reaffirmed. One coordinator chat + one agent role for all 35 stages. Per spec Appendix D § D.9, context-fill at 70–80% triggers a checkpoint; at >80% a hard stop. The agent's continuation session reads `docs/_audits/phase-4/progress.md` for the `CONTINUE_FROM` cue.
 >
-> **ACTION #1:** Every Claude Code session starts with `python tools/dispatch/preflight-phase.py 4`. Exit 0 → proceed. Exit 1 → BLOCKED. The script verifies prior-phase tag, common-3dgs presence, frontier paper vendoring, CUDA detection (informational; CPU-fallback is documented).
+> **ACTION #1:** Every Claude Code session starts with `python tools/dispatch/preflight-phase.py 4`. Exit 0 → proceed. Exit 1 → BLOCKED. The script verifies prior-phase tag, common-3dgs presence, CUDA detection (informational; CPU-fallback is documented). It does NOT require frontier papers vendored under `references/papers/` (papers are cited at Stage-0 per spec § 12.9 as amended A-8).
 >
 > **CONVENTION NAMES** per spec Appendix G. Earlier references to "Convention #8" etc. in this document resolve to "Convention-8" in the catalog.
 >
@@ -246,7 +246,7 @@ Per spec § 9.2 dependency policy and current upstream state verified May 2026.
 
 | Dependency | Treatment | Source | License | Pin / Notes | WU |
 |---|---|---|---|---|---|
-| **OpenVDB (and NanoVDB)** | Vendored | `github.com/AcademySoftwareFoundation/openvdb` | **MPL-2.0** (not Apache-2.0) | Vendor at `references/openvdb/`; use the `nanovdb/` subtree from the same vendored repo. Pin to a specific release tag (probe at vendoring time for current stable). | B |
+| **OpenVDB (and NanoVDB)** | Vendored | `github.com/AcademySoftwareFoundation/openvdb` | **Apache-2.0** (relicensed from MPL-2.0 at OpenVDB 12.0; as-vendored v13.0.0 = Apache-2.0; A-9) | Vendor at `references/openvdb/`; use the `nanovdb/` subtree from the same vendored repo. Pin to a specific release tag (probe at vendoring time for current stable). | B |
 | **NVIDIA Newton 1.0 GA** | Vendored | `github.com/newton-physics/newton` | Apache-2.0 | Vendor at `references/newton/`. Pin to 1.0.x specifically (v2.0 may follow). | D |
 | **OpenUSD** | Pinned pip | `usd-core` on PyPI | Apache-2.0 | Framework; not citation-load-bearing. | D |
 | **NVIDIA PhysicsNeMo** | Pinned pip | `nvidia-physicsnemo` on PyPI | Apache-2.0 | **Pin to specific 1.x version**; v2.0 update in progress (Mar 2026 release notes). May need `nvidia-physicsnemo[cu13]` or `[cu12]` extra. | E |
@@ -526,7 +526,7 @@ class GradientVerificationReport:
 
 **Two modules:** `common/common-cpp/nanovdb/` (C++ for Stack C) and `common/common-warp/sparse/` (Python for Stack E).
 
-**Vendoring:** `references/openvdb/` (the parent repo per `github.com/AcademySoftwareFoundation/openvdb`); use the `nanovdb/` subtree. License is **MPL-2.0** (weak copyleft; commercial use OK; modifications to vendored files require source disclosure of those files — but we don't modify vendored source, only consume it). Pin to a specific OpenVDB release tag; WU-B's probe resolves the current stable.
+**Vendoring:** `references/openvdb/` (the parent repo per `github.com/AcademySoftwareFoundation/openvdb`); use the `nanovdb/` subtree. License is **Apache-2.0** (relicensed from MPL-2.0 at OpenVDB 12.0; the as-vendored v13.0.0 LICENSE + NanoVDB.h SPDX confirm Apache-2.0; A-9. Permissive; MIT-compatible. We don't modify vendored source, only consume it). Pin to a specific OpenVDB release tag; WU-B's probe resolves the current stable.
 
 **C++ surface (`common-cpp/nanovdb/`):**
 
@@ -1669,10 +1669,10 @@ common-warp, add sparse-aware tier2 diagnostics inside scalar_field/
 and vector_field/ substacks (NOT a new tier2-sparse substack — spec
 § 3.3 fixes tier2 at exactly 4 substacks).
 
-License note: OpenVDB is MPL-2.0 (Mozilla Public License v2.0).
-Weakly copyleft: commercial use OK, modifications to MPL-2.0 files
-require source disclosure of those files. We don't modify vendored
-source; we consume it. Manifest.toml records the license.
+License note: OpenVDB is Apache-2.0 (relicensed from MPL-2.0 at
+OpenVDB 12.0; as-vendored v13.0.0 = Apache-2.0; A-9). Permissive,
+MIT-compatible. We don't modify vendored source; we consume it.
+Manifest.toml records the as-vendored license (Apache-2.0).
 
 Public API in §4.2.B:
   C++ namespace bit_physics::nanovdb:
@@ -1710,7 +1710,7 @@ Build (typically 2 commits per Convention A):
 
 Commit C1 (new files):
 - references/openvdb/ (vendored source or fetch script)
-- references/openvdb/manifest.toml (license=MPL-2.0, name,
+- references/openvdb/manifest.toml (license=Apache-2.0, name,
   version, sha, url, scope, vendoring metadata per spec §2.8)
 - common/common-cpp/nanovdb/ (CMakeLists, header
   include/bit_physics/nanovdb/io.hpp, src/io.cpp, tests)
@@ -1757,7 +1757,7 @@ Probe findings:
     closed_form (4)
   OpenVDB vendoring tag: <e.g., v12.0.0>
   OpenVDB SHA: <SHA>
-  License confirmed: MPL-2.0
+  License confirmed: Apache-2.0 (A-9; relicensed from MPL-2.0 at OpenVDB 12.0)
   references/ gitignore: <gitignored / committed>
   capture-v1.json schema_version after WU-A: 1.1.0 (confirmed)
   Strict-mode invocations: <commands>
@@ -2539,7 +2539,7 @@ Eight sims. Heterogeneous socket consumption — most use no § 4.2 socket; two 
 
 **Per-sim deliverables:**
 
-- Frontier-paper probe at agent's stage start: web-fetch the paper; confirm DOI/authors/title; decide vendor-or-cite per spec § 2.8.
+- Frontier-paper probe at agent's stage start: web-fetch the paper; confirm DOI/authors/title; CITE it (papers are not vendored — spec § 12.9 as amended A-8; a repo's reference implementation may be vendored only if its LICENSE permits, per Appendix D.3).
 - Variant spec sheet at `<parent>/spec-frontier.md` with §§ 2, 3, 4, 6, 13 populated; § 2 cites the frontier paper.
 - Paper-faithful implementation under `<parent>/<variant-suffix>/`.
 - Capture at `captures/<sim>-frontier-<variant>/<descriptor>.h5`. Schema 1.1.0 if gradient or active_mask fields used.
@@ -2607,7 +2607,7 @@ Two NEW reference sims under `learned-dynamics/`, both using `common_py.learned`
 
 **Acceptance:** training-loss convergence demonstrated; rollout-stability passes; trained weights reproducibly loadable; for 4.27, gradient-flow verification passes.
 
-**Notes:** Cite Sanchez-Gonzalez 2020 (GNS) for 4.26 — pre-vendored at `references/papers/gns-particle-2020/`. For 4.27 LES-closure paper anchor: **owner pre-vendors specific paper at `references/papers/learned-les-closure/` BEFORE Phase 4 dispatches per spec § 12.9**. Recommended candidate: a well-known 2024–2025 learned-LES paper (e.g., List et al. 2024 "Learned turbulence modelling with differentiable fluid solvers" or equivalent at owner's choice). The "web-fetch at stage start" language in earlier drafts is SUPERSEDED. Training data: 4.26 uses Phase 1 SPH captures; 4.27 uses Phase 1 smoke captures (filtered to LES resolution).
+**Notes:** Cite Sanchez-Gonzalez 2020 (GNS) for 4.26 — cited at Stage-0 (not vendored; A-8). For 4.27 LES-closure paper anchor: **owner pre-IDENTIFIES the specific paper; the agent cites it at Stage-0 per spec § 12.9 (as amended A-8) — papers are not vendored to `references/papers/`**. Recommended candidate: a well-known 2024–2025 learned-LES paper (e.g., List et al. 2024 "Learned turbulence modelling with differentiable fluid solvers" or equivalent at owner's choice). The "web-fetch at stage start" language in earlier drafts is SUPERSEDED. Training data: 4.26 uses Phase 1 SPH captures; 4.27 uses Phase 1 smoke captures (filtered to LES resolution).
 
 ---
 
@@ -2878,7 +2878,7 @@ Failure modes the WU agents and closing-audit agent surface (Hard Rule 2: pause 
 
 Version history:
 
-- **6.0** — Single-agent sequential execution model replaces v5's parallel model. Eight work units (added WU-P for Portfolio Conventions). PyTorch Lightning adopted for WU-E (replaces v5's bespoke TrainingLoop). OpenVDB license corrected (MPL-2.0, not Apache-2.0); vendoring path is `references/openvdb/` not `references/NanoVDB/`. Newton solver enum expanded (six solvers per Newton 1.0 GA docs: mujoco_warp, kamino, xpbd, featherstone, semi_implicit, vbd). Newton 1.0 GA shipped March 17, 2026 verified. PhysicsNeMo install verified (`pip install nvidia-physicsnemo`, pin to 1.x). Closing-integration step removed in favor of per-WU mini-landings on main. Watchlist simplified (no more parallel-coordination failure modes). Deviation-from-norms section added to confidence audit (§ 10.4).
+- **6.0** — Single-agent sequential execution model replaces v5's parallel model. Eight work units (added WU-P for Portfolio Conventions). PyTorch Lightning adopted for WU-E (replaces v5's bespoke TrainingLoop). OpenVDB license corrected (MPL-2.0, not Apache-2.0) [**A-9 supersede (Phase-4 close):** this v6.0 "correction" is itself now STALE — OpenVDB relicensed MPL-2.0 → Apache-2.0 at v12.0; the as-vendored v13.0.0 LICENSE + NanoVDB.h SPDX are Apache-2.0. Annotated, not deleted, for audit trail]; vendoring path is `references/openvdb/` not `references/NanoVDB/`. Newton solver enum expanded (six solvers per Newton 1.0 GA docs: mujoco_warp, kamino, xpbd, featherstone, semi_implicit, vbd). Newton 1.0 GA shipped March 17, 2026 verified. PhysicsNeMo install verified (`pip install nvidia-physicsnemo`, pin to 1.x). Closing-integration step removed in favor of per-WU mini-landings on main. Watchlist simplified (no more parallel-coordination failure modes). Deviation-from-norms section added to confidence audit (§ 10.4).
 - **5.0** — Architecture section added (§ 4) with API contracts. Agents named consistently. Concrete API conformance check in closing-landing prompt. JSON Schema fragments for capture extensions. Folder/naming reconciliation.
 - **4.0** — Path corrections (schema at `tools/testkit/schemas/capture-v1.json`; tier2 work in scalar_field/ and vector_field/; common-3dgs at `common/common-3dgs/`). Pre-dispatch checklist. Operating model. Dependency decisions pre-resolved.
 - **3.0** — Repo identity Bit-Physics. Confidence audit. Convention A. Strict-mode CI.
@@ -2894,7 +2894,7 @@ Version history:
 - **Eight-WU sequential decomposition** with per-WU mini-landings on main. No integration risk surface.
 - **API contracts in § 4.2** as canonical sockets for Phase 4.1+ consumption. Phase 4.1+ planning files reference these names verbatim.
 - **Coordinator as pure sequential router.** No verification, no validation, no decisions.
-- **Pre-resolved dependency decisions (§ 3.3)** verified against current upstream state (May 2026): Newton 1.0 GA Apache-2.0, OpenVDB MPL-2.0, PhysicsNeMo `nvidia-physicsnemo` PyPI, PyTorch Lightning, usd-core.
+- **Pre-resolved dependency decisions (§ 3.3)** verified against current upstream state (May 2026): Newton 1.0 GA Apache-2.0, OpenVDB Apache-2.0 (relicensed from MPL-2.0 at OpenVDB 12.0; A-9), PhysicsNeMo `nvidia-physicsnemo` PyPI, PyTorch Lightning, usd-core.
 - **Pre-resolved paths.** Schema at `tools/testkit/schemas/capture-v1.json`, tier2 substack structure, common-3dgs at `common/common-3dgs/`, audit at `docs/_audits/phase-4/`, phase docs at `docs/phase4/`, probe reports at `tools/testkit/probes/reports/`. All traceable to spec citations.
 - **Schema bump pre-resolved.** Additive non-breaking → minor: 1.0.0 → 1.1.0. WU-A bumps; WU-B does not re-bump.
 - **Convention adoption.** Spec §§ 7.1 (Conventions M, K, #8), 7.2 (Convention A), 7.4 (Convention #12), 7.5 (FACT/INFERENCE, four-state verdicts), 7.7 (strict-mode), 7.9 (anchor re-check), 7.10 (rule-of-three) all cited correctly per direct spec review.
@@ -2917,7 +2917,7 @@ Version history:
 - **Newton 1.0 → 2.0 transition.** Newton's release notes mention v2.0 follow-on; pinning to 1.0.x is the right move but the API may change. Mitigation: NewtonBackend wrapper insulates portfolio sims.
 - **PhysicsNeMo v2.0 update.** Same shape: pin to 1.x for Phase 4.0; adapt PhysicsNeMoAdapter when v2.0 stabilizes.
 - **Public API drift.** An agent could rename a load-bearing symbol despite plan warnings. Watchlist item 12 + closing audit Step 1.10 catch this.
-- **OpenVDB MPL-2.0 license implications.** Portfolio license is MIT (spec § 12.7 locked v2.2). MPL-2.0 (OpenVDB) is compatible with MIT consumers as long as we don't modify vendored source — and per spec Appendix D § D.8 item 12, modifying vendored source is forbidden. Surface at WU-B only if the vendored source needs modification for an unforeseen reason.
+- **OpenVDB Apache-2.0 license implications (A-9).** Portfolio license is MIT (spec § 12.7 locked v2.2). OpenVDB is **Apache-2.0** (relicensed from MPL-2.0 at OpenVDB 12.0; as-vendored v13.0.0 = Apache-2.0) — strictly more permissive than MPL-2.0 and MIT-compatible, so the earlier weak-copyleft caveat is moot. Per spec Appendix D § D.8 item 12, modifying vendored source is forbidden on general grounds (retained regardless of license).
 
 ### 12.4 Deviations from industry / academic / community standards (and defenses)
 
@@ -2961,7 +2961,7 @@ Per spec § 11.0 and the v8 amendment block at the top of this document:
 
 Phase 4 wall-clock under single-agent AI dispatch is bounded by:
 1. 35 stages × per-stage agent latency (each stage is "probe + build + capture + commit + report"; tens of minutes of agent execution under nominal conditions).
-2. External-dependency resolution: paper fetches replaced by pre-vendoring per § 12.9; vendor installs (OpenVDB, Newton, PhysicsNeMo) per § 3.3 pins.
+2. External-dependency resolution: papers cited at Stage-0 per § 12.9 (as amended A-8; not vendored); vendor installs (OpenVDB, Newton, PhysicsNeMo) per § 3.3 pins.
 3. Continuation-session overhead at context fills per spec Appendix D § D.9.
 4. Owner review: at phase landing (CONFIRMED/SHIFTED) or on BLOCKED/HALTED surfaces.
 

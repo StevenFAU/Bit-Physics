@@ -58,7 +58,7 @@
 > - **§ 11.x estimated-duration lines** — removed in favor of § 11.0's universal AI-execution framing.
 > - **§ 12.7** — License posture locked to MIT.
 > - **§ 12.8 (NEW)** — Phase 4 hardware floor: CUDA 12 + driver 545+ for Stages 31–33 Newton sims; CPU-only fallback in Appendix D § D.5.
-> - **§ 12.9 (NEW)** — Frontier paper vendoring: every load-bearing frontier paper is pre-vendored to `references/papers/` before Phase 4 dispatch.
+> - **§ 12.9 (NEW; amended Phase-4 close — A-8)** — Frontier paper citation: every load-bearing frontier paper is cited at the sim's Stage-0 probe (web-fetch + DOI/arXiv-id), NOT vendored to `references/papers/` (public-MIT redistribution risk).
 
 > **v2.1 changelog (May 18 2026):** Applied from `phase-plans-review-v4.md`:
 >
@@ -1863,7 +1863,7 @@ Exit 0 → all preconditions met; agent proceeds with phase work. Exit 1 → at 
 4. Per-workspace-member `uv run --directory <member> pytest -W error` exits 0 for each of `tools/testkit`, `tools/integrity`, `tools/diagnostics`, `packages/reaction-diffusion-2d` (skipped for Phase 0). Mirrors the Phase 0 landing audit's evidence pattern.
 5. Required capture descriptors per Appendix D § D.2.3 are present.
 6. External dependencies probed (no actual install).
-7. Phase-specific gates (e.g., Phase 4: CUDA detection, frontier-paper vendoring).
+7. Phase-specific gates (e.g., Phase 4: CUDA detection, frontier-paper citation).
 
 **Script source.** The preflight script content is embedded in `phase-0-plan.md` § 7.1 as a code block (Block 1 deliverable). Phase 0 Block 1 commits the script verbatim from the embedded source; subsequent phases consume it as a committed tool.
 
@@ -2174,16 +2174,15 @@ The spec accommodates both; emphasis is per-coordinator-quarter.
 
 Owner ratifies the fallback at Phase 4 dispatch if CUDA is unavailable; the agent does NOT silently fall back without owner ratification.
 
-## 12.9 Frontier paper vendoring (locked v2.2)
+## 12.9 Frontier paper citation (locked v2.2; amended Phase-4 close — A-8)
 
-Every load-bearing frontier paper (Phase 4 §§ 8.1–8.6 cited papers) is pre-vendored to `references/papers/` BEFORE Phase 4 dispatches. Pre-vendoring is an owner action; the agent's preflight script verifies the papers' presence.
+Every load-bearing frontier paper (Phase 4 §§ 8.1–8.6 cited papers) is a **CITED reference resolved at the sim's Stage-0 probe** (web-fetch; confirm DOI/arXiv-id/authors/title; record a citation pointer + BibTeX metadata in the sim's spec sheet / probe), **NOT a vendored binary.** The repo does **not** commit copyrighted paper PDFs (public-MIT redistribution risk; § 2.4 already mandates independent derivation from the published equations, so the paper is a citation, never a build/runtime dependency). The agent's preflight script verifies the prior-phase tag + common-module presence + CUDA detection; it does **NOT** require papers present under `references/papers/`.
 
-**Pre-vendoring contents per paper:**
-- PDF of the paper (or HTML if PDF unavailable) at `references/papers/<paper-slug>/paper.pdf`.
-- Citation metadata at `references/papers/<paper-slug>/cite.bib` (BibTeX).
-- The reference implementation's repo SHA (if applicable) at `references/papers/<paper-slug>/repo-sha.txt`.
+**Citation record per paper** (in the consuming sim's spec sheet / Stage-0 probe):
+- arXiv-id or DOI; authors + title + venue + year.
+- The reference implementation's repo SHA if one exists (pinned per Appendix D.3, vendored only if the repo's LICENSE permits redistribution — papers themselves are never vendored).
 
-**Required pre-vendored papers** (Phase 4 load-bearing citations):
+**Phase-4 load-bearing citations** (cited at each sim's Stage-0; not vendored binaries):
 
 | Paper | Slug | Used by stage |
 |---|---|---|
@@ -2557,7 +2556,7 @@ These SHAs are pinned at planning time and reverified at each consuming stage's 
 | Dependency | Used by | Pin | License | Verification command at probe time |
 |---|---|---|---|---|
 | **SPlisHSPlasH** | Phase 0 Block 4; Phase 1 Stage 2 sph-water | Latest release at Phase 0 Block 4 time | MIT | `gh release view -R InteractiveComputerGraphics/SPlisHSPlasH` |
-| **OpenVDB (incl. NanoVDB)** | Phase 4 WU-B; Phase 4 Stages 15, 16, 18 | Latest stable at WU-B time (expect v12.x+ as of May 2026) | **MPL-2.0** | `gh release view -R AcademySoftwareFoundation/openvdb` |
+| **OpenVDB (incl. NanoVDB)** | Phase 4 WU-B; Phase 4 Stages 15, 16, 18 | Latest stable at WU-B time (expect v12.x+ as of May 2026); as-vendored v13.0.0 — relicensed MPL-2.0 → Apache-2.0 at OpenVDB 12.0 (A-9; LICENSE + NanoVDB.h SPDX = Apache-2.0) | **Apache-2.0** | `gh release view -R AcademySoftwareFoundation/openvdb` |
 | **NVIDIA Newton 1.0 GA** | Phase 4 WU-D; Phase 4 Stages 31, 32, 33 | Pin to specific 1.0.x release (NOT 2.0) | Apache-2.0 | `gh release view -R newton-physics/newton --pattern 'v1.0.*'` |
 | **Inria gaussian-splatting** | Phase 3 task-1; Phase 4 WU-C; Phase 4 Stages 19–22 | Latest stable at Phase 3 task-1 time | Inria research license | Web-fetch latest commit on main |
 | **PhysGaussian (Xie 2024)** | Phase 4 Stage 19, Stage 22; Phase 3 task-8 (cite-only) | Latest stable; paper arXiv:2311.12198 | NONE (no LICENSE → all-rights-reserved; CITE-ONLY, no source vendored) | Web-fetch latest commit on main |
@@ -2720,8 +2719,8 @@ The playbook NEVER instructs "use judgment" or "decide what's best." Either cove
 ### Pattern C — Frontier paper unavailable
 
 **Response:**
-- Check `references/papers/` for pre-vendored copy. If found, use it.
-- If not found and implementation-load-bearing: BLOCKED.
+- Web-fetch the paper; confirm DOI/authors/title; cite by name (the § 12.9 citation record). Papers are not vendored (A-8).
+- If implementation-load-bearing and unavailable: BLOCKED.
 - If citation-only: cite URL with `<verify at landing>` annotation, proceed, flag in audit.
 
 ### Pattern D — Test runner not configured / framework missing
@@ -2823,7 +2822,7 @@ Agent surfaces (writes BLOCKED report and ends session) in exactly these cases:
 1. Precondition not met and not auto-recoverable.
 2. Major-version dep bump (Pattern B).
 3. Vendoring license change (Pattern M).
-4. Frontier paper unavailable and not pre-vendored (Pattern C).
+4. Frontier paper unavailable (Pattern C).
 5. Plan ambiguity with major-deliverable consequences (Pattern I deep case).
 6. Owner-decision item unresolved (Pattern L).
 7. Load-bearing spec contradiction (Pattern J substantive case).
@@ -2874,7 +2873,7 @@ All previously-outstanding decisions are now resolved:
 | common-warp timing | Phase 2 Stage 0 bootstrap; Phase 3 task-9 matures | Phase 2 plan v5 amendment |
 | Phase 4 Stages 31–33 sims+solvers | articulated-locomotion (Featherstone), granular-pile (MuJoCo-Warp), manipulator-grasp (Kamino) | Phase 4 plan v8 + § 8.5 body table |
 | Phase 4 SPH-diff stack | Stack D (DiffTaichi) | Phase 4 plan v8 + § 8.1 Stage 10 |
-| Phase 4 LES paper | Owner pre-vendors specific paper to `references/papers/learned-les-closure/` | Phase 4 plan v8 + § 8.6 |
+| Phase 4 LES paper | Owner pre-identifies the specific LES paper; agent cites it at Stage 35 Stage-0 (A-8; Stage 35 is CUDA-bound / deferred) | Phase 4 plan v8 + § 8.6 |
 | Phase 0 LBM Krüger | Algebraic reference only; no vendored code | Phase 0 plan v0.9 |
 | License | MIT | Spec § 12.7 |
 
@@ -2919,7 +2918,7 @@ Each phase plan opens with its own preflight section. This appendix gives the ow
 - Phase 3 landed CONFIRMED.
 - Hardware floor: CUDA 12 / driver 545+ OR CPU-only Newton fallback ratified.
 - Pinned: Lightning 2.x, PhysicsNeMo 1.x, OpenVDB tag, Newton 1.0.x.
-- **All 13 frontier papers pre-vendored** to `references/papers/` per spec § 12.9.
+- **All 13 frontier-paper citations identified** in § 12.9 (resolved at each sim's Stage-0) — A-8.
 - Stages 31–33 sim+solver picks baked into Phase 4 plan § 8.5.
 - Phase 4 v8 amendment block accepted.
 
