@@ -268,3 +268,127 @@ NOT renamed — a heavy LFS-capture + append-only-audit rename (the M-7 class),
   `references/PhysGaussian/MANIFEST.toml`, `source_vendored = false`). Spec edit deferred to
   the operator at a phase boundary (spec frozen in Phase 3 per §9.6; agent does NOT edit the
   plan per §0.3).
+
+---
+
+# PROPOSED — Phase-4 corrigenda (operator applies at the Phase-4 close)
+
+> The spec remains FROZEN mid-Phase-4 (`docs/architecture.md` §9.6). Phase-4
+> corrigenda are proposed here and applied by the operator at the Phase-4 close
+> boundary (the same mechanism that applied A-1..A-7 at the Phase-3 close). The
+> entries below are surfaced by the Phase-4 consolidation pass; the agent does NOT
+> direct-edit `docs/architecture.md` or the plan now.
+
+## A-8 — §12.9 frontier-paper vendoring → **CITED references resolved at sim Stage-0, NOT vendored binaries** (IP/redistribution correction)
+
+- **Surfaced by:** Phase-4 consolidation pass C1 (2026-05-31), confirming the
+  batch-1/2/3 banked finding B-1 ("13 frontier papers pre-vendored to
+  `references/papers/`" is unrealized; `references/papers/` holds only `.gitkeep`).
+- **IP-CRITICAL rationale (the load-bearing reason the resolution is "amend the
+  expectation," NOT "vendor the papers"):** `bit-physics` is a **public,
+  MIT-licensed** repository. Frontier papers (Kerbl 2023, Xie 2024 PhysGaussian,
+  Mordvintsev 2022 Particle Lenia, Plantec 2022 Flow Lenia, Sanchez-Gonzalez 2020
+  GNS, …) are **copyrighted works** distributed under publisher / arXiv
+  non-redistribution terms (SIGGRAPH/ACM, CVPR/IEEE, *Complex Systems*, *Distill*,
+  arXiv's non-exclusive license that does NOT grant third-party redistribution).
+  Committing their PDFs to a public MIT repo is a **copyright-redistribution risk**.
+  The §2.4 symmetric-bug guard ALREADY requires every reference implementation to be
+  **derived independently from the published equations** (cite-don't-import, §H.2) —
+  so the paper functions as a **CITATION**, never a vendored runtime/build
+  dependency. The 9 landed Phase-4 sims (batches 1–3) + all Phase-3 sims resolve
+  their paper citations by **web-fetch + cite-by-name with DOI/arXiv id at Stage 0**,
+  and `integrity --all` cat1 (citation-chain) is **GREEN** (0 HARD_FAIL) at HEAD —
+  i.e. the cite-not-vendor pattern is the *established, working* practice; §12.9's
+  pre-vendoring text describes a process that was never adopted and should not be.
+- **Confirmation (FACT, measured at HEAD `be29666`):** `ls references/papers/` →
+  `.gitkeep` only (0 papers); `integrity --all --mode strict` → 0 HARD_FAIL / 14
+  SOFT_WARN (cat1 citation chains for all 9 landed sims resolve). No landed sim ever
+  read a file under `references/papers/`.
+
+### A-8.1 — §12.9 body (`docs/architecture.md:2177-2204`)
+
+- **Current text (`:2177-2184`, header + intent + contents):**
+  > ## 12.9 Frontier paper vendoring (locked v2.2)
+  >
+  > Every load-bearing frontier paper (Phase 4 §§ 8.1–8.6 cited papers) is
+  > pre-vendored to `references/papers/` BEFORE Phase 4 dispatches. Pre-vendoring is
+  > an owner action; the agent's preflight script verifies the papers' presence.
+  >
+  > **Pre-vendoring contents per paper:** PDF … / cite.bib … / repo-sha.txt …
+- **Proposed text:**
+  > ## 12.9 Frontier paper citation (locked v2.2; **amended Phase-4 close — A-8**)
+  >
+  > Every load-bearing frontier paper (Phase 4 §§ 8.1–8.6 cited papers) is a **CITED
+  > reference resolved at the sim's Stage-0 probe** (web-fetch; confirm
+  > DOI/arXiv-id/authors/title; record a citation pointer + BibTeX metadata in the
+  > sim's spec sheet / probe), **NOT a vendored binary.** The repo does **not** commit
+  > copyrighted paper PDFs (public-MIT redistribution risk; §2.4 already mandates
+  > independent derivation from the published equations, so the paper is a citation,
+  > never a build/runtime dependency). The agent's preflight script verifies the
+  > prior-phase tag + common-module presence + CUDA detection; it does **NOT** require
+  > papers present under `references/papers/`.
+  >
+  > **Citation record per paper (in the consuming sim's spec sheet / Stage-0 probe):**
+  > arXiv-id or DOI; authors + title + venue + year; the reference implementation's
+  > repo SHA if one exists (pinned per Appendix D.3, vendored only if the repo's
+  > LICENSE permits redistribution — papers themselves are never vendored).
+- The **"Required pre-vendored papers" table (`:2186-2202`)** is RETAINED verbatim as
+  the **"Phase-4 load-bearing citations"** roster (slug/stage map remains useful as a
+  citation index); only the column-header word "pre-vendored" → "cited" changes.
+- The fallback clause (`:2204`) is RETAINED (paper paywalled/removed → owner
+  substitutes / defers / abandons) — it already describes a citation-availability
+  policy, not a vendoring one.
+
+### A-8.2 — dependent occurrences (apply consistently with A-8.1)
+
+Grep-verified at HEAD (Convention #8); each asserts the unrealized pre-vendoring and
+should read as "cited at Stage-0":
+- `docs/architecture.md:61` — v2.2 changelog bullet ("every load-bearing frontier
+  paper is pre-vendored … before Phase 4 dispatch" → "… is cited at the sim Stage-0
+  probe").
+- `docs/architecture.md:1866` — "Phase-specific gates (… Phase 4: … frontier-paper
+  vendoring)" → "frontier-paper citation".
+- `docs/architecture.md:2649` — checklist item 7 ("Do NOT pick research papers … at
+  stage time. All pre-resolved in this appendix or the phase plan") — RETAIN intent;
+  the papers are pre-*identified* in §12.9's roster, *resolved* (web-fetched) at
+  Stage-0. No vendoring implied; no edit strictly required.
+- `docs/architecture.md:2723` — Pattern C: "Check `references/papers/` for
+  pre-vendored copy. If found, use it." → "Web-fetch the paper; confirm DOI/authors/
+  title; cite by name (the §12.9 citation record). If implementation-load-bearing and
+  unavailable: BLOCKED."
+- `docs/architecture.md:2826` — Pattern C label "Frontier paper unavailable and not
+  pre-vendored" → "Frontier paper unavailable" (drop "and not pre-vendored").
+- `docs/architecture.md:2877` — the Phase-4 LES-paper row ("Owner pre-vendors specific
+  paper to `references/papers/learned-les-closure/`") → "Owner pre-identifies the
+  specific LES paper; agent cites it at Stage 35 Stage-0" (Stage 35 is CUDA-bound /
+  deferred regardless — see C6 deferred-scope).
+- `docs/architecture.md:2922` — §F.3.5 Phase-4 entry gate "**All 13 frontier papers
+  pre-vendored** to `references/papers/` per spec § 12.9" → "All 13 frontier-paper
+  **citations identified** in §12.9 (resolved at each sim's Stage-0)". (This is the
+  entry-gate line the foundation-close pass could not satisfy as written.)
+- `docs/phases/phase-4-plan.md:54,68,72,2542,2610,2964` — the plan's
+  "FRONTIER PAPERS PRE-VENDORED" / "all 13 … vendored to `references/papers/`" /
+  preflight "verifies … frontier paper vendoring" / "paper fetches replaced by
+  pre-vendoring" prose. Re-point to "cited at Stage-0." Per §0.3 the agent does NOT
+  edit the plan; the operator reconciles these at the close (A-4/A-6 deferral pattern).
+- `docs/phases/phase-0-plan.md:429,731,1142-1143` — Block-1/Block-4 scaffold prose
+  that created `references/papers/` and a README promising "Phase 4 pre-dispatch
+  vendors frontier papers." HISTORICAL (Phase-0 landed); lowest priority. The
+  `references/papers/.gitkeep` directory may stay (harmless) or be removed; the
+  README stub's promise should be softened to "Phase 4 sims cite frontier papers at
+  Stage-0; this directory holds only repos whose LICENSE permits redistribution."
+
+### A-8.3 — §0.3 SHIFT record
+
+This is a **§0.3 on-evidence SHIFT** (charter prose vs landed reality): the
+phase-4-plan §2/§8.4 prose "consume from `references/papers/`" was unrealizable
+(papers were never vendored, and should not be for IP reasons). The landed sims
+shifted to **cite-at-Stage-0** — the sound, IP-safe, §2.4-compatible practice — with
+no loss of verification rigor (independent derivation from published equations is the
+anchor, not a vendored PDF). Recorded in
+`docs/_audits/phase-4/mid-phase-state-*.md` (C1 disposition).
+
+- **Disposition:** PROPOSED. No file under `references/papers/` is added (IP). The 9
+  landed sims already comply (cite-at-Stage-0; cat1 GREEN). Spec + plan edits deferred
+  to the operator at the Phase-4 close (spec frozen mid-phase per §9.6; agent does NOT
+  edit the plan per §0.3).
