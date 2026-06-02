@@ -38,7 +38,20 @@ from lfs_migration._helpers import git
 
 _PHASE_BOUNDARY = "v0.2.0-phase-2"
 OPERATOR_PHASE_TAGS = frozenset(
-    {"v0.0.0-phase-0", "v0.1.0-phase-1", "v0.2.0-phase-2", "v0.3.0-phase-3"}
+    {
+        "v0.0.0-phase-0",
+        "v0.1.0-phase-1",
+        "v0.2.0-phase-2",
+        "v0.3.0-phase-3",
+        # Phase-4 close (operator-pushed at the v0.4.0-phase-4 landing commit
+        # d41333a, descendant of the phase-3 boundary). Per the Phase-4 close
+        # audit (docs/_audits/phase-4/landing-2026-06-01T01-44-34Z.md) section 7,
+        # this allowlist-add is the POST-tag follow-up: it cannot land before the
+        # operator pushes the tag because test_operator_phase_tags_present
+        # asserts every listed tag EXISTS. Mirrors the v0.3.0-phase-3 precedent
+        # added post-tag at 638b247.
+        "v0.4.0-phase-4",
+    }
 )
 
 # Operator-sanctioned non-phase tags (conventions section D.2). Each entry is a
