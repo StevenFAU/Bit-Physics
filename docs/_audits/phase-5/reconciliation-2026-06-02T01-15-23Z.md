@@ -5,7 +5,7 @@ subject: "Phase-5 RECONCILIATION — settle the three structural gaps + render/p
 kind: reconciliation
 verdict: SHIFTED
 phase: 5
-head_sha: 4022a13
+head_sha: 70515ca895da8307ee24abcfca87ad25b799498a
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 evidence_paths:
