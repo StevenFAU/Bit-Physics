@@ -2502,6 +2502,11 @@ wheels = [
 name = "mpm-multimaterial"
 version = "0.0.0"
 source = { editable = "packages/mpm-multimaterial" }
+dependencies = [
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "numpy" },
+]
 
 [package.optional-dependencies]
 dev = [
@@ -2509,7 +2514,12 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" }]
+requires-dist = [
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+]
 provides-extras = ["dev"]
 
 [[package]]

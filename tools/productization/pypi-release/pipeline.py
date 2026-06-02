@@ -348,10 +348,78 @@ def validation_route(sim_name: str) -> dict[str, Any] | None:
 # --- Build (wheelhouse) ----------------------------------------------------
 
 
-def build_infra_wheelhouse(wheelhouse: Path) -> list[str]:
+def _workspace_members() -> dict[str, Path]:
+    """Map project-name → pyproject path for every workspace member (sims,
+    commons, tools). Used to compute the build closure for a sim's wheelhouse."""
+    members: dict[str, Path] = {}
+    roots = [
+        *PACKAGES_ROOT.glob("*/pyproject.toml"),
+        *PACKAGES_ROOT.glob("*/python/pyproject.toml"),
+        *(REPO_ROOT / "common").glob("*/pyproject.toml"),
+        *(REPO_ROOT / "tools").glob("*/pyproject.toml"),
+    ]
+    for pp in roots:
+        try:
+            name = (
+                tomllib.loads(pp.read_text(encoding="utf-8"))
+                .get("project", {})
+                .get("name")
+            )
+        except (OSError, tomllib.TOMLDecodeError):
+            continue
+        if name:
+            members[name] = pp
+    return members
+
+
+def _workspace_dep_closure(sim_pyproject: Path) -> list[str]:
+    """Deps-first closure of workspace-member dependencies for a sim (the
+    sim's own wheel is built separately). Variants depend on their base sim,
+    which itself depends on the infra/commons — all resolved transitively."""
+    members = _workspace_members()
+    start_name = (
+        tomllib.loads(sim_pyproject.read_text(encoding="utf-8"))
+        .get("project", {})
+        .get("name", "")
+    )
+    order: list[str] = []
+    seen: set[str] = {start_name}
+
+    def visit(pp: Path) -> None:
+        deps = (
+            tomllib.loads(pp.read_text(encoding="utf-8"))
+            .get("project", {})
+            .get("dependencies", [])
+        )
+        for spec in deps:
+            dep_name = (
+                spec.split(";")[0]
+                .split("[")[0]
+                .split(">")[0]
+                .split("=")[0]
+                .split("<")[0]
+                .split("~")[0]
+                .strip()
+            )
+            if dep_name in members and dep_name not in seen:
+                seen.add(dep_name)
+                visit(members[dep_name])  # deps-first
+                order.append(dep_name)
+
+    visit(sim_pyproject)
+    # Union with the infra baseline (defensive: transitively-imported commons).
+    for pkg in INFRA_PACKAGES:
+        if pkg not in seen:
+            order.append(pkg)
+    return order
+
+
+def build_wheelhouse_deps(sim: SimSpec, wheelhouse: Path) -> list[str]:
+    """Build every workspace-source dependency of the sim into the wheelhouse."""
     wheelhouse.mkdir(parents=True, exist_ok=True)
     notes: list[str] = []
-    for pkg in INFRA_PACKAGES:
+    sim_pp = REPO_ROOT / sim.metadata["pyproject"]
+    for pkg in _workspace_dep_closure(sim_pp):
         rc = subprocess.run(
             ["uv", "build", "--package", pkg, "--wheel", "-o", str(wheelhouse)],
             cwd=REPO_ROOT,
@@ -359,9 +427,9 @@ def build_infra_wheelhouse(wheelhouse: Path) -> list[str]:
             text=True,
         )
         if rc.returncode != 0:
-            notes.append(f"infra build FAILED {pkg}: {rc.stderr.strip()[-400:]}")
+            notes.append(f"dep build FAILED {pkg}: {rc.stderr.strip()[-300:]}")
         else:
-            notes.append(f"infra wheel built: {pkg}")
+            notes.append(f"dep wheel: {pkg}")
     return notes
 
 
@@ -569,7 +637,7 @@ def run_pipeline_for_sim(sim: SimSpec, output_dir: Path) -> PipelineResult:
     t0 = time.monotonic()
     output_dir.mkdir(parents=True, exist_ok=True)
     wheelhouse = output_dir / "wheelhouse"
-    build_infra_wheelhouse(wheelhouse)
+    build_wheelhouse_deps(sim, wheelhouse)
     wheel, build_note = build_sim_wheel(sim, wheelhouse)
     if wheel is None:
         return PipelineResult(
@@ -589,6 +657,10 @@ def run_pipeline_for_sim(sim: SimSpec, output_dir: Path) -> PipelineResult:
             ok, note = _golden_table_surrogate(sim, wheel, wheelhouse, work)
     except Exception as exc:  # defensive: bootstrap is subprocess-heavy
         ok, note = False, f"bootstrap exception: {exc!r}"
+    finally:
+        # Reclaim disk: the fresh venv (incl. torch/taichi/warp) is large; the
+        # small wheelhouse is kept for the CI upload-artifact step.
+        shutil.rmtree(work / "venv", ignore_errors=True)
     dt = time.monotonic() - t0
     return PipelineResult(
         sim, "pass" if ok else "fail", wheel, ok, dt, f"{build_note}; {note}"
@@ -690,9 +762,9 @@ def main_build(argv: list[str]) -> int:
     spec_names = {d["name"] for d in json.loads(Path(args.sims_json).read_text())}
     sims = [s for s in discover_qualifying_sims() if s.name in spec_names]
     wheelhouse = out / "wheelhouse"
-    build_infra_wheelhouse(wheelhouse)
     status = {}
     for s in sims:
+        build_wheelhouse_deps(s, wheelhouse)
         wheel, note = build_sim_wheel(s, wheelhouse)
         status[s.name] = {"wheel": str(wheel) if wheel else None, "note": note}
     print(json.dumps(status, indent=2))

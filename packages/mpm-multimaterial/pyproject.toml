@@ -6,6 +6,18 @@ readme = "README.md"
 license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
+# Runtime dependencies authored at Phase-5 sub-phase 5.3 (pypi-release): this
+# Phase-1 TDD-bootstrap package shipped with NO [project.dependencies], so its
+# wheel installed but `import numpy` / `from capture import …` failed in a fresh
+# venv (surfaced by the § 3.8 bootstrap gate). Declared explicitly to match the
+# sibling reference packages (e.g. ising-classical). Packaging metadata only — no
+# sim-code change. `capture` resolves from the bit-physics-testkit wheel; the
+# sim.py repo-relative sys.path.insert is a harmless no-op once testkit is installed.
+dependencies = [
+  "bit-physics-testkit",
+  "h5py>=3.10",
+  "numpy>=2.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
@@ -20,3 +32,6 @@ packages = ["mpm_multimaterial"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }

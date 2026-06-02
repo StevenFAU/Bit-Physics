@@ -77,6 +77,18 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["capture", "code_verification", "determinism", "equivalence", "golden", "property", "render_similarity"]
 
+# Phase-5 pypi-release: ship the JSON schema data files alongside the Python
+# packages. `capture/manifest.py` and `golden/verifier.py` resolve their schemas
+# via `Path(__file__).resolve().parent.parent / "schemas"`, which in an installed
+# wheel is `<site-packages>/schemas/`. Without this force-include the wheel omits
+# the schemas, so capture-writing (every sim's re-emit) raises FileNotFoundError
+# in a fresh venv — surfaced by the spec § 3.8 bootstrap-verification gate. The
+# force-include lands the files at `<site-packages>/schemas/`, where the existing
+# `parent.parent` resolution finds them. Additive packaging metadata only; no code
+# or behaviour change. See docs/_audits/phase-5/pypi-release-*.md.
+[tool.hatch.build.targets.wheel.force-include]
+"schemas" = "schemas"
+
 [tool.ruff]
 line-length = 100
 target-version = "py312"
