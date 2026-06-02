@@ -32,6 +32,20 @@
 >
 > **PHASE-PLAN REVIEW:** Phase 5 introduces customer-facing artifacts; the bootstrap-style verification is novel. Per spec § 7.4 Convention E-addendum, owner runs phase-plan-review session BEFORE dispatch. Review audit at `docs/_audits/phase-5/pre-dispatch-review-<UTC>.md`.
 
+> **v9 reconciliation amendments (2026-06-01; post pre-dispatch-review).** Normative; supersedes conflicting text below. These are §0.3 SHIFTs landed at the Phase-5 reconciliation pass (`docs/_audits/phase-5/reconciliation-<UTC>.md`), where the pre-dispatch-review's surfaced gaps were settled against MEASURED repo state. They do NOT begin any sub-phase build.
+>
+> **R1 — BOOTSTRAP RE-EMIT IS PROGRAMMATIC (corrects § 6.3 + every STEP 5a block).** The plan's STEP 5a command blocks (Appendices B/C/D) invoke `python -m testkit.equivalence --source … --port … --strict`. That CLI is FALSIFIED on MEASURED state: (a) there is no `testkit` top-level module — the equivalence harness is the uv workspace member `equivalence` under `tools/testkit/equivalence/`; (b) `python -m equivalence` exposes only `--mode render-similarity` and explicitly must NOT invoke a generic numeric capture diff. The bootstrap round-trip therefore calls the **PROGRAMMATIC** `equivalence.harness.compare_captures(left_manifest_json, right_manifest_json)` (it takes the `.json` manifest paths, not `.h5`), returning an `EquivalenceVerdict(within_tolerance, per_field_diff, tolerance_table_used)`. Likewise the § 6.3 criterion "has a `[project.scripts]` capture-emitting CLI" is FALSIFIED — the spot-checked Stack-D/E sims have NO capture-emitting console-script; seed/steps/grid are locked in `canonical_params()` / `CANONICAL_STEP_COUNT`. **Corrected per-sim bootstrap recipe (5.1/5.2/5.3):**
+> 1. **Re-emit** the canonical capture PROGRAMMATICALLY via the sim's Python capture surface — `<pkg>.sim.sim_runner_seeded(seed, out_dir)` (e.g. ising-classical, rigid-body-pedagogical, reaction-diffusion-2d-stack-d) or the sim's `capture.default_capture(out_dir)` / `__main__` capture path. The descriptor is fixed by the sim, not by CLI flags.
+> 2. **Compare** PROGRAMMATICALLY: `compare_captures(Path(canonical_json), Path(reemit_json))` → assert `verdict.within_tolerance` (within the per-sim tolerance from `tolerance.toml`, under the `tolerance-budget.toml` cap).
+> 3. **Tolerance source.** `compare_captures` resolves `tolerance.toml` via `[overrides.<sim>]` (cross-stack, budget-capped) or `[defaults.<category>]` (no budget requirement). Sims whose canonical artifact is a golden TABLE (no committed `.h5`) — lenia, pinn-poisson, 3dgs-mpm — use a **golden-table re-check surrogate**, NOT `compare_captures`. mass-spring-cloth (no NumPy oracle) uses the **witness-hash + PBT surrogate**. See the per-sim §13 blocks + the reconciliation audit §R3.
+> 4. **§ 6.3 `[project.scripts]` criterion is RE-READ** as "exposes a programmatic Python capture surface (`sim_runner_seeded` / `default_capture`) re-emitting the canonical descriptor in a clean venv." A console-script entry-point is OPTIONAL, not a qualifying gate. "Phase 5 does not patch sims."
+>
+> **R3 — TOLERANCE COVERAGE for capture-bearing single-stack sims.** `[defaults.lattice-spin]` (ising-classical) and `[defaults.rigid-body]` (rigid-body-pedagogical / articulated-pedagogical-diff) added to `tolerance.toml` at the MEASURED bit-exact 0.0/0.0 round-trip (NOT a widening — measure-then-declare). Remaining `[defaults.continuous-ca]` hole (neural-ca 5.3 round-trip) is a 5.3-dispatch-time per-sim precondition (audit §R3 / Phase-C).
+>
+> **R4 — RENDER ASSET RELAXED + CANONICAL PICKS (operator-ratified).** No Alembic/`.vdb`/`.usd` asset is committed anywhere in the repo. The § 6.4 render-canonical criterion "has exported Alembic or VDB asset committed" is RELAXED to **"has a committed `.h5` canonical capture + an h5→render-asset conversion/export step"** (the honest fix to the landed state). **5.4 render canonical = `eulerian-smoke`** (volumetric, `render:true`, Stack-C bit-exact, 4.4 MB CI-friendly). **5.5 preprint canonical = `pinn-poisson`** (cleanest § 6: ≥3 analytic anchors + classical-FD + MMS-grade O(h²) convergence; physicsnemo-sym vendored; its § 13 five-boolean is now present). Both picks remain "+1 canonical sim as proof"; coverage extends post-phase.
+>
+> **5.1 WEB is BLOCKED — zero qualifying sims** (no Vite/`package.json` build exists in `packages/`). The 7 Stack-B sims WILL be built (operator-ratified); the web-build track is NAMED + QUEUED at `docs/phases/phase-5-web-build-track.md`. 5.1's workflow is authored in sub-phase 5.1 once real web builds exist to validate. Building the frontends is OUT of this reconciliation pass and out of 5.1's productization scope ("Phase 5 does not patch sims").
+
 > **v7 dispatch-hardening amendments (May 18 2026):** This block is normative.
 >
 > **DISPATCH MODEL CLARIFIED:** One coordinator chat (claude.ai). **Five Claude Code sessions** — one per sub-phase — with the **SAME agent role identity** across them. This resolves the ambiguity in v4 amendment 5 between "one session for the whole phase" and "five sessions, one per sub-phase." Reconciling factors:
@@ -736,7 +750,7 @@ Sims missing any criterion → DEFERRED verdict addressed to sim owner. Phase 5 
 
 **Qualifying Stack D / E sim criteria:**
 - Has a `pyproject.toml` declaring required fields (linter enforces).
-- Has a `[project.scripts]` entry point matching spec § 10.3 pattern (adapted to `bit-physics-<category>-<sim>` per § 4.6).
+- Has a programmatic Python capture surface (`sim_runner_seeded` / `default_capture`) re-emitting the canonical descriptor in a clean venv. *(SHIFTED per v9 R1 — a `[project.scripts]` console-script entry-point matching spec § 10.3 / § 4.6 `bit-physics-<category>-<sim>` is OPTIONAL/desirable for end-users, NOT a qualifying gate; no spot-checked Stack-D/E sim ships one.)*
 - Installs in a clean venv on `ubuntu-latest`.
 - CLI runs N steps without error.
 - Produces schema-valid capture.
@@ -767,7 +781,7 @@ CUDA-required sims: marker in pyproject. Install smoke runs on CUDA-capable runn
 **Inputs.** Sims of any stack with exported Alembic or VDB assets on disk. Testkit capture-manifest reader (for `build_id`).
 
 **Canonical-sim selection at probe time (all five criteria must hold):**
-- Has exported Alembic or VDB asset committed.
+- Has a committed `.h5` canonical capture + an h5→render-asset conversion/export step. *(RELAXED per v9 R4 — no Alembic/`.vdb`/`.usd` asset is committed anywhere in the repo; the canonical artifact is the `.h5` grid/particle state, converted to a render asset by the pipeline. 5.4 canonical = `eulerian-smoke`.)*
 - Has a published spec sheet (`spec-ref.md` exists with required sections).
 - Has visual interest (volumetric / particle / mesh; not pure-shader closed-form).
 - Passes its own per-sim determinism gate (probe to confirm).
