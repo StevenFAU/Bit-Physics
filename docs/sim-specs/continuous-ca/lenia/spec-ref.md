@@ -267,7 +267,19 @@ python -m lenia --seed 42 --steps 1000 --grid 256 \
 
 ## 13. Productization status
 
-Reference. Phase 3 task-3 is **terminal** in Phase 3
-(`docs/phases/phase-3-plan.md:325`). Phase 4+ may port to Stack B,
-add 3-D / particle / flow variants, polyring kernels, save-creature
-UX — out of scope here.
+```yaml
+productization:
+  web: false     # 5.1 — Stack D (Taichi); no web/WGSL surface in this sim
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Stack D Python package (packages/lenia/pyproject.toml)
+  render: true   # 5.4 — Lenia creature fields are visually rich
+  preprint: true # 5.5 — Chakazul/Lenia vendored upstream; research-active
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). Terminality context
+> retained: Phase-3 task-3 is terminal in Phase 3; a Phase-4+ Stack-B port plus
+> 3-D / particle / flow variants and save-creature UX remain out of scope here.
+> Bootstrap-verification (spec § 3.8): golden-table re-check surrogate (no
+> committed canonical `.h5` capture — lenia verifies via `lenia-kernel.json` +
+> `lenia-orbium-trajectory.json`), NOT a `compare_captures` round-trip.

@@ -183,5 +183,21 @@ in `.github/workflows/python-strict.yml` (D-CI; `build-py.yml` does not exist).
 
 ## 13. Productization status
 
-Phase-3 reference sim. Frontier variants (Newton 1.0, differentiable rigid-body,
-Isaac Lab; spec §5.8) are Phase-4+. USD export deferred to Phase-4 WU-D (D-USD).
+```yaml
+productization:
+  web: false     # 5.1 — Stack E (NVIDIA Warp); no web surface
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Stack E Warp package (packages/articulated-pedagogical/pyproject.toml)
+  render: true   # 5.4 — articulated pendulum motion is visually interesting
+  preprint: true # 5.5 — pedagogical; analytic (DLMF elliptic) verification anchors
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). No vendored upstream
+> (Featherstone/L&L/DLMF cited-not-vendored), so 5.5 `discover` may defer it under
+> the §4.9 vendored-upstream criterion despite `preprint:true`. Terminality
+> context retained: frontier variants (Newton 1.0, differentiable rigid-body,
+> Isaac Lab; spec §5.8) are Phase-4+; USD export deferred (D-USD). Bootstrap-
+> verification (spec § 3.8): `compare_captures` round-trip against
+> `captures/rigid-body-pedagogical-ref/` (manifest sim.name `rigid-body-pedagogical`)
+> resolves via the MEASURED bit-exact `[defaults.rigid-body]` row (added at this pass).

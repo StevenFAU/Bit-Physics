@@ -155,5 +155,21 @@ See `packages/mass-spring-cloth/README.md`. Canonical capture
 
 ## 13. Productization status
 
-Terminal reference sim. No downstream consumer-site obligation (plan §3.1). No
-tag (D-TAG NO; phase-close tag `v0.3.0-phase-3` at task-10).
+```yaml
+productization:
+  web: false     # 5.1 — Stack C (C++/Vulkan); no web surface
+  binary: true   # 5.2 — Stack-C CMake build (packages/mass-spring-cloth/CMakeLists.txt)
+  pypi: false    # 5.3 — pure C++; NO pyproject/Python package (genuinely N/A)
+  render: true   # 5.4 — cloth mesh draping is visually interesting
+  preprint: true # 5.5 — PositionBasedDynamics (Bender, MIT) vendored cross-check oracle
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). `pypi:false` is the
+> one genuinely-N/A flag: there is no `pyproject.toml` (the sim is pure C++20 /
+> Vulkan; its PBT tests subprocess the compiled binary). `binary:true` is the
+> only Stack-C-buildable sim besides reaction-diffusion-2d-stack-c. Terminality
+> context retained: terminal reference sim; no downstream consumer-site
+> obligation. Bootstrap-verification (spec § 3.8) SURROGATE: the in-binary
+> witness-hash round-trip + Hypothesis PBT re-check (the sim has no NumPy oracle
+> and no `compare_captures` soft-body tolerance op), NOT a fabricated tolerance row.

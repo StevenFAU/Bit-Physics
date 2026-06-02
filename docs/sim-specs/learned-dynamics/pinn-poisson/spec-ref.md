@@ -183,8 +183,23 @@ indirection).
 
 ## 13. Productization status
 
-Reference sim (Layer 4 per § 5.4). **No USD export** — DEFER per the task-4
-ratified Phase-3-Stack-E-WIDE policy (the `common_warp.usd` surface is unbuilt; no
-Stack-E sim ships USD; spec § 2.5 gap carried as a `closed-with-shifted` item). No
-tag (D-TAG NO). task-7 is TERMINAL on produce; task-9 is a soft/informational
-common-warp consumer.
+```yaml
+productization:
+  web: false     # 5.1 — Stack E + PyTorch (CPU); no web surface
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Stack E + PyTorch package (packages/pinn-poisson/pyproject.toml)
+  render: true   # 5.4 — Poisson solution field renders as a scalar heatmap
+  preprint: true # 5.5 — RECOMMENDED canonical: PhysicsNeMo-PINN vendored + MMS-grade O(h²)
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). This sim is the
+> operator-ratified 5.5 preprint canonical (cleanest §6: ≥3 analytic anchors +
+> classical-FD + MMS-grade convergence-order; physicsnemo-sym v2.4.0 vendored).
+> Terminality context retained: No USD export (Phase-3-Stack-E-WIDE policy; the
+> `common_warp.usd` surface is unbuilt); task-7 is terminal on produce. NO USD ≠
+> NO preprint: USD opt-out is orthogonal to the five Phase-5 streams.
+> Bootstrap-verification (spec § 3.8): golden-table re-check surrogate (no
+> committed canonical `.h5` capture — pinn-poisson verifies via
+> `pinn-poisson-canonical.json` + analytic/FD checks on the frozen network), NOT
+> a `compare_captures` round-trip.

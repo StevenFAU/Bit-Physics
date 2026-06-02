@@ -39,6 +39,53 @@ absolute = 0.0
 relative = 1e-5
 absolute = 0.0
 
+# -----------------------------------------------------------------------------
+# Phase-5 bootstrap-verification defaults for single-stack CAPTURE-bearing sims.
+# -----------------------------------------------------------------------------
+# Added at the Phase-5 reconciliation pass (docs/_audits/phase-5/reconciliation-*).
+# Context: spec § 3.8 bootstrap-style verification re-emits a sim's canonical
+# capture in a fresh environment and round-trips it through
+# `equivalence.harness.compare_captures` against the in-repo canonical capture.
+# For the SINGLE-STACK sims that commit a canonical `.h5` capture but carry NO
+# cross-stack pair, `compare_captures` previously raised KeyError ("no defaults
+# for category …") because the cross-stack `[overrides.<sim>]` / `[defaults.<cat>]`
+# tables had no entry for their category (the Phase-3 review's §3.3 finding;
+# reproduced on category 'rigid-body').
+#
+# These are `[defaults.<category>]` (NOT `[overrides.<sim>]`) on purpose:
+#   1. `_resolve_tolerance` falls through to `defaults[sim_category]` when the
+#      sim is absent from `[overrides]`, so a default suffices.
+#   2. Cat-X.tolerance-budget validates `[overrides.*]` ONLY (it requires a
+#      matching `[budgets.<cat>.cross_stack]` cap per override); `[defaults.*]`
+#      carry no budget-cap requirement, so adding a default keeps integrity
+#      0-HARD_FAIL without touching the operator-gated tolerance-budget.toml.
+#
+# Tolerance = 0.0 / 0.0 (BIT-EXACT). This is the MEASURED re-emit round-trip
+# error (spec § 2.6 measure-then-declare; NOT a widening): re-emitting each
+# canonical capture in a fresh process and diffing field-by-field against the
+# in-repo canonical yielded max_abs_err = 0.0 AND max_rel_err = 0.0 across every
+# state field and step. Deterministic same-hw re-emit round-trips bit-exact, so
+# the honest bootstrap-gate tolerance is zero. NEVER widen to force a pass.
+#
+# [defaults.lattice-spin]  — MEASURED on ising-classical
+#   (captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000):
+#   11 steps, 11 fields, max_abs=0.0, max_rel=0.0. Re-emit surface:
+#   `ising_classical.sim.sim_runner_seeded(seed, out_dir)`.
+[defaults.lattice-spin]
+relative = 0.0
+absolute = 0.0
+
+# [defaults.rigid-body]  — MEASURED on rigid-body-pedagogical (the
+#   articulated-pedagogical canonical; manifest sim.name = 'rigid-body-pedagogical';
+#   captures/rigid-body-pedagogical-ref/pendulum-trajectory-seed42-step1000):
+#   101 steps, 202 fields, max_abs=0.0, max_rel=0.0. Re-emit surface:
+#   `articulated_pedagogical.sim.sim_runner_seeded(seed, out_dir)`. Also resolves
+#   the articulated-pedagogical-diff (Phase-4, same category, single-stack Warp)
+#   KeyError the Phase-3 review's §3.3 reproduced.
+[defaults.rigid-body]
+relative = 0.0
+absolute = 0.0
+
 # No per-sim overrides at Phase 0 close. Block 8 (RD-2D) and Phase 1+ sims
 # may add entries here; each addition is gated by tolerance-budget.toml.
 

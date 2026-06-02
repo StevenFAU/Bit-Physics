@@ -213,7 +213,23 @@ python -m ising_classical --seed 42 --steps 10000 --grid 128 \
 
 ## 13. Productization status
 
-Reference. Phase 3 task-3a unblocks task-4 onwards but no later Phase-3
-task imports `packages/ising-classical/` as a code dependency. Phase 6
-ising-dwave inherits the spec-sheet + glossary as documentation
-precedent.
+```yaml
+productization:
+  web: true      # 5.1 — Stack B WGSL surface (packages/ising-classical/src/)
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Python reference package (packages/ising-classical/pyproject.toml)
+  render: true   # 5.4 — spin-domain fields are visually interesting
+  preprint: true # 5.5 — canonical Ising model; Onsager/Yang analytic anchors
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). `pypi:true` is the
+> SURFACED-ambiguity case: the sim's canonical artifact is the Stack-B WGSL web
+> demo, but it also ships a CI-visible NumPy reference Python package, so both
+> `web` and `pypi` are enabled (operator intent: productize everything). No
+> vendored upstream (Onsager/Yang/KW cited-not-vendored), so 5.5 `discover` may
+> defer it under the §4.9 vendored-upstream criterion despite `preprint:true`.
+> Terminality context retained: task-3a unblocks task-4 onwards; no later Phase-3
+> task imports `packages/ising-classical/`. Bootstrap-verification (spec § 3.8):
+> `compare_captures` round-trip against `captures/ising-classical-ref/` resolves
+> via the MEASURED bit-exact `[defaults.lattice-spin]` row (added at this pass).

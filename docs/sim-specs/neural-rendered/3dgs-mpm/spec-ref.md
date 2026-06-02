@@ -243,5 +243,19 @@ common-3dgs); Stomakhin 2013 / Hu 2018 MLS-MPM (via mpm-multimaterial-stack-e).
 
 ## 13. Productization status
 
-`coupling.py` SIM-LOCAL (promotion candidacy → Phase-4 WU-C). task-8 is TERMINAL on produce.
-NO tag (D-TAG NO).
+```yaml
+productization:
+  web: false     # 5.1 — Stack E; no web build in repo
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Stack E Python package (packages/3dgs-mpm/pyproject.toml)
+  render: true   # 5.4 — Gaussian-splat renders are the most visually striking
+  preprint: true # 5.5 — 3DGS + PhysGaussian vendored; research-active
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). Terminality context
+> retained: `coupling.py` is SIM-LOCAL (promotion candidacy → Phase-4 WU-C);
+> task-8 is terminal on produce. Bootstrap-verification (spec § 3.8): golden-table
+> re-check surrogate (no committed canonical `.h5` capture — 3dgs-mpm verifies via
+> `3dgs-mpm-coupling.json` + the render-similarity gate on committed golden
+> renders), NOT a `compare_captures` round-trip.

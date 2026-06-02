@@ -245,7 +245,25 @@ python -m neural_ca convert  --checkpoint <ckpt> --out <wgsl-artifact-dir>
 
 ## 13. Productization status
 
-Reference. **task-6 is TERMINAL on the produce side** (plan § 3.1 `:328`); the
-HARD dep on task-2 (render-similarity) is SATISFIED. No later Phase-3 task
-imports `packages/neural-ca/` as a code dependency; task-8 (3DGS-MPM
-golden-render) inherits the statistical-cross-stack-gate pattern.
+```yaml
+productization:
+  web: true      # 5.1 — Stack B WGSL surface (packages/neural-ca/typescript/)
+  binary: false  # 5.2 — no CMake/C++ build
+  pypi: true     # 5.3 — Stack D PyTorch package (packages/neural-ca/python/)
+  render: true   # 5.4 — growing-pattern fields are visually rich
+  preprint: true # 5.5 — growing-neural-ca vendored (Distill); research-active
+```
+
+> Five-boolean block added at the Phase-5 reconciliation pass (converted from a
+> prose note; see `docs/_audits/phase-5/reconciliation-*`). First dual-stack sim:
+> `web` enabled on the WGSL TypeScript surface, `pypi` on the PyTorch Python
+> surface. Terminality context retained: task-6 is terminal on the produce side;
+> no later Phase-3 task imports `packages/neural-ca/` as a code dependency.
+> Bootstrap-verification (spec § 3.8): the committed offline captures
+> (`captures/neural-ca-ref/`) + render-similarity gate carry verification.
+> PRECONDITION for the 5.3 PyPI round-trip: `compare_captures` against the
+> committed D-capture needs a `[defaults.continuous-ca]` (or `[overrides.neural-ca]`)
+> tolerance row in `tolerance.toml` — absent at HEAD — measured from the neural-ca
+> re-emit round-trip (needs the LFS-tracked checkpoint). The Phase-5 reconciliation
+> pass scoped this as a 5.3-dispatch-time per-sim precondition (see
+> `docs/_audits/phase-5/reconciliation-*` §R3/Phase-C), not fabricated here.
