@@ -1,0 +1,130 @@
+name: pypi-release
+# Phase 5 sub-phase 5.3 — build-and-validate PyPI wheels for every qualifying
+# Stack-D / Stack-E sim, re-verifying correctness via the spec § 3.8 bootstrap
+# gate (fresh-venv install → re-emit → compare_captures / golden-table surrogate).
+# The `deploy` job is GATED OFF (§ 4.5): Phase 5 ships artifact-ready, no publish.
+
+on:
+  push:
+    tags: ['pypi-v*']
+  pull_request:
+    paths:
+      - 'tools/productization/pypi-release/**'
+      - '.github/workflows/pypi-release.yml'
+      - 'packages/**/pyproject.toml'
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Set to "true" to run the deploy job. Default false (Phase 5 artifact-ready only).'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: pypi-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover qualifying sims
+    runs-on: ubuntu-latest
+    outputs:
+      sims: ${{ steps.disc.outputs.sims }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Discover (§13 pypi:true pool; variants inherit canonical flag)
+        id: disc
+        run: |
+          uv run python tools/productization/pypi-release/pipeline.py discover --json > sims.json
+          cat sims.json
+          # emit a flat name array for the matrix
+          NAMES=$(uv run python -c "import json,sys; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
+          echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
+
+  build-and-validate:
+    name: Build and validate (${{ matrix.sim }})
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sim: ${{ fromJson(needs.discover.outputs.sims) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Selective LFS fetch (§ Q.4): capture_roundtrip sims read a committed
+          # .h5 canonical; surrogate sims read golden tables (small/non-LFS). Pull
+          # the captures tree targeted, via R2 when the secrets reach this job.
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Selective LFS fetch — committed canonical captures (R2 when wired)
+        # R2 routing mirrors python-strict.yml: source tools/lfs/setup-lfs-s3.sh
+        # when the R2_* secrets are present (push + same-repo PRs); fall through
+        # to GitHub LFS for fork PRs (D4 steady-state fallback).
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2"
+          else
+            echo "lfs fetch route: GitHub LFS"
+          fi
+          git lfs pull --include="captures/**" || echo "no LFS captures for this sim (surrogate)"
+      - name: Lint pyproject (§ 6.3; namespace divergence is SHIFTED, not fail)
+        run: |
+          PP=$(uv run python -c "import json; d=[s for s in json.load(open('/dev/stdin')) if s['name']=='${{ matrix.sim }}'][0]; print(d['metadata']['pyproject'])" < <(uv run python tools/productization/pypi-release/pipeline.py discover --json))
+          uv run python tools/productization/pypi-release/lint.py "$PP" || true
+      - name: Build + bootstrap-validate (§ 3.8 gate)
+        run: |
+          uv run python tools/productization/pypi-release/pipeline.py validate \
+            --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" --json > result.json
+          cat result.json
+      - name: Surface result
+        if: always()
+        run: cat result.json || true
+      - name: Upload wheel
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: pypi-release-${{ matrix.sim }}
+          path: ${{ runner.temp }}/artifacts/${{ matrix.sim }}/wheelhouse/*.whl
+          retention-days: 30
+
+  deploy:
+    name: Deploy (GATED OFF — no publish in Phase 5)
+    needs: build-and-validate
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      contents: read
+      id-token: write   # OIDC trusted publisher (§ 4.5)
+    steps:
+      # download-artifact pin is finalized at go-live (this job never runs in
+      # Phase 5; confirm_deploy defaults false). v7.0.1 sibling of upload-artifact.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+      # Publish step — NOT exercised in Phase 5. Requires the operator to have
+      # registered the repo as a PyPI OIDC trusted publisher (docs/productization/
+      # pypi-release.md § 7 go-live runbook) AND reserved the bit-physics-* names.
+      - name: Publish to PyPI (OIDC trusted publisher)
+        uses: pypa/gh-action-pypi-publish@release/v1   # canonical OIDC form (pin a SHA at go-live)
