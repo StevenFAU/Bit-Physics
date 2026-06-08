@@ -86,6 +86,27 @@ absolute = 0.0
 relative = 0.0
 absolute = 0.0
 
+# [defaults.continuous-ca]  — MEASURED on neural-ca at the Phase-5 sub-phase 5.3
+#   (pypi-release) dispatch (reconciliation §R3 / §C-6 named this as the one 5.3
+#   per-sim precondition). The § 3.8 bootstrap gate re-emits the D-inference
+#   capture from the INSTALLED wheel by rolling the frozen LFS checkpoint forward
+#   (`python -m neural_ca infer --grid 64 --steps 1000 --seed 42 --capture-every 50
+#   --checkpoint tools/testkit/golden/checkpoints/neural-ca-emoji-disk.safetensors`)
+#   and round-trips it through `compare_captures` vs
+#   captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000.json (category
+#   continuous-ca; sim.name neural-ca). Without this row compare_captures KeyErrors
+#   ("no defaults for category continuous-ca"). MEASURED fresh-venv re-emit
+#   round-trip: 21 fields, max_abs=0.0, max_rel=0.0 (BIT-EXACT) — the installed
+#   wheel's deterministic same-hw CPU PyTorch inference (matched stateless-PCG fire
+#   mask, frozen checkpoint, seed 42) reproduces the D-inference capture exactly.
+#   Tolerance = 0.0/0.0 is the MEASURED value (measure-then-declare, spec § 2.6;
+#   NOT a widening), matching the ising-classical/rigid-body bootstrap rows.
+#   reaction-diffusion-3d is also continuous-ca but is pypi:false + no-CMake
+#   (outside the 5.3 pool).
+[defaults.continuous-ca]
+relative = 0.0
+absolute = 0.0
+
 # No per-sim overrides at Phase 0 close. Block 8 (RD-2D) and Phase 1+ sims
 # may add entries here; each addition is gated by tolerance-budget.toml.
 

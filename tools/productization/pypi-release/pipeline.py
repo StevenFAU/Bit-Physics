@@ -289,6 +289,18 @@ VALIDATION_ROUTING: dict[str, dict[str, Any]] = {
         "reemit": {
             "kind": "module_main",
             "module": "neural_ca",
+            "args": [
+                "infer",
+                "--grid",
+                "64",
+                "--steps",
+                "1000",
+                "--seed",
+                "42",
+                "--capture-every",
+                "50",
+            ],
+            "checkpoint": "tools/testkit/golden/checkpoints/neural-ca-emoji-disk.safetensors",
             "needs_lfs_checkpoint": True,
         },
         "canonical": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000.json",
@@ -386,11 +398,20 @@ def _workspace_dep_closure(sim_pyproject: Path) -> list[str]:
     seen: set[str] = {start_name}
 
     def visit(pp: Path) -> None:
-        deps = (
-            tomllib.loads(pp.read_text(encoding="utf-8"))
-            .get("project", {})
-            .get("dependencies", [])
-        )
+        proj = tomllib.loads(pp.read_text(encoding="utf-8")).get("project", {})
+        deps = list(proj.get("dependencies", []))
+        # Also include workspace-source siblings declared as OPTIONAL/dev deps.
+        # A -diff variant declares its base sim as a dev-only dependency (e.g.
+        # lenia-diff's `dev` extra carries `lenia`, imported by the WU-F forward-
+        # equivalence test). The §3.8 golden surrogate installs `{wheel}[dev]`, so
+        # that sibling must be in the wheelhouse — else the dev install can't
+        # resolve it, the harness falls back to a no-dev install, and pytest
+        # COLLECTION of the sibling-importing test file fails (sinking the whole
+        # run even though the golden-anchor test the `-k` filter targets does not
+        # import the sibling). This completes the checkpoint's stated wheelhouse-
+        # closure intent ("a variant like -diff gets its base-sim sibling").
+        for extra_deps in proj.get("optional-dependencies", {}).values():
+            deps.extend(extra_deps)
         for spec in deps:
             dep_name = (
                 spec.split(";")[0]
@@ -487,34 +508,74 @@ def _capture_roundtrip(
     reemit_dir.mkdir(parents=True, exist_ok=True)
     r = route["reemit"]
     import_name = route["import"]
-    if r["kind"] == "sim_runner_seeded":
-        snippet = (
-            f"import sys, pathlib\n"
-            f"import {import_name} as _pkg\n"
-            f"assert 'site-packages' in _pkg.__file__, _pkg.__file__\n"
-            f"from {r['module']} import sim_runner_seeded\n"
-            f"m = sim_runner_seeded({r['seed']}, pathlib.Path(sys.argv[1]))\n"
-            f"print(m)\n"
+    if r["kind"] == "module_main":
+        # Roll a frozen LFS checkpoint forward via the INSTALLED console module
+        # (neural-ca: `python -m neural_ca infer …`). The checkpoint is fixed input
+        # data read from the repo working tree (LFS-materialized), exactly like the
+        # in-repo canonical — the gate tests the INSTALLED code re-emitting from it.
+        ckpt = REPO_ROOT / r["checkpoint"]
+        if not ckpt.exists():
+            return False, f"re-emit checkpoint missing (LFS not fetched?): {ckpt}"
+        loc = _run([str(py), "-c", f"import {import_name} as p; print(p.__file__)"])
+        if loc.returncode != 0 or "site-packages" not in loc.stdout:
+            return (
+                False,
+                f"installed package not isolated: {(loc.stdout or loc.stderr).strip()[-300:]}",
+            )
+        emit = _run(
+            [
+                str(py),
+                "-m",
+                r["module"],
+                *r["args"],
+                "--checkpoint",
+                str(ckpt),
+                "--out",
+                str(reemit_dir),
+            ]
         )
-    elif r["kind"] == "default_capture":
-        snippet = (
-            f"import sys, pathlib\n"
-            f"import {import_name} as _pkg\n"
-            f"assert 'site-packages' in _pkg.__file__, _pkg.__file__\n"
-            f"from {r['module']} import default_capture\n"
-            f"m = default_capture(pathlib.Path(sys.argv[1]))\n"
-            f"print(m)\n"
-        )
+        if emit.returncode != 0:
+            return (
+                False,
+                f"fresh-venv re-emit FAILED: {(emit.stderr or emit.stdout).strip()[-700:]}",
+            )
+        # The CLI writes <descriptor>.{h5,json}; the descriptor matches the
+        # canonical basename (same grid/seed/steps), so resolve the manifest there.
+        reemit_manifest = str(reemit_dir / Path(route["canonical"]).name)
+        if not Path(reemit_manifest).exists():
+            found = sorted(str(p) for p in reemit_dir.glob("*.json"))
+            return (
+                False,
+                f"re-emit wrote no manifest at {reemit_manifest}; found {found}",
+            )
+    elif r["kind"] in ("sim_runner_seeded", "default_capture"):
+        if r["kind"] == "sim_runner_seeded":
+            snippet = (
+                f"import sys, pathlib\n"
+                f"import {import_name} as _pkg\n"
+                f"assert 'site-packages' in _pkg.__file__, _pkg.__file__\n"
+                f"from {r['module']} import sim_runner_seeded\n"
+                f"m = sim_runner_seeded({r['seed']}, pathlib.Path(sys.argv[1]))\n"
+                f"print(m)\n"
+            )
+        else:
+            snippet = (
+                f"import sys, pathlib\n"
+                f"import {import_name} as _pkg\n"
+                f"assert 'site-packages' in _pkg.__file__, _pkg.__file__\n"
+                f"from {r['module']} import default_capture\n"
+                f"m = default_capture(pathlib.Path(sys.argv[1]))\n"
+                f"print(m)\n"
+            )
+        emit = _run([str(py), "-c", snippet, str(reemit_dir)])
+        if emit.returncode != 0:
+            return (
+                False,
+                f"fresh-venv re-emit FAILED: {(emit.stderr or emit.stdout).strip()[-700:]}",
+            )
+        reemit_manifest = emit.stdout.strip().splitlines()[-1]
     else:
         return False, f"re-emit kind {r['kind']!r} not wired for {sim.name}"
-
-    emit = _run([str(py), "-c", snippet, str(reemit_dir)])
-    if emit.returncode != 0:
-        return (
-            False,
-            f"fresh-venv re-emit FAILED: {(emit.stderr or emit.stdout).strip()[-700:]}",
-        )
-    reemit_manifest = emit.stdout.strip().splitlines()[-1]
 
     # Compare host-side (the equivalence harness lives in the repo workspace).
     cmp_snippet = (
