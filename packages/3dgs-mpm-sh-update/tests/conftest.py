@@ -20,7 +20,16 @@ import warp as wp
 # Deterministic gate-13 evidence: suppress Warp's module-load stdout chatter ("Module X
 # load on device 'cpu' took Y ms"), whose timing Y varies run-to-run and would otherwise
 # perturb the failing-tests-output hash. Set before any @wp.kernel module loads.
-wp.config.quiet = True
+# Numerics-free (log-verbosity only; touches no kernel/array/RNG state). Version-adaptive:
+# the 1.13.0 authoring pin uses `wp.config.quiet`; a newer Warp (resolved by the
+# `>=1.13,<2.0` floor in a fresh venv) DEPRECATED `quiet` in favor of `wp.config.log_level`
+# and promotes the DeprecationWarning to a collection-abort error under `filterwarnings=
+# ["error"]`. `wp.config.log_level` / `wp.LOG_WARNING` do NOT exist on 1.13.0, so a bare
+# swap would AttributeError on the pin — set whichever knob the installed Warp exposes.
+if hasattr(wp.config, "log_level"):
+    wp.config.log_level = wp.LOG_WARNING  # newer Warp: the sanctioned replacement
+else:
+    wp.config.quiet = True  # warp 1.13.0 (authoring pin): predates the log_level API
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
 _TOLERANCE_TOML = _REPO_ROOT / "tools" / "testkit" / "equivalence" / "tolerance.toml"

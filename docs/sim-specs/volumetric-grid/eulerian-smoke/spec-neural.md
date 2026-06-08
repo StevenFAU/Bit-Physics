@@ -81,8 +81,11 @@ never widened.
 ## § 13 Gate-13
 
 Landing replays the Stage-1a failing-tests commit via `replay_failing_tests.py`; normalized hash
-matches (`tools/testkit/failing-tests-evidence/eulerian-smoke-neural-<UTC>.txt`). The conftest sets
-`wp.config.quiet = True` so the evidence is deterministic; the replay worktree is pre-synced.
+matches (`tools/testkit/failing-tests-evidence/eulerian-smoke-neural-<UTC>.txt`). The conftest
+suppresses Warp's module-load chatter so the evidence is deterministic — version-adaptively
+(`wp.config.log_level = wp.LOG_WARNING` on a newer Warp that deprecated `wp.config.quiet`;
+`wp.config.quiet = True` on the 1.13.0 authoring pin, which predates the `log_level` API); the
+replay worktree is pre-synced.
 
 ## Gate-14 / mutation
 
