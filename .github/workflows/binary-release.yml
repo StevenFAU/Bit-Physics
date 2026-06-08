@@ -1,0 +1,165 @@
+name: binary-release
+# Phase 5 sub-phase 5.2 — build-and-validate native binaries for every qualifying
+# Stack-C (C++ / Vulkan) sim, re-verifying correctness via the spec § 3.8 bootstrap
+# gate (clean CMake build → run the headless capture binary → compare_captures
+# round-trip / in-binary witness + PBT surrogate). Build steps mirror cpp-strict.yml
+# (the green Stack-C build precedent). The `deploy` job is GATED OFF (§ 4.3 / § 4.5):
+# Phase 5 ships artifact-ready, no GitHub Release drafted.
+#
+# §0.3 SHIFT — OS scope: the bootstrap gate is lavapipe-pinned (D14/D4, software
+# Vulkan determinism) and validated on ubuntu-latest, mirroring cpp-strict's
+# ubuntu-only posture. Windows + macOS binary builds (per-OS software-Vulkan
+# device + the R-CPPB2 cross-build determinism story) are DEFERRED-to-Phase-6,
+# documented in docs/productization/binary-release.md § go-live. We do not add
+# untested win/mac matrix cells that would fake-pass.
+
+on:
+  push:
+    tags: ['bin-v*']
+  pull_request:
+    paths:
+      - 'tools/productization/binary-release/**'
+      - '.github/workflows/binary-release.yml'
+      - 'packages/**/CMakeLists.txt'
+      - 'cmake/Packaging.cmake'
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Set to "true" to run the deploy job. Default false (Phase 5 artifact-ready only).'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: binary-release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover qualifying Stack-C CMake sims
+    runs-on: ubuntu-latest
+    outputs:
+      sims: ${{ steps.disc.outputs.sims }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Discover (CMake-capture pool; § 6.2 — own-§13 opt-out)
+        id: disc
+        run: |
+          uv run python tools/productization/binary-release/pipeline.py discover --json > sims.json
+          cat sims.json
+          NAMES=$(uv run python -c "import json,sys; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
+          echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
+
+  build-and-validate:
+    name: Build and validate (${{ matrix.sim }})
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sim: ${{ fromJson(needs.discover.outputs.sims) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install C++ / Vulkan / HDF5 toolchain (lavapipe pin — mirrors cpp-strict)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            cmake g++ \
+            mesa-vulkan-drivers vulkan-tools libvulkan-dev \
+            glslang-tools \
+            libhdf5-dev
+
+      - name: Install uv (for the programmatic compare_captures + PBT drivers)
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Sync testkit workspace deps (capture + equivalence + property)
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+
+      - name: Probe lavapipe selection
+        env:
+          VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.json
+        run: vulkaninfo --summary | grep -iE "deviceName|driverName" || true
+
+      - name: Lint CMakeLists (§ 6.2; posture divergence is SHIFTED, not fail)
+        run: |
+          CML="packages/${{ matrix.sim }}/CMakeLists.txt"
+          uv run python tools/productization/binary-release/lint.py "$CML" || true
+
+      - name: Selective LFS fetch — committed canonical captures (R2 when wired)
+        # Mirrors cpp-strict.yml / python-strict.yml: source the lfs-s3 agent when the
+        # R2_* secrets reach this job (push + same-repo PRs); fall through to GitHub
+        # LFS for fork PRs. The capture_roundtrip sim reads a committed .h5 canonical;
+        # the cloth witness/PBT surrogate generates its own runs.
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2"
+          else
+            echo "lfs fetch route: GitHub LFS"
+          fi
+          git lfs pull --include="captures/reaction-diffusion-2d-stack-c/**,captures/mass-spring-cloth-ref/**" \
+            || echo "no LFS captures pulled (surrogate sim)"
+
+      - name: Build + bootstrap-validate (§ 3.8 gate)
+        env:
+          VK_DRIVER_FILES: /usr/share/vulkan/icd.d/lvp_icd.json
+          LP_NUM_THREADS: '0'
+        run: |
+          cd tools/testkit
+          uv run python ../../tools/productization/binary-release/pipeline.py validate \
+            --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" --json \
+            > "${{ runner.temp }}/result.json"
+          cat "${{ runner.temp }}/result.json"
+
+      - name: Surface result
+        if: always()
+        run: cat "${{ runner.temp }}/result.json" || true
+
+      - name: Upload capture binary
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: binary-release-${{ matrix.sim }}
+          path: ${{ runner.temp }}/artifacts/${{ matrix.sim }}/build/packages/${{ matrix.sim }}/*_capture
+          retention-days: 30
+          if-no-files-found: warn
+
+  deploy:
+    name: Deploy (GATED OFF — no Release in Phase 5)
+    needs: build-and-validate
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # draft a GitHub Release with binaries attached (§ 4.3)
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: dist
+      # Release step — NOT exercised in Phase 5 (confirm_deploy defaults false).
+      # macOS binaries are UNSIGNED; the `xattr -d com.apple.quarantine` workaround
+      # is documented in docs/productization/binary-release.md § go-live runbook.
+      - name: Draft GitHub Release (binaries attached)
+        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.4.0 (pin re-verified at go-live)
+        with:
+          draft: true
+          files: dist/**/*
