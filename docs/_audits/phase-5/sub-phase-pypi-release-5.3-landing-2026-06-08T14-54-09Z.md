@@ -6,7 +6,7 @@ kind: sub-phase-landing
 verdict: SHIFTED
 phase: 5
 sub_phase: "5.3"
-head_sha: <PLACEHOLDER — back-filled per Convention #12 at the next commit>
+head_sha: 6c4b809d7c300d28a14104dfec6cd6036f5da4de
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 evidence_paths:
