@@ -6,18 +6,18 @@ kind: focused-fix
 verdict: SHIFTED
 phase: 5
 sub_phase: warp-deprecation-migration
-head_sha: TO-BE-BACKFILLED
+head_sha: 21b3b68d02d2210335e0813362f2845026ed9bca
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
-integrity_digest_at_head: TO-BE-BACKFILLED
+integrity_digest_at_head: 9894964135e582fc3d94448f87bdf8d859a1ff29e3675a45fa04a7f04b40b15f
 evidence_paths:
   - packages/3dgs-mpm-sh-update/tests/conftest.py
   - packages/eulerian-smoke-neural/tests/conftest.py
   - docs/sim-specs/volumetric-grid/eulerian-smoke/spec-neural.md
 evidence_hashes:
-  packages/3dgs-mpm-sh-update/tests/conftest.py: TO-BE-BACKFILLED
-  packages/eulerian-smoke-neural/tests/conftest.py: TO-BE-BACKFILLED
-  docs/sim-specs/volumetric-grid/eulerian-smoke/spec-neural.md: TO-BE-BACKFILLED
+  packages/3dgs-mpm-sh-update/tests/conftest.py: sha256:793e49df752d20eda3e490894919425cbba6c990ed43d8ca930231c86d233e7e
+  packages/eulerian-smoke-neural/tests/conftest.py: sha256:b4cd7c3305db421d41ad4a31686467b98f31df391776231364de164e0d4aa87b
+  docs/sim-specs/volumetric-grid/eulerian-smoke/spec-neural.md: sha256:1cfe8601043984646527a70930c14037f1022b937dec14413d28ada05095356b
 ---
 
 # Phase 5 — Warp-deprecation migration (focused fix)
