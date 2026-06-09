@@ -2086,7 +2086,7 @@ Overlaps with Phase 4; not a serial successor.
 
 **Delivered.**
 
-- **5.1 web-deploy** — `tools/productization/web-deploy/` + `.github/workflows/web-deploy.yml` + `docs/productization/web-deploy.md`, delivered at commit `<COMMIT_1_SHA_PENDING>`. Build-and-validate pipeline over the 7 Stack-B web frontends (web-build track): Vite build → headless browser-WebGPU run → each sim's OWN established gate re-applied to the browser-emitted capture (no tolerance widened). Browser-WebGPU gate runs locally (ANGLE-Vulkan, secure-context) + cloud CI (lavapipe); 4/7 clear their gate through the browser, 3/7 (rd2d/neural-ca pointwise-roundtrip, boids run-twice) exhibit characterized cross-implementation f32 divergence surfaced for sim-owner/operator. `deploy` gated off.
+- **5.1 web-deploy** — `tools/productization/web-deploy/` + `.github/workflows/web-deploy.yml` + `docs/productization/web-deploy.md`, delivered at commit `80d2fee`. Build-and-validate pipeline over the 7 Stack-B web frontends (web-build track): Vite build → headless browser-WebGPU run → each sim's OWN established gate re-applied to the browser-emitted capture (no tolerance widened). Browser-WebGPU gate runs locally (ANGLE-Vulkan, secure-context) + cloud CI (lavapipe); 4/7 clear their gate through the browser, 3/7 (rd2d/neural-ca pointwise-roundtrip, boids run-twice) exhibit characterized cross-implementation f32 divergence surfaced for sim-owner/operator. `deploy` gated off.
 
 ## 11.7 Ongoing
 
