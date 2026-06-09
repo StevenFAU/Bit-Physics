@@ -1,0 +1,65 @@
+% main.tex -- preprint extracted from spec-ref.md (Bit-Physics preprint-extraction).
+% Deterministic output: regenerating from the same spec sheet is byte-identical.
+\documentclass{bitphysics-preprint}
+
+\title{PINN-Poisson}
+\author{Bit-Physics Project}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+A \textbf{Physics-Informed Neural Network (PINN)} solving the \textbf{2D Poisson equation} \texttt{$\Delta$u = f} on the unit square \texttt{$\Omega$ = [0,1]\textsuperscript{2}} with Dirichlet boundary data \texttt{u = g} on \texttt{$\partial$$\Omega$}, on \textbf{Stack E (Warp substrate) + PyTorch} (single-stack). Soft-constraint Raissi-2019 formulation. Verified \textbf{two-pronged}: vs \textbf{analytic} Poisson solutions (golden values, $\geq$3 independent-reference anchors incl. one inhomogeneous \texttt{f$\neq$0} MMS case) AND vs a \textbf{classical finite-difference (FD) reference} (a reusable testkit surface), plus \textbf{solution-verification convergence with collocation density}.
+
+\textbf{CPU-only scope (scope honesty).} This environment has \textbf{no CUDA driver}, so the "Stack E" sim runs \textbf{entirely on CPU} (Warp-CPU + PyTorch-CPU). The GPU-Warp path is \textbf{unexercised} here. "Stack E: PASS" therefore means the CPU substrate + torch$\leftrightarrow$wp interop + capture bridge are verified --- it is \textbf{not} a claim that GPU Warp is verified (same scope-honesty discipline as neural-ca's "WGSL-shader-verified-but-browser-deploy-unexercised" note).
+
+\section{Method}
+A fully-connected \texttt{tanh} MLP \texttt{N\_$\theta$: (x, y) $\mapsto$ u} is trained by minimizing a composite soft-constraint loss over sampled points:
+
+\begin{quote}\small\ttfamily\setlength{\parindent}{0pt}\noindent
+L($\theta$) = L\_interior($\theta$) + $\lambda$ $\cdot$ L\_boundary($\theta$) \\
+L\_interior = mean over interior collocation pts of ( $\Delta$u\_$\theta$ $-$ f )\textsuperscript{2} \\
+L\_boundary = mean over $\partial$$\Omega$ pts of ( u\_$\theta$ $-$ g )\textsuperscript{2}
+\end{quote}
+
+where \texttt{$\Delta$u\_$\theta$ = u\_xx + u\_yy} is formed by \textbf{second-order \texttt{torch.autograd.grad}} (the network output differentiated twice w.r.t. its inputs). Optimizer: Adam, seeded (\texttt{config.seed}, default 42). The trained network is then \textbf{frozen} and evaluated on the eval grid; the frozen-network field is the verified artifact.
+
+\section{Mathematical Formulation}
+Problem: \texttt{u\_xx + u\_yy = f} on \texttt{(0,1)\textsuperscript{2}}, \texttt{u = g} on \texttt{$\partial$$\Omega$}. Three independent-reference analytic anchors (all verified symbolically --- derivation H, \texttt{tools/testkit/golden/derivations/poisson-2d-analytical.md}):
+
+\begin{center}
+\begin{tabular}{|p{0.184\linewidth}|p{0.184\linewidth}|p{0.184\linewidth}|p{0.184\linewidth}|p{0.184\linewidth}|}
+\hline
+\textbf{Anchor} & \textbf{\texttt{u(x,y)}} & \textbf{\texttt{f = $\Delta$u}} & \textbf{BC \texttt{g}} & \textbf{Reference} \\ \hline
+1 & \texttt{$\tfrac{1}{2}$ ln((x+$\tfrac{1}{2}$)\textsuperscript{2} + (y+$\tfrac{1}{2}$)\textsuperscript{2})} & \texttt{0} (harmonic) & trace of \texttt{u} & Evans PDE 2e \S{} 2.2 (\S{} 2.2.1 fundamental solution, n=2; singularity placed at \texttt{($-$$\tfrac{1}{2}$,$-$$\tfrac{1}{2}$)} OUTSIDE $\Omega$ so \texttt{u} is smooth on $\Omega$) \\ \hline
+2 & \texttt{sinh($\pi$x) sin($\pi$y)} & \texttt{0} (harmonic) & nonzero only on \texttt{x=1} & Strauss PDE 2e \S{} 6.2 "Rectangles and Cubes" \\ \hline
+3 & \texttt{sin($\pi$x) sin($\pi$y)} & \texttt{$-$2$\pi$\textsuperscript{2} sin($\pi$x) sin($\pi$y)} & \texttt{0} & hand-derived MMS --- the \textbf{load-bearing inhomogeneous (\texttt{f$\neq$0})} case \\ \hline
+\end{tabular}
+\end{center}
+
+Anchor 3 is the \textbf{canonical trained instance} (capture descriptor \texttt{poisson-sine-source-64sq-seed42-step1}).
+
+\section{Evaluation}
+\textbf{Prong 1 --- vs analytic (golden, \texttt{analytical\_l2 = 1e-3}).} The frozen-network field matches each analytic anchor within relative discrete-L2 \texttt{1e-3}. This is the load-bearing acceptance gate. $\geq$3 independent-reference anchors per golden table (Cat-3 HARD\_FAILs otherwise, spec \S{} 2.4).
+
+\textbf{Prong 2 --- vs classical FD (\texttt{fd\_l2 = 1e-2}).} The frozen-network field matches the pure-NumPy 5-point-Laplacian FD solution of the same BVP within relative discrete-L2 \texttt{1e-2}. \textbf{The FD solver is a high-precision NUMERICAL baseline anchored to the analytic set --- it is NOT an independent reference} (it inherits its own \texttt{O(h\textsuperscript{2})} discretization error). \texttt{fd\_l2} is intentionally \textbf{wider} than \texttt{analytical\_l2} for exactly this reason.
+
+\textbf{FD-reference rigor (mutation substitute).} The FD reference's mutation target is DEFERRED to task-9 (D-MUTATION, rule-of-three --- first classical-reference). Its correctness rests instead on: (a) point-match vs all three analytic anchors, AND (b) a \textbf{convergence-order check} --- refining \texttt{h $\in$ \{1/16,1/32,1/64,1/128\}} against the MMS analytic solution, the observed discrete-L2 order is \textbf{$\approx$ 2} (\texttt{O(h\textsuperscript{2})}, 5-point Laplacian truncation). A real solver bug breaks the \emph{order}, not just a tolerance --- so this MMS-grade order check is the rigor substitute for the deferred mutation testing (Phase-0 \texttt{mms/} infrastructure is the structural precedent).
+
+\textbf{Prong 3 --- convergence with collocation density.} Spec \S{} 5.12: the PINN's error vs the analytic solution decreases as the interior collocation-point count grows (envelope-scoped to the trained domain).
+
+\textbf{Declared PBT invariants (gate-11, $\geq$2; impl \texttt{tools/testkit/property/sims/pinn-poisson/}):}
+
+\begin{enumerate}
+  \item \textbf{\texttt{boundary\_residual\_bounded}} --- for boundary points sampled within \texttt{$\partial$$\Omega$}, \texttt{|u\_$\theta$(x,y) $-$ g(x,y)|} is bounded by a small envelope (the trained boundary-loss scale). Envelope-scoped: re-declare the regime on falsification, do NOT widen (PINNs do not extrapolate; neural-ca \texttt{field\_values\_bounded} precedent).
+  \item \textbf{\texttt{pde\_residual\_bounded}} --- for interior points sampled within \texttt{$\Omega$}, \texttt{|$\Delta$u\_$\theta$(x,y) $-$ f(x,y)|} is bounded by a small envelope (the trained interior-loss scale). Envelope-scoped identically.
+\end{enumerate}
+
+Both sample \textbf{within the trained domain} (the envelope is the training regime, not an extrapolation claim). The bounds are MEASURED + locked at Stage 1b-PINN.
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}

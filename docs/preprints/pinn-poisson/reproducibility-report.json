@@ -1,0 +1,29 @@
+{
+  "artifact_id": "preprint-extraction",
+  "canonical_sim": "pinn-poisson",
+  "clean_compile": {
+    "clean_compile": true,
+    "exit_code": 0,
+    "pdf_built_on_demand": true,
+    "tool": "latexmk (pinned portable TinyTeX v2026.06; TeX Live 2026)",
+    "unresolved_ref_cite_warnings": []
+  },
+  "deterministic_extraction": {
+    "main_tex_byte_identical": true,
+    "method": "extract.py run twice in SEPARATE processes (distinct PYTHONHASHSEED)",
+    "note": "sort-before-emit makes output a pure function of the input; verified hash-seed-independent (PYTHONHASHSEED 1 vs 999)",
+    "references_bib_byte_identical": true,
+    "references_bib_sha256": "sha256:9da6aa99c3e4284669adce803687511dbef7c177a794e4fb49475dc92b8c048b",
+    "run1_main_tex_sha256": "sha256:528ed860d5c48ed0b60c833ca726403d25a3a72569cba9021dbcbe86b9450685",
+    "run2_main_tex_sha256": "sha256:528ed860d5c48ed0b60c833ca726403d25a3a72569cba9021dbcbe86b9450685"
+  },
+  "gate": "deterministic-extraction + clean-compile (the \u00a7 3.8 surrogate; STEP-5a)",
+  "no_pdf_committed": true,
+  "overall_status": "pass",
+  "sub_phase": "5.5",
+  "toolchain_pin": {
+    "kind": "de-Docker'd portable TeX Live (no container runtime; \u00a7 0.3 SHIFT)",
+    "tarball_sha256": "73c8cc30550aa04fa0bfcc171ade1e8506721885f911ecf5eb9261d50413d63a",
+    "tinytex_version": "2026.06"
+  }
+}
