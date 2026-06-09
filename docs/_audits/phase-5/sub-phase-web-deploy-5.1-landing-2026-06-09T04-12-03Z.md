@@ -159,7 +159,7 @@ n/a (web-deploy is a matrix over all qualifying sims, not a single-canonical sub
   about:blank; MEASURED both (probe § 4 corrected table).
 - FACT — the 4 PASS / 3 DIVERGE per-sim verdicts (measured twice, reproducible; § 4 table + perf-ledger).
 - FACT — Vite build exit 0 for all 7; WebGPU path engaged for all 7 (adapter + panel + clean console).
-- FACT — `tolerance.toml` (sha `d190843…`) + `tolerance-budget.toml` (sha `e3922b3…`) byte-unchanged; gpu_gate.py untouched (git clean).
+- FACT — `tools/testkit/equivalence/tolerance.toml` (sha `d190843…`) + `tools/testkit/equivalence/tolerance-budget.toml` (sha `e3922b3…`) byte-unchanged; gpu_gate.py untouched (git clean).
 - FACT — integrity `--all`: 0 HARD_FAIL / 14 SOFT_WARN (all 14 pre-existing phase-0/1/2 audit-link warnings).
 - FACT — 9 smoke tests PASS; failing-first evidence sha `7a89585…`.
 - INFERENCE — the 3 divergences are cross-implementation f32 (Dawn vs wgpu-native), not sim bugs (rd2d/neural-ca match at setup; boids dynamics correct short-horizon). Strongly evidenced, not bit-proven against a third impl.
