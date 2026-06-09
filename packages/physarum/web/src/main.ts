@@ -14,7 +14,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/physarum.wgsl?raw";
 import renderWgsl from "./render.wgsl?raw";
@@ -203,6 +203,7 @@ async function main(): Promise<void> {
   await reset();
   boot.textContent = "";
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     step();
     const enc = device.createCommandEncoder();
     const pass = enc.beginRenderPass({

@@ -16,7 +16,7 @@ import type { DeviceContext } from "../../../../common/common-ts/src/context.js"
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { makeBindGroup, makeBindGroupLayout } from "../../../../common/common-ts/src/bindgroups.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/gray_scott.wgsl?raw";
@@ -312,6 +312,7 @@ async function main(): Promise<void> {
   setBoot("");
 
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     for (let i = 0; i < STEPS_PER_FRAME; i += 1) computeStep();
     renderFrame();
     requestAnimationFrame(frame);

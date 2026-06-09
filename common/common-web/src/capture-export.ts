@@ -105,3 +105,44 @@ export function resetCapture(): void {
   globalThis.__bitPhysicsCapture = undefined;
   globalThis.__bitPhysicsCaptureReady = false;
 }
+
+// --- Capture / live-loop mutual exclusion (the harness-race fix) -------------
+//
+// Every Stack-B web app runs a live `requestAnimationFrame(frame)` loop that
+// steps the sim on the SAME module-level ping-pong index + GPU buffers that
+// `captureCanonical()` uses. `captureCanonical()` yields at each `await`
+// readback; if the live `frame()` loop steps during that yield it overwrites
+// the capture's shared state, so two captures differ run-to-run by a
+// wall-clock-dependent amount (MEASURED for boids @ step 400 and neural-ca @
+// step 100; latent in rd2d/ising/physarum). This is a within-backend data
+// race, NOT a shader bug or a cross-backend artifact (see the Phase-0
+// browser-divergence charter).
+//
+// The fix isolates the two: the capture button wraps `onCapture` in
+// `runCaptureExclusive`, which holds `_capturing` for the capture's whole
+// duration, and every live `frame()` loop checks `isCapturing()` and yields
+// (no stepping, no render) until the capture completes. After the fix each
+// new_canonical sim is run-twice byte-identical again.
+let _capturing = false;
+
+/** True while a capture is in progress; live RAF loops must not step. */
+export function isCapturing(): boolean {
+  return _capturing;
+}
+
+/**
+ * Run the sim's capture routine with the live-loop lock held, so the live
+ * `requestAnimationFrame` loop cannot interleave a step into the shared GPU
+ * state mid-capture. The flag is set synchronously (before the first await) so
+ * any RAF callback scheduled after the capture click already sees it.
+ */
+export async function runCaptureExclusive(
+  fn: () => void | Promise<void>,
+): Promise<void> {
+  _capturing = true;
+  try {
+    await fn();
+  } finally {
+    _capturing = false;
+  }
+}

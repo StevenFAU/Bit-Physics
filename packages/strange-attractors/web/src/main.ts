@@ -13,7 +13,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/lorenz_rk4.wgsl?raw";
@@ -170,6 +170,7 @@ async function main(): Promise<void> {
   boot.textContent = "";
   let angle = 0;
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     angle += 0.003;
     queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, nPoints, 0]));
     const enc = device.createCommandEncoder();

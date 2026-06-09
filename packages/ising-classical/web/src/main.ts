@@ -14,7 +14,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/metropolis.wgsl?raw";
 import renderWgsl from "./render.wgsl?raw";
@@ -219,6 +219,7 @@ async function main(): Promise<void> {
   boot.textContent = "";
 
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     for (let i = 0; i < STEPS_PER_FRAME; i += 1) sweep();
     const enc = device.createCommandEncoder();
     const pass = enc.beginRenderPass({

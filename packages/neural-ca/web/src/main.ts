@@ -15,7 +15,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
 import inferenceWgsl from "../../typescript/src/nca_inference.wgsl?raw";
@@ -229,6 +229,7 @@ async function main(): Promise<void> {
   let liveStep = 0;
 
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     for (let i = 0; i < STEPS_PER_FRAME; i += 1) {
       stepOnce(liveStep, 42);
       liveStep += 1;

@@ -12,7 +12,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 
 import deWgsl from "../../src/mandelbulb_de.wgsl?raw";
 import renderWgsl from "./render.wgsl?raw";
@@ -180,6 +180,7 @@ async function main(): Promise<void> {
   boot.textContent = "";
   let angle = 0;
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     angle += 0.004;
     const u = new Float32Array([canvas.width / canvas.height, angle, 0, 0]);
     queue.writeBuffer(renderUniform, 0, u);

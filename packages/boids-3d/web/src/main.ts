@@ -13,7 +13,7 @@
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
-import { exposeCapture, field, resetCapture } from "../../../../common/common-web/src/capture-export.js";
+import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/boids.wgsl?raw";
@@ -202,6 +202,7 @@ async function main(): Promise<void> {
   let angle = 0;
   let liveStep = 0;
   function frame(): void {
+    if (isCapturing()) { requestAnimationFrame(frame); return; }
     step();
     liveStep += 1;
     if (liveStep > STEPS) { void loadIC(); liveStep = 0; }

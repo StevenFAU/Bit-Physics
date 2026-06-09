@@ -9,6 +9,8 @@
 // the Node-targeted `ts-strict` CI surface; the per-sim Vite apps import
 // it as source via a relative path and esbuild bundles it for the browser.
 
+import { runCaptureExclusive } from "./capture-export.js";
+
 export type Tier = "test" | "demo" | "reference";
 
 export interface SettingsState {
@@ -131,7 +133,9 @@ export function createSettingsPanel(
   btn.setAttribute("data-bp", "capture");
   btn.textContent = "Capture to disk";
   btn.addEventListener("click", () => {
-    void options.onCapture();
+    // Hold the capture/live-loop lock for the whole capture so the live RAF
+    // loop cannot interleave a step into the shared GPU state (harness race).
+    void runCaptureExclusive(options.onCapture);
   });
   root.appendChild(btn);
 
