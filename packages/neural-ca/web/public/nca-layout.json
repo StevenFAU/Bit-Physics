@@ -1,0 +1,33 @@
+{
+  "dtype": "f32",
+  "tensors": {
+    "w1.bias": {
+      "count": 128,
+      "offset": 0,
+      "shape": [
+        128
+      ]
+    },
+    "w1.weight": {
+      "count": 6144,
+      "offset": 128,
+      "shape": [
+        128,
+        48,
+        1,
+        1
+      ]
+    },
+    "w2.weight": {
+      "count": 2048,
+      "offset": 6272,
+      "shape": [
+        16,
+        128,
+        1,
+        1
+      ]
+    }
+  },
+  "version": "1.0.0"
+}

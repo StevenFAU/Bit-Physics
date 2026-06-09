@@ -360,9 +360,180 @@ def gate_mandelbulb() -> GateResult:
     )
 
 
+# --------------------------------------------------------------------------- #
+# neural-ca — capture_roundtrip (same-shader, bit-exact)
+# --------------------------------------------------------------------------- #
+def gate_neural_ca() -> GateResult:
+    sys.path.insert(0, str(REPO / "packages/neural-ca/python"))
+    from neural_ca.wgsl_harness import run_wgsl_inference  # type: ignore
+
+    from capture import load_capture
+
+    ckpt = REPO / "tools/testkit/golden/checkpoints/neural-ca-emoji-disk-wgsl.bin"
+    layout = (
+        REPO / "tools/testkit/golden/checkpoints/neural-ca-emoji-disk-wgsl.layout.json"
+    )
+    # Run the COMMITTED nca_inference.wgsl twice (the repo's own wgpu-native path).
+    f1 = run_wgsl_inference(
+        ckpt, layout, grid_size=64, steps=1000, seed=42, capture_every=50
+    )
+    f2 = run_wgsl_inference(
+        ckpt, layout, grid_size=64, steps=1000, seed=42, capture_every=50
+    )
+    twice_identical = bool(np.array_equal(f1, f2))
+
+    canon = load_capture(
+        REPO / "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.json"
+    )
+    steps = sorted(s.step for s in canon.steps())
+    fkey = next(iter(canon.step(steps[0]).state.keys()))
+    ref = np.stack([canon.step(n).state[fkey] for n in steps], axis=0)
+    diff = np.abs(f1.astype(np.float64) - ref.astype(np.float64))
+    max_abs = float(diff.max())
+    bit_exact = max_abs == 0.0
+
+    import wgpu
+
+    ad = wgpu.gpu.request_adapter_sync(power_preference="high-performance")
+    return GateResult(
+        sim="neural-ca",
+        kind="capture_roundtrip",
+        passed=(bit_exact and twice_identical),
+        device=ad.summary,
+        run_twice_identical=twice_identical,
+        detail={
+            "vs_wgsl_canonical_max_abs": max_abs,
+            "bit_exact": bit_exact,
+            "field": fkey,
+            "n_frames": int(f1.shape[0]),
+            "tolerance": "[defaults.continuous-ca] 0.0/0.0 (bit-exact, no row added)",
+        },
+    )
+
+
+# --------------------------------------------------------------------------- #
+# ising-classical — observable (statistical-equivalence, new-canonical)
+# --------------------------------------------------------------------------- #
+def gate_ising(n_seeds: int = 6) -> GateResult:
+    import dataclasses
+
+    import wgpu
+
+    sys.path.insert(0, str(REPO / "packages/ising-classical"))
+    from ising_classical.reference.ising_numpy import (  # type: ignore
+        IsingParams,
+        energy_per_spin,
+        initial_condition,
+        metropolis_sweep,
+    )
+
+    wgsl = (REPO / "packages/ising-classical/src/metropolis.wgsl").read_text()
+    n, steps, t, jj, hh = 128, 10000, 2.27, 1.0, 0.0
+    flds = {f.name for f in dataclasses.fields(IsingParams)}
+    kw: dict = {"n": n, "J": jj, "h": hh}
+    kw.update({"T": t} if "T" in flds else {})
+    kw.update({"temperature": t} if "temperature" in flds else {})
+    p = IsingParams(**kw)
+    seeds = [42 + i for i in range(n_seeds)]
+
+    ad = wgpu.gpu.request_adapter_sync(power_preference="high-performance")
+    dev = ad.request_device_sync()
+    U = wgpu.BufferUsage
+    bb = n * n * 4
+    sb = dev.create_buffer(size=bb, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC)
+    ub = dev.create_buffer(size=32, usage=U.UNIFORM | U.COPY_DST)
+    bgl = dev.create_bind_group_layout(
+        entries=[
+            {
+                "binding": 0,
+                "visibility": wgpu.ShaderStage.COMPUTE,
+                "buffer": {"type": wgpu.BufferBindingType.uniform},
+            },
+            {
+                "binding": 1,
+                "visibility": wgpu.ShaderStage.COMPUTE,
+                "buffer": {"type": wgpu.BufferBindingType.storage},
+            },
+        ]
+    )
+    pipe = dev.create_compute_pipeline(
+        layout=dev.create_pipeline_layout(bind_group_layouts=[bgl]),
+        compute={"module": dev.create_shader_module(code=wgsl), "entry_point": "main"},
+    )
+    bg = dev.create_bind_group(
+        layout=bgl,
+        entries=[
+            {"binding": 0, "resource": {"buffer": ub, "offset": 0, "size": 32}},
+            {"binding": 1, "resource": {"buffer": sb, "offset": 0, "size": bb}},
+        ],
+    )
+    wg = math.ceil(n / 8)
+
+    def wgsl_run(seed: int) -> np.ndarray:
+        dev.queue.write_buffer(
+            sb, 0, initial_condition(p, seed).astype(np.int32).tobytes()
+        )
+        for st in range(1, steps + 1):
+            for color in (0, 1):
+                dev.queue.write_buffer(
+                    ub, 0, struct.pack("<IIII4f", n, st, color, seed, jj, hh, t, 0.0)
+                )
+                e = dev.create_command_encoder()
+                c = e.begin_compute_pass()
+                c.set_pipeline(pipe)
+                c.set_bind_group(0, bg)
+                c.dispatch_workgroups(wg, wg, 1)
+                c.end()
+                dev.queue.submit([e.finish()])
+        return (
+            np.frombuffer(dev.queue.read_buffer(sb), dtype=np.int32)
+            .reshape(n, n)
+            .copy()
+        )
+
+    # run-twice byte-identical (mandatory for the new-canonical discipline)
+    twice_identical = bool(np.array_equal(wgsl_run(42), wgsl_run(42)))
+    w_e = [energy_per_spin(wgsl_run(s).astype(np.float64), p) for s in seeds]
+
+    def np_run(seed: int) -> float:
+        s = initial_condition(p, seed)
+        rng = np.random.default_rng(seed + 1)
+        for _ in range(steps):
+            s = metropolis_sweep(s, p, rng)
+        return energy_per_spin(s.astype(np.float64), p)
+
+    n_e = [np_run(s) for s in seeds]
+    wEm, nEm = float(np.mean(w_e)), float(np.mean(n_e))
+    wEs = float(np.std(w_e) / math.sqrt(len(w_e)))
+    nEs = float(np.std(n_e) / math.sqrt(len(n_e)))
+    comb = math.sqrt(wEs**2 + nEs**2)
+    z = abs(wEm - nEm) / comb if comb > 0 else 0.0
+    consistent = z < 3.0
+
+    return GateResult(
+        sim="ising-classical",
+        kind="observable",
+        passed=(consistent and twice_identical),
+        device=ad.summary,
+        run_twice_identical=twice_identical,
+        detail={
+            "n_seeds": n_seeds,
+            "wgsl_energy_mean": round(wEm, 4),
+            "numpy_energy_mean": round(nEm, 4),
+            "energy_z_score": round(z, 2),
+            "z_threshold": 3.0,
+            "observable": "energy_per_spin (self-averaging); |M| broad near Tc",
+            "note": "statistical-equivalence to the NumPy reference ensemble — NOT a spin-field "
+            "round-trip (WGSL RNG != NumPy PCG64; a field match would be fake)",
+        },
+    )
+
+
 GATES: dict[str, Callable[[], GateResult]] = {
     "reaction-diffusion-2d": gate_rd2d,
     "mandelbulb-explorer": gate_mandelbulb,
+    "neural-ca": gate_neural_ca,
+    "ising-classical": gate_ising,
 }
 
 

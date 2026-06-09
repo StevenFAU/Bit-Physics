@@ -40,10 +40,32 @@ def _rd2d_ic() -> np.ndarray:
     return out.reshape(-1)
 
 
+def _ising_ic() -> np.ndarray:
+    sys.path.insert(0, str(REPO / "packages/ising-classical"))
+    import dataclasses
+
+    from ising_classical.reference.ising_numpy import (  # type: ignore
+        IsingParams,
+        initial_condition,
+    )
+
+    flds = {f.name for f in dataclasses.fields(IsingParams)}
+    kw: dict = {"n": 128, "J": 1.0, "h": 0.0}
+    kw.update({"T": 2.27} if "T" in flds else {})
+    kw.update({"temperature": 2.27} if "temperature" in flds else {})
+    p = IsingParams(**kw)
+    # int32 ±1 spins (the WGSL `spins` buffer is i32).
+    return initial_condition(p, 42).astype(np.int32).reshape(-1)
+
+
 GENERATORS = {
     "reaction-diffusion-2d": (
         _rd2d_ic,
         "packages/reaction-diffusion-2d/web/public/rd2d-ic-seed42.bin",
+    ),
+    "ising-classical": (
+        _ising_ic,
+        "packages/ising-classical/web/public/ising-ic-seed42.bin",
     ),
 }
 

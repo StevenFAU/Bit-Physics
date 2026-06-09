@@ -30,6 +30,8 @@ REPO = Path(__file__).resolve().parents[3]
 WEB_DIRS = {
     "reaction-diffusion-2d": "packages/reaction-diffusion-2d/web",
     "mandelbulb-explorer": "packages/mandelbulb-explorer/web",
+    "neural-ca": "packages/neural-ca/web",
+    "ising-classical": "packages/ising-classical/web",
 }
 
 
