@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Phase 5 — Productization
+
+- **5.1 web-deploy** — build-and-validate pipeline for the 7 Stack-B WebGPU web
+  frontends. `tools/productization/web-deploy/` (pipeline.py + verify.py + pinned
+  Playwright headless browser-WebGPU `driver.mjs`), `.github/workflows/web-deploy.yml`
+  (build-and-validate matrix over the 7; `deploy` GATED OFF), `docs/productization/web-deploy.md`.
+  Each sim's bundle is loaded in headless Chromium with WebGPU and re-verified through
+  its OWN established gate (web-build track) on the browser-emitted capture — no tolerance
+  added or widened. Browser-WebGPU is available over a secure context (correcting the
+  web-build track's "unavailable", an about:blank artifact): 4/7 (mandelbulb, strange,
+  physarum, ising) clear their gate through the browser; rd2d/neural-ca (pointwise/bit-exact
+  round-trip) and boids (run-twice determinism) show characterized cross-implementation f32
+  divergence (browser Dawn vs canonical wgpu-native), surfaced for sim-owner/operator.
+
 ### sub-phase-phase-3-mass-spring-cloth (Phase 3, task-5 — FIRST NEW Stack-C SIM + first soft-body category)
 
 Reference mass-spring cloth on Stack C (C++20 / Vulkan compute). XPBD (Macklin,
