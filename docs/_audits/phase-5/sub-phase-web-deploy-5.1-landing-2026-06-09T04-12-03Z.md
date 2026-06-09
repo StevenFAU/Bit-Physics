@@ -7,7 +7,7 @@ artifact_id: web-deploy
 verdict: SHIFTED-with-notes
 verdict-state: SHIFTED
 sub_phase: "web-deploy-5.1"
-head_sha: <COMMIT_4_SHA_PENDING>
+head_sha: 05dbd24a086643b5c0d4615d4874bf27ef0e45f4
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
@@ -41,7 +41,7 @@ ci_activation:
   - { workflow: .github/workflows/web-deploy.yml, action: "created build-and-validate (matrix×7) + GATED-OFF deploy jobs; tag/PR/dispatch-triggered, not bare-main push — operator dispatch is the browser-delivery proof" }
 commit_1_sha: 80d2fee08a0992ac6b320f7e67d0f694c3702440
 commit_2_sha: dc7173c83030acb073621d37129e46e806302862
-commit_3_sha: <COMMIT_3_SHA_PENDING>
+commit_3_sha: 05dbd24a086643b5c0d4615d4874bf27ef0e45f4
 canonical_sim_selected: n/a
 ---
 
@@ -56,7 +56,7 @@ canonical_sim_selected: n/a
 
 | | |
 |---|---|
-| **Commits** | `80d2fee` (new files), `dc7173c` (modify existing), `<COMMIT_3>` (this audit), `<COMMIT_4>` (#12 head_sha back-fill). — FACT |
+| **Commits** | `80d2fee` (new files), `dc7173c` (modify existing), `05dbd24` (this audit), + the #12 head_sha back-fill. — FACT |
 | **Pipeline** | `tools/productization/web-deploy/` (pipeline.py §5.5 + verify.py + pinned-Playwright driver.mjs) + `.github/workflows/web-deploy.yml` (build-and-validate matrix×7 + GATED-OFF deploy) + `docs/productization/web-deploy.md`. — FACT |
 | **Browser WebGPU** | **AVAILABLE locally** over a secure context (ANGLE-Vulkan, RX 6800 XT). CONTRADICTS the web-build track's "unavailable" — which was an `about:blank` (non-secure-context) probe artifact. The gate RAN LOCALLY, not deferred-to-CI. — FACT |
 | **Gate result (7)** | **4 PASS / 3 DIVERGE** through the browser. PASS: mandelbulb, strange, physarum, ising. DIVERGE: rd2d, neural-ca (pointwise/bit-exact round-trip), boids (run-twice determinism). — FACT |
