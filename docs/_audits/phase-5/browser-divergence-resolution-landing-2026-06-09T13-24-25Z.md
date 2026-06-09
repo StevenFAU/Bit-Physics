@@ -8,7 +8,7 @@ verdict: CONFIRMED
 verdict-state: CONFIRMED
 phase: 5
 sub_phase: "browser-divergence-resolution"
-head_sha: PLACEHOLDER-BACKFILL-PER-CONVENTION-12
+head_sha: 84f17170ec2c265fe8d3b0b6db64214fb6a3524d
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 16 SOFT_WARN"
 parent_audits:
