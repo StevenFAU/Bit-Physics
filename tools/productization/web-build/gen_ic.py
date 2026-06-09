@@ -69,6 +69,17 @@ def _boids_ic() -> np.ndarray:
     )
 
 
+def _physarum_ic() -> np.ndarray:
+    sys.path.insert(0, str(REPO / "packages/physarum"))
+    from physarum.sim import _seeded_initial_state  # type: ignore
+
+    pos, head = _seeded_initial_state(42, 500, (256, 256))
+    # positions (500*2) then headings (500*2), little-endian f32.
+    return np.concatenate(
+        [pos.astype(np.float32).reshape(-1), head.astype(np.float32).reshape(-1)]
+    )
+
+
 GENERATORS = {
     "reaction-diffusion-2d": (
         _rd2d_ic,
@@ -77,6 +88,10 @@ GENERATORS = {
     "boids-3d": (
         _boids_ic,
         "packages/boids-3d/web/public/boids-ic-seed42.bin",
+    ),
+    "physarum": (
+        _physarum_ic,
+        "packages/physarum/web/public/physarum-ic-seed42.bin",
     ),
     "ising-classical": (
         _ising_ic,

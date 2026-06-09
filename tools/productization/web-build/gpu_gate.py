@@ -789,6 +789,161 @@ def gate_boids() -> GateResult:
     )
 
 
+# --------------------------------------------------------------------------- #
+# physarum — new_canonical (atomic trail deposit → integer-atomic determinism)
+# --------------------------------------------------------------------------- #
+def gate_physarum() -> GateResult:
+    import wgpu
+
+    sys.path.insert(0, str(REPO / "packages/physarum"))
+    from physarum.reference import canonical_params  # type: ignore
+    from physarum.sim import _seeded_initial_state  # type: ignore
+    from capture import load_capture
+
+    wgsl = (REPO / "packages/physarum/src/physarum.wgsl").read_text()
+    w = h = 256
+    na, steps = 500, 5000
+    p = canonical_params()
+    pos0, head0 = _seeded_initial_state(42, na, (w, h))
+    pos = pos0.astype(np.float32)
+    head = head0.astype(np.float32)
+
+    _, ad, dev = _adapter()
+    U = wgpu.BufferUsage
+    tn = w * h * 4
+    Ta = dev.create_buffer(size=tn, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC)
+    Tb = dev.create_buffer(size=tn, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC)
+    posb = dev.create_buffer(size=na * 2 * 4, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC)
+    headb = dev.create_buffer(
+        size=na * 2 * 4, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC
+    )
+    depb = dev.create_buffer(size=tn, usage=U.STORAGE | U.COPY_DST | U.COPY_SRC)
+    ub = dev.create_buffer(size=48, usage=U.UNIFORM | U.COPY_DST)
+    dphi = math.radians(p["delta_phi_deg"])
+    dev.queue.write_buffer(
+        ub,
+        0,
+        struct.pack(
+            "<IIII8f",
+            na,
+            w,
+            h,
+            0,
+            dphi,
+            p["L_sense"],
+            p["L_move"],
+            p["deposit"],
+            p["decay_alpha"],
+            0,
+            0,
+            0,
+        ),
+    )
+    ST = wgpu.ShaderStage.COMPUTE
+    BT = wgpu.BufferBindingType
+    bgl = dev.create_bind_group_layout(
+        entries=[
+            {"binding": 0, "visibility": ST, "buffer": {"type": BT.uniform}},
+            {"binding": 1, "visibility": ST, "buffer": {"type": BT.read_only_storage}},
+            {"binding": 2, "visibility": ST, "buffer": {"type": BT.storage}},
+            {"binding": 3, "visibility": ST, "buffer": {"type": BT.storage}},
+            {"binding": 4, "visibility": ST, "buffer": {"type": BT.storage}},
+            {"binding": 5, "visibility": ST, "buffer": {"type": BT.storage}},
+        ]
+    )
+    pl = dev.create_pipeline_layout(bind_group_layouts=[bgl])
+    mod = dev.create_shader_module(code=wgsl)
+    pa = dev.create_compute_pipeline(
+        layout=pl, compute={"module": mod, "entry_point": "agents"}
+    )
+    pap = dev.create_compute_pipeline(
+        layout=pl, compute={"module": mod, "entry_point": "apply"}
+    )
+    pd = dev.create_compute_pipeline(
+        layout=pl, compute={"module": mod, "entry_point": "diffuse"}
+    )
+
+    def bind(tin, tout):
+        return dev.create_bind_group(
+            layout=bgl,
+            entries=[
+                {"binding": 0, "resource": {"buffer": ub, "offset": 0, "size": 48}},
+                {"binding": 1, "resource": {"buffer": tin, "offset": 0, "size": tn}},
+                {"binding": 2, "resource": {"buffer": tout, "offset": 0, "size": tn}},
+                {
+                    "binding": 3,
+                    "resource": {"buffer": posb, "offset": 0, "size": na * 2 * 4},
+                },
+                {
+                    "binding": 4,
+                    "resource": {"buffer": headb, "offset": 0, "size": na * 2 * 4},
+                },
+                {"binding": 5, "resource": {"buffer": depb, "offset": 0, "size": tn}},
+            ],
+        )
+
+    wga, wgg = math.ceil(na / 64), math.ceil(w / 8)
+
+    def run():
+        dev.queue.write_buffer(Ta, 0, np.zeros(w * h, dtype=np.float32).tobytes())
+        dev.queue.write_buffer(depb, 0, np.zeros(w * h, dtype=np.uint32).tobytes())
+        dev.queue.write_buffer(posb, 0, pos.reshape(-1).tobytes())
+        dev.queue.write_buffer(headb, 0, head.reshape(-1).tobytes())
+        for _ in range(steps):
+            e = dev.create_command_encoder()
+            c = e.begin_compute_pass()
+            c.set_pipeline(pa)
+            c.set_bind_group(0, bind(Ta, Tb))
+            c.dispatch_workgroups(wga)
+            c.end()
+            c = e.begin_compute_pass()
+            c.set_pipeline(pap)
+            c.set_bind_group(0, bind(Ta, Tb))
+            c.dispatch_workgroups(wgg, wgg)
+            c.end()
+            c = e.begin_compute_pass()
+            c.set_pipeline(pd)
+            c.set_bind_group(0, bind(Tb, Ta))
+            c.dispatch_workgroups(wgg, wgg)
+            c.end()
+            dev.queue.submit([e.finish()])
+        return (
+            np.frombuffer(dev.queue.read_buffer(Ta), dtype=np.float32)
+            .reshape(w, h)
+            .copy()
+        )
+
+    t1 = run()
+    twice = bool(np.array_equal(t1, run()))
+    mass = float(t1.sum())
+    finite = bool(np.isfinite(t1).all())
+    canon = load_capture(
+        REPO / "captures/physarum-ref/network-canonical-seed42-step5000.json"
+    )
+    last = sorted(s.step for s in canon.steps())[-1]
+    canon_mass = float(canon.step(last).diagnostics["total_mass"])
+    mass_rel = abs(mass - canon_mass) / canon_mass if canon_mass else 0.0
+    mass_ok = mass_rel < 1e-3
+
+    return GateResult(
+        sim="physarum",
+        kind="new_canonical",
+        passed=(twice and finite and mass_ok),
+        device=ad.summary,
+        run_twice_identical=twice,
+        detail={
+            "total_mass": round(mass, 4),
+            "canonical_total_mass": round(canon_mass, 4),
+            "mass_rel_diff": mass_rel,
+            "atomic_strategy": "integer fixed-point atomicAdd<u32> — order-independent, so run-twice "
+            "byte-identical despite the scatter-deposit (float atomic-add would be non-deterministic)",
+            "note": "atomics + agent RNG IC preclude a trail-FIELD match to the f64 canonical — "
+            "new-canonical: determinism + the exact mass-balance invariant (M=deposit·N·(1-a)/a); "
+            "no tolerance widened",
+        },
+    )
+
+
 GATES: dict[str, Callable[[], GateResult]] = {
     "reaction-diffusion-2d": gate_rd2d,
     "mandelbulb-explorer": gate_mandelbulb,
@@ -796,6 +951,7 @@ GATES: dict[str, Callable[[], GateResult]] = {
     "ising-classical": gate_ising,
     "strange-attractors": gate_strange,
     "boids-3d": gate_boids,
+    "physarum": gate_physarum,
 }
 
 
