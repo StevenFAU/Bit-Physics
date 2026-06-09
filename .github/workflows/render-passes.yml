@@ -1,0 +1,167 @@
+name: render-passes
+# Phase 5 sub-phase 5.4 — build-and-validate a deterministic Cycles render for the
+# canonical render sim (eulerian-smoke; v9 R4), re-verifying the artifact by
+# DETERMINISM (two renders → bit-identical decoded pixel buffers) + ASSET-INTEGRITY
+# (the h5→VDB conversion round-trips the capture field bit-exactly). Bootstrap § 3.8
+# is N/A for renders (Appendix E): a static image is not a capture re-emitter. The
+# `deploy` job is GATED OFF (§ 4.5): renders are committed to docs/renders/<sim>/,
+# not deployed externally.
+#
+# §0.3 SHIFT — render toolchain: the plan names a "Blender Docker image pinned to
+# digest", but the landed environment has no Docker (mirrors 5.2's de-Docker'd
+# binary-cmake SHIFT). The toolchain is instead a pinned portable Blender tarball,
+# verified by sha256 digest before use — same pin guarantee, no container runtime.
+# §0.3 SHIFT — canonical capture: R4 described eulerian-smoke as "4.4 MB CI-friendly",
+# but the committed canonical capture (sim_runner_seeded) is the 705 MB 3D Taylor-Green
+# (taylor-green-128cube-seed42-step500.h5); it is fetched via LFS (R2 when wired).
+
+on:
+  push:
+    tags: ['render-v*']
+  pull_request:
+    paths:
+      - 'tools/productization/render-passes/**'
+      - '.github/workflows/render-passes.yml'
+      - 'docs/sim-specs/**/spec-ref.md'
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Set to "true" to run the deploy job. Default false (Phase 5 artifact-ready only).'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: render-passes-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Pinned render toolchain (the de-Docker'd SHIFT). Bump version + digest together.
+  BLENDER_VERSION: '4.5.10'
+  BLENDER_SERIES: '4.5'
+  BLENDER_SHA256: '198a4248b38899af661aa9241cebd746394eaddbfafbeb53152440de80b118f7'
+
+jobs:
+  discover:
+    name: Discover render canonical sim
+    runs-on: ubuntu-latest
+    outputs:
+      sims: ${{ steps.disc.outputs.sims }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Discover (§13 render:true pool; canonical pick per R4)
+        id: disc
+        run: |
+          uv run --with h5py --with numpy python \
+            tools/productization/render-passes/pipeline.py discover --json > sims.json
+          cat sims.json
+          NAMES=$(uv run python -c "import json; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
+          echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
+
+  build-and-validate:
+    name: Build and validate (${{ matrix.sim }})
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sim: ${{ fromJson(needs.discover.outputs.sims) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install render toolchain (pinned Blender tarball — digest verified)
+        run: |
+          URL="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+          curl -sSL -o blender.tar.xz "$URL"
+          echo "${BLENDER_SHA256}  blender.tar.xz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/blender"
+          tar -xf blender.tar.xz -C "$RUNNER_TEMP/blender"
+          echo "BIT_PHYSICS_BLENDER=$RUNNER_TEMP/blender/blender-${BLENDER_VERSION}-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Verify Blender + bundled openvdb
+        run: |
+          "$BIT_PHYSICS_BLENDER" --version
+          "$BIT_PHYSICS_BLENDER" -b --factory-startup -noaudio \
+            --python-expr "import openvdb,numpy;print('openvdb+numpy OK')"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync testkit workspace (h5py + render_similarity)
+        working-directory: tools/testkit
+        run: uv sync --extra dev
+
+      - name: Selective LFS fetch — committed canonical capture (R2 when wired)
+        # Mirrors pypi-release/binary-release: source the lfs-s3 agent when the R2_*
+        # secrets reach this job (push + same-repo PRs); fall through to GitHub LFS
+        # for fork PRs. The render canonical reads the committed 3D .h5 capture.
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2"
+          else
+            echo "lfs fetch route: GitHub LFS"
+          fi
+          git lfs pull --include="captures/${{ matrix.sim }}-ref/**" \
+            || echo "no LFS captures pulled for ${{ matrix.sim }}"
+
+      - name: Build + validate (convert → export → render×2 → determinism gate)
+        run: |
+          uv run --with pillow python \
+            tools/productization/render-passes/pipeline.py validate \
+            --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" --json \
+            > "${{ runner.temp }}/result.json"
+          cat "${{ runner.temp }}/result.json"
+
+      - name: Surface result
+        if: always()
+        run: cat "${{ runner.temp }}/result.json" || true
+
+      - name: Upload rendered hero + determinism report
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: render-passes-${{ matrix.sim }}
+          path: |
+            ${{ runner.temp }}/artifacts/${{ matrix.sim }}/hero.png
+            ${{ runner.temp }}/artifacts/${{ matrix.sim }}/determinism-report.json
+            ${{ runner.temp }}/artifacts/${{ matrix.sim }}/asset-integrity.json
+          retention-days: 30
+          if-no-files-found: warn
+
+  deploy:
+    name: Deploy (GATED OFF — no publish in Phase 5)
+    needs: build-and-validate
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # commit refreshed renders to docs/renders/ (§ 4.5 go-live)
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: renders
+      # Publish step — NOT exercised in Phase 5 (confirm_deploy defaults false).
+      # Renders are committed to docs/renders/<sim>/ in the repo; the post-phase
+      # go-live runbook (docs/productization/render-passes.md § 7) refreshes them.
+      - name: Surface renders (placeholder; no external publish target)
+        run: ls -R renders || true

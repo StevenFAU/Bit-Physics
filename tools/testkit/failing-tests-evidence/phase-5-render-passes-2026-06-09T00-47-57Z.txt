@@ -1,0 +1,24 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /home/clipbird/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/clipbird/Projects/Bit-Physics
+configfile: pyproject.toml
+plugins: anyio-4.13.0, timeout-2.4.0, hypothesis-6.152.8
+collecting ... collected 0 items / 1 error
+
+==================================== ERRORS ====================================
+__ ERROR collecting tools/productization/render-passes/smoke/test_pipeline.py __
+ImportError while importing test module '/home/clipbird/Projects/Bit-Physics/tools/productization/render-passes/smoke/test_pipeline.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+/home/clipbird/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/importlib/__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+smoke/test_pipeline.py:24: in <module>
+    import convert
+E   ModuleNotFoundError: No module named 'convert'
+=========================== short test summary info ============================
+ERROR smoke/test_pipeline.py
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+=============================== 1 error in 0.18s ===============================
