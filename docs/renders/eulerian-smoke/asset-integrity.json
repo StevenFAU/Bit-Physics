@@ -1,0 +1,15 @@
+{
+  "dims": [
+    128,
+    128,
+    128
+  ],
+  "grid_dtype": "double",
+  "grid_name": "density",
+  "openvdb_version": "unknown",
+  "render_asset_sha256": "sha256:22c86e071e85f51b54f7fa84328cb823db096fc0393f9fc6fa362428431cac91",
+  "roundtrip_bit_exact": true,
+  "roundtrip_max_abs": 0.0,
+  "roundtrip_max_rel": 0.0,
+  "source_field_sha256": "sha256:01597143d798ebe9d36325992f567c2a368fbd1eeae66169d288e56d9a80e673"
+}

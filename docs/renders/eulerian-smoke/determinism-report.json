@@ -1,0 +1,15 @@
+{
+  "gate": "byte-identical-pixels",
+  "hero_png_sha256": "sha256:00d30f37cb233c64afc23f3701985c7a9f5e766e49d07ef252f0918c1b8b4f89",
+  "pixel_bit_identical": true,
+  "psnr_db": 999.0,
+  "psnr_floor": 40.0,
+  "psnr_identical_sentinel": true,
+  "quality_pass": true,
+  "raw_png_byte_note": "PNG container carries run-varying ancillary chunks (eXIf timestamp, tEXt render-time); the gate is on the DECODED pixel buffer",
+  "raw_png_bytes_identical": false,
+  "run1_pixel_sha256": "sha256:3703e8e27a85bf729c2da18374474b04261f8ceccce065440589f3cb35ff6fc4",
+  "run2_pixel_sha256": "sha256:3703e8e27a85bf729c2da18374474b04261f8ceccce065440589f3cb35ff6fc4",
+  "ssim": 1.0,
+  "ssim_floor": 0.98
+}

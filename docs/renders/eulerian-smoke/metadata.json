@@ -1,0 +1,62 @@
+{
+  "asset": {
+    "category": "volumetric-grid",
+    "dims": [
+      128,
+      128,
+      128
+    ],
+    "object_scale": 0.015625,
+    "target_extent": 2.0
+  },
+  "blender_version": "4.5.10 LTS",
+  "build_id": "sub-phase-eulerian-smoke",
+  "camera": {
+    "lens_mm": 50.0,
+    "location": [
+      3.2,
+      -3.2,
+      2.2
+    ],
+    "target": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "cycles": {
+    "device": "CPU",
+    "engine": "CYCLES",
+    "resolution": [
+      512,
+      512
+    ],
+    "samples": 128,
+    "seed": 42,
+    "use_adaptive_sampling": false,
+    "use_denoising": false
+  },
+  "lighting": {
+    "key_energy": 3000.0,
+    "key_location": [
+      4.0,
+      -3.0,
+      6.0
+    ],
+    "key_size": 3.0,
+    "world_color": [
+      0.02,
+      0.02,
+      0.03
+    ],
+    "world_strength": 0.3
+  },
+  "note_render_asset_sha256": "VDB file bytes are OpenVDB-internal non-deterministic (informational, NOT gated); the GATED invariant is the bit-exact field round-trip in asset-integrity.json + the byte-stable hero pixel/file sha in determinism-report.json",
+  "render_asset_sha256": "sha256:22c86e071e85f51b54f7fa84328cb823db096fc0393f9fc6fa362428431cac91",
+  "render_field": "density",
+  "sim": "eulerian-smoke",
+  "sim_variant": "stam-fedkiw-stable-fluids",
+  "source_capture_path": "taylor-green-128cube-seed42-step500.h5",
+  "source_capture_sha256": "sha256:4604ebdc40b7fdf80c0354c4429f6fb0a12fd566c5bc301ad9ceed60dcd4e2ed",
+  "step": 0
+}
