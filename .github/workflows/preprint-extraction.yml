@@ -1,0 +1,142 @@
+name: preprint-extraction
+# Phase 5 sub-phase 5.5 — build-and-validate an academic-preprint LaTeX source for
+# the canonical preprint sim (pinn-poisson; v9 R4), re-verifying the artifact the way
+# a preprint CAN be verified: not against an analytic anchor (the source sim's physics
+# was already gated through Phase-3 acceptance; bootstrap § 3.8 is N/A here, Appendix F)
+# but by DETERMINISTIC EXTRACTION (two extractions in separate processes -> byte-identical
+# main.tex; the § 3.8 surrogate, STEP-5a) + CLEAN COMPILE (latexmk exit 0, no unresolved
+# \ref/\cite). The `deploy` job is GATED OFF (§ 4.5): no arXiv submission in Phase 5 — the
+# preprint source is committed to docs/preprints/<sim>/, and NO built PDF is committed.
+#
+# §0.3 SHIFT — TeX toolchain: the plan names a "TeX Live container image pinned to digest",
+# but the landed environment has no Docker (mirrors 5.2's de-Docker'd CMake and 5.4's
+# de-Docker'd Blender SHIFTs). The toolchain is instead a pinned portable TeX Live
+# (TinyTeX) tarball, verified by sha256 digest before use — same pin guarantee, no
+# container runtime.
+
+on:
+  push:
+    tags: ['preprint-v*']
+  pull_request:
+    paths:
+      - 'tools/productization/preprint-extraction/**'
+      - '.github/workflows/preprint-extraction.yml'
+      - 'docs/sim-specs/**/spec-ref.md'
+      - 'references/**/MANIFEST.toml'
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Set to "true" to run the deploy job. Default false (Phase 5 artifact-ready only).'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: preprint-extraction-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  # Pinned portable TeX toolchain (the de-Docker'd SHIFT). Bump version + digest together.
+  TINYTEX_VERSION: '2026.06'
+  TINYTEX_SHA256: '73c8cc30550aa04fa0bfcc171ade1e8506721885f911ecf5eb9261d50413d63a'
+
+jobs:
+  discover:
+    name: Discover preprint canonical sim
+    runs-on: ubuntu-latest
+    outputs:
+      sims: ${{ steps.disc.outputs.sims }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Discover (§13 preprint:true pool; canonical pick per § 6.5 / R4)
+        id: disc
+        run: |
+          uv run python \
+            tools/productization/preprint-extraction/pipeline.py discover --json > sims.json
+          cat sims.json
+          NAMES=$(uv run python -c "import json; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
+          echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
+
+  build-and-validate:
+    name: Build and validate (${{ matrix.sim }})
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sim: ${{ fromJson(needs.discover.outputs.sims) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install TeX toolchain (pinned portable TinyTeX — digest verified)
+        run: |
+          URL="https://github.com/rstudio/tinytex-releases/releases/download/v${TINYTEX_VERSION}/TinyTeX-v${TINYTEX_VERSION}.tar.gz"
+          curl -sSL -o tinytex.tar.gz "$URL"
+          echo "${TINYTEX_SHA256}  tinytex.tar.gz" | sha256sum -c -
+          mkdir -p "$RUNNER_TEMP/tinytex"
+          tar -xzf tinytex.tar.gz -C "$RUNNER_TEMP/tinytex"
+          BIN="$RUNNER_TEMP/tinytex/.TinyTeX/bin/x86_64-linux"
+          echo "$BIN" >> "$GITHUB_PATH"
+          echo "BIT_PHYSICS_LATEXMK=$BIN/latexmk" >> "$GITHUB_ENV"
+
+      - name: Verify TeX toolchain (latexmk + pdflatex)
+        run: |
+          latexmk --version
+          pdflatex --version | head -1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Build + validate (extract x2 -> byte-identity gate -> latexmk clean compile)
+        run: |
+          uv run python \
+            tools/productization/preprint-extraction/pipeline.py validate \
+            --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" --json \
+            > "${{ runner.temp }}/result.json"
+          cat "${{ runner.temp }}/result.json"
+
+      - name: Surface result
+        if: always()
+        run: cat "${{ runner.temp }}/result.json" || true
+
+      - name: Upload extracted preprint source (main.tex + references.bib; NO PDF)
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: preprint-extraction-${{ matrix.sim }}
+          path: |
+            ${{ runner.temp }}/artifacts/${{ matrix.sim }}/run1/main.tex
+            ${{ runner.temp }}/artifacts/${{ matrix.sim }}/run1/references.bib
+          retention-days: 30
+          if-no-files-found: warn
+
+  deploy:
+    name: Deploy (GATED OFF — no arXiv submission in Phase 5)
+    needs: build-and-validate
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: preprints
+      # Submit step — NOT exercised in Phase 5 (confirm_deploy defaults false). The
+      # preprint source is committed to docs/preprints/<sim>/; the post-phase go-live
+      # runbook (docs/productization/preprint-extraction.md § 7) does the arXiv upload.
+      - name: Surface preprint source (placeholder; no external submission target)
+        run: ls -R preprints || true
