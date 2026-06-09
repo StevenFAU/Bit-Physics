@@ -8,7 +8,7 @@ verdict: PROPOSED
 verdict-state: PROPOSED
 phase: 5
 sub_phase: "browser-divergence-resolution"
-head_sha: PLACEHOLDER-BACKFILL-PER-CONVENTION-12
+head_sha: d6ebd49e210cb87d187873df4f99950f7f00dfe7
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
