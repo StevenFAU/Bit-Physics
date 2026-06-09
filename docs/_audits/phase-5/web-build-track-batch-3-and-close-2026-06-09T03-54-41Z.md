@@ -8,7 +8,7 @@ verdict: CONFIRMED
 verdict-state: CONFIRMED
 phase: 5
 sub_phase: "web-build-batch-3-and-close"
-head_sha: f1a47adaf00541a267f7aa6eb07d3289d8b368aa
+head_sha: b02f20a11d87b91938a16915a7286570afca78f0
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
