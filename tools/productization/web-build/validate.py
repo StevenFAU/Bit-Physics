@@ -32,6 +32,9 @@ WEB_DIRS = {
     "mandelbulb-explorer": "packages/mandelbulb-explorer/web",
     "neural-ca": "packages/neural-ca/web",
     "ising-classical": "packages/ising-classical/web",
+    "strange-attractors": "packages/strange-attractors/web",
+    "boids-3d": "packages/boids-3d/web",
+    "physarum": "packages/physarum/web",
 }
 
 

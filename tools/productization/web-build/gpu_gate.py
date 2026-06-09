@@ -529,11 +529,122 @@ def gate_ising(n_seeds: int = 6) -> GateResult:
     )
 
 
+# --------------------------------------------------------------------------- #
+# strange-attractors — new_canonical (chaos → structural attractor invariants)
+# --------------------------------------------------------------------------- #
+def gate_strange() -> GateResult:
+    import wgpu
+
+    sys.path.insert(0, str(REPO / "packages/strange-attractors"))
+    from strange_attractors.integrator import rk4_evolve  # type: ignore
+    from strange_attractors.reference.lorenz import lorenz_field  # type: ignore
+
+    wgsl = (REPO / "packages/strange-attractors/src/lorenz_rk4.wgsl").read_text()
+    n, dt = 10000, 0.01
+    sigma, rho, beta = 10.0, 28.0, 8.0 / 3.0
+    off = np.array(
+        [3.047170797544313e-07, -1.0399841062404955e-06, 7.504511958064573e-07]
+    )
+    ic = np.array([1.0, 1.0, 1.0]) + off
+
+    _, ad, dev = _adapter()
+    U = wgpu.BufferUsage
+    nbytes = (n + 1) * 3 * 4
+    out = dev.create_buffer(size=nbytes, usage=U.STORAGE | U.COPY_SRC)
+    ub = dev.create_buffer(size=48, usage=U.UNIFORM | U.COPY_DST)
+    dev.queue.write_buffer(
+        ub,
+        0,
+        struct.pack("<II8f", n, 0, sigma, rho, beta, dt, ic[0], ic[1], ic[2], 0.0),
+    )
+    bgl = dev.create_bind_group_layout(
+        entries=[
+            {
+                "binding": 0,
+                "visibility": wgpu.ShaderStage.COMPUTE,
+                "buffer": {"type": wgpu.BufferBindingType.uniform},
+            },
+            {
+                "binding": 1,
+                "visibility": wgpu.ShaderStage.COMPUTE,
+                "buffer": {"type": wgpu.BufferBindingType.storage},
+            },
+        ]
+    )
+    pipe = dev.create_compute_pipeline(
+        layout=dev.create_pipeline_layout(bind_group_layouts=[bgl]),
+        compute={"module": dev.create_shader_module(code=wgsl), "entry_point": "main"},
+    )
+    bg = dev.create_bind_group(
+        layout=bgl,
+        entries=[
+            {"binding": 0, "resource": {"buffer": ub, "offset": 0, "size": 48}},
+            {"binding": 1, "resource": {"buffer": out, "offset": 0, "size": nbytes}},
+        ],
+    )
+
+    def run() -> np.ndarray:
+        e = dev.create_command_encoder()
+        c = e.begin_compute_pass()
+        c.set_pipeline(pipe)
+        c.set_bind_group(0, bg)
+        c.dispatch_workgroups(1)
+        c.end()
+        dev.queue.submit([e.finish()])
+        return (
+            np.frombuffer(dev.queue.read_buffer(out), dtype=np.float32)
+            .reshape(n + 1, 3)
+            .copy()
+        )
+
+    t1 = run()
+    twice_identical = bool(np.array_equal(t1, run()))
+    ref = rk4_evolve(
+        lambda s: lorenz_field(s, sigma=sigma, rho=rho, beta=beta),
+        ic,
+        dt=dt,
+        n_steps=n,
+        capture_interval=1,
+    )
+    finite = bool(np.isfinite(t1).all()) and float(np.abs(t1).max()) < 60.0
+
+    # Structural invariants: per-axis bounding box + spread (robust to chaos);
+    # mean is near-zero / ill-conditioned, checked with an absolute tolerance.
+    worst_rel = 0.0
+    worst_mean_abs = 0.0
+    for i in range(3):
+        a, b = t1[:, i], ref[:, i]
+        for fa, fb in ((a.min(), b.min()), (a.max(), b.max()), (a.std(), b.std())):
+            worst_rel = max(
+                worst_rel, abs(float(fa) - float(fb)) / max(abs(float(fb)), 1.0)
+            )
+        worst_mean_abs = max(worst_mean_abs, abs(float(a.mean()) - float(b.mean())))
+    structural_ok = worst_rel < 0.12 and worst_mean_abs < 1.5
+
+    return GateResult(
+        sim="strange-attractors",
+        kind="new_canonical",
+        passed=(twice_identical and finite and structural_ok),
+        device=ad.summary,
+        run_twice_identical=twice_identical,
+        detail={
+            "finite_on_attractor": finite,
+            "structural_worst_rel_minmaxstd": round(worst_rel, 4),
+            "structural_rel_threshold": 0.12,
+            "mean_worst_abs": round(worst_mean_abs, 4),
+            "note": "f32 RK4 of chaotic Lorenz diverges pointwise from f64 by the trajectory end — "
+            "gate is structural attractor invariants (bounding box + spread per axis) + determinism, "
+            "NOT a pointwise round-trip; no tolerance widened",
+        },
+    )
+
+
 GATES: dict[str, Callable[[], GateResult]] = {
     "reaction-diffusion-2d": gate_rd2d,
     "mandelbulb-explorer": gate_mandelbulb,
     "neural-ca": gate_neural_ca,
     "ising-classical": gate_ising,
+    "strange-attractors": gate_strange,
 }
 
 
