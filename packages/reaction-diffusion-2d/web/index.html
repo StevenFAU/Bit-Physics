@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gray-Scott Reaction-Diffusion 2D — Bit-Physics</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0d12; color: #cdd6e0;
+        font: 14px ui-monospace, monospace; overflow: hidden; }
+      #app { position: fixed; inset: 0; display: grid; place-items: center; }
+      canvas { image-rendering: pixelated; width: min(90vmin, 720px);
+        height: min(90vmin, 720px); border-radius: 6px; box-shadow: 0 0 40px rgba(0,0,0,.6); }
+      #boot { position: fixed; bottom: 12px; left: 12px; font-size: 12px; color: #7f8a99; }
+    </style>
+  </head>
+  <body>
+    <div id="app"><canvas id="view" width="512" height="512"></canvas></div>
+    <div id="boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
