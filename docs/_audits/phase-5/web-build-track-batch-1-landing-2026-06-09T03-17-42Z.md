@@ -8,7 +8,7 @@ verdict: SHIFTED
 verdict-state: CONFIRMED
 phase: 5
 sub_phase: "web-build-batch-1"
-head_sha: d967e7c14262ce98d29324325e5766b62fa80d3a
+head_sha: d50a65a267fa525a6814f5634b24be9277a7ab26
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
@@ -39,7 +39,7 @@ evidence_hashes:
 
 | | |
 |---|---|
-| **Build/validate commit** | `c921462`→ amended `d967e7c` (batch-1 new files). This audit lands on top; `head_sha` back-filled per Convention #12. — FACT |
+| **Build/validate commit** | `c921462`→ amended `d967e7c` (batch-1 new files). This audit + its back-fill land on top; `head_sha` back-filled per Convention #12. — FACT |
 | **Result** | **2 PASS / 0 BLOCKED.** rd2d `capture_roundtrip` PASS; mandelbulb `new_canonical` PASS. — FACT |
 | **Vite build (§6.1)** | rd2d ✓ exit 0; mandelbulb ✓ exit 0 (vite 6.4.3). — FACT |
 | **Headless WebGPU** | **§6.1 FALLBACK for BOTH** (DOM-load smoke; NOT real headless browser WebGPU). Real headless browser WebGPU is **unavailable in this environment** (§3). The load-bearing correctness gate runs the **identical committed `.wgsl`** via wgpu-native on the **real AMD RX 6800 XT (RADV/Vulkan)** — REAL GPU validation of the actual shader. — FACT |
