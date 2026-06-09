@@ -1,0 +1,31 @@
+<!doctype html>
+<!--
+  Phase-5 web-deploy — iframe embed template (sub-phase 5.1).
+  The deploy job (GATED OFF in Phase 5) would publish one built bundle per sim to
+  GitHub Pages and expose this embed for docs/blog use. {{SIM}} / {{TITLE}} are
+  substituted by assemble_deploy_artifact at go-live. WebGPU needs a secure context
+  (https) and a WebGPU-capable browser; COOP/COEP headers per the go-live runbook.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{TITLE}} — Bit-Physics web demo</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0b0d12; }
+      .bp-embed { width: 100%; height: 100%; border: 0; display: block; }
+      .bp-note { position: fixed; bottom: 8px; left: 8px; color: #6b7785;
+        font: 12px ui-monospace, monospace; }
+    </style>
+  </head>
+  <body>
+    <iframe
+      class="bp-embed"
+      src="./{{SIM}}/index.html"
+      title="{{TITLE}}"
+      allow="cross-origin-isolated"
+      loading="lazy"
+    ></iframe>
+    <div class="bp-note">WebGPU required (Chrome/Edge 113+, secure context).</div>
+  </body>
+</html>

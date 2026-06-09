@@ -1,0 +1,155 @@
+name: web-deploy
+# Phase 5 sub-phase 5.1 — build-and-validate the 7 Stack-B WebGPU web frontends and
+# re-verify each through a REAL headless browser: Vite build → headless Chromium with
+# WebGPU (Mesa lavapipe Vulkan) → drive the capture-export hook → re-apply the sim's
+# OWN established gate (web-build track) to the BROWSER-emitted capture (verify.py).
+# This is the workflow whose green specifically proves browser delivery (the web-build
+# track validated the shaders only on wgpu-native). NO tolerance is added or widened.
+# The `deploy` job is GATED OFF (§ 4.5): Phase 5 ships artifact-ready, no Pages publish.
+
+on:
+  push:
+    tags: ['web-v*']
+  pull_request:
+    paths:
+      - 'tools/productization/web-deploy/**'
+      - '.github/workflows/web-deploy.yml'
+      - 'packages/**/web/**'
+      - 'common/common-web/**'
+  workflow_dispatch:
+    inputs:
+      confirm_deploy:
+        description: 'Set to "true" to run the deploy job. Default is false (Phase 5 artifact-ready only).'
+        required: true
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+concurrency:
+  group: web-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  discover:
+    name: Discover qualifying sims
+    runs-on: ubuntu-latest
+    outputs:
+      sims: ${{ steps.disc.outputs.sims }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Discover (§6.1 qualifying Stack-B web sims)
+        id: disc
+        run: |
+          uv run python tools/productization/web-deploy/pipeline.py discover --json > sims.json
+          cat sims.json
+          NAMES=$(uv run python -c "import json; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
+          echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
+
+  build-and-validate:
+    name: Build and validate (${{ matrix.sim }})
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        sim: ${{ fromJson(needs.discover.outputs.sims) }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Set up Node (pinned)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/${{ matrix.sim }}/web/package-lock.json
+      - name: Install Mesa lavapipe (software Vulkan for headless browser WebGPU)
+        # Chrome's Dawn/WebGPU comes up over Mesa lavapipe (llvmpipe Vulkan) on the
+        # runner — the REAL browser WebGPU path (not WebGL). A SECOND independent
+        # browser-WebGPU backend vs the local ANGLE-Vulkan gate (probe § 4).
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            mesa-vulkan-drivers libvulkan1 vulkan-tools
+          vulkaninfo --summary 2>/dev/null | head -20 || true
+      - name: Install pinned Playwright + Chromium
+        working-directory: tools/productization/web-deploy/web/headless
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium
+      - name: Selective LFS fetch — committed canonical captures (R2 when wired)
+        # Mirrors python-strict.yml: R2 when the secrets reach this job (push + same-repo
+        # PRs), else GitHub LFS (fork PRs). capture_roundtrip / new_canonical sims read a
+        # committed .h5 canonical; the live-reference sims (strange/boids) need none.
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
+             [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
+            source tools/lfs/setup-lfs-s3.sh
+            echo "lfs fetch route: R2"
+          else
+            echo "lfs fetch route: GitHub LFS"
+          fi
+          git lfs pull --include="captures/**" || echo "no LFS captures for this sim"
+      - name: Build artifact (Vite production build)
+        run: |
+          uv run python tools/productization/web-deploy/pipeline.py build \
+            --sim "${{ matrix.sim }}" --output "${{ runner.temp }}/artifacts"
+      - name: Validate (headless browser-WebGPU → sim's established gate)
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
+        run: |
+          uv run python tools/productization/web-deploy/pipeline.py validate \
+            --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" \
+            --skip-build --json > results.json
+          cat results.json
+      - name: Surface results
+        if: always()
+        run: cat results.json || true
+      - name: Upload built bundle
+        if: success()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-deploy-${{ matrix.sim }}
+          path: packages/${{ matrix.sim }}/web/dist
+          retention-days: 30
+
+  deploy:
+    name: Deploy to GitHub Pages (GATED OFF — no publish in Phase 5)
+    needs: build-and-validate
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    runs-on: ubuntu-latest
+    environment: github-pages
+    permissions:
+      contents: read
+      pages: write       # Pages deploy (§ 4.5)
+      id-token: write    # OIDC for deploy-pages
+    steps:
+      # Pins finalized at go-live (this job never runs in Phase 5; confirm_deploy
+      # defaults false). Assemble the per-sim bundles into one Pages artifact.
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: site
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3   # pin a SHA at go-live
+        with:
+          path: site
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4            # pin a SHA at go-live

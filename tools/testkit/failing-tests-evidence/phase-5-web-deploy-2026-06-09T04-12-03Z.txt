@@ -1,0 +1,247 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /home/clipbird/Projects/Bit-Physics/.venv/bin/python3
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/clipbird/Projects/Bit-Physics
+configfile: pyproject.toml
+plugins: anyio-4.13.0, timeout-2.4.0, hypothesis-6.152.8
+collecting ... collected 9 items
+
+tools/productization/web-deploy/smoke/test_pipeline.py::test_discover_finds_the_seven_qualifying_sims ERROR [ 11%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_discover_cli_emits_valid_json ERROR [ 22%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_thresholds_are_byte_equal_to_web_build_gate ERROR [ 33%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_roundtrip_accepts_canonical_bundle ERROR [ 44%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_neural_ca_bit_exact ERROR [ 55%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_new_canonical_run_twice_and_anchor ERROR [ 66%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_rejects_divergent_capture ERROR [ 77%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_run_twice_detects_nondeterminism ERROR [ 88%]
+tools/productization/web-deploy/smoke/test_pipeline.py::test_smoke_results_json_has_required_keys ERROR [100%]
+
+==================================== ERRORS ====================================
+_______ ERROR at setup of test_discover_finds_the_seven_qualifying_sims ________
+
+    @pytest.fixture(scope="module")
+    def pipeline() -> ModuleType:
+>       return _load("pipeline")
+               ^^^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c1e50>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+_____________ ERROR at setup of test_discover_cli_emits_valid_json _____________
+
+    @pytest.fixture(scope="module")
+    def pipeline() -> ModuleType:
+>       return _load("pipeline")
+               ^^^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c1e50>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+__ ERROR at setup of test_verify_thresholds_are_byte_equal_to_web_build_gate ___
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+_______ ERROR at setup of test_verify_roundtrip_accepts_canonical_bundle _______
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+______________ ERROR at setup of test_verify_neural_ca_bit_exact _______________
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+_______ ERROR at setup of test_verify_new_canonical_run_twice_and_anchor _______
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+___________ ERROR at setup of test_verify_rejects_divergent_capture ____________
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+________ ERROR at setup of test_verify_run_twice_detects_nondeterminism ________
+
+    @pytest.fixture(scope="module")
+    def verify() -> ModuleType:
+>       return _load("verify")
+               ^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:59: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c2390>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/verify.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+_________ ERROR at setup of test_smoke_results_json_has_required_keys __________
+
+    @pytest.fixture(scope="module")
+    def pipeline() -> ModuleType:
+>       return _load("pipeline")
+               ^^^^^^^^^^^^^^^^^
+
+tools/productization/web-deploy/smoke/test_pipeline.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tools/productization/web-deploy/smoke/test_pipeline.py:48: in _load
+    spec.loader.exec_module(mod)
+<frozen importlib._bootstrap_external>:995: in exec_module
+    ???
+<frozen importlib._bootstrap_external>:1132: in get_code
+    ???
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <_frozen_importlib_external.SourceFileLoader object at 0x7811c89c1e50>
+path = '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+>   ???
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/productization/web-deploy/pipeline.py'
+
+<frozen importlib._bootstrap_external>:1190: FileNotFoundError
+=========================== short test summary info ============================
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_discover_finds_the_seven_qualifying_sims
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_discover_cli_emits_valid_json
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_thresholds_are_byte_equal_to_web_build_gate
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_roundtrip_accepts_canonical_bundle
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_neural_ca_bit_exact
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_new_canonical_run_twice_and_anchor
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_rejects_divergent_capture
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_verify_run_twice_detects_nondeterminism
+ERROR tools/productization/web-deploy/smoke/test_pipeline.py::test_smoke_results_json_has_required_keys
+============================== 9 errors in 0.17s ===============================

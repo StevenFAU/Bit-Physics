@@ -1,0 +1,13 @@
+{
+  "name": "@bit-physics/web-deploy-headless",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Phase-5 web-deploy headless browser-WebGPU capture driver (sub-phase 5.1). Pins Playwright + its bundled Chromium for the cloud-CI browser-delivery gate.",
+  "type": "module",
+  "scripts": {
+    "install-browser": "playwright install --with-deps chromium"
+  },
+  "dependencies": {
+    "playwright": "1.60.0"
+  }
+}
