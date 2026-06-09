@@ -7,7 +7,7 @@ artifact: stage
 verdict: PROPOSED
 phase: 5
 sub_phase: "web-build-track"
-head_sha: 6b38011241c54f567b278049c5d2566c33f80a84
+head_sha: e511540d69e27d265148ca6564f746cbbf9aae48
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 parent_audits:
