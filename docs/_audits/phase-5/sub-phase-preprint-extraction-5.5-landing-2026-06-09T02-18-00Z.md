@@ -6,7 +6,7 @@ kind: sub-phase-landing
 verdict: SHIFTED
 phase: 5
 sub_phase: "5.5"
-head_sha: BACKFILL_COMMIT3_SHA
+head_sha: 9292a4bae55eb786121554a444f0957d98fefaa2
 prior_phase_tag: v0.4.0-phase-4
 integrity_invariant: "0 HARD_FAIL / 14 SOFT_WARN"
 evidence_paths:
