@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 import tempfile
 from dataclasses import dataclass, field as _dc_field
@@ -64,6 +65,24 @@ T_BOIDS_SHORT = 1e-2
 T_BOIDS_VMAX_TOL = 1e-4
 T_PHYSARUM_MASS_REL = 1e-3
 T_ISING_Z = 3.0
+
+# --- PENDING-LAVAPIPE contingency thresholds (Phase-5 browser-divergence) ---------
+# These are NOT part of ESTABLISHED_THRESHOLDS and the parity guard intentionally
+# does NOT bind them: they belong to OPT-IN observable/structural browser gates that
+# activate per-sim ONLY when CI lavapipe (a 3rd, non-RADV backend not obtainable in
+# this env) is shown to genuinely diverge cross-backend from the native f32 path. On
+# the obtainable backends (wgpu-native + browser ANGLE-Vulkan, both RADV) rd2d clears
+# its established capture_roundtrip @ rel=1e-4 (2.64e-5 == wgpu-native) and neural-ca
+# is bit-exact 0.0 once the harness race is fixed, so the ESTABLISHED gates stay the
+# default. The native gpu_gate.py rel=1e-4 / bit-exact rows are byte-UNCHANGED.
+# Activated via BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK="<sim>,<sim>". See
+# docs/_audits/phase-5/browser-divergence-*.
+T_RD2D_SHORTHORIZON_MAXSTEP = 200  # backends are bit-near-identical early
+T_RD2D_SHORTHORIZON_ABS = 1e-4  # the native rd2d budget, on the short horizon
+T_RD2D_FIELD_BOUND = 1e-3  # U,V stay within [0,1] +/- this
+T_NCA_SHORTHORIZON_STEP = 50  # first captured frame
+T_NCA_SHORTHORIZON_ABS = 1e-2  # early agreement before any cross-backend drift
+T_NCA_ALPHA_MIN_MASS = 1.0  # final-frame alpha mass > 0 -> the pattern is alive
 
 CANON = {
     "reaction-diffusion-2d": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json",
@@ -492,6 +511,127 @@ def _gate_physarum(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_rd2d_observable(bundles: list[dict]) -> VerifyResult:
+    """PENDING-LAVAPIPE contingency for rd2d (Decision 2, SHIFTED to opt-in).
+
+    A portable observable/structural browser gate for the case CI lavapipe's distinct
+    ALU genuinely diverges from the native f32 trajectory (it does NOT on the
+    obtainable RADV-backed backends, where rd2d clears its established 1e-4 gate). The
+    DEFAULT rd2d gate stays ``_gate_rd2d`` (capture_roundtrip @ rel=1e-4); this NEVER
+    widens the native tolerance. Gate = run-twice determinism + short-horizon agreement
+    vs the f64 canonical through step 200 + a bounded gray-scott field."""
+    from capture import load_capture
+
+    b0 = bundles[0]
+    twice = None
+    if len(bundles) > 1:
+        twice = bool(
+            np.array_equal(_last_field(bundles[0], "U"), _last_field(bundles[1], "U"))
+            and np.array_equal(
+                _last_field(bundles[0], "V"), _last_field(bundles[1], "V")
+            )
+        )
+    canon = load_capture(REPO / CANON["reaction-diffusion-2d"])
+    cs = {s.step: s for s in canon.steps()}
+    worst_short = 0.0
+    for s in _bundle_steps(b0):
+        st = s["step"]
+        if st > T_RD2D_SHORTHORIZON_MAXSTEP or st not in cs:
+            continue
+        for k in ("U", "V"):
+            worst_short = max(
+                worst_short,
+                float(
+                    np.abs(
+                        _field(s, k) - np.asarray(cs[st].state[k], dtype=np.float64)
+                    ).max()
+                ),
+            )
+    short_ok = worst_short <= T_RD2D_SHORTHORIZON_ABS
+    u, v = _last_field(b0, "U"), _last_field(b0, "V")
+    bounded = bool(
+        np.isfinite(u).all()
+        and np.isfinite(v).all()
+        and u.min() >= -T_RD2D_FIELD_BOUND
+        and u.max() <= 1.0 + T_RD2D_FIELD_BOUND
+        and v.min() >= -T_RD2D_FIELD_BOUND
+        and v.max() <= 1.0 + T_RD2D_FIELD_BOUND
+    )
+    return VerifyResult(
+        sim="reaction-diffusion-2d",
+        kind="observable_browser_fallback",
+        passed=bool((twice is not False) and short_ok and bounded),
+        run_twice_identical=twice,
+        detail={
+            "short_horizon_max_abs_le_step200": worst_short,
+            "short_horizon_abs": T_RD2D_SHORTHORIZON_ABS,
+            "bounded_field": bounded,
+            "note": "PENDING-LAVAPIPE contingency (opt-in): portable observable gate; the "
+            "established capture_roundtrip @1e-4 is the default and passes on the obtainable "
+            "backends; native gpu_gate.py rel=1e-4 row byte-unchanged",
+        },
+    )
+
+
+def _gate_neural_ca_observable(bundles: list[dict]) -> VerifyResult:
+    """PENDING-LAVAPIPE contingency for neural-ca (Decision 4).
+
+    Bit-exactness held on the obtainable backends only because browser-Dawn and
+    wgpu-native both compile to SPIR-V on the SAME RADV driver; CI lavapipe's distinct
+    ALU may break it. If so, this opt-in gate replaces the BROWSER bit-exact check with
+    a portable observable one (run-twice determinism + bounded RGBA + alive alpha +
+    short-horizon agreement). The established bit-exact gate stays the DEFAULT and stays
+    the wgpu-native canonical gate — it is NOT pre-emptively weakened."""
+    from capture import load_capture
+
+    b0 = bundles[0]
+    twice = None
+    if len(bundles) > 1:
+        twice = bool(
+            np.array_equal(
+                _stack_field(bundles[0], "rgba"), _stack_field(bundles[1], "rgba")
+            )
+        )
+    frames = _stack_field(b0, "rgba").astype(np.float64)
+    bounded = bool(
+        np.isfinite(frames).all()
+        and frames.min() >= -1e-6
+        and frames.max() <= 1.0 + 1e-6
+    )
+    alpha_mass = float(frames[-1, :, :, 3].sum()) if frames.ndim == 4 else math.inf
+    alive = alpha_mass >= T_NCA_ALPHA_MIN_MASS
+    canon = load_capture(REPO / CANON["neural-ca"])
+    csteps = sorted(s.step for s in canon.steps())
+    fkey = next(iter(canon.step(csteps[0]).state.keys()))
+    worst_short = math.inf
+    for s in _bundle_steps(b0):
+        if s["step"] == T_NCA_SHORTHORIZON_STEP:
+            ref = np.asarray(
+                canon.step(T_NCA_SHORTHORIZON_STEP).state[fkey], dtype=np.float64
+            )
+            fb = _field(s, "rgba").astype(np.float64)
+            worst_short = (
+                float(np.abs(fb - ref).max()) if fb.shape == ref.shape else math.inf
+            )
+            break
+    short_ok = worst_short <= T_NCA_SHORTHORIZON_ABS
+    return VerifyResult(
+        sim="neural-ca",
+        kind="observable_browser_fallback",
+        passed=bool((twice is not False) and bounded and alive and short_ok),
+        run_twice_identical=twice,
+        detail={
+            "short_horizon_step50_max_abs": worst_short,
+            "short_horizon_abs": T_NCA_SHORTHORIZON_ABS,
+            "bounded_rgba": bounded,
+            "alpha_mass_alive": alive,
+            "note": "PENDING-LAVAPIPE contingency (opt-in): portable observable gate; the "
+            "established bit-exact gate is the default (passes on the obtainable backends) and "
+            "stays the wgpu-native canonical gate — not pre-emptively weakened",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -500,6 +640,14 @@ _GATES = {
     "strange-attractors": _gate_strange,
     "boids-3d": _gate_boids,
     "physarum": _gate_physarum,
+}
+
+# Opt-in observable/structural BROWSER gates, activated per-sim ONLY via
+# BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK="<sim>,<sim>" when the operator's CI lavapipe
+# dispatch shows a genuine cross-backend divergence. Default unset -> established gates.
+_OBSERVABLE_FALLBACK = {
+    "reaction-diffusion-2d": _gate_rd2d_observable,
+    "neural-ca": _gate_neural_ca_observable,
 }
 
 
@@ -515,6 +663,13 @@ def verify_browser_capture(sim: str, bundle_paths: list[Path]) -> VerifyResult:
     bundles = [_load_bundle(p) for p in bundle_paths]
     if not bundles:
         raise ValueError("no capture bundles provided")
+    fallback = {
+        s.strip()
+        for s in os.environ.get("BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK", "").split(",")
+        if s.strip()
+    }
+    if sim in fallback and sim in _OBSERVABLE_FALLBACK:
+        return _OBSERVABLE_FALLBACK[sim](bundles)
     return _GATES[sim](bundles)
 
 
