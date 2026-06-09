@@ -58,10 +58,25 @@ def _ising_ic() -> np.ndarray:
     return initial_condition(p, 42).astype(np.int32).reshape(-1)
 
 
+def _boids_ic() -> np.ndarray:
+    sys.path.insert(0, str(REPO / "packages/boids-3d"))
+    from boids_3d.sim import _seeded_flock_initial_state  # type: ignore
+
+    pos, vel = _seeded_flock_initial_state(42, 1000)
+    # positions (1000*3) then velocities (1000*3), little-endian f32.
+    return np.concatenate(
+        [pos.astype(np.float32).reshape(-1), vel.astype(np.float32).reshape(-1)]
+    )
+
+
 GENERATORS = {
     "reaction-diffusion-2d": (
         _rd2d_ic,
         "packages/reaction-diffusion-2d/web/public/rd2d-ic-seed42.bin",
+    ),
+    "boids-3d": (
+        _boids_ic,
+        "packages/boids-3d/web/public/boids-ic-seed42.bin",
     ),
     "ising-classical": (
         _ising_ic,
