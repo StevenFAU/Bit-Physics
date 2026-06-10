@@ -310,3 +310,4 @@ Fix commit: `62ed5d9`. Audit-append commit: see Convention #12 back-fill below.
 
 appended_by: phase-5-web-deploy-ci-fix-agent
 appended_head_sha: 62ed5d9
+appended_commit_sha: 947ad30  # Convention #12 back-fill
