@@ -311,3 +311,65 @@ Fix commit: `62ed5d9`. Audit-append commit: see Convention #12 back-fill below.
 appended_by: phase-5-web-deploy-ci-fix-agent
 appended_head_sha: 62ed5d9
 appended_commit_sha: 947ad30  # Convention #12 back-fill
+
+## § 14 — SHIFT (APPENDED 2026-06-10, post-run-#2; § 0.3 append-only — no section above is edited)
+
+Run #2 (`27244441494`, on `6a5065e`, with the § 13 fixes) was a MIXED result —
+4/7 GREEN, 3/7 RED — and decomposes into one REAL cross-backend finding, one
+harness defect, and two verdicts still pending. Evidence: full job logs (token
+re-used) + a local reproduction of the harness defect.
+
+**a. Lavapipe gate BASELINES — 4/7 PASS, measured (declare-on-green fulfilled
+for these four).** The Mode-A numpy fix verified green; capture, verify import,
+and the established gates all ran on CI lavapipe:
+
+| Sim | Gate | Measured on lavapipe | Declared bound |
+|---|---|---|---|
+| reaction-diffusion-2d | capture_roundtrip | max_abs_err **2.0394e-05** (≈ wgpu-native 2.64e-05) | rel 1e-4 |
+| mandelbulb-explorer | new_canonical | run_twice=True; f32-vs-f64 **2.9024e-05** at the f32 floor | golden anchor, no widening |
+| strange-attractors | new_canonical | run_twice=True; envelope overshoot **0.0** | rel 0.12 / abs 1.5 envelope |
+| ising-classical | observable | energy z = **1.33** | z < 3.0 |
+
+**b. boids-3d — genuine deterministic lavapipe ALU divergence (cross-backend
+FINDING; remedy PENDING consolidated contingency ratification).** Driver and
+capture succeeded; **run_twice=True (byte-identical on lavapipe — determinism
+holds on a third backend)**; the established gate measurably failed:
+`short_horizon_step100_pos_max_abs = 0.03537654327775819` vs declared `0.01`
+(3.5×); `v_max_observed = 3.0`, clamp held. NOTE the INVERSION vs the 5.1/§ 13-era
+contingency prediction: the authored pending-lavapipe contingencies classed rd2d
+(and neural-ca) as the fragile sims and boids as resolved-robust; lavapipe says
+the opposite — rd2d PASSES its established gate (2.04e-05) and boids is the sim
+that genuinely diverges. NOTHING is remedied, widened, or flipped in this
+session; the numbers above are the operator's decision input.
+
+**c. Harness defect (REFUTES the § 13 Mode-B framing as the operative fix).**
+Playwright's signature is `waitForFunction(pageFunction, arg, options)`;
+`driver.mjs` passed `{ timeout }` as the 2nd parameter, where it lands in the
+`arg` slot and the 30000ms options default silently governs. MEASURED (pinned
+playwright 1.60.0): 2-arg form fires at 30008 ms regardless of declared value;
+3-arg form honors it (3004 ms for a declared 3000). Consequences: ALL driver
+timeouts had been de-facto 30s since 5.1 landed, INCLUDING the declared 300s
+capture wait; the § 13 `BITPHYSICS_READY_TIMEOUT_MS=180000` widening was a NO-OP
+(the env value provably reached the node process; it never reached Playwright);
+every previously-green run had simply completed inside 30s windows. FIXED at
+`d65b20e`: both waits use the 3-arg form — declared timeouts are now real —
+and `pipeline.py` now surfaces the driver log on green (stderr) and lifts the
+measured time-to-ready values into results.json notes (`time_to_ready_ms=[...]`),
+closing the § 13 instrumentation gap (run #2 yielded ZERO declarable readiness
+values because driver stdout was swallowed on success). Local end-to-end proof
+through the real validate path (ising-classical): override 1 ms → "Timeout 1ms
+exceeded"; default run → PASS, `time_to_ready_ms=[29]`, z=1.46.
+
+**d. neural-ca / physarum — lavapipe verdicts UNKNOWN, pending re-run.** Their
+run-#2 reds ("Timeout 30000ms exceeded" at the readiness wait, ~40 s in, no
+capture) were the (c) harness defect, PRE-capture — they are NOT yet physics
+findings in either direction. The re-run on the fixed harness (genuine 180s
+readiness budget + measured time-to-ready) produces their first real verdicts.
+
+Disposition: (a) CONFIRMED baselines; (b) **FINDING — PENDING operator
+contingency ratification**; (c) SHIFTED (harness, fixed at `d65b20e`);
+(d) DEFERRED to re-dispatch. Checks at fix time: web-deploy smoke 9/9, node
+--check clean, ruff clean, integrity baseline unchanged.
+
+appended_by: phase-5-web-deploy-harness-fix-round-3-agent
+appended_head_sha: d65b20e
