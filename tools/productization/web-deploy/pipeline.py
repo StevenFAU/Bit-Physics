@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 import time
@@ -181,6 +182,13 @@ def run_pipeline_for_sim(
         str(runs),
     ]
     rc, log = _run(cmd, cwd=REPO)
+    # Surface the driver log on success AND failure — stdout carries the results
+    # JSON (`--json > results.json`), so the log goes to stderr. Without this the
+    # driver's measured time-to-ready instrumentation is invisible on green runs
+    # (run 27244441494: zero declarable readiness values).
+    if log:
+        print(f"--- driver log ({sim.name}) ---\n{log.rstrip()}", file=sys.stderr)
+    time_to_ready_ms = [int(ms) for ms in re.findall(r"time-to-ready (\d+) ms", log)]
     bundles = sorted(out.glob("capture-*.json"))
 
     if rc == 42 or "WEBGPU_UNAVAILABLE" in log:
@@ -225,7 +233,8 @@ def run_pipeline_for_sim(
         str(dist),
         bool(res.passed),
         time.time() - t0,
-        f"{res.kind}: passed={res.passed} run_twice={res.run_twice_identical} {json.dumps(res.detail, default=str)}",
+        f"{res.kind}: passed={res.passed} run_twice={res.run_twice_identical} "
+        f"time_to_ready_ms={time_to_ready_ms} {json.dumps(res.detail, default=str)}",
     )
 
 

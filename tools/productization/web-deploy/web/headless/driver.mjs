@@ -100,8 +100,12 @@ async function captureOnce(browser, baseUrl, runIdx) {
   // successful WebGPU path — proof the WebGPU path engaged, not a fallback).
   // Log measured time-to-ready so each CI run yields the actual per-backend value
   // (measured-then-declared applies to harness waits too).
+  // Playwright signature is waitForFunction(fn, arg, options) — options MUST be the
+  // 3rd parameter; in the 2-arg form the object lands in the `arg` slot and the
+  // 30000ms default silently governs (run-27244441494 defect: every declared driver
+  // timeout had been de-facto 30s).
   const readyT0 = Date.now();
-  await page.waitForFunction(() => window.__bitPhysicsReady === true, { timeout: READY_TIMEOUT_MS });
+  await page.waitForFunction(() => window.__bitPhysicsReady === true, undefined, { timeout: READY_TIMEOUT_MS });
   console.log(`  run ${runIdx}: time-to-ready ${Date.now() - readyT0} ms (limit ${READY_TIMEOUT_MS} ms)`);
   const panelMounted = await page.evaluate(() => !!document.querySelector("[data-bp-panel]"));
   if (!panelMounted) {
@@ -112,7 +116,7 @@ async function captureOnce(browser, baseUrl, runIdx) {
   // Drive the capture-export hook and wait for the browser to publish the capture.
   await page.evaluate(() => { window.__bitPhysicsCaptureReady = false; });
   await page.click('[data-bp="capture"]');
-  await page.waitForFunction(() => window.__bitPhysicsCaptureReady === true, { timeout: 300000 });
+  await page.waitForFunction(() => window.__bitPhysicsCaptureReady === true, undefined, { timeout: 300000 });
   const bundle = await page.evaluate(() => window.__bitPhysicsCapture);
   if (!bundle || !bundle.steps || bundle.steps.length === 0) {
     await context.close();
