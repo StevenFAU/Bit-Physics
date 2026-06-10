@@ -43,6 +43,7 @@ from common_warp.warp_harness import (
     set_warp_deterministic,
 )
 from determinism import run_twice_and_diff
+
 from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
     bgk_step,
     feq_field,

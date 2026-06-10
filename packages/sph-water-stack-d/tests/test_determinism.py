@@ -27,6 +27,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from determinism import run_twice_and_diff
+
 from sph_water_stack_d.sim import (  # type: ignore[import-not-found]
     sim_runner_diagnostic,
     sim_runner_seeded,  # noqa: F401  # contract-import (probe § 5)

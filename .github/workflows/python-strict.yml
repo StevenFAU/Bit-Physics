@@ -953,3 +953,44 @@ jobs:
       - name: pytest (conservation golden 3 anchors + determinism + PBT + capture + diagnostics)
         working-directory: packages/flow-lenia
         run: uv run pytest tests/
+
+  # Lint coverage for the seven Phase-2 stack-d/stack-e port packages. Added at
+  # the post-phase-5 housekeeping sweep (operator-ratified): these ports were
+  # never in this workflow's per-package lint scope, so 27 ruff I001 findings
+  # accumulated invisibly (CI green while per-package `ruff check` was red).
+  # Lint-only by design — their pytest suites already run in the local full
+  # sweep and their numerics are gate-checked elsewhere; this closes the lint
+  # blind spot without duplicating test infrastructure.
+  lint-phase-2-ports:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package:
+          - reaction-diffusion-2d-stack-d
+          - sph-water-stack-d
+          - eulerian-smoke-stack-d
+          - eulerian-smoke-stack-e
+          - lattice-boltzmann-d3q19-stack-d
+          - lattice-boltzmann-d3q19-stack-e
+          - mpm-multimaterial-stack-d
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync ${{ matrix.package }} workspace deps (with dev extras)
+        working-directory: packages/${{ matrix.package }}
+        run: uv sync --extra dev
+
+      - name: ruff (whole package)
+        working-directory: packages/${{ matrix.package }}
+        run: |
+          uv run ruff check .
+          uv run ruff format --check .

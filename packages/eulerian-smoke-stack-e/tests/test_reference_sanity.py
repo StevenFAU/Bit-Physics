@@ -17,6 +17,7 @@ ModuleNotFoundError cleanly until the Stage-1b implementation lands.
 from __future__ import annotations
 
 import numpy as np
+
 from eulerian_smoke_stack_e.reference import (  # type: ignore[import-not-found]
     _DEFAULT_N_JACOBI,
     CANONICAL_DESCRIPTOR_2D,

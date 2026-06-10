@@ -42,6 +42,7 @@ from common_warp.warp_harness import (
     set_warp_deterministic,
 )
 from determinism import run_twice_and_diff
+
 from eulerian_smoke_stack_e.reference import (  # type: ignore[import-not-found]
     project_pressure_3d,
 )

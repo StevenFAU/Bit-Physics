@@ -26,6 +26,7 @@ from diagnostics.tier2.particle import (
     check_neighbor_list_integrity,
     check_no_overlap,
 )
+
 from sph_water_stack_d.reference.dfsph_taichi import (  # type: ignore[import-not-found]
     canonical_params,
 )

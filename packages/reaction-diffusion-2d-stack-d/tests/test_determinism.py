@@ -21,6 +21,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from determinism import run_twice_and_diff
+
 from reaction_diffusion_2d_stack_d.sim import sim_runner_seeded  # type: ignore[import-not-found]
 
 

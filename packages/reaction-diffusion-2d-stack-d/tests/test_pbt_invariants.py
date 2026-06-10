@@ -24,6 +24,7 @@ from pathlib import Path
 
 from property.harness import run_invariants
 from property.strategies import smooth_scalar_field_in_unit_box
+
 from reaction_diffusion_2d_stack_d.invariants import (  # type: ignore[import-not-found]
     mass_approximately_conserved,
     monotone_bounds_uv,

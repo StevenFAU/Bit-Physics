@@ -17,6 +17,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from mpm_multimaterial_stack_d.reference import (
     shape_functions,  # type: ignore[import-not-found]
 )

@@ -26,6 +26,7 @@ from diagnostics.tier2.vector_field import (
     check_energy_spectrum,
     check_helicity,
 )
+
 from eulerian_smoke_stack_e.sim import (  # type: ignore[import-not-found]
     compute_canonical_trajectory_3d,
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)

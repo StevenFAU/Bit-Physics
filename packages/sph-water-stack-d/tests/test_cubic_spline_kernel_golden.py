@@ -25,6 +25,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from sph_water_stack_d.reference import dfsph_taichi  # type: ignore[import-not-found]
 
 TABLE = (

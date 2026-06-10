@@ -16,6 +16,7 @@ until the implementation lands.
 from __future__ import annotations
 
 import numpy as np
+
 from eulerian_smoke_stack_d.reference import (  # type: ignore[import-not-found]
     _DEFAULT_N_JACOBI,
     CANONICAL_DESCRIPTOR_2D,

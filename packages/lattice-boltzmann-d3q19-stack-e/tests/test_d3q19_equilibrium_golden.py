@@ -20,6 +20,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from lattice_boltzmann_d3q19_stack_e.reference import (  # type: ignore[import-not-found]
     feq,
     momentum_moment,

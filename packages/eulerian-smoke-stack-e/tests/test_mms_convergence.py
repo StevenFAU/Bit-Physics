@@ -37,11 +37,12 @@ import numpy as np
 from code_verification.mms.solutions.incompressible_ns_2d.solution import (
     IncompressibleNS2DSolution,
 )
+from numpy.typing import NDArray
+
 from eulerian_smoke_stack_e.reference import (  # type: ignore[import-not-found]
     project_pressure,
     stable_fluids_step,
 )
-from numpy.typing import NDArray
 
 Array2D = NDArray[np.float64]
 

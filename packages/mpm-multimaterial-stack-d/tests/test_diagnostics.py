@@ -30,6 +30,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+
 from mpm_multimaterial_stack_d.sim import (  # type: ignore[import-not-found]
     sim_runner_diagnostic,
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)

@@ -22,6 +22,7 @@ import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis import strategies as st
+
 from mpm_multimaterial_stack_d.invariants import (  # type: ignore[import-not-found]
     mass_conservation_p2g_g2p,
     partition_of_unity_b_spline,

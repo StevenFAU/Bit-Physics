@@ -12,6 +12,7 @@ does NOT exist at the failing-tests commit — collection fails with
 from __future__ import annotations
 
 import numpy as np
+
 from reaction_diffusion_2d_stack_d.reference import (  # type: ignore[import-not-found]
     GrayScottParams,
     canonical_params,

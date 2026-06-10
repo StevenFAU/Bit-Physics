@@ -31,6 +31,7 @@ import numpy as np
 from code_verification.mms.solutions.incompressible_ns_2d.solution import (
     IncompressibleNS2DSolution,
 )
+
 from lattice_boltzmann_d3q19_stack_d.reference import (  # type: ignore[import-not-found]
     CS2,
     bgk_step,

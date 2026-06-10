@@ -22,6 +22,7 @@ from pathlib import Path
 
 import h5py
 import numpy as np
+
 from lattice_boltzmann_d3q19_stack_e.sim import (  # type: ignore[import-not-found]
     sim_runner_diagnostic,
     sim_runner_seeded,  # noqa: F401  # contract-import (public-API surface)

@@ -17,6 +17,7 @@ from pathlib import Path
 from capture import load_capture
 from diagnostics.tier1.health import check_health
 from diagnostics.tier2.scalar_field.monotone_bounds import check_bounds
+
 from reaction_diffusion_2d_stack_d.sim import (
     sim_runner_seeded,  # type: ignore[import-not-found]  # noqa: F401
 )
