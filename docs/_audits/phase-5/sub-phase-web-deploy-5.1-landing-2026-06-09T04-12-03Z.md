@@ -374,3 +374,55 @@ contingency ratification**; (c) SHIFTED (harness, fixed at `d65b20e`);
 appended_by: phase-5-web-deploy-harness-fix-round-3-agent
 appended_head_sha: d65b20e
 appended_commit_sha: 1d0d116  # Convention #12 back-fill
+
+## § 15 — Run #3 (APPENDED 2026-06-10, post-harness-fix; § 0.3 append-only — no section above is edited)
+
+Run #3 (`27246062969`, on `cb4da99`) — 5/7 GREEN, 2/7 RED. The § 14(c) harness fix
+is CONFIRMED in production: declared limits honored (`limit 180000 ms` visible per
+run), driver logs surfaced on green, `time_to_ready_ms` carried into results.json.
+Both reds are now GENUINE per-sim lavapipe gate verdicts.
+
+**Measured time-to-ready, ALL sims (lavapipe, declared per measured-then-declared):**
+
+| Sim | time-to-ready ms [run 0, run 1] |
+|---|---|
+| reaction-diffusion-2d | [1671] |
+| ising-classical | [625] |
+| boids-3d | [326, 69] |
+| mandelbulb-explorer | [241, 72] |
+| strange-attractors | [588, 34] |
+| physarum | [611, 62] |
+| neural-ca | **[76541]** |
+
+neural-ca's 76.5 s pipeline bring-up is 2.5× the old de-facto 30 s ceiling — the
+direct confirmation of why runs #1/#2 died pre-capture. Readiness on lavapipe is
+also VARIABLE: physarum crossed 30 s in run #2 yet came ready in 611 ms in run #3.
+The 180 s CI budget covers the observed range with ~2.4× headroom.
+
+**Lavapipe gate verdicts — now complete for 7/7:**
+
+- **5 PASS:** rd2d max_abs_err 2.0394e-05 (rel 1e-4); ising z=1.33 (<3.0);
+  mandelbulb f32-vs-f64 2.9024e-05, run_twice=True; strange envelope overshoot 0.0,
+  run_twice=True; **physarum (new this run): mass_rel_diff 1.6166e-07 vs 1e-3,
+  run_twice=True, finite=True**.
+- **boids-3d FAIL — unchanged § 14(b) finding,** reproduced byte-for-byte:
+  run_twice=True, short_horizon_step100_pos_max_abs 0.03537654327775819 vs 0.01,
+  v_max clamp held. Fails by design pending consolidated contingency ratification.
+- **neural-ca FAIL — first genuine lavapipe verdict (capture completed, 21 frames,
+  verify ran).** Verbatim: `capture_roundtrip: passed=False run_twice=None
+  time_to_ready_ms=[76541] {"bit_exact": false, "vs_wgsl_canonical_max_abs":
+  1.0132789611816406e-06, "n_frames": 21, "field": "rgba", "tolerance":
+  "[defaults.continuous-ca] 0.0/0.0 (bit-exact, no row added)"}`. Classification:
+  clean GATE VERDICT — lavapipe's distinct ALU breaks bit-exactness vs the
+  wgpu-native canonical at f32-ULP scale (max_abs ≈ 1.01e-06 on rgba), precisely
+  the failure mode the § 3 / Decision-4 PENDING-LAVAPIPE contingency anticipated.
+  run-twice on lavapipe is UNTESTED for neural-ca (CI capture_roundtrip mode = 1
+  run; run_twice=None).
+
+Disposition: the two findings (boids-3d, neural-ca) proceed to a consolidated
+cross-backend contingency CHARTER (proposal-only, operator ratification required).
+Nothing beyond this audit append changes at this head: tolerance.toml, gpu_gate.py,
+established gates, fallback flags, and sim sources byte-untouched.
+
+appended_by: phase-5-cross-backend-contingency-evidence-agent
+appended_head_sha: cb4da99
