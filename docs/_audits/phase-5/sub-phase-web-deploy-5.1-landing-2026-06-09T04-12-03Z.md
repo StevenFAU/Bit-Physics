@@ -373,3 +373,4 @@ contingency ratification**; (c) SHIFTED (harness, fixed at `d65b20e`);
 
 appended_by: phase-5-web-deploy-harness-fix-round-3-agent
 appended_head_sha: d65b20e
+appended_commit_sha: 1d0d116  # Convention #12 back-fill
