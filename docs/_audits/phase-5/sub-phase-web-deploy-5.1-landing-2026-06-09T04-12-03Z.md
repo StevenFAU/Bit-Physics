@@ -243,3 +243,70 @@ operator + sim-owner per phase plan §5a, with **no tolerance added or widened**
 (`tolerance.toml` byte-unchanged) and the dense gates still validated by the web-build
 track's `gpu_gate.py`. Integrity held 0 HF / 14 SW; render_similarity (0.9242) + variant
 (0.8702) floors unaffected. This sub-phase pushed NO tag (I7).
+
+## § 13 — SHIFT (APPENDED 2026-06-09, post-CI-dispatch; § 0.3 append-only — no section above is edited)
+
+The operator's first `web-deploy.yml` dispatch (run `27210300628`, on `89ea841`)
+went 7/7 RED at the Validate step. The follow-up diagnosis session localized the
+failure as post-capture/environmental and inferred **"not a missing dependency —
+those steps all passed"**; full job logs (pulled with an Actions:read token)
+**REFUTE that inference for 5/7 sims, and refute the single-cause framing
+entirely** — there were TWO independent CI-environment failure modes. The install
+steps that passed were the browser/LFS/build installs (Playwright + Chromium,
+lavapipe, git-lfs, Vite), NOT the Python tool env: the workspace ROOT `[project]`
+declares no dependencies, so the workflow's bare `uv run` resolved an EMPTY venv —
+which the stdlib-only `discover`/`build` entrypoints masked until `validate`
+reached `import verify`. This § 13 also revises § 11 item 1's implicit framing
+that a red Validate would indicate the lavapipe gate verdict: this first red was
+CI-harness plumbing; the lavapipe gate column is STILL unfilled.
+
+**Mode A — 5/7 (boids-3d, strange-attractors, mandelbulb-explorer,
+reaction-diffusion-2d, ising-classical).** Deciding log line (identical traceback
+in all five; boids-3d job `80337242023`):
+
+```
+File ".../web-deploy/pipeline.py", line 218, in run_pipeline_for_sim
+    import verify  # type: ignore
+File ".../web-deploy/verify.py", line 42, in <module>
+    import numpy as np
+ModuleNotFoundError: No module named 'numpy'
+```
+
+The traceback sits AFTER the driver returned rc=0 with capture bundles in hand —
+**browser-WebGPU capture on lavapipe SUCCEEDED for these 5**; the venv, not the
+gate, failed. `results.json` was never written (process died pre-serialization).
+FIX (commit `62ed5d9`): a per-sim `uv sync --package "${{ matrix.sim }}"` step
+before Validate (workspace member names match matrix sim names 1:1), installing
+ONLY deps already declared in `packages/<sim>/pyproject.toml`
+(`bit-physics-testkit`, `bit-physics-diagnostics`, `h5py`, `numpy`, ...), which
+covers verify.py's numpy import, the testkit `capture`/`equivalence` closure, and
+the ising/strange/boids reference-module imports; Validate then runs
+`uv run --no-sync`. No ad-hoc installs, no new dependency declarations,
+`verify.py` byte-untouched.
+
+**Mode B — 2/7 (neural-ca, physarum).** Deciding `results.json` notes line
+(neural-ca job `80337242009`, duration 32.06s; physarum identical):
+
+```
+"notes": "driver failed (rc=1): driver FAIL — TimeoutError: page.waitForFunction: Timeout 30000ms exceeded."
+```
+
+That is the `driver.mjs` `__bitPhysicsReady` app-READINESS wait (30s), calibrated
+on local RADV and never measured under software rasterization; lavapipe's pipeline
+compilation exceeds it for these two heavier sims. FIX (commit `62ed5d9`): the
+wait is now env-overridable (`BITPHYSICS_READY_TIMEOUT_MS`, default unchanged
+30000 — local behavior byte-identical), set to 180000 in the CI Validate step
+only, and the driver logs measured time-to-ready per run so the next green run
+yields the actual lavapipe values for declaration here (measured-then-declared
+applies to harness waits too). **This is a harness readiness wait, NOT a physics
+tolerance** — the 300s capture wait, `tolerance.toml`, `gpu_gate.py`, the
+established gates, and the fallback flags are all byte-unchanged. If a sim still
+misses 180s, that is a real finding to surface, not a number to bump again.
+
+Disposition: both modes **SHIFTED** (CI-harness environment, not physics; the
+lavapipe gate verdicts of §§ 4/11 remain PENDING the re-dispatch). Local checks at
+fix time: web-deploy smoke 9/9 green; workflow YAML parses; `node --check` clean.
+Fix commit: `62ed5d9`. Audit-append commit: see Convention #12 back-fill below.
+
+appended_by: phase-5-web-deploy-ci-fix-agent
+appended_head_sha: 62ed5d9
