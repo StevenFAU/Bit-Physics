@@ -133,6 +133,13 @@ jobs:
           # 27210300628). The driver logs measured time-to-ready per run; the
           # measured lavapipe values get declared in the audit after the green run.
           BITPHYSICS_READY_TIMEOUT_MS: "180000"
+          # Ratified cross-backend contingency charter (per-sim opt-in; verify.py
+          # consults this ONLY for the listed sims — the other 5 keep their
+          # established gates untouched). Round 1: bounds UNDECLARED, so these two
+          # FAIL-PENDING loudly while emitting measured observables for round-2
+          # measured-then-declared. The canonical-backend gates stay authoritative
+          # on RADV/wgpu-native.
+          BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK: "boids-3d,neural-ca"
         run: |
           uv run --no-sync python tools/productization/web-deploy/pipeline.py validate \
             --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" \
@@ -142,12 +149,24 @@ jobs:
         if: always()
         run: cat results.json || true
       - name: Upload built bundle
-        if: success()
+        # always() per ratified charter Q3: failing jobs must still publish their
+        # outputs so the cross-backend measurement pass can read them.
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: web-deploy-${{ matrix.sim }}
           path: packages/${{ matrix.sim }}/web/dist
           retention-days: 30
+      - name: Upload browser captures (measurement pass — charter Q3)
+        # The captures (not the bundle) are what the round-2 measured-then-declared
+        # pass reads; published on failure too (FAIL-PENDING jobs carry the data).
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: web-deploy-captures-${{ matrix.sim }}
+          path: ${{ runner.temp }}/artifacts/${{ matrix.sim }}
+          retention-days: 30
+          if-no-files-found: ignore
 
   deploy:
     name: Deploy to GitHub Pages (GATED OFF — no publish in Phase 5)

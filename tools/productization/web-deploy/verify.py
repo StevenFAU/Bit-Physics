@@ -84,6 +84,21 @@ T_NCA_SHORTHORIZON_STEP = 50  # first captured frame
 T_NCA_SHORTHORIZON_ABS = 1e-2  # early agreement before any cross-backend drift
 T_NCA_ALPHA_MIN_MASS = 1.0  # final-frame alpha mass > 0 -> the pattern is alive
 
+# Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
+# lands with the numeric bounds UNDECLARED — measured-then-declared requires one
+# RADV + one lavapipe measurement pass over the charter observables first. While a
+# sim's entry is None its ACTIVATED fallback FAILS-PENDING loudly (never a silent
+# pass) and emits every measured observable into the result detail for round-2
+# declaration. Round 2 replaces None with the declared bound dicts.
+_CROSS_BACKEND_DECLARED_BOUNDS: dict[str, dict[str, float] | None] = {
+    "boids-3d": None,
+    "neural-ca": None,
+}
+_FAIL_PENDING_NOTE = (
+    "FAIL-PENDING: cross-backend bounds UNDECLARED (charter round 1 — mechanism only); "
+    "measured observables emitted for round-2 measured-then-declared. Never a silent pass."
+)
+
 CANON = {
     "reaction-diffusion-2d": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json",
     "neural-ca": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.json",
@@ -614,20 +629,144 @@ def _gate_neural_ca_observable(bundles: list[dict]) -> VerifyResult:
                 float(np.abs(fb - ref).max()) if fb.shape == ref.shape else math.inf
             )
             break
-    short_ok = worst_short <= T_NCA_SHORTHORIZON_ABS
+    # Ratified charter round 1: run-twice on a foreign ALU is part of the verdict —
+    # `twice` must be LITERALLY True (None = untested = not green; the prior
+    # `twice is not False` was vacuous in the 1-run CI mode).
+    bounds = _CROSS_BACKEND_DECLARED_BOUNDS["neural-ca"]
+    measured = {
+        "short_horizon_step50_max_abs": worst_short,
+        "alpha_mass": alpha_mass,
+        "bounded_rgba": bounded,
+        "alpha_mass_alive": alive,
+        "run_twice_identical": twice,
+        "authored_candidate_short_horizon_abs": T_NCA_SHORTHORIZON_ABS,
+        "authored_candidate_alpha_min_mass": T_NCA_ALPHA_MIN_MASS,
+    }
+    if bounds is None:
+        return VerifyResult(
+            sim="neural-ca",
+            kind="observable_browser_fallback",
+            passed=False,
+            run_twice_identical=twice,
+            detail={**measured, "verdict_state": _FAIL_PENDING_NOTE},
+        )
+    short_ok = worst_short <= bounds["short_horizon_abs"]
     return VerifyResult(
         sim="neural-ca",
         kind="observable_browser_fallback",
-        passed=bool((twice is not False) and bounded and alive and short_ok),
+        passed=bool((twice is True) and bounded and alive and short_ok),
         run_twice_identical=twice,
         detail={
-            "short_horizon_step50_max_abs": worst_short,
-            "short_horizon_abs": T_NCA_SHORTHORIZON_ABS,
-            "bounded_rgba": bounded,
-            "alpha_mass_alive": alive,
+            **measured,
+            "declared_bounds": bounds,
             "note": "PENDING-LAVAPIPE contingency (opt-in): portable observable gate; the "
             "established bit-exact gate is the default (passes on the obtainable backends) and "
             "stays the wgpu-native canonical gate — not pre-emptively weakened",
+        },
+    )
+
+
+def _gate_boids_observable(bundles: list[dict]) -> VerifyResult:
+    """PENDING-LAVAPIPE contingency for boids-3d (consolidated charter, ratified).
+
+    Run #3 measured a DETERMINISTIC lavapipe ALU divergence: run-twice byte-identical,
+    v_max clamp held, but step-100 pointwise pos max_abs 0.0354 vs the established
+    0.01. For a chaotic agent-based system the pointwise short horizon is the
+    f32-fragile property; the portable properties are structural/distributional
+    (the ising-z / physarum-mass philosophy — NOT a relaxed copy of 0.01). Gate =
+    run-twice determinism (strictly True) + v_max clamp + finiteness + declared
+    bounds on flock observables (polarization, mean speed, speed spread, cohesion)
+    vs the SAME frozen f64 NumPy reference used by the established gate (no new
+    oracle). The established new_canonical gate stays the DEFAULT and stays
+    authoritative on the RADV/wgpu-native backends — not pre-emptively weakened."""
+    sys.path.insert(0, str(REPO / "packages/boids-3d"))
+    from boids_3d.reference import canonical_params, evolve  # type: ignore
+    from boids_3d.sim import _seeded_flock_initial_state  # type: ignore
+
+    def frames(b: dict) -> dict:
+        return {
+            s["step"]: (_field(s, "position"), _field(s, "velocity"))
+            for s in _bundle_steps(b)
+        }
+
+    f1 = frames(bundles[0])
+    twice = None
+    if len(bundles) > 1:
+        f2 = frames(bundles[1])
+        twice = all(
+            np.array_equal(f1[k][0], f2[k][0]) and np.array_equal(f1[k][1], f2[k][1])
+            for k in f1
+        )
+    p = canonical_params()
+    pos0, vel0 = _seeded_flock_initial_state(42, 1000)
+    ph, vh, idx = evolve(pos0, vel0, p, 100, capture_interval=100)
+    ref_pos, ref_vel = ph[idx.index(100)], vh[idx.index(100)]
+
+    def flock_observables(pos: np.ndarray, vel: np.ndarray) -> dict[str, float]:
+        pos = np.asarray(pos, dtype=np.float64)
+        vel = np.asarray(vel, dtype=np.float64)
+        speed = np.linalg.norm(vel, axis=1)
+        vhat = vel / np.where(speed > 0.0, speed, 1.0)[:, None]
+        centroid = pos.mean(axis=0)
+        return {
+            "polarization": float(np.linalg.norm(vhat.mean(axis=0))),
+            "mean_speed": float(speed.mean()),
+            "speed_std": float(speed.std()),
+            "mean_dist_to_centroid": float(
+                np.linalg.norm(pos - centroid, axis=1).mean()
+            ),
+        }
+
+    have_100 = 100 in f1
+    br_obs = flock_observables(*f1[100]) if have_100 else {}
+    ref_obs = flock_observables(ref_pos, ref_vel)
+    deltas = {
+        k: (abs(br_obs[k] - ref_obs[k]) if have_100 else math.inf) for k in ref_obs
+    }
+    finite = bool(
+        have_100
+        and np.isfinite(np.asarray(f1[100][0], dtype=np.float64)).all()
+        and np.isfinite(np.asarray(f1[100][1], dtype=np.float64)).all()
+    )
+    pointwise = (
+        float(np.abs(np.asarray(f1[100][0], dtype=np.float64) - ref_pos).max())
+        if have_100
+        else math.inf
+    )
+    vmax_obs = max(float(np.linalg.norm(f1[k][1], axis=1).max()) for k in f1)
+    clamp_ok = vmax_obs <= p["v_max"] * (1.0 + T_BOIDS_VMAX_TOL)
+    measured = {
+        "run_twice_identical": twice,
+        "v_max_observed": round(vmax_obs, 6),
+        "v_max_clamp_ok": clamp_ok,
+        "finite": finite,
+        "browser_step100": br_obs,
+        "reference_step100_f64": ref_obs,
+        "abs_delta_step100": deltas,
+        "pointwise_step100_pos_max_abs_informative": pointwise,
+    }
+    bounds = _CROSS_BACKEND_DECLARED_BOUNDS["boids-3d"]
+    if bounds is None:
+        return VerifyResult(
+            sim="boids-3d",
+            kind="observable_browser_fallback",
+            passed=False,
+            run_twice_identical=twice,
+            detail={**measured, "verdict_state": _FAIL_PENDING_NOTE},
+        )
+    obs_ok = all(deltas[k] <= bounds[f"{k}_abs"] for k in deltas)
+    return VerifyResult(
+        sim="boids-3d",
+        kind="observable_browser_fallback",
+        passed=bool((twice is True) and clamp_ok and finite and obs_ok),
+        run_twice_identical=twice,
+        detail={
+            **measured,
+            "declared_bounds": bounds,
+            "note": "PENDING-LAVAPIPE contingency (opt-in): structural/distributional "
+            "gate vs the same frozen f64 reference; the established new_canonical gate "
+            "(0.01 pointwise short horizon) stays the default and stays authoritative "
+            "on RADV/wgpu-native — not pre-emptively weakened",
         },
     )
 
@@ -648,6 +787,7 @@ _GATES = {
 _OBSERVABLE_FALLBACK = {
     "reaction-diffusion-2d": _gate_rd2d_observable,
     "neural-ca": _gate_neural_ca_observable,
+    "boids-3d": _gate_boids_observable,
 }
 
 

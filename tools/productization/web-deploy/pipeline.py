@@ -115,7 +115,13 @@ def discover_qualifying_sims() -> list[SimSpec]:
                 metadata={
                     "gate_kind": GATE_KIND[name],
                     "web_dir": rel,
-                    "runs": 2 if GATE_KIND[name] == "new_canonical" else 1,
+                    # new_canonical needs 2 runs for run-twice byte-identity;
+                    # neural-ca joins per the ratified cross-backend charter —
+                    # foreign-ALU determinism is part of its fallback verdict
+                    # (the 1-run mode made the fallback's run-twice term vacuous).
+                    "runs": 2
+                    if (GATE_KIND[name] == "new_canonical" or name == "neural-ca")
+                    else 1,
                 },
             )
         )
