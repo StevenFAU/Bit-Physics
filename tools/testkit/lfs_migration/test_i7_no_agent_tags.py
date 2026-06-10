@@ -51,6 +51,16 @@ OPERATOR_PHASE_TAGS = frozenset(
         # asserts every listed tag EXISTS. Mirrors the v0.3.0-phase-3 precedent
         # added post-tag at 638b247.
         "v0.4.0-phase-4",
+        # Phase-5 close (operator-pushed at the v0.5.0-phase-5 close commit
+        # 922a850, descendant of the phase-4 boundary). Per the Phase-5 close
+        # audit (docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md)
+        # section 8, the tag proposal was surfaced to the operator (I7 — the
+        # close agent did NOT tag); the operator pushed the tag 2026-06-10 and
+        # ratified this allowlist-add at the post-phase-5 housekeeping sweep.
+        # POST-tag follow-up as with v0.4.0-phase-4: it cannot land before the
+        # operator pushes the tag because test_operator_phase_tags_present
+        # asserts every listed tag EXISTS.
+        "v0.5.0-phase-5",
     }
 )
 

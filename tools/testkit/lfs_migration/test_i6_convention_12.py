@@ -22,7 +22,9 @@ def _backfill_commits() -> list[str]:
 
     Matching the whole message would falsely catch commits that merely *mention*
     back-fill in prose (e.g. an audit body describing this very lock); a back-fill
-    commit is identified by its subject line carrying "back-fill" / "backfill".
+    commit is identified by its subject line carrying "back-fill" / "backfill",
+    minus the SHA-keyed subject false positives below (commits whose subject word
+    refers to something other than a Convention-#12 SHA back-fill).
     """
     out = git("log", "--format=%H%x1f%s", _RANGE)
     commits: list[str] = []
@@ -31,9 +33,36 @@ def _backfill_commits() -> list[str]:
             continue
         sha, subject = line.split("\x1f", 1)
         low = subject.lower()
-        if "back-fill" in low or "backfill" in low:
+        if ("back-fill" in low or "backfill" in low) and (
+            sha.strip() not in _SUBJECT_FALSE_POSITIVE_SHAS
+        ):
             commits.append(sha.strip())
     return commits
+
+
+# SHA-keyed subject false positives (operator-ratified, post-phase-5
+# housekeeping 2026-06-10). Mirrors the _CITATION_EXEMPT_SHAS pattern: full
+# 40-hex key, THIS-SHA-ONLY, REQUIRED documented reason. These are commits the
+# subject matcher catches whose "backfill" refers to something other than a
+# Convention-#12 SHA back-fill — they are NOT back-fill commits, so neither the
+# citation rule nor the doc-only invariant applies to them. The agent never
+# adds entries on its own behalf — a new entry accompanies an operator
+# ratification only.
+_SUBJECT_FALSE_POSITIVE_SHAS: dict[str, str] = {
+    "760b0e06bcb594161121878ef6fe70dd487a9a2d": (
+        "feat(phase-5-reconciliation): 'five-boolean §13 backfill' — the subject "
+        "word 'backfill' names the R2 task of converting seven prose ## 13 notes "
+        "to spec §8.2 five-boolean productization YAML (a CONTENT change to "
+        "docs/sim-specs/*/spec-ref.md), plus R3 adding two measured 0.0/0.0 "
+        "tolerance rows to tools/testkit/equivalence/tolerance.toml. It is a "
+        "feature commit, not a Convention-#12 SHA back-fill (it back-fills no "
+        "commit SHA into any audit), so the doc-only invariant was never meant "
+        "to bind it — and indeed it touches a non-docs file (tolerance.toml). "
+        "Surfaced by the post-close health sweep once 05dbd24a0866's exemption "
+        "unmasked it (the assert stops at the first offender); ratified as a "
+        "subject false positive at Stage-2 execution. THIS SHA ONLY."
+    ),
+}
 
 
 # Operator-ratified SHA-keyed citation exceptions (Phase-4 D4). Mirrors the I7
@@ -56,6 +85,19 @@ _CITATION_EXEMPT_SHAS: dict[str, str] = {
         "head_sha VALUE it replaced contained the citation. (iii) It is immutable "
         "Phase-3 history under tag v0.3.0-phase-3, so the citation cannot be added "
         "retroactively without a forbidden history rewrite. THIS SHA ONLY."
+    ),
+    "05dbd24a086643b5c0d4615d4874bf27ef0e45f4": (
+        "Post-phase-5 housekeeping (operator-ratified 2026-06-10). (i) VALID "
+        "back-fill: subject 'chore(phase-5/web-deploy): SHA back-fill and audit' "
+        "— it back-filled the web-deploy 5.1 landing audit SHA references and the "
+        "architecture §11.6 delivered annotation; it changed exactly two docs/ "
+        "files (docs/_audits/phase-5/sub-phase-web-deploy-5.1-landing-2026-06-09"
+        "T04-12-03Z.md + docs/architecture.md), so the doc-only invariant holds. "
+        "(ii) Its commit MESSAGE omits the literal 'Convention #12' string. "
+        "(iii) It is immutable history under tag v0.5.0-phase-5, so the citation "
+        "cannot be added retroactively without a forbidden history rewrite. "
+        "Surfaced by the post-close health sweep (just test red at HEAD); "
+        "ratified as a SHA-keyed exception at Stage-2 dispatch. THIS SHA ONLY."
     ),
 }
 
@@ -110,3 +152,14 @@ def test_citation_exception_is_sha_keyed_and_not_a_loophole() -> None:
             f"exemption key must be a full 40-hex SHA: {sha!r}"
         )
         assert len(reason) > 120, f"exemption {sha[:12]} must carry a documented reason"
+    # The subject-false-positive allowlist obeys the same no-loophole shape:
+    # full 40-hex keys with documented reasons, and it must never overlap the
+    # citation exemptions (a commit is either a back-fill or it is not).
+    for sha, reason in _SUBJECT_FALSE_POSITIVE_SHAS.items():
+        assert len(sha) == 40 and all(c in "0123456789abcdef" for c in sha), (
+            f"false-positive key must be a full 40-hex SHA: {sha!r}"
+        )
+        assert len(reason) > 120, f"false positive {sha[:12]} must carry a documented reason"
+    assert not set(_SUBJECT_FALSE_POSITIVE_SHAS) & set(_CITATION_EXEMPT_SHAS), (
+        "a SHA cannot be both a citation-exempt back-fill and not-a-back-fill"
+    )

@@ -57,6 +57,30 @@ WORKFLOW_CAPTURE_REQUIREMENT: dict[str, str] = {
     # OID at HEAD + every phase tag. It checks out lfs: false and fetches
     # explicitly (never lfs: true), so it does not over-fetch via the smudge path.
     "r2-sweep-proof.yml": "full",
+    # Phase-5 productization workflows (declared at the post-phase-5 housekeeping
+    # sweep — the registry lock caught their addition; operator-ratified 2026-06-10).
+    # All five check out `lfs: false`; the four that read committed canonical
+    # captures fetch them with a targeted `git lfs pull --include=` (R2-routed
+    # when R2_* secrets are present, GitHub LFS otherwise).
+    #
+    # 5.1 web-deploy: per-sim validate jobs re-apply each sim's established gate
+    # to the browser-emitted capture, comparing against that sim's committed
+    # canonical (pull --include="captures/**" inside the per-sim job).
+    "web-deploy.yml": "reference-capture",
+    # 5.2 binary-release: § 3.8 bootstrap gate compares the clean-build capture
+    # against the two qualifying packages' committed references
+    # (captures/reaction-diffusion-2d-stack-c/** + captures/mass-spring-cloth-ref/**).
+    "binary-release.yml": "reference-capture",
+    # 5.3 pypi-release: per-sim bootstrap gate pulls the sim's canonical capture
+    # as the compare surrogate (pull --include="captures/**" per-sim job; logs
+    # 'no LFS captures for this sim (surrogate)' when a sim has none).
+    "pypi-release.yml": "reference-capture",
+    # 5.4 render-passes: convert step reads the matrix sim's committed canonical
+    # capture (pull --include="captures/<sim>-ref/**").
+    "render-passes.yml": "reference-capture",
+    # 5.5 preprint-extraction: extracts LaTeX from tracked docs + compiles with a
+    # pinned TinyTeX; reads no committed LFS object (no lfs pull anywhere).
+    "preprint-extraction.yml": "none",
 }
 
 _WORKFLOW_DIR = ".github/workflows"
