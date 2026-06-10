@@ -16,8 +16,14 @@ repos:
       - id: end-of-file-fixer
         # Vendored upstream sources under references/ are read-only and must
         # remain byte-identical to upstream (docs/architecture.md Appendix D
-        # § D.8); do not append final newlines to them.
-        exclude: ^references/
+        # § D.8); do not append final newlines to them. AND the audit ledger
+        # (docs/_audits/) is append-only (spec § 7.5 / G.7): an auto-fixer
+        # rewriting a committed audit byte is a ledger violation by definition.
+        # Surfaced at the post-phase-5 housekeeping sweep: `pre-commit run
+        # --all-files` mutated two back-test verbatim evidence captures
+        # (checkpoints/d10/nonpass-detail.txt, evidence/D3-mms.log) — same
+        # class as the failing-tests-evidence exclusion below.
+        exclude: ^(references/|docs/_audits/)
       - id: trailing-whitespace
         # Vendored upstream (references/) must stay byte-identical; AND
         # failing-tests evidence ledgers (tools/testkit/failing-tests-evidence/)
@@ -26,7 +32,10 @@ repos:
         # trailing whitespace on blank traceback context lines; stripping it
         # diverges the committed evidence from a fresh replay capture. First
         # surfaced by the first Stack-E Phase-3 sim (task-4 rigid-body-pedagogical).
-        exclude: ^(references/|tools/testkit/failing-tests-evidence/)
+        # docs/_audits/ added at the post-phase-5 housekeeping sweep: the ledger
+        # is append-only AND its back-test evidence files are verbatim pytest
+        # captures (same trailing-whitespace property as failing-tests-evidence).
+        exclude: ^(references/|tools/testkit/failing-tests-evidence/|docs/_audits/)
       - id: check-added-large-files
         # 2 GB ceiling. Per spec § 2.7, canonical capture HDF5 payloads
         # are committed. Ceiling history: default 500 KB → Phase 0
