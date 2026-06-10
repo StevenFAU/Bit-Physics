@@ -91,8 +91,27 @@ T_NCA_ALPHA_MIN_MASS = 1.0  # final-frame alpha mass > 0 -> the pattern is alive
 # pass) and emits every measured observable into the result detail for round-2
 # declaration. Round 2 replaces None with the declared bound dicts.
 _CROSS_BACKEND_DECLARED_BOUNDS: dict[str, dict[str, float] | None] = {
-    "boids-3d": None,
-    "neural-ca": None,
+    # DECLARED (charter round 2) from deltas vs the f64 reference MEASURED on both
+    # backend families — RADV (local, audit § 16) and lavapipe (CI run #4
+    # 27247859138) — each per-backend deterministic (run_twice=True on both, so
+    # within-backend spread is zero). Bound = 10x the worst measured delta, rounded
+    # up to 2 s.f.: the observed cross-family spread is <= 4.05x (RADV->lavapipe),
+    # so 10x covers a further backend family of the observed character with > 2x
+    # margin, while every bound stays >= 2 orders below the f32-fragile pointwise
+    # scale (0.0354) and <= 0.08% of its observable's magnitude. Full measured
+    # table in audit § 17. NOT a canonical-gate tolerance: these adjudicate the
+    # opt-in foreign-ALU fallback only.
+    "boids-3d": {
+        "polarization_abs": 1.1e-05,  # 10x lavapipe 1.0555e-06 (RADV 4.4014e-07)
+        "mean_speed_abs": 2.9e-04,  # 10x lavapipe 2.8172e-05 (RADV 7.7750e-06)
+        "speed_std_abs": 1.4e-04,  # 10x lavapipe 1.3979e-05 (RADV 5.0107e-06)
+        "mean_dist_to_centroid_abs": 9.7e-05,  # 10x lavapipe 9.6943e-06 (RADV 2.3930e-06)
+    },
+    "neural-ca": {
+        # 10x lavapipe 1.7881e-07 (RADV 0.0, bit-exact). ~4 orders TIGHTER than
+        # the authored 1e-2 candidate, which stays a never-exceed ceiling only.
+        "short_horizon_abs": 1.8e-06,
+    },
 }
 _FAIL_PENDING_NOTE = (
     "FAIL-PENDING: cross-backend bounds UNDECLARED (charter round 1 — mechanism only); "
