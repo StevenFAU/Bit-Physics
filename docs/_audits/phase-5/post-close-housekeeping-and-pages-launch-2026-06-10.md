@@ -186,3 +186,6 @@ artifact-complete and awaiting the operator's dispatch click. The portfolio's
 verification core was and remains green — everything this sweep changed was
 governance registries, debris, and prose that had fallen behind the landed
 reality.
+
+appended_by: post-close-housekeeping-agent
+audit_commit_sha: 7dc2039  # Convention #12 back-fill
