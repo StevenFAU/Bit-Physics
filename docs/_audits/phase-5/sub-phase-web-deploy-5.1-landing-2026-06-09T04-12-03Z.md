@@ -481,3 +481,57 @@ NOT canonical equivalence (which stays proven on RADV/wgpu-native only).
 appended_by: phase-5-cross-backend-contingency-round-1-agent
 appended_head_sha: 73c914f
 appended_commit_sha: 96c4aca  # Convention #12 back-fill
+
+## § 17 — Charter round 2: cross-backend bounds DECLARED from measurement (APPENDED 2026-06-10; § 0.3 append-only)
+
+Run #4 (`27247859138`, on `13b38e5`): 5 GREEN; boids-3d + neural-ca FAIL-PENDING
+by design with every charter observable emitted and the `web-deploy-captures-*`
+artifacts published for all 7 sims (failing jobs included — Q3 mechanism proven).
+
+**Run-twice on lavapipe: True for BOTH sims** — neural-ca's FIRST foreign-ALU
+determinism datapoint (runs=2 landed in § 16's round 1). Determinism holds on
+every measured backend for both findings.
+
+**Measured time-to-ready, lavapipe run #4 (declared):** boids-3d [463, 49] ms;
+neural-ca [77535, 78672] ms (run-1 78.7 s confirms the ~77 s pipeline bring-up is
+stable per-context, not a one-off; 180 s budget retains ~2.3× headroom).
+
+**The full measured table (deltas vs the f64 reference; per-backend
+deterministic, so within-backend spread is zero):**
+
+| Observable | RADV (§ 16) | lavapipe (run #4) | ratio | DECLARED bound |
+|---|---|---|---|---|
+| boids polarization Δ | 4.4014e-07 | 1.0555e-06 | 2.40× | **1.1e-05** |
+| boids mean_speed Δ | 7.7750e-06 | 2.8172e-05 | 3.62× | **2.9e-04** |
+| boids speed_std Δ | 5.0107e-06 | 1.3979e-05 | 2.79× | **1.4e-04** |
+| boids mean_dist_to_centroid Δ | 2.3930e-06 | 9.6943e-06 | 4.05× | **9.7e-05** |
+| neural-ca step-50 max_abs | 0.0 (bit-exact) | 1.7881e-07 | — | **1.8e-06** |
+
+(boids informative pointwise: RADV 3.186e-03 / lavapipe 3.5377e-02 — the § 14(b)
+finding reproduced verbatim; it is measured and reported but NOT gated, per
+charter. neural-ca alpha_mass: RADV 1713.436006 / lavapipe 1713.435996, both
+alive; clamp held on both backends.)
+
+**Headroom rationale (declared in code at `_CROSS_BACKEND_DECLARED_BOUNDS`,
+commit `c2cedcf`):** bound = 10× the worst measured delta, rounded up to 2 s.f.
+The measured cross-family spread is ≤ 4.05× (RADV→lavapipe), so 10× covers a
+further backend family of the observed character with > 2× margin; every bound
+remains ≥ 2 orders below the f32-fragile pointwise scale (0.0354) and ≤ 0.08% of
+its observable's magnitude. neural-ca's declared 1.8e-06 is ~4 orders TIGHTER
+than the authored 1e-2 candidate, which stays a never-exceed ceiling only.
+Sanity gate passed before declaring: no lavapipe delta is an unexplained outlier.
+
+**Local regression at declaration (RADV, real validate path):** flag-on boids
+PASS with 25–41× margin to the declared bounds; flag-on neural-ca PASS (0.0 ≤
+1.8e-06, run_twice=True); flag-off boids established gate byte-unchanged PASS
+(0.0032 < 0.01).
+
+**What CI green now MEANS (the § 16 charter, now in force):** for boids-3d and
+neural-ca, lavapipe green = deterministic (run-twice byte-identical) + clamped/
+bounded/alive + declared observable agreement on a foreign ALU. Canonical
+equivalence (0.01 pointwise short-horizon; bit-exact 0.0/0.0) remains proven on
+RADV/wgpu-native ONLY, where the untouched established gates stay authoritative.
+Named follow-up `boids-3d-wgsl-precision-review` (§ 16 decision 4) remains open.
+
+appended_by: phase-5-cross-backend-contingency-round-2-agent
+appended_head_sha: c2cedcf
