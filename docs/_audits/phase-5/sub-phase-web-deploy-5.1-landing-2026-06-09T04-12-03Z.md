@@ -535,3 +535,4 @@ Named follow-up `boids-3d-wgsl-precision-review` (§ 16 decision 4) remains open
 
 appended_by: phase-5-cross-backend-contingency-round-2-agent
 appended_head_sha: c2cedcf
+appended_commit_sha: 79f4446  # Convention #12 back-fill
