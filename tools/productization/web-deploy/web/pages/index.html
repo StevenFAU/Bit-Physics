@@ -1,0 +1,167 @@
+<!doctype html>
+<!--
+  Bit-Physics — GitHub Pages landing (post-phase-5 go-live, 2026-06-10).
+  Served at the site root by the web-deploy `deploy` job; the per-sim bundles
+  it links are the SAME already-validated artifacts the build-and-validate
+  matrix produced in the same run (each re-verified through its own
+  established gate in a real headless browser-WebGPU session before deploy).
+  This page publishes; it verifies nothing and adds no verification claims.
+  Minimal by design — to be replaced by the full interactive site later.
+  House style: IBM Plex Mono / dark instrument palette / cyan-teal accent.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bit-Physics — GPU physics &amp; emergence, verified</title>
+<meta name="description" content="A GPU-accelerated physics and emergence simulation portfolio with an append-only verification ledger. Seven browser-WebGPU sims, each re-verified through its own established gate." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #05060a;
+    --panel: #0b0d12;
+    --line: #1a2029;
+    --fg: #cdd6e0;
+    --muted: #7f8a99;
+    --accent: #2dd4bf;
+    --accent-dim: #14756a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 14px/1.55 "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 48px 20px 64px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+  h1 { margin: 0 0 4px; font-size: 28px; font-weight: 600; letter-spacing: .5px; }
+  h1 .tld { color: var(--accent); }
+  .tag { color: var(--muted); font-size: 13px; }
+  .posture { margin-top: 20px; padding: 16px 18px; background: var(--panel);
+    border: 1px solid var(--line); border-left: 3px solid var(--accent-dim);
+    border-radius: 4px; color: var(--fg); font-size: 13px; }
+  .posture b { color: var(--accent); font-weight: 600; }
+  h2 { margin: 40px 0 6px; font-size: 15px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+  h2::before { content: "// "; color: var(--accent-dim); }
+  .sub { color: var(--muted); font-size: 12.5px; margin: 0 0 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px; }
+  .card { display: block; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 14px 16px; color: var(--fg);
+    transition: border-color .15s ease, transform .15s ease; }
+  .card:hover { border-color: var(--accent-dim); text-decoration: none;
+    transform: translateY(-1px); }
+  .card .name { font-weight: 600; font-size: 14px; color: var(--accent); }
+  .card .meta { margin-top: 6px; color: var(--muted); font-size: 12px; }
+  .card .gate { margin-top: 8px; font-size: 11.5px; color: var(--muted); }
+  .card .gate code { color: var(--fg); background: var(--bg);
+    border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; }
+  ul.plain { list-style: none; padding: 0; margin: 0; }
+  ul.plain li { padding: 10px 0; border-bottom: 1px dashed var(--line); font-size: 13px; }
+  ul.plain li:last-child { border-bottom: 0; }
+  .note { color: var(--muted); font-size: 12px; }
+  footer { margin-top: 48px; border-top: 1px solid var(--line); padding-top: 18px;
+    color: var(--muted); font-size: 12px; }
+  .webgpu { color: var(--muted); font-size: 12px; margin-top: 10px; }
+  .webgpu code { color: var(--fg); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>bit-physics<span class="tld">.sim</span></h1>
+  <div class="tag">GPU-accelerated physics &amp; emergence — a portfolio with a verification spine</div>
+  <div class="posture">
+    Every claim in this project is backed by an <b>append-only audit ledger</b>:
+    each simulation ships with golden-value anchors, determinism contracts,
+    property-based invariants, and cross-stack equivalence gates whose
+    tolerances are <b>measured, then declared — never widened</b>. The seven
+    browser sims below are the exact bundles that passed each sim&rsquo;s own
+    established gate inside a real headless browser-WebGPU session (CI: Mesa
+    lavapipe, 7/7 green; canonical equivalence proven on RADV/wgpu-native).
+    This page only publishes those validated bundles — it adds no new
+    verification claims.
+  </div>
+</header>
+
+<h2>Simulations</h2>
+<p class="sub">Run in the browser via WebGPU. Each card names the gate its bundle was re-verified through.</p>
+<div class="grid">
+  <a class="card" href="./sims/reaction-diffusion-2d/">
+    <div class="name">Gray-Scott Reaction-Diffusion 2D</div>
+    <div class="meta">continuous-CA · WGSL compute</div>
+    <div class="gate">gate: <code>capture_roundtrip</code> vs committed canonical</div>
+  </a>
+  <a class="card" href="./sims/neural-ca/">
+    <div class="name">Growing Neural CA</div>
+    <div class="meta">continuous-CA · learned dynamics · one trained checkpoint</div>
+    <div class="gate">gate: <code>capture_roundtrip</code> (bit-exact on canonical backend)</div>
+  </a>
+  <a class="card" href="./sims/ising-classical/">
+    <div class="name">2D Ising — Metropolis</div>
+    <div class="meta">lattice-spin · checkerboard Monte Carlo</div>
+    <div class="gate">gate: <code>observable</code> (magnetization statistics)</div>
+  </a>
+  <a class="card" href="./sims/strange-attractors/">
+    <div class="name">Lorenz Strange Attractor</div>
+    <div class="meta">closed-form · RK4</div>
+    <div class="gate">gate: <code>new_canonical</code> + run-twice determinism</div>
+  </a>
+  <a class="card" href="./sims/mandelbulb-explorer/">
+    <div class="name">Mandelbulb Explorer</div>
+    <div class="meta">closed-form · distance-estimator ray march</div>
+    <div class="gate">gate: <code>new_canonical</code> + run-twice determinism</div>
+  </a>
+  <a class="card" href="./sims/boids-3d/">
+    <div class="name">Boids 3D</div>
+    <div class="meta">agent-based · flocking</div>
+    <div class="gate">gate: <code>new_canonical</code> + run-twice determinism</div>
+  </a>
+  <a class="card" href="./sims/physarum/">
+    <div class="name">Physarum Transport Network</div>
+    <div class="meta">agent-based · slime-mold trails · order-independent atomics</div>
+    <div class="gate">gate: <code>new_canonical</code> (mass conservation)</div>
+  </a>
+</div>
+<div class="webgpu">Requires WebGPU: Chrome/Edge&nbsp;113+ (or equivalent) over a secure context. Firefox/Safari support varies.</div>
+
+<h2>Downloads</h2>
+<ul class="plain">
+  <li>
+    <a href="https://github.com/StevenFAU/Bit-Physics/releases">Binary releases — GitHub Releases</a>
+    <div class="note">Native Stack-C (C++/Vulkan) builds are produced by the
+    operator-dispatched <code>binary-release</code> pipeline and published as
+    GitHub Release assets — they are never copied into this site. None are
+    published yet; the pipeline is validated and dispatch is an operator
+    action.</div>
+  </li>
+  <li>
+    <a href="https://github.com/StevenFAU/Bit-Physics">Source — github.com/StevenFAU/Bit-Physics</a>
+    <div class="note">MIT. Python / TypeScript-WebGPU / C++-Vulkan / Taichi / NVIDIA Warp stacks.</div>
+  </li>
+</ul>
+
+<h2>Verification record</h2>
+<ul class="plain">
+  <li>
+    <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md">Phase-5 close audit</a>
+    <div class="note">7/7 browser-WebGPU green on CI lavapipe; tolerance ledger byte-unchanged through the phase.</div>
+  </li>
+  <li>
+    <a href="https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits">Full append-only audit ledger</a>
+    <div class="note">Phase 0 → 5: every landing, every SHIFT, every measured bound.</div>
+  </li>
+</ul>
+
+<footer>
+  bit-physics · v0.5.0-phase-5 · published by the web-deploy pipeline
+  (operator-dispatched) · this page is a minimal launch surface, designed for
+  replacement by the full interactive site
+</footer>
+
+</div>
+</body>
+</html>
