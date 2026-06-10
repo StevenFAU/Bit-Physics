@@ -7,72 +7,129 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Phase 5 — Productization
+> **Restructuring note (2026-06-10, post-phase-5 housekeeping):** ~2,200 lines
+> of tagged work had accumulated under `[Unreleased]`. Entries below are now
+> grouped under the release whose work they describe (several entries were
+> originally written retroactively, after their tag). The append-only audit
+> ledger under `docs/_audits/` is the authoritative chronology.
 
-- **5.1 web-deploy** — build-and-validate pipeline for the 7 Stack-B WebGPU web
-  frontends. `tools/productization/web-deploy/` (pipeline.py + verify.py + pinned
-  Playwright headless browser-WebGPU `driver.mjs`), `.github/workflows/web-deploy.yml`
-  (build-and-validate matrix over the 7; `deploy` GATED OFF), `docs/productization/web-deploy.md`.
-  Each sim's bundle is loaded in headless Chromium with WebGPU and re-verified through
-  its OWN established gate (web-build track) on the browser-emitted capture — no tolerance
-  added or widened. Browser-WebGPU is available over a secure context (correcting the
-  web-build track's "unavailable", an about:blank artifact): 4/7 (mandelbulb, strange,
-  physarum, ising) clear their gate through the browser; rd2d/neural-ca (pointwise/bit-exact
-  round-trip) and boids (run-twice determinism) show characterized cross-implementation f32
-  divergence (browser Dawn vs canonical wgpu-native), surfaced for sim-owner/operator.
+### Post-phase-5 housekeeping + GitHub Pages launch
 
-### sub-phase-phase-3-mass-spring-cloth (Phase 3, task-5 — FIRST NEW Stack-C SIM + first soft-body category)
+- Governance-registry reconciliation (I7 tag allowlist, I6 citation
+  exemption + subject-false-positive allowlist, workflow capture-requirement
+  declarations for the five Phase-5 workflows); 27 ruff I001 fixes + new
+  `lint-phase-2-ports` CI job; pre-commit auto-fixers excluded from the
+  append-only `docs/_audits/` ledger.
+- Ratified deletions (dead neural-ca Stack-B driver stub, phantom
+  `docs/phase4/_audits/` placeholder, npm lockfile debris) and docs drift
+  reconciliation (this restructuring, README status, architecture § 11.6/11.7,
+  phase-6 charter backlog, CITATION.cff, plan-doc status banners, master-catalog
+  superseded-baseline banner).
+- GitHub Pages launch: the web-deploy `deploy` job un-gated
+  (workflow_dispatch, operator-controlled); house-style landing page serving
+  the 7 validated Stack-B sim bundles. Deploy publishes already-validated
+  bundles only — no new verification claims.
+- Full health-sweep + housekeeping audit:
+  `docs/_audits/phase-5/post-close-housekeeping-and-pages-launch-2026-06-10.md`.
 
-Reference mass-spring cloth on Stack C (C++20 / Vulkan compute). XPBD (Macklin,
-Müller, Chentanez 2016) reimplemented from scratch; classic Provot (1995)
-structural/shear/bending springs all as XPBD distance constraints; substepped
-semi-implicit Euler + symmetric serial Gauss-Seidel projection in a single Vulkan
-invocation (bit-exact on lavapipe).
+## [0.5.0-phase-5] — Productization (2026-06-10)
 
-- `packages/mass-spring-cloth/` — `cloth.{hpp,cpp}` host driver + `shaders/cloth_xpbd.comp`
-  serial-GS kernel + `cloth_capture_main.cpp` CLI (capture + PBT driver). Consumes
-  the common-cpp Vulkan/capture/determinism/hash substrate. Registered in the
-  top-level CMake after `reaction-diffusion-2d-stack-c` (not a uv member; uv stays 23).
-- Golden tables `tools/testkit/golden/tables/cloth-{hanging,stretched}.json` from
-  `cloth-catenary-limit.md` (analytic catenary + hand-derivation + variational
-  anchors); the inextensible-limit XPBD chain matches the analytic catenary to
-  0.119% of sag depth (`catenary_shape_rel = 2e-3`).
-- PBT (`tools/testkit/property/sims/mass_spring_cloth/invariants.py` + cross-language
-  Hypothesis→subprocess→`.h5` wiring): `length_bounded_above` +
-  `momentum_conservation_free_no_gravity`.
-- Tier-3 diagnostics `tools/diagnostics/tier3/mass-spring-cloth/`; determinism
-  registry `[soft-body.mass-spring-cloth]` (bit-exact, MEASURED); tolerance
-  `[golden_tolerance.soft-body.mass-spring-cloth]`; cpp-strict.yml runs the cloth
-  ctests; canonical capture `flag-wind-128x128-seed42-step1000`.
-- Vendored read-only oracle `references/PositionBasedDynamics/` (Bender 2.2.0, MIT).
-- Spec corrigenda proposed (A-2 cloth-xpbd→mass-spring-cloth; A-3 §2.18 Bender SHA).
+Phase 5 **CLOSED — SHIFTED-with-notes** (close audit:
+`docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md`). Five
+productization pipelines delivered and validated; **no tolerance added or
+widened anywhere in the phase**; integrity 0 HARD_FAIL. This section
+supersedes the interim 5.1-only entry that previously sat under
+`[Unreleased]` (it froze the mid-campaign 4/7 state; final state below).
 
-### sub-phase-phase-3-rigid-body (Phase 3, task-4 — FIRST Stack-E SIM in Phase 3)
+### Added
 
-Reference articulated rigid-body pendulum on Stack E (Python / NVIDIA Warp).
-Featherstone Articulated-Body Algorithm (ABA, reduced/generalized-coordinate
-forward dynamics; Ch. 7 §7.2–§7.3) for a planar revolute serial chain, in a
-single-thread f64 `@wp.kernel`; semi-implicit (symplectic) Euler default + RK4
-option; CLI tiers `single-joint` / `double-pendulum` / `6-dof` / `N-link`.
+- **5.1 web-deploy** — build-and-validate over the 7 Stack-B web frontends
+  through a REAL headless browser-WebGPU gate
+  (`tools/productization/web-deploy/`: pipeline.py + verify.py + pinned
+  Playwright `driver.mjs`; `.github/workflows/web-deploy.yml`). Each sim's
+  bundle is loaded in headless Chromium with WebGPU and re-verified through
+  its OWN established gate on the browser-emitted capture. The `deploy` job
+  shipped gated off (launched post-close — see [Unreleased]).
+- **web-build track** — the 7 Stack-B WebGPU frontends themselves (boids-3d,
+  ising-classical, mandelbulb-explorer, neural-ca, physarum,
+  reaction-diffusion-2d, strange-attractors), each re-gated against its own
+  established gate on wgpu-native (`gpu_gate.py`), thresholds parity-guarded.
+- **5.2 binary-release** — 2 qualifying Stack-C CMake packages validated
+  (clean-build-dir isolation, no Docker; Windows/macOS deferred to Phase 6).
+- **5.3 pypi-release** — 15-sim pool: 14 PASS through the § 3.8 bootstrap
+  gate; the 1 BLOCKED (3dgs-mpm-sh-update) unblocked by the Warp-deprecation
+  migration below.
+- **5.4 render-passes** — eulerian-smoke canonical through
+  convert→export→render→verify, decoded-pixel bit-exact (de-Docker'd
+  Blender; cloud job operator-dispatch-only).
+- **5.5 preprint-extraction** — pinn-poisson byte-identical extraction +
+  clean TeX compile, zero unresolved cites (de-Docker'd TinyTeX; cloud job
+  operator-dispatch-only).
 
-- `packages/articulated-pedagogical/` — 26th workspace member. `articulated_pedagogical/`
-  (`model`, `aba` Warp kernel, `integrators`, `analytic` scipy elliptic anchors,
-  `dynamics`, `sim`, CLI). 18-test acceptance suite (single-pendulum A1/A2/A3
-  anchors + ABA EOM; double-pendulum vs closed-form RK4 reference; 6-DOF energy
-  conservation; D-DET bit-exact; energy_drift_bounded + angular_momentum-about-
-  pivot PBT; capture round-trip; golden-table + Tier-1 health).
-- `docs/sim-specs/rigid-body/articulated-pedagogical/{spec-ref,algebraic}.md`.
-- `tools/testkit/golden/tables/rigid-body-{pendulum,double-pendulum,6dof}-trajectory.json`
-  + `tools/testkit/golden/derivations/rigid-body-{pendulum,rk4-reference}.md`.
-- `tools/diagnostics/tier3/rigid_body_pedagogical/` (energy-conservation + period-recovery);
-  `tools/testkit/property/sims/rigid_body_pedagogical/` (PBT invariant module).
-- `tools/testkit/determinism/registry.toml` — `[rigid-body.articulated-pedagogical]`
-  (Stack E, bit-exact, same-stack-same-hw; MEASURED).
-- `tools/testkit/equivalence/tolerance.toml` — `[golden_tolerance.rigid-body.articulated-pedagogical]`
-  (`pendulum_period_rel`, `trajectory_abs`, `energy_drift_rel_per_second`); no cross-stack cap.
-- `.github/workflows/python-strict.yml` — `test-rigid-body-pedagogical` job.
-- `.pre-commit-config.yaml` — failing-tests-evidence excluded from trailing-whitespace.
-- `docs/spec-amendments-proposed.md` — A-1: §5.8 maximal→ABA corrigendum (operator-applied).
+### Changed
+
+- **Warp-deprecation migration** — 3 live occurrences migrated behind a
+  version-adaptive guard; numerics-free proven bit-identical per touched sim.
+- **Browser-divergence resolution** — the 3 browser failures (rd2d,
+  neural-ca, boids) were ONE capture/live-RAF data race; fixed with a shared
+  lock across all 7 frontends; no shader/tolerance/atomics change.
+
+### Verification
+
+- Five-run web-deploy CI campaign closing at **7/7 GREEN on Mesa lavapipe**
+  (final run `27275878776` on `ab9f372`). Two genuine deterministic lavapipe
+  ALU findings (boids-3d pointwise 0.0354 vs 0.01; neural-ca bit-exactness
+  broken at 1.0133e-06) chartered into an opt-in observable-gate class with
+  measured-then-declared bounds (10× worst measured). Canonical equivalence
+  remains proven on RADV/wgpu-native ONLY, where the untouched established
+  gates stay authoritative.
+- Named deferrals (close audit § 5): `boids-3d-wgsl-precision-review`;
+  Phase-4-CUDA rows; Phase-4-Greenfield-CPU; Windows/macOS binary targets;
+  render-passes + preprint-extraction cloud jobs operator-dispatch-only.
+
+## [0.4.0-phase-4] — Frontier-variant batches (2026-05-31)
+
+Phase 4 **CLOSED** (landing audit:
+`docs/_audits/phase-4/landing-2026-06-01T01-44-34Z.md`). No per-sub-phase
+entries were written in this file during the phase; `docs/phase4/ledger.md`
+and the audit ledger carry the detail.
+
+### Added
+
+- **9 of 27 planned frontier sims landed**: reaction-diffusion-2d-diff,
+  lenia-diff, mpm-multimaterial-diff, eulerian-smoke-diff (batch 1 —
+  differentiable, on the WU-A autodiff substrate); 3dgs-mpm-sh-update,
+  eulerian-smoke-neural (batch 2 — neural-rendered);
+  articulated-pedagogical-diff, particle-lenia, flow-lenia (batch 3 —
+  frontier algorithms).
+- 8/8 foundation work units (incl. the WU-A autodiff substrate consumed by
+  every batch-1 sim) + Phase-4.1 foundation hardening + mutation re-tier.
+
+### Deferred (named-with-cause)
+
+- 18 of 27 frontier rows re-homed per `docs/phase4/ledger.md`:
+  **Phase-4-CUDA** (10 sims; CUDA measured absent on the dev host — needs an
+  A100-class CUDA 12 host) and **Phase-4-Greenfield-CPU** (8 sims; each needs
+  its base sim landed first).
+
+## [0.3.0-phase-3] — Phase-3 close (2026-05-30)
+
+Phase 3 close (audit: `docs/_audits/phase-3/` — R3–R5 + corrigenda + task-9
+consolidated close). Three of the seven Phase-3 sims landed in earlier
+sub-phase tags below (lenia, plus the common-3dgs and render-similarity
+infrastructure roots); three task entries were never written in this file and
+are summarized here:
+
+- **neural-ca (task-6)** — first dual-stack sim (Stack-D PyTorch
+  training+inference + Stack-B custom-WGSL inference tied by ONE trained
+  checkpoint); first render-similarity gate-14; vendored Mordvintsev et al.
+  2020 oracle.
+- **pinn-poisson (task-7)** — first learned-dynamics-category sim
+  (Raissi-2019 soft-constraint PINN, 2D Poisson, CPU-only); verified
+  two-pronged vs analytic anchors + a reusable classical FD reference.
+- **3dgs-mpm (task-8)** — Phase-3 finale; first neural-rendered-category sim
+  (PhysGaussian-style MPM→3DGS coupling consuming the Phase-2 MPM solver +
+  common-3dgs renderer).
 
 ### sub-phase-phase-3-ising-classical (Phase 3, task-3a — FIRST Stack-B SIM in Phase 3)
 
@@ -118,6 +175,61 @@ cadence going forward — charter-v2).
   Metropolis-Hastings, detailed balance, critical temperature, Onsager
   solution, Kramers-Wannier duality, parallel-Metropolis checkerboard);
   `justfile` recipes (`run-ising-classical`, `test-ising-classical`).
+
+### sub-phase-phase-3-rigid-body (Phase 3, task-4 — FIRST Stack-E SIM in Phase 3)
+
+Reference articulated rigid-body pendulum on Stack E (Python / NVIDIA Warp).
+Featherstone Articulated-Body Algorithm (ABA, reduced/generalized-coordinate
+forward dynamics; Ch. 7 §7.2–§7.3) for a planar revolute serial chain, in a
+single-thread f64 `@wp.kernel`; semi-implicit (symplectic) Euler default + RK4
+option; CLI tiers `single-joint` / `double-pendulum` / `6-dof` / `N-link`.
+
+- `packages/articulated-pedagogical/` — 26th workspace member. `articulated_pedagogical/`
+  (`model`, `aba` Warp kernel, `integrators`, `analytic` scipy elliptic anchors,
+  `dynamics`, `sim`, CLI). 18-test acceptance suite (single-pendulum A1/A2/A3
+  anchors + ABA EOM; double-pendulum vs closed-form RK4 reference; 6-DOF energy
+  conservation; D-DET bit-exact; energy_drift_bounded + angular_momentum-about-
+  pivot PBT; capture round-trip; golden-table + Tier-1 health).
+- `docs/sim-specs/rigid-body/articulated-pedagogical/{spec-ref,algebraic}.md`.
+- `tools/testkit/golden/tables/rigid-body-{pendulum,double-pendulum,6dof}-trajectory.json`
+  + `tools/testkit/golden/derivations/rigid-body-{pendulum,rk4-reference}.md`.
+- `tools/diagnostics/tier3/rigid_body_pedagogical/` (energy-conservation + period-recovery);
+  `tools/testkit/property/sims/rigid_body_pedagogical/` (PBT invariant module).
+- `tools/testkit/determinism/registry.toml` — `[rigid-body.articulated-pedagogical]`
+  (Stack E, bit-exact, same-stack-same-hw; MEASURED).
+- `tools/testkit/equivalence/tolerance.toml` — `[golden_tolerance.rigid-body.articulated-pedagogical]`
+  (`pendulum_period_rel`, `trajectory_abs`, `energy_drift_rel_per_second`); no cross-stack cap.
+- `.github/workflows/python-strict.yml` — `test-rigid-body-pedagogical` job.
+- `.pre-commit-config.yaml` — failing-tests-evidence excluded from trailing-whitespace.
+- `docs/spec-amendments-proposed.md` — A-1: §5.8 maximal→ABA corrigendum (operator-applied).
+
+### sub-phase-phase-3-mass-spring-cloth (Phase 3, task-5 — FIRST NEW Stack-C SIM + first soft-body category)
+
+Reference mass-spring cloth on Stack C (C++20 / Vulkan compute). XPBD (Macklin,
+Müller, Chentanez 2016) reimplemented from scratch; classic Provot (1995)
+structural/shear/bending springs all as XPBD distance constraints; substepped
+semi-implicit Euler + symmetric serial Gauss-Seidel projection in a single Vulkan
+invocation (bit-exact on lavapipe).
+
+- `packages/mass-spring-cloth/` — `cloth.{hpp,cpp}` host driver + `shaders/cloth_xpbd.comp`
+  serial-GS kernel + `cloth_capture_main.cpp` CLI (capture + PBT driver). Consumes
+  the common-cpp Vulkan/capture/determinism/hash substrate. Registered in the
+  top-level CMake after `reaction-diffusion-2d-stack-c` (not a uv member; uv stays 23).
+- Golden tables `tools/testkit/golden/tables/cloth-{hanging,stretched}.json` from
+  `cloth-catenary-limit.md` (analytic catenary + hand-derivation + variational
+  anchors); the inextensible-limit XPBD chain matches the analytic catenary to
+  0.119% of sag depth (`catenary_shape_rel = 2e-3`).
+- PBT (`tools/testkit/property/sims/mass_spring_cloth/invariants.py` + cross-language
+  Hypothesis→subprocess→`.h5` wiring): `length_bounded_above` +
+  `momentum_conservation_free_no_gravity`.
+- Tier-3 diagnostics `tools/diagnostics/tier3/mass-spring-cloth/`; determinism
+  registry `[soft-body.mass-spring-cloth]` (bit-exact, MEASURED); tolerance
+  `[golden_tolerance.soft-body.mass-spring-cloth]`; cpp-strict.yml runs the cloth
+  ctests; canonical capture `flag-wind-128x128-seed42-step1000`.
+- Vendored read-only oracle `references/PositionBasedDynamics/` (Bender 2.2.0, MIT).
+- Spec corrigenda proposed (A-2 cloth-xpbd→mass-spring-cloth; A-3 §2.18 Bender SHA).
+
+## [0.2.4-sub-phase-phase-3-lenia] (2026-05-28)
 
 ### sub-phase-phase-3-lenia (Phase 3, task-3 — FIRST SIM in Phase 3)
 
@@ -220,14 +332,1264 @@ architecture both §D.2 conditions strongly met).
   `docs/architecture.md:962` Stack-D determinism notes). Future
   optimization opportunity at Phase 4+.
 
-### Added
+## [0.2.3-sub-phase-phase-3-render-similarity] (2026-05-28)
 
-- Phase 0 Block 1 (FOUNDATION): repo skeleton, vendored design spec at
-  `docs/architecture.md`, vendored Phase 0 plan, glossary, capture format
-  module + JSON schemas, CI scaffolding, pre-commit config, branch-protection
-  doc, preflight script, sim-spec template, probe template, perf-ledger
-  scaffold, failing-tests-evidence scaffold, tolerance-budget stub,
-  schema-corpus directory.
+### sub-phase-phase-3-render-similarity
+
+Second Phase-3 sub-phase (task-2, scope item 3.x; HARD-blocks task-6 + task-8).
+Introduces `tools/testkit/render_similarity/` — the render-similarity metric
+module (PSNR / SSIM / LPIPS + `ms_ssim` Phase-4-WU-C shell) — and the
+`equivalence` CLI `--mode render-similarity` dispatch under the matured
+per-sub-phase cadence.
+
+#### Added
+
+- `tools/testkit/render_similarity/` package (`metrics.py` + `harness_mode.py`)
+  exposing the §3.2.2 public surface:
+  `psnr(a, b) -> float` (sentinel `+inf` for identical), `ssim(a, b) -> float`
+  (Wang 2004 via `skimage.metrics.structural_similarity`),
+  `lpips(a, b, net='alex'|'vgg') -> float` (Zhang 2018 via `lpips==0.1.4`),
+  `ms_ssim(a, b) -> float` (SHELL — `NotImplementedError` until Phase 4 WU-C
+  per `docs/phases/phase-3-plan.md:380`). Input contract: `(H, W, 3)` uint8
+  `[0, 255]` OR float32 `[0, 1]` (auto-detect by dtype); shape/dtype/channel
+  mismatch → `ValueError`.
+- `tools/testkit/equivalence/__main__.py` — argparse CLI dispatcher
+  (D-HARNESS-CLI lean (a)) with `--mode render-similarity`. The existing
+  `compare_captures` programmatic surface is unchanged.
+- `tools/testkit/equivalence/tolerance-schema.json` — additive top-level
+  `render_similarity` key (category → sim → `{psnr_min, ssim_min, lpips_max}`;
+  D-SCHEMA lean). Schema only — tasks 6 and 8 add rows.
+- PyPI deps in `tools/testkit/pyproject.toml`: `lpips==0.1.4`,
+  `scikit-image>=0.26`, `torch>=2.0` (declared; transitive of lpips).
+- Adversarial fixtures + meta-test at
+  `tools/testkit/render_similarity/tests/fixtures/adversarial/` (testkit-local
+  per charter-v2 evidence: identical CI breadth/freq + Cat 1-5+Cat-X semantic
+  mis-fit + `docs/architecture.md:673` Layer-0 placement). Two families:
+  `ssim_false_positive` (inverted-checkerboard pair) + `lpips_false_negative`
+  (1/255 single-pixel perturbation).
+- `test-render-similarity` job in `.github/workflows/python-strict.yml`
+  (pytest directly per §2.14, mirroring the `test-common-3dgs` job; bundled
+  lpips linear-head weights pin via R-3 sha256 assertion; CI backbone
+  download cached via `actions/cache`).
+- `docs/testkit/equivalence.md` — render-similarity mode section (Cat-2 doc↔impl
+  contract).
+- `docs/glossary.md` entries: PSNR, SSIM, LPIPS, perceptual loss, MS-SSIM.
+
+#### D-class
+
+- **D-LOC**: `tools/testkit/render_similarity/` package per §3.2.2 (RESOLVED-IN-CHARTER).
+- **D-HARNESS-CLI**: lean (a) — `equivalence/__main__.py` + `--mode` flag
+  (RATIFIED Stage 1a; no destructive refactor → STOP-CLI not fired).
+- **D-SCHEMA**: additive `render_similarity` top-level key in
+  `tolerance-schema.json` (RATIFIED Stage 1a; existing validators unchanged →
+  STOP-SCHEMA not fired).
+- **D-WEIGHTS**: lazy runtime-fetch + CI `actions/cache` + R-3 sha256 assertion
+  on bundled linear-head weights; backbone download per torchvision pin.
+- **D-DET**: **bit-exact / same-stack-same-hw** — MEASURED at Stage 1b across
+  PSNR (pure numpy), SSIM (skimage), LPIPS-alex (CPU + eval + no_grad +
+  pinned weights), LPIPS-vgg. All four bit-exact across two runs → STOP-DET
+  not fired. R-4 (GPU LPIPS diverges from CI CPU) documented in metrics.py
+  docstring + `docs/testkit/equivalence.md`.
+- **D-ANCHOR**: 3 anchors landed at Stage 1b — PSNR hand-derivation
+  (closed-form `10 * log10(MAX_I**2 / MSE)`); SSIM Wang 2004 Eq. 13 on
+  identity + constant-pair luminance term; LPIPS self-consistency
+  (`< 1e-4`) + Zhang 2018 monotonic-under-perturbation property.
+
+#### Tag reservation
+
+Intermediate tag `v0.2.3-sub-phase-phase-3-render-similarity` is the
+**lean-YES** Stage-2 landing tag (§D.2 (a) PyPI deps `lpips` + `scikit-image`
++ `torch` + (b) durable architecture gating all Phase-4 neural sims;
+operator-pushed, I7). Not pushed during Stage 1.
+
+## [0.2.2-sub-phase-phase-3-common-3dgs] (2026-05-28)
+
+### sub-phase-phase-3-common-3dgs
+
+First Phase-3 sub-phase (task-1, scope item 3.8). Introduces
+`common/common-3dgs/` — the Stack-E (Python / NVIDIA Warp) 3D-Gaussian-Splatting
+common module — under the matured per-sub-phase cadence. Produces the
+`GaussianSplatModel` / `Camera` / `render` API that task-8 (3dgs-mpm) and Phase-4
+WU-C consume unchanged.
+
+#### Added
+
+- `common/common-3dgs/` workspace member (23rd; second Stack-E common module):
+  `GaussianSplatModel` (Warp-array fields; Inria `.ply` load/save), `Camera`
+  (view/projection + `look_at`), the deterministic forward EWA-splatting
+  `render`, and `save_png` (the D-D RGB-image writer). Smoke sim at
+  `examples/smoke_3dgs/` (`just run-3dgs-smoke`).
+- `references/3DGS-reference/` — vendored Inria gaussian-splatting at the §2.18
+  SHA `54c035f7…` (**NON-COMMERCIAL** research license; read-only; the first
+  non-permissive upstream; the clause binds task-8 + Phase-4 WU-C).
+- `docs/common/3dgs.md`; `tools/testkit/determinism/registry.toml` (NEW Phase-3
+  surface) with `[neural-rendered.common-3dgs]` = bit-exact / same-stack-same-hw
+  (D-C; MEASURED `max_abs_diff = 0.0`); `test-common-3dgs` job in
+  `.github/workflows/python-strict.yml`; `just run-3dgs-smoke` / `just test-3dgs`;
+  schema-corpus fixture `tests/fixtures/legacy-captures/phase-3-common-3dgs.h5`.
+
+#### Tag reservation
+
+Intermediate tag `v0.2.2-sub-phase-phase-3-common-3dgs` is the **lean-YES** Stage-2
+landing tag (D-E: external dependency + durable architecture; operator-pushed, I7).
+Not pushed during Stage 1.
+
+## [0.2.1-sub-phase-lfs-architecture] (2026-05-27)
+
+### sub-phase-lfs-architecture
+
+Phase-2-tail infrastructure sub-phase. Migrates the portfolio's large
+capture/audit-evidence LFS content (4.852 GiB across 26 unique objects) off
+GitHub LFS — whose **bandwidth** free tier (10 GB/month) was fully consumed and
+throttled — onto **Cloudflare R2** (zero-egress, 10 GiB free storage) via the
+`lfs-s3` custom-transfer agent, **without rewriting any git history**. Every LFS
+pointer stub stays byte-identical; only the resolver/backend config changes. All
+seven named invariants (I1–I7) and the bit-identity replay (`9399fc33…`) and
+integrity baseline (`c19492ad…`) held throughout. No `-phase-N` tag; an optional
+non-phase point-release `v0.2.1-sub-phase-lfs-architecture` is a banked operator
+decision (`docs/conventions/sub-phase-conventions.md` § D.2).
+
+**What changed for contributors:**
+
+- **CI handles R2 automatically, per-job.** The two capture-heavy workflows
+  (`python-strict`, `cpp-strict`) no longer fetch all LFS content on every run.
+  `python-strict` pulls only `tests/fixtures/legacy-captures/**`; `cpp-strict`
+  pulls only `captures/reaction-diffusion-2d-ref/**` (its gate-14 reference
+  capture) — the dominant per-run LFS term drops ~20×. The R2-routed workflows
+  install `lfs-s3` and opt in via per-job `git config` (`tools/lfs/setup-lfs-s3.sh`),
+  using the repo's `R2_*` Actions secrets.
+- **Local dev is unaffected by default.** A fresh clone with no R2 credentials
+  resolves LFS via GitHub LFS exactly as before (the steady-state fallback). To
+  route local LFS through R2 (faster, zero-egress), follow the one-command
+  bootstrap in `tools/lfs/README.md` to register `lfs-s3` in your **trusted**
+  `.git/config` (git-lfs ignores these keys from a committed `.lfsconfig` by
+  design, so R2 activation is always explicit opt-in).
+- **Steady-state architecture:** R2 is primary for opted-in consumers (CI + any
+  developer who bootstraps it); GitHub LFS remains the fallback for default
+  consumers. Both backends hold every object; decommissioning GitHub LFS
+  (R2-only) is deferred indefinitely to a future operator decision.
+
+#### Added
+
+- `tools/lfs/setup-lfs-s3.sh` — per-job `lfs-s3` installer + trusted-config
+  registrar (credentials from env, never committed).
+- `tools/lfs/r2-bulk-upload.sh` — deterministic bulk upload of the HEAD +
+  phase-tag OID union (26 objects) to R2, with per-object sha256 round-trip
+  verification.
+- `tools/lfs/README.md` — R2 opt-in bootstrap + local-dev runbook.
+- `.github/workflows/r2-roundtrip-proof.yml` — M2 single-object R2 round-trip
+  proof (content-OID preserved).
+- `.github/workflows/r2-sweep-proof.yml` — M4 sweep: verifies every LFS pointer
+  at HEAD + each phase tag resolves from R2 by sha256 (62/62 PASS).
+- `tools/testkit/lfs_migration/` — invariant-verification lock surface for
+  I1–I7 + cost-axis registry + per-job R2-config (16 tests).
+- `docs/planning/bit-physics-master-catalog.md` (+ `docs/planning/README.md`) —
+  vendored CI-tier / capacity planning catalog.
+- Sub-phase audit chain under `docs/_audits/phase-2/sub-phase-lfs-architecture/`
+  (plan-drafting → Stage 0 → 1a → 1b → 1c → 2 landing).
+
+#### Changed
+
+- `.github/workflows/python-strict.yml`, `.github/workflows/cpp-strict.yml` —
+  `lfs: true` → `lfs: false` + targeted `git lfs pull --include=` (selective
+  fetch).
+- `.github/workflows/mutation-testing.yml` — re-tiered to weekly T4 (cron +
+  dispatch + path-filtered push) per catalog § 41.4 (sibling chain); de-listed
+  from required-must-run in `docs/ops/branch-protection.md`; `docs/architecture.md`
+  § 2.13 CI-policy amended accordingly.
+
+## [0.2.0-phase-2] — Cross-stack replication (2026-05-25)
+
+### sub-phase-taichi-integration
+
+**FIRST spec-Phase-2 sub-phase**; focused-infrastructure shape mirroring
+`sub-phase-numba-integration` per `docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md`
+§ 10.5 item 4. Establishes Stack-D (Python / Taichi) workspace surface
+before subsequent spec-Phase-2 per-sim Stack-D port sub-phases consume
+it. Resolves the **common-py adoption decision** banked since the
+numba-integration § 2 re-anchor finding. Operator-routed D1=SUPERSEDE
+(existing `docs/phases/phase-2-cross-stack-replication.md` 10-stage
+monolithic plan is NOT the dispatch vehicle; per-sub-phase decomposition
+matching Phase-1 pattern carries forward); D2 row 2 transitions
+SCOPED IN → RESOLVED at this sub-phase close; D3=v0.1.0-phase-1 replay
+anchor for all spec-Phase-2 sub-phases until `v0.2.0-phase-2` lands.
+
+#### Added
+
+- **`common/common-py/` workspace registration** in root
+  `pyproject.toml` `[tool.uv.workspace].members` (14th member;
+  resolves "infrastructure shipped, not yet wired" state surfaced at
+  numba-integration § 2).
+- **Taichi as workspace-accessible dependency** —
+  `taichi>=1.7,<2.0` promoted from `common/common-py/pyproject.toml`
+  `[project.optional-dependencies].taichi` to `[project].dependencies`
+  per Task 0.3 routing (a): Stack-D-only scoping (Stack-B/C developers
+  omit common-py from their workspace install). Upper bound tightened
+  per re-pin policy convention (`docs/conventions/sub-phase-conventions.md`
+  § H.4).
+- **`docs/common/taichi.md` convention doc** (361 lines including
+  Stage-2 § 4.6 addendum) — sister to `docs/common/numba.md`; documents
+  required `ti.init` form (`arch=ti.cpu, random_seed=<seed>,
+  cpu_max_num_threads=1, offline_cache=True`), banned flags
+  (`fast_math=True`, `default_fp=ti.f32` mismatch, unguarded parallel
+  reductions), the 4 spec § 4.4 known limitations + workarounds + the
+  Taichi-locale-DeprecationWarning workaround (§ 4.5) + the
+  `@ti.kernel` `-> None` annotation TypeError surface (§ 4.6).
+- **`common_py.determinism.set_taichi_deterministic` extended** with
+  `arch: str = "cpu"` parameter (`SUPPORTED_TAICHI_ARCHS = cpu / cuda
+  / vulkan / metal`); raises `ValueError` on unrecognised arch;
+  backward-compatible default preserves existing callers; uses the
+  correct Taichi 1.7.4 determinism mechanism. **Latent-bug fix
+  (SHIFTED N2):** charter § 1.4.1 prescribed `deterministic_mode=True`
+  is NOT a valid Taichi 1.7.4 `ti.init` kwarg (verified by signature
+  inspection); the pre-Stage-1 implementation would have always raised
+  at runtime if any caller had invoked it with taichi installed.
+- **12 unit tests** at `common/common-py/tests/test_determinism.py`
+  covering all 4 backends + ValueError path + backward-compat path +
+  monkeypatched missing-taichi path (rewritten from the pre-Stage-1
+  Stage-1-pre-assumption test); +7 net new tests.
+- **Hello-physics Taichi smoke sim** at
+  `common/common-py/smoke/hello_taichi.py` (1D explicit diffusion;
+  Taichi backend; sibling to `advection_1d.py`). Exercises
+  `set_taichi_deterministic` + `Capture.write_capture` + `FKeyDispatcher`
+  (CI-skipped) + `watch_and_reexec` (CI-skipped). Smoke-tier capture at
+  `common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.{h5,json}`
+  (47 KB; NOT LFS-tracked at this path; smoke-tier only — not a
+  canonical-corpus capture per Appendix D § D.2.3). Kernel module
+  deliberately omits `from __future__ import annotations` per spec
+  § 4.4 limitation #2 and `-> None` return annotations per the
+  Taichi-1.7.4 AST-transformer limitation discovered at Stage 1
+  (SHIFTED N3).
+- **`tools/testkit/taichi_harness/`** regression-test subpackage —
+  non-shadowing name per numba § 8 N2 lesson. 5 tests at
+  `tests/test_taichi_determinism.py`: FP-equivalence vs pure-NumPy at
+  N ∈ {64, 256, 1024}; run-to-run bit-determinism; cold-vs-warm
+  offline-cache identity. All 5 use `pytest.importorskip("taichi")`
+  for R-T1 CI-without-Taichi mitigation per charter § 9.
+- **filterwarnings amendment** at `common/common-py/pyproject.toml`
+  `[tool.pytest.ini_options]`: filters
+  `DeprecationWarning:taichi.*` + `locale\\.getdefaultlocale` to
+  preserve strict-warnings posture against Taichi 1.7.4's internal
+  Python-3.12 locale-deprecation call (SHIFTED N4; documented at
+  `docs/common/taichi.md` § 4.5).
+- **`docs/dependencies.md` additive entry** for Taichi pin +
+  `bit-physics-common-py` as workspace member.
+- This audit chain (9 commits): plan-drafting probe (`7b21ee2`);
+  charter (`9f5c80f`); plan-drafting landing audit (`185401b`); plan-
+  drafting SHA back-fill (`75fb99a`); Stage 0 tolerance-budget
+  carryover (`81b1475`); Stage 0 checkpoint (`0eed3d7`); Stage 0 SHA
+  back-fill (`ae3b834`); Stage 1 sub-bundle feat (`c2900c3`); Stage 1
+  checkpoint (`fece9a8`); Stage 1 SHA back-fill (`9502824`); Stage 2
+  landing audit + back-fill (final SHAs).
+
+#### Verified
+
+| Deliverable | Status | Notes |
+|---|---|---|
+| Workspace registration | GREEN | `common/common-py` in `[tool.uv.workspace].members` at commit `c2900c3` |
+| Taichi declared as workspace dep | GREEN | `taichi>=1.7,<2.0` at `common/common-py/pyproject.toml` |
+| `docs/common/taichi.md` | GREEN | 361 lines; sister to `docs/common/numba.md`; ≥3 anchors at § 2.1 |
+| `set_taichi_deterministic` arch param + API fix | GREEN | 12 unit tests; 4 backends + ValueError + backward-compat + monkeypatch |
+| Hello-physics smoke + capture | GREEN | 47 KB `.h5`; sha256 `347d6568…05cfd` |
+| `taichi_harness` regression | GREEN | 5 tests; locally validated; CI-skip on missing-Taichi |
+| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (third byte-identical sweep in a row) |
+| Cross-package regression sweep | GREEN | 325 GREEN (+30 vs 295 baseline); zero Phase-1 sim regressions |
+| Equivalence-harness compatibility | GREEN | hello-taichi vs advection_1d diff emitted cleanly (within_tolerance=False expected; different sims) — W-Gate 5 analogue |
+| `docs/dependencies.md` entry | GREEN | Taichi pin + common-py workspace member |
+| CHANGELOG entry | GREEN | this entry |
+
+### sub-phase-capture-determinism-contract
+
+**SECOND spec-Phase-2 sub-phase**; portfolio-wide contract-redesign mirroring
+`sub-phase-conventions-refactor-post-phase-1` consolidation shape per
+`docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md`.
+SUPERSEDES Taichi-integration § 10 next-sub-phase recommendation (RD-2D →
+Stack-D port) because the determinism contract is structurally upstream of
+any further Stack-D port. Surfaced via CI fan-out from Taichi-integration's
+push to main: `common/common-ts/examples/hello-physics/hello-physics.test.ts`
+asserted raw HDF5 byte-equality across two runs, which is unstable across
+Unix-second boundaries because h5wasm 0.10.1's bundled HDF5 library embeds
+wall-clock-influenced `H5O_MTIME_NEW` timestamps in every object header (the
+`H5Pset_obj_track_times` symbol is absent from h5wasm 0.10.1's WASM blob
+entirely — Stage 0 Task 0.3(c) empirical refutation of the probe's lean
+Module-direct fix path).
+
+D2 operator-routed wording at STEP 8 HALT-AND-SURFACE incorporates D2-c
+(project-onto-Capture) + explicit R-D3 cross-reference to spec § 2.6 + tool-
+agnostic exclusion language; landed verbatim at `docs/architecture.md` § 2.5.
+D2-sub: `payload.checksum` retained as raw-file sha256 + description note
+that it is informational and the contract lives at the harness.
+
+#### Added
+
+- **Spec § 2.5 amendment** (`docs/architecture.md`; primary contract wording
+  site). Replaces the pre-amendment "bit-identical output" framing with the
+  content-equivalent contract over the parsed Capture data model:
+  *"A simulation is deterministic if every state array and diagnostic entry
+  in its canonical Capture is exactly element-wise equal across two runs at
+  the same seed on the same hardware. This is the zero-tolerance special
+  case of the cross-stack content-equivalence posture in §2.6, computed over
+  the same Capture projection. Storage-format metadata (wall-clock timestamps
+  embedded by the underlying file format, library version banners, and other
+  environment-influenced packaging artifacts) is excluded from the
+  comparison."* Cross-references to the new harness API (Python + TS) added
+  alongside.
+- **Spec § 2.7 + `tools/testkit/schemas/capture-v1.json` description-only
+  amendment** clarifying `payload.checksum` is informational; the contract
+  lives at the harness; field-shape unchanged (no schema_version bump; no
+  WU-A coordination cost).
+- **Canonical Python determinism harness** at
+  `tools/testkit/determinism/harness.py` — `DeterminismVerdict.bit_exact`
+  renamed to `content_equivalent` with backward-compatibility property shim
+  emitting `DeprecationWarning` (preserve callers' surface for one
+  deprecation window). Module docstring + `policy.md` updated to reflect
+  the content-equivalent contract. 12 portfolio call sites migrated inline
+  to `verdict.content_equivalent` (8 Phase-1 sims + RD-2D Phase-0 +
+  diagnostics tier1 + harness's own tests).
+- **TypeScript determinism harness (NEW)** at
+  `common/common-ts/src/determinism/`:
+  - `captureReader.ts` — parses h5wasm `/steps/{N}/state/{field}` +
+    `/steps/{N}/diagnostics/{check}` into a typed `Capture` record;
+    reuses existing `H5FileLike` shim types.
+  - `diffCaptures.ts` — element-wise Float64Array equality + max-abs/rel
+    error reporting + sorted-step + sorted-field traversal for stable
+    first-mismatch reporting.
+  - `runTwiceAndDiff.ts` — orchestrator matching the Python harness
+    semantically; returns `DeterminismVerdict { contentEquivalent, detail }`.
+  - `index.ts` — re-exports (non-empty per § B.6 N6 banked precedent).
+  - `__tests__/harness.test.ts` — 5 tests verifying contract semantics on
+    synthetic deterministic + nondeterministic stub runners.
+- **Python `CaptureWriter` source-level fix** at
+  `tools/testkit/capture/writer.py`: `libver="earliest"` +
+  `track_order=False` on every `create_group` + `track_times=False` on
+  every `create_dataset`. Defense-in-depth — non-load-bearing per the
+  harness-based contract but eliminates the latent flake at the source for
+  any downstream consumer that does compare bytes. New
+  `test_writer_determinism.py::test_write_capture_byte_identical_across_seconds`
+  verifies byte-identical `.h5` output across 1.5 s wall-clock separation.
+- **TypeScript `CaptureWriter` source-level fix per N1 path (a)** at
+  `common/common-ts/src/capture.ts`: freezes `globalThis.Date.now` for the
+  duration of the h5wasm write window in a `try/finally` (saves real
+  `Date.now`, replaces with `() => 0`, restores in `finally`). Stage 0 Task
+  0.3(c) empirically refuted the probe's lean Module-direct path; this is
+  the only viable userland shim per the h5wasm-node 0.10.1 surface. New
+  `capture-writer-determinism.test.ts` (3 tests: byte-identical across 1.5 s
+  + no-leaked-monkey-patch + restore-on-throw).
+- **Per-test refactor V1 (hello-physics)** at
+  `common/common-ts/examples/hello-physics/hello-physics.test.ts`:
+  `payloadA.equals(payloadB)` replaced by `runTwiceAndDiff` against a
+  `SimRunner` wrapping `runHelloPhysics`; assertion is
+  `verdict.contentEquivalent === true`. Adds R-D2 spot-check (broken-
+  determinism runner with varying step count → `contentEquivalent === false`).
+- **Per-test refactor V2 (LBM)** at
+  `packages/lattice-boltzmann-d3q19/tests/test_determinism.py`: removed
+  `_sha256_of_file` helper; uses `run_twice_and_diff(sim_runner_diagnostic,
+  ...)` + asserts `verdict.content_equivalent`. Module-level + per-test
+  docstrings updated ("byte-identical HDF5 payloads" → "content-equivalent
+  Capture projections" per Stage 0 SHIFTED N2). Adds R-D2 spot-check via
+  synthetic-capture `drifting_runner` (per Stage 1 SHIFTED N1).
+- **Per-test refactor V3 (MPM)** at
+  `packages/mpm-multimaterial/tests/test_determinism.py`: same pattern as V2.
+  Per-test docstring updated. R-D2 spot-check matches V2.
+- **Conventions doc additive amendment** at
+  `docs/conventions/sub-phase-conventions.md`:
+  - § F.3 row "Bit-identical run-to-run" reworded to "Content-equivalent
+    run-to-run"; new "Content-equivalent NOT raw-file-byte-equality" prose
+    paragraph cross-referencing spec § 2.5 + the new harness API.
+  - § A.2 gate-11 mechanism cross-reference (new paragraph after the three-
+    stage cadence table).
+  - New § B.7 "Cross-package regression sweep — Python + TypeScript
+    fan-out" sub-section codifying the dual-language sweep template
+    established at this sub-phase.
+  - sha256 SHIFTED additively: pre-Stage-1 `3698d19b62a0e9066f2daf616bdd13670b757d4460ea8d3d7c114fb2392bd734`
+    (829 lines) → post-Stage-1 `167fe34911b4d3f49e3e924fcb8261421acac87a3e0931a5d00a3dbcf2c58c2e`
+    (854 lines; +25 additive). This is the first conventions-doc sha256 SHIFT
+    since the conventions-refactor-post-phase-1 sub-phase locked the baseline;
+    the new sha256 is the canonical reference for subsequent sub-phases.
+- **CI gate redesign per D4 strict-fanout**:
+  - `.github/workflows/ts-strict.yml`: new explicit "Determinism gate
+    (content-equivalent contract)" step running `pnpm vitest run` on the
+    new `src/determinism/` + the refactored `examples/hello-physics/`.
+  - `.github/workflows/python-strict.yml`: extends ruff + mypy + pytest to
+    cover `determinism/` alongside `capture/`; new explicit "Determinism
+    gate" step.
+  - `.github/workflows/determinism.yml`: new "Determinism gate per-sim
+    fan-out" step iterating over all 10 sims (per-package per § M.4 N1
+    `tests.conftest` import-path-collision avoidance).
+- **IC-13 (content-equivalence contract semantics)** + **IC-14 (determinism-
+  harness API, Python + TypeScript)** — first post-Taichi-integration ICs;
+  numbered IC-11/12 → IC-13/14 per established convention.
+- This audit chain (12 commits):
+  - Plan-drafting: probe (`44941c2`); charter (`8fe770c`); plan-drafting
+    landing (`5cf1903`); SHA back-fill (`97ff87b`).
+  - Stage 0: tolerance-budget carryover (`4fa9a07`); checkpoint (`ffc7c24`);
+    SHA back-fill (`9bc409e`).
+  - Stage 1: monolithic feat (`26e1343`); checkpoint (`0a99f4e`); SHA
+    back-fill (`1963e5d`).
+  - Stage 2: landing audit + back-fill (final SHAs).
+
+#### Verified
+
+| Deliverable | Status | Notes |
+|---|---|---|
+| Spec § 2.5 amendment | GREEN | docs/architecture.md sha256 `42f5d599…0a347b` |
+| Spec § 2.7 + capture-v1.json description edits | GREEN | capture-v1.json sha256 `7715a50a…943735` |
+| Python harness rename + deprecation shim | GREEN | 12 portfolio call sites migrated; 3 harness tests pass under `-W error` |
+| TypeScript harness (NEW; 4 source + 1 test file) | GREEN | 5 harness tests pass |
+| Python CaptureWriter source-level fix | GREEN | new test verifies byte-identical across 1.5 s |
+| TypeScript CaptureWriter source-level fix per N1 path (a) | GREEN | 3 new tests pass (incl. no-leaked-monkey-patch + restore-on-throw) |
+| V1/V2/V3 refactors + R-D2 spot-checks | GREEN | 3 sites; all R-D2 spot-checks PASS (each refactored test FAILS as expected on broken-determinism mock) |
+| Conventions doc § F.3 + § A.2 + § B.7 amendment | GREEN | sha256 `3698d19b…2bd734` → `167fe349…58c2e` (+25 lines additive) |
+| CI gate redesign per D4 strict-fanout | GREEN | 3 workflows extended |
+| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (**FOURTH byte-identical integrity sweep in a row**) |
+| Cross-package regression sweep | GREEN | Python 342 PASSED (+17 net vs Taichi-integration's 325; +1 sim RD-2D counted + 2 R-D2 spot-checks + 1 writer-determinism test); TS 20 passed + 2 skipped (interactive surfaces); ZERO REGRESSIONS |
+| docs/dependencies.md entry | GREEN | new Python + TS determinism-harness module surfaces |
+| CHANGELOG entry | GREEN | this entry |
+
+### sub-phase-reaction-diffusion-2d-stack-d
+
+**FIRST per-sim cross-stack port sub-phase under spec-Phase-2.** Ports
+`reaction-diffusion-2d` from the Phase-0-Block-8-frozen Stack-B
+(TypeScript / WGSL / WebGPU) reference to a content-equivalent Stack-D
+(Python / Taichi-DSL / CPU) implementation through gates 4–14. No
+`-phase-N` tag pushed (spec § 7.12); optional non-phase point-release
+`v0.1.11` is a banked operator decision per
+`docs/phases/sub-phase-reaction-diffusion-2d-stack-d.md` § 11.4.
+
+#### Added
+
+- Stack-D Taichi-DSL Gray-Scott implementation at
+  `packages/reaction-diffusion-2d-stack-d/` (sibling workspace member; D6).
+  Determinism posture `bit-exact-same-hw` at `arch="cpu"` (IC-13
+  content-equivalent); `ti.ndrange(n, n)` row-major + `cpu_max_num_threads=1`;
+  NumPy-seeded IC matching Stack-B.
+- Stack-D spec sheet `docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref-stack-d.md`
+  + pre-implementation probe report.
+- Canonical Stack-D capture at the HEAD-frozen descriptor
+  `gray-scott-lambda-128sq-seed42-step2000` (`.h5` content OID
+  `2e93a751…1041b13d`; `.json` `e1752ceb…27e104`).
+- **Cross-stack equivalence (gate 14, Phase-2-specific):**
+  `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` — the
+  first cross-stack-pair methodology template (IC-15 candidate).
+  `compare_captures(Stack-B, Stack-D)` returns `within_tolerance=True` at
+  `relative=1e-4`; peak `max_abs_err=1.9e-14` (step 1600 U), margin ~10
+  orders of magnitude; R-P2 chaotic-regime divergence empirically falsified
+  for this pair at the full step-2000 horizon.
+- At-budget per-sim `[overrides.reaction-diffusion-2d] category =
+  "reaction-diffusion"` in `tools/testkit/equivalence/tolerance.toml`
+  (resolution wiring mapping physics-family `sim.category` to
+  numerical-method tolerance-category; NOT a tolerance widening).
+- Schema-corpus entry
+  `tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.{h5,json}`
+  (Phase 4 WU-A consumer).
+- `docs/perf-ledger.md` row: `taichi-cpu` 0.568 s (0.61× Stack-B
+  numpy-reference 0.931 s baseline; well below the 2× regression band).
+
+#### Verification
+
+| Gate | Status | Note |
+|---|---|---|
+| 4–13 (stack-agnostic) | GREEN | gates landed at Stage 1b (MMS OOA 1.9972; IC-13 content-equivalent; 3 PBT invariants; gate-13 structural replay) |
+| 14 (cross-stack equivalence) | GREEN | `within_tolerance=True` at `relative=1e-4`; per-field witness in `equivalence.md` |
+| Portfolio sweep | GREEN | Python 360 passed (+18 net vs 342; Stack-D +16 + testkit +2); TS 20 passed + 2 skipped; ZERO REGRESSIONS |
+| Integrity sweep | GREEN | bit-identical to `810cd6e3…23411f98` (**FIFTH byte-identical integrity sweep in a row**, despite a new sim package + spec sheet + probe + capture + perf row + Cat-X additive override) |
+| Mutation (B17) | PATH-B re-bank | framework-validated artifact; per-sim Taichi-DSL mutmut target deferred (cross-stack port) |
+
+### sub-phase-sph-water-stack-d
+
+**SECOND per-sim cross-stack port sub-phase under spec-Phase-2** (after
+`reaction-diffusion-2d-stack-d`); the SECOND empirical validation of the IC-15
+cross-stack-equivalence methodology and the FIRST production consumer of IC-16
+(`verify_evidence` LFS-content-OID resolution). All 14 gates GREEN. No `-phase-N`
+tag (spec § 7.12); optional non-phase point-release banked per
+`docs/phases/sub-phase-sph-water-stack-d.md` § 11.4.
+
+#### Added
+
+- **Stack-D Taichi-DSL DFSPH port** at `packages/sph-water-stack-d/` (Stage 1b;
+  workspace member 16): `reference/dfsph_taichi.py` (pure-Python golden surface +
+  inlined 27-cell spatial-hash Taichi kernels; cell = 2h cutoff), `sim.py`
+  (determinism-strategy docstring + `sim_runner_seeded` / `sim_runner_diagnostic`
+  / `compute_diagnostic_trajectory` / `neighbor_lists_at`), `invariants.py`
+  (`density_nonneg`, `kernel_normalization_unit_volume`). Gates 4–13 GREEN
+  (gate-4 golden-table, NOT MMS; err 0.0 at abs<1e-12 / abs<1e-15).
+- **Canonical Stack-D capture** `captures/sph-water-stack-d/dam-break-100K-particles-seed42-step1000.{h5,json}`
+  (252.346 s = 0.195× the numpy-reference baseline; perf-ledger row at Stage 1b).
+- **Cross-stack equivalence (gate 14) GREEN** at Stage 1c: `within_tolerance=True`
+  at `relative=1e-4` over the full canonical step-1000 horizon — position+velocity
+  bit-identical across all 11 frames; density `max_rel_err=1.585292e-15`
+  (~11 orders of margin).
+- **`[overrides.sph-water] category="sph"`** in `tools/testkit/equivalence/tolerance.toml`
+  (Stage 1c; at-budget per `[defaults.sph]`; the SECOND per-sim override).
+- **`equivalence.md` extended additively** (Stage 1c; +7 IC-15 methodology
+  sections + S6 banked methodology-precedent).
+- **Schema-corpus entry** `tests/fixtures/legacy-captures/phase-2-sph-water-stack-d.{h5,json}`
+  (Stage 1c; payload.path rewritten; corpus round-trip GREEN).
+- **IC-15 PARTIAL FORMALIZATION** (Stage 2; D5 routing = option (c)):
+  `docs/conventions/cross-stack-equivalence-methodology.md` codifies the
+  components validated across both cross-stack pairs — per-cell/per-particle
+  position-exact comparison; category-default tolerance; per-sim `tolerance.toml`
+  override pattern (two-taxonomy mapping); per-frame diff witness format; per-sim
+  `equivalence.md` authoring pattern. **Explicitly defers** (NOT codified):
+  R-P2 chaotic-regime escape-hatch details; D8 comparison-projection axis;
+  atomic-scatter handling; lattice-velocity quantization; iterative-solver
+  amplification — none stress-tested across the two algebraically-identical-
+  trajectory pairs. Third cross-stack pair lands the full stress test.
+
+#### Notes
+
+- **S6 banked methodology-precedent:** plan-drafting probes for cross-stack ports
+  MUST read the Phase-1 `sim.py` implementation at HEAD (not just the spec sheet).
+  The Phase-1 sph-water reference trajectory is explicit-Euler rigid free-fall +
+  a discarded per-step SPH-density side-effect — NOT an iterative DFSPH pressure
+  solve; this dissolved R-S1/R-S2/R-S3/R-P2 for the cross-stack pair.
+- **Forward-routable observation:** an LFS rule for `tests/fixtures/legacy-captures/`
+  as legacy-fixture sizes grow — the sph-water schema-corpus `.h5` is the first
+  >3 MB non-LFS legacy entry (61 MB; under the 2 GB hook ceiling). Banked for a
+  downstream focused-infrastructure sub-phase.
+- IC-16 first production consumer ran clean across this sub-phase's gate-5
+  evidence verification (LFS `.h5` OIDs resolved automatically; no §B.6 annotation).
+- `sim_runner_diagnostic` seed-propagating pattern established as the canonical
+  reference for the banked LBM/MPM `sim_runner_diagnostic` remediation (D7).
+
+### sub-phase-lattice-boltzmann-d3q19-stack-d
+
+THIRD per-sim cross-stack port under spec-Phase-2 (after `reaction-diffusion-2d`
++ `sph-water`). Stack-D Taichi-DSL CPU port of the Phase-1 D3Q19 BGK reference;
+all 14 gates GREEN (gate-14 ×2 for the dual-canonical-capture). FIRST cross-stack
+port with dual-arm gate-4, two seeded runners, two canonical captures, two
+perf-ledger rows, two independent gate-14 verdicts, and the tighter `1e-5`
+cross-stack tolerance. No `-phase-N` tag (spec § 7.12).
+
+#### Added
+
+- `packages/lattice-boltzmann-d3q19-stack-d/` — Stack-D Taichi-DSL D3Q19 BGK port
+  (Qian-1992 equilibrium + Guo-2002 forcing). `reference` (Taichi `feq`/`feq_field`/
+  `bgk_step`/`stream`/f64-seeded moment reductions + NumPy bounce-back), `sim`
+  (`sim_runner_seeded` Poiseuille + `sim_runner_seeded_couette` Couette +
+  `sim_runner_diagnostic`), `invariants` (2 PBT). Gates 4–13 GREEN at Stage 1b.
+- DUAL cross-stack equivalence at gate 14 (Stage 1c): both `within_tolerance=True`
+  at `relative=1e-5` with ~10 orders of margin — Poiseuille (1001 frames) rho/u
+  max_abs `5.77e-15`/`6.16e-15`; Couette (501 frames) rho/u max_abs `3.33e-15`/
+  `1.27e-15`. Step-horizon flat at FP-round-off scale (no amplification).
+- `[overrides.lattice-boltzmann-d3q19] category="lbm"` in `tolerance.toml` (Stage 1c;
+  THIRD per-sim override; at-budget per `[defaults.lbm]=1e-5`; 10× tighter than the
+  prior two ports; NOT a widening).
+- `docs/sim-specs/lattice/lattice-boltzmann-d3q19/{spec-ref-stack-d,equivalence}.md`
+  (spec sheet Stage 1b; equivalence.md additive amendment Stage 1c).
+- Two canonical captures at `captures/lattice-boltzmann-d3q19-stack-d/` + two
+  perf-ledger rows (Stage 1b; taichi-cpu 4.954s / 0.973s).
+- `f64` accumulator-seed pattern empirically validated (Stage 0 banked, Stage 1b
+  applied to in-kernel 19-term collision-moment reductions: bare `0.0`→f32 leaked
+  `3.4e-6`; `ti.f64(0.0)` seed → `7e-15`). First port with genuine in-kernel f64
+  reductions (D9 cross-stack-non-trivial surface).
+
+#### Notes
+
+- **D5 = option (b) PARTIAL HOLDS + REFINEMENT:** `docs/conventions/cross-stack-
+  equivalence-methodology.md` AMENDED ADDITIVELY (Stage 2) with five subsections —
+  collision-step FP-accumulation handling; dual-arm gate-4 verification surface;
+  `1e-5` vs `1e-4` tolerance routing; dual-canonical-capture + two-seeded-runner
+  pattern; near-zero-field-value relative-error harness-artifact. **NOT promoted
+  partial → full**; full IC-15 formalization remains DEFERRED to a pair that
+  exercises the un-stress-tested aspects (#1 R-P2 chaotic / #3 atomic-scatter /
+  #5 iterative-solver amplification). Methodology now validates across three
+  physics families, all at the algebraically-identical-trajectory FP-round-off-scale
+  regime.
+- **N1 schema-corpus deferral RESOLVED (Stage 2):** added a `.gitattributes` LFS
+  rule for `tests/fixtures/legacy-captures/**/*.h5`; both LBM schema-corpus entries
+  added through LFS (Poiseuille ~202 MB exceeds GitHub's 100 MB hard push limit —
+  the prior non-LFS convention could not carry it). This RESOLVES the
+  forward-routable LFS-rule-for-legacy-captures observation banked at
+  `sub-phase-sph-water-stack-d`. The existing non-LFS sph-water (61 MB) + smaller
+  phase-0/2 entries remain as historical committed blobs (not retroactively re-tagged;
+  the rule applies going forward).
+- **`u` `max_rel_err≈2.0` harness-artifact (informational):** near-zero transverse
+  velocity in unidirectional flow; `compare_captures` verdicts on `abs_err > atol +
+  rtol·field_scale`, so `within_tolerance=True` is correct (banked in methodology § 4.5).
+- **First cross-stack port with Taichi-cpu running SLOWER than the NumPy reference**
+  (Poiseuille 1.31×, Couette 1.61× — small-grid per-step kernel-launch overhead;
+  both within the 2× regression band). Banked as a workload-dependent perf ratio.
+
+### sub-phase-mpm-multimaterial-stack-d
+
+FOURTH per-sim cross-stack port under spec-Phase-2 (`mpm-multimaterial` →
+Stack-D Taichi-DSL CPU). All 14 gates GREEN.
+
+- **Stack-D Taichi-DSL MLS-MPM/APIC port** at `packages/mpm-multimaterial-stack-d/`
+  (Stage 1b; gates 4–13 GREEN; new workspace member, 18th). MLS-MPM (Hu 2018) + APIC
+  (4/dx² reconstruction) + neo-Hookean single-material (`material_id` all-0;
+  "multimaterial" is Phase-1 naming-only). P2G `ti.atomic_add` scatter serialised at
+  `cpu_max_num_threads=1` (posture (i)); `ti.f64(0.0)` accumulator seeds throughout.
+- **Perf: 360.773 s = 2.28× the NumPy+numba baseline (158.052 s) — FLAGGED per
+  spec § 2.15** for landing-audit review. First Stack-D port over the 2× band;
+  attributable to posture-(i) serialisation (required for deterministic atomic-scatter
+  — Stage-0 Task 0.3 showed threads=8 is NOT run-to-run bit-exact) + ~3000 kernel
+  launches over 1M particles. Correctness-over-speed; informational at landing review.
+- **Gate-14 cross-stack equivalence GREEN** at `relative=1e-4` (Stage 1c): `within_tolerance=True`;
+  `particle_pos` BIT-EXACT every frame; `particle_vel` monotonic APIC residual
+  `1.18e-30 → 6.25e-28`; `grid_mom` `1.50e-32`. **~24-order margin — the largest of any
+  cross-stack port to date.**
+- **N2 finding:** the canonical drop-impact trajectory is rigid free-fall (`j_det=1.0`;
+  `F=I` → zero neo-Hookean stress → uniform velocity). The atomic-scatter surface
+  (deferred IC-15 aspect #3) is PRESENT in the P2G kernel BUT NOT EXERCISED at the
+  canonical scale (order-independent sums); aspect #3 stays substantively un-stress-tested.
+- **First cross-stack port with hybrid-particle-grid taxonomy** (`sim.category="hybrid-pg"`
+  → tolerance-category `mpm` via `[overrides.mpm-multimaterial]`; FOURTH per-sim override;
+  at-budget per `[defaults.mpm]`=1e-4).
+- **`docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md`** extended additively at
+  Stage 1c (MPM-specific aspects + N2 + S6-pattern context).
+- **IC-15 partial-formalization document AMENDED ADDITIVELY at Stage 2** (D5 routing =
+  option (b) PARTIAL HOLDS + REFINEMENT; § 5, four subsections): atomic-scatter-present-but-
+  not-exercised; hybrid-particle-grid taxonomy; S6 two-instance pattern (methodology
+  consideration); legacy-captures schema-corpus entry size bound (~256 MiB) +
+  representative-subset artifact class. **NOT promoted partial → full** — the methodology
+  now validates across four physics families at the same regime; full formalization stays
+  DEFERRED to a pair that exercises #1 (R-P2 chaotic) / #3 (atomic-scatter substantively) /
+  #5 (iterative-solver amplification).
+- **D10 schema-corpus representative-subset deliverable:** first cross-stack port to
+  introduce the representative-subset artifact class. The canonical capture is ~1.05 GiB
+  (too large for the corpus); landed a **first-2-frames representative subset** (195 MiB,
+  ≤ the ~256 MiB bound) at `tests/fixtures/legacy-captures/phase-2-mpm-multimaterial-stack-d-representative.{h5,json}`
+  via the new `tools/testkit/scripts/extract_capture_subset.py` (deterministic data-only
+  extraction; no sim re-run). LFS-routed; corpus round-trip verified locally + in CI (S-CI1).
+- **S6 pattern is now a TWO-INSTANCE banked observation** (sph-water + MPM): Phase-1
+  canonical trajectories may exercise far less than spec-described dynamics; downstream
+  cross-stack-pair probes HEAD-verify the canonical trajectory's algebraic surface at
+  plan-drafting (S6 banked precedent).
+- **LBM/MPM `sim_runner_diagnostic` banked item DECOMPOSED:** MPM-side CLOSED-AS-NOT-A-DEFECT
+  (plan-drafting S-M4 — MPM threads its seed correctly; only the descriptor filename was
+  cosmetically hardcoded, now interpolated on the clean Stack-D contract); LBM-side stays
+  banked (cosmetic per analytic ICs). No Phase-1-sealed edit.
+
+### sub-phase-eulerian-smoke-stack-d
+
+FIFTH per-sim cross-stack port under spec-Phase-2: `eulerian-smoke` →
+Stack-D (Taichi-DSL / CPU); spec § 11.3 item 2.4 first half (the Stack-E
+Warp half deferred). **The FIRST of the five cross-stack pairs to exercise
+IC-15 aspect #1 (R-P2 chaotic regime) substantively** — both Phase-1 canonical
+trajectories are numerically unstable (positive Lyapunov; 2D Kelvin-Helmholtz
+shear, 3D Taylor-Green blow-up to ~5e19). Gates 4-13 GREEN; gate-14
+`within_tolerance=False` on both canonicals with the **chaotic-regime
+escape-hatch invoked correctly** (Option-2 operator routing): cross-stack
+content-equivalence is physically impossible for chaotic trajectories, so the
+failing verdict is the CORRECT verdict, and the methodology gains its first
+formalized chaotic-regime component. A methodology-strengthening sub-phase. The
+port is faithful (matches the sealed NumPy reference to ~1e-16 while stable; the
+instability is in the Phase-1 reference, verified independently). Cross-stack
+testing surfaced a latent Phase-1 instability that within-stack determinism +
+finite-NaN/Inf gates could not see. No `-phase-N` tag (spec § 7.12); local
+landing only — remote-CI re-validation banked behind the LFS-architecture
+sub-phase (D13).
+
+#### Added
+
+- `packages/eulerian-smoke-stack-d/` — 19th workspace member. Taichi-DSL CPU
+  Stam-Fedkiw stable-fluids port: `reference/stable_fluids_taichi.py`
+  (`@ti.kernel` per-cell SL-advect / Laplacian / divergence / Jacobi-sweep /
+  gradient / curl primitives + NumPy wrappers mirroring the Phase-1 reference;
+  CANONICAL_* re-derived verbatim), `sim.py` (`sim_runner_seeded` 3D,
+  `sim_runner_seeded_2d` 2D, `sim_runner_diagnostic`,
+  `compute_canonical_trajectory_3d`), `invariants.py` (2 PBT @ 50 examples).
+  Collocated cell-centered periodic; plain trilinear SL (3D) + MacCormack (2D);
+  fixed-`n_jacobi=20` Jacobi; vorticity confinement `eps=0` PRESENT-but-NOT-
+  EXERCISED. Gate-4 MMS-only (advection OOA 1.9892 / projection 1.9976).
+- `tools/testkit/equivalence/tolerance.toml` `[overrides.eulerian-smoke]
+  category="smoke"` — 5th per-sim override (additive; resolves
+  `volumetric-grid`→`smoke`@1e-4).
+- `docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` — extended to
+  the **chaotic-regime witness** (the template future chaotic-regime pairs
+  inherit): divergence-rate witness, Lyapunov estimates, step-1 port-faithfulness
+  baseline, gates-4-13-GREEN evidence.
+- `docs/conventions/cross-stack-equivalence-methodology.md` § 6 — **IC-15 § 2
+  item 1 (R-P2 chaotic-regime escape-hatch) promoted deferred → FORMALIZED**
+  (smoke the data-backed first instance); References renumbered → § 7. Methodology
+  remains PARTIAL (#2/#3/#5 deferred).
+- `docs/conventions/sub-phase-conventions.md` § L.4 — three banked
+  methodology-precedents: S6-trajectory-simulation discipline; cross-stack-as-
+  defect-amplifier; banked precedent #7 (f64-seed) extends to pure-literal kernel
+  constants (3D Jacobi `1.0/6.0` → `ti.f64(1.0)/ti.f64(6.0)`).
+- `docs/perf-ledger.md` — two rows (2D 8.470s / 3D 698.986s; both within 2× band).
+- Sub-phase audit chain under
+  `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/` (plan-drafting 4 +
+  Stage 0 3 + Stage 1 5 + Stage 2 6 = 18 commits).
+
+#### Verification
+
+Gates 4-13 GREEN (MMS OOA 1.9892/1.9976; Tier-1/Tier-2; citations; API; captures;
+`run_twice_and_diff` content-equivalent; 2 PBT @ 50; perf; failing-tests replay).
+Gate-14 `within_tolerance=False` (chaotic-regime escape-hatch — correct verdict).
+Cross-package regression sweep: 19 members + testkit (58) + diagnostics (22), ZERO
+regressions. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak HELD, 8th
+sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (32nd+). Append-only PASS;
+`verify_evidence` full chain PASS. Cumulative shifts 159 → 165 (Stage 1: 4; Stage 2: 2).
+
+#### Banked
+
+- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint/check-yaml/
+  supply-chain-pin for the other 3 actions; LFS-architecture sub-phase (D13);
+  manifest-equality smoke-specific test (D7).
+- NEW banked observation: **Phase-1-canonical re-characterization question** —
+  whether future Phase-1 canonicals should "exhibit stable physics" vs "exercise
+  numerics including unstable cases" (raised by smoke's chaotic finding; banked
+  for operator routing, Option-2).
+- NEW banked methodology-precedents: S6-trajectory-simulation; cross-stack-as-
+  defect-amplifier; banked-#7-pure-literal-constants (conventions § L.4).
+
+### sub-phase-common-warp-bootstrap
+
+Focused-infrastructure sub-phase (not a per-sim cross-stack port): establishes
+`common/common-warp/` as the **20th workspace member** and the **Stack-E
+(Python / NVIDIA Warp 1.13.0)** workspace surface — the phase-2 plan §1.9.1
+seven-subsystem minimal API. Enables the 3 forthcoming Stack-E port sub-phases
+(MPM, Smoke, LBM). All six W-Gates GREEN. The module is "shipped, then wired"
+(consumed at landing only by its own tests + `examples/hello/`; the Stack-E
+ports import it). No `-phase-N` tag (spec § 7.12); local landing only —
+remote-CI re-validation banked behind the LFS-architecture sub-phase (D13).
+
+#### Added
+
+- `common/common-warp/` — 20th workspace member (`bit-physics-common-warp`;
+  import package `common_warp`; `warp-lang>=1.13,<2.0`). The §1.9.1 seven
+  subsystems: **Runtime** (`runtime.py` — `init(device, deterministic)` /
+  `get_device` / `set_device`; CPU-default per D4/R-W3), **Determinism**
+  (`warp_harness/` — `set_seed` / `get_seed` / `assert_deterministic_run` /
+  `deterministic_context` / `set_warp_deterministic`; W-2), **Capture I/O**
+  (`capture/` — `Capture` / `write_capture` / `read_capture` delegating to the
+  testkit capture format; W-1), **Particles** (`particles/`), **Grids**
+  (`grids/` — `ScalarField3D` / `VectorField3D` + allocators), **HashGrid**
+  (`hashgrid/` — native `wp.HashGrid` + kernel `query_radius`).
+- `common/common-warp/examples/hello/` — **Subsystem 7** smoke sim (W-3): 2D
+  advection-diffusion 64×64, explicit FTCS diffusion + first-order upwind
+  advection, double-buffered per-cell gather (no atomics, no RNG). Bounded +
+  monotonically-decaying trajectory reproduces the Stage-0 design-time
+  prediction (max-field 1.0 → 0.218683 over 400 steps, zero increases, mass
+  conserved). Exercises Runtime/Determinism/Capture/Grids directly; Particles +
+  HashGrid via smoke-field tracer-particle unit tests.
+- `docs/common/warp.md` — W-4 project-wide Stack-E Warp convention + the
+  common-warp public API reference (8-section, mirrors `docs/common/taichi.md`).
+- `docs/dependencies.md` — `warp-lang` entry; root `pyproject.toml` — 20th
+  workspace member.
+- `warp_harness/` §1.9.1 socket — the Runtime + Determinism signatures
+  reconciled to §1.9.1 verbatim (S1b-3 Option-B refactor): `init(device,
+  deterministic)`, no-arg `deterministic_context()`,
+  `assert_deterministic_run(sim_fn, *, runs=2, tolerance=0.0)`. The W-2 baseline
+  `24d44c7e…0746f314` reproduces under the refactored signature (load-bearing).
+- `docs/conventions/sub-phase-conventions.md` § L.5 — three new
+  methodology-precedents: **S1a-2** GPU device-string discipline; **S1b-3**
+  socket-reconciliation Option B; **S1c-1** plan-prose-gloss vs spec-verbatim.
+- Sub-phase audit chain under
+  `docs/_audits/phase-2/sub-phase-common-warp-bootstrap/` (plan-drafting 4 +
+  Stage 0 2 + Stage 1a 4 + Stage 1b 4 + Stage 1c 6 + Stage 2 3 = 23 commits).
+
+#### Verification
+
+All six W-Gates GREEN: W-1 Capture (1b mechanism / 1c full, real capture); W-2
+Determinism (1a mechanism / 1c full, `assert_deterministic_run` +
+`run_twice_and_diff` on the smoke sim; baseline `24d44c7e…0746f314`); W-3 smoke
+sim; W-4 docs; W-5 equivalence-compat (`compare_captures` run-twice-and-diff,
+`within_tolerance=True`, no HARD_FAIL); W-6 integrity. Cross-package regression
+sweep (20 workspace roots, cold `.pyc`): ZERO REGRESSIONS (common-warp 38;
+common-py 25; 5 Stack-D ports + 10 Phase-1 sims + 3 tools unchanged). TS sweep:
+20 passed + 2 skipped. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak
+HELD, 9th sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (40th).
+Append-only PASS; `verify_evidence --strict` full chain (12 audits) PASS.
+Cumulative shifts 165 → 176 (plan-drafting 3; Stage 0 1; Stage 1a 2; Stage 1b 3;
+Stage 1c 1; Stage 2 1).
+
+#### Banked
+
+- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint installation /
+  check-yaml hook `.github/workflows/` coverage / supply-chain-pin for the other
+  3 actions; LFS-architecture sub-phase (D13); manifest-equality smoke test (D7);
+  Phase-1-canonical re-characterization; **mypy --strict warp partial-stub
+  errors** (banked at Stage 1c; future tooling-improvement).
+- CLOSED: common-warp bootstrap (all 6 W-Gates GREEN); S1b-3 socket
+  reconciliation (Option B refactor landed; §1.9.1 verbatim signatures shipped);
+  Subsystem-7 design-time prediction verified empirically.
+- NEW banked observation: the next 3 Stack-E ports (MPM, Smoke, LBM) inherit the
+  common-warp surface + the S6-trajectory-simulation discipline at plan-drafting.
+- NEW banked methodology-precedents: S1a-2 GPU device-string discipline; S1b-3
+  socket-reconciliation Option B; S1c-1 plan-prose-gloss vs spec-verbatim
+  (conventions § L.5).
+
+### sub-phase-mpm-multimaterial-stack-e
+
+SIXTH per-sim cross-stack port; FIRST Stack-E (NVIDIA Warp 1.13.0) port to
+*consume* the `common-warp` § 1.9.1 socket (the bootstrap landed the socket
+itself). Spec § 11.3 item 2.3 mandate. All 14 gates GREEN; **gate-14 BIT-EXACT**
+(`within_tolerance=True`; `max_abs_err = max_rel_err = 0.0` across 4 fields × 11
+frames) — the FIRST bit-exact cross-stack verdict across the six-port portfolio
+(contrast the Stack-D Taichi ports' `~1e-28` FP-round-off and `eulerian-smoke`
+Stack-D's chaotic-regime `within_tolerance=False`). No `-phase-N` tag (D12);
+local-only (D13; remote-CI deferred).
+
+#### Added
+
+- `packages/mpm-multimaterial-stack-e/` — 21st workspace member; the Warp
+  MLS-MPM/APIC neo-Hookean single-material port. Socket-only `common-warp`
+  consumption (Runtime + Capture + Determinism) with its own
+  `wp.array(dtype=wp.float64)` sim-state (D15; the convenience surfaces are
+  f32-pinned); fixed 27-cell B-spline stencil (no `HashGrid`).
+- `captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.{h5,json}`
+  — canonical capture (~1.05 GiB; LFS; `.h5` oid `dfc4d699…4554d0a9`); 2/2
+  canonical-scale determinism; mass-conservation partition-of-unity exact
+  (`4.44e-16`) at 1M particles / 128³.
+- `docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-ref-stack-e.md` — Stack-E
+  spec sheet (gate-7 Cat-1 surface).
+- `docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md` — ADDITIVE Stack-E
+  section (bit-exact per-field witness; Stack-D Taichi section preserved).
+- `docs/perf-ledger.md` — canonical Warp-CPU row (`304.492 s`; 1.93×-numba,
+  within the 2× band).
+- conventions § L.6 — O-W7 extension (`wp.float64()` taint workaround) [Stage 1b].
+- `docs/common/warp.md` § 6.1 — D16 correction: MPM socket-only consumption
+  pattern (general principle for f64 vs f32 Stack-E ports).
+- `cross-stack-equivalence-methodology.md` § 5.1 — third-instance (D8): the
+  atomic-scatter PRESENT-but-NOT-EXERCISED pattern is stack-portable
+  (Taichi → Warp); graduated to an established portfolio pattern.
+- conventions § L.7 — two banked observations: O-1 cross-stack verdict taxonomy
+  (bit-exact / FP-round-off / chaotic-regime escape-hatch); O-2 Warp CPU
+  determinism four-checkpoint chain.
+
+#### Audit chain
+
+- 23 commits across plan-drafting (4) + Stage 0 (2) + Stage 1a (4) + Stage 1b (5)
+  + Stage 1c (3) + Stage 2 (5), under
+  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/`.
+
+#### Verification
+
+- 14 gates GREEN (gate-14 BIT-EXACT). 21-root regression sweep ZERO REGRESSIONS
+  (490 passed + 1 skipped; after a Stage-2 `.venv` dev-dep restoration — the
+  workspace lost `scipy`/`mutmut`/`pytest-timeout` since the prior landing,
+  restored via `uv sync --all-packages --all-extras`). TS sweep 20 passed + 2
+  skipped. Integrity `c19492ad…d22cb52` baseline-MATCH (10th contiguous
+  sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (47th). Append-only
+  PASS. verify_evidence full chain (12 .md audits) PASS.
+
+#### Banked
+
+- STAYED: LFS-architecture (D13); multi-material MPM extension (single-material
+  scope per S1a-ME2); the standing tooling/CI items.
+- CLOSED: MPM → Stack-E port; D7 RATIFIED REUSE (tolerance override edit no-op —
+  first per-sim port to skip it); O-W7 § L.6; warp.md § 6 D16; methodology § 5.1
+  third-instance.
+- NEW observations: cross-stack verdict taxonomy (§ L.7 O-1); Warp CPU
+  four-checkpoint chain (§ L.7 O-2); environment-provisioning drift (dev extras
+  must be synced for the sweep/mutation gates).
+
+### sub-phase-eulerian-smoke-stack-e
+
+SEVENTH per-sim cross-stack port under spec-Phase-2 (`eulerian-smoke` →
+Stack-E NVIDIA-Warp 1.13.0 CPU); the SECOND Stack-E port (after
+`mpm-multimaterial-stack-e`) and the SECOND `eulerian-smoke` port (after the
+Stack-D Taichi port). Spec § 11.3 item 2.4 (the Stack-E half). All 14 gates
+landed; gate-14 is **cross-stack BIT-EXACT**.
+
+- **Stack-E Warp Stam-Fedkiw stable-fluids port** at
+  `packages/eulerian-smoke-stack-e/` (Stage 1b; gates 4–13 GREEN; 22nd workspace
+  member). Socket-only common-warp consumption (Runtime + Capture + Determinism)
+  over its own f64 `wp.array`s — the dense-grid f32 `ScalarField3D` /
+  `VectorField3D` surfaces structurally fit but are f64-blocked (D15;
+  `docs/common/warp.md` § 6.2). § L.7 O-2 four-checkpoint Warp-CPU determinism
+  chain complete.
+- **Gate-14 cross-stack BIT-EXACT** (Stage 1c-revisited): `within_tolerance=True`,
+  `max_abs_err = 0.0` on BOTH canonicals — the Warp port is **byte-identical** to
+  the sealed Phase-1 NumPy reference across the full horizon, INCLUDING through the
+  3D Taylor-Green blow-up (reference AND port both reach `|u| ≈ 5.1e19` at step 500,
+  bit-for-bit). The FIRST portfolio instance of bit-exactness through a chaotic
+  (positive-Lyapunov) horizon; logically a consequence of the step-1 cross-stack
+  BIT-EXACT baseline. Tolerance REUSES `[overrides.eulerian-smoke]` (smoke/1e-4; D6,
+  no new row).
+- **R-P2 is NOT stack-portable — counter-evidence to smoke-Stack-D.** The same
+  chaotic canonicals produced Stack-D's `within_tolerance=False` R-P2 chaotic-regime
+  verdict but Stack-E's `within_tolerance=True` bit-exact verdict. The plan-drafting
+  prediction (R-P2 stack-portable Taichi → Warp) was empirically FALSIFIED at
+  Stage 1c (Hard Rule 2 STOP) and the charter §§ 1/3/5 amended mid-sub-phase to the
+  cross-stack BIT-EXACT verdict shape (Stage 1c-revisited). Stack-D's divergence was
+  a Taichi-FP-specific step-1 round-off; Warp's same-operation-order arithmetic
+  yields a `0.0` step-1 difference, so chaos has nothing to amplify.
+- **Methodology + conventions refinements (Stage 2):**
+  `cross-stack-equivalence-methodology.md` § 6.1 + new § 6.7 (R-P2 requires a
+  non-zero cross-stack seed-difference AND a chaotic regime — chaos amplifies, it
+  does not manufacture, a seed-difference); `sub-phase-conventions.md` § L.7 O-1
+  shape-(a) refinement (the bit-exact condition is a zero seed-difference, not an
+  "algebraically-tame trajectory"; D-S2-1) + new § L.8 (O-W7 narrowing, R-SME9
+  resolution-dependent false-laminar trap, the charter-amendment-landing precedent,
+  the `uv sync` `.venv`-prune hazard).
+- **`docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md`** extended
+  additively with a Stack-E § E **bit-exactness witness** (Stage 1c-revisited; the
+  Stack-D chaotic-regime witness §§ 1–7 unchanged).
+- **Schema-corpus representative-subset:** the 2D 4.4 MB capture at
+  `tests/fixtures/legacy-captures/phase-2-eulerian-smoke-stack-e.{h5,json}`
+  (LFS-routed; corpus round-trip verified). The 3D 738 MB capture is held local
+  (D14). No `-phase-N` tag (D12); local-only (D13).
+- **D17 banked (operator routing):** the committed 2D lid-driven-cavity reference is
+  laminar-bounded (`max|u| ≈ 2.08`), NOT the plan-drafting `~1.64e3` Kelvin-Helmholtz
+  blow-up — a candidate Phase-1-canonical re-characterization trigger (empirical
+  second instance, after smoke-Stack-D's finding). The 3D blow-up is confirmed. This
+  sub-phase surfaces, but does NOT adjudicate, the Phase-1 provenance question.
+
+### sub-phase-lattice-boltzmann-d3q19-stack-e
+
+EIGHTH per-sim cross-stack port under spec-Phase-2 (`lattice-boltzmann-d3q19` →
+Stack-E NVIDIA-Warp 1.13.0 CPU); the THIRD Stack-E port (after
+`mpm-multimaterial-stack-e` + `eulerian-smoke-stack-e`) and the SECOND
+`lattice-boltzmann-d3q19` port (after the Stack-D Taichi port). Spec § 11.3 item 2.5
+(the Stack-E half; the Stack-D half landed at `lattice-boltzmann-d3q19-stack-d`).
+All 14 gates landed; gate-14 is **cross-stack BIT-EXACT** — the expected,
+plan-drafting-MEASURED verdict (no surprise in either direction).
+
+- **Stack-E Warp D3Q19 BGK port** at `packages/lattice-boltzmann-d3q19-stack-e/`
+  (Stage 1b; gates 4–13 GREEN incl. the **dual-arm gate-4** — 4a D3Q19 equilibrium
+  golden `abs=1e-15` + 4b NS-2D MMS; 23rd workspace member). Socket-only common-warp
+  consumption (Runtime + Capture + Determinism) over its own
+  `wp.array(dtype=wp.float64, ndim=4)` 19-component distribution — the single-component
+  f32 `ScalarField3D` does not structurally fit a 19-component lattice AND f64 blocks
+  the f32 surface (D15/D7; `docs/common/warp.md` § 6.3). The THIRD f64 socket-only
+  consumer and the FIRST with genuine **in-kernel reductions** (the per-cell 19-term
+  BGK moment sums). § L.7 O-2 four-checkpoint Warp-CPU determinism chain complete
+  (4/4; every checkpoint a zero-seed-difference / bit-exact result).
+- **Gate-14 cross-stack BIT-EXACT** (Stage 1c): `within_tolerance=True`,
+  `max_abs_err = 0.0` on BOTH canonicals (Poiseuille 1001 frames + Couette 501 frames)
+  at the resolved `lbm`/`1e-5` (the portfolio-tightest category, ~10 orders of margin).
+  The **THIRD shape-(a) instance and the FIRST on a LAMINAR trajectory** — together
+  with `eulerian-smoke-stack-e` (the second instance, on a CHAOTIC horizon) it
+  empirically **completes the D-S2-1 decoupling**: shape (a) is a zero cross-stack
+  seed-difference property, orthogonal to the Lyapunov regime. Tolerance REUSES
+  `[overrides.lattice-boltzmann-d3q19]` (`lbm`/`1e-5`; D6, no new row — the THIRD port
+  to skip the Stage-1c override add).
+- **§ 6.7 within-sim cross-backend corroboration.** Same sim, same laminar canonicals,
+  same sealed NumPy reference: Stack-D **Taichi** is shape **(b)** (`~6e-15`,
+  division-form feq + summation order) while Stack-E **Warp** is shape **(a)** (`0.0`,
+  reciprocal-operand-form feq + `wp.float64(0.0)` seeds). Varying ONLY the backend
+  flips the seed-difference from `~6e-15` to `0.0` — the sharpest demonstration that
+  the cross-stack seed-difference is a **backend-pair arithmetic property**, not the
+  sim's or the trajectory's.
+- **Methodology + conventions refinements (Stage 2):**
+  `cross-stack-equivalence-methodology.md` § 4.1 second-instance amendment
+  (collision-step FP-accumulation is determinism-safe AND bit-faithful on Warp CPU
+  f64; deferred aspect #4's FIRST Warp measurement) + § 6.7 within-sim corroboration +
+  **new § 6.8** (the Warp-CPU-f64 ↔ NumPy zero-seed-difference backend-pair
+  observation, **`n=2`** — suggestive, NOT established; surfaced not asserted, with a
+  portfolio-track-future-ports qualifier; routed to the methodology doc over
+  `sub-phase-conventions.md` § L.7 "O-3" per D-S2-1); `sub-phase-conventions.md`
+  § L.7 O-1 shape-(a) **third-instance / first-laminar** note; `docs/common/warp.md`
+  § 6 LBM-row dtype `f32 → f64` (D15) + new § 6.3 (the f64-principle's third instance,
+  first with in-kernel reductions).
+- **Schema-corpus representative-subset:** the Couette 27 MB capture (the smaller
+  canonical) at
+  `tests/fixtures/legacy-captures/phase-2-lattice-boltzmann-d3q19-stack-e-couette.{h5,json}`
+  (LFS-routed; corpus round-trip verified). BOTH canonicals are LFS-committable
+  (≤ 256 MiB) — NO held-local (D14). No `-phase-N` tag (D12); local-only (D13).
+- **Phase-2 cross-stack status:** completes the Stack-E ports of spec § 11.3
+  items 2.3–2.5 (MPM + smoke + LBM → Stack-E all landed). The remaining enumerated
+  spec § 11.3 cross-stack port is `reaction-diffusion-2d` → Stack-C (charter § 8;
+  a different `common-cpp` infrastructure arc). Banked LFS-architecture +
+  comprehensive-cleanup sub-phases remain queued for after Phase-2 completion.
+
+### sub-phase-common-cpp-bootstrap
+
+Focused-infrastructure sub-phase maturing `common/common-cpp/` from a
+Phase-1-Stage-1 declarations-only scaffold into a consumable Stack-C (C++ /
+Vulkan) surface — the **precondition** that unblocks the Stack-C per-sim ports
+(RD-2D-Stack-C plan-drafting REFRESH next, D11). Determinism is pinned to Mesa
+**lavapipe** (CPU software Vulkan; `VK_DRIVER_FILES` + `LP_NUM_THREADS=0`).
+Gates C-0..C-7 all GREEN. `common-cpp` is **CMake-registered, NOT a uv workspace
+member** (D6; member count stays 23). No `-phase-N` tag (D12 — reserved for
+spec-phase boundaries). Initiates the **Vulkan/C++ quirks catalog**
+(`docs/conventions/sub-phase-conventions.md` § L.9; D5).
+
+#### Added
+
+- **Vulkan headless compute substrate** (`bit_physics::common_cpp_vulkan`;
+  `include/bit_physics/common/vulkan_compute.hpp` + `src/vulkan_compute.cpp`) —
+  `vkcompute::{ComputeContext, StorageBuffer, ComputePipeline, dispatch}` (RAII,
+  move-only, VkResult→exception); instance / device / compute-queue /
+  command-pool / descriptor-set / pipeline / SPIR-V module / host-visible
+  buffer-IO / fence sync; `query_float_controls` +
+  `assert_deterministic_float_controls`. Reproduces the Stage-0 determinism
+  baseline `a7f85bd4…` (C-3).
+- **SPIR-V build-time wiring** — `bitphysics_embed_compute_shader()` CMake helper
+  (glslang `--vn` embedded `uint32_t[]` headers; reproducible) + `shaders/`.
+- **Determinism socket** (`include/bit_physics/common/determinism.hpp`) —
+  `DeterministicContext` RAII + `assert_deterministic_run` + `set_seed`/`get_seed`
+  + library `hash::sha256_hex`; FloatControls + NoContraction (`precise`)
+  discipline (NoContraction baseline `48c92e95…`, distinct from the contracted
+  `a7f85bd4…` — the two-baseline rule, § L.9 Q-CPP1) (C-1/C-2).
+- **HDF5 capture-v1** (`bit_physics::common_cpp_hdf5`; `src/capture_hdf5.cpp`) —
+  `Hdf5Writer`/`Hdf5Reader` replicating the testkit capture-v1 layout (system
+  `libhdf5-dev` + header-only HighFive v2.10.1, FetchContent; D3/D8).
+- **§1.9.1-cpp socket** (`include/bit_physics/common/common_cpp.hpp` umbrella) +
+  **2D advection-diffusion smoke** (Vulkan compute; bounded/stable § L.4,
+  max-field 0.99→0.19) + **cross-language interop** (Python testkit parses the
+  C++-emitted `.h5`; C-4/C-5/C-6).
+- **Top-level `CMakeLists.txt`** registering `bit_physics::common_cpp` (D6) +
+  **`.github/workflows/cpp-strict.yml`** (lavapipe + cmake + ctest CI; S-CPPB5).
+- De-scaffolded `docs/common/cpp.md` (C-5; resolves the dangling
+  `_staging/deps.md` reference, B-RD2C1) + § L.9 Vulkan/C++ quirks catalog
+  (Q-CPP1..5; D5).
+
+Verification: integrity baseline-MATCH `c19492ad…d22cb52` (0 HF / 14 SW) HELD;
+bit-identity replay `9399fc33…` HELD; portfolio sweep 23/23 members ZERO
+regressions; `ctest` 5/5. Methodology § 6.8 (Warp-CPU-f64↔NumPy) explicitly does
+NOT inherit to the Vulkan/C++↔NumPy backend pair (documented at plan-drafting;
+established empirically at the per-sim ports). No `-phase-N` tag pushed (D12).
+
+### sub-phase-reaction-diffusion-2d-stack-c
+
+The **8th and final** spec § 11.3 cross-stack port and the **FIRST Stack-C
+(Vulkan / C++)** per-sim port: the Phase-1 NumPy Gray-Scott reaction-diffusion 2D
+reference ported to GLSL `double` compute on Mesa **lavapipe**, consuming the
+`common-cpp` § 1.9.1-cpp substrate. With this landing Phase-2 is **substantively
+complete** (8/8 ports landed; the comprehensive cleanup sub-phase + the deferred
+LFS-architecture sub-phase become routable). The **formal Phase-2 close** (a
+phase-level closing audit + a proposed `v0.2.0-phase-2` tag) is a dedicated
+**Stage 9 — Landing** pass per Phase-2 plan § 2.12, routed separately — NOT part of
+this sub-phase. `common-cpp` + RD-2D-Stack-C are **CMake-registered, NOT uv
+workspace members** (D6/D11; member count stays **23**). No `-phase-N` tag (D12).
+
+#### Added
+
+- **`packages/reaction-diffusion-2d-stack-c/`** — Vulkan/C++ Gray-Scott f64 port:
+  `src/gray_scott.cpp` (run-loop consuming `vkcompute` + `capture` + `determinism`
+  + `hash`); **two** embedded SPIR-V kernels — the plain Gray-Scott step **and** a
+  manufactured-source variant for the gate-4 MMS order-ladder (S0-RD2C1) —
+  `precise`/`NoContraction` f64; `gray_scott_capture_main` capture binary;
+  doctest suite + the `rd2d_stack_c_gate14` cross-language ctest.
+- **`captures/reaction-diffusion-2d-stack-c/gray-scott-lambda-128sq-seed42-step2000.{h5,json}`**
+  (LFS; h5 sha256 `00081dc42b…`, 2.94 MB) — capture-v1-conformant
+  (`payload.format="hdf5"`, non-empty `run.start_utc`).
+- **`tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-c.{h5,json}`**
+  (LFS) — schema-corpus entry (corpus round-trip 17 → **19**).
+- **`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § C** —
+  additive Stack-C bit-exactness witness (Stack-B ↔ Stack-D §§ untouched).
+- **`docs/perf-ledger.md`** — `reaction-diffusion-2d | vulkan-cpp | gray-scott-lambda-128sq-seed42-step2000 | 1.13 | i7-12700KF-linux-6.17`
+  gate-12 row (added at Stage 2; the row was omitted at Stage 1b — S2-RD2C1).
+- Top-level `CMakeLists.txt` `add_subdirectory(packages/reaction-diffusion-2d-stack-c)`.
+
+#### Changed (additive per Convention A)
+
+- **`docs/conventions/cross-stack-equivalence-methodology.md`** — § 6.7 within-sim
+  cross-backend corroboration #2 (RD-2D Stack-D Taichi `~1.9e-14` vs Stack-C
+  Vulkan/C++ `0.0`); § 6.8 the **SECOND** zero-seed-difference backend pair
+  (Vulkan/C++-f64-lavapipe-NoContraction ↔ NumPy, n=1; Option α per charter § 6 —
+  n=3 bit-exact instances across two backend pairs, SUGGESTIVE not established).
+- **`docs/conventions/sub-phase-conventions.md`** — § L.7 O-1 shape-(a)
+  **fourth-instance / first-non-Warp** note; § L.9 Q-CPP2 **D16** FloatControls
+  f32-scoped cleanup-candidate note.
+- **`docs/common/cpp.md`** § 4 — D16 f64-scoping note.
+
+**gate-14: cross-stack BIT-EXACT** (`within_tolerance=True`, `max_abs_err=0.0`,
+all 11 frames × {U,V}, full `step-2000` horizon) — the THIRD shape-(a) instance
+overall and the FIRST on a non-Warp backend. Verification: all 14 gates GREEN;
+`ctest` **7/7** (incl. `rd2d_stack_c_gate14`); integrity baseline-MATCH
+`c19492ad…d22cb52` (0 HF / 14 SW) HELD; bit-identity replay `9399fc33…` HELD;
+portfolio sweep ZERO regressions. No `-phase-N` tag pushed (D12).
+
+### sub-phase-audit-chain-correctness
+
+Focused-infrastructure sub-phase resolving the two banked-for-operator
+audit-chain hash-correctness items surfaced at the RD-2D Stack-D landing
+(§ 8 N5a / N5b). Mirrors the `sub-phase-taichi-integration` (focused-infra)
++ `sub-phase-capture-determinism-contract` (portfolio-wide amendment) shapes.
+No `-phase-N` tag (spec § 7.12); optional non-phase point-release `v0.1.12`
+is a banked operator decision.
+
+#### Added / Changed
+
+- **`verify_evidence` LFS-content-OID fix (Stage 1a).** New
+  `lfs_pointer_oid()` helper in `tools/integrity/integrity/common/repo.py`
+  (pointer-stub sniff + `oid sha256:` parse) and an OID-aware comparison
+  branch in `tools/integrity/integrity/scripts/verify_evidence.py`:
+  LFS-tracked artifacts (`captures/**/*.h5`) now verify against the content
+  OID embedded in the git-lfs pointer stub — offline, no `git lfs smudge` /
+  network / auth. Non-LFS artifacts hash the git blob unchanged;
+  mismatch→error preserved (R-A4). `--strict` untouched.
+- **IC-16 formalized (Stage 1a).** `verify_evidence` LFS-content-OID
+  verification semantics; cited at spec § 7.5 + Appendix G.7 (Stage 1b,
+  D3-positive) and recorded in `docs/dependencies.md`.
+- **§ B.6 amended in two steps.** Mode 2 (LFS pointer-vs-content) **RESOLVED**
+  at Stage 1a — subsequent landings need no Option-3 annotation. Mode 3
+  (phantom-sha / pre-commit-hook trailing-newline) **ADDED** at Stage 1b,
+  covering 2 retroactively-classified portfolio-wide drifts.
+- **Portfolio-wide phantom-sha audit (Stage 1b).** New report at
+  `docs/_audits/phase-2/sub-phase-audit-chain-correctness/phantom-sha-audit-2026-05-23T22-39-45Z.md`
+  (HEAD sha256 `9a1167dc…a40d085b` post-back-fill). 14-capture survey: 5 MATCH /
+  7 NO-RECORD / 2 PHANTOM-DRIFT (rd-2d-stack-d, rd-3d-ref) — both trailing-newline
+  phantoms, both pre-caught at landings, both in sealed checkpoints only.
+  rd-3d-ref re-classified § B.6 Mode 1 → Mode 3. Non-corrective of prior audits
+  (Convention A + § 12 + D5).
+- **Spec amendments (Stage 1b, D3-positive, additive).** `docs/architecture.md`
+  § 7.5 + Appendix G.7 gain an LFS-content-OID clarification (IC-16). Existing
+  wording unchanged.
+- **Test surface.** `tools/integrity/tests/test_verify_evidence.py` +5 tests
+  (LFS pointer OID resolution; wrong-OID negative path; non-LFS regression);
+  10/10 GREEN; portfolio Python sweep 365 PASS (= 360 + 5; zero regressions).
+
+#### Banked methodology-precedents
+
+- **Commit-first-then-sha256.** Record the sha256 of the committed blob, never
+  in-memory pre-hook content (the pre-commit `end-of-file-fixer` appends a
+  trailing newline → phantom shas). Exemplified across this sub-phase's audit
+  chain. The hook is not modified (out of scope); the discipline is the
+  working mitigation.
+- **SHA back-fill must enumerate EVERY placeholder-bearing audit committed in a
+  stage**, not just the checkpoint (Stage 1b N1; the now-fixed `verify_evidence`
+  is the mechanical self-check that catches placeholder leakage).
+
+### sub-phase-phase-2-cleanup
+
+Phase-2-tail basket-hygiene sub-phase, landing after `sub-phase-lfs-architecture`.
+Pays down the hygiene debt consolidated at Phase-2 close — citation/path drift,
+convention amendments, doc-truth divergences, deferred small follow-ups — across
+seven thematic clusters (A–G) before Phase 3 dispatches. Of **53 enumerated items**
+(41 from the Phase-2 landing § 13 inventory + 8 operator-known-pre-queued + 4
+probe-discovered), the cleanup-shaped ones were resolved in place and **11 items
+were routed forward as candidate sibling sub-phases / operator-decision dispatches /
+Phase-3 consumptions** (the full forward-routing catalog is in the sub-phase landing
+audit). No simulation source changed; all seven invariants (I1–I7), the bit-identity
+replay (`9399fc33…`), and the integrity baseline (`c19492ad…`) held byte-for-byte
+throughout. No `-phase-N` tag and — per the § D.2 default this sub-phase itself
+authored — **no point-release tag** (cleanup is steady-state hygiene, meeting none
+of the three intermediate-tag conditions).
+
+**What changed for contributors:**
+
+- **Intermediate-tag policy is now explicit** (`docs/conventions/sub-phase-conventions.md`
+  § D.2): the default is **NO tag** for a sub-phase, except when it (a) adds an external
+  dependency, (b) marks durable architecture worth git-archaeology, or (c) the operator
+  judges historical significance — precedent `v0.2.1-sub-phase-lfs-architecture`.
+- **Per-package code ownership scaffolding** (`.github/CODEOWNERS`, new): 19 sim packages
+  + 4 common + tooling, with an operator owner and agent-id sentinel comments. **Latent**
+  (not enforced — the repo has no live branch protection); it benefits the project at
+  multi-agent maturity.
+- **README test invocations standardized** to `uv run pytest …` across all 11 packages.
+- **GitHub Actions pinned to immutable commit SHAs** (`checkout`, `setup-node`,
+  `pnpm/action-setup`) with the mutable-tag-vs-immutable-SHA distinction documented in
+  `docs/dependencies.md`.
+- **CHANGELOG structure fix:** seven misfiled Phase-2 sub-phase sections that had been
+  recorded under the `[0.1.0-phase-1]` header were relocated (byte-exact) to
+  `[Unreleased]`, where they belong.
+- **Conventions / methodology reconciled:** the § M cumulative-shift inventory and
+  several stale § L / methodology § 6 section titles were brought current; the
+  integrity baseline-digest derivation and coordinator-drift patterns were formalized
+  in a new § L.10; verdict-states were mapped to Nygard ADR states as a § L.11
+  intention-note (no ADR directory yet); and the matched-pair cross-stack gate ↔
+  differential-testing relationship was cross-referenced (§ L.11 + catalog § 50.1)
+  without renaming anything.
+- **The I7 no-agent-pushed-tags guard test was rewritten** to encode the actual
+  invariant — it now forbids *agent-pushed* tags via a declarative
+  operator-sanctioned-tags allowlist, rather than forbidding *all* tags pointing into
+  a sub-phase range (which had wrongly flagged the operator's legitimate
+  `v0.2.1-sub-phase-lfs-architecture`).
+- **Branch-protection doc amended to live state** (`docs/ops/branch-protection.md`):
+  the documented rules are DESIGNED-but-unenforced (the live API returns 404 "not
+  protected"); implementing them is forward-routed for if/when the contributor model
+  grows beyond solo+agent.
+
+### sub-phase-ci-action-migration-and-banked-cleanup
+
+Focused-infrastructure sub-phase whose PRIMARY, time-pressured driver is
+**S-CI2** — the GitHub Actions Node-20 runtime deprecation (Node-24 default
+2026-06-16; Node-20 removal "later in fall 2026"). Bumps every workflow action
+pinned to a Node-20 major to its latest Node-24 major, preserving four
+load-bearing `with:` blocks byte-for-byte, and bundles the banked
+testing-improvements subset (pytest-timeout + a representative manifest-equality
+test) per the focused-infra `sub-phase-audit-chain-correctness` shape. NOT a
+per-sim port; NOT cross-stack. No `-phase-N` tag (spec § 7.12); PUSH IS OPERATOR
+ACTION (remote-CI validation of the bumped majors happens at the operator push).
+
+#### Added / Changed
+
+- **S-CI2 workflow Node-runtime migration (Stage 1a).** Across all 9
+  `.github/workflows/*.yml` (17 `uses:` version-string changes only):
+  `actions/checkout@v4`→`@v6` (×9), `astral-sh/setup-uv@v6`→`@v8` (×6),
+  `actions/setup-node@v4`→`@v6` (×1, `ts-strict.yml`),
+  `pnpm/action-setup@v4`→`@v6` (×1, `ts-strict.yml`). Target majors web-fetched
+  fresh at edit time (D3). The four D4 `with:` blocks preserved byte-for-byte
+  (R-CI CLEARED): `lfs: true` (`python-strict.yml`, the S-CI1 legacy-captures
+  smudge), `fetch-depth: 0` (`audit-append-only.yml`, prior-tag read),
+  `setup-node` inputs + pnpm `version: 10` (`ts-strict.yml`).
+- **pytest-timeout (Stage 1b, § J.3, D12 shape (b)).** `pytest-timeout>=2.0`
+  added to `tools/testkit/pyproject.toml` dev extras + a default per-test ceiling
+  in `[tool.pytest.ini_options]`. Lands the § J.3 requirement (numba PATH-A
+  mutation targets); per-target mutmut runners may tighten it. MPM `mls_mpm.py`
+  mutation completion remains banked.
+- **LBM manifest-equality test (Stage 1b, § J.7, D11, strategy (i)).** New
+  `packages/lattice-boltzmann-d3q19/tests/test_manifest_equality.py` — invokes
+  the existing `sim_runner_diagnostic` and asserts the full emitted `.json`
+  manifest against expected literals (volatile `run.wall_clock_seconds` +
+  `payload.checksum` excluded per spec § 2.5 / § F.3) + run-to-run stability.
+  ZERO sealed-source edits; no public `build_manifest()` (strategy (ii) banked).
+  Representative-single-sim (the representative-subset artifact class).
+- **Conventions § J amended additively** (`docs/conventions/sub-phase-conventions.md`):
+  § J.3 records pytest-timeout LANDED; § J.7 records the manifest-equality test
+  REALIZED via strategy (i) (banked methodology-precedent #14). Existing prose
+  unchanged.
+
+#### Verification
+
+- **Python 18-root sweep:** ZERO code regressions (418 passed + 3 skipped,
+  full-collection mode; LBM 10→12 is the only intended delta). The 4 Stack-D
+  ports errored on a COLD taichi `.pyc` (latent pre-existing
+  taichi-`SyntaxWarning` filterwarnings gap, exposed by the Stage-1b `uv sync`;
+  proven not a code regression — warming the `.pyc` → all pass; banked as a
+  recommended Stack-D-filterwarnings follow-up).
+- **TypeScript sweep:** 20 passed + 2 skipped (baseline-match).
+- **Integrity sweep:** `0 HARD_FAIL, 14 SOFT_WARN`; sweep-output sha256
+  `c19492ad…cb52` byte-identical to the MPM Stack-D close baseline (streak HELD
+  across the migration + § J amendment + new test).
+- **Bit-identity replay invariant:** `9399fc33…18909f34` HELD (27th+ invocation).
+- **Append-only:** PASS (no Phase-0/Phase-1 or prior-sub-phase audit edited).
+- **verify_evidence:** full 9-audit chain GREEN.
+
+#### Banked methodology-precedent
+
+- **#14 — strategy-(i) manifest-equality pattern.** The literal
+  `<sim>.sim.build_manifest()` call site does not exist at HEAD; invoke the
+  existing `sim_runner_*` (or its diagnostic-tier variant), load the emitted
+  `.json` manifest sidecar, shape-check-then-exclude the volatile wall-clock +
+  checksum fields, and assert the remainder equals expected literals (numeric
+  params from module constants). Realizes § J.7's intent without a sealed-source
+  refactor. Reusable for any future per-sim manifest-equality fan-out.
+
+### sub-phase-ci-action-hotfix-setup-uv-v8-pin
+
+Single-stage focused-infrastructure **hotfix** for the post-push CI failure of
+`sub-phase-ci-action-migration-and-banked-cleanup`: 6 of 9 workflows went red,
+all using `astral-sh/setup-uv@v8`. Per the setup-uv v8.0.0 release notes, the
+maintainer **discontinued publishing moving major/minor tags** at v8 as
+supply-chain hardening (*"we will stop publishing minor tags. You won't be able
+to use `@v8` or `@v8.0` any longer"*) — so `@v8` does not resolve. No `-phase-N`
+tag; PUSH IS OPERATOR ACTION.
+
+#### Changed
+
+- **Pinned `astral-sh/setup-uv@v8` → `@v8.1.0`** (immutable specific-version tag;
+  current latest v8.x, re-fetched at edit time) across the 6 setup-uv workflows
+  (`python-strict.yml`, `determinism.yml`, `equivalence.yml`, `integrity.yml`,
+  `mutation-testing.yml`, `tolerance-budget-check.yml`). 6 single-line `uses:`
+  changes; every other line byte-for-byte preserved. The other 3 bumped actions
+  (`actions/checkout@v6`, `actions/setup-node@v6`, `pnpm/action-setup@v6`) still
+  publish moving tags and are left as-is (out of scope).
+
+#### Verification
+
+- pyyaml 9/9 valid; integrity sweep `c19492ad…cb52` byte-identical (streak HELD);
+  bit-identity replay `9399fc33…18909f34` HELD (28th+ invocation). No
+  cross-package regression sweep warranted (workflow-YAML-only; zero Python/TS
+  surface touched).
+
+#### Banked observation
+
+- **Action-version web-fetch must distinguish (a) latest released version from
+  (b) usable pinning forms.** Release notes may document deviation from the
+  default "pin to major" assumption (setup-uv v8.0.0: moving tags discontinued).
+  Future workflow-action probes / D3 re-fetch must read the release notes for the
+  specific major targeted, not merely confirm the version exists.
+
+## [0.1.9] — Phase-1 per-sim implementations point release (2026-05-22)
 
 ### sub-phase-closed-form
 
@@ -545,25 +1907,6 @@ golden lands. Recorded as Stage 2 SHIFT N2.
 | 13 | perf-ledger first row | GREEN |
 | 13 (anchor) | failing-tests replay verifiable (worktree at `a159086` → 4 ModuleNotFoundError) | GREEN |
 
-### sub-phase-numba-integration
-
-Focused infrastructure hotfix sub-phase landed between
-`sub-phase-particle-fluids-sph-water` Stage 1's R18 STOP-AND-SURFACE
-and Stage 1's continuation. Adds `numba >= 0.61, < 0.66` (0.65.1
-known-good) as a project-wide runtime dependency at
-`tools/testkit/pyproject.toml` (the universal workspace dep at HEAD;
-every sim + integrity + diagnostics consumer transitively gets numba).
-Documents the project-wide JIT-acceleration convention at
-`docs/common/numba.md`: `@njit(fastmath=False, cache=True)` is the
-mandatory decorator form; `fastmath=True`, unguarded `parallel=True`,
-and `error_model="numpy"` are banned. Determinism contract verified
-by the regression test at `tools/testkit/numba_harness/tests/test_numba_determinism.py`
-(5/5 PASS): FP-equivalence with pure-NumPy reference (< 1e-9
-tolerance) + bit-deterministic-with-itself + cold-vs-warm cache
-identity. Cross-version bit-equality not formally guaranteed by
-numba upstream; project pins + verifies via regression test. No
-`-phase-N` tag pushed.
-
 ### sub-phase-particle-fluids-sph-water
 
 Fourth per-sim implementation sub-phase under spec-Phase-1 (the
@@ -677,31 +2020,6 @@ operator decision per `docs/phases/sub-phase-particle-fluids-sph-water.md`
 | 13 | perf-ledger first row (~21.5 min canonical at 100K) | GREEN |
 | 13 (anchor) | failing-tests replay verifiable (worktree at `cd20faa` → 5 ModuleNotFoundError) | GREEN |
 
-### sub-phase-conventions-consolidation
-
-Operator-routed cross-sub-phase conventions doc consolidation per
-`sub-phase-particle-fluids-sph-water` landing § 9.3 row 7. New
-canonical reference at `docs/conventions/sub-phase-conventions.md`
-(696 lines, sha256 `004d7011…600a3e6`) consolidates the patterns
-shared across the four landed per-sim implementation sub-phases
-(closed-form, agent-based, continuous-CA-rd3d, particle-fluids-sph-water)
-plus three focused infrastructure-hotfix sub-phases (replay-tool-hotfix,
-numba-integration, mutation-script-hotfix). Future sub-phase plan-drafting
-reads this doc FIRST, then inherits sim-specific deltas from the
-most-recent prior sub-phase landing. Section N "PROPOSED: Stage 0
-canonical-descriptor scope-analysis" anticipates the load-bearing
-discipline that sub-phase-eulerian-smoke first practiced.
-
-#### Added
-
-- `docs/conventions/sub-phase-conventions.md` — 14-section reference
-  (A architecture, B audit chain, C commit conventions, D replay/tag,
-  E gate-13 worktree, F determinism, G numba, H vendored-upstream,
-  I Cat 3 subdir pattern, J B17 routing, K R-class STOP-AND-SURFACE,
-  L banked observations carry-forward, M 65-shift inventory,
-  N PROPOSED Stage 0 Task 0.4, O coherence note).
-- Audit chain at `docs/_audits/phase-1/sub-phase-conventions-consolidation/`.
-
 ### sub-phase-eulerian-smoke
 
 Fifth per-sim implementation sub-phase under spec-Phase-1; **first
@@ -798,17 +2116,6 @@ lean: no tag).
 | 12 | GREEN | 2 PBT invariants |
 | 13 | GREEN | perf-ledger rows (691.587 s + 5.099 s) |
 | 13 (anchor) | GREEN | worktree replay at `216021a` → 4 ModuleNotFoundError |
-
-### sub-phase-git-lfs-migration
-
-Focused infrastructure-hotfix sub-phase landed CONFIRMED at
-`0672554`. Adopts Git LFS for `captures/**/*.h5` to absorb the
-704 MB eulerian-smoke Taylor-Green capture that exceeded GitHub's
-100 MB per-file hard limit. 11-commit history rewrite from
-`34c7d34` to `cf13d1c` via fast-forward; bit-identity replay
-invariant `9399fc33…909f34` held byte-identically at pre-push +
-post-push runs (12th + 13th invocations). All 10 LFS-tracked
-captures verified bit-identical to canonical sha256s.
 
 ### sub-phase-lattice-boltzmann-d3q19
 
@@ -970,1254 +2277,60 @@ dispatchable at `v0.2.0-phase-2`.
 | 13 | GREEN | perf-ledger row (158.052 s) |
 | 13 (anchor) | GREEN | worktree replay at `9de8048` → 4 ModuleNotFoundError |
 
-### sub-phase-taichi-integration
+### sub-phase-numba-integration
 
-**FIRST spec-Phase-2 sub-phase**; focused-infrastructure shape mirroring
-`sub-phase-numba-integration` per `docs/_audits/phase-1/sub-phase-mpm-multimaterial/landing-2026-05-23T02-53-11Z.md`
-§ 10.5 item 4. Establishes Stack-D (Python / Taichi) workspace surface
-before subsequent spec-Phase-2 per-sim Stack-D port sub-phases consume
-it. Resolves the **common-py adoption decision** banked since the
-numba-integration § 2 re-anchor finding. Operator-routed D1=SUPERSEDE
-(existing `docs/phases/phase-2-cross-stack-replication.md` 10-stage
-monolithic plan is NOT the dispatch vehicle; per-sub-phase decomposition
-matching Phase-1 pattern carries forward); D2 row 2 transitions
-SCOPED IN → RESOLVED at this sub-phase close; D3=v0.1.0-phase-1 replay
-anchor for all spec-Phase-2 sub-phases until `v0.2.0-phase-2` lands.
+Focused infrastructure hotfix sub-phase landed between
+`sub-phase-particle-fluids-sph-water` Stage 1's R18 STOP-AND-SURFACE
+and Stage 1's continuation. Adds `numba >= 0.61, < 0.66` (0.65.1
+known-good) as a project-wide runtime dependency at
+`tools/testkit/pyproject.toml` (the universal workspace dep at HEAD;
+every sim + integrity + diagnostics consumer transitively gets numba).
+Documents the project-wide JIT-acceleration convention at
+`docs/common/numba.md`: `@njit(fastmath=False, cache=True)` is the
+mandatory decorator form; `fastmath=True`, unguarded `parallel=True`,
+and `error_model="numpy"` are banned. Determinism contract verified
+by the regression test at `tools/testkit/numba_harness/tests/test_numba_determinism.py`
+(5/5 PASS): FP-equivalence with pure-NumPy reference (< 1e-9
+tolerance) + bit-deterministic-with-itself + cold-vs-warm cache
+identity. Cross-version bit-equality not formally guaranteed by
+numba upstream; project pins + verifies via regression test. No
+`-phase-N` tag pushed.
 
-#### Added
+### sub-phase-conventions-consolidation
 
-- **`common/common-py/` workspace registration** in root
-  `pyproject.toml` `[tool.uv.workspace].members` (14th member;
-  resolves "infrastructure shipped, not yet wired" state surfaced at
-  numba-integration § 2).
-- **Taichi as workspace-accessible dependency** —
-  `taichi>=1.7,<2.0` promoted from `common/common-py/pyproject.toml`
-  `[project.optional-dependencies].taichi` to `[project].dependencies`
-  per Task 0.3 routing (a): Stack-D-only scoping (Stack-B/C developers
-  omit common-py from their workspace install). Upper bound tightened
-  per re-pin policy convention (`docs/conventions/sub-phase-conventions.md`
-  § H.4).
-- **`docs/common/taichi.md` convention doc** (361 lines including
-  Stage-2 § 4.6 addendum) — sister to `docs/common/numba.md`; documents
-  required `ti.init` form (`arch=ti.cpu, random_seed=<seed>,
-  cpu_max_num_threads=1, offline_cache=True`), banned flags
-  (`fast_math=True`, `default_fp=ti.f32` mismatch, unguarded parallel
-  reductions), the 4 spec § 4.4 known limitations + workarounds + the
-  Taichi-locale-DeprecationWarning workaround (§ 4.5) + the
-  `@ti.kernel` `-> None` annotation TypeError surface (§ 4.6).
-- **`common_py.determinism.set_taichi_deterministic` extended** with
-  `arch: str = "cpu"` parameter (`SUPPORTED_TAICHI_ARCHS = cpu / cuda
-  / vulkan / metal`); raises `ValueError` on unrecognised arch;
-  backward-compatible default preserves existing callers; uses the
-  correct Taichi 1.7.4 determinism mechanism. **Latent-bug fix
-  (SHIFTED N2):** charter § 1.4.1 prescribed `deterministic_mode=True`
-  is NOT a valid Taichi 1.7.4 `ti.init` kwarg (verified by signature
-  inspection); the pre-Stage-1 implementation would have always raised
-  at runtime if any caller had invoked it with taichi installed.
-- **12 unit tests** at `common/common-py/tests/test_determinism.py`
-  covering all 4 backends + ValueError path + backward-compat path +
-  monkeypatched missing-taichi path (rewritten from the pre-Stage-1
-  Stage-1-pre-assumption test); +7 net new tests.
-- **Hello-physics Taichi smoke sim** at
-  `common/common-py/smoke/hello_taichi.py` (1D explicit diffusion;
-  Taichi backend; sibling to `advection_1d.py`). Exercises
-  `set_taichi_deterministic` + `Capture.write_capture` + `FKeyDispatcher`
-  (CI-skipped) + `watch_and_reexec` (CI-skipped). Smoke-tier capture at
-  `common/common-py/smoke/captures/hello-taichi-cpu-seed42-step100.{h5,json}`
-  (47 KB; NOT LFS-tracked at this path; smoke-tier only — not a
-  canonical-corpus capture per Appendix D § D.2.3). Kernel module
-  deliberately omits `from __future__ import annotations` per spec
-  § 4.4 limitation #2 and `-> None` return annotations per the
-  Taichi-1.7.4 AST-transformer limitation discovered at Stage 1
-  (SHIFTED N3).
-- **`tools/testkit/taichi_harness/`** regression-test subpackage —
-  non-shadowing name per numba § 8 N2 lesson. 5 tests at
-  `tests/test_taichi_determinism.py`: FP-equivalence vs pure-NumPy at
-  N ∈ {64, 256, 1024}; run-to-run bit-determinism; cold-vs-warm
-  offline-cache identity. All 5 use `pytest.importorskip("taichi")`
-  for R-T1 CI-without-Taichi mitigation per charter § 9.
-- **filterwarnings amendment** at `common/common-py/pyproject.toml`
-  `[tool.pytest.ini_options]`: filters
-  `DeprecationWarning:taichi.*` + `locale\\.getdefaultlocale` to
-  preserve strict-warnings posture against Taichi 1.7.4's internal
-  Python-3.12 locale-deprecation call (SHIFTED N4; documented at
-  `docs/common/taichi.md` § 4.5).
-- **`docs/dependencies.md` additive entry** for Taichi pin +
-  `bit-physics-common-py` as workspace member.
-- This audit chain (9 commits): plan-drafting probe (`7b21ee2`);
-  charter (`9f5c80f`); plan-drafting landing audit (`185401b`); plan-
-  drafting SHA back-fill (`75fb99a`); Stage 0 tolerance-budget
-  carryover (`81b1475`); Stage 0 checkpoint (`0eed3d7`); Stage 0 SHA
-  back-fill (`ae3b834`); Stage 1 sub-bundle feat (`c2900c3`); Stage 1
-  checkpoint (`fece9a8`); Stage 1 SHA back-fill (`9502824`); Stage 2
-  landing audit + back-fill (final SHAs).
-
-#### Verified
-
-| Deliverable | Status | Notes |
-|---|---|---|
-| Workspace registration | GREEN | `common/common-py` in `[tool.uv.workspace].members` at commit `c2900c3` |
-| Taichi declared as workspace dep | GREEN | `taichi>=1.7,<2.0` at `common/common-py/pyproject.toml` |
-| `docs/common/taichi.md` | GREEN | 361 lines; sister to `docs/common/numba.md`; ≥3 anchors at § 2.1 |
-| `set_taichi_deterministic` arch param + API fix | GREEN | 12 unit tests; 4 backends + ValueError + backward-compat + monkeypatch |
-| Hello-physics smoke + capture | GREEN | 47 KB `.h5`; sha256 `347d6568…05cfd` |
-| `taichi_harness` regression | GREEN | 5 tests; locally validated; CI-skip on missing-Taichi |
-| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (third byte-identical sweep in a row) |
-| Cross-package regression sweep | GREEN | 325 GREEN (+30 vs 295 baseline); zero Phase-1 sim regressions |
-| Equivalence-harness compatibility | GREEN | hello-taichi vs advection_1d diff emitted cleanly (within_tolerance=False expected; different sims) — W-Gate 5 analogue |
-| `docs/dependencies.md` entry | GREEN | Taichi pin + common-py workspace member |
-| CHANGELOG entry | GREEN | this entry |
-
-### sub-phase-capture-determinism-contract
-
-**SECOND spec-Phase-2 sub-phase**; portfolio-wide contract-redesign mirroring
-`sub-phase-conventions-refactor-post-phase-1` consolidation shape per
-`docs/_audits/phase-2/sub-phase-capture-determinism-contract/plan-drafting-probe-2026-05-23T15-37-24Z.md`.
-SUPERSEDES Taichi-integration § 10 next-sub-phase recommendation (RD-2D →
-Stack-D port) because the determinism contract is structurally upstream of
-any further Stack-D port. Surfaced via CI fan-out from Taichi-integration's
-push to main: `common/common-ts/examples/hello-physics/hello-physics.test.ts`
-asserted raw HDF5 byte-equality across two runs, which is unstable across
-Unix-second boundaries because h5wasm 0.10.1's bundled HDF5 library embeds
-wall-clock-influenced `H5O_MTIME_NEW` timestamps in every object header (the
-`H5Pset_obj_track_times` symbol is absent from h5wasm 0.10.1's WASM blob
-entirely — Stage 0 Task 0.3(c) empirical refutation of the probe's lean
-Module-direct fix path).
-
-D2 operator-routed wording at STEP 8 HALT-AND-SURFACE incorporates D2-c
-(project-onto-Capture) + explicit R-D3 cross-reference to spec § 2.6 + tool-
-agnostic exclusion language; landed verbatim at `docs/architecture.md` § 2.5.
-D2-sub: `payload.checksum` retained as raw-file sha256 + description note
-that it is informational and the contract lives at the harness.
+Operator-routed cross-sub-phase conventions doc consolidation per
+`sub-phase-particle-fluids-sph-water` landing § 9.3 row 7. New
+canonical reference at `docs/conventions/sub-phase-conventions.md`
+(696 lines, sha256 `004d7011…600a3e6`) consolidates the patterns
+shared across the four landed per-sim implementation sub-phases
+(closed-form, agent-based, continuous-CA-rd3d, particle-fluids-sph-water)
+plus three focused infrastructure-hotfix sub-phases (replay-tool-hotfix,
+numba-integration, mutation-script-hotfix). Future sub-phase plan-drafting
+reads this doc FIRST, then inherits sim-specific deltas from the
+most-recent prior sub-phase landing. Section N "PROPOSED: Stage 0
+canonical-descriptor scope-analysis" anticipates the load-bearing
+discipline that sub-phase-eulerian-smoke first practiced.
 
 #### Added
 
-- **Spec § 2.5 amendment** (`docs/architecture.md`; primary contract wording
-  site). Replaces the pre-amendment "bit-identical output" framing with the
-  content-equivalent contract over the parsed Capture data model:
-  *"A simulation is deterministic if every state array and diagnostic entry
-  in its canonical Capture is exactly element-wise equal across two runs at
-  the same seed on the same hardware. This is the zero-tolerance special
-  case of the cross-stack content-equivalence posture in §2.6, computed over
-  the same Capture projection. Storage-format metadata (wall-clock timestamps
-  embedded by the underlying file format, library version banners, and other
-  environment-influenced packaging artifacts) is excluded from the
-  comparison."* Cross-references to the new harness API (Python + TS) added
-  alongside.
-- **Spec § 2.7 + `tools/testkit/schemas/capture-v1.json` description-only
-  amendment** clarifying `payload.checksum` is informational; the contract
-  lives at the harness; field-shape unchanged (no schema_version bump; no
-  WU-A coordination cost).
-- **Canonical Python determinism harness** at
-  `tools/testkit/determinism/harness.py` — `DeterminismVerdict.bit_exact`
-  renamed to `content_equivalent` with backward-compatibility property shim
-  emitting `DeprecationWarning` (preserve callers' surface for one
-  deprecation window). Module docstring + `policy.md` updated to reflect
-  the content-equivalent contract. 12 portfolio call sites migrated inline
-  to `verdict.content_equivalent` (8 Phase-1 sims + RD-2D Phase-0 +
-  diagnostics tier1 + harness's own tests).
-- **TypeScript determinism harness (NEW)** at
-  `common/common-ts/src/determinism/`:
-  - `captureReader.ts` — parses h5wasm `/steps/{N}/state/{field}` +
-    `/steps/{N}/diagnostics/{check}` into a typed `Capture` record;
-    reuses existing `H5FileLike` shim types.
-  - `diffCaptures.ts` — element-wise Float64Array equality + max-abs/rel
-    error reporting + sorted-step + sorted-field traversal for stable
-    first-mismatch reporting.
-  - `runTwiceAndDiff.ts` — orchestrator matching the Python harness
-    semantically; returns `DeterminismVerdict { contentEquivalent, detail }`.
-  - `index.ts` — re-exports (non-empty per § B.6 N6 banked precedent).
-  - `__tests__/harness.test.ts` — 5 tests verifying contract semantics on
-    synthetic deterministic + nondeterministic stub runners.
-- **Python `CaptureWriter` source-level fix** at
-  `tools/testkit/capture/writer.py`: `libver="earliest"` +
-  `track_order=False` on every `create_group` + `track_times=False` on
-  every `create_dataset`. Defense-in-depth — non-load-bearing per the
-  harness-based contract but eliminates the latent flake at the source for
-  any downstream consumer that does compare bytes. New
-  `test_writer_determinism.py::test_write_capture_byte_identical_across_seconds`
-  verifies byte-identical `.h5` output across 1.5 s wall-clock separation.
-- **TypeScript `CaptureWriter` source-level fix per N1 path (a)** at
-  `common/common-ts/src/capture.ts`: freezes `globalThis.Date.now` for the
-  duration of the h5wasm write window in a `try/finally` (saves real
-  `Date.now`, replaces with `() => 0`, restores in `finally`). Stage 0 Task
-  0.3(c) empirically refuted the probe's lean Module-direct path; this is
-  the only viable userland shim per the h5wasm-node 0.10.1 surface. New
-  `capture-writer-determinism.test.ts` (3 tests: byte-identical across 1.5 s
-  + no-leaked-monkey-patch + restore-on-throw).
-- **Per-test refactor V1 (hello-physics)** at
-  `common/common-ts/examples/hello-physics/hello-physics.test.ts`:
-  `payloadA.equals(payloadB)` replaced by `runTwiceAndDiff` against a
-  `SimRunner` wrapping `runHelloPhysics`; assertion is
-  `verdict.contentEquivalent === true`. Adds R-D2 spot-check (broken-
-  determinism runner with varying step count → `contentEquivalent === false`).
-- **Per-test refactor V2 (LBM)** at
-  `packages/lattice-boltzmann-d3q19/tests/test_determinism.py`: removed
-  `_sha256_of_file` helper; uses `run_twice_and_diff(sim_runner_diagnostic,
-  ...)` + asserts `verdict.content_equivalent`. Module-level + per-test
-  docstrings updated ("byte-identical HDF5 payloads" → "content-equivalent
-  Capture projections" per Stage 0 SHIFTED N2). Adds R-D2 spot-check via
-  synthetic-capture `drifting_runner` (per Stage 1 SHIFTED N1).
-- **Per-test refactor V3 (MPM)** at
-  `packages/mpm-multimaterial/tests/test_determinism.py`: same pattern as V2.
-  Per-test docstring updated. R-D2 spot-check matches V2.
-- **Conventions doc additive amendment** at
-  `docs/conventions/sub-phase-conventions.md`:
-  - § F.3 row "Bit-identical run-to-run" reworded to "Content-equivalent
-    run-to-run"; new "Content-equivalent NOT raw-file-byte-equality" prose
-    paragraph cross-referencing spec § 2.5 + the new harness API.
-  - § A.2 gate-11 mechanism cross-reference (new paragraph after the three-
-    stage cadence table).
-  - New § B.7 "Cross-package regression sweep — Python + TypeScript
-    fan-out" sub-section codifying the dual-language sweep template
-    established at this sub-phase.
-  - sha256 SHIFTED additively: pre-Stage-1 `3698d19b62a0e9066f2daf616bdd13670b757d4460ea8d3d7c114fb2392bd734`
-    (829 lines) → post-Stage-1 `167fe34911b4d3f49e3e924fcb8261421acac87a3e0931a5d00a3dbcf2c58c2e`
-    (854 lines; +25 additive). This is the first conventions-doc sha256 SHIFT
-    since the conventions-refactor-post-phase-1 sub-phase locked the baseline;
-    the new sha256 is the canonical reference for subsequent sub-phases.
-- **CI gate redesign per D4 strict-fanout**:
-  - `.github/workflows/ts-strict.yml`: new explicit "Determinism gate
-    (content-equivalent contract)" step running `pnpm vitest run` on the
-    new `src/determinism/` + the refactored `examples/hello-physics/`.
-  - `.github/workflows/python-strict.yml`: extends ruff + mypy + pytest to
-    cover `determinism/` alongside `capture/`; new explicit "Determinism
-    gate" step.
-  - `.github/workflows/determinism.yml`: new "Determinism gate per-sim
-    fan-out" step iterating over all 10 sims (per-package per § M.4 N1
-    `tests.conftest` import-path-collision avoidance).
-- **IC-13 (content-equivalence contract semantics)** + **IC-14 (determinism-
-  harness API, Python + TypeScript)** — first post-Taichi-integration ICs;
-  numbered IC-11/12 → IC-13/14 per established convention.
-- This audit chain (12 commits):
-  - Plan-drafting: probe (`44941c2`); charter (`8fe770c`); plan-drafting
-    landing (`5cf1903`); SHA back-fill (`97ff87b`).
-  - Stage 0: tolerance-budget carryover (`4fa9a07`); checkpoint (`ffc7c24`);
-    SHA back-fill (`9bc409e`).
-  - Stage 1: monolithic feat (`26e1343`); checkpoint (`0a99f4e`); SHA
-    back-fill (`1963e5d`).
-  - Stage 2: landing audit + back-fill (final SHAs).
-
-#### Verified
-
-| Deliverable | Status | Notes |
-|---|---|---|
-| Spec § 2.5 amendment | GREEN | docs/architecture.md sha256 `42f5d599…0a347b` |
-| Spec § 2.7 + capture-v1.json description edits | GREEN | capture-v1.json sha256 `7715a50a…943735` |
-| Python harness rename + deprecation shim | GREEN | 12 portfolio call sites migrated; 3 harness tests pass under `-W error` |
-| TypeScript harness (NEW; 4 source + 1 test file) | GREEN | 5 harness tests pass |
-| Python CaptureWriter source-level fix | GREEN | new test verifies byte-identical across 1.5 s |
-| TypeScript CaptureWriter source-level fix per N1 path (a) | GREEN | 3 new tests pass (incl. no-leaked-monkey-patch + restore-on-throw) |
-| V1/V2/V3 refactors + R-D2 spot-checks | GREEN | 3 sites; all R-D2 spot-checks PASS (each refactored test FAILS as expected on broken-determinism mock) |
-| Conventions doc § F.3 + § A.2 + § B.7 amendment | GREEN | sha256 `3698d19b…2bd734` → `167fe349…58c2e` (+25 lines additive) |
-| CI gate redesign per D4 strict-fanout | GREEN | 3 workflows extended |
-| Integrity gates GREEN | GREEN | bit-identical to MPM § 7.2 baseline `810cd6e3…23411f98` (**FOURTH byte-identical integrity sweep in a row**) |
-| Cross-package regression sweep | GREEN | Python 342 PASSED (+17 net vs Taichi-integration's 325; +1 sim RD-2D counted + 2 R-D2 spot-checks + 1 writer-determinism test); TS 20 passed + 2 skipped (interactive surfaces); ZERO REGRESSIONS |
-| docs/dependencies.md entry | GREEN | new Python + TS determinism-harness module surfaces |
-| CHANGELOG entry | GREEN | this entry |
-
-### sub-phase-reaction-diffusion-2d-stack-d
-
-**FIRST per-sim cross-stack port sub-phase under spec-Phase-2.** Ports
-`reaction-diffusion-2d` from the Phase-0-Block-8-frozen Stack-B
-(TypeScript / WGSL / WebGPU) reference to a content-equivalent Stack-D
-(Python / Taichi-DSL / CPU) implementation through gates 4–14. No
-`-phase-N` tag pushed (spec § 7.12); optional non-phase point-release
-`v0.1.11` is a banked operator decision per
-`docs/phases/sub-phase-reaction-diffusion-2d-stack-d.md` § 11.4.
-
-#### Added
-
-- Stack-D Taichi-DSL Gray-Scott implementation at
-  `packages/reaction-diffusion-2d-stack-d/` (sibling workspace member; D6).
-  Determinism posture `bit-exact-same-hw` at `arch="cpu"` (IC-13
-  content-equivalent); `ti.ndrange(n, n)` row-major + `cpu_max_num_threads=1`;
-  NumPy-seeded IC matching Stack-B.
-- Stack-D spec sheet `docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref-stack-d.md`
-  + pre-implementation probe report.
-- Canonical Stack-D capture at the HEAD-frozen descriptor
-  `gray-scott-lambda-128sq-seed42-step2000` (`.h5` content OID
-  `2e93a751…1041b13d`; `.json` `e1752ceb…27e104`).
-- **Cross-stack equivalence (gate 14, Phase-2-specific):**
-  `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` — the
-  first cross-stack-pair methodology template (IC-15 candidate).
-  `compare_captures(Stack-B, Stack-D)` returns `within_tolerance=True` at
-  `relative=1e-4`; peak `max_abs_err=1.9e-14` (step 1600 U), margin ~10
-  orders of magnitude; R-P2 chaotic-regime divergence empirically falsified
-  for this pair at the full step-2000 horizon.
-- At-budget per-sim `[overrides.reaction-diffusion-2d] category =
-  "reaction-diffusion"` in `tools/testkit/equivalence/tolerance.toml`
-  (resolution wiring mapping physics-family `sim.category` to
-  numerical-method tolerance-category; NOT a tolerance widening).
-- Schema-corpus entry
-  `tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-d.{h5,json}`
-  (Phase 4 WU-A consumer).
-- `docs/perf-ledger.md` row: `taichi-cpu` 0.568 s (0.61× Stack-B
-  numpy-reference 0.931 s baseline; well below the 2× regression band).
-
-#### Verification
-
-| Gate | Status | Note |
-|---|---|---|
-| 4–13 (stack-agnostic) | GREEN | gates landed at Stage 1b (MMS OOA 1.9972; IC-13 content-equivalent; 3 PBT invariants; gate-13 structural replay) |
-| 14 (cross-stack equivalence) | GREEN | `within_tolerance=True` at `relative=1e-4`; per-field witness in `equivalence.md` |
-| Portfolio sweep | GREEN | Python 360 passed (+18 net vs 342; Stack-D +16 + testkit +2); TS 20 passed + 2 skipped; ZERO REGRESSIONS |
-| Integrity sweep | GREEN | bit-identical to `810cd6e3…23411f98` (**FIFTH byte-identical integrity sweep in a row**, despite a new sim package + spec sheet + probe + capture + perf row + Cat-X additive override) |
-| Mutation (B17) | PATH-B re-bank | framework-validated artifact; per-sim Taichi-DSL mutmut target deferred (cross-stack port) |
-
-### sub-phase-audit-chain-correctness
-
-Focused-infrastructure sub-phase resolving the two banked-for-operator
-audit-chain hash-correctness items surfaced at the RD-2D Stack-D landing
-(§ 8 N5a / N5b). Mirrors the `sub-phase-taichi-integration` (focused-infra)
-+ `sub-phase-capture-determinism-contract` (portfolio-wide amendment) shapes.
-No `-phase-N` tag (spec § 7.12); optional non-phase point-release `v0.1.12`
-is a banked operator decision.
-
-#### Added / Changed
-
-- **`verify_evidence` LFS-content-OID fix (Stage 1a).** New
-  `lfs_pointer_oid()` helper in `tools/integrity/integrity/common/repo.py`
-  (pointer-stub sniff + `oid sha256:` parse) and an OID-aware comparison
-  branch in `tools/integrity/integrity/scripts/verify_evidence.py`:
-  LFS-tracked artifacts (`captures/**/*.h5`) now verify against the content
-  OID embedded in the git-lfs pointer stub — offline, no `git lfs smudge` /
-  network / auth. Non-LFS artifacts hash the git blob unchanged;
-  mismatch→error preserved (R-A4). `--strict` untouched.
-- **IC-16 formalized (Stage 1a).** `verify_evidence` LFS-content-OID
-  verification semantics; cited at spec § 7.5 + Appendix G.7 (Stage 1b,
-  D3-positive) and recorded in `docs/dependencies.md`.
-- **§ B.6 amended in two steps.** Mode 2 (LFS pointer-vs-content) **RESOLVED**
-  at Stage 1a — subsequent landings need no Option-3 annotation. Mode 3
-  (phantom-sha / pre-commit-hook trailing-newline) **ADDED** at Stage 1b,
-  covering 2 retroactively-classified portfolio-wide drifts.
-- **Portfolio-wide phantom-sha audit (Stage 1b).** New report at
-  `docs/_audits/phase-2/sub-phase-audit-chain-correctness/phantom-sha-audit-2026-05-23T22-39-45Z.md`
-  (HEAD sha256 `9a1167dc…a40d085b` post-back-fill). 14-capture survey: 5 MATCH /
-  7 NO-RECORD / 2 PHANTOM-DRIFT (rd-2d-stack-d, rd-3d-ref) — both trailing-newline
-  phantoms, both pre-caught at landings, both in sealed checkpoints only.
-  rd-3d-ref re-classified § B.6 Mode 1 → Mode 3. Non-corrective of prior audits
-  (Convention A + § 12 + D5).
-- **Spec amendments (Stage 1b, D3-positive, additive).** `docs/architecture.md`
-  § 7.5 + Appendix G.7 gain an LFS-content-OID clarification (IC-16). Existing
-  wording unchanged.
-- **Test surface.** `tools/integrity/tests/test_verify_evidence.py` +5 tests
-  (LFS pointer OID resolution; wrong-OID negative path; non-LFS regression);
-  10/10 GREEN; portfolio Python sweep 365 PASS (= 360 + 5; zero regressions).
-
-#### Banked methodology-precedents
-
-- **Commit-first-then-sha256.** Record the sha256 of the committed blob, never
-  in-memory pre-hook content (the pre-commit `end-of-file-fixer` appends a
-  trailing newline → phantom shas). Exemplified across this sub-phase's audit
-  chain. The hook is not modified (out of scope); the discipline is the
-  working mitigation.
-- **SHA back-fill must enumerate EVERY placeholder-bearing audit committed in a
-  stage**, not just the checkpoint (Stage 1b N1; the now-fixed `verify_evidence`
-  is the mechanical self-check that catches placeholder leakage).
-
-### sub-phase-sph-water-stack-d
-
-**SECOND per-sim cross-stack port sub-phase under spec-Phase-2** (after
-`reaction-diffusion-2d-stack-d`); the SECOND empirical validation of the IC-15
-cross-stack-equivalence methodology and the FIRST production consumer of IC-16
-(`verify_evidence` LFS-content-OID resolution). All 14 gates GREEN. No `-phase-N`
-tag (spec § 7.12); optional non-phase point-release banked per
-`docs/phases/sub-phase-sph-water-stack-d.md` § 11.4.
-
-#### Added
-
-- **Stack-D Taichi-DSL DFSPH port** at `packages/sph-water-stack-d/` (Stage 1b;
-  workspace member 16): `reference/dfsph_taichi.py` (pure-Python golden surface +
-  inlined 27-cell spatial-hash Taichi kernels; cell = 2h cutoff), `sim.py`
-  (determinism-strategy docstring + `sim_runner_seeded` / `sim_runner_diagnostic`
-  / `compute_diagnostic_trajectory` / `neighbor_lists_at`), `invariants.py`
-  (`density_nonneg`, `kernel_normalization_unit_volume`). Gates 4–13 GREEN
-  (gate-4 golden-table, NOT MMS; err 0.0 at abs<1e-12 / abs<1e-15).
-- **Canonical Stack-D capture** `captures/sph-water-stack-d/dam-break-100K-particles-seed42-step1000.{h5,json}`
-  (252.346 s = 0.195× the numpy-reference baseline; perf-ledger row at Stage 1b).
-- **Cross-stack equivalence (gate 14) GREEN** at Stage 1c: `within_tolerance=True`
-  at `relative=1e-4` over the full canonical step-1000 horizon — position+velocity
-  bit-identical across all 11 frames; density `max_rel_err=1.585292e-15`
-  (~11 orders of margin).
-- **`[overrides.sph-water] category="sph"`** in `tools/testkit/equivalence/tolerance.toml`
-  (Stage 1c; at-budget per `[defaults.sph]`; the SECOND per-sim override).
-- **`equivalence.md` extended additively** (Stage 1c; +7 IC-15 methodology
-  sections + S6 banked methodology-precedent).
-- **Schema-corpus entry** `tests/fixtures/legacy-captures/phase-2-sph-water-stack-d.{h5,json}`
-  (Stage 1c; payload.path rewritten; corpus round-trip GREEN).
-- **IC-15 PARTIAL FORMALIZATION** (Stage 2; D5 routing = option (c)):
-  `docs/conventions/cross-stack-equivalence-methodology.md` codifies the
-  components validated across both cross-stack pairs — per-cell/per-particle
-  position-exact comparison; category-default tolerance; per-sim `tolerance.toml`
-  override pattern (two-taxonomy mapping); per-frame diff witness format; per-sim
-  `equivalence.md` authoring pattern. **Explicitly defers** (NOT codified):
-  R-P2 chaotic-regime escape-hatch details; D8 comparison-projection axis;
-  atomic-scatter handling; lattice-velocity quantization; iterative-solver
-  amplification — none stress-tested across the two algebraically-identical-
-  trajectory pairs. Third cross-stack pair lands the full stress test.
-
-#### Notes
-
-- **S6 banked methodology-precedent:** plan-drafting probes for cross-stack ports
-  MUST read the Phase-1 `sim.py` implementation at HEAD (not just the spec sheet).
-  The Phase-1 sph-water reference trajectory is explicit-Euler rigid free-fall +
-  a discarded per-step SPH-density side-effect — NOT an iterative DFSPH pressure
-  solve; this dissolved R-S1/R-S2/R-S3/R-P2 for the cross-stack pair.
-- **Forward-routable observation:** an LFS rule for `tests/fixtures/legacy-captures/`
-  as legacy-fixture sizes grow — the sph-water schema-corpus `.h5` is the first
-  >3 MB non-LFS legacy entry (61 MB; under the 2 GB hook ceiling). Banked for a
-  downstream focused-infrastructure sub-phase.
-- IC-16 first production consumer ran clean across this sub-phase's gate-5
-  evidence verification (LFS `.h5` OIDs resolved automatically; no §B.6 annotation).
-- `sim_runner_diagnostic` seed-propagating pattern established as the canonical
-  reference for the banked LBM/MPM `sim_runner_diagnostic` remediation (D7).
-
-### sub-phase-lattice-boltzmann-d3q19-stack-d
-
-THIRD per-sim cross-stack port under spec-Phase-2 (after `reaction-diffusion-2d`
-+ `sph-water`). Stack-D Taichi-DSL CPU port of the Phase-1 D3Q19 BGK reference;
-all 14 gates GREEN (gate-14 ×2 for the dual-canonical-capture). FIRST cross-stack
-port with dual-arm gate-4, two seeded runners, two canonical captures, two
-perf-ledger rows, two independent gate-14 verdicts, and the tighter `1e-5`
-cross-stack tolerance. No `-phase-N` tag (spec § 7.12).
-
-#### Added
-
-- `packages/lattice-boltzmann-d3q19-stack-d/` — Stack-D Taichi-DSL D3Q19 BGK port
-  (Qian-1992 equilibrium + Guo-2002 forcing). `reference` (Taichi `feq`/`feq_field`/
-  `bgk_step`/`stream`/f64-seeded moment reductions + NumPy bounce-back), `sim`
-  (`sim_runner_seeded` Poiseuille + `sim_runner_seeded_couette` Couette +
-  `sim_runner_diagnostic`), `invariants` (2 PBT). Gates 4–13 GREEN at Stage 1b.
-- DUAL cross-stack equivalence at gate 14 (Stage 1c): both `within_tolerance=True`
-  at `relative=1e-5` with ~10 orders of margin — Poiseuille (1001 frames) rho/u
-  max_abs `5.77e-15`/`6.16e-15`; Couette (501 frames) rho/u max_abs `3.33e-15`/
-  `1.27e-15`. Step-horizon flat at FP-round-off scale (no amplification).
-- `[overrides.lattice-boltzmann-d3q19] category="lbm"` in `tolerance.toml` (Stage 1c;
-  THIRD per-sim override; at-budget per `[defaults.lbm]=1e-5`; 10× tighter than the
-  prior two ports; NOT a widening).
-- `docs/sim-specs/lattice/lattice-boltzmann-d3q19/{spec-ref-stack-d,equivalence}.md`
-  (spec sheet Stage 1b; equivalence.md additive amendment Stage 1c).
-- Two canonical captures at `captures/lattice-boltzmann-d3q19-stack-d/` + two
-  perf-ledger rows (Stage 1b; taichi-cpu 4.954s / 0.973s).
-- `f64` accumulator-seed pattern empirically validated (Stage 0 banked, Stage 1b
-  applied to in-kernel 19-term collision-moment reductions: bare `0.0`→f32 leaked
-  `3.4e-6`; `ti.f64(0.0)` seed → `7e-15`). First port with genuine in-kernel f64
-  reductions (D9 cross-stack-non-trivial surface).
-
-#### Notes
-
-- **D5 = option (b) PARTIAL HOLDS + REFINEMENT:** `docs/conventions/cross-stack-
-  equivalence-methodology.md` AMENDED ADDITIVELY (Stage 2) with five subsections —
-  collision-step FP-accumulation handling; dual-arm gate-4 verification surface;
-  `1e-5` vs `1e-4` tolerance routing; dual-canonical-capture + two-seeded-runner
-  pattern; near-zero-field-value relative-error harness-artifact. **NOT promoted
-  partial → full**; full IC-15 formalization remains DEFERRED to a pair that
-  exercises the un-stress-tested aspects (#1 R-P2 chaotic / #3 atomic-scatter /
-  #5 iterative-solver amplification). Methodology now validates across three
-  physics families, all at the algebraically-identical-trajectory FP-round-off-scale
-  regime.
-- **N1 schema-corpus deferral RESOLVED (Stage 2):** added a `.gitattributes` LFS
-  rule for `tests/fixtures/legacy-captures/**/*.h5`; both LBM schema-corpus entries
-  added through LFS (Poiseuille ~202 MB exceeds GitHub's 100 MB hard push limit —
-  the prior non-LFS convention could not carry it). This RESOLVES the
-  forward-routable LFS-rule-for-legacy-captures observation banked at
-  `sub-phase-sph-water-stack-d`. The existing non-LFS sph-water (61 MB) + smaller
-  phase-0/2 entries remain as historical committed blobs (not retroactively re-tagged;
-  the rule applies going forward).
-- **`u` `max_rel_err≈2.0` harness-artifact (informational):** near-zero transverse
-  velocity in unidirectional flow; `compare_captures` verdicts on `abs_err > atol +
-  rtol·field_scale`, so `within_tolerance=True` is correct (banked in methodology § 4.5).
-- **First cross-stack port with Taichi-cpu running SLOWER than the NumPy reference**
-  (Poiseuille 1.31×, Couette 1.61× — small-grid per-step kernel-launch overhead;
-  both within the 2× regression band). Banked as a workload-dependent perf ratio.
-
-### sub-phase-mpm-multimaterial-stack-d
-
-FOURTH per-sim cross-stack port under spec-Phase-2 (`mpm-multimaterial` →
-Stack-D Taichi-DSL CPU). All 14 gates GREEN.
-
-- **Stack-D Taichi-DSL MLS-MPM/APIC port** at `packages/mpm-multimaterial-stack-d/`
-  (Stage 1b; gates 4–13 GREEN; new workspace member, 18th). MLS-MPM (Hu 2018) + APIC
-  (4/dx² reconstruction) + neo-Hookean single-material (`material_id` all-0;
-  "multimaterial" is Phase-1 naming-only). P2G `ti.atomic_add` scatter serialised at
-  `cpu_max_num_threads=1` (posture (i)); `ti.f64(0.0)` accumulator seeds throughout.
-- **Perf: 360.773 s = 2.28× the NumPy+numba baseline (158.052 s) — FLAGGED per
-  spec § 2.15** for landing-audit review. First Stack-D port over the 2× band;
-  attributable to posture-(i) serialisation (required for deterministic atomic-scatter
-  — Stage-0 Task 0.3 showed threads=8 is NOT run-to-run bit-exact) + ~3000 kernel
-  launches over 1M particles. Correctness-over-speed; informational at landing review.
-- **Gate-14 cross-stack equivalence GREEN** at `relative=1e-4` (Stage 1c): `within_tolerance=True`;
-  `particle_pos` BIT-EXACT every frame; `particle_vel` monotonic APIC residual
-  `1.18e-30 → 6.25e-28`; `grid_mom` `1.50e-32`. **~24-order margin — the largest of any
-  cross-stack port to date.**
-- **N2 finding:** the canonical drop-impact trajectory is rigid free-fall (`j_det=1.0`;
-  `F=I` → zero neo-Hookean stress → uniform velocity). The atomic-scatter surface
-  (deferred IC-15 aspect #3) is PRESENT in the P2G kernel BUT NOT EXERCISED at the
-  canonical scale (order-independent sums); aspect #3 stays substantively un-stress-tested.
-- **First cross-stack port with hybrid-particle-grid taxonomy** (`sim.category="hybrid-pg"`
-  → tolerance-category `mpm` via `[overrides.mpm-multimaterial]`; FOURTH per-sim override;
-  at-budget per `[defaults.mpm]`=1e-4).
-- **`docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md`** extended additively at
-  Stage 1c (MPM-specific aspects + N2 + S6-pattern context).
-- **IC-15 partial-formalization document AMENDED ADDITIVELY at Stage 2** (D5 routing =
-  option (b) PARTIAL HOLDS + REFINEMENT; § 5, four subsections): atomic-scatter-present-but-
-  not-exercised; hybrid-particle-grid taxonomy; S6 two-instance pattern (methodology
-  consideration); legacy-captures schema-corpus entry size bound (~256 MiB) +
-  representative-subset artifact class. **NOT promoted partial → full** — the methodology
-  now validates across four physics families at the same regime; full formalization stays
-  DEFERRED to a pair that exercises #1 (R-P2 chaotic) / #3 (atomic-scatter substantively) /
-  #5 (iterative-solver amplification).
-- **D10 schema-corpus representative-subset deliverable:** first cross-stack port to
-  introduce the representative-subset artifact class. The canonical capture is ~1.05 GiB
-  (too large for the corpus); landed a **first-2-frames representative subset** (195 MiB,
-  ≤ the ~256 MiB bound) at `tests/fixtures/legacy-captures/phase-2-mpm-multimaterial-stack-d-representative.{h5,json}`
-  via the new `tools/testkit/scripts/extract_capture_subset.py` (deterministic data-only
-  extraction; no sim re-run). LFS-routed; corpus round-trip verified locally + in CI (S-CI1).
-- **S6 pattern is now a TWO-INSTANCE banked observation** (sph-water + MPM): Phase-1
-  canonical trajectories may exercise far less than spec-described dynamics; downstream
-  cross-stack-pair probes HEAD-verify the canonical trajectory's algebraic surface at
-  plan-drafting (S6 banked precedent).
-- **LBM/MPM `sim_runner_diagnostic` banked item DECOMPOSED:** MPM-side CLOSED-AS-NOT-A-DEFECT
-  (plan-drafting S-M4 — MPM threads its seed correctly; only the descriptor filename was
-  cosmetically hardcoded, now interpolated on the clean Stack-D contract); LBM-side stays
-  banked (cosmetic per analytic ICs). No Phase-1-sealed edit.
-
-### sub-phase-eulerian-smoke-stack-e
-
-SEVENTH per-sim cross-stack port under spec-Phase-2 (`eulerian-smoke` →
-Stack-E NVIDIA-Warp 1.13.0 CPU); the SECOND Stack-E port (after
-`mpm-multimaterial-stack-e`) and the SECOND `eulerian-smoke` port (after the
-Stack-D Taichi port). Spec § 11.3 item 2.4 (the Stack-E half). All 14 gates
-landed; gate-14 is **cross-stack BIT-EXACT**.
-
-- **Stack-E Warp Stam-Fedkiw stable-fluids port** at
-  `packages/eulerian-smoke-stack-e/` (Stage 1b; gates 4–13 GREEN; 22nd workspace
-  member). Socket-only common-warp consumption (Runtime + Capture + Determinism)
-  over its own f64 `wp.array`s — the dense-grid f32 `ScalarField3D` /
-  `VectorField3D` surfaces structurally fit but are f64-blocked (D15;
-  `docs/common/warp.md` § 6.2). § L.7 O-2 four-checkpoint Warp-CPU determinism
-  chain complete.
-- **Gate-14 cross-stack BIT-EXACT** (Stage 1c-revisited): `within_tolerance=True`,
-  `max_abs_err = 0.0` on BOTH canonicals — the Warp port is **byte-identical** to
-  the sealed Phase-1 NumPy reference across the full horizon, INCLUDING through the
-  3D Taylor-Green blow-up (reference AND port both reach `|u| ≈ 5.1e19` at step 500,
-  bit-for-bit). The FIRST portfolio instance of bit-exactness through a chaotic
-  (positive-Lyapunov) horizon; logically a consequence of the step-1 cross-stack
-  BIT-EXACT baseline. Tolerance REUSES `[overrides.eulerian-smoke]` (smoke/1e-4; D6,
-  no new row).
-- **R-P2 is NOT stack-portable — counter-evidence to smoke-Stack-D.** The same
-  chaotic canonicals produced Stack-D's `within_tolerance=False` R-P2 chaotic-regime
-  verdict but Stack-E's `within_tolerance=True` bit-exact verdict. The plan-drafting
-  prediction (R-P2 stack-portable Taichi → Warp) was empirically FALSIFIED at
-  Stage 1c (Hard Rule 2 STOP) and the charter §§ 1/3/5 amended mid-sub-phase to the
-  cross-stack BIT-EXACT verdict shape (Stage 1c-revisited). Stack-D's divergence was
-  a Taichi-FP-specific step-1 round-off; Warp's same-operation-order arithmetic
-  yields a `0.0` step-1 difference, so chaos has nothing to amplify.
-- **Methodology + conventions refinements (Stage 2):**
-  `cross-stack-equivalence-methodology.md` § 6.1 + new § 6.7 (R-P2 requires a
-  non-zero cross-stack seed-difference AND a chaotic regime — chaos amplifies, it
-  does not manufacture, a seed-difference); `sub-phase-conventions.md` § L.7 O-1
-  shape-(a) refinement (the bit-exact condition is a zero seed-difference, not an
-  "algebraically-tame trajectory"; D-S2-1) + new § L.8 (O-W7 narrowing, R-SME9
-  resolution-dependent false-laminar trap, the charter-amendment-landing precedent,
-  the `uv sync` `.venv`-prune hazard).
-- **`docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md`** extended
-  additively with a Stack-E § E **bit-exactness witness** (Stage 1c-revisited; the
-  Stack-D chaotic-regime witness §§ 1–7 unchanged).
-- **Schema-corpus representative-subset:** the 2D 4.4 MB capture at
-  `tests/fixtures/legacy-captures/phase-2-eulerian-smoke-stack-e.{h5,json}`
-  (LFS-routed; corpus round-trip verified). The 3D 738 MB capture is held local
-  (D14). No `-phase-N` tag (D12); local-only (D13).
-- **D17 banked (operator routing):** the committed 2D lid-driven-cavity reference is
-  laminar-bounded (`max|u| ≈ 2.08`), NOT the plan-drafting `~1.64e3` Kelvin-Helmholtz
-  blow-up — a candidate Phase-1-canonical re-characterization trigger (empirical
-  second instance, after smoke-Stack-D's finding). The 3D blow-up is confirmed. This
-  sub-phase surfaces, but does NOT adjudicate, the Phase-1 provenance question.
-
-### sub-phase-lattice-boltzmann-d3q19-stack-e
-
-EIGHTH per-sim cross-stack port under spec-Phase-2 (`lattice-boltzmann-d3q19` →
-Stack-E NVIDIA-Warp 1.13.0 CPU); the THIRD Stack-E port (after
-`mpm-multimaterial-stack-e` + `eulerian-smoke-stack-e`) and the SECOND
-`lattice-boltzmann-d3q19` port (after the Stack-D Taichi port). Spec § 11.3 item 2.5
-(the Stack-E half; the Stack-D half landed at `lattice-boltzmann-d3q19-stack-d`).
-All 14 gates landed; gate-14 is **cross-stack BIT-EXACT** — the expected,
-plan-drafting-MEASURED verdict (no surprise in either direction).
-
-- **Stack-E Warp D3Q19 BGK port** at `packages/lattice-boltzmann-d3q19-stack-e/`
-  (Stage 1b; gates 4–13 GREEN incl. the **dual-arm gate-4** — 4a D3Q19 equilibrium
-  golden `abs=1e-15` + 4b NS-2D MMS; 23rd workspace member). Socket-only common-warp
-  consumption (Runtime + Capture + Determinism) over its own
-  `wp.array(dtype=wp.float64, ndim=4)` 19-component distribution — the single-component
-  f32 `ScalarField3D` does not structurally fit a 19-component lattice AND f64 blocks
-  the f32 surface (D15/D7; `docs/common/warp.md` § 6.3). The THIRD f64 socket-only
-  consumer and the FIRST with genuine **in-kernel reductions** (the per-cell 19-term
-  BGK moment sums). § L.7 O-2 four-checkpoint Warp-CPU determinism chain complete
-  (4/4; every checkpoint a zero-seed-difference / bit-exact result).
-- **Gate-14 cross-stack BIT-EXACT** (Stage 1c): `within_tolerance=True`,
-  `max_abs_err = 0.0` on BOTH canonicals (Poiseuille 1001 frames + Couette 501 frames)
-  at the resolved `lbm`/`1e-5` (the portfolio-tightest category, ~10 orders of margin).
-  The **THIRD shape-(a) instance and the FIRST on a LAMINAR trajectory** — together
-  with `eulerian-smoke-stack-e` (the second instance, on a CHAOTIC horizon) it
-  empirically **completes the D-S2-1 decoupling**: shape (a) is a zero cross-stack
-  seed-difference property, orthogonal to the Lyapunov regime. Tolerance REUSES
-  `[overrides.lattice-boltzmann-d3q19]` (`lbm`/`1e-5`; D6, no new row — the THIRD port
-  to skip the Stage-1c override add).
-- **§ 6.7 within-sim cross-backend corroboration.** Same sim, same laminar canonicals,
-  same sealed NumPy reference: Stack-D **Taichi** is shape **(b)** (`~6e-15`,
-  division-form feq + summation order) while Stack-E **Warp** is shape **(a)** (`0.0`,
-  reciprocal-operand-form feq + `wp.float64(0.0)` seeds). Varying ONLY the backend
-  flips the seed-difference from `~6e-15` to `0.0` — the sharpest demonstration that
-  the cross-stack seed-difference is a **backend-pair arithmetic property**, not the
-  sim's or the trajectory's.
-- **Methodology + conventions refinements (Stage 2):**
-  `cross-stack-equivalence-methodology.md` § 4.1 second-instance amendment
-  (collision-step FP-accumulation is determinism-safe AND bit-faithful on Warp CPU
-  f64; deferred aspect #4's FIRST Warp measurement) + § 6.7 within-sim corroboration +
-  **new § 6.8** (the Warp-CPU-f64 ↔ NumPy zero-seed-difference backend-pair
-  observation, **`n=2`** — suggestive, NOT established; surfaced not asserted, with a
-  portfolio-track-future-ports qualifier; routed to the methodology doc over
-  `sub-phase-conventions.md` § L.7 "O-3" per D-S2-1); `sub-phase-conventions.md`
-  § L.7 O-1 shape-(a) **third-instance / first-laminar** note; `docs/common/warp.md`
-  § 6 LBM-row dtype `f32 → f64` (D15) + new § 6.3 (the f64-principle's third instance,
-  first with in-kernel reductions).
-- **Schema-corpus representative-subset:** the Couette 27 MB capture (the smaller
-  canonical) at
-  `tests/fixtures/legacy-captures/phase-2-lattice-boltzmann-d3q19-stack-e-couette.{h5,json}`
-  (LFS-routed; corpus round-trip verified). BOTH canonicals are LFS-committable
-  (≤ 256 MiB) — NO held-local (D14). No `-phase-N` tag (D12); local-only (D13).
-- **Phase-2 cross-stack status:** completes the Stack-E ports of spec § 11.3
-  items 2.3–2.5 (MPM + smoke + LBM → Stack-E all landed). The remaining enumerated
-  spec § 11.3 cross-stack port is `reaction-diffusion-2d` → Stack-C (charter § 8;
-  a different `common-cpp` infrastructure arc). Banked LFS-architecture +
-  comprehensive-cleanup sub-phases remain queued for after Phase-2 completion.
-
-### sub-phase-lfs-architecture
-
-Phase-2-tail infrastructure sub-phase. Migrates the portfolio's large
-capture/audit-evidence LFS content (4.852 GiB across 26 unique objects) off
-GitHub LFS — whose **bandwidth** free tier (10 GB/month) was fully consumed and
-throttled — onto **Cloudflare R2** (zero-egress, 10 GiB free storage) via the
-`lfs-s3` custom-transfer agent, **without rewriting any git history**. Every LFS
-pointer stub stays byte-identical; only the resolver/backend config changes. All
-seven named invariants (I1–I7) and the bit-identity replay (`9399fc33…`) and
-integrity baseline (`c19492ad…`) held throughout. No `-phase-N` tag; an optional
-non-phase point-release `v0.2.1-sub-phase-lfs-architecture` is a banked operator
-decision (`docs/conventions/sub-phase-conventions.md` § D.2).
-
-**What changed for contributors:**
-
-- **CI handles R2 automatically, per-job.** The two capture-heavy workflows
-  (`python-strict`, `cpp-strict`) no longer fetch all LFS content on every run.
-  `python-strict` pulls only `tests/fixtures/legacy-captures/**`; `cpp-strict`
-  pulls only `captures/reaction-diffusion-2d-ref/**` (its gate-14 reference
-  capture) — the dominant per-run LFS term drops ~20×. The R2-routed workflows
-  install `lfs-s3` and opt in via per-job `git config` (`tools/lfs/setup-lfs-s3.sh`),
-  using the repo's `R2_*` Actions secrets.
-- **Local dev is unaffected by default.** A fresh clone with no R2 credentials
-  resolves LFS via GitHub LFS exactly as before (the steady-state fallback). To
-  route local LFS through R2 (faster, zero-egress), follow the one-command
-  bootstrap in `tools/lfs/README.md` to register `lfs-s3` in your **trusted**
-  `.git/config` (git-lfs ignores these keys from a committed `.lfsconfig` by
-  design, so R2 activation is always explicit opt-in).
-- **Steady-state architecture:** R2 is primary for opted-in consumers (CI + any
-  developer who bootstraps it); GitHub LFS remains the fallback for default
-  consumers. Both backends hold every object; decommissioning GitHub LFS
-  (R2-only) is deferred indefinitely to a future operator decision.
-
-#### Added
-
-- `tools/lfs/setup-lfs-s3.sh` — per-job `lfs-s3` installer + trusted-config
-  registrar (credentials from env, never committed).
-- `tools/lfs/r2-bulk-upload.sh` — deterministic bulk upload of the HEAD +
-  phase-tag OID union (26 objects) to R2, with per-object sha256 round-trip
-  verification.
-- `tools/lfs/README.md` — R2 opt-in bootstrap + local-dev runbook.
-- `.github/workflows/r2-roundtrip-proof.yml` — M2 single-object R2 round-trip
-  proof (content-OID preserved).
-- `.github/workflows/r2-sweep-proof.yml` — M4 sweep: verifies every LFS pointer
-  at HEAD + each phase tag resolves from R2 by sha256 (62/62 PASS).
-- `tools/testkit/lfs_migration/` — invariant-verification lock surface for
-  I1–I7 + cost-axis registry + per-job R2-config (16 tests).
-- `docs/planning/bit-physics-master-catalog.md` (+ `docs/planning/README.md`) —
-  vendored CI-tier / capacity planning catalog.
-- Sub-phase audit chain under `docs/_audits/phase-2/sub-phase-lfs-architecture/`
-  (plan-drafting → Stage 0 → 1a → 1b → 1c → 2 landing).
-
-#### Changed
-
-- `.github/workflows/python-strict.yml`, `.github/workflows/cpp-strict.yml` —
-  `lfs: true` → `lfs: false` + targeted `git lfs pull --include=` (selective
-  fetch).
-- `.github/workflows/mutation-testing.yml` — re-tiered to weekly T4 (cron +
-  dispatch + path-filtered push) per catalog § 41.4 (sibling chain); de-listed
-  from required-must-run in `docs/ops/branch-protection.md`; `docs/architecture.md`
-  § 2.13 CI-policy amended accordingly.
-
-### sub-phase-phase-2-cleanup
-
-Phase-2-tail basket-hygiene sub-phase, landing after `sub-phase-lfs-architecture`.
-Pays down the hygiene debt consolidated at Phase-2 close — citation/path drift,
-convention amendments, doc-truth divergences, deferred small follow-ups — across
-seven thematic clusters (A–G) before Phase 3 dispatches. Of **53 enumerated items**
-(41 from the Phase-2 landing § 13 inventory + 8 operator-known-pre-queued + 4
-probe-discovered), the cleanup-shaped ones were resolved in place and **11 items
-were routed forward as candidate sibling sub-phases / operator-decision dispatches /
-Phase-3 consumptions** (the full forward-routing catalog is in the sub-phase landing
-audit). No simulation source changed; all seven invariants (I1–I7), the bit-identity
-replay (`9399fc33…`), and the integrity baseline (`c19492ad…`) held byte-for-byte
-throughout. No `-phase-N` tag and — per the § D.2 default this sub-phase itself
-authored — **no point-release tag** (cleanup is steady-state hygiene, meeting none
-of the three intermediate-tag conditions).
-
-**What changed for contributors:**
-
-- **Intermediate-tag policy is now explicit** (`docs/conventions/sub-phase-conventions.md`
-  § D.2): the default is **NO tag** for a sub-phase, except when it (a) adds an external
-  dependency, (b) marks durable architecture worth git-archaeology, or (c) the operator
-  judges historical significance — precedent `v0.2.1-sub-phase-lfs-architecture`.
-- **Per-package code ownership scaffolding** (`.github/CODEOWNERS`, new): 19 sim packages
-  + 4 common + tooling, with an operator owner and agent-id sentinel comments. **Latent**
-  (not enforced — the repo has no live branch protection); it benefits the project at
-  multi-agent maturity.
-- **README test invocations standardized** to `uv run pytest …` across all 11 packages.
-- **GitHub Actions pinned to immutable commit SHAs** (`checkout`, `setup-node`,
-  `pnpm/action-setup`) with the mutable-tag-vs-immutable-SHA distinction documented in
-  `docs/dependencies.md`.
-- **CHANGELOG structure fix:** seven misfiled Phase-2 sub-phase sections that had been
-  recorded under the `[0.1.0-phase-1]` header were relocated (byte-exact) to
-  `[Unreleased]`, where they belong.
-- **Conventions / methodology reconciled:** the § M cumulative-shift inventory and
-  several stale § L / methodology § 6 section titles were brought current; the
-  integrity baseline-digest derivation and coordinator-drift patterns were formalized
-  in a new § L.10; verdict-states were mapped to Nygard ADR states as a § L.11
-  intention-note (no ADR directory yet); and the matched-pair cross-stack gate ↔
-  differential-testing relationship was cross-referenced (§ L.11 + catalog § 50.1)
-  without renaming anything.
-- **The I7 no-agent-pushed-tags guard test was rewritten** to encode the actual
-  invariant — it now forbids *agent-pushed* tags via a declarative
-  operator-sanctioned-tags allowlist, rather than forbidding *all* tags pointing into
-  a sub-phase range (which had wrongly flagged the operator's legitimate
-  `v0.2.1-sub-phase-lfs-architecture`).
-- **Branch-protection doc amended to live state** (`docs/ops/branch-protection.md`):
-  the documented rules are DESIGNED-but-unenforced (the live API returns 404 "not
-  protected"); implementing them is forward-routed for if/when the contributor model
-  grows beyond solo+agent.
-
-### sub-phase-ci-action-migration-and-banked-cleanup
-
-Focused-infrastructure sub-phase whose PRIMARY, time-pressured driver is
-**S-CI2** — the GitHub Actions Node-20 runtime deprecation (Node-24 default
-2026-06-16; Node-20 removal "later in fall 2026"). Bumps every workflow action
-pinned to a Node-20 major to its latest Node-24 major, preserving four
-load-bearing `with:` blocks byte-for-byte, and bundles the banked
-testing-improvements subset (pytest-timeout + a representative manifest-equality
-test) per the focused-infra `sub-phase-audit-chain-correctness` shape. NOT a
-per-sim port; NOT cross-stack. No `-phase-N` tag (spec § 7.12); PUSH IS OPERATOR
-ACTION (remote-CI validation of the bumped majors happens at the operator push).
-
-#### Added / Changed
-
-- **S-CI2 workflow Node-runtime migration (Stage 1a).** Across all 9
-  `.github/workflows/*.yml` (17 `uses:` version-string changes only):
-  `actions/checkout@v4`→`@v6` (×9), `astral-sh/setup-uv@v6`→`@v8` (×6),
-  `actions/setup-node@v4`→`@v6` (×1, `ts-strict.yml`),
-  `pnpm/action-setup@v4`→`@v6` (×1, `ts-strict.yml`). Target majors web-fetched
-  fresh at edit time (D3). The four D4 `with:` blocks preserved byte-for-byte
-  (R-CI CLEARED): `lfs: true` (`python-strict.yml`, the S-CI1 legacy-captures
-  smudge), `fetch-depth: 0` (`audit-append-only.yml`, prior-tag read),
-  `setup-node` inputs + pnpm `version: 10` (`ts-strict.yml`).
-- **pytest-timeout (Stage 1b, § J.3, D12 shape (b)).** `pytest-timeout>=2.0`
-  added to `tools/testkit/pyproject.toml` dev extras + a default per-test ceiling
-  in `[tool.pytest.ini_options]`. Lands the § J.3 requirement (numba PATH-A
-  mutation targets); per-target mutmut runners may tighten it. MPM `mls_mpm.py`
-  mutation completion remains banked.
-- **LBM manifest-equality test (Stage 1b, § J.7, D11, strategy (i)).** New
-  `packages/lattice-boltzmann-d3q19/tests/test_manifest_equality.py` — invokes
-  the existing `sim_runner_diagnostic` and asserts the full emitted `.json`
-  manifest against expected literals (volatile `run.wall_clock_seconds` +
-  `payload.checksum` excluded per spec § 2.5 / § F.3) + run-to-run stability.
-  ZERO sealed-source edits; no public `build_manifest()` (strategy (ii) banked).
-  Representative-single-sim (the representative-subset artifact class).
-- **Conventions § J amended additively** (`docs/conventions/sub-phase-conventions.md`):
-  § J.3 records pytest-timeout LANDED; § J.7 records the manifest-equality test
-  REALIZED via strategy (i) (banked methodology-precedent #14). Existing prose
-  unchanged.
-
-#### Verification
-
-- **Python 18-root sweep:** ZERO code regressions (418 passed + 3 skipped,
-  full-collection mode; LBM 10→12 is the only intended delta). The 4 Stack-D
-  ports errored on a COLD taichi `.pyc` (latent pre-existing
-  taichi-`SyntaxWarning` filterwarnings gap, exposed by the Stage-1b `uv sync`;
-  proven not a code regression — warming the `.pyc` → all pass; banked as a
-  recommended Stack-D-filterwarnings follow-up).
-- **TypeScript sweep:** 20 passed + 2 skipped (baseline-match).
-- **Integrity sweep:** `0 HARD_FAIL, 14 SOFT_WARN`; sweep-output sha256
-  `c19492ad…cb52` byte-identical to the MPM Stack-D close baseline (streak HELD
-  across the migration + § J amendment + new test).
-- **Bit-identity replay invariant:** `9399fc33…18909f34` HELD (27th+ invocation).
-- **Append-only:** PASS (no Phase-0/Phase-1 or prior-sub-phase audit edited).
-- **verify_evidence:** full 9-audit chain GREEN.
-
-#### Banked methodology-precedent
-
-- **#14 — strategy-(i) manifest-equality pattern.** The literal
-  `<sim>.sim.build_manifest()` call site does not exist at HEAD; invoke the
-  existing `sim_runner_*` (or its diagnostic-tier variant), load the emitted
-  `.json` manifest sidecar, shape-check-then-exclude the volatile wall-clock +
-  checksum fields, and assert the remainder equals expected literals (numeric
-  params from module constants). Realizes § J.7's intent without a sealed-source
-  refactor. Reusable for any future per-sim manifest-equality fan-out.
-
-### sub-phase-ci-action-hotfix-setup-uv-v8-pin
-
-Single-stage focused-infrastructure **hotfix** for the post-push CI failure of
-`sub-phase-ci-action-migration-and-banked-cleanup`: 6 of 9 workflows went red,
-all using `astral-sh/setup-uv@v8`. Per the setup-uv v8.0.0 release notes, the
-maintainer **discontinued publishing moving major/minor tags** at v8 as
-supply-chain hardening (*"we will stop publishing minor tags. You won't be able
-to use `@v8` or `@v8.0` any longer"*) — so `@v8` does not resolve. No `-phase-N`
-tag; PUSH IS OPERATOR ACTION.
-
-#### Changed
-
-- **Pinned `astral-sh/setup-uv@v8` → `@v8.1.0`** (immutable specific-version tag;
-  current latest v8.x, re-fetched at edit time) across the 6 setup-uv workflows
-  (`python-strict.yml`, `determinism.yml`, `equivalence.yml`, `integrity.yml`,
-  `mutation-testing.yml`, `tolerance-budget-check.yml`). 6 single-line `uses:`
-  changes; every other line byte-for-byte preserved. The other 3 bumped actions
-  (`actions/checkout@v6`, `actions/setup-node@v6`, `pnpm/action-setup@v6`) still
-  publish moving tags and are left as-is (out of scope).
-
-#### Verification
-
-- pyyaml 9/9 valid; integrity sweep `c19492ad…cb52` byte-identical (streak HELD);
-  bit-identity replay `9399fc33…18909f34` HELD (28th+ invocation). No
-  cross-package regression sweep warranted (workflow-YAML-only; zero Python/TS
-  surface touched).
-
-#### Banked observation
-
-- **Action-version web-fetch must distinguish (a) latest released version from
-  (b) usable pinning forms.** Release notes may document deviation from the
-  default "pin to major" assumption (setup-uv v8.0.0: moving tags discontinued).
-  Future workflow-action probes / D3 re-fetch must read the release notes for the
-  specific major targeted, not merely confirm the version exists.
-
-### sub-phase-eulerian-smoke-stack-d
-
-FIFTH per-sim cross-stack port under spec-Phase-2: `eulerian-smoke` →
-Stack-D (Taichi-DSL / CPU); spec § 11.3 item 2.4 first half (the Stack-E
-Warp half deferred). **The FIRST of the five cross-stack pairs to exercise
-IC-15 aspect #1 (R-P2 chaotic regime) substantively** — both Phase-1 canonical
-trajectories are numerically unstable (positive Lyapunov; 2D Kelvin-Helmholtz
-shear, 3D Taylor-Green blow-up to ~5e19). Gates 4-13 GREEN; gate-14
-`within_tolerance=False` on both canonicals with the **chaotic-regime
-escape-hatch invoked correctly** (Option-2 operator routing): cross-stack
-content-equivalence is physically impossible for chaotic trajectories, so the
-failing verdict is the CORRECT verdict, and the methodology gains its first
-formalized chaotic-regime component. A methodology-strengthening sub-phase. The
-port is faithful (matches the sealed NumPy reference to ~1e-16 while stable; the
-instability is in the Phase-1 reference, verified independently). Cross-stack
-testing surfaced a latent Phase-1 instability that within-stack determinism +
-finite-NaN/Inf gates could not see. No `-phase-N` tag (spec § 7.12); local
-landing only — remote-CI re-validation banked behind the LFS-architecture
-sub-phase (D13).
-
-#### Added
-
-- `packages/eulerian-smoke-stack-d/` — 19th workspace member. Taichi-DSL CPU
-  Stam-Fedkiw stable-fluids port: `reference/stable_fluids_taichi.py`
-  (`@ti.kernel` per-cell SL-advect / Laplacian / divergence / Jacobi-sweep /
-  gradient / curl primitives + NumPy wrappers mirroring the Phase-1 reference;
-  CANONICAL_* re-derived verbatim), `sim.py` (`sim_runner_seeded` 3D,
-  `sim_runner_seeded_2d` 2D, `sim_runner_diagnostic`,
-  `compute_canonical_trajectory_3d`), `invariants.py` (2 PBT @ 50 examples).
-  Collocated cell-centered periodic; plain trilinear SL (3D) + MacCormack (2D);
-  fixed-`n_jacobi=20` Jacobi; vorticity confinement `eps=0` PRESENT-but-NOT-
-  EXERCISED. Gate-4 MMS-only (advection OOA 1.9892 / projection 1.9976).
-- `tools/testkit/equivalence/tolerance.toml` `[overrides.eulerian-smoke]
-  category="smoke"` — 5th per-sim override (additive; resolves
-  `volumetric-grid`→`smoke`@1e-4).
-- `docs/sim-specs/volumetric-grid/eulerian-smoke/equivalence.md` — extended to
-  the **chaotic-regime witness** (the template future chaotic-regime pairs
-  inherit): divergence-rate witness, Lyapunov estimates, step-1 port-faithfulness
-  baseline, gates-4-13-GREEN evidence.
-- `docs/conventions/cross-stack-equivalence-methodology.md` § 6 — **IC-15 § 2
-  item 1 (R-P2 chaotic-regime escape-hatch) promoted deferred → FORMALIZED**
-  (smoke the data-backed first instance); References renumbered → § 7. Methodology
-  remains PARTIAL (#2/#3/#5 deferred).
-- `docs/conventions/sub-phase-conventions.md` § L.4 — three banked
-  methodology-precedents: S6-trajectory-simulation discipline; cross-stack-as-
-  defect-amplifier; banked precedent #7 (f64-seed) extends to pure-literal kernel
-  constants (3D Jacobi `1.0/6.0` → `ti.f64(1.0)/ti.f64(6.0)`).
-- `docs/perf-ledger.md` — two rows (2D 8.470s / 3D 698.986s; both within 2× band).
-- Sub-phase audit chain under
-  `docs/_audits/phase-2/sub-phase-eulerian-smoke-stack-d/` (plan-drafting 4 +
-  Stage 0 3 + Stage 1 5 + Stage 2 6 = 18 commits).
-
-#### Verification
-
-Gates 4-13 GREEN (MMS OOA 1.9892/1.9976; Tier-1/Tier-2; citations; API; captures;
-`run_twice_and_diff` content-equivalent; 2 PBT @ 50; perf; failing-tests replay).
-Gate-14 `within_tolerance=False` (chaotic-regime escape-hatch — correct verdict).
-Cross-package regression sweep: 19 members + testkit (58) + diagnostics (22), ZERO
-regressions. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak HELD, 8th
-sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (32nd+). Append-only PASS;
-`verify_evidence` full chain PASS. Cumulative shifts 159 → 165 (Stage 1: 4; Stage 2: 2).
-
-#### Banked
-
-- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint/check-yaml/
-  supply-chain-pin for the other 3 actions; LFS-architecture sub-phase (D13);
-  manifest-equality smoke-specific test (D7).
-- NEW banked observation: **Phase-1-canonical re-characterization question** —
-  whether future Phase-1 canonicals should "exhibit stable physics" vs "exercise
-  numerics including unstable cases" (raised by smoke's chaotic finding; banked
-  for operator routing, Option-2).
-- NEW banked methodology-precedents: S6-trajectory-simulation; cross-stack-as-
-  defect-amplifier; banked-#7-pure-literal-constants (conventions § L.4).
-
-### sub-phase-common-warp-bootstrap
-
-Focused-infrastructure sub-phase (not a per-sim cross-stack port): establishes
-`common/common-warp/` as the **20th workspace member** and the **Stack-E
-(Python / NVIDIA Warp 1.13.0)** workspace surface — the phase-2 plan §1.9.1
-seven-subsystem minimal API. Enables the 3 forthcoming Stack-E port sub-phases
-(MPM, Smoke, LBM). All six W-Gates GREEN. The module is "shipped, then wired"
-(consumed at landing only by its own tests + `examples/hello/`; the Stack-E
-ports import it). No `-phase-N` tag (spec § 7.12); local landing only —
-remote-CI re-validation banked behind the LFS-architecture sub-phase (D13).
-
-#### Added
-
-- `common/common-warp/` — 20th workspace member (`bit-physics-common-warp`;
-  import package `common_warp`; `warp-lang>=1.13,<2.0`). The §1.9.1 seven
-  subsystems: **Runtime** (`runtime.py` — `init(device, deterministic)` /
-  `get_device` / `set_device`; CPU-default per D4/R-W3), **Determinism**
-  (`warp_harness/` — `set_seed` / `get_seed` / `assert_deterministic_run` /
-  `deterministic_context` / `set_warp_deterministic`; W-2), **Capture I/O**
-  (`capture/` — `Capture` / `write_capture` / `read_capture` delegating to the
-  testkit capture format; W-1), **Particles** (`particles/`), **Grids**
-  (`grids/` — `ScalarField3D` / `VectorField3D` + allocators), **HashGrid**
-  (`hashgrid/` — native `wp.HashGrid` + kernel `query_radius`).
-- `common/common-warp/examples/hello/` — **Subsystem 7** smoke sim (W-3): 2D
-  advection-diffusion 64×64, explicit FTCS diffusion + first-order upwind
-  advection, double-buffered per-cell gather (no atomics, no RNG). Bounded +
-  monotonically-decaying trajectory reproduces the Stage-0 design-time
-  prediction (max-field 1.0 → 0.218683 over 400 steps, zero increases, mass
-  conserved). Exercises Runtime/Determinism/Capture/Grids directly; Particles +
-  HashGrid via smoke-field tracer-particle unit tests.
-- `docs/common/warp.md` — W-4 project-wide Stack-E Warp convention + the
-  common-warp public API reference (8-section, mirrors `docs/common/taichi.md`).
-- `docs/dependencies.md` — `warp-lang` entry; root `pyproject.toml` — 20th
-  workspace member.
-- `warp_harness/` §1.9.1 socket — the Runtime + Determinism signatures
-  reconciled to §1.9.1 verbatim (S1b-3 Option-B refactor): `init(device,
-  deterministic)`, no-arg `deterministic_context()`,
-  `assert_deterministic_run(sim_fn, *, runs=2, tolerance=0.0)`. The W-2 baseline
-  `24d44c7e…0746f314` reproduces under the refactored signature (load-bearing).
-- `docs/conventions/sub-phase-conventions.md` § L.5 — three new
-  methodology-precedents: **S1a-2** GPU device-string discipline; **S1b-3**
-  socket-reconciliation Option B; **S1c-1** plan-prose-gloss vs spec-verbatim.
-- Sub-phase audit chain under
-  `docs/_audits/phase-2/sub-phase-common-warp-bootstrap/` (plan-drafting 4 +
-  Stage 0 2 + Stage 1a 4 + Stage 1b 4 + Stage 1c 6 + Stage 2 3 = 23 commits).
-
-#### Verification
-
-All six W-Gates GREEN: W-1 Capture (1b mechanism / 1c full, real capture); W-2
-Determinism (1a mechanism / 1c full, `assert_deterministic_run` +
-`run_twice_and_diff` on the smoke sim; baseline `24d44c7e…0746f314`); W-3 smoke
-sim; W-4 docs; W-5 equivalence-compat (`compare_captures` run-twice-and-diff,
-`within_tolerance=True`, no HARD_FAIL); W-6 integrity. Cross-package regression
-sweep (20 workspace roots, cold `.pyc`): ZERO REGRESSIONS (common-warp 38;
-common-py 25; 5 Stack-D ports + 10 Phase-1 sims + 3 tools unchanged). TS sweep:
-20 passed + 2 skipped. Integrity sweep `c19492ad…d22cb52` baseline-MATCH (streak
-HELD, 9th sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (40th).
-Append-only PASS; `verify_evidence --strict` full chain (12 audits) PASS.
-Cumulative shifts 165 → 176 (plan-drafting 3; Stage 0 1; Stage 1a 2; Stage 1b 3;
-Stage 1c 1; Stage 2 1).
-
-#### Banked
-
-- STAYED-BANKED: LBM `sim_runner_diagnostic` cosmetic; actionlint installation /
-  check-yaml hook `.github/workflows/` coverage / supply-chain-pin for the other
-  3 actions; LFS-architecture sub-phase (D13); manifest-equality smoke test (D7);
-  Phase-1-canonical re-characterization; **mypy --strict warp partial-stub
-  errors** (banked at Stage 1c; future tooling-improvement).
-- CLOSED: common-warp bootstrap (all 6 W-Gates GREEN); S1b-3 socket
-  reconciliation (Option B refactor landed; §1.9.1 verbatim signatures shipped);
-  Subsystem-7 design-time prediction verified empirically.
-- NEW banked observation: the next 3 Stack-E ports (MPM, Smoke, LBM) inherit the
-  common-warp surface + the S6-trajectory-simulation discipline at plan-drafting.
-- NEW banked methodology-precedents: S1a-2 GPU device-string discipline; S1b-3
-  socket-reconciliation Option B; S1c-1 plan-prose-gloss vs spec-verbatim
-  (conventions § L.5).
-
-### sub-phase-mpm-multimaterial-stack-e
-
-SIXTH per-sim cross-stack port; FIRST Stack-E (NVIDIA Warp 1.13.0) port to
-*consume* the `common-warp` § 1.9.1 socket (the bootstrap landed the socket
-itself). Spec § 11.3 item 2.3 mandate. All 14 gates GREEN; **gate-14 BIT-EXACT**
-(`within_tolerance=True`; `max_abs_err = max_rel_err = 0.0` across 4 fields × 11
-frames) — the FIRST bit-exact cross-stack verdict across the six-port portfolio
-(contrast the Stack-D Taichi ports' `~1e-28` FP-round-off and `eulerian-smoke`
-Stack-D's chaotic-regime `within_tolerance=False`). No `-phase-N` tag (D12);
-local-only (D13; remote-CI deferred).
-
-#### Added
-
-- `packages/mpm-multimaterial-stack-e/` — 21st workspace member; the Warp
-  MLS-MPM/APIC neo-Hookean single-material port. Socket-only `common-warp`
-  consumption (Runtime + Capture + Determinism) with its own
-  `wp.array(dtype=wp.float64)` sim-state (D15; the convenience surfaces are
-  f32-pinned); fixed 27-cell B-spline stencil (no `HashGrid`).
-- `captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.{h5,json}`
-  — canonical capture (~1.05 GiB; LFS; `.h5` oid `dfc4d699…4554d0a9`); 2/2
-  canonical-scale determinism; mass-conservation partition-of-unity exact
-  (`4.44e-16`) at 1M particles / 128³.
-- `docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-ref-stack-e.md` — Stack-E
-  spec sheet (gate-7 Cat-1 surface).
-- `docs/sim-specs/hybrid-pg/mpm-multimaterial/equivalence.md` — ADDITIVE Stack-E
-  section (bit-exact per-field witness; Stack-D Taichi section preserved).
-- `docs/perf-ledger.md` — canonical Warp-CPU row (`304.492 s`; 1.93×-numba,
-  within the 2× band).
-- conventions § L.6 — O-W7 extension (`wp.float64()` taint workaround) [Stage 1b].
-- `docs/common/warp.md` § 6.1 — D16 correction: MPM socket-only consumption
-  pattern (general principle for f64 vs f32 Stack-E ports).
-- `cross-stack-equivalence-methodology.md` § 5.1 — third-instance (D8): the
-  atomic-scatter PRESENT-but-NOT-EXERCISED pattern is stack-portable
-  (Taichi → Warp); graduated to an established portfolio pattern.
-- conventions § L.7 — two banked observations: O-1 cross-stack verdict taxonomy
-  (bit-exact / FP-round-off / chaotic-regime escape-hatch); O-2 Warp CPU
-  determinism four-checkpoint chain.
-
-#### Audit chain
-
-- 23 commits across plan-drafting (4) + Stage 0 (2) + Stage 1a (4) + Stage 1b (5)
-  + Stage 1c (3) + Stage 2 (5), under
-  `docs/_audits/phase-2/sub-phase-mpm-multimaterial-stack-e/`.
-
-#### Verification
-
-- 14 gates GREEN (gate-14 BIT-EXACT). 21-root regression sweep ZERO REGRESSIONS
-  (490 passed + 1 skipped; after a Stage-2 `.venv` dev-dep restoration — the
-  workspace lost `scipy`/`mutmut`/`pytest-timeout` since the prior landing,
-  restored via `uv sync --all-packages --all-extras`). TS sweep 20 passed + 2
-  skipped. Integrity `c19492ad…d22cb52` baseline-MATCH (10th contiguous
-  sub-phase). Bit-identity replay `9399fc33…718909f34` HELD (47th). Append-only
-  PASS. verify_evidence full chain (12 .md audits) PASS.
-
-#### Banked
-
-- STAYED: LFS-architecture (D13); multi-material MPM extension (single-material
-  scope per S1a-ME2); the standing tooling/CI items.
-- CLOSED: MPM → Stack-E port; D7 RATIFIED REUSE (tolerance override edit no-op —
-  first per-sim port to skip it); O-W7 § L.6; warp.md § 6 D16; methodology § 5.1
-  third-instance.
-- NEW observations: cross-stack verdict taxonomy (§ L.7 O-1); Warp CPU
-  four-checkpoint chain (§ L.7 O-2); environment-provisioning drift (dev extras
-  must be synced for the sweep/mutation gates).
-
-### sub-phase-common-cpp-bootstrap
-
-Focused-infrastructure sub-phase maturing `common/common-cpp/` from a
-Phase-1-Stage-1 declarations-only scaffold into a consumable Stack-C (C++ /
-Vulkan) surface — the **precondition** that unblocks the Stack-C per-sim ports
-(RD-2D-Stack-C plan-drafting REFRESH next, D11). Determinism is pinned to Mesa
-**lavapipe** (CPU software Vulkan; `VK_DRIVER_FILES` + `LP_NUM_THREADS=0`).
-Gates C-0..C-7 all GREEN. `common-cpp` is **CMake-registered, NOT a uv workspace
-member** (D6; member count stays 23). No `-phase-N` tag (D12 — reserved for
-spec-phase boundaries). Initiates the **Vulkan/C++ quirks catalog**
-(`docs/conventions/sub-phase-conventions.md` § L.9; D5).
-
-#### Added
-
-- **Vulkan headless compute substrate** (`bit_physics::common_cpp_vulkan`;
-  `include/bit_physics/common/vulkan_compute.hpp` + `src/vulkan_compute.cpp`) —
-  `vkcompute::{ComputeContext, StorageBuffer, ComputePipeline, dispatch}` (RAII,
-  move-only, VkResult→exception); instance / device / compute-queue /
-  command-pool / descriptor-set / pipeline / SPIR-V module / host-visible
-  buffer-IO / fence sync; `query_float_controls` +
-  `assert_deterministic_float_controls`. Reproduces the Stage-0 determinism
-  baseline `a7f85bd4…` (C-3).
-- **SPIR-V build-time wiring** — `bitphysics_embed_compute_shader()` CMake helper
-  (glslang `--vn` embedded `uint32_t[]` headers; reproducible) + `shaders/`.
-- **Determinism socket** (`include/bit_physics/common/determinism.hpp`) —
-  `DeterministicContext` RAII + `assert_deterministic_run` + `set_seed`/`get_seed`
-  + library `hash::sha256_hex`; FloatControls + NoContraction (`precise`)
-  discipline (NoContraction baseline `48c92e95…`, distinct from the contracted
-  `a7f85bd4…` — the two-baseline rule, § L.9 Q-CPP1) (C-1/C-2).
-- **HDF5 capture-v1** (`bit_physics::common_cpp_hdf5`; `src/capture_hdf5.cpp`) —
-  `Hdf5Writer`/`Hdf5Reader` replicating the testkit capture-v1 layout (system
-  `libhdf5-dev` + header-only HighFive v2.10.1, FetchContent; D3/D8).
-- **§1.9.1-cpp socket** (`include/bit_physics/common/common_cpp.hpp` umbrella) +
-  **2D advection-diffusion smoke** (Vulkan compute; bounded/stable § L.4,
-  max-field 0.99→0.19) + **cross-language interop** (Python testkit parses the
-  C++-emitted `.h5`; C-4/C-5/C-6).
-- **Top-level `CMakeLists.txt`** registering `bit_physics::common_cpp` (D6) +
-  **`.github/workflows/cpp-strict.yml`** (lavapipe + cmake + ctest CI; S-CPPB5).
-- De-scaffolded `docs/common/cpp.md` (C-5; resolves the dangling
-  `_staging/deps.md` reference, B-RD2C1) + § L.9 Vulkan/C++ quirks catalog
-  (Q-CPP1..5; D5).
-
-Verification: integrity baseline-MATCH `c19492ad…d22cb52` (0 HF / 14 SW) HELD;
-bit-identity replay `9399fc33…` HELD; portfolio sweep 23/23 members ZERO
-regressions; `ctest` 5/5. Methodology § 6.8 (Warp-CPU-f64↔NumPy) explicitly does
-NOT inherit to the Vulkan/C++↔NumPy backend pair (documented at plan-drafting;
-established empirically at the per-sim ports). No `-phase-N` tag pushed (D12).
-
-### sub-phase-reaction-diffusion-2d-stack-c
-
-The **8th and final** spec § 11.3 cross-stack port and the **FIRST Stack-C
-(Vulkan / C++)** per-sim port: the Phase-1 NumPy Gray-Scott reaction-diffusion 2D
-reference ported to GLSL `double` compute on Mesa **lavapipe**, consuming the
-`common-cpp` § 1.9.1-cpp substrate. With this landing Phase-2 is **substantively
-complete** (8/8 ports landed; the comprehensive cleanup sub-phase + the deferred
-LFS-architecture sub-phase become routable). The **formal Phase-2 close** (a
-phase-level closing audit + a proposed `v0.2.0-phase-2` tag) is a dedicated
-**Stage 9 — Landing** pass per Phase-2 plan § 2.12, routed separately — NOT part of
-this sub-phase. `common-cpp` + RD-2D-Stack-C are **CMake-registered, NOT uv
-workspace members** (D6/D11; member count stays **23**). No `-phase-N` tag (D12).
-
-#### Added
-
-- **`packages/reaction-diffusion-2d-stack-c/`** — Vulkan/C++ Gray-Scott f64 port:
-  `src/gray_scott.cpp` (run-loop consuming `vkcompute` + `capture` + `determinism`
-  + `hash`); **two** embedded SPIR-V kernels — the plain Gray-Scott step **and** a
-  manufactured-source variant for the gate-4 MMS order-ladder (S0-RD2C1) —
-  `precise`/`NoContraction` f64; `gray_scott_capture_main` capture binary;
-  doctest suite + the `rd2d_stack_c_gate14` cross-language ctest.
-- **`captures/reaction-diffusion-2d-stack-c/gray-scott-lambda-128sq-seed42-step2000.{h5,json}`**
-  (LFS; h5 sha256 `00081dc42b…`, 2.94 MB) — capture-v1-conformant
-  (`payload.format="hdf5"`, non-empty `run.start_utc`).
-- **`tests/fixtures/legacy-captures/phase-2-reaction-diffusion-2d-stack-c.{h5,json}`**
-  (LFS) — schema-corpus entry (corpus round-trip 17 → **19**).
-- **`docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` § C** —
-  additive Stack-C bit-exactness witness (Stack-B ↔ Stack-D §§ untouched).
-- **`docs/perf-ledger.md`** — `reaction-diffusion-2d | vulkan-cpp | gray-scott-lambda-128sq-seed42-step2000 | 1.13 | i7-12700KF-linux-6.17`
-  gate-12 row (added at Stage 2; the row was omitted at Stage 1b — S2-RD2C1).
-- Top-level `CMakeLists.txt` `add_subdirectory(packages/reaction-diffusion-2d-stack-c)`.
-
-#### Changed (additive per Convention A)
-
-- **`docs/conventions/cross-stack-equivalence-methodology.md`** — § 6.7 within-sim
-  cross-backend corroboration #2 (RD-2D Stack-D Taichi `~1.9e-14` vs Stack-C
-  Vulkan/C++ `0.0`); § 6.8 the **SECOND** zero-seed-difference backend pair
-  (Vulkan/C++-f64-lavapipe-NoContraction ↔ NumPy, n=1; Option α per charter § 6 —
-  n=3 bit-exact instances across two backend pairs, SUGGESTIVE not established).
-- **`docs/conventions/sub-phase-conventions.md`** — § L.7 O-1 shape-(a)
-  **fourth-instance / first-non-Warp** note; § L.9 Q-CPP2 **D16** FloatControls
-  f32-scoped cleanup-candidate note.
-- **`docs/common/cpp.md`** § 4 — D16 f64-scoping note.
-
-**gate-14: cross-stack BIT-EXACT** (`within_tolerance=True`, `max_abs_err=0.0`,
-all 11 frames × {U,V}, full `step-2000` horizon) — the THIRD shape-(a) instance
-overall and the FIRST on a non-Warp backend. Verification: all 14 gates GREEN;
-`ctest` **7/7** (incl. `rd2d_stack_c_gate14`); integrity baseline-MATCH
-`c19492ad…d22cb52` (0 HF / 14 SW) HELD; bit-identity replay `9399fc33…` HELD;
-portfolio sweep ZERO regressions. No `-phase-N` tag pushed (D12).
-
-### sub-phase-phase-3-common-3dgs
-
-First Phase-3 sub-phase (task-1, scope item 3.8). Introduces
-`common/common-3dgs/` — the Stack-E (Python / NVIDIA Warp) 3D-Gaussian-Splatting
-common module — under the matured per-sub-phase cadence. Produces the
-`GaussianSplatModel` / `Camera` / `render` API that task-8 (3dgs-mpm) and Phase-4
-WU-C consume unchanged.
-
-#### Added
-
-- `common/common-3dgs/` workspace member (23rd; second Stack-E common module):
-  `GaussianSplatModel` (Warp-array fields; Inria `.ply` load/save), `Camera`
-  (view/projection + `look_at`), the deterministic forward EWA-splatting
-  `render`, and `save_png` (the D-D RGB-image writer). Smoke sim at
-  `examples/smoke_3dgs/` (`just run-3dgs-smoke`).
-- `references/3DGS-reference/` — vendored Inria gaussian-splatting at the §2.18
-  SHA `54c035f7…` (**NON-COMMERCIAL** research license; read-only; the first
-  non-permissive upstream; the clause binds task-8 + Phase-4 WU-C).
-- `docs/common/3dgs.md`; `tools/testkit/determinism/registry.toml` (NEW Phase-3
-  surface) with `[neural-rendered.common-3dgs]` = bit-exact / same-stack-same-hw
-  (D-C; MEASURED `max_abs_diff = 0.0`); `test-common-3dgs` job in
-  `.github/workflows/python-strict.yml`; `just run-3dgs-smoke` / `just test-3dgs`;
-  schema-corpus fixture `tests/fixtures/legacy-captures/phase-3-common-3dgs.h5`.
-
-#### Tag reservation
-
-Intermediate tag `v0.2.2-sub-phase-phase-3-common-3dgs` is the **lean-YES** Stage-2
-landing tag (D-E: external dependency + durable architecture; operator-pushed, I7).
-Not pushed during Stage 1.
-
-### sub-phase-phase-3-render-similarity
-
-Second Phase-3 sub-phase (task-2, scope item 3.x; HARD-blocks task-6 + task-8).
-Introduces `tools/testkit/render_similarity/` — the render-similarity metric
-module (PSNR / SSIM / LPIPS + `ms_ssim` Phase-4-WU-C shell) — and the
-`equivalence` CLI `--mode render-similarity` dispatch under the matured
-per-sub-phase cadence.
-
-#### Added
-
-- `tools/testkit/render_similarity/` package (`metrics.py` + `harness_mode.py`)
-  exposing the §3.2.2 public surface:
-  `psnr(a, b) -> float` (sentinel `+inf` for identical), `ssim(a, b) -> float`
-  (Wang 2004 via `skimage.metrics.structural_similarity`),
-  `lpips(a, b, net='alex'|'vgg') -> float` (Zhang 2018 via `lpips==0.1.4`),
-  `ms_ssim(a, b) -> float` (SHELL — `NotImplementedError` until Phase 4 WU-C
-  per `docs/phases/phase-3-plan.md:380`). Input contract: `(H, W, 3)` uint8
-  `[0, 255]` OR float32 `[0, 1]` (auto-detect by dtype); shape/dtype/channel
-  mismatch → `ValueError`.
-- `tools/testkit/equivalence/__main__.py` — argparse CLI dispatcher
-  (D-HARNESS-CLI lean (a)) with `--mode render-similarity`. The existing
-  `compare_captures` programmatic surface is unchanged.
-- `tools/testkit/equivalence/tolerance-schema.json` — additive top-level
-  `render_similarity` key (category → sim → `{psnr_min, ssim_min, lpips_max}`;
-  D-SCHEMA lean). Schema only — tasks 6 and 8 add rows.
-- PyPI deps in `tools/testkit/pyproject.toml`: `lpips==0.1.4`,
-  `scikit-image>=0.26`, `torch>=2.0` (declared; transitive of lpips).
-- Adversarial fixtures + meta-test at
-  `tools/testkit/render_similarity/tests/fixtures/adversarial/` (testkit-local
-  per charter-v2 evidence: identical CI breadth/freq + Cat 1-5+Cat-X semantic
-  mis-fit + `docs/architecture.md:673` Layer-0 placement). Two families:
-  `ssim_false_positive` (inverted-checkerboard pair) + `lpips_false_negative`
-  (1/255 single-pixel perturbation).
-- `test-render-similarity` job in `.github/workflows/python-strict.yml`
-  (pytest directly per §2.14, mirroring the `test-common-3dgs` job; bundled
-  lpips linear-head weights pin via R-3 sha256 assertion; CI backbone
-  download cached via `actions/cache`).
-- `docs/testkit/equivalence.md` — render-similarity mode section (Cat-2 doc↔impl
-  contract).
-- `docs/glossary.md` entries: PSNR, SSIM, LPIPS, perceptual loss, MS-SSIM.
-
-#### D-class
-
-- **D-LOC**: `tools/testkit/render_similarity/` package per §3.2.2 (RESOLVED-IN-CHARTER).
-- **D-HARNESS-CLI**: lean (a) — `equivalence/__main__.py` + `--mode` flag
-  (RATIFIED Stage 1a; no destructive refactor → STOP-CLI not fired).
-- **D-SCHEMA**: additive `render_similarity` top-level key in
-  `tolerance-schema.json` (RATIFIED Stage 1a; existing validators unchanged →
-  STOP-SCHEMA not fired).
-- **D-WEIGHTS**: lazy runtime-fetch + CI `actions/cache` + R-3 sha256 assertion
-  on bundled linear-head weights; backbone download per torchvision pin.
-- **D-DET**: **bit-exact / same-stack-same-hw** — MEASURED at Stage 1b across
-  PSNR (pure numpy), SSIM (skimage), LPIPS-alex (CPU + eval + no_grad +
-  pinned weights), LPIPS-vgg. All four bit-exact across two runs → STOP-DET
-  not fired. R-4 (GPU LPIPS diverges from CI CPU) documented in metrics.py
-  docstring + `docs/testkit/equivalence.md`.
-- **D-ANCHOR**: 3 anchors landed at Stage 1b — PSNR hand-derivation
-  (closed-form `10 * log10(MAX_I**2 / MSE)`); SSIM Wang 2004 Eq. 13 on
-  identity + constant-pair luminance term; LPIPS self-consistency
-  (`< 1e-4`) + Zhang 2018 monotonic-under-perturbation property.
-
-#### Tag reservation
-
-Intermediate tag `v0.2.3-sub-phase-phase-3-render-similarity` is the
-**lean-YES** Stage-2 landing tag (§D.2 (a) PyPI deps `lpips` + `scikit-image`
-+ `torch` + (b) durable architecture gating all Phase-4 neural sims;
-operator-pushed, I7). Not pushed during Stage 1.
+- `docs/conventions/sub-phase-conventions.md` — 14-section reference
+  (A architecture, B audit chain, C commit conventions, D replay/tag,
+  E gate-13 worktree, F determinism, G numba, H vendored-upstream,
+  I Cat 3 subdir pattern, J B17 routing, K R-class STOP-AND-SURFACE,
+  L banked observations carry-forward, M 65-shift inventory,
+  N PROPOSED Stage 0 Task 0.4, O coherence note).
+- Audit chain at `docs/_audits/phase-1/sub-phase-conventions-consolidation/`.
+
+### sub-phase-git-lfs-migration
+
+Focused infrastructure-hotfix sub-phase landed CONFIRMED at
+`0672554`. Adopts Git LFS for `captures/**/*.h5` to absorb the
+704 MB eulerian-smoke Taylor-Green capture that exceeded GitHub's
+100 MB per-file hard limit. 11-commit history rewrite from
+`34c7d34` to `cf13d1c` via fast-forward; bit-identity replay
+invariant `9399fc33…909f34` held byte-identically at pre-push +
+post-push runs (12th + 13th invocations). All 10 LFS-tracked
+captures verified bit-identical to canonical sha256s.
 
 ## [0.1.0-phase-1] — Reference Sim TDD Bootstrap (2026-05-20; tag pushed by operator)
 
@@ -2348,6 +2461,17 @@ particle-fluids, volumetric-grid, lattice, and hybrid-particle-grid.
   `docs/_audits/phase-1/landing-<UTC>.md` per spec § 7.12 R9 amendment.
 - **Phase 0 regression.** RD-2D Phase 0 test suite remains 14/14
   green; no Phase 0 deliverable was edited.
+
+## [0.0.0-phase-0] — Foundation (2026-05-19)
+
+### Added
+
+- Phase 0 Block 1 (FOUNDATION): repo skeleton, vendored design spec at
+  `docs/architecture.md`, vendored Phase 0 plan, glossary, capture format
+  module + JSON schemas, CI scaffolding, pre-commit config, branch-protection
+  doc, preflight script, sim-spec template, probe template, perf-ledger
+  scaffold, failing-tests-evidence scaffold, tolerance-budget stub,
+  schema-corpus directory.
 
 ## [0.0.0] — Initial placeholder
 

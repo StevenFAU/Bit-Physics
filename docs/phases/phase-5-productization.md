@@ -45,6 +45,8 @@
 > **R4 — RENDER ASSET RELAXED + CANONICAL PICKS (operator-ratified).** No Alembic/`.vdb`/`.usd` asset is committed anywhere in the repo. The § 6.4 render-canonical criterion "has exported Alembic or VDB asset committed" is RELAXED to **"has a committed `.h5` canonical capture + an h5→render-asset conversion/export step"** (the honest fix to the landed state). **5.4 render canonical = `eulerian-smoke`** (volumetric, `render:true`, Stack-C bit-exact, 4.4 MB CI-friendly). **5.5 preprint canonical = `pinn-poisson`** (cleanest § 6: ≥3 analytic anchors + classical-FD + MMS-grade O(h²) convergence; physicsnemo-sym vendored; its § 13 five-boolean is now present). Both picks remain "+1 canonical sim as proof"; coverage extends post-phase.
 >
 > **5.1 WEB is BLOCKED — zero qualifying sims** (no Vite/`package.json` build exists in `packages/`). The 7 Stack-B sims WILL be built (operator-ratified); the web-build track is NAMED + QUEUED at `docs/phases/phase-5-web-build-track.md`. 5.1's workflow is authored in sub-phase 5.1 once real web builds exist to validate. Building the frontends is OUT of this reconciliation pass and out of 5.1's productization scope ("Phase 5 does not patch sims").
+>
+> *[SUPERSEDED 2026-06-10, post-phase-5 housekeeping: the block above froze the reconciliation-time state. The web-build track WAS dispatched and landed 2026-06-09 (7 frontends), 5.1 web-deploy validated all of them through the browser, and the phase closed 7/7 GREEN on CI lavapipe — see `docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md`.]*
 
 > **v7 dispatch-hardening amendments (May 18 2026):** This block is normative.
 >

@@ -2086,7 +2086,15 @@ Overlaps with Phase 4; not a serial successor.
 
 **Delivered.**
 
-- **5.1 web-deploy** — `tools/productization/web-deploy/` + `.github/workflows/web-deploy.yml` + `docs/productization/web-deploy.md`, delivered at commit `80d2fee`. Build-and-validate pipeline over the 7 Stack-B web frontends (web-build track): Vite build → headless browser-WebGPU run → each sim's OWN established gate re-applied to the browser-emitted capture (no tolerance widened). Browser-WebGPU gate runs locally (ANGLE-Vulkan, secure-context) + cloud CI (lavapipe); 4/7 clear their gate through the browser, 3/7 (rd2d/neural-ca pointwise-roundtrip, boids run-twice) exhibit characterized cross-implementation f32 divergence surfaced for sim-owner/operator. `deploy` gated off.
+- **5.1 web-deploy** — `tools/productization/web-deploy/` + `.github/workflows/web-deploy.yml` + `docs/productization/web-deploy.md`, delivered at commit `80d2fee`. Build-and-validate pipeline over the 7 Stack-B web frontends (web-build track): Vite build → headless browser-WebGPU run → each sim's OWN established gate re-applied to the browser-emitted capture (no tolerance widened). Browser-WebGPU gate runs locally (ANGLE-Vulkan, secure-context) + cloud CI (lavapipe). The interim "4/7 + 3 divergences" state recorded here mid-campaign resolved as: the 3 browser failures were ONE capture/live-RAF harness data race (browser-divergence resolution, audit 2026-06-09); after the fix and the five-run CI campaign the phase closed at **7/7 GREEN on lavapipe** (close audit § 1; two genuine deterministic lavapipe ALU findings — boids-3d, neural-ca — chartered into the opt-in observable-gate class with measured-then-declared bounds; canonical equivalence stays proven on RADV/wgpu-native only). `deploy` gated off at close; un-gated to operator-controlled `workflow_dispatch` at the post-close housekeeping sweep (2026-06-10) for the GitHub Pages launch — deploy publishes already-validated bundles only.
+- **web-build track** — the 7 Stack-B WebGPU frontends themselves (`packages/{boids-3d,ising-classical,mandelbulb-explorer,neural-ca,physarum,reaction-diffusion-2d,strange-attractors}/web/`), each re-gated against its own established gate on wgpu-native (`gpu_gate.py`), thresholds parity-guarded. Charter + 3 batch landing audits, 2026-06-09.
+- **5.2 binary-release** — `tools/productization/binary-release/` + `.github/workflows/binary-release.yml` + `docs/productization/binary-release.md`. 2 qualifying Stack-C CMake packages validated (clean-build-dir isolation; no Docker). Windows/macOS matrix DEFERRED-to-Phase-6 (§ 11.7 table). Landing audit 2026-06-08.
+- **5.3 pypi-release** — `tools/productization/pypi-release/` + `.github/workflows/pypi-release.yml` + `docs/productization/pypi-release.md`. 15-sim pool: 14 PASS through the § 3.8 bootstrap gate; the 1 BLOCKED resolved by the Warp-deprecation migration. Landing audit 2026-06-08.
+- **5.4 render-passes** — `tools/productization/render-passes/` + `.github/workflows/render-passes.yml` + `docs/productization/render-passes.md`. eulerian-smoke canonical through convert→export→render→verify, decoded-pixel bit-exact; de-Docker'd Blender; cloud job operator-dispatch-only. Landing audit 2026-06-09.
+- **5.5 preprint-extraction** — `tools/productization/preprint-extraction/` + `.github/workflows/preprint-extraction.yml` + `docs/productization/preprint-extraction.md`. pinn-poisson byte-identical extraction + clean TeX compile, zero unresolved cites; de-Docker'd TinyTeX; cloud job operator-dispatch-only. Landing audit 2026-06-09.
+- **Warp-deprecation migration** — 3 live occurrences migrated behind a version-adaptive guard; numerics-free proven bit-identical per touched sim; unblocked 5.3's 3dgs-mpm-sh-update. Landing audit 2026-06-08.
+
+Phase 5 CLOSED — SHIFTED-with-notes, 2026-06-10 (`docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md`; tag `v0.5.0-phase-5`).
 
 ## 11.7 Ongoing
 
@@ -2104,12 +2112,19 @@ The architecture supports indefinite extension: new category is a new folder; ne
 | Cat 4 grammars beyond `path:line[-range]` (grammars `<phrase X in Y>`, `<API X has shape Y>`) | Phase 0 (`§ 9` Decision #22) | Phase 1 Stage 1 (extends Phase 0 Cat 4) | Owned |
 | Tier 3 diagnostics for Phase 1 sims | spec § 3.3 (implied per-sim) | Per-sim implementation phases (not yet planned); backlog for Phase 1.5 charter | Backlog |
 | pic-flip particle fluids | spec § 5.4 | Not yet scheduled | Backlog |
-| JGS2, MGPBD, Elastic Locomotion (SIGGRAPH 2025 elastodynamics) | spec § 5.9 | Phase 4 frontier-algorithm stages (§ 8.4) | Backlog |
+| JGS2, MGPBD, Elastic Locomotion (SIGGRAPH 2025 elastodynamics) | spec § 5.9 | Phase 6 charter backlog (Phase 4 closed 2026-06-01 without activating these; not among the 27 ratified frontier rows) | Backlog |
 | ising-dwave | spec § 5.10 + § 12.5 | Phase 6+ pending hardware-access decision | Backlog |
 | JAX-MD, Brax, PhiFlow integrations | spec § 6.1 | Phase 6+ charter | Backlog |
-| NeuralVDB | spec § 6.2 | Phase 4 sparse stages (§ 8.2) | Backlog |
-| OpenLB | spec § 5.7 | Phase 4 frontier-algorithm stages (§ 8.4) | Backlog |
+| NeuralVDB | spec § 6.2 | Phase-4-CUDA deferral track (the sparse-nanovdb variant rows 15/16, `docs/phase4/ledger.md`; CUDA-bound) | Backlog |
+| OpenLB | spec § 5.7 | Phase 6 charter backlog (Phase 4 closed without it; related LBM frontier rows sit in the P4 deferral homes) | Backlog |
 | Stack G (Mojo) adoption | spec § 4.7 | Phase 6+ trigger: Mojo open-sources stably | Backlog |
+| **Phase-4-CUDA** deferral home (10 frontier-variant rows: 15/16/17/18/22/31/32/33/34/35) | Phase 4 landing § 4 Home 1 (2026-06-01) | Dedicated track once an A100-class CUDA 12 host exists (Phase 6 charter backlog) | Backlog |
+| **Phase-4-Greenfield-CPU** deferral home (8 frontier-variant rows; base-sim-first) | Phase 4 landing § 4 Home 2 (2026-06-01) | Phase 6+ batches, operator-decidable | Backlog |
+| `boids-3d-wgsl-precision-review` (lavapipe-only 0.0354 pointwise divergence; fma/contraction + precision-pragma inspection of the boids WGSL update kernel) | Phase 5 close § 5.1 (2026-06-10) | Phase 6 charter backlog | Backlog |
+| Windows/macOS binary-release matrix | Phase 5.2 landing (2026-06-08) | Phase 6 (named in the 5.2 audit + `docs/productization/binary-release.md`) | Owned |
+| render-passes + preprint-extraction cloud jobs (operator-dispatch-only posture → automated dispatch) | Phase 5 close § 5.4 (2026-06-10) | Phase 6 charter backlog | Backlog |
+| audit-append-only CI gate full-chain coverage (today: `docs/_audits/` only, most-recent-tag→HEAD hop only; the other `_audits` trees + full tag chain are checked manually) | Post-phase-5 housekeeping sweep (2026-06-10) | Phase 6 charter backlog | Backlog |
+| integrity Cat-2 cpp-headers / ts-exports checks (`TODO(phase-1)` placeholders, never implemented) | Phase 0 (spec § 3.2 Cat 2) | Phase 6 charter backlog (retargeted from the aged-out phase-1 tag at the housekeeping sweep) | Backlog |
 
 ## 11.8 Pacing under single-agent AI dispatch (supersedes prior pacing estimates)
 

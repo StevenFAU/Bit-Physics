@@ -2,7 +2,15 @@
 
 # Phase 5 — Web-build track (scoping note)
 
-> **Status:** SCOPING — NAMED + QUEUED, not yet dispatched. This note exists so the
+> **Status: LANDED — superseded by execution (banner added 2026-06-10, post-phase-5
+> housekeeping).** The track was dispatched and delivered 2026-06-09: 7/7 Stack-B
+> frontends built and re-gated (charter + batch-1/2/3 landing audits under
+> `docs/_audits/phase-5/web-build-track-*`), then validated through the browser by
+> 5.1 web-deploy, closing 7/7 GREEN on CI lavapipe (phase-5 close audit § 3). The
+> § 2 gap table below describes the PRE-track state (e.g. "Python-only / no WGSL"
+> rows) and is retained as scoping history, not current reality.
+>
+> Original status line (historical): SCOPING — NAMED + QUEUED, not yet dispatched. This note exists so the
 > web-build work is on the board with a known shape; it does NOT author any
 > frontend, the 5.1 `web-deploy.yml` workflow, or any sub-phase build.
 > **Authored at:** the Phase-5 reconciliation pass (`docs/_audits/phase-5/reconciliation-<UTC>.md`).

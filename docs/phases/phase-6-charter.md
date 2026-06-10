@@ -85,6 +85,36 @@ This is the starting backlog. It evolves as items are picked up.
 - Pre-registration discipline for benchmark hypotheses (per v3 review).
 - Top-level Docker image for fully reproducible builds (per v3 review).
 
+### 2.6 Routed deferrals from the Phase-4/5 closes (added 2026-06-10, post-phase-5 housekeeping)
+
+The Phase-4 landing and Phase-5 close named these deferrals; this section is
+their accountable Phase-6 home (architecture § 11.7 ownership table mirrors it):
+
+- **Windows/macOS binary-release matrix** — 5.2 landing S-5/C-4 +
+  `docs/productization/binary-release.md`; the bootstrap gate is
+  lavapipe-pinned Linux today.
+- **Phase-4-CUDA deferral track** — the 10 CUDA-bound frontier-variant rows
+  (15/16/17/18/22/31/32/33/34/35 per `docs/phase4/ledger.md`). Precondition:
+  an A100-class CUDA 12 host (CUDA measured absent on the dev box).
+- **Phase-4-Greenfield-CPU deferral track** — the 8 greenfield-needs-base-sim
+  frontier rows (base sims first, then ports), operator-decidable batches.
+- **`boids-3d-wgsl-precision-review`** — Phase-5 close § 5.1: sim-owner
+  inspection of the boids WGSL update kernel (fma/contraction,
+  precision-pragma) explaining the lavapipe-only 0.0354 pointwise divergence.
+  The observable gate ships delivery; it does not close this.
+- **render-passes + preprint-extraction cloud-job dispatch** — both remain
+  operator-dispatch-only; automating dispatch (and widening the per-pipeline
+  content pool beyond the R4 canonicals) is Phase-6 work.
+- **audit-append-only CI gate full-chain coverage** — today the CI gate checks
+  `docs/_audits/` only and only the most-recent-tag→HEAD hop; the housekeeping
+  sweep verified the full chain + all `_audits` trees manually and found two
+  historical (pre-gate-fix) violations. Extending the gate is Phase-6 work.
+- **integrity Cat-2 cpp-headers / ts-exports checks** — `TODO(phase-1)`
+  placeholders in `tools/integrity/integrity/cat2_contracts/__init__.py`,
+  never implemented; retargeted here from the aged-out phase-1 tag
+  (operator ruling at the housekeeping sweep: implement-or-drop is a Phase-6
+  decision).
+
 ---
 
 ## § 3 — Operating model

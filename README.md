@@ -38,6 +38,7 @@ Shared per-stack infrastructure under `common/`:
 - `common-cpp` (Stack C / Vulkan + C++) — [`docs/common/cpp.md`](docs/common/cpp.md)
 - `common-ts` (Stack B / WebGPU + TypeScript) — [`docs/common/ts.md`](docs/common/ts.md)
 - `common-3dgs` (Stack E / 3D Gaussian Splatting) — [`docs/common/3dgs.md`](docs/common/3dgs.md)
+- `common-web` (Stack B / shared web-frontend TS: capture-export + settings panel, consumed by all 7 sim web builds)
 
 ## License
 
@@ -46,5 +47,13 @@ for the rationale.
 
 ## Status
 
-Phase 0 (Foundation) in progress. Subsequent phases follow per
-`docs/architecture.md` Part XI.
+**Phases 0–5 closed** (tags `v0.0.0-phase-0` … `v0.5.0-phase-5`, 2026-06-10):
+foundation, 9 reference sims, cross-stack replication (Stacks B/C/D/E),
+Phase-3's seven sims + 3DGS/render-similarity infrastructure, Phase-4's nine
+frontier variants, and Phase-5 productization (web-deploy / binary-release /
+pypi-release / render-passes / preprint-extraction; 7 browser-WebGPU frontends
+7/7 green on CI lavapipe). Phase 6 (continuous operation) is chartered at
+[`docs/phases/phase-6-charter.md`](docs/phases/phase-6-charter.md). The
+authoritative record is the append-only audit ledger under
+[`docs/_audits/`](docs/_audits/) — see the
+[Phase-5 close audit](docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md).

@@ -8,6 +8,7 @@
 > **Spec authority:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) + spec Appendix D + spec Appendix G + spec Appendix E
 > **Plan location:** `docs/phases/phase-3-plan.md` (this file).
 > **Status:** dispatch-ready (contingent on Phase 2 landing CONFIRMED and owner preflight per § 9).
+> **[LANDED-reality note, added 2026-06-10 post-phase-5 housekeeping:** Phase 3 closed 2026-05-30 (tag `v0.3.0-phase-3`). One standing § 0.3-class SHIFT applies throughout this plan: the literal directory layouts `continuous-ca/<sim>/python/`, `lattice-spin/<sim>/typescript/`, `rigid-body/`, etc. were superseded by the existing-convention flat `packages/<sim>/` layout (D-LAYOUT; first ratified at the lenia sub-phase, mirrored by every later task — each sub-phase charter documents its own mapping). The plan text is retained unedited as dispatch history; the audit ledger is authoritative.**]**
 > **Execution model:** Sequential single-agent. One Claude Code agent role at a time, working through all tasks; one claude.ai chat coordinator. Per Anthropic's long-running-agent guidance, sessions bridge via a progress file + git history.
 > **Stance:** Two equal-weight halves:
 > - **Architecture (§3):** the interface contracts ("sockets") between Phase 3 deliverables.
