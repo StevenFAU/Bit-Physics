@@ -61,3 +61,12 @@ captures/eulerian-smoke-stack-e/taylor-green-128cube-seed42-step500.*
 # capture is committed to the schema-corpus at tests/fixtures/legacy-captures/;
 # the examples/smoke_3dgs/out/ dir is a scratch render target.
 common/common-3dgs/examples/smoke_3dgs/out/
+
+# common-ts is pnpm-managed (tracked pnpm-lock.yaml; ts-strict.yml uses
+# `pnpm install --frozen-lockfile`). An accidental `npm install` there writes a
+# conflicting package-lock.json (happened 2026-06-07; deleted at the
+# post-phase-5 housekeeping sweep) — guard against recurrence. The npm
+# lockfiles in packages/*/web and the headless driver dir stay TRACKED (npm is
+# canonical there per web-deploy.yml `npm ci`).
+common/common-ts/package-lock.json
+common/common-ts/preflight/package-lock.json
