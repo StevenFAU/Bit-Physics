@@ -480,3 +480,4 @@ NOT canonical equivalence (which stays proven on RADV/wgpu-native only).
 
 appended_by: phase-5-cross-backend-contingency-round-1-agent
 appended_head_sha: 73c914f
+appended_commit_sha: 96c4aca  # Convention #12 back-fill
