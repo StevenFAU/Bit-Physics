@@ -112,11 +112,29 @@ jobs:
         run: |
           uv run python tools/productization/web-deploy/pipeline.py build \
             --sim "${{ matrix.sim }}" --output "${{ runner.temp }}/artifacts"
+      - name: Sync Python env for verify (per-sim workspace member, declared deps only)
+        # verify.py imports numpy at module level, the testkit capture/equivalence
+        # modules' deps (numpy, h5py, jsonschema) via its tools/testkit sys.path
+        # insert, and — for ising/strange/boids — the sim's own reference package.
+        # All of that is ALREADY declared in packages/<sim>/pyproject.toml
+        # (bit-physics-testkit, bit-physics-diagnostics, h5py, numpy, ...); the
+        # workspace ROOT `[project]` declares NO dependencies, so a bare `uv run`
+        # resolves an empty venv (the run-27210300628 ModuleNotFoundError: numpy).
+        # Workspace member names match the matrix sim names 1:1. No new deps are
+        # declared here and none are installed ad hoc.
+        run: uv sync --package "${{ matrix.sim }}"
       - name: Validate (headless browser-WebGPU → sim's established gate)
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
+          # Harness app-READINESS wait only (driver.mjs __bitPhysicsReady), NOT a
+          # physics tolerance and NOT the 300s capture wait. The 30s default was
+          # calibrated on local RADV; lavapipe software rasterization compiles
+          # pipelines far slower (neural-ca/physarum exceeded 30s in run
+          # 27210300628). The driver logs measured time-to-ready per run; the
+          # measured lavapipe values get declared in the audit after the green run.
+          BITPHYSICS_READY_TIMEOUT_MS: "180000"
         run: |
-          uv run python tools/productization/web-deploy/pipeline.py validate \
+          uv run --no-sync python tools/productization/web-deploy/pipeline.py validate \
             --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" \
             --skip-build --json > results.json
           cat results.json

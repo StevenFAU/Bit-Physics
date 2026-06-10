@@ -34,6 +34,13 @@ if (!distDir || !sim || !gateKind || !outDir) {
 }
 
 const WEBGPU_UNAVAILABLE = 42;
+
+// App-readiness wait (NOT the capture wait below, which stays 300000). The 30000
+// default was calibrated on local RADV; software rasterization (CI lavapipe)
+// compiles pipelines far slower, so CI widens it via BITPHYSICS_READY_TIMEOUT_MS.
+// This is a harness readiness wait, not a physics tolerance — the gate verify.py
+// applies to the capture is untouched. Default unchanged: local behavior identical.
+const READY_TIMEOUT_MS = Number(process.env.BITPHYSICS_READY_TIMEOUT_MS ?? "30000");
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
   ".css": "text/css", ".json": "application/json", ".bin": "application/octet-stream",
@@ -91,7 +98,11 @@ async function captureOnce(browser, baseUrl, runIdx) {
 
   // Wait for the app to boot to the WebGPU-ready state (panel mounts only on the
   // successful WebGPU path — proof the WebGPU path engaged, not a fallback).
-  await page.waitForFunction(() => window.__bitPhysicsReady === true, { timeout: 30000 });
+  // Log measured time-to-ready so each CI run yields the actual per-backend value
+  // (measured-then-declared applies to harness waits too).
+  const readyT0 = Date.now();
+  await page.waitForFunction(() => window.__bitPhysicsReady === true, { timeout: READY_TIMEOUT_MS });
+  console.log(`  run ${runIdx}: time-to-ready ${Date.now() - readyT0} ms (limit ${READY_TIMEOUT_MS} ms)`);
   const panelMounted = await page.evaluate(() => !!document.querySelector("[data-bp-panel]"));
   if (!panelMounted) {
     await context.close();
