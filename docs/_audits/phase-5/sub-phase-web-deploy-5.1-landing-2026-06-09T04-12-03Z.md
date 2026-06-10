@@ -427,3 +427,56 @@ established gates, fallback flags, and sim sources byte-untouched.
 appended_by: phase-5-cross-backend-contingency-evidence-agent
 appended_head_sha: cb4da99
 appended_commit_sha: fc2c155  # Convention #12 back-fill
+
+## § 16 — Cross-backend contingency charter RATIFIED + round-1 mechanism landed (APPENDED 2026-06-10; § 0.3 append-only)
+
+**Ratification record — the five charter open questions, decided:**
+
+1. neural-ca runs 1→2 + tightening the fallback determinism term to
+   `twice is True` — **YES**.
+2. boids-3d added to the observable-fallback registry, new literals/logic in the
+   PENDING-LAVAPIPE block only — **YES**.
+3. `if: always()` on artifact upload; the artifact route serves the measurement
+   pass — **YES**.
+4. WGSL fma/contraction precision review for boids-3d — **DEFERRED-WITH-CAUSE**:
+   recorded here as the named follow-up
+   `boids-3d-wgsl-precision-review` (sim-owner: inspect the boids WGSL update
+   kernel for fma/contraction and precision-pragma differences that could explain
+   the lavapipe-only 0.0354 pointwise divergence). NOT a Phase-5 blocker; the
+   observable gating below does not close that investigation.
+5. Fallback flag placement: per-sim env (`BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK`)
+   in the web-deploy.yml Validate step only — **CONFIRMED**.
+
+**Prediction ledger (charter §3 / Decision-2/4 contingencies vs lavapipe reality):**
+
+| Prediction | Measured outcome | Verdict |
+|---|---|---|
+| neural-ca bit-exactness breaks on a non-RADV ALU (Decision 4) | broke at 1.0133e-06 (rgba, 21 frames) | **AS PREDICTED** |
+| rd2d is the fragile sim needing the observable gate (Decision 2) | clears its ESTABLISHED 1e-4 gate on lavapipe at 2.0394e-05 | **DID NOT diverge** |
+| boids robust post-RAF-fix | deterministic but 0.0354 vs 0.01 pointwise on lavapipe | **INVERTED** |
+
+**Round-1 mechanism (commit `73c914f`) — bounds UNDECLARED by design:** activated
+fallbacks (boids-3d, neural-ca) FAIL-PENDING loudly — `passed=False` with an
+explicit `verdict_state` note — and emit every charter observable into
+results.json notes; no silent pass is possible while
+`_CROSS_BACKEND_DECLARED_BOUNDS[<sim>] is None`. The 5 unlisted sims and ALL
+canonical-backend gates are untouched (guardrail diff over tolerance.toml /
+tolerance-budget.toml / gpu_gate.py / sim sources: 0 lines; established boids
+gate re-verified passing on RADV without the flag, 0.0032 < 0.01).
+
+**Round-2 plan (measured-then-declared):** the RADV half is MEASURED (locally,
+this session, via the real validate path): boids-3d abs deltas vs the f64
+reference at step 100 — polarization 4.40e-07, mean_speed 7.77e-06, speed_std
+5.01e-06, mean_dist_to_centroid 2.39e-06 (pointwise informative 3.19e-03),
+run_twice=True, clamp held; neural-ca — short_horizon_step50_max_abs 0.0
+(bit-exact on RADV), alpha_mass 1713.436, bounded+alive, run_twice=True with the
+new runs=2. The lavapipe half comes from run #4 (boids-3d and neural-ca will be
+RED-by-design with measured observables in notes; captures also published via the
+new `web-deploy-captures-<sim>` artifacts). Round 2 then declares per-observable
+bounds with documented headroom over BOTH backends' measured deltas and flips the
+registry entries from None — after which lavapipe green for these two sims MEANS:
+deterministic + clamped/bounded + declared observable agreement on a foreign ALU;
+NOT canonical equivalence (which stays proven on RADV/wgpu-native only).
+
+appended_by: phase-5-cross-backend-contingency-round-1-agent
+appended_head_sha: 73c914f
