@@ -426,3 +426,4 @@ established gates, fallback flags, and sim sources byte-untouched.
 
 appended_by: phase-5-cross-backend-contingency-evidence-agent
 appended_head_sha: cb4da99
+appended_commit_sha: fc2c155  # Convention #12 back-fill
