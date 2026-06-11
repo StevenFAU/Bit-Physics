@@ -7,7 +7,7 @@
 > 38/38 corpus roundtrip.
 > **Commit chain:** `986f5f0` (stage-0 probe) → `87da3cb` (stage-1a scaffold+RED, evidence
 > footer-hashed) → `38da1ef` (stage-1b GREEN + golden) → `cc6f0ed` (stage-1c
-> perf/CI/LFS/mutation/gate-13) → *(this landing fold — SHA back-filled per Convention #12)*.
+> perf/CI/LFS/mutation/gate-13) → `5e810d9` (stage-2 landing fold; SHA back-filled per Convention #12).
 
 ## Gates (spec Appendix D.6)
 
