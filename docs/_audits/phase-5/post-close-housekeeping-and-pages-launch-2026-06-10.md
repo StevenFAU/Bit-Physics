@@ -221,3 +221,38 @@ audit_commit_sha: 7dc2039  # Convention #12 back-fill
   verification claim was added by publishing.
 
 pages_evidence_commit_sha: d516ccc  # Convention #12 back-fill
+
+## § 10 — binary-release publishing un-gated (mirror of § 7; appended per Convention #12 pattern)
+
+- **Trigger reality:** binary-release run #1 (`workflow run on 7893955`) went
+  green — both qualifying Stack-C sims (mass-spring-cloth,
+  reaction-diffusion-2d-stack-c) built + § 3.8 bootstrap-validated with
+  sha256 digests — but the deploy job was still Phase-5-gated, so the
+  binaries existed only as 30-day workflow artifacts. — FACT
+- **Mechanism** (commit fa4a7af): deploy job un-gated to operator-controlled
+  `workflow_dispatch` only (`confirm_release=true`; input renamed from
+  confirm_deploy). It publishes the SAME run's validated artifacts (staged as
+  `<target>-linux-x86_64`, ≥2-asset hard check; never rebuilt, never
+  re-fetched), computes sha256 in-run, attaches `SHA256SUMS`, and inlines the
+  digests in the release body together with the honest build-SHA statement.
+  The release attaches to the EXISTING operator-pushed `v0.5.0-phase-5` tag —
+  the ratified I7 carve-out (release-on-existing-tag allowed; tag
+  creation/push remains forbidden and the workflow does neither).
+- **PIN FINDING (caught by this go-live, fixed in fa4a7af):** the gated job's
+  `softprops/action-gh-release` pin `c95fe148` — whose own comment said "pin
+  re-verified at go-live" — resolved to **v2.2.1 mislabeled as v2.4.0**.
+  Repinned to the real v2.4.0 (`aec2ec56`), tag SHA verified against the
+  actions repo via the public API this session. — FACT
+- **Landing page** (same commit): Downloads note "none published yet"
+  replaced with direct links to the two release assets + SHA256SUMS and the
+  honest scope note (2 Stack-C CPU-tier Linux x86_64 binaries; the 7-sim
+  browser set is the site itself). Literal digests are NOT embedded in the
+  page: the published digests belong to the publishing run's build and cannot
+  be honestly written in advance — the page points to SHA256SUMS / the
+  release body, and this audit will mirror them. The live page updates on the
+  next web-deploy dispatch.
+- **Release evidence** (run ID, asset names, digests, release URL) will be
+  APPENDED below after the operator dispatches binary-release with
+  confirm_release=true — same commitment pattern as § 7/§ 9.
+- Restated: publishing attaches already-validated binaries; the gates are
+  untouched and no new verification claim is made.
