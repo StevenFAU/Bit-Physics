@@ -189,3 +189,33 @@ reality.
 
 appended_by: post-close-housekeeping-agent
 audit_commit_sha: 7dc2039  # Convention #12 back-fill
+
+## § 9 — Deploy evidence (appended post-dispatch per the § 7 commitment; Convention #12 append pattern)
+
+- **Run:** web-deploy `27281618943` (workflow_dispatch, confirm_deploy=true,
+  operator-fired) on head `7893955` — **completed success**: 7/7
+  build-and-validate matrix green + deploy green (the SIXTH web-deploy run;
+  the first ever execution of the deploy job). Pages source set to "GitHub
+  Actions" by the operator. — FACT (public API, read this session)
+- **Live site:** https://stevenfau.github.io/Bit-Physics/ — index HTTP 200
+  (8,360 B, text/html), all 7 sim cards present with resolving hrefs. — FACT
+  (fetched this session)
+- **Bundle-chunk resolution (steps-10 spot pair, one heavy):**
+  - `sims/boids-3d/` 200 (769 B) + `assets/index-Buq11ErP.js` 200 (13,314 B,
+    application/javascript)
+  - `sims/physarum/` 200 (813 B) + `assets/index-DvkaVhiL.js` 200 (14,965 B,
+    application/javascript)
+  - Each sim is a single-chunk Vite bundle (WGSL inlined); no missing chunks.
+    The only 404s are `*.js.map` sourceMappingURL references — devtools-only,
+    never fetched during boot; noted, not a defect. — FACT
+- **Live BOOT proof (beyond HTTP):** the repo's pinned Playwright harness +
+  the driver.mjs flag set, pointed at the LIVE URLs:
+  `boids-3d: BOOT OK http=200 ready_ms=200 adapter=amd/rdna-2`;
+  `physarum: BOOT OK http=200 ready_ms=160 adapter=amd/rdna-2`
+  (`window.__bitPhysicsReady === true` over real browser-WebGPU). — FACT
+  (run this session)
+- **Retroactive operator ratifications recorded:** the § 4
+  `_SUBJECT_FALSE_POSITIVE_SHAS` allowlist (correct shape, correctly
+  flagged) and the § 6 17-SOFT_WARN explained baseline. — RATIFIED
+- Restated: the deploy published the run's own already-validated bundles; no
+  verification claim was added by publishing.
