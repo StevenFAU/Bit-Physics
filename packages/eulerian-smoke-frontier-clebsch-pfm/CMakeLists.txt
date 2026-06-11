@@ -23,6 +23,7 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
   # --- Variant library ------------------------------------------------------------
   add_library(bit_physics_clebsch_pfm
     src/clebsch_pfm.cpp
+    src/clebsch_pfm_math.cpp
     ${CLEBSCH_INNER_SPV}
     ${CLEBSCH_ROTATE_SPV}
     ${CLEBSCH_DIV_SPV}

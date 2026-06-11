@@ -84,10 +84,13 @@ TEST_CASE("A1 closed-form: global-phase gauge invariance of the Eq.-19 face velo
     }
 }
 
-TEST_CASE("A3 golden: lift-induced face velocity converges to analytic 2D TG") {
-    // Sample the closed-form lift at adjacent cell centres; Eq.-19 face velocity must
-    // approach the analytic TG x-velocity at the face midpoint as dx -> 0 (order >= 1.5
-    // observed ratio; the discretization is formally 2nd-order for smooth phases).
+TEST_CASE("A3 golden: lift-induced face velocity converges to the analytic Clebsch"
+          " pre-projection field") {
+    // The Eq.-19 reconstruction of the closed-form lift converges to u_m = λ∇μ
+    // = (0, −2cos2πx·sin2πy, 0), NOT to TG itself: TG = λ∇μ + ∇φ, and the projection
+    // supplies the gradient part (derivation in src/clebsch_pfm_detail.hpp; the
+    // projected IC residual vs TG is asserted in the A3 steady-anchor test).
+    const double k2pi = 2.0 * std::acos(-1.0);
     double err[2];
     int idx = 0;
     for (uint32_t n : {32u, 64u}) {
@@ -96,12 +99,15 @@ TEST_CASE("A3 golden: lift-induced face velocity converges to analytic 2D TG") {
         for (uint32_t j = 0; j < n; ++j)
             for (uint32_t i = 0; i < n; ++i) {
                 double xc = (i + 0.5) * dx, yc = (j + 0.5) * dx;
+                // x-face: θ is y-only ⇒ the inner product is real ⇒ u_f exactly ~0.
                 Spinor pa = taylor_green_wave_2d(xc, yc, 0.5);
-                Spinor pb = taylor_green_wave_2d(xc + dx, yc, 0.5);
-                double uf = wave_velocity_face(pa, pb, 0.5, dx);
-                auto uref = taylor_green_velocity(InitialCondition::kTaylorGreen2DZInvariant,
-                                                  xc + 0.5 * dx, yc, 0.25);
-                emax = std::max(emax, std::fabs(uf - uref[0]));
+                Spinor pbx = taylor_green_wave_2d(xc + dx, yc, 0.5);
+                CHECK(std::fabs(wave_velocity_face(pa, pbx, 0.5, dx)) <= 1e-13);
+                // y-face: converges to λ∇μ·ŷ at the face midpoint.
+                Spinor pby = taylor_green_wave_2d(xc, yc + dx, 0.5);
+                double vf = wave_velocity_face(pa, pby, 0.5, dx);
+                double vref = -2.0 * std::cos(k2pi * xc) * std::sin(k2pi * (yc + 0.5 * dx));
+                emax = std::max(emax, std::fabs(vf - vref));
             }
         err[idx++] = emax;
     }
