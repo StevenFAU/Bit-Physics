@@ -9,7 +9,7 @@
 > **Commit chain:** probe (`docs/_audits/phase-6/c1-u2-difflogic-ca-probe-2026-06-11T14-37-07Z.md`
 > commit) → `96a235b` (stage-1a scaffold+RED, evidence footer-hashed) → `08c373e`
 > (stage-1b GREEN + golden) → `7e0cc53` (stage-1c spec/perf/CI/corpus/mutation/gate-13) →
-> *(stage-2 landing fold SHA back-filled per Convention #12)*.
+> `7391510` (stage-2 landing fold; SHA back-filled per Convention #12).
 
 ## Gates (spec Appendix D.6)
 
