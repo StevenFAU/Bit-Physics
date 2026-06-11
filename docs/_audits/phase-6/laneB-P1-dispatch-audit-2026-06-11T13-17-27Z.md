@@ -83,3 +83,6 @@ documentation, docs-only commits.
 
 - Plan-proposal commit: *(back-filled in follow-up commit)*
 - Audit-note commit (this file): *(back-filled in the same follow-up commit)*
+
+plan_proposal_commit_sha: 7f42917  # Convention #12 back-fill (§ 4); pushed in P-2
+audit_note_commit_sha: 06ec8f6  # Convention #12 back-fill (§ 4); pushed in P-2

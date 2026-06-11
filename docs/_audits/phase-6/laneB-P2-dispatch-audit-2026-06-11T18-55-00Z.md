@@ -124,3 +124,10 @@ with total budget at 45%; revisit if the asset dir grows.
   .reaction-diffusion] rel 1e-4; neural-ca bit-exact (max_abs 0.0); no
   tolerance widened anywhere.
 - Commit SHAs: *(back-filled below per Convention #12 — never `--amend`)*
+
+p1_plan_commit_sha: 7f42917  # Convention #12 back-fill (§ 5)
+p1_audit_commit_sha: 06ec8f6  # Convention #12 back-fill (§ 5)
+house_style_commit_sha: a5b7d4a  # Convention #12 back-fill (§ 5)
+poster_assets_commit_sha: 3a04d58  # Convention #12 back-fill (§ 5)
+landing_v2_commit_sha: c41257a  # Convention #12 back-fill (§ 5)
+p2_audit_commit_sha: 95f4b4c  # Convention #12 back-fill (§ 5)
