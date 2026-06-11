@@ -85,7 +85,10 @@ TEST_CASE("A2: 16-bit quantization round-trip is within the closed-form bound") 
             double tt = (m - r.lo[k]) / (r.hi[k] - r.lo[k]);
             uint32_t code = static_cast<uint32_t>(std::lround(tt * 65535.0));
             double back = r.lo[k] + code * (r.hi[k] - r.lo[k]) / 65535.0;
-            CHECK(std::fabs(back - m) <= bound[k] * (1.0 + 1e-12));
+            // FP slack: the encode/decode arithmetic rounds in a different op-order
+            // than the closed-form bound (measured excess ~1 ulp of (m - lo)).
+            CHECK(std::fabs(back - m)
+                  <= bound[k] + 1e-15 * (std::fabs(r.hi[k]) + std::fabs(r.lo[k])));
         }
     }
 }

@@ -231,7 +231,12 @@ QuantRanges calibrate_ranges(const LbmConfig& cfg, const MomentBasis& basis) {
         }
     };
     absorb(f);
-    for (uint32_t s = 0; s < cfg.warmup_steps; ++s) {
+    // Stability-guided = the envelope must cover the WHOLE trajectory (a Poiseuille
+    // start-up keeps accelerating well past any short warmup; a clamped momentum moment
+    // is a systematic bias, MEASURED at stage 1b: 64-step ranges on a 200-step run gave
+    // ~60% u error from clamping). Calibrate over max(warmup_steps, steps).
+    const uint32_t horizon = std::max(cfg.warmup_steps, cfg.steps);
+    for (uint32_t s = 0; s < horizon; ++s) {
         reference_step(f, cfg);
         absorb(f);
     }
@@ -278,7 +283,6 @@ MacroFields macroscopic(const std::vector<double>& f, const LbmConfig& cfg) {
 }  // namespace
 
 LbmResult run_lbm(const LbmConfig& cfg, const std::filesystem::path* capture_manifest) {
-    throw std::runtime_error("C-1 U-3 scaffold (RED): run_lbm implemented at the GREEN commit");
     const size_t n = ncell_of(cfg);
     const VkDeviceSize fbytes = static_cast<VkDeviceSize>(kQ) * n * sizeof(double);
     const size_t nwords = (static_cast<size_t>(kQ) * n + 1) / 2;
