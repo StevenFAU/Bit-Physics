@@ -83,9 +83,14 @@ struct ParticleSystem {
                                    // layout: dir-major [d][comp] -> 4 doubles per dir
     std::vector<double> jac_t;     // 9 per particle: T̃ (backward-map Jacobian, s'→t)
     std::vector<double> jac_f;     // 9 per particle (test mode only): F̃ forward
+    // per-step scratch: the mapped gradient (∇Φ)_p = T̃ᵀ(∇Φ)_{s'} (Eq. 18), computed
+    // ONCE per step (compute_mapped_gradients) and reused by P2G + both Eq.-23 samples
+    std::vector<double> mapped_grad;  // 12 per particle
     // cell binning (counting sort; rebuilt per step; deterministic order)
     std::vector<uint32_t> bin_offsets;  // ncell+1
     std::vector<uint32_t> bin_particles;
+
+    void compute_mapped_gradients();
 
     void rebuild_bins(uint32_t n);
 };
@@ -103,12 +108,15 @@ void g2p_spinor(const ParticleSystem& ps, const std::vector<double>& phi_g, uint
 // scalar weight field cancels in arg⟨·,·⟩ (documented spec § 2 scale-invariance).
 void p2g_spinor(const ParticleSystem& ps, std::vector<double>& phi_g, uint32_t n);
 
-// P2G evaluation of the mapped spinor field at an arbitrary sample point (the Eq.-23
-// enhanced-conversion samples). Returns weighted APIC mean; falls back to the nearest
-// grid value if no particle is in range (recorded by the caller as a regime note).
-void p2g_spinor_at(const ParticleSystem& ps, const std::vector<double>& phi_g,
-                   uint32_t n, const double* points, std::size_t npoints,
-                   std::vector<double>& out_spinors);
+// P2G evaluation of the mapped spinor field at the Eq.-23 enhanced-conversion
+// sample pairs (f ∓ dx_s/2, dx_s = dx/2) for all three +axis-owner faces of every
+// cell: one exact-union-window gather per cell serves all 6 points (off-centre
+// points need a wider window than cell-centred P2G; per-axis spline values shared).
+// Weighted APIC mean per point; grid-value fallback if no particle is in range.
+// Output layout: 4 doubles per item, item = axis·ncell + cell (a = f−dx_s/2 side).
+void p2g_face_samples(const ParticleSystem& ps, const std::vector<double>& phi_g,
+                      uint32_t n, std::vector<double>& out_a,
+                      std::vector<double>& out_b);
 
 // RK4 advection of (x_p, T̃_p[, F̃_p]) in the frozen MAC velocity field
 // (faces per the +axis-owner convention), dT̃/dt = −T̃·∇u, dF̃/dt = ∇u·F̃.
@@ -116,17 +124,13 @@ void advect_particles_rk4(ParticleSystem& ps, const std::vector<double>& ux,
                           const std::vector<double>& uy, const std::vector<double>& uz,
                           uint32_t n, double dt, bool track_forward);
 
-// MAC-face velocity sample (quadratic B-spline, staggered nodes) at a point.
-std::array<double, 3> sample_mac_velocity(const std::vector<double>& ux,
-                                          const std::vector<double>& uy,
-                                          const std::vector<double>& uz, uint32_t n,
-                                          double x, double y, double z);
-// ∇u (3×3, row r = ∂u_r/∂x_c) at a point from the MAC field.
-std::array<double, 9> sample_mac_velocity_gradient(const std::vector<double>& ux,
-                                                   const std::vector<double>& uy,
-                                                   const std::vector<double>& uz,
-                                                   uint32_t n, double x, double y,
-                                                   double z);
+// MAC-face velocity + gradient sample (quadratic B-spline, staggered nodes) at a
+// point: u (3) and ∇u (3×3, row r = ∂u_r/∂x_c) from ONE shared stencil walk.
+void sample_mac_velocity_and_gradient(const std::vector<double>& ux,
+                                      const std::vector<double>& uy,
+                                      const std::vector<double>& uz, uint32_t n,
+                                      double x, double y, double z, double* u_out,
+                                      double* grad_out);
 
 // Cell-centred average of the MAC field (capture parity with the collocated parent).
 void mac_to_centres(const std::vector<double>& ux, const std::vector<double>& uy,
