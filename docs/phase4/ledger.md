@@ -26,7 +26,7 @@
 | Stage | Spec item | Sim ID | Variant | Stack | Primary infra | Phase-3 carry-in | Hidden deps | Spec path | PBT invariants declared | Perf-ledger row | Audit | Status |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | 9 | 4.1 | continuous-ca/reaction-diffusion-2d | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-diff.md | 2 (gradient_matches_finite_difference + concentration_change_bounded) | yes | batch-1-close | **landed** |
-| 10 | 4.2 | particle-fluids/sph-water | diff | D | § 4.2.A | (none) | — | docs/sim-specs/particle-fluids/sph-water/spec-diff.md | TODO (≥2) | no | — | deferred → P4-Greenfield-CPU (5th diff sim; CPU-feasible, operator-decidable future diff batch) |
+| 10 | 4.2 | particle-fluids/sph-water | diff | D | § 4.2.A | (none) | — | docs/sim-specs/particle-fluids/sph-water/spec-diff.md | 2 (gradient_matches_finite_difference + density_summation_positive) | yes | c1-u1-landing (phase-6) | **landed** (Phase-6 C-1 U-1; deferral history: P4-Greenfield-CPU, batch-1 EXP-C) |
 | 11 | 4.3 | hybrid-pg/mpm-multimaterial | diff | D | § 4.2.A | (none) | — | docs/sim-specs/hybrid-pg/mpm-multimaterial/spec-diff.md | 2 (gradient_matches_finite_difference + momentum_change_bounded_by_impulse) | yes | batch-1-close | **landed** |
 | 12 | 4.4 | continuous-ca/lenia | diff | D | § 4.2.A | (none) | — | docs/sim-specs/continuous-ca/lenia/spec-diff.md | 2 (gradient_matches_finite_difference + field_bounded) | yes | batch-1-close | **landed** |
 | 13 | 4.5 | volumetric-grid/eulerian-smoke | diff | E | § 4.2.A | (none) | — | docs/sim-specs/volumetric-grid/eulerian-smoke/spec-diff.md | 2 (gradient_matches_finite_difference + advect_field_bounded_by_input_range) | yes | batch-1-close | **landed** |
