@@ -1,0 +1,62 @@
+#version 450
+// Clebsch-PFM wave-function MAC-face inner products — Stack-C f64 (NoContraction).
+//
+// Paper Eq. 19 split (probe § 5 / spec § 6 execution posture): GLSL exposes no f64
+// transcendentals, so this kernel computes the COMPLEX inner product
+//   z_f = <Phi_a, Phi_b>_C = conj(a1)b1 + conj(a2)b2
+// per MAC face (a = cell g, b = the +axis periodic neighbour) in pure f64 arithmetic;
+// the host applies u_f = (hbar/dx)*atan2(Im z, Re z). One invocation per cell, three
+// owned faces (+x, +y, +z); element-wise, no atomics; `precise` -> NoContraction.
+//
+// Layout: phi[] is 4 doubles per cell (Re1, Im1, Re2, Im2), x-major lex cell order
+// cell = (k*n + j)*n + i. z*[] are 2 doubles per face (Re, Im), same cell order.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly  buffer Phi { double phi[]; };
+layout(std430, binding = 1) writeonly buffer Zx  { double zx[];  };
+layout(std430, binding = 2) writeonly buffer Zy  { double zy[];  };
+layout(std430, binding = 3) writeonly buffer Zz  { double zz[];  };
+layout(push_constant) uniform Params {
+    uint n;
+} p;
+
+void inner(uint a, uint b, out double re, out double im) {
+    double a1r = phi[4u * a + 0u], a1i = phi[4u * a + 1u];
+    double a2r = phi[4u * a + 2u], a2i = phi[4u * a + 3u];
+    double b1r = phi[4u * b + 0u], b1i = phi[4u * b + 1u];
+    double b2r = phi[4u * b + 2u], b2i = phi[4u * b + 3u];
+    // conj(a)*b: (ar - i*ai)(br + i*bi) = (ar*br + ai*bi) + i(ar*bi - ai*br)
+    precise double r = ((a1r * b1r + a1i * b1i) + (a2r * b2r + a2i * b2i));
+    precise double s = ((a1r * b1i - a1i * b1r) + (a2r * b2i - a2i * b2r));
+    re = r;
+    im = s;
+}
+
+void main() {
+    uint n = p.n;
+    uint ncell = n * n * n;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    uint i = cell % n;
+    uint j = (cell / n) % n;
+    uint k = cell / (n * n);
+    uint ip = (i + 1u) % n;
+    uint jp = (j + 1u) % n;
+    uint kp = (k + 1u) % n;
+    uint cx = (k * n + j) * n + ip;
+    uint cy = (k * n + jp) * n + i;
+    uint cz = (kp * n + j) * n + i;
+
+    double re, im;
+    inner(cell, cx, re, im);
+    zx[2u * cell + 0u] = re;
+    zx[2u * cell + 1u] = im;
+    inner(cell, cy, re, im);
+    zy[2u * cell + 0u] = re;
+    zy[2u * cell + 1u] = im;
+    inner(cell, cz, re, im);
+    zz[2u * cell + 0u] = re;
+    zz[2u * cell + 1u] = im;
+}

@@ -1,0 +1,56 @@
+#version 450
+// Clebsch-PFM per-cell phase rotation + (optional) normalization — Stack-C f64
+// (NoContraction).
+//
+// Applies Phi <- Phi * r with r = (rot_re, rot_im) a HOST-precomputed unit complex
+// factor per cell (the paper's Eq. 26 standardization r = e^{-iq/hbar} and any gauge
+// rotation; the host owns the f64 sin/cos — GLSL has no f64 trig), then optionally
+// normalizes Phi <- Phi / ||Phi|| (sqrt IS f64-capable in SPIR-V). Element-wise, no
+// atomics; `precise` -> NoContraction.
+//
+// normalize_flag: 0 = rotate only; 1 = rotate then normalize; 2 = normalize only
+// (rot buffer ignored).
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) buffer Phi          { double phi[]; };
+layout(std430, binding = 1) readonly buffer Rot { double rot[]; };
+layout(push_constant) uniform Params {
+    uint n;
+    uint normalize_flag;
+} p;
+
+void main() {
+    uint ncell = p.n * p.n * p.n;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    double p1r = phi[4u * cell + 0u], p1i = phi[4u * cell + 1u];
+    double p2r = phi[4u * cell + 2u], p2i = phi[4u * cell + 3u];
+
+    if (p.normalize_flag != 2u) {
+        double rr = rot[2u * cell + 0u], ri = rot[2u * cell + 1u];
+        precise double q1r = p1r * rr - p1i * ri;
+        precise double q1i = p1r * ri + p1i * rr;
+        precise double q2r = p2r * rr - p2i * ri;
+        precise double q2i = p2r * ri + p2i * rr;
+        p1r = q1r;
+        p1i = q1i;
+        p2r = q2r;
+        p2i = q2i;
+    }
+
+    if (p.normalize_flag != 0u) {
+        precise double nrm2 = ((p1r * p1r + p1i * p1i) + (p2r * p2r + p2i * p2i));
+        double inv = 1.0lf / sqrt(max(nrm2, 1e-300lf));
+        p1r *= inv;
+        p1i *= inv;
+        p2r *= inv;
+        p2i *= inv;
+    }
+
+    phi[4u * cell + 0u] = p1r;
+    phi[4u * cell + 1u] = p1i;
+    phi[4u * cell + 2u] = p2r;
+    phi[4u * cell + 3u] = p2i;
+}
