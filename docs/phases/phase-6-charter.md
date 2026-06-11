@@ -1,11 +1,11 @@
 # Phase 6+ — Ongoing Maintenance, Expansion, and Open Backlog Charter
 
 > **Project:** Bit-Physics (`git@github.com:StevenFAU/Bit-Physics.git`; owner: Steven Cohen)
-> **Version:** 1.2 (verification-hardening alignment, May 18 2026)
+> **Version:** 1.3 (operating-model revision — two-lane serial cluster execution; landed June 11 2026, operator-ratified June 10 2026)
 > **Spec anchor:** `docs/architecture.md` (v2.4; originally drafted as `gpu-sims-design-spec-v2.md`) § 11.7 (Ongoing) + § 11.0 (Pacing under single-agent AI dispatch) + spec Appendix D + spec Appendix G + spec Appendix E.
 > **Plan location:** `docs/phases/phase-6-charter.md` (this file).
 > **Status:** Draft charter. Lives as a long-running planning artifact, not a single executable phase.
-> **Execution model:** Multi-track. Each track inside Phase 6 is its own mini-phase with its own dispatch under spec § 7.13's single-agent model (one coordinator chat + one Claude Code agent role per track, running auto-accept, committing direct to `main`, tagged at track close).
+> **Execution model (v1.3):** Two-lane serial cluster execution (§ 3). Each cluster is a charter-first self-driving single-agent dispatch (spec § 7.13) with continuation handoffs, committing direct to `main`. **No per-cluster tags** — `v0.6.0-phase-6` is proposed once at phase close, operator-pushed (I7 / spec § 7.12). *(v1.2's multi-track / tagged-at-track-close model is superseded — see the v1.3 amendment block below.)*
 
 > **v2 verification-hardening amendments (May 18 2026, post-design-spec v2.4):** Normative for every Phase 6 sub-charter.
 >
@@ -16,11 +16,17 @@
 > 1. **Pre-dispatch review (Convention E-addendum, spec § 7.4):** Owner runs phase-plan-review session before dispatch; audit at `docs/_audits/phase-6-<track>/pre-dispatch-review-<UTC>.md`.
 > 2. **Cross-phase audit replay (first action):** Track's first stage runs `python -m integrity.scripts.replay_prior_phase --prior-phase <most-recent-phase-or-track-tag> --audit <its-landing-audit> --gates …`. Discrepancy → BLOCKED.
 > 3. **TDD discipline:** Sim tracks honor spec § 1.3 step 4 (failing-tests output hash in commit footer). Capability/maintenance tracks where no sim is added skip this for non-sim deliverables but inherit it for any sim-adjacent test surfaces.
-> 4. **Operator-only tag pushing (spec § 7.12):** Track closes by proposing the tag `v0.6.0-phase-6-<track>` (or whichever versioning the owner picks); agent never runs `git tag` or `git push origin <tag>`.
+> 4. **Operator-only tag pushing (spec § 7.12):** Track closes by proposing the tag `v0.6.0-phase-6-<track>` (or whichever versioning the owner picks); agent never runs `git tag` or `git push origin <tag>`. **[Superseded by v1.3:** no per-track/per-cluster tags; a single `v0.6.0-phase-6` is proposed once at phase close, operator-pushed. The operator-only-push rule itself stands.**]**
 > 5. **Evidence-path verification + append-only check:** Track's closing audit runs `verify_evidence.py` on every track-stage report and runs the append-only check against the immediately-prior tag.
 > 6. **Schema-corpus growth (if track touches captures):** Append entries to `tests/fixtures/legacy-captures/phase-6-<track>-<sim>.h5` for any future schema bump (no current bumps planned beyond Phase 4 WU-A's 1.1.0).
 > 7. **Perf-ledger row (if track produces a sim):** Append to `docs/perf-ledger.md` per spec § 2.15.
 > 8. **Mutation-testing threshold compliance:** Tracks that touch testkit/integrity modules must not regress mutation scores below spec § 2.13 thresholds.
+
+> **v1.3 operating-model amendment (landed June 11 2026; operator-ratified June 10 2026).** SHIFT record at `docs/_audits/phase-6/charter-amendment-operating-model-2026-06-11T12-51-28Z.md` (first entry of the phase-6 audit ledger).
+>
+> **D-9 SHIFT.** Catalog D-9 (`docs/planning/bit-physics-master-catalog.md` § 60.1, multi-agent coordination tooling) stood open, with catalog Part VI prose leaning toward Claude Code Agent Teams + git worktrees + CLAUDE.md/AGENTS.md for multi-agent coordinated execution (default position: (d) defer). **D-9 now closes toward serial single-agent self-driving cluster dispatches**, with parallelism ONLY as the two-lane file-surface partition of § 3. Evidence: (a) measured Phase-5 single-session throughput — the 5-run CI campaign, health sweep, and dual launches were executed by single self-driving sessions with continuation handoffs; the throughput premise behind multi-agent is refuted. (b) The project's load-bearing disciplines are single-writer disciplines: append-only audits, trunk-based `main`, Convention-#12 back-fills, and HARD-STOP ratification gates all assume one agent's coherent view of HEAD; concurrent worktree agents would import state-divergence risk — the exact failure class the verification architecture exists to prevent.
+>
+> **Supersessions (v1.2 → v1.3):** header execution-model line (multi-track → two-lane serial clusters); v2-amendment item 4 (per-track tags → single phase-close tag); § 3 (track model → cluster model); § 6 (per-track audit dirs → `docs/_audits/phase-6/`). The rest of the v2 verification-hardening stack stays normative for every cluster, with "track" read as "cluster". § 2.6 backlog routing stands unchanged.
 
 This document is the **charter** for everything after Phase 5's productization completes. Unlike Phases 0–5, Phase 6+ is not a single execution unit — it's a rolling commitment to maintenance, capability expansion, and frontier tracking. The charter exists so that whenever a Phase 6 sub-charter is written, it has a parent reference for scope, conventions, and decision authority.
 
@@ -37,6 +43,7 @@ Phase 6+ covers:
 5. **Annual SIGGRAPH frontier additions** — at every SIGGRAPH cycle, evaluate new papers for adoption.
 6. **Cross-cutting capability work** — e.g., a unified determinism harness across multiple new sims; a unified rendering pipeline beyond Phase 5's render-passes.
 7. **Audit-tooling maturation** — Cat 4 grammar additions beyond Phase 1 Stage 1's three; Cat 5 link-graph visualization; integrity dashboard.
+8. **Lane B — portfolio presentation polish (v1.3).** Presentation-layer work on the shipped web portfolio — per-sim web frontend UI (controls, layout, styling, panels), the Pages landing page, common-web presentation code — runs as its own lane under § 3.1 and is **in scope**. Lane-B polish commits on `main` are charter-sanctioned, not scope creep. Lane B never touches compute kernels (HARD RULE, § 3.1).
 
 Phase 6+ does NOT cover:
 
@@ -117,29 +124,48 @@ their accountable Phase-6 home (architecture § 11.7 ownership table mirrors it)
 
 ---
 
-## § 3 — Operating model
+## § 3 — Operating model (v1.3): two lanes, serial cluster execution
 
-Phase 6 differs from Phases 0–5 in that it has no single landing event. Instead:
+> v1.2's track-based model (owner picks track → sub-charter → spec § 7.13 execution → landing audit → per-track tag) is superseded by this section; the SHIFT record with evidence is the v1.3 amendment block above and `docs/_audits/phase-6/charter-amendment-operating-model-2026-06-11T12-51-28Z.md`. Phase 6 still has no single landing event; what changed is how dispatches are shaped, paralleled, and tagged.
 
-1. **Owner picks a track** from the backlog (or a newly discovered need).
-2. **Author a Phase 6.<track> sub-charter** at `docs/phases/phase-6-<track>.md`. The sub-charter follows the same shape as the Phase 4.1–4.6 sub-landing plans:
-   - Preconditions
-   - Scope
-   - Sockets (which spec § 3 layer / which existing common module is touched)
-   - Per-unit charter
-   - Stage decomposition
-   - Acceptance criteria
-   - Agent prompts
-   - Audit-file paths (per spec § 8.1: `docs/_audits/phase-6-<track>/...`)
-3. **Execute per spec § 7.13** sequential single-agent.
-4. **Close with a landing audit.**
-5. **Bank conventions** if the track introduced new ones (extend spec § 7 or § 11.7 ownership table).
+### 3.1 Two-lane model
 
-The portfolio's audit trail thus grows continuously: every Phase 6 track leaves behind a sub-charter + landing audit, and the spec's § 11.7 ownership table is the running index.
+- **Lane A — Phase-6 forward:** new sim packages, category dirs, `tools/testkit`, `docs/sim-specs`, phase-6 audits, and the standing-backlog items routed in § 2.6.
+- **Lane B — Portfolio polish:** presentation layer ONLY of the shipped web portfolio — per-sim web frontend UI (controls, layout, styling, panels), the Pages landing page, common-web presentation code.
+- **LANE BOUNDARY HARD RULE:** lanes commit only to their own file surfaces. Lane B MUST NOT change compute kernels: WGSL shaders, step loops, seeded initial-state generation, capture/gate paths, tolerance or verify code. If a polish task requires touching any of those, the agent HARD-STOPs to the operator; if ratified, the change runs the FULL validate gate and is called out explicitly in the report and audit — never slipped into a styling commit. (The deploy pipeline publishing only validated bundles is the backstop, not the boundary.)
+- **SHARED-MAIN DISCIPLINE:** both lanes push to `origin/main`. Every session MUST `git pull --rebase` before its first commit and before every push; on any rebase conflict touching the other lane's surface, HARD-STOP (HARD RULE 2). Convention M: re-anchor against HEAD before editing.
+
+### 3.2 Cluster execution model (Lane A)
+
+Phase 6 executes as a sequence of CLUSTERS, each a charter-first self-driving dispatch: agent proposes scope + anchors verified against live sources (PHASE-0-charter HARD-STOP pattern), operator ratifies, agent self-drives with continuation handoffs. The charter-first ratification gate serves the Convention E-addendum (spec § 7.4) pre-dispatch-review function.
+
+**Cluster ordering:**
+
+- **C-1 = Phase-4-Greenfield-CPU pool** (§ 2.6) — the deferred-with-cause frontier sims not requiring CUDA; already-scoped unblocking work first.
+- **C-2+ = catalog family clusters** from the master-catalog phenomenon families, scoped per-cluster at charter time. The catalog is a **superseded baseline**: cluster charters anchor against live papers and the audit chain, never against catalog prose.
+- **Standing backlog items** (Windows/macOS binaries, boids-3d-wgsl-precision-review, append-only CI full-chain coverage, integrity cat2 TODOs — § 2.6 routing stands) are woven between clusters as small dispatches at operator discretion.
+- **Phase-4-CUDA x10 stays parked** pending hardware (§ 2.6).
+
+### 3.3 Cluster-close definition
+
+- Per-cluster mini-audit under `docs/_audits/phase-6/` (append-only).
+- `verify_evidence` green over the cluster's audits.
+- Full CI sweep green at the cluster's final head (sub-phase conventions § S.5).
+- All 13 gates (spec § 3.5) or declared-deferred-with-cause per sim.
+- **NO tag per cluster** — `v0.6.0-phase-6` is proposed once at phase close, operator-pushed (I7 / spec § 7.12).
+
+### 3.4 What carries over from v1.2
+
+- The v2 verification-hardening amendment stack above stays normative for every cluster, with "track" read as "cluster" (item 4 superseded as noted).
+- The § 5 per-track charter template remains the skeleton for cluster charters.
+- § 7 convention banking is unchanged: clusters that introduce conventions co-author the spec amendment with the cluster's landing commit.
+- The portfolio's audit trail grows continuously: every cluster leaves behind a ratified cluster charter + mini-audit in `docs/_audits/phase-6/`, and the spec's § 11.7 ownership table is the running index.
 
 ---
 
 ## § 4 — Tracks already named (priority order, owner-decided)
+
+> **v1.3 note:** the operator exercised the re-order this section invites — the ratified cluster ordering is § 3.2 (C-1 = Phase-4-Greenfield-CPU pool, then catalog family clusters, backlog woven between). The list below is retained as the candidate-family inventory, not the dispatch order.
 
 The initial priority is owner's call. A reasonable Phase-5-close ordering:
 
@@ -156,6 +182,8 @@ This ordering is a suggestion; owner re-orders based on portfolio direction at P
 ---
 
 ## § 5 — Per-track charter template
+
+> **v1.3 note:** this skeleton now serves cluster charters (read "track" as "cluster"). Drop the tag-prepare / `Tag pushed: NO` closing step — cluster closes propose no tag (§ 3.3); audit paths resolve per § 6 (single `docs/_audits/phase-6/` ledger).
 
 When authoring a new Phase 6.<track> sub-charter, use this skeleton:
 
@@ -218,13 +246,14 @@ Existing exemplars to adapt from:
 
 ---
 
-## § 6 — Audit-file paths
+## § 6 — Audit-file paths (v1.3)
 
-Per spec § 8.1:
+Per spec § 8.1, as revised by the v1.3 amendment:
 
-- Each track lands at `docs/_audits/phase-6-<track-name>/landing-<UTC>.md`.
-- Per-unit reports at `docs/_audits/phase-6-<track-name>/<unit>-<UTC>.md`.
-- Per-track audit-directory bootstrap is the first commit of each track.
+- All Phase-6 cluster audits land in the single append-only ledger directory `docs/_audits/phase-6/`.
+- Cluster mini-audits at `docs/_audits/phase-6/<cluster>-close-<UTC>.md`; per-unit reports at `docs/_audits/phase-6/<cluster>-<unit>-<UTC>.md`.
+- The directory was bootstrapped by the v1.3 charter-amendment note (its first entry).
+- *(v1.2's per-track directories `docs/_audits/phase-6-<track-name>/` are superseded; none was ever created.)*
 
 ---
 
