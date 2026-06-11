@@ -158,6 +158,16 @@ members = [
   # et al. 2020 (Distill); vendored oracle references/growing-neural-ca/.
   # Registered at Stage 1a.
   "packages/neural-ca/python",
+  # Phase-6 C-1 unit U-2 frozen-gate Differentiable Logic CA variant of neural-ca
+  # (Stack D / Taichi; spec § 11.5 item 4.20, Phase-4 ledger row 28 deferred-with-
+  # cause; ratified D-3 frozen-gate scope). Hand-constructed 16-gate multilinear
+  # circuit computing exact Game-of-Life in the hard limit (exhaustive-512 golden)
+  # + WU-A soft-excitation gradient surface (no training, no EFECT). Golden table
+  # ≥3 anchors (A1 gate truth tables+midpoints / A2 exhaustive-512 GoL / A3
+  # central FD). Single-stack (gate-14 N/A; parent-equivalence REFRAMED to exact
+  # circuit goldens). D-LAYOUT: flat `packages/neural-ca-frontier-difflogic/` per
+  # §0.3. Registered at C-1 U-2 stage 1a.
+  "packages/neural-ca-frontier-difflogic",
 
   # Phase-3 task-7 (sub-phase-phase-3-pinn-poisson). SEVENTH Phase-3 sub-phase +
   # FIRST learned-dynamics-CATEGORY sim. Stack E (Warp substrate) + PyTorch,

@@ -60,6 +60,7 @@ members = [
     "mpm-multimaterial-stack-d",
     "mpm-multimaterial-stack-e",
     "neural-ca",
+    "neural-ca-frontier-difflogic",
     "particle-lenia",
     "physarum",
     "pinn-poisson",
@@ -2866,6 +2867,44 @@ requires-dist = [
     { name = "wgpu", marker = "extra == 'local-gpu'", specifier = ">=0.31" },
 ]
 provides-extras = ["dev", "local-gpu"]
+
+[[package]]
+name = "neural-ca-frontier-difflogic"
+version = "0.0.0"
+source = { editable = "packages/neural-ca-frontier-difflogic" }
+dependencies = [
+    { name = "bit-physics-common-py" },
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+    { name = "taichi" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-common-py", editable = "common/common-py" },
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
+    { name = "taichi", specifier = ">=1.7,<2.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "numba"
