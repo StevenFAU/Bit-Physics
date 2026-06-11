@@ -258,3 +258,35 @@ pages_evidence_commit_sha: d516ccc  # Convention #12 back-fill
   untouched and no new verification claim is made.
 
 binary_release_ungate_commit_sha: fda19ec  # Convention #12 back-fill (§ 10 append commit)
+
+## § 11 — binary-release publish evidence (appended post-dispatch per the § 10 commitment; Convention #12 append pattern)
+
+- **Run:** binary-release `27315258312` (workflow_dispatch,
+  confirm_release=true, operator-fired) on head `3729db8` — **completed
+  success**: both Stack-C sims validated green + Publish job executed (the
+  first ever GitHub Release published by this repo). — FACT (public API,
+  read this session)
+- **Release:** id `337596089` on the EXISTING operator-pushed tag
+  `v0.5.0-phase-5` (I7 carve-out; no tag created) — **published, not draft**:
+  https://github.com/StevenFAU/Bit-Physics/releases/tag/v0.5.0-phase-5 — FACT
+- **Assets + VERIFIED digests** (downloaded from the release URLs this
+  session; three-way match release-body == SHA256SUMS asset == locally
+  computed `sha256sum` over the downloaded bytes; `sha256sum -c` OK; ELF
+  64-bit x86-64 confirmed):
+
+| Asset | Size | sha256 (verified) |
+|---|---|---|
+| `bit_physics_mass_spring_cloth_capture-linux-x86_64` | 1,966,048 B | `912387fb821ac30795b9267ddd600e12cb2af2b6962b1bbb4cf90b663b72ce5a` |
+| `bit_physics_rd2d_stack_c_capture-linux-x86_64` | 1,956,472 B | `25a592fbcc36dbe188179e9d33fd823a500da289fc8af5b7cd77ed225c1ab036` |
+| `SHA256SUMS` | 229 B | (the digest manifest itself) |
+
+- **Release body:** carries the honest build-SHA statement verbatim — built
+  and § 3.8-validated in run `27315258312` on build SHA `3729db8cd0…` (a
+  post-close housekeeping head), attached to the Phase-5 close tag
+  (`v0.5.0-phase-5` = `922a850`), same-run artifacts never rebuilt or
+  re-fetched, scope note (2 Stack-C CPU-tier Linux x86_64; the 7-sim
+  browser set is the Pages site), and the no-new-verification-claims
+  statement. — FACT (fetched this session)
+- The landing page's Downloads links (committed at fa4a7af) now resolve to
+  these exact asset URLs; the LIVE page picks them up on the operator's next
+  web-deploy dispatch.
