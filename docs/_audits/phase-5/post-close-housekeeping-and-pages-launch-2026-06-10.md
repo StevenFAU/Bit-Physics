@@ -290,3 +290,5 @@ binary_release_ungate_commit_sha: fda19ec  # Convention #12 back-fill (§ 10 app
 - The landing page's Downloads links (committed at fa4a7af) now resolve to
   these exact asset URLs; the LIVE page picks them up on the operator's next
   web-deploy dispatch.
+
+release_evidence_commit_sha: 2c160d2  # Convention #12 back-fill (§ 11 append commit)
