@@ -135,3 +135,6 @@ none was an unresolved section-0.3 conflict:
 - Audit-note bootstrap commit (this file, Convention A new-files-first):
   *(back-filled in a follow-up commit per Convention #12 — never `--amend`)*
 - Charter v1.3 amendment commit: *(back-filled in the same follow-up commit)*
+
+audit_note_bootstrap_commit_sha: 95c8402  # Convention #12 back-fill (§ 5)
+charter_v1_3_amendment_commit_sha: 1d705c4  # Convention #12 back-fill (§ 5)
