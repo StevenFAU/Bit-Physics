@@ -3,8 +3,15 @@ name: binary-release
 # Stack-C (C++ / Vulkan) sim, re-verifying correctness via the spec § 3.8 bootstrap
 # gate (clean CMake build → run the headless capture binary → compare_captures
 # round-trip / in-binary witness + PBT surrogate). Build steps mirror cpp-strict.yml
-# (the green Stack-C build precedent). The `deploy` job is GATED OFF (§ 4.3 / § 4.5):
-# Phase 5 ships artifact-ready, no GitHub Release drafted.
+# (the green Stack-C build precedent). The `deploy` job (un-gated at the post-phase-5
+# housekeeping sweep, operator-ratified 2026-06-10, mirroring the web-deploy Pages
+# un-gating; it was GATED OFF through Phase 5) publishes a GitHub Release on
+# OPERATOR-CONTROLLED workflow_dispatch only (confirm_release=true). It attaches the
+# SAME validated binaries the build-and-validate matrix produced in the same run —
+# never rebuilt, never re-fetched from elsewhere — with their sha256 digests in the
+# release body. The release attaches to the EXISTING operator-pushed v0.5.0-phase-5
+# tag: creating a release on an existing tag is the ratified I7 carve-out; this
+# workflow never creates or pushes a tag. Publishing adds no new verification claims.
 #
 # §0.3 SHIFT — OS scope: the bootstrap gate is lavapipe-pinned (D14/D4, software
 # Vulkan determinism) and validated on ubuntu-latest, mirroring cpp-strict's
@@ -24,8 +31,8 @@ on:
       - 'cmake/Packaging.cmake'
   workflow_dispatch:
     inputs:
-      confirm_deploy:
-        description: 'Set to "true" to run the deploy job. Default false (Phase 5 artifact-ready only).'
+      confirm_release:
+        description: 'Set to "true" to publish the GitHub Release after a green validate matrix (operator-controlled).'
         required: true
         default: 'false'
         type: choice
@@ -145,21 +152,67 @@ jobs:
           if-no-files-found: warn
 
   deploy:
-    name: Deploy (GATED OFF — no Release in Phase 5)
+    name: Publish GitHub Release (operator-dispatched; confirm_release=true)
     needs: build-and-validate
-    if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
+    if: github.event_name == 'workflow_dispatch' && inputs.confirm_release == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # draft a GitHub Release with binaries attached (§ 4.3)
+      contents: write   # publish a GitHub Release with binaries attached (§ 4.3)
     steps:
+      # Go-live (2026-06-10). Linux x86_64 only (the validated matrix; Windows/
+      # macOS are Phase-6 — the old macOS quarantine note moves with them, see
+      # docs/productization/binary-release.md § go-live runbook).
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
+          pattern: binary-release-*
           path: dist
-      # Release step — NOT exercised in Phase 5 (confirm_deploy defaults false).
-      # macOS binaries are UNSIGNED; the `xattr -d com.apple.quarantine` workaround
-      # is documented in docs/productization/binary-release.md § go-live runbook.
-      - name: Draft GitHub Release (binaries attached)
-        uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2.4.0 (pin re-verified at go-live)
+      - name: Stage assets, compute sha256 digests, compose release body
+        run: |
+          set -euo pipefail
+          mkdir -p assets
+          for d in dist/binary-release-*/; do
+            for f in "$d"*_capture; do
+              test -f "$f" || { echo "no capture binary under $d" >&2; exit 1; }
+              cp "$f" "assets/$(basename "$f")-linux-x86_64"
+            done
+          done
+          n=$(ls assets | wc -l)
+          test "$n" -ge 2 || { echo "expected >=2 staged binaries, got $n" >&2; exit 1; }
+          (cd assets && sha256sum -- * > SHA256SUMS)
+          echo "staged:"; cat assets/SHA256SUMS
+          {
+            echo "## Stack-C native capture binaries (Phase-5 deliverables)"
+            echo
+            echo "Built and § 3.8 bootstrap-validated (clean CMake build → headless capture"
+            echo "run → compare_captures round-trip / witness + PBT surrogate, Mesa lavapipe"
+            echo "software Vulkan) in THIS workflow run — run \`${{ github.run_id }}\` on"
+            echo "build SHA \`${{ github.sha }}\`, a post-close housekeeping head. The Phase-5"
+            echo "close itself is the tag this release attaches to (\`v0.5.0-phase-5\` ="
+            echo "\`922a850\`). The attached assets are the SAME artifacts the validate matrix"
+            echo "produced in this run: never rebuilt, never re-fetched from elsewhere."
+            echo
+            echo "**Scope (honest):** 2 qualifying Stack-C (C++/Vulkan) sims, Linux x86_64,"
+            echo "CPU-tier headless capture binaries. The full 7-sim browser-WebGPU set is"
+            echo "served at https://stevenfau.github.io/Bit-Physics/. Windows/macOS builds"
+            echo "are DEFERRED-to-Phase-6 (binary-release.md § go-live)."
+            echo
+            echo "**sha256 digests** (also attached as \`SHA256SUMS\`; mirrored in the audit"
+            echo "ledger under \`docs/_audits/phase-5/\`):"
+            echo
+            echo '```'
+            cat assets/SHA256SUMS
+            echo '```'
+            echo
+            echo "Publishing adds NO new verification claims: the gates that validated these"
+            echo "binaries are unchanged, and their record is the append-only audit ledger."
+          } > release-body.md
+      - name: Publish GitHub Release on the existing v0.5.0-phase-5 tag (I7 carve-out — no tag created)
+        uses: softprops/action-gh-release@aec2ec56f94eb8180ceec724245f64ef008b89f5 # v2.4.0 (tag SHA verified against softprops/action-gh-release via the public API at go-live; the prior pin c95fe148 was v2.2.1 mislabeled as v2.4.0 — caught by this re-verification)
         with:
-          draft: true
-          files: dist/**/*
+          tag_name: v0.5.0-phase-5
+          name: "v0.5.0-phase-5 — Phase-5 close · Stack-C binaries"
+          body_path: release-body.md
+          draft: false
+          make_latest: "true"
+          fail_on_unmatched_files: true
+          files: assets/*
