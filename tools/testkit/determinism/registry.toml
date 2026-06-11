@@ -444,3 +444,21 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# lattice-boltzmann-d3q19-frontier-moment-encoded (Stack C / Vulkan-lavapipe; phase-6
+# C-1 unit U-3; the FIRST Stack-C LBM surface). D3Q19 BGK + Guo forcing + half-way
+# bounce-back with 16-bit moment-encoded persistent state (f64 compute, NoContraction
+# shaders). MEASURED bit-identical 2-run at every run_lbm invocation (the in-run
+# assert_deterministic_run witness, tolerance 0.0, both quantized + f64 modes; canonical
+# witness sha 2fe02516…). atomic_ops = "none": the kernels are element-wise; the encode
+# kernel's atomicOr composes DISJOINT 16-bit half-words (order-independent OR — not a
+# reduction), so no ordering-sensitive atomic surface exists. Lavapipe pin per cpp-strict
+# (VK_DRIVER_FILES=lvp_icd.json, LP_NUM_THREADS=0). No EFECT. Declared + MEASURED at
+# C-1 U-3 stage 1b/1c; HOLDS.
+[lattice.lattice-boltzmann-d3q19-frontier-moment-encoded]
+stack = "C"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

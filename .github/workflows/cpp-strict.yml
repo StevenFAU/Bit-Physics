@@ -90,7 +90,9 @@ jobs:
           # golden + mass_spring_cloth_pbt) GENERATE their own runs and read no
           # committed capture; the canonical flag-wind-128x128 capture is pulled
           # here so a future replay/validation ctest (gate-9) finds it locally.
-          git lfs pull --include="captures/reaction-diffusion-2d-ref/**,captures/mass-spring-cloth-ref/**"
+          # lbm-ref (Phase-6 C-1 U-3): the lbm_me_frontier_equivalence ctest reads the
+          # parent numpy capture (202 MB) for the bounded-quantization comparison.
+          git lfs pull --include="captures/reaction-diffusion-2d-ref/**,captures/mass-spring-cloth-ref/**,captures/lbm-ref/**"
 
       - name: ctest (substrate C-3, determinism C-2, capture C-1, smoke C-4, interop C-6, cloth gate-3/4/11)
         # The Vulkan/determinism/smoke tests set the lavapipe env (VK_DRIVER_FILES +

@@ -39,3 +39,9 @@ absolute = 0.0
 [budgets.lbm.cross_stack]
 relative = 1e-5
 absolute = 0.0
+
+# Phase-6 C-1 U-3 (ratified D-2): cap for the 16-bit moment-quantization equivalence
+# category — at-declared (no headroom beyond the documented measurement margin).
+[budgets.lbm-quantized.cross_stack]
+relative = 5.0e-2
+absolute = 1.0e-5

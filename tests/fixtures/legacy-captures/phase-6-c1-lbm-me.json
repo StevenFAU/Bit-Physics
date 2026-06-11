@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      64,
+      32,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "force_x_lattice": 1e-05,
+      "quantize_bits": 16.0,
+      "range_margin": 0.25,
+      "tau": 0.7,
+      "warmup_steps": 64.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:24ad070e62a675a91d0b6aafddb40168884f6050a2a37126aff82ada6abefbf9",
+    "format": "hdf5",
+    "path": "phase-6-c1-lbm-me.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-06-11T15:23:16Z",
+    "step_count": 8,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "lattice",
+    "name": "lattice-boltzmann-d3q19",
+    "variant": "frontier-moment-encoded-16bit"
+  },
+  "stack": {
+    "build_id": "phase-6-c1-u3",
+    "name": "cpp",
+    "version": "0.0.0"
+  }
+}

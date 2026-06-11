@@ -460,3 +460,17 @@ lpips_max = 0.15
 psnr_min = 28.0
 ssim_min = 0.85
 lpips_max = 0.15
+
+# [defaults.lbm-quantized] — Phase-6 C-1 U-3 (charter § 3.3, ratified D-2): the
+#   frontier-moment-encoded (16-bit) Stack-C LBM's bounded-quantization equivalence
+#   vs the landed numpy parent on poiseuille-64x32-seed42-step1000. MEASURED at the
+#   canonical 1001-frame horizon (stage 1c, full-horizon stability-guided ranges,
+#   margin 0.25): rho max_abs 8.5e-15; u max_abs 3.12e-6 (u_peak 8.65e-3 ->
+#   peak-relative 3.6e-4); max_rel over |u|>1e-6 cells 1.98e-2. DECLARED with
+#   documented margin (3.2x absolute / 2.5x relative): the comparison form is
+#   err <= absolute + relative*|parent| per field. Measure-then-declare per spec
+#   § 2.6 — NOT a widening of the parent's `lbm` category (which stays 1e-5 for
+#   true cross-stack ports; the U-3 f64 mode MEASURED inside it at ~4e-15/1.6e-15).
+[defaults.lbm-quantized]
+relative = 5.0e-2
+absolute = 1.0e-5
