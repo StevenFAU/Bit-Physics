@@ -426,3 +426,9 @@ runner    = "uv run --no-sync pytest packages/particle-lenia/tests/ -x -q --tb=n
 path      = "packages/flow-lenia/flow_lenia"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/flow-lenia/tests/ -x -q --tb=no"
+
+# Phase-6 C-1 unit U-1 (sph-water-diff). Per-sim mutation target (advisory, spec § 2.13/§ 8.7).
+[targets.sph_water_diff]
+path      = "packages/sph-water-diff/sph_water_diff"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/sph-water-diff/tests/ -x -q --tb=no"

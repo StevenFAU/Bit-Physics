@@ -154,3 +154,22 @@ trajectory the Phase-1 reference does not use.
 - `docs/sim-specs/continuous-ca/reaction-diffusion-2d/equivalence.md` (first
   cross-stack pair; IC-15 candidate template).
 - Stage 1c witness: `docs/_audits/phase-2/sub-phase-sph-water-stack-d/stage-1c-evidence/`.
+
+---
+
+## 6. WU-F differentiable-axis variant equivalence (appended C-1 U-1, 2026-06-11)
+
+The Phase-6 C-1 `sph-water-diff` variant (single-stack Taichi; gate-14 N/A) verifies
+forward-equivalence against this parent on the **WU-F differentiable axis** (declared
+`relative <= 1e-3`, axis cap `1e-2`; `tools/testkit/equivalence/variant/tolerance.py`).
+MEASURED at U-1 stage 1c (64 particles, 8 steps, h=0.05, diff-first runtime ordering):
+
+| Surface | Measured | Declared |
+|---|---|---|
+| Free-fall final positions (diff vs parent `_evolve`) | `np.array_equal == True` (max_abs 0.0) | rel <= 1e-3 |
+| SPH density (ti.static id-order pair sum vs parent 27-cell spatial hash) | max_rel 0.0 | rel <= 1e-12 (test) |
+
+Identical per-component f64 arithmetic; even the accumulation-order difference in the
+density sum reproduces bit-exactly at this fixture. Tests:
+`packages/sph-water-diff/tests/test_forward_equivalence.py`. Tolerance routing stays the
+existing `sph` category (no new `tolerance.toml` row; charter § 3.1 D-TOL).

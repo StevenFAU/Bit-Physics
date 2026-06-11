@@ -793,6 +793,41 @@ jobs:
   # reference, pulled in via the dev extra) — no committed LFS capture is read (the
   # schema-corpus legacy-capture fixture this sim ships is consumed by the WU-A corpus
   # round-trip jobs, not here), so no selective LFS pull step.
+  # Phase-6 C-1 unit U-1 (sph-water-diff). Differentiable SPH (Stack D / Taichi ti.ad.Tape)
+  # on the WU-A autodiff substrate. Tests instantiate the sim in-process (the
+  # forward-equivalence test imports the sph-water-stack-d parent, pulled in via the dev
+  # extra) — no committed LFS capture is read, so lfs: false stays correct.
+  test-sph-water-diff:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Sync sph-water-diff workspace deps (with dev extras)
+        working-directory: packages/sph-water-diff
+        run: uv sync --extra dev
+
+      - name: ruff (src + tests)
+        working-directory: packages/sph-water-diff
+        run: |
+          uv run ruff check sph_water_diff/ tests/
+          uv run ruff format --check sph_water_diff/ tests/
+
+      - name: mypy --strict (src)
+        working-directory: packages/sph-water-diff
+        run: uv run mypy --strict sph_water_diff/
+
+      - name: pytest (gradient golden 3 anchors + forward-equiv + inverse + PBT + capture)
+        working-directory: packages/sph-water-diff
+        run: uv run pytest tests/
+
   test-mpm-multimaterial-diff:
     runs-on: ubuntu-latest
     steps:

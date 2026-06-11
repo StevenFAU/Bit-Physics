@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dims": [
+      8,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "iterations": 2,
+      "planted_v0z": -0.2,
+      "recovered_v0z": -0.19999999999996898
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "gradient_fields": [
+    {
+      "dtype": "float64",
+      "name": "dLoss_dv0z",
+      "shape": [
+        1
+      ],
+      "wrt": "v0z"
+    }
+  ],
+  "payload": {
+    "checksum": "sha256:070a51daf6e1e8ed1289b080b320ad30a1c45cf518e0040dc0d0571822fd1507",
+    "format": "hdf5",
+    "path": "sph-water-diff-recover-v0z-8part-seed42.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-06-11T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.1.0",
+  "sim": {
+    "category": "particle-fluids",
+    "name": "sph-water-diff",
+    "variant": "diff"
+  },
+  "stack": {
+    "build_id": "cpu-det",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}

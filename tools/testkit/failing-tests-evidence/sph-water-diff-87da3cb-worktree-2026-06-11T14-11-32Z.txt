@@ -1,0 +1,317 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /home/clipbird/Projects/Bit-Physics/.venv/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/clipbird/Projects/Bit-Physics/packages/sph-water-diff
+configfile: pyproject.toml
+testpaths: tests
+plugins: jaxtyping-0.3.10, hydra-core-1.3.2, cov-7.1.0, anyio-4.13.0, timeout-2.4.0, hypothesis-6.152.8
+collecting ... collected 19 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  5%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [ 10%]
+tests/test_determinism.py::test_forward_bit_identical_across_runs FAILED [ 15%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 21%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 26%]
+tests/test_diagnostics.py::test_recovered_positions_bounded FAILED       [ 31%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_parent_final_positions FAILED [ 36%]
+tests/test_forward_equivalence.py::test_diff_forward_matches_parent_bit_close FAILED [ 42%]
+tests/test_forward_equivalence.py::test_diff_density_matches_parent_spatial_hash FAILED [ 47%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 52%]
+tests/test_gradient_golden.py::test_a1_freefall_exact_closed_form FAILED [ 57%]
+tests/test_gradient_golden.py::test_a3_pair_drho_dh_exact_closed_form FAILED [ 63%]
+tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report FAILED [ 68%]
+tests/test_gradient_golden.py::test_density_matches_parent_golden_surface PASSED [ 73%]
+tests/test_inverse_recovery.py::test_recover_planted_v0z FAILED          [ 78%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 84%]
+tests/test_inverse_recovery.py::test_recovery_from_other_init FAILED     [ 89%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [ 94%]
+tests/test_pbt_invariants.py::test_density_summation_positive_pbt FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:30: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_forward_bit_identical_across_runs ____________________
+tests/test_determinism.py:29: in test_forward_bit_identical_across_runs
+    f1, _ = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = prob.final_positions(v0z * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:36: in test_gradient_bit_identical_across_runs
+    _, g1 = _forward_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:20: in _forward_and_grad
+    target = prob.final_positions(v0z * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________________ test_recovered_positions_bounded _______________________
+tests/test_diagnostics.py:27: in test_recovered_positions_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________ test_diff_forward_matches_parent_final_positions _______________
+tests/test_forward_equivalence.py:54: in test_diff_forward_matches_parent_final_positions
+    diff_final = prob.final_positions(0.0)  # parent IC is at rest
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________ test_diff_forward_matches_parent_bit_close __________________
+tests/test_forward_equivalence.py:65: in test_diff_forward_matches_parent_bit_close
+    diff_final = prob.final_positions(0.0)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_diff_density_matches_parent_spatial_hash _________________
+tests/test_forward_equivalence.py:90: in test_diff_density_matches_parent_spatial_hash
+    diff_rho = prob.densities(h)
+               ^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:164: in densities
+    self.forward(self._h, self.state)
+sph_water_diff/sim.py:155: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:78: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/clipbird/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/testkit/golden/tables/sph-water-diff-gradient.json'
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________________ test_a1_freefall_exact_closed_form ______________________
+tests/test_gradient_golden.py:91: in test_a1_freefall_exact_closed_form
+    target = prob.final_positions(v0zt)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_a3_pair_drho_dh_exact_closed_form ____________________
+tests/test_gradient_golden.py:100: in test_a3_pair_drho_dh_exact_closed_form
+    ad = autodiff_drho_dh_pair(r, 0.05, 1.0e-3)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:186: in autodiff_drho_dh_pair
+    prob.forward(prob._h, prob.state)
+sph_water_diff/sim.py:155: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________ test_a2_gradient_matches_finite_difference_report _______________
+tests/test_gradient_golden.py:111: in test_a2_gradient_matches_finite_difference_report
+    target_pos = prob_v.final_positions(0.30 * 1.05)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_recover_planted_v0z ___________________________
+tests/test_inverse_recovery.py:17: in test_recover_planted_v0z
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:26: in test_gradient_fields_populated
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.15)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_other_init _________________________
+tests/test_inverse_recovery.py:37: in test_recovery_from_other_init
+    sol = solve_recovery(cfg, planted=0.15, init=0.40)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:30: in test_gradient_matches_finite_difference_pbt
+    @settings(
+               
+tests/test_pbt_invariants.py:43: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, x0, v0z=v0z, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/invariants.py:37: in gradient_matches_finite_difference
+    target = prob.final_positions(float(v0z) + 0.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+sph_water_diff/sim.py:94: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       v0z=0.0,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+_____________________ test_density_summation_positive_pbt ______________________
+tests/test_pbt_invariants.py:47: in test_density_summation_positive_pbt
+    @settings(
+               
+tests/test_pbt_invariants.py:57: in test_density_summation_positive_pbt
+    assert density_summation_positive(cfg, x0, h=h)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/invariants.py:55: in density_summation_positive
+    rho = prob.densities(float(h))
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:164: in densities
+    self.forward(self._h, self.state)
+sph_water_diff/sim.py:155: in forward
+    raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+E   Falsifying example: test_density_summation_positive_pbt(
+E       h=0.03,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_positions_bounded - NotImple...
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_parent_final_positions
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_parent_bit_close
+FAILED tests/test_forward_equivalence.py::test_diff_density_matches_parent_spatial_hash
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_freefall_exact_closed_form - No...
+FAILED tests/test_gradient_golden.py::test_a3_pair_drho_dh_exact_closed_form
+FAILED tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_v0z - NotImplemen...
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_other_init - NotImp...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_density_summation_positive_pbt - No...
+========================= 18 failed, 1 passed in 3.09s =========================
