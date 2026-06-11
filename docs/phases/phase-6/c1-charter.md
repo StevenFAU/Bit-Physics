@@ -166,7 +166,7 @@ Ascending-risk + substrate-reuse ordering; D-class decisions (§ 6) are all reso
 ## § 8 — Charter commit SHAs (Convention #12)
 
 - §§ 0–2 (pool + anchors): `1636d2b`
-- §§ 3–9 (proposals + decisions): *(back-filled in the follow-up commit per Convention #12)*
+- §§ 3–9 (proposals + decisions): `253a3dc`
 
 ## § 9 — Continuation handoff (stub)
 
