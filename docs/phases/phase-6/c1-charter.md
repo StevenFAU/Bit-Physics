@@ -172,6 +172,33 @@ Ascending-risk + substrate-reuse ordering; D-class decisions (§ 6) are all reso
 
 > *Empty at charter stage by design. If a build session approaches context fill: commit landed work, append here — state, next unit/step, open questions, last-commit SHA — push, report. The continuation session resumes from this block at HEAD (Appendix D.9 format).*
 
+### Handoff #1 — build session 1 (2026-06-11, appended at context checkpoint)
+
+`CONTINUE_FROM: next-unit=U-4 (eulerian-smoke-frontier-clebsch-pfm, S23/4.15); last-commit-sha=531a354; partial-work=none (U-3 fully landed; clean unit boundary); remaining-context-budget=~30%`
+
+**State:** §10 ratification + S-5 amendment applied. **U-1, U-2, U-3 LANDED** (13 gates
+each; per-unit landing reports under `docs/_audits/phase-6/`; CI sweep green at each
+push — U-3's sweep was in flight at handoff write, confirmed in the session report).
+Ledger rows 10/28/29 → landed. D-2 exercised (`lbm-quantized` declared; amendment
+2026-06-11T15-22-14Z). Corpus lock now 38.
+
+**Next step (U-4, ratified § 4 order):** probe-first per the unit pattern: read
+`packages/eulerian-smoke/` + the Stack-C precedents (now TWO: rd2d-stack-c + the U-3
+lbm-me package — reuse its CMake/lavapipe/capture-writer shape), design the
+particle-flow-map substrate per the § 3.4 anchor strategy (|ψ|=1 exact invariant,
+flow-map composition identity, Taylor–Green decay + REFRAMED qualitative fixtures), DOI
+10.1145/3731194 anchor. Then U-5 (vpfm, reuses the PFM substrate), U-6 (edge, D-1 =
+DOI 10.1145/3731193), U-7 (gaussian-fluids), U-8a/U-8b.
+
+**Banked environment notes (load-bearing):** U-1 landing report § Environment +
+memory: `/tmp` quota breaks worktree `uv sync` (use `TMPDIR=~/.cache/bp-tmp`);
+`GIT_LFS_SKIP_SMUDGE=1` for worktree ops; LFS push = R2-first
+(`git lfs push --object-id origin --stdin`) then `git -c lfs.standalonetransferagent=
+push git@github.com:…`; cmake needs `-DCMAKE_POLICY_VERSION_MINIMUM=3.5`; eof-fixer
+rewrites capture `.json` (re-add); the B-2 worktree `--generate` recipe is the
+byte-stable gate-13 path for pytest units (ctest units: hash-footer + manual worktree
+replay, see U-3 landing § findings).
+
 *End of C-1 cluster charter (PROPOSED — awaiting operator ratification).*
 
 ---
