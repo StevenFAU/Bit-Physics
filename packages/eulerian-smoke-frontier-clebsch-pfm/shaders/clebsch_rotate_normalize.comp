@@ -16,14 +16,13 @@ layout(local_size_x = 64) in;
 layout(std430, binding = 0) buffer Phi          { double phi[]; };
 layout(std430, binding = 1) readonly buffer Rot { double rot[]; };
 layout(push_constant) uniform Params {
-    uint n;
+    uint count;
     uint normalize_flag;
 } p;
 
 void main() {
-    uint ncell = p.n * p.n * p.n;
     uint cell = gl_GlobalInvocationID.x;
-    if (cell >= ncell) return;
+    if (cell >= p.count) return;
 
     double p1r = phi[4u * cell + 0u], p1i = phi[4u * cell + 1u];
     double p2r = phi[4u * cell + 2u], p2i = phi[4u * cell + 3u];

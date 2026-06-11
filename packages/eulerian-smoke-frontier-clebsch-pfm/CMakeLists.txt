@@ -24,6 +24,7 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
   add_library(bit_physics_clebsch_pfm
     src/clebsch_pfm.cpp
     src/clebsch_pfm_math.cpp
+    src/clebsch_pfm_particles.cpp
     ${CLEBSCH_INNER_SPV}
     ${CLEBSCH_ROTATE_SPV}
     ${CLEBSCH_DIV_SPV}
@@ -33,6 +34,14 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
     PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/generated/shaders
   )
   target_compile_features(bit_physics_clebsch_pfm PUBLIC cxx_std_20)
+  # Per-target optimization with STRICT IEEE FP: the tree builds with no
+  # CMAKE_BUILD_TYPE (-O0); the PFM particle transport is infeasible unoptimized
+  # (measured stage 1b: ~60 s/step at 128³ -O0). -ffp-contract=off forbids FMA
+  # fusion and GCC performs no FP reassociation without fast-math, so results are
+  # bit-identical to the -O0 build (verified via the determinism witness sha at
+  # n=32 — recorded in the spec sheet § 6) while ~10× faster. Scoped to this
+  # target only; landed packages are untouched.
+  target_compile_options(bit_physics_clebsch_pfm PRIVATE -O3 -ffp-contract=off)
   target_link_libraries(bit_physics_clebsch_pfm PUBLIC
     bit_physics_common_cpp_vulkan
     bit_physics_common_cpp_hdf5

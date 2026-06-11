@@ -123,20 +123,27 @@ TEST_CASE("A1 measured: 0-form transport — carried wave function has zero bit-
     CHECK(res.max_norm_deviation <= 1e-14);      // post-reinit ||Φ_g|| = 1 FP-tight
 }
 
-TEST_CASE("A2: flow-map composition residual bounded + resolution-converging") {
+TEST_CASE("A2: flow-map composition residual bounded + dt-converging") {
+    // d(T̃F̃)/dt = −T̃∇uF̃ + T̃∇uF̃ ≡ 0 along any trajectory, so the composition
+    // identity is ALGEBRAICALLY exact in continuous time; the measured residual is
+    // pure RK4 truncation and converges with dt (global O(dt⁴): halving dt over the
+    // same horizon contracts it ~16×; gate ≥ 8×). MEASURED at stage 1b: 3.7e-9 at
+    // n=16 / dt=0.005 / 10 steps → declared ceiling 1e-7 (~25× margin).
     double resid[2];
     int idx = 0;
-    for (uint32_t n : {16u, 32u}) {
-        ClebschConfig cfg = small_cfg(n, 10, InitialCondition::kTaylorGreen2DZInvariant);
-        cfg.n_g = 10;  // hold one gradient-map window across the horizon
-        cfg.n_v = 10;
+    for (uint32_t halvings : {0u, 1u}) {
+        uint32_t steps = 10u << halvings;
+        ClebschConfig cfg = small_cfg(16, steps, InitialCondition::kTaylorGreen2DZInvariant);
+        cfg.dt = 0.005 / (1u << halvings);  // same physical horizon
+        cfg.n_g = steps;  // hold one gradient-map window across the horizon
+        cfg.n_v = steps;
         cfg.track_forward_jacobian = true;
         ClebschResult res = run_clebsch(cfg, nullptr);
         resid[idx++] = res.max_flowmap_residual;
-        CHECK(res.max_flowmap_residual > 0.0);   // genuinely measured, not a no-op
-        CHECK(res.max_flowmap_residual <= 0.1);  // structural ceiling (tighten at 1b)
+        CHECK(res.max_flowmap_residual > 0.0);    // genuinely measured, not a no-op
+        CHECK(res.max_flowmap_residual <= 1e-7);  // declared (measured 3.7e-9, 25x)
     }
-    CHECK(resid[1] < resid[0]);  // converging with resolution at fixed dt/horizon
+    CHECK(resid[0] / resid[1] >= 8.0);  // O(dt^4) contraction under dt-halving
 }
 
 TEST_CASE("A3 steady anchor: z-invariant TG is preserved (drift + energy bounded)") {
@@ -148,13 +155,15 @@ TEST_CASE("A3 steady anchor: z-invariant TG is preserved (drift + energy bounded
     const StepFrame& fT = res.frames.back();
     double drift = std::max({max_abs_diff(f0.u, fT.u), max_abs_diff(f0.v, fT.v),
                              max_abs_diff(f0.w, fT.w)});
-    // Structural ceilings (the analytic steady solution has |u|max = 1): MEASURED
-    // values declared + tightened at stage 1b — never widened (spec § 2.6).
+    // MEASURED at stage 1b (n=32, 50 steps): energy drift 8.7e-3 relative, init
+    // residual 2.66e-3 — ceilings tightened from the structural guesses (0.05/0.05)
+    // to ~3x margins; drift ceiling stays structural until the 1c canonical
+    // measurement (never widened; spec § 2.6).
     CHECK(drift <= 0.10);
     CHECK(std::fabs(res.energy_final - res.energy_initial)
-          <= 0.05 * std::fabs(res.energy_initial));
+          <= 0.025 * std::fabs(res.energy_initial));
     // The closed-form IC must land near the analytic TG after init + projection.
-    CHECK(res.init_velocity_residual <= 0.05);
+    CHECK(res.init_velocity_residual <= 0.01);
 }
 
 TEST_CASE("PBT sweep: divergence + normalization + finiteness across regimes") {
@@ -168,7 +177,12 @@ TEST_CASE("PBT sweep: divergence + normalization + finiteness across regimes") {
             cfg.hbar = hb;
             cfg.init_descent_iters = 50;  // toy-size fit for the 3D IC
             ClebschResult res = run_clebsch(cfg, nullptr);
-            CHECK(res.max_div_postproj <= 1e-3);  // fixed-cycle MG residual ceiling
+            // Scale-free projection gate: 4 fixed V(2,2) cycles contract the residual
+            // by ~1e-4 relative to the pre-projection divergence (hand-derived MG
+            // factor ~0.1/cycle; 10x margin). An absolute ceiling would bake in the
+            // rhs scale, which varies across (hbar, IC) regimes — measured at 1b.
+            CHECK(res.max_div_preproj > 0.0);
+            CHECK(res.max_div_postproj <= 1e-3 * res.max_div_preproj);
             CHECK(res.max_norm_deviation <= 1e-12);
             for (const StepFrame& fr : res.frames)
                 for (const auto* f : {&fr.u, &fr.v, &fr.w})

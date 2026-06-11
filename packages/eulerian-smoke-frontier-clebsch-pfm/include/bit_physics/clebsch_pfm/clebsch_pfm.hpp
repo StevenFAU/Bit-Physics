@@ -90,6 +90,7 @@ struct ClebschResult {
     double max_norm_deviation = 0.0;       // max ‖Φ_g‖−1 deviation at reinit points
     double max_carried_phi_drift = 0.0;    // bit-drift of carried Φ_{p,s} between
                                            // reinits (0-form transport ⇒ expect 0.0)
+    double max_div_preproj = 0.0;          // max |∇·u_m| before projection over the run
     double max_div_postproj = 0.0;         // max |∇·u| after projection over the run
     double max_flowmap_residual = 0.0;     // test mode: max ‖T̃F̃ − I‖_max over the run
 };
