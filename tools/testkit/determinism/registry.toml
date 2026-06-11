@@ -420,3 +420,27 @@ scope = "same-stack-same-hw"
 atomic_ops = "sum-only"
 subgroup_ops = "none"
 seed_pinned = true
+
+# neural-ca-frontier-difflogic (Stack D / Taichi; phase-6 C-1 unit U-2; ratified D-3
+# frozen-gate scope). Hand-constructed 36-wire multilinear GoL circuit: the forward (hard
+# trajectory AND soft rollout) is per-cell single-write with NO atomics; the only atomic is
+# the L2 loss += reduction on the gradient surface (sum-only), serialised bit-exact under
+# cpu_max_num_threads=1. All three surfaces MEASURED bit-identical run-to-run at stage 1b
+# (tests/test_determinism.py: hard trajectory, soft forward, gradient - np.array_equal /
+# exact-equality all True). Frozen gates, no training => no EFECT. Declared + MEASURED at
+# C-1 U-2 stage 1b; HOLDS.
+[continuous-ca.neural-ca-frontier-difflogic.forward]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
+
+[continuous-ca.neural-ca-frontier-difflogic.gradient]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true

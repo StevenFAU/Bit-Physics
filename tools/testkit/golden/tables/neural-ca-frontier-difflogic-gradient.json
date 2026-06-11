@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "neural-ca-frontier-difflogic-gradient",
+  "category": "continuous-ca",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/neural-ca-frontier-difflogic-gradient.md",
+    "upstream": "Miotti-2025-arXiv-2506.04912 / Gardner-1970-SciAm-223-4-GoL / multilinear-extension-hand-derivation / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": { "anchor": "a1-gate-multilinear", "gate": 8, "a": 1.0, "b": 1.0 },
+      "expected": { "value": 1.0 },
+      "independent_reference": {
+        "source": "Multilinear extension of each 2-input truth table, hand-derived: g(a,b) = t00(1-a)(1-b) + t01(1-a)b + t10 a(1-b) + t11 ab - the unique bilinear interpolation; EXACT at binary corners (hard limit), midpoint g(0.5,0.5) = mean(truth table). Gate set per Miotti, Niklasson, Randazzo, Mordvintsev 2025 (arXiv:2506.04912; relaxed differentiable logic gates).",
+        "derived_by": "closed-form-analytic (multilinear interpolation)",
+        "expected": { "value": 1.0 }
+      }
+    },
+    {
+      "inputs": { "anchor": "a1-gate-multilinear", "gate": 6, "a": 1.0, "b": 1.0 },
+      "expected": { "value": 0.0 }
+    },
+    {
+      "inputs": { "anchor": "a1-gate-multilinear", "gate": 8, "a": 0.5, "b": 0.5 },
+      "expected": { "value": 0.25 }
+    },
+    {
+      "inputs": { "anchor": "a1-gate-multilinear", "gate": 6, "a": 0.5, "b": 0.5 },
+      "expected": { "value": 0.5 }
+    },
+    {
+      "inputs": { "anchor": "a1-gate-multilinear", "gate": 3, "a": 0.25, "b": 0.75 },
+      "expected": { "value": 0.75 }
+    },
+    {
+      "inputs": { "anchor": "a2-gol-exhaustive" },
+      "expected": { "matches": 512.0 },
+      "independent_reference": {
+        "source": "Conway's Game of Life transition rule (Gardner, Sci. Am. 223(4), 1970): alive' = (n==3) OR (alive AND n==2). The hand-constructed 36-wire popcount+equality circuit is evaluated at ALL 512 (center x 8-neighbor) binary configurations and must equal the rule EXACTLY on every one - a complete, exact golden over the entire input space.",
+        "derived_by": "exhaustive-enumeration vs the published rule",
+        "expected": { "matches": 512.0 }
+      }
+    },
+    {
+      "inputs": { "anchor": "a3-fd-alpha", "soft_steps": 2, "alpha": 0.4, "alpha_target": 0.75 },
+      "expected": { "grad_alpha": -0.5567927429256381 },
+      "independent_reference": {
+        "source": "Central finite-difference baseline of the soft-excitation L2 loss (common_py.autodiff.finite_diff.finite_difference_gradient, eps=1e-6) through the 2-step soft circuit - an independent numerical method (no tape). Autodiff-vs-FD agreement measured ~1.3e-11 / 1.7e-11 / 7.4e-11 relative at table-build.",
+        "derived_by": "central-finite-difference (eps=1e-6)",
+        "expected": { "grad_alpha": -0.5567927429256381 }
+      }
+    },
+    {
+      "inputs": { "anchor": "a3-fd-alpha", "soft_steps": 2, "alpha": 0.2, "alpha_target": 0.6 },
+      "expected": { "grad_alpha": -1.6753511884459726 }
+    },
+    {
+      "inputs": { "anchor": "a3-fd-alpha", "soft_steps": 2, "alpha": 0.8, "alpha_target": 0.3 },
+      "expected": { "grad_alpha": 0.3399747600940639 }
+    }
+  ]
+}

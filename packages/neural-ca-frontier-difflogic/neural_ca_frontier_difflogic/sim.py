@@ -102,7 +102,11 @@ class SoftExcitationID(ParameterIDProblem):  # type: ignore[misc]
 
     def forward(self, params: Any, state: Any) -> Any:
         """Load s[0] = base + alpha*delta (in-tape), run the soft rollout; return ``s``."""
-        raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+        k = self._ker
+        k["load_alpha"](self.s, self.base, self.delta, params)
+        for t in range(self.cfg.soft_steps):
+            k["step"](t, self.s)
+        return self.s
 
     def loss(self, predicted: Any, target: Any) -> Any:
         self._ker["comp_loss"](self.s, target, self.loss_field)
