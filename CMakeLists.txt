@@ -48,3 +48,8 @@ add_subdirectory(packages/mass-spring-cloth)
 # LBM surface; charter docs/phases/phase-6/c1-charter.md § 3.3, ratified § 10 incl.
 # D-2). D11-style CMake-only registration (NOT a uv member), AFTER common/common-cpp.
 add_subdirectory(packages/lattice-boltzmann-d3q19-frontier-moment-encoded)
+
+# Phase-6 C-1 unit U-4 — Stack-C frontier-clebsch-pfm (the FIRST particle-flow-map
+# surface; charter docs/phases/phase-6/c1-charter.md § 3.4, ratified § 10). D11-style
+# CMake-only registration (NOT a uv member), AFTER common/common-cpp.
+add_subdirectory(packages/eulerian-smoke-frontier-clebsch-pfm)
