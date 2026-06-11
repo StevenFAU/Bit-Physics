@@ -1,0 +1,738 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0
+rootdir: /home/clipbird/Projects/Bit-Physics/packages/sph-water-diff
+configfile: pyproject.toml
+plugins: jaxtyping-0.3.10, hydra-core-1.3.2, cov-7.1.0, anyio-4.13.0, timeout-2.4.0, hypothesis-6.152.8
+collected 19 items
+
+tests/test_capture.py FF                                                 [ 10%]
+tests/test_determinism.py FF                                             [ 21%]
+tests/test_diagnostics.py FF                                             [ 31%]
+tests/test_forward_equivalence.py FFF                                    [ 47%]
+tests/test_gradient_golden.py FFFF.                                      [ 73%]
+tests/test_inverse_recovery.py FFF                                       [ 89%]
+tests/test_pbt_invariants.py FF                                          [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-clipbird/pytest-154/test_capture_has_gradient_fiel0')
+
+    def test_capture_has_gradient_fields(tmp_path: Path) -> None:
+>       manifest_path = default_capture(tmp_path)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_capture.py:12: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a284348f3e0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_roundtrips ____________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-clipbird/pytest-154/test_capture_roundtrips0')
+
+    def test_capture_roundtrips(tmp_path: Path) -> None:
+        from common_py.capture import Reader
+    
+>       manifest_path = default_capture(tmp_path)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_capture.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a2840654da0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_forward_bit_identical_across_runs ____________________
+
+    def test_forward_bit_identical_across_runs() -> None:
+        cfg = SphDiffConfig()
+>       f1, _ = _forward_and_grad(cfg)
+                ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_determinism.py:29: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_determinism.py:20: in _forward_and_grad
+    target = prob.final_positions(v0z * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28406be2a0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+
+    def test_gradient_bit_identical_across_runs() -> None:
+        cfg = SphDiffConfig()
+>       _, g1 = _forward_and_grad(cfg)
+                ^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_determinism.py:36: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_determinism.py:20: in _forward_and_grad
+    target = prob.final_positions(v0z * 1.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28406bef30>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_is_healthy ____________________________
+
+tmp_path = PosixPath('/tmp/pytest-of-clipbird/pytest-154/test_capture_is_healthy0')
+
+    def test_capture_is_healthy(tmp_path: Path) -> None:
+        """No NaN/Inf in the recovered positions or the gradient (Tier-1 health)."""
+>       manifest = default_capture(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_diagnostics.py:15: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28406bfe00>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________________ test_recovered_positions_bounded _______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-clipbird/pytest-154/test_recovered_positions_bound0')
+
+    def test_recovered_positions_bounded(tmp_path: Path) -> None:
+        """The recovered particle positions stay in the physical [0,1] domain (Tier-2 bounds)."""
+        from diagnostics.tier2.scalar_field.monotone_bounds import check_bounds
+    
+>       manifest = default_capture(tmp_path)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_diagnostics.py:27: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/capture.py:105: in default_capture
+    sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28403a0770>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_______________ test_diff_forward_matches_parent_final_positions _______________
+
+    def test_diff_forward_matches_parent_final_positions() -> None:
+        cfg = SphDiffConfig(n_particles=_N, steps=_STEPS)
+        params = canonical_params()
+        assert cfg.dt == float(params["dt"]) and cfg.g_z == float(params["g_z"])
+    
+        # Diff FIRST (f64 runtime), parent second (its _ensure_taichi re-init).
+        x0, _v0, _m = _seeded_initial_state(42, _N)
+        prob = SphInitialVelocityControl(cfg, x0)
+>       diff_final = prob.final_positions(0.0)  # parent IC is at rest
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_forward_equivalence.py:54: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a284940a690>
+params = <ti.field>
+state = (array([[0.77395605, 0.43887844, 0.85859792],
+       [0.69736803, 0.09417735, 0.97562235],
+       [0.7611397 , 0.78606..., 0.77201243, 0.66166126],
+       [0.37365773, 0.09446667, 0.74678961],
+       [0.26246052, 0.93681315, 0.24097058]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________ test_diff_forward_matches_parent_bit_close __________________
+
+    def test_diff_forward_matches_parent_bit_close() -> None:
+        """Same per-component arithmetic, f64, single-thread => near-bit-exact agreement."""
+        cfg = SphDiffConfig(n_particles=_N, steps=_STEPS)
+        x0, _v0, _m = _seeded_initial_state(42, _N)
+        prob = SphInitialVelocityControl(cfg, x0)
+>       diff_final = prob.final_positions(0.0)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_forward_equivalence.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28406be8d0>
+params = <ti.field>
+state = (array([[0.77395605, 0.43887844, 0.85859792],
+       [0.69736803, 0.09417735, 0.97562235],
+       [0.7611397 , 0.78606..., 0.77201243, 0.66166126],
+       [0.37365773, 0.09446667, 0.74678961],
+       [0.26246052, 0.93681315, 0.24097058]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________ test_diff_density_matches_parent_spatial_hash _________________
+
+    def test_diff_density_matches_parent_spatial_hash() -> None:
+        """The ti.static pair-sum density == the parent's 27-cell spatial-hash density.
+    
+        Same cubic-spline arithmetic per pair; the only difference is neighbor ACCUMULATION
+        ORDER (id-order unrolled pairs vs hash-cell traversal), so agreement is f64-reorder
+        tight (<= 1e-12 relative), far inside the sph category tolerance (1e-4)."""
+        import taichi as ti
+    
+        params = canonical_params()
+        h = float(params["h"])
+    
+        # Parent first here (its outputs are needed as the diff's input), then an EXPLICIT
+        # fresh f64 runtime for the diff fields - the parent's _ensure_taichi may have re-inited
+        # Taichi without default_fp=f64 on its first in-process touch (kernel literals would
+        # otherwise compute f32; the mpm-diff Stage-1b mechanism).
+        _x0p, parent_final, parent_rho = _parent_rollout()
+        ti.init(arch=ti.cpu, default_fp=ti.f64, cpu_max_num_threads=1, random_seed=0)
+        cfg = SphDiffConfig(n_particles=_N, h=h)
+        prob = SphKernelWidthID(cfg, parent_final)
+>       diff_rho = prob.densities(h)
+                   ^^^^^^^^^^^^^^^^^
+
+tests/test_forward_equivalence.py:90: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:164: in densities
+    self.forward(self._h, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphKernelWidthID object at 0x7a284036f260>
+params = <ti.field>
+state = (array([[0.77395605, 0.43887844, 0.85824476],
+       [0.69736803, 0.09417735, 0.97526919],
+       [0.7611397 , 0.78606..., 0.77201243, 0.6613081 ],
+       [0.37365773, 0.09446667, 0.74643645],
+       [0.26246052, 0.93681315, 0.24061742]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Compute the density field at ``h`` (tape-differentiable); return ``rho``."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:155: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+
+gradient_table = PosixPath('/home/clipbird/Projects/Bit-Physics/tools/testkit/golden/tables/sph-water-diff-gradient.json')
+
+    def test_gradient_golden_table(gradient_table: Path) -> None:
+>       result = verify_against_table(gradient_table, gradient_evaluator)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gradient_golden.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = PosixPath('/home/clipbird/Projects/Bit-Physics/tools/testkit/golden/tables/sph-water-diff-gradient.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+>       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/testkit/golden/tables/sph-water-diff-gradient.json'
+
+../../../../.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py:1013: FileNotFoundError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________________ test_a1_freefall_exact_closed_form ______________________
+
+    def test_a1_freefall_exact_closed_form() -> None:
+        """A1 cross-check: autodiff dLoss/dv0z == 2N(dt*T)^2(v0z - v0z*) exactly (linear map)."""
+        cfg = SphDiffConfig()
+        x0 = cloud_initial_positions(cfg)
+        v0z, v0zt = 0.30, 0.10
+        prob = SphInitialVelocityControl(cfg, x0)
+>       target = prob.final_positions(v0zt)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gradient_golden.py:91: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28403a11f0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+____________________ test_a3_pair_drho_dh_exact_closed_form ____________________
+
+    def test_a3_pair_drho_dh_exact_closed_form() -> None:
+        """A3 cross-check: autodiff d(rho)/dh == the Monaghan-spline analytic, both branches."""
+        for r in (0.025, 0.07):  # q = 0.5 (inner branch) and q = 1.4 (outer branch) at h=0.05
+>           ad = autodiff_drho_dh_pair(r, 0.05, 1.0e-3)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gradient_golden.py:100: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:186: in autodiff_drho_dh_pair
+    prob.forward(prob._h, prob.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphKernelWidthID object at 0x7a2840693ad0>
+params = <ti.field>
+state = (array([[0.5  , 0.5  , 0.5  ],
+       [0.5  , 0.5  , 0.525]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Compute the density field at ``h`` (tape-differentiable); return ``rho``."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:155: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________ test_a2_gradient_matches_finite_difference_report _______________
+
+    def test_a2_gradient_matches_finite_difference_report() -> None:
+        """A2 anchor mechanism: GradientCheckReport passes for BOTH problems (autodiff vs FD)."""
+        cfg = SphDiffConfig()
+        x0 = cloud_initial_positions(cfg)
+    
+        prob_v = SphInitialVelocityControl(cfg, x0)
+>       target_pos = prob_v.final_positions(0.30 * 1.05)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_gradient_golden.py:111: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28403e38c0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_recover_planted_v0z ___________________________
+
+    def test_recover_planted_v0z() -> None:
+        cfg = SphDiffConfig()
+>       sol = solve_recovery(cfg, planted=-0.20, init=-0.12)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_inverse_recovery.py:17: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a28403e2f90>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+
+    def test_gradient_fields_populated() -> None:
+        """The capture payload carries the dLoss/dv0z gradient_fields (schema 1.1.0)."""
+        cfg = SphDiffConfig()
+>       sol = solve_recovery(cfg, planted=-0.20, init=-0.15)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_inverse_recovery.py:26: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a284043a2d0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_other_init _________________________
+
+    def test_recovery_from_other_init() -> None:
+        cfg = SphDiffConfig()
+>       sol = solve_recovery(cfg, planted=0.15, init=0.40)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_inverse_recovery.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+sph_water_diff/sim.py:228: in solve_recovery
+    target = truth.final_positions(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a284043bbc0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+
+    @given(v0z=st.floats(min_value=-0.4, max_value=0.4))
+>   @settings(
+               
+        max_examples=10,
+        deadline=None,
+        derandomize=True,
+        # Skip shrink: on the Stage-1a RED state every example fails (forward raises
+        # NotImplementedError); shrinking would re-init Taichi hundreds of times. derandomize +
+        # skip-shrink keep RED fast and the gate-13 evidence byte-stable (mpm-diff precedent).
+        phases=(Phase.explicit, Phase.reuse, Phase.generate, Phase.target),
+    )
+
+tests/test_pbt_invariants.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_pbt_invariants.py:43: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, x0, v0z=v0z, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/invariants.py:37: in gradient_matches_finite_difference
+    target = prob.final_positions(float(v0z) + 0.05)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:104: in final_positions
+    self.forward(self._v0z, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphInitialVelocityControl object at 0x7a284043b230>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Run the tape-differentiable free-fall rollout; return the position field ``x``.
+    
+        ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
+        the tape so the gradient flows back; x[0] is the constant set in
+        :meth:`set_initial`."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+E       Falsifying example: test_gradient_matches_finite_difference_pbt(
+E           v0z=0.0,
+E       )
+
+sph_water_diff/sim.py:94: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+_____________________ test_density_summation_positive_pbt ______________________
+
+    @given(h=st.floats(min_value=0.03, max_value=0.12))
+>   @settings(
+               
+        max_examples=10,
+        deadline=None,
+        derandomize=True,
+        phases=(Phase.explicit, Phase.reuse, Phase.generate, Phase.target),
+    )
+
+tests/test_pbt_invariants.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+tests/test_pbt_invariants.py:57: in test_density_summation_positive_pbt
+    assert density_summation_positive(cfg, x0, h=h)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/invariants.py:55: in density_summation_positive
+    rho = prob.densities(float(h))
+          ^^^^^^^^^^^^^^^^^^^^^^^^
+sph_water_diff/sim.py:164: in densities
+    self.forward(self._h, self.state)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <sph_water_diff.sim.SphKernelWidthID object at 0x7a28404199d0>
+params = <ti.field>
+state = (array([[0.50547912, 0.49877757, 0.60717196],
+       [0.50394736, 0.49188355, 0.60951245],
+       [0.50522279, 0.50572..., 0.5010917 , 0.59127635],
+       [0.50655262, 0.50263329, 0.60516175],
+       [0.49709052, 0.50941396, 0.60786242]]),)
+
+    def forward(self, params: Any, state: Any) -> Any:
+        """Compute the density field at ``h`` (tape-differentiable); return ``rho``."""
+>       raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+E       NotImplementedError: C-1 U-1 scaffold (RED): forward implemented at the GREEN commit
+E       Falsifying example: test_density_summation_positive_pbt(
+E           h=0.03,
+E       )
+
+sph_water_diff/sim.py:155: NotImplementedError
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_forward_bit_identical_across_runs - No...
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_recovered_positions_bounded - NotImple...
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_parent_final_positions
+FAILED tests/test_forward_equivalence.py::test_diff_forward_matches_parent_bit_close
+FAILED tests/test_forward_equivalence.py::test_diff_density_matches_parent_spatial_hash
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a1_freefall_exact_closed_form - No...
+FAILED tests/test_gradient_golden.py::test_a3_pair_drho_dh_exact_closed_form
+FAILED tests/test_gradient_golden.py::test_a2_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_v0z - NotImplemen...
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_other_init - NotImp...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+FAILED tests/test_pbt_invariants.py::test_density_summation_positive_pbt - No...
+========================= 18 failed, 1 passed in 2.75s =========================

@@ -40,6 +40,15 @@ members = [
   # sph-water-stack-d plan-drafting close; consumes common-py + taichi
   # for the Taichi-DSL DFSPH implementation. Registered at Stage 1a.
   "packages/sph-water-stack-d",
+  # Phase-6 C-1 unit U-1 differentiable variant of sph-water (Stack D / Taichi
+  # ti.ad.Tape; spec § 11.5 item 4.2, Phase-4 ledger row 10 deferred-with-cause).
+  # Tape-differentiable free-fall + cubic-spline-density forward on the WU-A
+  # autodiff substrate; v0z control + kernel-width-ID inverse problems +
+  # gradient golden table (≥3 independent anchors: A1 free-fall closed form /
+  # A2 central FD / A3 kernel-width analytic). Single-stack (gate-14 N/A; WU-F
+  # differentiable-axis variant-equivalence applies). D-LAYOUT: flat
+  # `packages/sph-water-diff/` per §0.3. Registered at C-1 U-1 stage 1a.
+  "packages/sph-water-diff",
   # Spec-Phase-2 Stack-D port of lattice-boltzmann-d3q19 (THIRD per-sim
   # cross-stack port). Sibling workspace member per D1/D6 ratification at
   # sub-phase-lattice-boltzmann-d3q19-stack-d plan-drafting close; consumes

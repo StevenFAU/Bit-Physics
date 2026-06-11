@@ -1,0 +1,82 @@
+[project]
+name = "sph-water-diff"
+version = "0.0.0"
+description = "Phase-6 C-1 differentiable variant of sph-water (Stack D / Taichi; spec § 11.5 item 4.2). Tape-differentiable free-fall + cubic-spline SPH density forward (ti.ad.Tape) on the WU-A autodiff substrate; v0z control + kernel-width identification inverse problems + gradient golden table (≥3 independent anchors) per the C-1 cluster charter § 3.1."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "bit-physics-common-py",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+  "taichi>=1.7,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "mypy>=1.10",
+  "pytest>=8.0",
+  "pytest-cov>=5.0",
+  "ruff>=0.5",
+  # The landed forward-reference sibling; imported by the WU-F forward-equivalence test
+  # (diff.forward == sph-water-stack-d free-fall + density on the differentiable axis).
+  "sph-water-stack-d",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sph_water_diff"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+files = ["sph_water_diff"]
+mypy_path = "."
+
+[[tool.mypy.overrides]]
+module = [
+  "capture", "capture.*",
+  "common_py", "common_py.*",
+  "determinism", "determinism.*",
+  "diagnostics", "diagnostics.*",
+  "equivalence", "equivalence.*",
+  "golden", "golden.*",
+  "property", "property.*",
+  "h5py", "h5py.*",
+  "hypothesis", "hypothesis.*",
+  "sph_water_stack_d", "sph_water_stack_d.*",
+  "taichi", "taichi.*",
+]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  "error",
+  # Taichi 1.7.4 internally calls `locale.getdefaultlocale()` during `ti.init()`;
+  # Python 3.12 deprecates that API. Filter to preserve the strict-warnings posture
+  # (sister convention: lenia-diff + reaction-diffusion-2d-diff + mpm-multimaterial-diff).
+  "ignore::DeprecationWarning:taichi.*",
+  "ignore::SyntaxWarning",
+  "ignore:.*locale\\.getdefaultlocale.*:DeprecationWarning",
+]
+testpaths = ["tests"]
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
+bit-physics-common-py = { workspace = true }
+sph-water-stack-d = { workspace = true }
