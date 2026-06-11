@@ -219,3 +219,5 @@ audit_commit_sha: 7dc2039  # Convention #12 back-fill
   flagged) and the § 6 17-SOFT_WARN explained baseline. — RATIFIED
 - Restated: the deploy published the run's own already-validated bundles; no
   verification claim was added by publishing.
+
+pages_evidence_commit_sha: d516ccc  # Convention #12 back-fill
