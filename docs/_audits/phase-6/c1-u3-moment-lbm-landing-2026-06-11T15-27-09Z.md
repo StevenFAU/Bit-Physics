@@ -9,8 +9,7 @@
 > **Commit chain:** `838b161` (stage-0 probe incl. the no-Stack-C-parent SHIFT) →
 > `53c826e` (stage-1a scaffold+RED, ctest evidence footer-hashed) → `9aedc3c` (stage-1b
 > GREEN 8/8 + the stability-guided-ranges defect fix) → `c06d0b1` (stage-1c D-2 category
-> + amendment + capture + corpus + registry + perf + CI) → *(stage-2 SHA back-filled per
-> Convention #12)*.
+> + amendment + capture + corpus + registry + perf + CI) → `7b25881` (stage-2 landing fold; SHA back-filled per Convention #12).
 
 ## Gates (spec Appendix D.6, Stack-C adaptation)
 
