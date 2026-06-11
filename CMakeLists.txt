@@ -43,3 +43,8 @@ add_subdirectory(packages/reaction-diffusion-2d-stack-c)
 # targets + bitphysics_embed_compute_shader helper) per
 # sub-phase-phase-3-mass-spring-cloth § 3 / § 8. NOT a uv member (uv stays 23).
 add_subdirectory(packages/mass-spring-cloth)
+
+# Phase-6 C-1 unit U-3 — Stack-C frontier-moment-encoded LBM (the FIRST Stack-C
+# LBM surface; charter docs/phases/phase-6/c1-charter.md § 3.3, ratified § 10 incl.
+# D-2). D11-style CMake-only registration (NOT a uv member), AFTER common/common-cpp.
+add_subdirectory(packages/lattice-boltzmann-d3q19-frontier-moment-encoded)

@@ -1,0 +1,157 @@
+Test project /home/clipbird/Projects/Bit-Physics/build/cpp
+    Start 11: lbm_me_tests
+1/2 Test #11: lbm_me_tests .....................***Failed    0.03 sec
+[doctest] doctest version is "2.4.11"
+[doctest] run with "--help" for options
+===============================================================================
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:75:
+TEST CASE:  A2: 16-bit quantization round-trip is within the closed-form bound
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.69645e-09 <= 2.69645e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.69645e-09 <= 2.69645e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.69645e-09 <= 2.69645e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.69645e-09 <= 2.69645e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 3.8205e-18 <= 3.8205e-18 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 3.8205e-18 <= 3.8205e-18 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 5.06262e-14 <= 5.06061e-14 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 5.06262e-14 <= 5.06061e-14 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.09554e-09 <= 1.09554e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.09554e-09 <= 1.09554e-09 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 3.81481e-18 <= 3.81481e-18 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 3.81481e-18 <= 3.81481e-18 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.02999e-13 <= 2.02999e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.02999e-13 <= 2.02999e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.02999e-13 <= 2.02999e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.02999e-13 <= 2.02999e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 8.94037e-10 <= 8.94037e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 8.94037e-10 <= 8.94037e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 8.94037e-10 <= 8.94037e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 9.01205e-10 <= 9.01205e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 9.01205e-10 <= 9.01205e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 9.01205e-10 <= 9.01205e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 9.01205e-10 <= 9.01205e-10 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.015e-13 <= 1.015e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.015e-13 <= 1.015e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.015e-13 <= 1.015e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.0739e-13 <= 2.07386e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 2.0739e-13 <= 2.07386e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.03695e-13 <= 1.03693e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.03695e-13 <= 1.03693e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.03695e-13 <= 1.03693e-13 )
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:88: ERROR: CHECK( std::fabs(back - m) <= bound[k] * (1.0 + 1e-12) ) is NOT correct!
+  values: CHECK( 1.03695e-13 <= 1.03693e-13 )
+
+===============================================================================
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:103:
+TEST CASE:  A1: f64 Vulkan path conserves mass+momentum exactly-to-FP (no force)
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:103: ERROR: test case THREW exception: C-1 U-3 scaffold (RED): run_lbm implemented at the GREEN commit
+
+===============================================================================
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:112:
+TEST CASE:  A1-bounded: quantized path conserves mass within the quantization budget
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:112: ERROR: test case THREW exception: C-1 U-3 scaffold (RED): run_lbm implemented at the GREEN commit
+
+===============================================================================
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:123:
+TEST CASE:  PBT sweep: conservation + boundedness across (tau, force) regimes
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:123: ERROR: test case THREW exception: C-1 U-3 scaffold (RED): run_lbm implemented at the GREEN commit
+
+===============================================================================
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:144:
+TEST CASE:  frontier vs f64: quantized trajectory tracks the f64 trajectory (bounded)
+
+/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/test_lbm_me.cpp:144: ERROR: test case THREW exception: C-1 U-3 scaffold (RED): run_lbm implemented at the GREEN commit
+
+===============================================================================
+[doctest] test cases:   8 |   3 passed |  5 failed | 0 skipped
+[doctest] assertions: 383 | 351 passed | 32 failed |
+[doctest] Status: FAILURE!
+
+    Start 12: lbm_me_frontier_equivalence
+2/2 Test #12: lbm_me_frontier_equivalence ......***Failed    0.08 sec
+Traceback (most recent call last):
+  File "/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/python/test_frontier_equivalence.py", line 115, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/python/test_frontier_equivalence.py", line 59, in main
+    rel_tol, abs_tol = declared_tolerance()
+                       ^^^^^^^^^^^^^^^^^^^^
+  File "/home/clipbird/Projects/Bit-Physics/packages/lattice-boltzmann-d3q19-frontier-moment-encoded/tests/python/test_frontier_equivalence.py", line 49, in declared_tolerance
+    cat = table["defaults"]["lbm-quantized"]
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+KeyError: 'lbm-quantized'
+
+
+0% tests passed, 2 tests failed out of 2
+
+Total Test time (real) =   0.11 sec
+
+The following tests FAILED:
+	 11 - lbm_me_tests (Failed)
+	 12 - lbm_me_frontier_equivalence (Failed)
+Errors while running CTest

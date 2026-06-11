@@ -1,0 +1,62 @@
+#version 450
+// D3Q19 pull streaming + half-way bounce-back y-walls — Stack-C f64, element-wise.
+//
+// Pull form of the parent's `stream` (np.roll(f[i], shift=c_i) == f_new[i](x) =
+// f_post[i](x - c_i), periodic) followed by the parent's `apply_bounce_back_y_walls`
+// for STATIC walls: at y==0, every direction with c_iy>0 is replaced by the
+// post-streaming value of its opposite direction AT THE SAME CELL (momentum injection
+// is zero for resting walls — the canonical Poiseuille config). All 19 post-streaming
+// values are gathered into registers first, so the wall fix reads pre-bounce values
+// exactly like the parent's out[i] = f[OPP[i]] on the full post-streaming array.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly  buffer Fpost { double f_post[]; };
+layout(std430, binding = 1) writeonly buffer Fnew  { double f_new[];  };
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    uint   nz;
+    uint   pad;
+    double tau;
+    double force_x;
+} p;
+
+const int Q = 19;
+const ivec3 C[Q] = ivec3[](
+    ivec3(0,0,0),  ivec3(1,0,0),  ivec3(-1,0,0), ivec3(0,1,0),  ivec3(0,-1,0),
+    ivec3(0,0,1),  ivec3(0,0,-1), ivec3(1,1,0),  ivec3(-1,-1,0), ivec3(1,-1,0),
+    ivec3(-1,1,0), ivec3(1,0,1),  ivec3(-1,0,-1), ivec3(1,0,-1), ivec3(-1,0,1),
+    ivec3(0,1,1),  ivec3(0,-1,-1), ivec3(0,1,-1), ivec3(0,-1,1));
+const int OPP[Q] = int[](0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15, 18, 17);
+
+void main() {
+    uint ncell = p.nx * p.ny * p.nz;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    // cell = (x * ny + y) * nz + z  (C-order over (Nx, Ny, Nz), matching numpy).
+    uint z = cell % p.nz;
+    uint y = (cell / p.nz) % p.ny;
+    uint x = cell / (p.ny * p.nz);
+
+    double g[Q];
+    for (int i = 0; i < Q; ++i) {
+        int sx = (int(x) - C[i].x + int(p.nx)) % int(p.nx);
+        int sy = (int(y) - C[i].y + int(p.ny)) % int(p.ny);
+        int sz = (int(z) - C[i].z + int(p.nz)) % int(p.nz);
+        g[i] = f_post[uint(i) * ncell + uint((sx * int(p.ny) + sy) * int(p.nz) + sz)];
+    }
+    // Static-wall half-way bounce-back at y == 0 and y == ny-1.
+    double outv[Q];
+    for (int i = 0; i < Q; ++i) outv[i] = g[i];
+    if (y == 0u) {
+        for (int i = 0; i < Q; ++i)
+            if (C[i].y > 0) outv[i] = g[OPP[i]];
+    }
+    if (y == p.ny - 1u) {
+        for (int i = 0; i < Q; ++i)
+            if (C[i].y < 0) outv[i] = g[OPP[i]];
+    }
+    for (int i = 0; i < Q; ++i) f_new[uint(i) * ncell + cell] = outv[i];
+}

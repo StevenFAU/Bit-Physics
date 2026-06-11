@@ -1,0 +1,44 @@
+#version 450
+// Moment decoding: 16-bit codes -> m -> f = M^{-1} m.
+//
+// Inverse of lbm_encode.comp: m_k = lo_k + code_k * (hi_k - lo_k) / 65535, then the
+// f64 inverse-basis matmul. Element-wise per cell (reads are shared-word-safe; no
+// writes to enc), no atomics.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly buffer Enc    { uint   enc[];     };
+layout(std430, binding = 1) writeonly buffer Fout  { double f_out[];   };
+layout(std430, binding = 2) readonly buffer BasisI { double minv_rows[]; };  // 19x19 M^{-1}
+layout(std430, binding = 3) readonly buffer Ranges { double rng[];     };  // [lo.. , hi..]
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    uint   nz;
+    uint   pad;
+    double tau;
+    double force_x;
+} p;
+
+const int Q = 19;
+
+void main() {
+    uint ncell = p.nx * p.ny * p.nz;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    double m[Q];
+    for (int k = 0; k < Q; ++k) {
+        uint idx = cell * uint(Q) + uint(k);
+        uint shift = (idx & 1u) * 16u;
+        uint code = (enc[idx >> 1u] >> shift) & 0xFFFFu;
+        double lo = rng[k];
+        double hi = rng[Q + k];
+        m[k] = lo + double(code) * (hi - lo) / 65535.0lf;
+    }
+    for (int i = 0; i < Q; ++i) {
+        precise double fi = 0.0lf;
+        for (int k = 0; k < Q; ++k) fi += minv_rows[i * Q + k] * m[k];
+        f_out[uint(i) * ncell + cell] = fi;
+    }
+}

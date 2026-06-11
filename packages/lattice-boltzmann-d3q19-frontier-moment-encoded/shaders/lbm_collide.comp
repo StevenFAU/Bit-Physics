@@ -1,0 +1,74 @@
+#version 450
+// D3Q19 BGK collision + Guo-2002 forcing — Stack-C f64 (NoContraction), element-wise.
+//
+// Op-order mirrors the numpy parent `reference/bgk.py` (rho sum lex, momentum lex,
+// u_eq = u_pre + F/(2 rho_safe), Qian-1992 feq, BGK relax, Guo force term last).
+// One invocation per cell; all 19 directions in registers; no atomics.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly  buffer Fin   { double f_in[];  };
+layout(std430, binding = 1) writeonly buffer Fout  { double f_out[]; };
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    uint   nz;
+    uint   pad;
+    double tau;
+    double force_x;
+} p;
+
+const int Q = 19;
+const ivec3 C[Q] = ivec3[](
+    ivec3(0,0,0),  ivec3(1,0,0),  ivec3(-1,0,0), ivec3(0,1,0),  ivec3(0,-1,0),
+    ivec3(0,0,1),  ivec3(0,0,-1), ivec3(1,1,0),  ivec3(-1,-1,0), ivec3(1,-1,0),
+    ivec3(-1,1,0), ivec3(1,0,1),  ivec3(-1,0,-1), ivec3(1,0,-1), ivec3(-1,0,1),
+    ivec3(0,1,1),  ivec3(0,-1,-1), ivec3(0,1,-1), ivec3(0,-1,1));
+
+void main() {
+    uint ncell = p.nx * p.ny * p.nz;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    const double w0 = 1.0lf / 3.0lf;
+    const double w1 = 1.0lf / 18.0lf;
+    const double w2 = 1.0lf / 36.0lf;
+    double W[Q] = double[](w0, w1, w1, w1, w1, w1, w1,
+                           w2, w2, w2, w2, w2, w2, w2, w2, w2, w2, w2, w2);
+    const double cs2 = 1.0lf / 3.0lf;
+
+    double f[Q];
+    for (int i = 0; i < Q; ++i) f[i] = f_in[uint(i) * ncell + cell];
+
+    precise double rho = 0.0lf;
+    for (int i = 0; i < Q; ++i) rho += f[i];
+    double rho_safe = max(rho, 1e-30lf);
+
+    precise double mx = 0.0lf, my = 0.0lf, mz = 0.0lf;
+    for (int i = 0; i < Q; ++i) {
+        mx += double(C[i].x) * f[i];
+        my += double(C[i].y) * f[i];
+        mz += double(C[i].z) * f[i];
+    }
+    // u_eq = u_pre + F/(2 rho)  (Guo half-step shift; force along +x only).
+    precise double ux = mx / rho_safe + 0.5lf * p.force_x / rho_safe;
+    precise double uy = my / rho_safe;
+    precise double uz = mz / rho_safe;
+
+    precise double u_sq = ux * ux + uy * uy + uz * uz;
+    double inv_cs2 = 1.0lf / cs2;
+    double inv_cs4 = inv_cs2 * inv_cs2;
+    double prefactor = 1.0lf - 0.5lf / p.tau;
+
+    for (int i = 0; i < Q; ++i) {
+        precise double cu = double(C[i].x) * ux + double(C[i].y) * uy + double(C[i].z) * uz;
+        // feq op-order matches the parent's equilibrium.py (divisions, not reciprocals).
+        precise double feq = W[i] * rho
+            * (1.0lf + cu / cs2 + (cu * cu) / (2.0lf * cs2 * cs2) - u_sq / (2.0lf * cs2));
+        precise double fpost = f[i] - (f[i] - feq) / p.tau;
+        // Guo body-force contribution (force = (force_x, 0, 0)).
+        precise double term_x = (double(C[i].x) - ux) * inv_cs2 + cu * double(C[i].x) * inv_cs4;
+        fpost += prefactor * W[i] * (term_x * p.force_x);
+        f_out[uint(i) * ncell + cell] = fpost;
+    }
+}

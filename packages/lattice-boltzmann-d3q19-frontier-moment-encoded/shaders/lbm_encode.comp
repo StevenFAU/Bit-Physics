@@ -1,0 +1,52 @@
+#version 450
+// Moment encoding: f -> m = M f -> 16-bit codes (two codes packed per uint).
+//
+// The frontier delta (arXiv:2602.05295 CITE-DON'T-IMPORT): the persistent state is the
+// quantized moment vector. code_k = round((m_k - lo_k) / (hi_k - lo_k) * 65535), clamped.
+// Codes are packed cell-major (idx = cell*19 + k; word = idx >> 1; lo/hi half by idx & 1)
+// so the persistent footprint is 16 bits per moment — 75% below the f64 populations.
+// Element-wise per cell; the only cross-half write hazard is avoided by having each
+// invocation own a WHOLE cell whose 19 codes span words [cell*19/2 .. (cell*19+18)/2]:
+// boundary words shared between adjacent cells are composed via atomicOr after an
+// explicit zero pass (host clears the buffer each step before this dispatch) — order-
+// independent (OR of disjoint half-words), so determinism is unaffected.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly buffer Fin    { double f_in[];   };
+layout(std430, binding = 1) buffer Enc             { uint   enc[];    };
+layout(std430, binding = 2) readonly buffer Basis  { double m_rows[]; };  // 19x19 row-major M
+layout(std430, binding = 3) readonly buffer Ranges { double rng[];    };  // [lo0..lo18, hi0..hi18]
+layout(push_constant) uniform Params {
+    uint   nx;
+    uint   ny;
+    uint   nz;
+    uint   pad;
+    double tau;
+    double force_x;
+} p;
+
+const int Q = 19;
+
+void main() {
+    uint ncell = p.nx * p.ny * p.nz;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    double f[Q];
+    for (int i = 0; i < Q; ++i) f[i] = f_in[uint(i) * ncell + cell];
+
+    for (int k = 0; k < Q; ++k) {
+        precise double m = 0.0lf;
+        for (int i = 0; i < Q; ++i) m += m_rows[k * Q + i] * f[i];
+        double lo = rng[k];
+        double hi = rng[Q + k];
+        double t = (m - lo) / (hi - lo);
+        t = clamp(t, 0.0lf, 1.0lf);
+        uint code = uint(round(t * 65535.0lf));
+        code = min(code, 65535u);
+        uint idx = cell * uint(Q) + uint(k);
+        uint shift = (idx & 1u) * 16u;
+        atomicOr(enc[idx >> 1u], code << shift);
+    }
+}
