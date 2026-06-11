@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "sph-water-diff-gradient",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/sph-water-diff-gradient.md",
+    "upstream": "DiffTaichi-Hu-2020-ICLR / Monaghan-2005-RPP-68-8 / Bender-Koschier-2015-SCA / central-FD-baseline",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-06,
+    "relative": 1e-05
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "anchor": "a1-freefall",
+        "n_particles": 8,
+        "steps": 8,
+        "dt": 0.001,
+        "v0z": 0.3,
+        "v0z_target": 0.1
+      },
+      "expected": {
+        "grad_v0z": 0.00020479999999999996
+      },
+      "independent_reference": {
+        "source": "Semi-implicit-Euler free-fall closed form: v_k = v0 + k*g*dt, z_T = z0 + T*dt*v0 + g*dt^2*T(T+1)/2; gravity/IC cancel in the loss difference so z_T(v0z)-z_T(v0z*) = T*dt*(v0z-v0z*) per particle and dLoss/dv0z = 2*N*(dt*T)^2*(v0z-v0z*), EXACT for the discrete map (linear in v0z). Hand-derived kinematics (the mpm-diff a1-ballistic sibling).",
+        "derived_by": "closed-form-analytic (free-fall kinematics)",
+        "expected": {
+          "grad_v0z": 0.00020479999999999996
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-freefall",
+        "n_particles": 8,
+        "steps": 12,
+        "dt": 0.001,
+        "v0z": -0.25,
+        "v0z_target": 0.05
+      },
+      "expected": {
+        "grad_v0z": -0.0006912
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a1-freefall",
+        "n_particles": 1,
+        "steps": 8,
+        "dt": 0.005,
+        "v0z": 0.4,
+        "v0z_target": 0.1
+      },
+      "expected": {
+        "grad_v0z": 0.0009600000000000002
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-kernel-width",
+        "n_particles": 8,
+        "h": 0.05,
+        "h_target": 0.055
+      },
+      "expected": {
+        "grad_h": -73052.5219110234
+      },
+      "independent_reference": {
+        "source": "Central finite-difference baseline of the kernel-width L2 density loss on the canonical 8-particle cloud (common_py.autodiff.finite_diff.finite_difference_gradient, eps=1e-7); no closed form exists for the multi-particle cloud loss - a numerically independent method (autodiff-vs-FD agreement measured ~1e-10 relative at table-build).",
+        "derived_by": "central-finite-difference (eps=1e-7)",
+        "expected": {
+          "grad_h": -73052.5219110234
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-kernel-width",
+        "n_particles": 8,
+        "h": 0.045,
+        "h_target": 0.05
+      },
+      "expected": {
+        "grad_h": -155921.8453544986
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a2-fd-kernel-width",
+        "n_particles": 8,
+        "h": 0.06,
+        "h_target": 0.05
+      },
+      "expected": {
+        "grad_h": 63107.56907367932
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-pair-drho-dh",
+        "r": 0.025,
+        "h": 0.05,
+        "mass": 0.001
+      },
+      "expected": {
+        "drho_dh": -238.73241463784296
+      },
+      "independent_reference": {
+        "source": "Monaghan cubic-spline kernel calculus, hand-derived: rho(h) = (m*sigma_3/h^3)(1 + f(q)), q = r/h, dq/dh = -q/h => d(rho)/dh = -(m*sigma_3/h^4)(3(1+f(q)) + q*f'(q)). Evaluated on the inner branch (q=0.5 < 1). Monaghan 2005 Rep. Prog. Phys. 68(8) Eq. 2.7 (the parent's SPlisHSPlasH-cross-checked golden kernel surface). Distinct physical term (kernel calculus), parameter (h), and method from a1/a2.",
+        "derived_by": "closed-form-analytic (Monaghan-spline differentiation)",
+        "expected": {
+          "drho_dh": -238.73241463784296
+        }
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-pair-drho-dh",
+        "r": 0.07,
+        "h": 0.05,
+        "mass": 0.001
+      },
+      "expected": {
+        "drho_dh": -141.7879557017077
+      }
+    },
+    {
+      "inputs": {
+        "anchor": "a3-pair-drho-dh",
+        "r": 0.04,
+        "h": 0.05,
+        "mass": 0.001
+      },
+      "expected": {
+        "drho_dh": -178.45725459008037
+      }
+    }
+  ]
+}

@@ -394,3 +394,29 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# sph-water-diff (Stack D / Taichi ti.ad.Tape; phase-6 C-1 unit U-1). Differentiable
+# free-fall + cubic-spline SPH density (time-indexed needs_grad fields; ti.static-unrolled
+# id-order pair sum; load_velocity -> advance chain -> L2). Two surfaces, both MEASURED
+# bit-identical run-to-run at stage 1b (single-thread CPU f64, seed-pinned interior cloud
+# IC; tests/test_determinism.py: np.array_equal final-positions + gradient both True). The
+# loss/density += accumulations are the determinism-sensitive surface, serialised bit-exact
+# under cpu_max_num_threads=1 (the parent + mpm-diff posture). No EFECT (no training-loss
+# distribution). BOTH rows carry atomic_ops = "sum-only": the L2 loss (and the density
+# accumulation) reduce via += into scalar/element targets; `gradient` adds the tape adjoint
+# of those reductions. Declared + MEASURED at C-1 U-1 stage 1b; HOLDS.
+[particle-fluids.sph-water-diff.forward]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true
+
+[particle-fluids.sph-water-diff.gradient]
+stack = "D"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "sum-only"
+subgroup_ops = "none"
+seed_pinned = true

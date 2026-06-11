@@ -91,7 +91,11 @@ class SphInitialVelocityControl(ControlProblem):  # type: ignore[misc]
         ``params`` is the ``(1,)`` ``needs_grad`` ``v0z`` field, loaded into ``v[0]`` inside
         the tape so the gradient flows back; x[0] is the constant set in
         :meth:`set_initial`."""
-        raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+        k = self._ker
+        k["load_velocity"](self.v, params)
+        for f in range(self.cfg.steps):
+            k["advance"](f, self.x, self.v)
+        return self.x
 
     def loss(self, predicted: Any, target: Any) -> Any:
         self._ker["comp_loss_pos"](self.x, target, self.loss_field)
@@ -152,7 +156,10 @@ class SphKernelWidthID(ParameterIDProblem):  # type: ignore[misc]
 
     def forward(self, params: Any, state: Any) -> Any:
         """Compute the density field at ``h`` (tape-differentiable); return ``rho``."""
-        raise NotImplementedError("C-1 U-1 scaffold (RED): forward implemented at the GREEN commit")
+        k = self._ker
+        k["clear_rho"](self.rho)
+        k["density_from_h"](self.xs, params, self.rho)
+        return self.rho
 
     def loss(self, predicted: Any, target: Any) -> Any:
         self._ker["comp_loss_rho"](self.rho, target, self.loss_field)
