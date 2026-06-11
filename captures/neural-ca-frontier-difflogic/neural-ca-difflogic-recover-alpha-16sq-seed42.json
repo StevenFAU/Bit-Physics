@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dims": [
+      16,
+      16
+    ],
+    "dtype": "f64",
+    "params": {
+      "iterations": 354,
+      "planted_alpha": 0.6,
+      "recovered_alpha": 0.5999999999895512
+    },
+    "seed": 42,
+    "tier": "reference"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "gradient_fields": [
+    {
+      "dtype": "float64",
+      "name": "dLoss_dalpha",
+      "shape": [
+        1
+      ],
+      "wrt": "alpha"
+    }
+  ],
+  "payload": {
+    "checksum": "sha256:05fa614ebcf94e449004fcc01e28728dc2c6ae085df8a9b99019ca28ef93e4af",
+    "format": "hdf5",
+    "path": "neural-ca-difflogic-recover-alpha-16sq-seed42.h5"
+  },
+  "run": {
+    "capture_interval": 1,
+    "start_utc": "2026-06-11T00:00:00Z",
+    "step_count": 1,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.1.0",
+  "sim": {
+    "category": "continuous-ca",
+    "name": "neural-ca",
+    "variant": "frontier-difflogic"
+  },
+  "stack": {
+    "build_id": "cpu-det",
+    "name": "taichi",
+    "version": "1.7"
+  }
+}

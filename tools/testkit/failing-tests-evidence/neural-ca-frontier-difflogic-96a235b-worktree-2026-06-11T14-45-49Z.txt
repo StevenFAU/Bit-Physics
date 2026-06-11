@@ -1,0 +1,233 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.13, pytest-9.0.3, pluggy-1.6.0 -- /home/clipbird/Projects/Bit-Physics/.venv/bin/python
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: /home/clipbird/Projects/Bit-Physics/packages/neural-ca-frontier-difflogic
+configfile: pyproject.toml
+testpaths: tests
+plugins: jaxtyping-0.3.10, hydra-core-1.3.2, cov-7.1.0, anyio-4.13.0, timeout-2.4.0, hypothesis-6.152.8
+collecting ... collected 22 items
+
+tests/test_capture.py::test_capture_has_gradient_fields FAILED           [  4%]
+tests/test_capture.py::test_capture_roundtrips FAILED                    [  9%]
+tests/test_determinism.py::test_hard_trajectory_bit_identical_across_runs PASSED [ 13%]
+tests/test_determinism.py::test_soft_forward_bit_identical_across_runs FAILED [ 18%]
+tests/test_determinism.py::test_gradient_bit_identical_across_runs FAILED [ 22%]
+tests/test_diagnostics.py::test_capture_is_healthy FAILED                [ 27%]
+tests/test_diagnostics.py::test_final_state_bounded FAILED               [ 31%]
+tests/test_gol_circuit.py::test_circuit_matches_gol_rule_exhaustive_512 PASSED [ 36%]
+tests/test_gol_circuit.py::test_kernel_matches_python_evaluator_on_random_soft_states PASSED [ 40%]
+tests/test_gol_circuit.py::test_blinker_period_two PASSED                [ 45%]
+tests/test_gol_circuit.py::test_glider_translates PASSED                 [ 50%]
+tests/test_gol_circuit.py::test_hard_limit_stays_exactly_binary PASSED   [ 54%]
+tests/test_gradient_golden.py::test_gradient_golden_table FAILED         [ 59%]
+tests/test_gradient_golden.py::test_a1_all_sixteen_gates_exact_at_corners PASSED [ 63%]
+tests/test_gradient_golden.py::test_a1_midpoint_is_truth_table_mean PASSED [ 68%]
+tests/test_gradient_golden.py::test_a3_gradient_matches_finite_difference_report FAILED [ 72%]
+tests/test_inverse_recovery.py::test_recover_planted_alpha FAILED        [ 77%]
+tests/test_inverse_recovery.py::test_gradient_fields_populated FAILED    [ 81%]
+tests/test_inverse_recovery.py::test_recovery_from_other_init FAILED     [ 86%]
+tests/test_pbt_invariants.py::test_hard_limit_matches_truth_table_pbt PASSED [ 90%]
+tests/test_pbt_invariants.py::test_soft_gate_output_bounded_pbt PASSED   [ 95%]
+tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt FAILED [100%]
+
+=================================== FAILURES ===================================
+_______________________ test_capture_has_gradient_fields _______________________
+tests/test_capture.py:12: in test_capture_has_gradient_fields
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/capture.py:103: in default_capture
+    sol = solve_recovery(cfg, planted=0.60, init=0.30)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_roundtrips ____________________________
+tests/test_capture.py:32: in test_capture_roundtrips
+    manifest_path = default_capture(tmp_path)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/capture.py:103: in default_capture
+    sol = solve_recovery(cfg, planted=0.60, init=0.30)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_soft_forward_bit_identical_across_runs __________________
+tests/test_determinism.py:34: in test_soft_forward_bit_identical_across_runs
+    f1, _ = _soft_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:25: in _soft_and_grad
+    target = prob.final_state(0.75)
+             ^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________ test_gradient_bit_identical_across_runs ____________________
+tests/test_determinism.py:41: in test_gradient_bit_identical_across_runs
+    _, g1 = _soft_and_grad(cfg)
+            ^^^^^^^^^^^^^^^^^^^
+tests/test_determinism.py:25: in _soft_and_grad
+    target = prob.final_state(0.75)
+             ^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_capture_is_healthy ____________________________
+tests/test_diagnostics.py:15: in test_capture_is_healthy
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/capture.py:103: in default_capture
+    sol = solve_recovery(cfg, planted=0.60, init=0.30)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+___________________________ test_final_state_bounded ___________________________
+tests/test_diagnostics.py:27: in test_final_state_bounded
+    manifest = default_capture(tmp_path)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/capture.py:103: in default_capture
+    sol = solve_recovery(cfg, planted=0.60, init=0.30)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________________ test_gradient_golden_table __________________________
+tests/test_gradient_golden.py:66: in test_gradient_golden_table
+    result = verify_against_table(gradient_table, gradient_evaluator)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+../../tools/testkit/golden/verifier.py:96: in verify_against_table
+    with table_path.open("r", encoding="utf-8") as fh:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+/home/clipbird/.local/share/uv/python/cpython-3.12.13-linux-x86_64-gnu/lib/python3.12/pathlib.py:1013: in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   FileNotFoundError: [Errno 2] No such file or directory: '/home/clipbird/Projects/Bit-Physics/tools/testkit/golden/tables/neural-ca-frontier-difflogic-gradient.json'
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+______________ test_a3_gradient_matches_finite_difference_report _______________
+tests/test_gradient_golden.py:92: in test_a3_gradient_matches_finite_difference_report
+    target = prob.final_state(0.75)
+             ^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+__________________________ test_recover_planted_alpha __________________________
+tests/test_inverse_recovery.py:13: in test_recover_planted_alpha
+    sol = solve_recovery(cfg, planted=0.60, init=0.30)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_gradient_fields_populated ________________________
+tests/test_inverse_recovery.py:21: in test_gradient_fields_populated
+    sol = solve_recovery(cfg, planted=0.60, init=0.40)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+________________________ test_recovery_from_other_init _________________________
+tests/test_inverse_recovery.py:32: in test_recovery_from_other_init
+    sol = solve_recovery(cfg, planted=0.25, init=0.70)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:154: in solve_recovery
+    target = truth.final_state(float(planted))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+_________________ test_gradient_matches_finite_difference_pbt __________________
+tests/test_pbt_invariants.py:57: in test_gradient_matches_finite_difference_pbt
+    @settings(
+               
+tests/test_pbt_invariants.py:69: in test_gradient_matches_finite_difference_pbt
+    assert gradient_matches_finite_difference(cfg, alpha=alpha, rel_tol=1e-3)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/invariants.py:43: in gradient_matches_finite_difference
+    target = prob.final_state(min(1.0, float(alpha) + 0.15))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+neural_ca_frontier_difflogic/sim.py:114: in final_state
+    self.forward(self._alpha, self.state)
+neural_ca_frontier_difflogic/sim.py:105: in forward
+    raise NotImplementedError("C-1 U-2 scaffold (RED): forward implemented at the GREEN commit")
+E   NotImplementedError: C-1 U-2 scaffold (RED): forward implemented at the GREEN commit
+E   Falsifying example: test_gradient_matches_finite_difference_pbt(
+E       alpha=0.05,
+E   )
+---------------------------- Captured stdout setup -----------------------------
+[Taichi] Starting on arch=x64
+----------------------------- Captured stdout call -----------------------------
+[Taichi] Starting on arch=x64
+[Taichi] Starting on arch=x64
+=========================== short test summary info ============================
+FAILED tests/test_capture.py::test_capture_has_gradient_fields - NotImplement...
+FAILED tests/test_capture.py::test_capture_roundtrips - NotImplementedError: ...
+FAILED tests/test_determinism.py::test_soft_forward_bit_identical_across_runs
+FAILED tests/test_determinism.py::test_gradient_bit_identical_across_runs - N...
+FAILED tests/test_diagnostics.py::test_capture_is_healthy - NotImplementedErr...
+FAILED tests/test_diagnostics.py::test_final_state_bounded - NotImplementedEr...
+FAILED tests/test_gradient_golden.py::test_gradient_golden_table - FileNotFou...
+FAILED tests/test_gradient_golden.py::test_a3_gradient_matches_finite_difference_report
+FAILED tests/test_inverse_recovery.py::test_recover_planted_alpha - NotImplem...
+FAILED tests/test_inverse_recovery.py::test_gradient_fields_populated - NotIm...
+FAILED tests/test_inverse_recovery.py::test_recovery_from_other_init - NotImp...
+FAILED tests/test_pbt_invariants.py::test_gradient_matches_finite_difference_pbt
+======================== 12 failed, 10 passed in 3.06s =========================

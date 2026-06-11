@@ -432,3 +432,9 @@ runner    = "uv run --no-sync pytest packages/flow-lenia/tests/ -x -q --tb=no"
 path      = "packages/sph-water-diff/sph_water_diff"
 threshold = 0.80
 runner    = "uv run --no-sync pytest packages/sph-water-diff/tests/ -x -q --tb=no"
+
+# Phase-6 C-1 unit U-2 (neural-ca-frontier-difflogic). Per-sim mutation target (advisory).
+[targets.neural_ca_frontier_difflogic]
+path      = "packages/neural-ca-frontier-difflogic/neural_ca_frontier_difflogic"
+threshold = 0.80
+runner    = "uv run --no-sync pytest packages/neural-ca-frontier-difflogic/tests/ -x -q --tb=no"
