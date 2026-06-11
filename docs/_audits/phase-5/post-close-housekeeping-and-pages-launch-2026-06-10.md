@@ -256,3 +256,5 @@ pages_evidence_commit_sha: d516ccc  # Convention #12 back-fill
   confirm_release=true — same commitment pattern as § 7/§ 9.
 - Restated: publishing attaches already-validated binaries; the gates are
   untouched and no new verification claim is made.
+
+binary_release_ungate_commit_sha: fda19ec  # Convention #12 back-fill (§ 10 append commit)
