@@ -122,10 +122,9 @@ async function main(): Promise<void> {
     ],
   });
 
-  async function captureCanonical(): Promise<void> {
-    panel.setStatus("reading trajectory…");
-    panel.setCaptureEnabled(false);
-    resetCapture();
+  // One readback path for BOTH the capture export and the Study diagnostics,
+  // so what Study displays is measured from the same buffer the capture reads.
+  async function readTrajectory(): Promise<Float32Array> {
     const rb = device.createBuffer({ size: trajBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
     const enc = device.createCommandEncoder();
     enc.copyBufferToBuffer(traj, 0, rb, 0, trajBytes);
@@ -134,6 +133,14 @@ async function main(): Promise<void> {
     const all = new Float32Array(rb.getMappedRange().slice(0));
     rb.unmap();
     rb.destroy();
+    return all;
+  }
+
+  async function captureCanonical(): Promise<void> {
+    panel.setStatus("reading trajectory…");
+    panel.setCaptureEnabled(false);
+    resetCapture();
+    const all = await readTrajectory();
     const steps: CaptureStepDescriptor[] = [];
     for (let s = 0; s <= N_STEPS; s += 1) {
       if (s % CAPTURE_INTERVAL !== 0 && s !== N_STEPS) continue;
@@ -164,16 +171,38 @@ async function main(): Promise<void> {
     panel.setCaptureEnabled(true);
   }
 
-  const panel = createSettingsPanel("Lorenz Attractor", {
-    initial: { tier: "test", seed: 42 },
-    onCapture: captureCanonical,
-  });
+  // Study diagnostics (house § 5.4): measured from the SAME trajectory buffer
+  // the capture exports — i.e. the capture-time values, not a re-derivation.
+  async function measureStudyDiagnostics(): Promise<void> {
+    const all = await readTrajectory();
+    const lo = [Infinity, Infinity, Infinity];
+    const hi = [-Infinity, -Infinity, -Infinity];
+    for (let s = 0; s < nPoints; s += 1) {
+      for (let i = 0; i < 3; i += 1) {
+        const v = all[s * 3 + i]!;
+        if (v < lo[i]!) lo[i] = v;
+        if (v > hi[i]!) hi[i] = v;
+      }
+    }
+    const fx = all[N_STEPS * 3]!, fy = all[N_STEPS * 3 + 1]!, fz = all[N_STEPS * 3 + 2]!;
+    const r = (i: number): string => `${lo[i]!.toFixed(1)} … ${hi[i]!.toFixed(1)}`;
+    panel.setDiagnostics([
+      { label: "integrator", value: "RK4 ×10000, dt 0.01" },
+      { label: "σ / ρ / β", value: "10 / 28 / 8⁄3" },
+      { label: "x range", value: r(0) },
+      { label: "y range", value: r(1) },
+      { label: "z range", value: r(2) },
+      { label: "final |x⃗|", value: Math.sqrt(fx * fx + fy * fy + fz * fz).toFixed(2) },
+      { label: "states exported", value: `${Math.floor(N_STEPS / CAPTURE_INTERVAL) + 1} of ${nPoints}` },
+    ]);
+  }
 
   boot.textContent = "";
   let angle = 0;
-  function frame(): void {
-    if (isCapturing()) { requestAnimationFrame(frame); return; }
-    angle += 0.003;
+  let suspended = false;
+  let rafQueued = false;
+
+  function renderFrame(): void {
     queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, nPoints, 0]));
     const enc = device.createCommandEncoder();
     const pass = enc.beginRenderPass({
@@ -186,9 +215,68 @@ async function main(): Promise<void> {
     pass.draw(nPoints);
     pass.end();
     queue.submit([enc.finish()]);
+  }
+
+  function queueFrame(): void {
+    if (rafQueued) return;
+    rafQueued = true;
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+
+  function frame(): void {
+    rafQueued = false;
+    if (isCapturing()) { queueFrame(); return; }
+    if (suspended) return; // Study mode: RAF chain ends here (D-P1.2(b))
+    angle += 0.003;
+    renderFrame();
+    queueFrame();
+  }
+
+  const panel = createSettingsPanel("Lorenz Attractor", {
+    initial: { tier: "test", seed: 42 },
+    onCapture: captureCanonical,
+    modes: {
+      initial: "play",
+      onMode: (m) => {
+        suspended = m === "study";
+        if (suspended) {
+          // Frozen observation: one fresh present after the mode styles apply,
+          // then measure the diagnostics from the capture buffer.
+          renderFrame();
+          void measureStudyDiagnostics();
+        } else {
+          queueFrame();
+        }
+      },
+    },
+    study: {
+      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      honesty: {
+        faithful:
+          "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs (σ=10, ρ=28, β=8⁄3, dt=0.01, seed-42 jittered IC); the point cloud is that trajectory, untouched",
+        simplified:
+          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise",
+        measured: "ranges read back from the displayed trajectory buffer on entering Study — the same buffer the capture exports",
+      },
+      verdict: {
+        gate: "new_canonical + run-twice (two browser runs byte-identical; all sampled points inside the f64 reference attractor envelope)",
+        verdict: "PASS",
+        pass: true,
+      },
+      links: [
+        {
+          label: "sim spec",
+          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/closed-form/strange-attractors/spec-ref.md",
+        },
+        {
+          label: "audit ledger",
+          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
+        },
+      ],
+    },
+  });
+
+  queueFrame();
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 
