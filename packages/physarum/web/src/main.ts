@@ -12,8 +12,10 @@
 // so the gate is determinism + the EXACT mass-balance invariant (total_mass =
 // deposit·N·(1-α)/α = 22500). Seed-42 IC ships as physarum-ic-seed42.bin.
 
+import "../../../../common/common-web/src/theme.css";
+
 import { createContext } from "../../../../common/common-ts/src/context.js";
-import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
+import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 
 import computeWgsl from "../../src/physarum.wgsl?raw";
