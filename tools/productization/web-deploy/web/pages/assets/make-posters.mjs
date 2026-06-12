@@ -31,7 +31,12 @@ const REPO = join(HERE, "../../../../../..");
 // zoom: crop to the bright-content bounding box (sparse point renders read
 //   as voids at card size otherwise). pixelated: crisp CA texels, no smoothing.
 const SIMS = {
-  "boids-3d": { frames: 520, px: 512, trail: { shots: 16, gap: 4 }, boost: "brightness(2.2) saturate(1.6) contrast(1.45)" },
+  // P-5: plain shot — the P-2 long-exposure trail stack is obsolete since the
+  // P-4 point-size fix (agents draw as ~5 px sprites, directly visible);
+  // photographic zoom-to-content like strange-attractors, mild exposure only.
+  // frames 240 = condensed flock stream still inside the fixed render frame
+  // (the kernel has no world bounds; later frames drift out — P-5 audit § 5).
+  "boids-3d": { frames: 240, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.8) saturate(1.4)" },
   "neural-ca": { frames: 140, px: 512 },
   physarum: { frames: 650, px: 512 },
   "reaction-diffusion-2d": { frames: 2200, px: 512 },
