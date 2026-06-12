@@ -206,3 +206,5 @@ diagnostics always show raw un-framed values.
 
 - Stage commit SHAs recorded in § 3 (already pushed at audit-write time).
 - p3_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p3_audit_commit_sha: 8352aa2  # Convention #12 back-fill (§ 8)
