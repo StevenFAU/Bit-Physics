@@ -195,7 +195,7 @@ async function main(): Promise<void> {
     layout: device.createPipelineLayout({ bindGroupLayouts: [renderBGL] }),
     vertex: { module: renderModule, entryPoint: "vs_main" },
     fragment: { module: renderModule, entryPoint: "fs_main", targets: [{ format }] },
-    primitive: { topology: "point-list" },
+    primitive: { topology: "triangle-list" },
   });
 
   const panel = createSettingsPanel("Boids 3D", { initial: { tier: "test", seed: 42 }, onCapture: captureCanonical });
@@ -226,7 +226,7 @@ async function main(): Promise<void> {
     });
     pass.setPipeline(renderPipeline);
     pass.setBindGroup(0, renderBG);
-    pass.draw(NA);
+    pass.draw(NA * 6); // 6 vertices per agent — quad sprites (render.wgsl)
     pass.end();
     queue.submit([enc.finish()]);
     requestAnimationFrame(frame);
