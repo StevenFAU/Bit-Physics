@@ -70,6 +70,61 @@ async function main(): Promise<void> {
     queue.writeBuffer(paramBuf, 0, buf);
   }
 
+  // Named sensing regimes (house § 5.3, ruling D-P1.2(a)): live-loop presets
+  // over the SAME committed kernel. The preset axes are the Jones 2010 § 5
+  // pattern-formation parameters (sensor angle / sensor offset; DOI
+  // 10.1162/artl.2010.16.2.16202 — canonical set per § 3 Table 1, pinned in
+  // docs/sim-specs/agent-based/physarum/algebraic.md § 2); regime NAMES
+  // describe the measured behavior of THIS kernel (screenshots + trail stats
+  // in the P-4 audit). deposit/decay/L_move stay canonical, so the
+  // d·N·(1−α)/α mass equilibrium is regime-invariant. The capture path steps
+  // with the canonical paramBuf only.
+  interface SenseRegime {
+    label: string;
+    title: string;
+    delta_phi_deg: number;
+    L_sense: number;
+  }
+  const REGIMES: readonly SenseRegime[] = [
+    {
+      label: "canonical",
+      title: "Jones 2010 Table-1 sensing — Δφ 45°, L_sense 9. The capture regime.",
+      delta_phi_deg: PARAMS.delta_phi_deg, L_sense: PARAMS.L_sense,
+    },
+    {
+      label: "fragments",
+      title: "short sensors — Δφ 45°, L_sense 3: small-scale sensing breaks the trail into short, fine fragments",
+      delta_phi_deg: 45.0, L_sense: 3.0,
+    },
+    {
+      label: "long strands",
+      title: "far sensors — Δφ 45°, L_sense 24: long-range sensing pulls sparse, large-scale corridors",
+      delta_phi_deg: 45.0, L_sense: 24.0,
+    },
+    {
+      label: "trunk lines",
+      title: "narrow steering — Δφ 22.5°, L_sense 9: slow turning forges few, straight, heavily reinforced trunks",
+      delta_phi_deg: 22.5, L_sense: 9.0,
+    },
+  ];
+  let activeRegime: SenseRegime = REGIMES[0]!;
+  const liveParamBuf = device.createBuffer({ size: 48, usage: U.UNIFORM | U.COPY_DST });
+  function writeLiveParams(r: SenseRegime): void {
+    const buf = new ArrayBuffer(48);
+    const dv = new DataView(buf);
+    dv.setUint32(0, NA, true);
+    dv.setUint32(4, W, true);
+    dv.setUint32(8, H, true);
+    dv.setUint32(12, 0, true);
+    dv.setFloat32(16, (r.delta_phi_deg * Math.PI) / 180, true);
+    dv.setFloat32(20, r.L_sense, true);
+    dv.setFloat32(24, PARAMS.L_move, true);
+    dv.setFloat32(28, PARAMS.deposit, true);
+    dv.setFloat32(32, PARAMS.decay_alpha, true);
+    queue.writeBuffer(liveParamBuf, 0, buf);
+  }
+  writeLiveParams(activeRegime);
+
   const module = device.createShaderModule({ code: computeWgsl, label: "physarum" });
   const bgl = device.createBindGroupLayout({
     entries: [
@@ -86,11 +141,11 @@ async function main(): Promise<void> {
   const pApply = await device.createComputePipelineAsync({ layout: pl, compute: { module, entryPoint: "apply" } });
   const pDiffuse = await device.createComputePipelineAsync({ layout: pl, compute: { module, entryPoint: "diffuse" } });
 
-  const bind = (tin: GPUBuffer, tout: GPUBuffer): GPUBindGroup =>
+  const bind = (tin: GPUBuffer, tout: GPUBuffer, params: GPUBuffer): GPUBindGroup =>
     device.createBindGroup({
       layout: bgl,
       entries: [
-        { binding: 0, resource: { buffer: paramBuf } },
+        { binding: 0, resource: { buffer: params } },
         { binding: 1, resource: { buffer: tin } },
         { binding: 2, resource: { buffer: tout } },
         { binding: 3, resource: { buffer: posB } },
@@ -101,16 +156,20 @@ async function main(): Promise<void> {
 
   const wga = Math.ceil(NA / 64);
   const wgg = Math.ceil(W / 8);
-  function step(): void {
+  function stepWith(params: GPUBuffer): void {
     const enc = device.createCommandEncoder();
     let c = enc.beginComputePass();
-    c.setPipeline(pAgents); c.setBindGroup(0, bind(Ta, Tb)); c.dispatchWorkgroups(wga); c.end();
+    c.setPipeline(pAgents); c.setBindGroup(0, bind(Ta, Tb, params)); c.dispatchWorkgroups(wga); c.end();
     c = enc.beginComputePass();
-    c.setPipeline(pApply); c.setBindGroup(0, bind(Ta, Tb)); c.dispatchWorkgroups(wgg, wgg); c.end();
+    c.setPipeline(pApply); c.setBindGroup(0, bind(Ta, Tb, params)); c.dispatchWorkgroups(wgg, wgg); c.end();
     c = enc.beginComputePass();
-    c.setPipeline(pDiffuse); c.setBindGroup(0, bind(Tb, Ta)); c.dispatchWorkgroups(wgg, wgg); c.end();
+    c.setPipeline(pDiffuse); c.setBindGroup(0, bind(Tb, Ta, params)); c.dispatchWorkgroups(wgg, wgg); c.end();
     queue.submit([enc.finish()]);
   }
+  // The capture path steps ONLY with the canonical paramBuf; the RAF live
+  // loop steps with the live regime buffer (D-P1.2(a) pinning split).
+  const stepCanonical = (): void => stepWith(paramBuf);
+  const stepLive = (): void => stepWith(liveParamBuf);
 
   async function readF32(buf: GPUBuffer, n: number): Promise<Float32Array> {
     const rb = device.createBuffer({ size: n * 4, usage: U.COPY_DST | U.MAP_READ });
@@ -137,7 +196,7 @@ async function main(): Promise<void> {
     panel.setCaptureEnabled(false);
     resetCapture();
     await reset();
-    for (let s = 0; s < STEPS; s += 1) step();
+    for (let s = 0; s < STEPS; s += 1) stepCanonical();
     const trail = await readF32(Ta, W * H);
     const pos = await readF32(posB, NA * 2);
     const head = await readF32(headB, NA * 2);
@@ -218,21 +277,40 @@ async function main(): Promise<void> {
       if (v > peak) peak = v;
     }
     const equil = (PARAMS.deposit * NA * (1 - PARAMS.decay_alpha)) / PARAMS.decay_alpha;
+    const reg = activeRegime;
     panel.setDiagnostics([
+      { label: "live regime", value: reg.label },
       { label: "grid", value: `${W} × ${H}` },
       { label: "agents", value: String(NA) },
       { label: "live step", value: String(liveStep) },
-      { label: "Δφ / L_sense", value: `${PARAMS.delta_phi_deg}° / ${PARAMS.L_sense}` },
+      { label: "Δφ / L_sense", value: `${reg.delta_phi_deg}° / ${reg.L_sense}` },
       { label: "deposit / decay α", value: `${PARAMS.deposit} / ${PARAMS.decay_alpha}` },
       { label: "total mass", value: mass.toFixed(1) },
       { label: "mass equilibrium", value: `${equil} (d·N·(1−α)/α)` },
       { label: "peak trail", value: peak.toFixed(2) },
+      { label: "capture pinned to", value: "canonical, seed 42" },
     ]);
+  }
+
+  function applyRegime(r: SenseRegime): void {
+    activeRegime = r;
+    writeLiveParams(r);
+    panel.setStatus(
+      r === REGIMES[0]
+        ? "live network: canonical — the capture regime"
+        : `live network: ${r.label} — capture stays pinned to canonical seed-42`,
+    );
+    if (suspended) void measureStudyDiagnostics();
   }
 
   const panel = createSettingsPanel("Physarum Network", {
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
+    presets: REGIMES.map((r) => ({
+      label: r.label,
+      title: r.title,
+      apply: () => applyRegime(r),
+    })),
     modes: {
       initial: "play",
       onMode: (m) => {
@@ -246,9 +324,9 @@ async function main(): Promise<void> {
         faithful:
           "the committed physarum.wgsl 3-pass kernel — the same sense/rotate/move + deposit, apply, diffuse+decay compute the wgpu-native gate runs; Jones 2010 Table-1 canonical params (Δφ 45°, L_sense 9, L_move 1, d 5, α 0.1); seed-42 IC; every displayed frame is a real kernel step",
         simplified:
-          "the trail deposit is u32 fixed-point (×65536) so the atomic adds are order-independent — that is what makes two runs byte-identical; the trail-vs-f64-canonical field match is precluded by atomics + agent RNG IC, so the gate is determinism + the exact mass-balance invariant",
+          "the trail deposit is u32 fixed-point (×65536) so the atomic adds are order-independent — that is what makes two runs byte-identical; the trail-vs-f64-canonical field match is precluded by atomics + agent RNG IC, so the gate is determinism + the exact mass-balance invariant; presets (sensing geometry) and the cursor deposit drive the live loop only — the capture resets to the seed-42 IC and re-runs the canonical params",
         measured:
-          "trail statistics read back from the live trail buffer on entering Study (stepping is paused; the view keeps presenting)",
+          "trail statistics read back from the live trail buffer on entering Study and on preset change (stepping is paused in Study; the view keeps presenting)",
       },
       verdict: {
         gate: "new_canonical + run-twice (byte-identical runs; total mass within 1e-3 of the d·N·(1−α)/α = 22500 equilibrium)",
@@ -267,6 +345,7 @@ async function main(): Promise<void> {
       ],
     },
   });
+  panel.setActivePreset("canonical");
   await reset();
   boot.textContent = "";
   // Study = pause stepping, keep presenting (P-4 rule 0.5.3): measured at
@@ -328,7 +407,7 @@ async function main(): Promise<void> {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
     if (!suspended) {
       injectCursorDeposit();
-      step();
+      stepLive();
       liveStep += 1;
     }
     const enc = device.createCommandEncoder();
