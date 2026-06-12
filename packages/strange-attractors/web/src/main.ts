@@ -11,8 +11,10 @@
 // — so the gate is structural attractor invariants (bounding box + spread) +
 // run-twice byte-identical determinism, NOT a pointwise round-trip.
 
+import "../../../../common/common-web/src/theme.css";
+
 import { createContext } from "../../../../common/common-ts/src/context.js";
-import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
+import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
