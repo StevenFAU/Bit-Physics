@@ -283,6 +283,40 @@ async function main(): Promise<void> {
   // render-without-step is a clean separation — the frozen flock stays
   // orbitable while the physics is suspended (D-P1.2(b)).
   let suspended = false;
+
+  // Cursor-as-camera (house § 5.1, D-P1.2(a) class): drag orbits the flock by
+  // driving the SAME render-uniform angle slot the auto-orbit writes — live
+  // loop only; nothing here is read by captureCanonical/readBuf/step. The
+  // auto-orbit resumes after AUTO_ORBIT_IDLE_MS without pointer input. The
+  // render loop keeps presenting in Study, so dragging works there too.
+  const AUTO_ORBIT_IDLE_MS = 4000;
+  const DRAG_RAD_PER_PX = 0.008;
+  let lastPointerMs = -AUTO_ORBIT_IDLE_MS; // boot: auto-orbit live immediately
+  let dragPointer: number | null = null;
+  let dragX = 0;
+  canvas.style.cursor = "grab";
+  canvas.addEventListener("pointerdown", (e) => {
+    dragPointer = e.pointerId;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = "grabbing";
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (dragPointer !== e.pointerId) return;
+    angle += (e.clientX - dragX) * DRAG_RAD_PER_PX;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+  });
+  const endDrag = (e: PointerEvent): void => {
+    if (dragPointer !== e.pointerId) return;
+    dragPointer = null;
+    lastPointerMs = performance.now();
+    canvas.style.cursor = "grab";
+  };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
     if (!suspended) {
@@ -290,7 +324,7 @@ async function main(): Promise<void> {
       liveStep += 1;
       if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
     }
-    angle += 0.003;
+    if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
     queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0]));
     const renderBG = device.createBindGroup({
       layout: renderBGL,
