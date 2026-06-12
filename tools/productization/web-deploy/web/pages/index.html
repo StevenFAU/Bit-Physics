@@ -18,10 +18,25 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Bit-Physics — GPU physics &amp; emergence, verified</title>
 <meta name="description" content="A GPU-accelerated physics and emergence simulation portfolio with an append-only verification ledger. Seven browser-WebGPU sims, each re-verified through its own established gate." />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap" rel="stylesheet" />
 <style>
+  /* Self-hosted house fonts (P-3 Stage 1 — no Google Fonts runtime fetch).
+     Source of truth: common/common-web/fonts/ (OFL 1.1); this page is served
+     verbatim with no build step, so it carries its own copy under ./assets/. */
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 300;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-300.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-400.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 500;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 600;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 700;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-700.woff2') format('woff2'); }
+
   :root {
     --bg: #06090d;
     --panel: rgba(10, 15, 21, .80);
