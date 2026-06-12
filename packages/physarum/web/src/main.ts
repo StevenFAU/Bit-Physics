@@ -201,12 +201,87 @@ async function main(): Promise<void> {
     ],
   });
 
-  const panel = createSettingsPanel("Physarum Network", { initial: { tier: "test", seed: 42 }, onCapture: captureCanonical });
+  // Study diagnostics (house § 5.4): trail statistics measured via the SAME
+  // readF32 readback the capture path uses, on the live trail buffer. The
+  // sequence token drops superseded measurements (binding rule P-4 § 0.5.2 —
+  // pattern from packages/strange-attractors/web/src/main.ts).
+  let diagSeq = 0;
+  async function measureStudyDiagnostics(): Promise<void> {
+    const seq = ++diagSeq;
+    const trail = await readF32(Ta, W * H);
+    if (seq !== diagSeq) return;
+    let mass = 0;
+    let peak = 0;
+    for (let i = 0; i < trail.length; i += 1) {
+      const v = trail[i]!;
+      mass += v;
+      if (v > peak) peak = v;
+    }
+    const equil = (PARAMS.deposit * NA * (1 - PARAMS.decay_alpha)) / PARAMS.decay_alpha;
+    panel.setDiagnostics([
+      { label: "grid", value: `${W} × ${H}` },
+      { label: "agents", value: String(NA) },
+      { label: "live step", value: String(liveStep) },
+      { label: "Δφ / L_sense", value: `${PARAMS.delta_phi_deg}° / ${PARAMS.L_sense}` },
+      { label: "deposit / decay α", value: `${PARAMS.deposit} / ${PARAMS.decay_alpha}` },
+      { label: "total mass", value: mass.toFixed(1) },
+      { label: "mass equilibrium", value: `${equil} (d·N·(1−α)/α)` },
+      { label: "peak trail", value: peak.toFixed(2) },
+    ]);
+  }
+
+  const panel = createSettingsPanel("Physarum Network", {
+    initial: { tier: "test", seed: 42 },
+    onCapture: captureCanonical,
+    modes: {
+      initial: "play",
+      onMode: (m) => {
+        suspended = m === "study";
+        if (suspended) void measureStudyDiagnostics();
+      },
+    },
+    study: {
+      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      honesty: {
+        faithful:
+          "the committed physarum.wgsl 3-pass kernel — the same sense/rotate/move + deposit, apply, diffuse+decay compute the wgpu-native gate runs; Jones 2010 Table-1 canonical params (Δφ 45°, L_sense 9, L_move 1, d 5, α 0.1); seed-42 IC; every displayed frame is a real kernel step",
+        simplified:
+          "the trail deposit is u32 fixed-point (×65536) so the atomic adds are order-independent — that is what makes two runs byte-identical; the trail-vs-f64-canonical field match is precluded by atomics + agent RNG IC, so the gate is determinism + the exact mass-balance invariant",
+        measured:
+          "trail statistics read back from the live trail buffer on entering Study (stepping is paused; the view keeps presenting)",
+      },
+      verdict: {
+        gate: "new_canonical + run-twice (byte-identical runs; total mass within 1e-3 of the d·N·(1−α)/α = 22500 equilibrium)",
+        verdict: "PASS",
+        pass: true,
+      },
+      links: [
+        {
+          label: "sim spec",
+          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/agent-based/physarum/spec-ref.md",
+        },
+        {
+          label: "audit ledger",
+          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
+        },
+      ],
+    },
+  });
   await reset();
   boot.textContent = "";
+  // Study = pause stepping, keep presenting (P-4 rule 0.5.3): measured at
+  // HEAD, deposit/decay live in the agents/apply/diffuse COMPUTE passes inside
+  // step(); the render pass is a fullscreen triangle reading the trail buffer
+  // read-only (render.wgsl var<storage, read>). Stepping and presenting
+  // separate cleanly, so Study suspends the physics only (D-P1.2(b)).
+  let suspended = false;
+  let liveStep = 0;
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
-    step();
+    if (!suspended) {
+      step();
+      liveStep += 1;
+    }
     const enc = device.createCommandEncoder();
     const pass = enc.beginRenderPass({
       colorAttachments: [
