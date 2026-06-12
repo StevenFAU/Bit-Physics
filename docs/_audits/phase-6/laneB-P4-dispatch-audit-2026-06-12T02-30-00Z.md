@@ -212,3 +212,5 @@ Per-preset Study screenshots: `/tmp/laneB-P4-boids-*.png`,
 
 - Stage commit SHAs recorded in § 1 (pushed before audit-write).
 - p4_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p4_audit_commit_sha: d4e0b63  # Convention #12 back-fill (§ 9)
