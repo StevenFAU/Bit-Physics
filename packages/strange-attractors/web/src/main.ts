@@ -227,10 +227,44 @@ async function main(): Promise<void> {
     rafQueued = false;
     if (isCapturing()) { queueFrame(); return; }
     if (suspended) return; // Study mode: RAF chain ends here (D-P1.2(b))
-    angle += 0.003;
+    if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
     renderFrame();
     queueFrame();
   }
+
+  // Cursor-as-camera (house § 5.1, D-P1.2(a) class): drag orbits the cloud by
+  // driving the SAME render-uniform `angle` slot the auto-orbit writes — live
+  // loop only; nothing here is read by captureCanonical/readTrajectory. The
+  // auto-orbit resumes after AUTO_ORBIT_IDLE_MS without pointer input; in
+  // Study (RAF suspended) a drag one-shot-renders the frozen cloud instead.
+  const AUTO_ORBIT_IDLE_MS = 4000;
+  const DRAG_RAD_PER_PX = 0.008;
+  let lastPointerMs = -AUTO_ORBIT_IDLE_MS; // boot: auto-orbit live immediately
+  let dragPointer: number | null = null;
+  let dragX = 0;
+  canvas.style.cursor = "grab";
+  canvas.addEventListener("pointerdown", (e) => {
+    dragPointer = e.pointerId;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = "grabbing";
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (dragPointer !== e.pointerId) return;
+    angle += (e.clientX - dragX) * DRAG_RAD_PER_PX;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+    if (suspended && !isCapturing()) renderFrame();
+  });
+  const endDrag = (e: PointerEvent): void => {
+    if (dragPointer !== e.pointerId) return;
+    dragPointer = null;
+    lastPointerMs = performance.now();
+    canvas.style.cursor = "grab";
+  };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
 
   const panel = createSettingsPanel("Lorenz Attractor", {
     initial: { tier: "test", seed: 42 },
