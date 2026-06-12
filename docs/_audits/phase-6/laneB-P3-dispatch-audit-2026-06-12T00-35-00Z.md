@@ -16,8 +16,9 @@ related:
 evidence_paths:
   - common/common-web/src/theme.css
   - common/common-web/src/panel-shell.ts
-  - common/common-web/fonts/
-  - packages/strange-attractors/web/
+  - common/common-web/fonts/README.md
+  - packages/strange-attractors/web/src/main.ts
+  - packages/strange-attractors/web/index.html
   - tools/productization/web-deploy/web/pages/index.html
 ---
 
@@ -74,13 +75,15 @@ Pair: `common/common-web/src/theme.css` + `common/common-web/src/panel-shell.ts`
 
 Grep evidence (`/tmp/laneB-P3-contract-grep.txt`, re-runnable):
 
-- Producers: `settings-panel.ts:83/95/117/133/144` (sole `data-bp` producer at
-  HEAD; panel-shell.ts now produces the identical set).
-- Consumers: `web-deploy/web/headless/driver.mjs:110` (`[data-bp-panel]`
-  mount), `:118` (click `[data-bp="capture"]`); `web-build/headless/
-  smoke.mjs:81`; `web-deploy/web/pages/assets/make-posters.mjs:106`;
-  `web-deploy/pipeline.py:96` (§ 6.1 discovery greps main.ts for the literals
-  `createSettingsPanel` + `exposeCapture`).
+- Producers: `common/common-web/src/settings-panel.ts:83` (and :95/:117/:133/
+  :144 — sole `data-bp` producer at HEAD; panel-shell.ts now produces the
+  identical set).
+- Consumers: `tools/productization/web-deploy/web/headless/driver.mjs:110`
+  (`[data-bp-panel]` mount) and :118 (click `[data-bp="capture"]`);
+  `tools/productization/web-build/headless/smoke.mjs:81`;
+  `tools/productization/web-deploy/web/pages/assets/make-posters.mjs:106`;
+  `tools/productization/web-deploy/pipeline.py:96` (§ 6.1 discovery greps
+  main.ts for the literals `createSettingsPanel` + `exposeCapture`).
 - Window globals unchanged: `__bitPhysicsReady` (7/7 sims),
   `__bitPhysicsCapture(Ready)` (capture-export.ts).
 - 7/7 sims call `createSettingsPanel` at HEAD; after the pilot, six still
@@ -208,3 +211,23 @@ diagnostics always show raw un-framed values.
 - p3_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
 
 p3_audit_commit_sha: 8352aa2  # Convention #12 back-fill (§ 8)
+
+## § 9 — Correction entry (same dispatch, post-push)
+
+1. **Citation-path fix (integrity HARD_FAIL, cat1/cat4).** The § 2 grep
+   evidence as first committed (`8352aa2`) abbreviated four tool paths
+   (`web-deploy/…`, `web-build/…`); the integrity checker correctly
+   HARD_FAILed three of them as unresolvable at HEAD (the fourth escaped
+   parsing only because it line-wrapped). § 2 now carries the full
+   `tools/productization/…` paths, and the front-matter `evidence_paths`
+   directory entries (cat5 SOFT_WARN) now point at tracked files. This file
+   is net-new this dispatch (not present at the last phase tag), so the
+   in-place fix does not breach the append-only invariant the
+   `audit-append-only` workflow enforces; this entry records the correction
+   instead of silently rewriting it. Lesson banked for Lane B audits:
+   citations are checker-parsed — always repo-root-relative, never
+   abbreviated, never line-wrapped mid-path.
+2. **cpp-strict recurrence.** The § 7 CI observation also applies to the
+   Stage-5 push (`a862b72`, zero C++ in the diff): same red-on-runner-drift
+   signature, again green on neighboring SHAs. Standing pattern for the
+   operator, not a Lane B regression.
