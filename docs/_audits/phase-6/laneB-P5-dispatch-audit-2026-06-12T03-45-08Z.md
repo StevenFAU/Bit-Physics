@@ -293,3 +293,11 @@ differ).
 - `tools/integrity` run: `uv run python -m integrity --all` locally before
   the audit push (result recorded in the back-fill entry below).
 - p5_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p5_audit_commit_sha: 4cfbf71  # Convention #12 back-fill (§ 9)
+
+Back-fill record: `uv run python -m integrity --all` at the audit tree —
+**0 HARD_FAIL, 24 SOFT_WARN**, every SOFT_WARN pre-existing in phase-1/2/5
+and Lane A c1-u* notes (none against this audit or the P-5 commits). Final
+S.5 sweep at back-fill time: `9b98acf` 36/37 checks complete, all green,
+one still in flight; `4cfbf71` (docs-only) queued.
