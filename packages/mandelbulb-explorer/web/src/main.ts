@@ -10,8 +10,10 @@
 // closed-form 1e-5 budget — an f32 limit, not a defect), and is run-twice
 // byte-identical. No tolerance is widened; see tools/productization/web-build.
 
+import "../../../../common/common-web/src/theme.css";
+
 import { createContext } from "../../../../common/common-ts/src/context.js";
-import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
+import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 
 import deWgsl from "../../src/mandelbulb_de.wgsl?raw";
@@ -94,13 +96,12 @@ async function main(): Promise<void> {
     compute: { module: deModule, entryPoint: "main" },
   });
 
-  async function captureCanonical(): Promise<void> {
-    panel.setStatus("evaluating DE on 256 probe points…");
-    panel.setCaptureEnabled(false);
-    resetCapture();
-    const pts64 = probeGrid();
+  // One DE-evaluation path for BOTH the capture export and the Study
+  // diagnostics (the strange-attractors readTrajectory pattern): the
+  // COMMITTED mandelbulb_de.wgsl on the canonical probe grid, transient
+  // buffers only — no persistent state anywhere.
+  async function evalProbeDE(pts32: Float32Array): Promise<Float32Array> {
     const nP = GRID * GRID;
-    const pts32 = new Float32Array(pts64); // f32 for the GPU
     const params = new ArrayBuffer(16);
     const dv = new DataView(params);
     dv.setUint32(0, nP, true);
@@ -132,6 +133,20 @@ async function main(): Promise<void> {
     await rb.mapAsync(GPUMapMode.READ);
     const de32 = new Float32Array(rb.getMappedRange().slice(0));
     rb.unmap();
+    rb.destroy();
+    ub.destroy();
+    pin.destroy();
+    dout.destroy();
+    return de32;
+  }
+
+  async function captureCanonical(): Promise<void> {
+    panel.setStatus("evaluating DE on 256 probe points…");
+    panel.setCaptureEnabled(false);
+    resetCapture();
+    const pts64 = probeGrid();
+    const nP = GRID * GRID;
+    const de32 = await evalProbeDE(new Float32Array(pts64));
 
     const de = new Float64Array(nP);
     let nOutside = 0;
@@ -172,16 +187,46 @@ async function main(): Promise<void> {
     panel.setCaptureEnabled(true);
   }
 
-  const panel = createSettingsPanel("Mandelbulb Explorer", {
-    initial: { tier: "test", seed: 42 },
-    onCapture: captureCanonical,
-  });
+  // Study diagnostics (house § 5.4): DE probe statistics recomputed via the
+  // SAME evalProbeDE() path the capture uses, on entering Study. The display
+  // has no evolving state — the ray-march re-renders from a camera uniform —
+  // so Study freezes the presented frame (the RAF chain ends; a drag
+  // one-shot-renders the frozen view). Supersession-guarded (P-4 rule 0.5.5).
+  let diagSeq = 0;
+  async function measureStudyDiagnostics(): Promise<void> {
+    const seq = ++diagSeq;
+    const de32 = await evalProbeDE(new Float32Array(probeGrid()));
+    if (seq !== diagSeq) return;
+    let nOutside = 0;
+    let maxDe = -Infinity;
+    let minPos = Infinity;
+    for (let i = 0; i < de32.length; i += 1) {
+      const d = de32[i]!;
+      if (d > 0) {
+        nOutside += 1;
+        if (d < minPos) minPos = d;
+      }
+      if (d > maxDe) maxDe = d;
+    }
+    panel.setDiagnostics([
+      { label: "probe grid", value: `${GRID} × ${GRID} (z = 0)` },
+      { label: "power p", value: String(P) },
+      { label: "escape radius / N_max", value: `${ESCAPE_RADIUS} / ${N_MAX}` },
+      { label: "n outside set (DE>0)", value: String(nOutside) },
+      { label: "n inside set (DE=0)", value: String(de32.length - nOutside) },
+      { label: "max DE", value: maxDe.toFixed(4) },
+      { label: "min positive DE", value: minPos.toFixed(6) },
+      { label: "camera azimuth", value: `${((angle * 180) / Math.PI).toFixed(1)}°` },
+      { label: "capture pinned to", value: "16×16 probe grid, seed 42" },
+    ]);
+  }
 
   boot.textContent = "";
   let angle = 0;
-  function frame(): void {
-    if (isCapturing()) { requestAnimationFrame(frame); return; }
-    angle += 0.004;
+  let suspended = false;
+  let rafQueued = false;
+
+  function renderFrame(): void {
     const u = new Float32Array([canvas.width / canvas.height, angle, 0, 0]);
     queue.writeBuffer(renderUniform, 0, u);
     const enc = device.createCommandEncoder();
@@ -195,9 +240,102 @@ async function main(): Promise<void> {
     pass.draw(3);
     pass.end();
     queue.submit([enc.finish()]);
+  }
+
+  function queueFrame(): void {
+    if (rafQueued) return;
+    rafQueued = true;
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+
+  function frame(): void {
+    rafQueued = false;
+    if (isCapturing()) { queueFrame(); return; }
+    if (suspended) return; // Study mode: RAF chain ends here (D-P1.2(b))
+    if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.004;
+    renderFrame();
+    queueFrame();
+  }
+
+  // Cursor-as-camera (house § 5.1, D-P1.2(a) class; pattern verbatim from
+  // packages/strange-attractors/web/src/main.ts): drag orbits the bulb by
+  // driving the SAME render-uniform `angle` slot the auto-orbit writes — a
+  // display uniform only; nothing here is read by captureCanonical or
+  // evalProbeDE. Auto-orbit resumes after AUTO_ORBIT_IDLE_MS without pointer
+  // input; in Study (RAF suspended) a drag one-shot-renders the frozen view.
+  const AUTO_ORBIT_IDLE_MS = 4000;
+  const DRAG_RAD_PER_PX = 0.008;
+  let lastPointerMs = -AUTO_ORBIT_IDLE_MS; // boot: auto-orbit live immediately
+  let dragPointer: number | null = null;
+  let dragX = 0;
+  canvas.style.cursor = "grab";
+  canvas.addEventListener("pointerdown", (e) => {
+    dragPointer = e.pointerId;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+    canvas.setPointerCapture(e.pointerId);
+    canvas.style.cursor = "grabbing";
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (dragPointer !== e.pointerId) return;
+    angle += (e.clientX - dragX) * DRAG_RAD_PER_PX;
+    dragX = e.clientX;
+    lastPointerMs = performance.now();
+    if (suspended && !isCapturing()) renderFrame();
+  });
+  const endDrag = (e: PointerEvent): void => {
+    if (dragPointer !== e.pointerId) return;
+    dragPointer = null;
+    lastPointerMs = performance.now();
+    canvas.style.cursor = "grab";
+  };
+  canvas.addEventListener("pointerup", endDrag);
+  canvas.addEventListener("pointercancel", endDrag);
+
+  const panel = createSettingsPanel("Mandelbulb Explorer", {
+    initial: { tier: "test", seed: 42 },
+    onCapture: captureCanonical,
+    modes: {
+      initial: "play",
+      onMode: (m) => {
+        suspended = m === "study";
+        if (suspended) {
+          renderFrame();
+          void measureStudyDiagnostics();
+        } else {
+          queueFrame();
+        }
+      },
+    },
+    study: {
+      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      honesty: {
+        faithful:
+          "the capture and the Study diagnostics evaluate the COMMITTED mandelbulb_de.wgsl distance estimator — the exact compute kernel the wgpu-native gate runs — on the canonical 16×16 seed-42-jittered probe grid (Quilez p8, escape radius 2, N_max 16)",
+        simplified:
+          "the DISPLAY is a separate sphere-tracing shader (render.wgsl) that mirrors the DE but raises the iteration count for smoother surfaces — visual fidelity, not the gate kernel; the f32 GPU DE sits at the single-precision floor (~1.5e-5) against the f64 canonical, just outside the closed-form 1e-5 budget — an f32 limit, not a defect, and no tolerance is widened; drag/auto-orbit drive a display camera uniform only",
+        measured:
+          "DE probe statistics recomputed via the committed kernel on entering Study (the view is frozen in Study; dragging re-renders the frozen frame)",
+      },
+      verdict: {
+        gate: "new_canonical + run-twice (f32 DE at the single-precision floor vs the f64 canonical; two runs byte-identical)",
+        verdict: "PASS",
+        pass: true,
+      },
+      links: [
+        {
+          label: "sim spec",
+          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/closed-form/mandelbulb-explorer/spec-ref.md",
+        },
+        {
+          label: "audit ledger",
+          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
+        },
+      ],
+    },
+  });
+
+  queueFrame();
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 
