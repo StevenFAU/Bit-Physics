@@ -67,6 +67,59 @@ async function main(): Promise<void> {
     queue.writeBuffer(paramBuf, 0, buf);
   }
 
+  // Named flock regimes (house § 5.3, ruling D-P1.2(a)): live-loop presets
+  // over the SAME committed kernel — weight/perception uniforms only (v_max
+  // and dt stay canonical). Names describe the measured behavior of THIS
+  // kernel (distinctness screenshots + order parameters in the P-4 audit).
+  // The capture path steps with the canonical paramBuf above, never with the
+  // live regime buffer below.
+  interface FlockRegime {
+    label: string;
+    title: string;
+    w_sep: number;
+    w_align: number;
+    w_cohere: number;
+    perception: number;
+  }
+  const REGIMES: readonly FlockRegime[] = [
+    {
+      label: "canonical",
+      title: "Reynolds 1987 canonical weights — w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5. The capture regime.",
+      w_sep: PARAMS.w_sep, w_align: PARAMS.w_align, w_cohere: PARAMS.w_cohere, perception: PARAMS.perception,
+    },
+    {
+      label: "tight swarm",
+      title: "cohesion-dominant — w_cohere 2.5, w_sep 0.5: the flock contracts into a dense ball",
+      w_sep: 0.5, w_align: 1.0, w_cohere: 2.5, perception: 5.0,
+    },
+    {
+      label: "midge cloud",
+      title: "cohesion without alignment — w_cohere 2.0, w_sep 2.0, w_align 0.2, perception 8: a fast, agitated swarm that holds together without a common heading",
+      w_sep: 2.0, w_align: 0.2, w_cohere: 2.0, perception: 8.0,
+    },
+    {
+      label: "flocklets",
+      title: "short sight — canonical weights at perception 2: the flock fragments into many small independent groups",
+      w_sep: 1.5, w_align: 1.0, w_cohere: 1.0, perception: 2.0,
+    },
+  ];
+  let activeRegime: FlockRegime = REGIMES[0]!;
+  const liveParamBuf = device.createBuffer({ size: 32, usage: U.UNIFORM | U.COPY_DST });
+  function writeLiveParams(r: FlockRegime): void {
+    const buf = new ArrayBuffer(32);
+    const dv = new DataView(buf);
+    dv.setUint32(0, NA, true);
+    dv.setFloat32(4, r.perception, true);
+    dv.setFloat32(8, PARAMS.v_max, true);
+    dv.setFloat32(12, r.w_sep, true);
+    dv.setFloat32(16, r.w_align, true);
+    dv.setFloat32(20, r.w_cohere, true);
+    dv.setFloat32(24, PARAMS.dt, true);
+    dv.setFloat32(28, 0, true);
+    queue.writeBuffer(liveParamBuf, 0, buf);
+  }
+  writeLiveParams(activeRegime);
+
   const computeModule = device.createShaderModule({ code: computeWgsl, label: "boids" });
   const computeBGL = device.createBindGroupLayout({
     entries: [
@@ -81,11 +134,11 @@ async function main(): Promise<void> {
     layout: device.createPipelineLayout({ bindGroupLayouts: [computeBGL] }),
     compute: { module: computeModule, entryPoint: "main" },
   });
-  const computeBG = (src: number): GPUBindGroup =>
+  const computeBG = (src: number, params: GPUBuffer): GPUBindGroup =>
     device.createBindGroup({
       layout: computeBGL,
       entries: [
-        { binding: 0, resource: { buffer: paramBuf } },
+        { binding: 0, resource: { buffer: params } },
         { binding: 1, resource: { buffer: posB[src]! } },
         { binding: 2, resource: { buffer: velB[src]! } },
         { binding: 3, resource: { buffer: posB[1 - src]! } },
@@ -94,16 +147,20 @@ async function main(): Promise<void> {
     });
 
   const wg = Math.ceil(NA / 64);
-  function step(): void {
+  function stepWith(params: GPUBuffer): void {
     const enc = device.createCommandEncoder();
     const pass = enc.beginComputePass();
     pass.setPipeline(computePipeline);
-    pass.setBindGroup(0, computeBG(s));
+    pass.setBindGroup(0, computeBG(s, params));
     pass.dispatchWorkgroups(wg);
     pass.end();
     queue.submit([enc.finish()]);
     s = 1 - s;
   }
+  // The capture path steps ONLY with the canonical paramBuf; the RAF live
+  // loop steps with the live regime buffer (D-P1.2(a) pinning split).
+  const stepCanonical = (): void => stepWith(paramBuf);
+  const stepLive = (): void => stepWith(liveParamBuf);
 
   async function readBuf(buf: GPUBuffer): Promise<Float32Array> {
     const rb = device.createBuffer({ size: nb, usage: U.COPY_DST | U.MAP_READ });
@@ -155,7 +212,7 @@ async function main(): Promise<void> {
     };
     await record(0);
     for (let st = 1; st <= STEPS; st += 1) {
-      step();
+      stepCanonical();
       if (st % CAPTURE_INTERVAL === 0 || st === STEPS) await record(st);
     }
     exposeCapture(
@@ -223,11 +280,13 @@ async function main(): Promise<void> {
     for (let a = 0; a < NA; a += 1) {
       r2 += (pos[a * 3]! - cx) ** 2 + (pos[a * 3 + 1]! - cy) ** 2 + (pos[a * 3 + 2]! - cz) ** 2;
     }
+    const reg = activeRegime;
     panel.setDiagnostics([
+      { label: "live regime", value: reg.label },
       { label: "agents", value: String(NA) },
       { label: "live step", value: `${liveStep} (IC reset @ ${STEPS})` },
-      { label: "weights s/a/c", value: `${PARAMS.w_sep} / ${PARAMS.w_align} / ${PARAMS.w_cohere}` },
-      { label: "perception", value: PARAMS.perception.toFixed(1) },
+      { label: "weights s/a/c", value: `${reg.w_sep} / ${reg.w_align} / ${reg.w_cohere}` },
+      { label: "perception", value: reg.perception.toFixed(1) },
       { label: "mean speed", value: sp.mean.toFixed(3) },
       { label: "max speed", value: `${sp.max.toFixed(3)} (clamp ${PARAMS.v_max})` },
       { label: "polarization", value: (Math.hypot(ux, uy, uz) / NA).toFixed(3) },
@@ -236,9 +295,25 @@ async function main(): Promise<void> {
     ]);
   }
 
+  function applyRegime(r: FlockRegime): void {
+    activeRegime = r;
+    writeLiveParams(r);
+    panel.setStatus(
+      r === REGIMES[0]
+        ? "live flock: canonical — the capture regime"
+        : `live flock: ${r.label} — capture stays pinned to canonical seed-42`,
+    );
+    if (suspended) void measureStudyDiagnostics();
+  }
+
   const panel = createSettingsPanel("Boids 3D", {
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
+    presets: REGIMES.map((r) => ({
+      label: r.label,
+      title: r.title,
+      apply: () => applyRegime(r),
+    })),
     modes: {
       initial: "play",
       onMode: (m) => {
@@ -252,9 +327,9 @@ async function main(): Promise<void> {
         faithful:
           "the committed boids.wgsl Reynolds kernel — the same flocking compute the wgpu-native gate runs (w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5, v_max 3, dt 0.05; seed-42 IC); every displayed frame is a real kernel step",
         simplified:
-          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; the live flock restarts from the IC every 1000 steps",
+          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; presets and cursor drive the live loop only — the capture re-runs from the seed-42 IC with the canonical params; the live flock restarts from the IC every 1000 steps",
         measured:
-          "flock statistics read back from the live position/velocity buffers on entering Study (stepping is paused; the view keeps rendering)",
+          "flock statistics read back from the live position/velocity buffers on entering Study and on preset change (stepping is paused in Study; the view keeps rendering)",
       },
       verdict: {
         gate: "new_canonical + run-twice (byte-identical runs; step-100 match to the f64 reference; v_max clamp)",
@@ -273,6 +348,7 @@ async function main(): Promise<void> {
       ],
     },
   });
+  panel.setActivePreset("canonical");
   await loadIC();
   boot.textContent = "";
   let angle = 0;
@@ -320,7 +396,7 @@ async function main(): Promise<void> {
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
     if (!suspended) {
-      step();
+      stepLive();
       liveStep += 1;
       if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
     }
