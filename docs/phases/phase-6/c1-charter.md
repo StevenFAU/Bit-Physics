@@ -212,3 +212,38 @@ replay, see U-3 landing § findings).
 ## § 11 — U-3 rel-bound provenance note (build session 2 first action, 2026-06-11 — appended per § 0.3)
 
 `lbm-quantized relative=5.0e-2` is measurement-backed (dispatch-2 § 1 case 1, no breach): the stage-1c canonical-horizon comparison (1001 frames; quantized capture sha256 `dabb947ca87f6429d7473327941810ad9917be7b040857f9265811365e2ba763` vs landed numpy parent `captures/lbm-ref/poiseuille-64x32-seed42-step1000.h5` sha256 `0e0843aa8707e5f07f2e12fae81c764fccdbe91b408833bbc67450f1b5e16f68`; landed at `c06d0b1`) measured **max_rel = 1.98e-2 over |u| > 1e-6 cells** — a domain that is a *superset* of the outside-abs-floor zone (|u| > 1e-5 = the declared absolute), so it conservatively bounds the outside-floor max_rel — declared 5.0e-2 at 2.5× margin; recorded in the `tools/testkit/equivalence/tolerance.toml` category comment and amendment `docs/_audits/tolerance-budget-amendments/2026-06-11T15-22-14Z-lbm-quantized.md`.
+
+## § 12 — Continuation handoff #2 — build session 2 (2026-06-12T07-38Z, appended at a PUSH-BLOCKED boundary)
+
+`CONTINUE_FROM: next-action=UNBLOCK-PUSH-then-U-5; last-local-commit=6c43902 (9 commits ahead of origin fa0d790); partial-work=U-4 BUILT + locally GREEN, stage-2 landing fold pending CI; blocked-on=R2 LFS credentials (operator-held)`
+
+**State:** Dispatch-2 § 1 provenance check CLOSED (§ 11 below; pushed, CI green).
+**U-4 clebsch-pfm fully built**: stages 0–1c committed (probe pushed `ecf68fb`;
+local chain `b3e4562`→`6c43902`); ALL local gates green — ctest 14/14 (doctest 9/9 =
+152,686 assertions + the REFRAMED fixture gate), corpus suites 102/102, 2-run
+bit-identity witness `45ae09f3…` (run 2 = the capture run), canonical capture
+`ed4e5689…` (738 MB) + corpus seed `d8f6795f…` (lock 38→39). Spec sheet
+`spec-frontier-clebsch-pfm.md` carries every declared bound WITH its backing
+measurement (the dispatch-2 § 2 pairing rule).
+
+**SHIFTs (all documented in spec § 2/§ 3 + commit chain):** inviscid-Euler anchor-(c)
+adaptation (steady 2D-TG-in-3D); wave-fit init instability (τ·ħ²/dx² CFL — first
+canonical run produced a deterministic-garbage IC, residual 350, DISCARDED; fix =
+cascadic multigrid init, measured ladder 0.108→0.0459, + a PBT init-quality gate);
+parent canonical trajectory measured BLOWN UP by step 50 → REFRAMED gate is the
+measured stability contrast (variant physical through step 100, saturates ~477 at
+the wave ceiling vs parent 4.9e20); capture axis layout transposed to parent
+[x][y][z]; per-target -O3 -ffp-contract=off (bit-identical to -O0, witness-verified).
+
+**BLOCKED (push withheld deliberately):** this session's environment has NO R2
+credentials (`lfs-s3: no bucket set`; the moved-env note). Both new LFS objects are
+in **GitHub LFS** (pushed via SSH auth — the D4 steady-state fallback), but NOT in
+R2 — and `python-strict` pulls `tests/fixtures/legacy-captures/**` THROUGH R2 on
+every main push, so pushing now would knowingly red CI (§ S.5 forbids). **Unblock
+(operator):** export the scoped R2 env (R2_ACCOUNT_ID, AWS_ACCESS_KEY_ID,
+AWS_SECRET_ACCESS_KEY, S3_BUCKET), then:
+`printf "ed4e5689eca33029056614b8522339b19f8472295d2038937a5ec5c39c27f0bc\nd8f6795fd2b09400929dc92a8000d42d7102d70719dcaaa979dcabaa2230efe0\n" | git lfs push --object-id origin --stdin`
+then `git -c lfs.standalonetransferagent= push git@github.com:StevenFAU/Bit-Physics.git main`,
+watch the full sweep, and the next session does the U-4 stage-2 landing fold
+(landing report under `docs/_audits/phase-6/`, ledger row 23 → landed, Convention
+#12 SHA back-fill) before resuming U-5 vpfm (which reuses the U-4 PFM substrate).
