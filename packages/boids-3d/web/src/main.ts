@@ -198,16 +198,98 @@ async function main(): Promise<void> {
     primitive: { topology: "triangle-list" },
   });
 
-  const panel = createSettingsPanel("Boids 3D", { initial: { tier: "test", seed: 42 }, onCapture: captureCanonical });
+  // Study diagnostics (house § 5.4): flock statistics measured via the SAME
+  // readBuf readback the capture path uses, on the live state buffers. The
+  // sequence token drops superseded measurements (P-3 §9 lesson, binding rule
+  // P-4 §0.5.2 — pattern from packages/strange-attractors/web/src/main.ts).
+  let diagSeq = 0;
+  async function measureStudyDiagnostics(): Promise<void> {
+    const seq = ++diagSeq;
+    const pos = await readBuf(posB[s]!);
+    const vel = await readBuf(velB[s]!);
+    if (seq !== diagSeq) return;
+    const sp = speeds(vel);
+    // polarization |Σ v̂|/N (1 = all aligned) and rms distance to centroid
+    let ux = 0, uy = 0, uz = 0, cx = 0, cy = 0, cz = 0;
+    for (let a = 0; a < NA; a += 1) {
+      const m = Math.hypot(vel[a * 3]!, vel[a * 3 + 1]!, vel[a * 3 + 2]!);
+      if (m > 1e-12) {
+        ux += vel[a * 3]! / m; uy += vel[a * 3 + 1]! / m; uz += vel[a * 3 + 2]! / m;
+      }
+      cx += pos[a * 3]!; cy += pos[a * 3 + 1]!; cz += pos[a * 3 + 2]!;
+    }
+    cx /= NA; cy /= NA; cz /= NA;
+    let r2 = 0;
+    for (let a = 0; a < NA; a += 1) {
+      r2 += (pos[a * 3]! - cx) ** 2 + (pos[a * 3 + 1]! - cy) ** 2 + (pos[a * 3 + 2]! - cz) ** 2;
+    }
+    panel.setDiagnostics([
+      { label: "agents", value: String(NA) },
+      { label: "live step", value: `${liveStep} (IC reset @ ${STEPS})` },
+      { label: "weights s/a/c", value: `${PARAMS.w_sep} / ${PARAMS.w_align} / ${PARAMS.w_cohere}` },
+      { label: "perception", value: PARAMS.perception.toFixed(1) },
+      { label: "mean speed", value: sp.mean.toFixed(3) },
+      { label: "max speed", value: `${sp.max.toFixed(3)} (clamp ${PARAMS.v_max})` },
+      { label: "polarization", value: (Math.hypot(ux, uy, uz) / NA).toFixed(3) },
+      { label: "rms spread", value: Math.sqrt(r2 / NA).toFixed(2) },
+      { label: "capture pinned to", value: "canonical, seed 42" },
+    ]);
+  }
+
+  const panel = createSettingsPanel("Boids 3D", {
+    initial: { tier: "test", seed: 42 },
+    onCapture: captureCanonical,
+    modes: {
+      initial: "play",
+      onMode: (m) => {
+        suspended = m === "study";
+        if (suspended) void measureStudyDiagnostics();
+      },
+    },
+    study: {
+      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      honesty: {
+        faithful:
+          "the committed boids.wgsl Reynolds kernel — the same flocking compute the wgpu-native gate runs (w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5, v_max 3, dt 0.05; seed-42 IC); every displayed frame is a real kernel step",
+        simplified:
+          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; the live flock restarts from the IC every 1000 steps",
+        measured:
+          "flock statistics read back from the live position/velocity buffers on entering Study (stepping is paused; the view keeps rendering)",
+      },
+      verdict: {
+        gate: "new_canonical + run-twice (byte-identical runs; step-100 match to the f64 reference; v_max clamp)",
+        verdict: "PASS",
+        pass: true,
+      },
+      links: [
+        {
+          label: "sim spec",
+          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/agent-based/boids-3d/spec-ref.md",
+        },
+        {
+          label: "audit ledger",
+          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
+        },
+      ],
+    },
+  });
   await loadIC();
   boot.textContent = "";
   let angle = 0;
   let liveStep = 0;
+  // Study = pause stepping, keep presenting (P-4 rule 0.5.3): measured at
+  // HEAD, the render path is read-only over pos/vel (render.wgsl declares
+  // var<storage, read>; the render encoder dispatches no compute), so
+  // render-without-step is a clean separation — the frozen flock stays
+  // orbitable while the physics is suspended (D-P1.2(b)).
+  let suspended = false;
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
-    step();
-    liveStep += 1;
-    if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
+    if (!suspended) {
+      step();
+      liveStep += 1;
+      if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
+    }
     angle += 0.003;
     queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0]));
     const renderBG = device.createBindGroup({
