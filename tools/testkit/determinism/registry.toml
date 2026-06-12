@@ -462,3 +462,24 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# eulerian-smoke-frontier-clebsch-pfm (Stack C / Vulkan-lavapipe + deterministic host
+# transport; phase-6 C-1 unit U-4; the FIRST particle-flow-map surface). Clebsch
+# wave-function PFM per DOI 10.1145/3731194: gauge-transformed 0-form transport
+# (carried Φ_{p,s} bit-drift MEASURED exactly 0.0), gather-only fixed-order particle
+# transfers, fixed-cycle MG projection, f64 NoContraction Vulkan kernels for the
+# per-cell wave arithmetic (f64 transcendentals on host — GLSL has no f64 trig; same
+# glibc both witness runs). MEASURED bit-identical 2-run at every run_clebsch
+# invocation (in-run assert_deterministic_run witness, tolerance 0.0; witness run #2
+# IS the capture run, so the capture bytes are the asserted-identical bytes). Also
+# MEASURED bit-identical across -O0 vs -O3 -ffp-contract=off builds (witness
+# c932298d… at n=32 both ways — strict-IEEE per-target optimization, no FMA fusion).
+# atomic_ops = "none" (gather-only; sequential binning + reductions). No EFECT.
+# Declared + MEASURED at C-1 U-4 stage 1b/1c; HOLDS.
+[volumetric-grid.eulerian-smoke-frontier-clebsch-pfm]
+stack = "C"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true

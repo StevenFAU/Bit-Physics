@@ -62,8 +62,12 @@ struct ClebschConfig {
     uint32_t n_g = 5;              // gradient-map (∇Φ, T̃) reinit cadence (k-loop)
     uint32_t poisson_vcycles = 4;  // fixed-count MG V-cycles (deterministic by count,
                                    // not by residual test); RB-GS smoother, periodic
-    uint32_t init_descent_iters = 200;  // kTaylorGreen3D wave-fit iterations (fixed)
-    double init_descent_tau = 0.2;      // descent step size (fixed, f64)
+    uint32_t init_descent_iters = 2000;  // kTaylorGreen3D wave-fit iterations at the
+                                         // coarsest cascadic level (per-level count
+                                         // decays with refinement; see run_clebsch)
+    double init_descent_tau = 0.005;     // descent step at the n=16 reference level
+                                         // (MEASURED stable boundary ~0.0075; the
+                                         // effective step scales (16/n)² per level)
     InitialCondition ic = InitialCondition::kTaylorGreen3D;
     bool track_forward_jacobian = false;  // A2 test mode: carry F̃ (dF̃/dt = ∇u·F̃)
                                           // alongside T̃ and record ‖T̃F̃ − I‖_max
@@ -108,6 +112,12 @@ std::array<double, 3> taylor_green_velocity(InitialCondition ic, double x, doubl
 // (‖Ψ‖ = 1 exact-to-FP); its induced velocity equals the 2D TG field up to a gradient,
 // which the projection removes (verified as a resolution-converging golden).
 Spinor taylor_green_wave_2d(double x, double y, double hbar);
+
+// z-modulated closed-form seed for the 3D TG wave-fit init (stage-1c divergence fix):
+// the same Hopf section with z-coordinate −cos(2πx)·cos(2πz) — its induced vorticity
+// already matches the 3D TG ω_z exactly and ~half of ω_x, leaving the descent a small
+// correction (derivation in src/clebsch_pfm_detail.hpp). Unit-norm by construction.
+Spinor taylor_green_wave_seed_3d(double x, double y, double z, double hbar);
 
 // Paper Eq. 19: MAC-face velocity from two adjacent wave samples,
 // u_f = (ħ/Δx)·arg⟨Φ_a, Φ_b⟩_ℂ with ⟨a,b⟩_ℂ = ā₁b₁ + ā₂b₂.

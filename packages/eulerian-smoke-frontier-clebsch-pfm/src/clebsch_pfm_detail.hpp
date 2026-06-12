@@ -144,8 +144,16 @@ void advect_scalar_semi_lagrangian(std::vector<double>& field,
                                    const std::vector<double>& vc,
                                    const std::vector<double>& wc, uint32_t n, double dt);
 
+// Trilinear prolongation of a cell-centred spinor field nc³ -> nf³ (= 2·nc) with
+// pointwise renormalization (the cascadic wave-fit ladder's level transfer).
+void prolong_spinor(const std::vector<double>& coarse, uint32_t nc,
+                    std::vector<double>& fine, uint32_t nf);
+
 // Wave-fit descent iteration block for the 3D TG IC (see header notes). Mutates phi_g
 // in place; returns the final max-abs face-velocity residual vs the target MAC field.
+// `tau` is declared at the n=16 reference level; the effective step scales (16/n)²
+// (the cell-scale phase-noise feedback through (∇·e)Ψ scales 1/dx² — measured 1c:
+// 1/n scaling still diverged at n=32).
 double wave_fit_descent(std::vector<double>& phi_g, const std::vector<double>& tx,
                         const std::vector<double>& ty, const std::vector<double>& tz,
                         uint32_t n, double hbar, uint32_t iters, double tau);

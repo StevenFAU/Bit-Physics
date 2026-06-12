@@ -67,7 +67,9 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # → 33 (24 real + 9 ph).
 # batch-3 sim 2 (particle-lenia) adds a real schema-1.0.0 rollout capture → 34 (25 real + 9 ph).
 # batch-3 sim 3 (flow-lenia) adds a real schema-1.0.0 rollout capture → 35 (26 real + 9 ph).
-_EXPECTED_TOTAL = 38
+# phase-6 C-1 U-4 (eulerian-smoke-frontier-clebsch-pfm) adds a real 1.1.0 short-horizon
+# Stack-C capture (no gradient_fields; the second C++-emitted corpus entry) → 39 (30 real + 9 ph).
+_EXPECTED_TOTAL = 39
 _EXPECTED_PLACEHOLDERS = 9
 
 

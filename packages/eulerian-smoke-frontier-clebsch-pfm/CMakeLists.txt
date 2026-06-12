@@ -68,6 +68,21 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
     set_tests_properties(clebsch_pfm_tests PROPERTIES
       ENVIRONMENT "VK_DRIVER_FILES=/usr/share/vulkan/icd.d/lvp_icd.json;LP_NUM_THREADS=0")
   endif()
+
+  # --- REFRAMED frontier-vs-parent equivalence (stage 1c; python, fixture-based) ---
+  # Reads the two SMALL committed budget-metric fixtures (derived once at landing by
+  # tests/python/derive_budget_metrics.py from the LFS canonical captures) — no LFS
+  # pull in CI (probe § 4.4).
+  find_program(UV_EXECUTABLE NAMES uv)
+  if (UV_EXECUTABLE)
+    add_test(NAME clebsch_pfm_reframed_equivalence
+      COMMAND ${UV_EXECUTABLE} run --no-sync pytest -q
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests/python/test_reframed_equivalence.py)
+    set_tests_properties(clebsch_pfm_reframed_equivalence PROPERTIES
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../tools/testkit)
+  else()
+    message(WARNING "uv not found: skipping clebsch_pfm_reframed_equivalence ctest.")
+  endif()
 else()
   message(STATUS "eulerian-smoke-frontier-clebsch-pfm: Vulkan + HDF5 required; skipping.")
 endif()

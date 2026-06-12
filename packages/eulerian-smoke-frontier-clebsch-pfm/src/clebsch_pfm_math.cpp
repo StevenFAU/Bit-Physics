@@ -246,6 +246,20 @@ Spinor taylor_green_wave_2d(double x, double y, double hbar) {
     return {ca * ch, ca * sh, sa * ch, -sa * sh};
 }
 
+Spinor taylor_green_wave_seed_3d(double x, double y, double z, double hbar) {
+    const double k = 2.0 * M_PI;
+    // z-coordinate λ₃/2 = −cos(2πx)cos(2πz) ∈ [−1,1]; fibre angle θ = 4μ/ħ as in the
+    // 2D lift. ∇λ₃×∇μ matches the 3D TG ω_z exactly (4π·sin2πx·sin2πy·cos2πz) and
+    // contributes −4π·cos2πx·sin2πy·sin2πz along x (the target has half that); the
+    // ω_y component and the ω_x excess are the wave-fit descent's residual work.
+    double zc = -std::cos(k * x) * std::cos(k * z);
+    double theta = 4.0 * (-std::cos(k * y) / k) / hbar;
+    double ca = std::sqrt(0.5 * (1.0 + zc));
+    double sa = std::sqrt(0.5 * (1.0 - zc));
+    double ch = std::cos(0.5 * theta), sh = std::sin(0.5 * theta);
+    return {ca * ch, ca * sh, sa * ch, -sa * sh};
+}
+
 double wave_velocity_face(const Spinor& a, const Spinor& b, double hbar, double dx) {
     // z = <a,b>_C = conj(a1)b1 + conj(a2)b2 (the Vulkan kernel's op-order); host atan2.
     double re = (a[0] * b[0] + a[1] * b[1]) + (a[2] * b[2] + a[3] * b[3]);

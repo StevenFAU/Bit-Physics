@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <ctime>
 #include <stdexcept>
@@ -288,6 +289,43 @@ void standardize_phi(Kernels& K, std::vector<double>& phi_g, double hbar,
 
 namespace detail {
 
+void prolong_spinor(const std::vector<double>& coarse, uint32_t nc,
+                    std::vector<double>& fine, uint32_t nf) {
+    const std::size_t nfcell = static_cast<std::size_t>(nf) * nf * nf;
+    fine.resize(4 * nfcell);
+    parallel_for(nfcell, [&](std::size_t lo, std::size_t hi) {
+        for (std::size_t c = lo; c < hi; ++c) {
+            uint32_t i = static_cast<uint32_t>(c % nf);
+            uint32_t j = static_cast<uint32_t>((c / nf) % nf);
+            uint32_t k = static_cast<uint32_t>(c / (static_cast<std::size_t>(nf) * nf));
+            // fine cell centre in coarse cell-centred index space
+            double xc = (i + 0.5) * static_cast<double>(nc) / nf - 0.5;
+            double yc = (j + 0.5) * static_cast<double>(nc) / nf - 0.5;
+            double zc = (k + 0.5) * static_cast<double>(nc) / nf - 0.5;
+            int i0 = static_cast<int>(std::floor(xc));
+            int j0 = static_cast<int>(std::floor(yc));
+            int k0 = static_cast<int>(std::floor(zc));
+            double fx = xc - i0, fy = yc - j0, fz = zc - k0;
+            double out[4] = {0, 0, 0, 0};
+            for (int dk = 0; dk < 2; ++dk)
+                for (int dj = 0; dj < 2; ++dj)
+                    for (int di = 0; di < 2; ++di) {
+                        double w = (di ? fx : 1.0 - fx) * (dj ? fy : 1.0 - fy) *
+                                   (dk ? fz : 1.0 - fz);
+                        uint32_t ii = static_cast<uint32_t>(((i0 + di) % static_cast<int>(nc) + nc) % nc);
+                        uint32_t jj = static_cast<uint32_t>(((j0 + dj) % static_cast<int>(nc) + nc) % nc);
+                        uint32_t kk = static_cast<uint32_t>(((k0 + dk) % static_cast<int>(nc) + nc) % nc);
+                        const double* src = &coarse[4 * cell_index(ii, jj, kk, nc)];
+                        for (int q = 0; q < 4; ++q) out[q] += w * src[q];
+                    }
+            double n2 = out[0] * out[0] + out[1] * out[1] + out[2] * out[2] +
+                        out[3] * out[3];
+            double inv = 1.0 / std::sqrt(std::max(n2, 1e-300));
+            for (int q = 0; q < 4; ++q) fine[4 * c + q] = out[q] * inv;
+        }
+    });
+}
+
 double wave_fit_descent(std::vector<double>& phi_g, const std::vector<double>& tx,
                         const std::vector<double>& ty, const std::vector<double>& tz,
                         uint32_t n, double hbar, uint32_t iters, double tau) {
@@ -295,6 +333,14 @@ double wave_fit_descent(std::vector<double>& phi_g, const std::vector<double>& t
     // Host-only (init path); central differences; pointwise normalization per iter.
     const std::size_t ncell = static_cast<std::size_t>(n) * n * n;
     const double dx = 1.0 / static_cast<double>(n);
+    // Stability scaling (1c divergence fix, MEASURED + hand-derived): cell-scale
+    // phase noise δθ produces e-noise ~ħδθ/dx and ∇·e ~ħδθ/dx², so the update feeds
+    // back at rate τ·ħ²/(2dx²) — a diffusion-like CFL. The stable step therefore
+    // scales (16/n)²·(0.5/ħ)² from the (n=16, ħ=0.5) reference where τ was tuned
+    // (measured boundary ~0.0075 there; ħ=1.0 at τ=0.005 diverged, confirming ħ⁻²).
+    const double sn = 16.0 / static_cast<double>(n);
+    const double sh = 0.5 / hbar;
+    const double tau_eff = tau * sn * sn * sh * sh;
     std::vector<double> ex(ncell), ey(ncell), ez(ncell), dive(ncell);
     std::vector<double> next(4 * ncell);
     double resid = 0.0;
@@ -326,6 +372,9 @@ double wave_fit_descent(std::vector<double>& phi_g, const std::vector<double>& t
         for (std::size_t c = 0; c < ncell; ++c)
             r = std::max({r, std::fabs(ex[c]), std::fabs(ey[c]), std::fabs(ez[c])});
         resid = r;
+        if (it % 100 == 0)
+            std::fprintf(stderr, "[clebsch-pfm] wave-fit iter %u/%u resid %.3e\n", it,
+                         iters, resid);
         if (it == iters) break;
         // div(e) at centres (faces are +axis-owned).
         detail::parallel_for(ncell, [&](std::size_t lo, std::size_t hi) {
@@ -370,8 +419,8 @@ double wave_fit_descent(std::vector<double>& phi_g, const std::vector<double>& t
                     double si = 2.0 * (ec[0] * gi[0] + ec[1] * gi[1] + ec[2] * gi[2]) +
                                 dive[c] * phi_g[4 * c + 2 * comp + 1];
                     // + τ·(iħ/2)(sr + i·si) = + τ·(ħ/2)(−si + i·sr)
-                    out[2 * comp] = phi_g[4 * c + 2 * comp] - tau * (hbar / 2.0) * si;
-                    out[2 * comp + 1] = phi_g[4 * c + 2 * comp + 1] + tau * (hbar / 2.0) * sr;
+                    out[2 * comp] = phi_g[4 * c + 2 * comp] - tau_eff * (hbar / 2.0) * si;
+                    out[2 * comp + 1] = phi_g[4 * c + 2 * comp + 1] + tau_eff * (hbar / 2.0) * sr;
                 }
                 double n2 = out[0] * out[0] + out[1] * out[1] + out[2] * out[2] +
                             out[3] * out[3];
@@ -408,32 +457,69 @@ ClebschResult run_clebsch(const ClebschConfig& cfg,
             for (std::size_t c = lo; c < hi; ++c) {
                 uint32_t i = static_cast<uint32_t>(c % n);
                 uint32_t j = static_cast<uint32_t>((c / n) % n);
-                double x = (i + 0.5) * dx, y = (j + 0.5) * dx;
-                Spinor s = taylor_green_wave_2d(x, y, cfg.hbar);
+                uint32_t k = static_cast<uint32_t>(c / (static_cast<std::size_t>(n) * n));
+                double x = (i + 0.5) * dx, y = (j + 0.5) * dx, z = (k + 0.5) * dx;
+                Spinor s = (cfg.ic == InitialCondition::kTaylorGreen3D)
+                               ? taylor_green_wave_seed_3d(x, y, z, cfg.hbar)
+                               : taylor_green_wave_2d(x, y, cfg.hbar);
                 for (int q = 0; q < 4; ++q) phi_g[4 * c + q] = s[q];
             }
         });
-        double fit_residual = 0.0;
         if (cfg.ic == InitialCondition::kTaylorGreen3D) {
-            // analytic target on MAC faces
-            std::vector<double> tx(ncell), ty(ncell), tz(ncell);
-            detail::parallel_for(ncell, [&](std::size_t lo, std::size_t hi) {
+            // Cascadic wave-fit (1c divergence fix): converge on the coarsest level
+            // (16³, closed-form seed) and prolong upward, cleaning the high-frequency
+            // residual per level — plain fine-level descent is a stiff 1/dx²-CFL
+            // problem (≈7 h at 128³; MEASURED divergence ladder in the landing note).
+            auto target_faces = [&](uint32_t nl, std::vector<double>& tx,
+                                    std::vector<double>& ty, std::vector<double>& tz) {
+                const std::size_t ncl = static_cast<std::size_t>(nl) * nl * nl;
+                const double dxl = 1.0 / static_cast<double>(nl);
+                tx.resize(ncl);
+                ty.resize(ncl);
+                tz.resize(ncl);
+                detail::parallel_for(ncl, [&](std::size_t lo, std::size_t hi) {
+                    for (std::size_t c = lo; c < hi; ++c) {
+                        uint32_t i = static_cast<uint32_t>(c % nl);
+                        uint32_t j = static_cast<uint32_t>((c / nl) % nl);
+                        uint32_t k = static_cast<uint32_t>(c / (static_cast<std::size_t>(nl) * nl));
+                        tx[c] = taylor_green_velocity(cfg.ic, (i + 1.0) * dxl,
+                                                      (j + 0.5) * dxl, (k + 0.5) * dxl)[0];
+                        ty[c] = taylor_green_velocity(cfg.ic, (i + 0.5) * dxl,
+                                                      (j + 1.0) * dxl, (k + 0.5) * dxl)[1];
+                        tz[c] = taylor_green_velocity(cfg.ic, (i + 0.5) * dxl,
+                                                      (j + 0.5) * dxl, (k + 1.0) * dxl)[2];
+                    }
+                });
+            };
+            const uint32_t n0 = std::min(16u, n);
+            std::vector<double> phi_l(4 * static_cast<std::size_t>(n0) * n0 * n0);
+            const double dx0 = 1.0 / static_cast<double>(n0);
+            detail::parallel_for(phi_l.size() / 4, [&](std::size_t lo, std::size_t hi) {
                 for (std::size_t c = lo; c < hi; ++c) {
-                    uint32_t i = static_cast<uint32_t>(c % n);
-                    uint32_t j = static_cast<uint32_t>((c / n) % n);
-                    uint32_t k = static_cast<uint32_t>(c / (static_cast<std::size_t>(n) * n));
-                    tx[c] = taylor_green_velocity(cfg.ic, (i + 1.0) * dx, (j + 0.5) * dx,
-                                                  (k + 0.5) * dx)[0];
-                    ty[c] = taylor_green_velocity(cfg.ic, (i + 0.5) * dx, (j + 1.0) * dx,
-                                                  (k + 0.5) * dx)[1];
-                    tz[c] = taylor_green_velocity(cfg.ic, (i + 0.5) * dx, (j + 0.5) * dx,
-                                                  (k + 1.0) * dx)[2];
+                    uint32_t i = static_cast<uint32_t>(c % n0);
+                    uint32_t j = static_cast<uint32_t>((c / n0) % n0);
+                    uint32_t k = static_cast<uint32_t>(c / (static_cast<std::size_t>(n0) * n0));
+                    Spinor sp = taylor_green_wave_seed_3d((i + 0.5) * dx0, (j + 0.5) * dx0,
+                                                          (k + 0.5) * dx0, cfg.hbar);
+                    for (int q = 0; q < 4; ++q) phi_l[4 * c + q] = sp[q];
                 }
             });
-            fit_residual = detail::wave_fit_descent(phi_g, tx, ty, tz, n, cfg.hbar,
-                                                    cfg.init_descent_iters,
-                                                    cfg.init_descent_tau);
-            (void)fit_residual;  // recorded via init_velocity_residual post-projection
+            std::vector<double> tx, ty, tz;
+            for (uint32_t nl = n0;; nl *= 2) {
+                target_faces(nl, tx, ty, tz);
+                // per-level budget: full count at the coarsest level (where global
+                // convergence happens), halved per refinement (only high-frequency
+                // cleanup remains), floored at 200.
+                uint32_t iters_l = std::max(200u, cfg.init_descent_iters / (nl / n0));
+                double r = detail::wave_fit_descent(phi_l, tx, ty, tz, nl, cfg.hbar,
+                                                    iters_l, cfg.init_descent_tau);
+                std::fprintf(stderr, "[clebsch-pfm] cascadic level %u resid %.3e\n", nl, r);
+                if (nl == n) break;
+                std::vector<double> phi_f;
+                detail::prolong_spinor(phi_l, nl, phi_f, nl * 2);
+                phi_l.swap(phi_f);
+            }
+            phi_g.swap(phi_l);
         }
         double norm_dev = 0.0;
         standardize_phi(K, phi_g, cfg.hbar, cfg.poisson_vcycles, gamma, nullptr);
@@ -493,6 +579,8 @@ ClebschResult run_clebsch(const ClebschConfig& cfg,
         double e0 = kinetic_energy(frames[0].u, frames[0].v, frames[0].w, dx);
 
         for (uint32_t step = 0; step < cfg.steps; ++step) {
+            if (step % 50 == 0)
+                std::fprintf(stderr, "[clebsch-pfm] run step %u/%u\n", step, cfg.steps);
             if (step % cfg.n_v == 0) {
                 if (step > 0) {
                     // measure carried-Φ drift (0-form: expect exactly 0), then reinit
@@ -603,7 +691,9 @@ ClebschResult run_clebsch(const ClebschConfig& cfg,
 
     if (capture_manifest) {
         cap::Manifest m;
-        m.schema_version = "1.1.0";
+        // Schema 1.0.0: no gradient_fields/active_mask (the corpus invariant reads
+        // 1.1.0 as "differentiable-consumer capture"; the U-3 precedent).
+        m.schema_version = "1.0.0";
         m.sim = {"eulerian-smoke", "volumetric-grid", "frontier-clebsch-pfm"};
         m.stack = {"cpp", "0.0.0", "phase-6-c1-u4"};
         m.config.tier = "test";
@@ -640,7 +730,19 @@ ClebschResult run_clebsch(const ClebschConfig& cfg,
                 fd.shape = {static_cast<int64_t>(n), static_cast<int64_t>(n),
                             static_cast<int64_t>(n)};
                 fd.bytes.resize(v.size() * sizeof(double));
-                std::memcpy(fd.bytes.data(), v.data(), fd.bytes.size());
+                // Transpose the internal x-fastest lex order ((k·n + j)·n + i) to the
+                // parent capture's [x][y][z] axis layout (z fastest) — field parity
+                // with the descriptor family (MEASURED at 1c: the parent's frame-0 TG
+                // structure varies as sin along h5 axis 0 = x).
+                double* outp = reinterpret_cast<double*>(fd.bytes.data());
+                detail::parallel_for(ncell, [&](std::size_t lo, std::size_t hi) {
+                    for (std::size_t c = lo; c < hi; ++c) {
+                        std::size_t i = c % n;
+                        std::size_t j = (c / n) % n;
+                        std::size_t k = c / (static_cast<std::size_t>(n) * n);
+                        outp[(i * n + j) * n + k] = v[c];
+                    }
+                });
                 sd.fields.emplace(name, std::move(fd));
             };
             put_field("u", fr.u);

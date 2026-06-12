@@ -25,6 +25,13 @@ int main(int argc, char** argv) {
             cfg.steps = static_cast<uint32_t>(std::atoi(argv[++i]));
         if (std::strcmp(argv[i], "--tg2d") == 0)
             cfg.ic = bit_physics::clebsch_pfm::InitialCondition::kTaylorGreen2DZInvariant;
+        if (std::strcmp(argv[i], "--hbar") == 0 && i + 1 < argc)
+            cfg.hbar = std::atof(argv[++i]);
+        // diagnostic mode: override the wave-fit hyperparameters (init tuning)
+        if (std::strcmp(argv[i], "--init-tau") == 0 && i + 1 < argc)
+            cfg.init_descent_tau = std::atof(argv[++i]);
+        if (std::strcmp(argv[i], "--init-iters") == 0 && i + 1 < argc)
+            cfg.init_descent_iters = static_cast<uint32_t>(std::atoi(argv[++i]));
     }
     auto result = bit_physics::clebsch_pfm::run_clebsch(cfg, &out);
     std::cout << "frames=" << result.frames.size()

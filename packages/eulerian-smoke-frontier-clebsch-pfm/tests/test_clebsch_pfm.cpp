@@ -175,8 +175,11 @@ TEST_CASE("PBT sweep: divergence + normalization + finiteness across regimes") {
         for (InitialCondition ic : ics) {
             ClebschConfig cfg = small_cfg(16, 8, ic);
             cfg.hbar = hb;
-            cfg.init_descent_iters = 50;  // toy-size fit for the 3D IC
             ClebschResult res = run_clebsch(cfg, nullptr);
+            // 3D wave-fit init quality is GATED (the 1c lesson: an unasserted init
+            // diverged silently at scale). MEASURED floor at n=16/ħ=0.5: ~0.11.
+            if (ic == InitialCondition::kTaylorGreen3D)
+                CHECK(res.init_velocity_residual <= 0.30);
             // Scale-free projection gate: 4 fixed V(2,2) cycles contract the residual
             // by ~1e-4 relative to the pre-projection divergence (hand-derived MG
             // factor ~0.1/cycle; 10x margin). An absolute ceiling would bake in the
