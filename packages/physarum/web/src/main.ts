@@ -276,9 +276,58 @@ async function main(): Promise<void> {
   // separate cleanly, so Study suspends the physics only (D-P1.2(b)).
   let suspended = false;
   let liveStep = 0;
+
+  // Cursor-as-force (house § 5.1, ruling D-P1.2(a)): the pointer deposits
+  // chemoattractant through the kernel's OWN deposit channel — a falloff blob
+  // is written into the (zero-between-steps) u32 fixed-point deposit buffer
+  // immediately before the live step, so the committed apply pass adds it to
+  // the trail and the agents sense and steer toward it, same frame. LIVE LOOP
+  // ONLY: injection is gated to live stepping (never during capture — frame()
+  // early-returns while capturing, and captureCanonical's reset() wipes the
+  // trail and deposits before its canonical 5000-step re-run).
+  const FORCE_RADIUS = 5; // cells
+  const FORCE_DEPOSIT = 4.0; // trail units per step at the blob centre
+  const DEP_SCALE = 65536; // physarum.wgsl fixed-point SCALE
+  let forceCell: { x: number; y: number } | null = null;
+  function pointerToCell(e: PointerEvent): { x: number; y: number } {
+    const rect = canvas.getBoundingClientRect();
+    const u = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 0.999);
+    const v = Math.min(Math.max((e.clientY - rect.top) / rect.height, 0), 0.999);
+    // render.wgsl maps fragment (u, v) -> T[x*H + y] with x = u*W, y = v*H
+    // (screen top = grid y 0 after its uv flip)
+    return { x: Math.floor(u * W), y: Math.floor(v * H) };
+  }
+  canvas.addEventListener("pointerdown", (e) => {
+    canvas.setPointerCapture(e.pointerId);
+    forceCell = pointerToCell(e);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (forceCell) forceCell = pointerToCell(e);
+  });
+  const endForce = (): void => {
+    forceCell = null;
+  };
+  canvas.addEventListener("pointerup", endForce);
+  canvas.addEventListener("pointercancel", endForce);
+  const one = new Uint32Array(1);
+  function injectCursorDeposit(): void {
+    if (!forceCell) return;
+    for (let di = -FORCE_RADIUS; di <= FORCE_RADIUS; di += 1) {
+      for (let dj = -FORCE_RADIUS; dj <= FORCE_RADIUS; dj += 1) {
+        const r = Math.hypot(di, dj);
+        if (r > FORCE_RADIUS) continue;
+        const gx = (((forceCell.x + di) % W) + W) % W;
+        const gy = (((forceCell.y + dj) % H) + H) % H;
+        one[0] = Math.round(FORCE_DEPOSIT * (1 - r / FORCE_RADIUS) * DEP_SCALE);
+        if (one[0]! > 0) queue.writeBuffer(depB, (gx * H + gy) * 4, one);
+      }
+    }
+  }
+
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
     if (!suspended) {
+      injectCursorDeposit();
       step();
       liveStep += 1;
     }
