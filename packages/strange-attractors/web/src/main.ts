@@ -114,26 +114,54 @@ async function main(): Promise<void> {
     fragment: { module: renderModule, entryPoint: "fs_main", targets: [{ format }] },
     primitive: { topology: "point-list" },
   });
+  // Live-view trajectory for named-regime presets (ruling D-P1.2(a)).
+  // The render pass reads liveTraj, a DISPLAY buffer seeded from the canonical
+  // trajectory at boot; presets re-integrate the SAME committed kernel into it
+  // with their own uniform params. The capture path never sees any of this:
+  // captureCanonical reads only `traj` (canonical params, computed once above).
+  const liveTraj = device.createBuffer({
+    size: trajBytes,
+    usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC | GPUBufferUsage.COPY_DST,
+  });
+  const liveParamBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  {
+    const enc = device.createCommandEncoder();
+    enc.copyBufferToBuffer(traj, 0, liveTraj, 0, trajBytes);
+    queue.submit([enc.finish()]);
+  }
+  const liveComputeBG = device.createBindGroup({
+    layout: computeBGL,
+    entries: [
+      { binding: 0, resource: { buffer: liveParamBuf } },
+      { binding: 1, resource: { buffer: liveTraj } },
+    ],
+  });
+
   const renderBG = device.createBindGroup({
     layout: renderBGL,
     entries: [
       { binding: 0, resource: { buffer: renderUniform } },
-      { binding: 1, resource: { buffer: traj } },
+      { binding: 1, resource: { buffer: liveTraj } },
     ],
   });
 
-  // One readback path for BOTH the capture export and the Study diagnostics,
-  // so what Study displays is measured from the same buffer the capture reads.
-  async function readTrajectory(): Promise<Float32Array> {
+  async function readBuffer(src: GPUBuffer): Promise<Float32Array> {
     const rb = device.createBuffer({ size: trajBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
     const enc = device.createCommandEncoder();
-    enc.copyBufferToBuffer(traj, 0, rb, 0, trajBytes);
+    enc.copyBufferToBuffer(src, 0, rb, 0, trajBytes);
     queue.submit([enc.finish()]);
     await rb.mapAsync(GPUMapMode.READ);
     const all = new Float32Array(rb.getMappedRange().slice(0));
     rb.unmap();
     rb.destroy();
     return all;
+  }
+
+  // One readback path for BOTH the capture export and the Study diagnostics,
+  // so what Study displays is measured from the same buffer the capture reads.
+  // The capture path reads ONLY the canonical `traj` buffer — never liveTraj.
+  function readTrajectory(): Promise<Float32Array> {
+    return readBuffer(traj);
   }
 
   async function captureCanonical(): Promise<void> {
@@ -171,10 +199,128 @@ async function main(): Promise<void> {
     panel.setCaptureEnabled(true);
   }
 
-  // Study diagnostics (house § 5.4): measured from the SAME trajectory buffer
-  // the capture exports — i.e. the capture-time values, not a re-derivation.
+  // Named Lorenz-family regimes (house § 5.3, ruling D-P1.2(a)): live-loop
+  // presets over the SAME committed kernel — σ/ρ/β uniform values only. Names
+  // are the standard dynamical-systems descriptions of these parameter ranges
+  // (σ=10, β=8/3 throughout): chaos at ρ=28; stable fixed-point spirals below
+  // the ρ≈24.74 subcritical Hopf; the well-known ρ≈99.65 periodic window; a
+  // single global limit cycle far above the chaotic range. Distinctness is
+  // measured (f32 host sweep + per-preset screenshots in the P-3 audit note).
+  interface Regime {
+    label: string;
+    title: string;
+    sigma: number;
+    rho: number;
+    beta: number;
+  }
+  const REGIMES: readonly Regime[] = [
+    {
+      label: "classic",
+      title: "Lorenz 1963 — σ=10, ρ=28, β=8⁄3: the chaotic butterfly. The canonical capture regime.",
+      sigma: SIGMA, rho: RHO, beta: BETA,
+    },
+    {
+      label: "stable spiral",
+      title: "ρ=15 — below the ρ≈24.74 chaos threshold: the trajectory spirals into one of the two fixed points.",
+      sigma: 10, rho: 15, beta: 8 / 3,
+    },
+    {
+      label: "periodic window",
+      title: "ρ=99.65 — a known periodic window: the orbit closes into a repeating ribbon instead of wandering.",
+      sigma: 10, rho: 99.65, beta: 8 / 3,
+    },
+    {
+      label: "limit cycle",
+      title: "ρ=350 — far past the chaotic range: one giant stable loop.",
+      sigma: 10, rho: 350, beta: 8 / 3,
+    },
+  ];
+  let activeRegime: Regime = REGIMES[0]!;
+  // Raw (un-framed) live trajectory of the active non-classic regime, kept for
+  // honest diagnostics; null ⇒ classic ⇒ diagnostics read the canonical buffer.
+  let liveRaw: Float32Array | null = null;
+
+  // Presentation-only auto-framing: render.wgsl's fixed framing is calibrated
+  // to the classic attractor (centre z≈25, scale 0.035); other regimes live at
+  // very different scales (ρ=350 reaches |y|>300). Map the regime's bbox
+  // (transient-trimmed) into the classic-sized frame for DISPLAY; the physics
+  // values diagnostics/captures read are never framed.
+  function frameForDisplay(raw: Float32Array): Float32Array {
+    const TRIM = 500; // skip the fall-in transient when measuring the box
+    const lo = [Infinity, Infinity, Infinity];
+    const hi = [-Infinity, -Infinity, -Infinity];
+    for (let s = TRIM; s < nPoints; s += 1) {
+      for (let i = 0; i < 3; i += 1) {
+        const v = raw[s * 3 + i]!;
+        if (v < lo[i]!) lo[i] = v;
+        if (v > hi[i]!) hi[i] = v;
+      }
+    }
+    const c = [0, 1, 2].map((i) => (lo[i]! + hi[i]!) / 2);
+    const half = Math.max(hi[0]! - lo[0]!, hi[1]! - lo[1]!, hi[2]! - lo[2]!) / 2 || 1;
+    const k = 22 / half; // classic-sized half-extent target
+    const out = new Float32Array(raw.length);
+    for (let p = 0; p < nPoints; p += 1) {
+      out[p * 3] = (raw[p * 3]! - c[0]!) * k;
+      out[p * 3 + 1] = (raw[p * 3 + 1]! - c[1]!) * k;
+      out[p * 3 + 2] = (raw[p * 3 + 2]! - c[2]!) * k + 25;
+    }
+    return out;
+  }
+
+  async function applyRegime(r: Regime): Promise<void> {
+    activeRegime = r;
+    if (r === REGIMES[0]) {
+      // classic: restore the boot state — the raw canonical trajectory
+      const enc = device.createCommandEncoder();
+      enc.copyBufferToBuffer(traj, 0, liveTraj, 0, trajBytes);
+      queue.submit([enc.finish()]);
+      liveRaw = null;
+      panel.setStatus("live view: classic — the canonical capture regime");
+    } else {
+      // re-integrate the SAME committed kernel with the regime's uniforms,
+      // into the live display buffer only
+      const lp = new ArrayBuffer(48);
+      const lv = new DataView(lp);
+      lv.setUint32(0, N_STEPS, true);
+      lv.setUint32(4, 0, true);
+      lv.setFloat32(8, r.sigma, true);
+      lv.setFloat32(12, r.rho, true);
+      lv.setFloat32(16, r.beta, true);
+      lv.setFloat32(20, DT, true);
+      lv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0], true);
+      lv.setFloat32(28, CANONICAL_IC[1] + SEED42_OFFSET[1], true);
+      lv.setFloat32(32, CANONICAL_IC[2] + SEED42_OFFSET[2], true);
+      queue.writeBuffer(liveParamBuf, 0, lp);
+      const enc = device.createCommandEncoder();
+      const pass = enc.beginComputePass();
+      pass.setPipeline(computePipeline);
+      pass.setBindGroup(0, liveComputeBG);
+      pass.dispatchWorkgroups(1);
+      pass.end();
+      queue.submit([enc.finish()]);
+      const raw = await readBuffer(liveTraj);
+      liveRaw = raw;
+      queue.writeBuffer(liveTraj, 0, frameForDisplay(raw));
+      panel.setStatus(`live view: ${r.label} — capture stays pinned to classic seed-42`);
+    }
+    if (suspended) {
+      renderFrame();
+      void measureStudyDiagnostics();
+    }
+  }
+
+  // Study diagnostics (house § 5.4): measured from the displayed regime's raw
+  // trajectory — for classic that is the SAME buffer the capture exports
+  // (capture-time values); for presets it is the live re-integration, un-framed.
+  // The sequence token drops superseded measurements: a Study-entry readback
+  // that resolves AFTER a preset's own measurement must not overwrite it.
+  let diagSeq = 0;
   async function measureStudyDiagnostics(): Promise<void> {
-    const all = await readTrajectory();
+    const seq = ++diagSeq;
+    const reg = activeRegime;
+    const all = liveRaw ?? (await readTrajectory());
+    if (seq !== diagSeq) return;
     const lo = [Infinity, Infinity, Infinity];
     const hi = [-Infinity, -Infinity, -Infinity];
     for (let s = 0; s < nPoints; s += 1) {
@@ -186,14 +332,17 @@ async function main(): Promise<void> {
     }
     const fx = all[N_STEPS * 3]!, fy = all[N_STEPS * 3 + 1]!, fz = all[N_STEPS * 3 + 2]!;
     const r = (i: number): string => `${lo[i]!.toFixed(1)} … ${hi[i]!.toFixed(1)}`;
+    const beta = reg.beta === 8 / 3 ? "8⁄3" : String(reg.beta);
     panel.setDiagnostics([
-      { label: "integrator", value: "RK4 ×10000, dt 0.01" },
-      { label: "σ / ρ / β", value: "10 / 28 / 8⁄3" },
+      { label: "live regime", value: reg.label },
+      { label: "σ / ρ / β", value: `${reg.sigma} / ${reg.rho} / ${beta}` },
+      { label: "integrator", value: "RK4, dt 0.01" },
+      { label: "steps", value: String(N_STEPS) },
       { label: "x range", value: r(0) },
       { label: "y range", value: r(1) },
       { label: "z range", value: r(2) },
-      { label: "final |x⃗|", value: Math.sqrt(fx * fx + fy * fy + fz * fz).toFixed(2) },
-      { label: "states exported", value: `${Math.floor(N_STEPS / CAPTURE_INTERVAL) + 1} of ${nPoints}` },
+      { label: "final |x|", value: Math.sqrt(fx * fx + fy * fy + fz * fz).toFixed(2) },
+      { label: "capture pinned to", value: "classic, seed 42" },
     ]);
   }
 
@@ -269,6 +418,13 @@ async function main(): Promise<void> {
   const panel = createSettingsPanel("Lorenz Attractor", {
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
+    presets: REGIMES.map((r) => ({
+      label: r.label,
+      title: r.title,
+      apply: () => {
+        void applyRegime(r);
+      },
+    })),
     modes: {
       initial: "play",
       onMode: (m) => {
@@ -289,8 +445,8 @@ async function main(): Promise<void> {
         faithful:
           "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs (σ=10, ρ=28, β=8⁄3, dt=0.01, seed-42 jittered IC); the point cloud is that trajectory, untouched",
         simplified:
-          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise",
-        measured: "ranges read back from the displayed trajectory buffer on entering Study — the same buffer the capture exports",
+          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; presets and cursor drive the live view only (non-classic regimes are auto-framed for display), while the capture stays pinned to the classic seed-42 params",
+        measured: "ranges read back from the displayed regime's raw trajectory on entering Study and on preset change — for classic, the same buffer the capture exports",
       },
       verdict: {
         gate: "new_canonical + run-twice (two browser runs byte-identical; all sampled points inside the f64 reference attractor envelope)",
@@ -309,6 +465,7 @@ async function main(): Promise<void> {
       ],
     },
   });
+  panel.setActivePreset("classic");
 
   queueFrame();
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
