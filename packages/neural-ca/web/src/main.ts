@@ -13,8 +13,10 @@
 // WGSL canonical (captures/neural-ca-ref/...-wgsl) on the real GPU, run-twice
 // byte-identical — resolves via [defaults.continuous-ca] 0.0/0.0 (no row added).
 
+import "../../../../common/common-web/src/theme.css";
+
 import { createContext } from "../../../../common/common-ts/src/context.js";
-import { createSettingsPanel } from "../../../../common/common-web/src/settings-panel.js";
+import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 
@@ -218,22 +220,96 @@ async function main(): Promise<void> {
     liveStep = 0;
   }
 
+  // Study = pause stepping, keep presenting (P-4 rule 0.5.3): measured at
+  // HEAD, all state mutation lives in the update/mask COMPUTE dispatches
+  // inside stepOnce(); the render pass is a fullscreen triangle reading the
+  // `cur` buffer through a read-only-storage binding (renderBGL above) and
+  // dispatches no compute. Stepping and presenting separate cleanly, so Study
+  // suspends the physics only (D-P1.2(b)).
+  let suspended = false;
+  let liveStep = 0;
+
+  // Study diagnostics (house § 5.4): alive-cell statistics measured via the
+  // SAME readState() readback the capture path uses, on the live state buffer.
+  // "Alive" is the kernel's own criterion (nca_inference.wgsl alive mask:
+  // maxpool_3x3(alpha) > 0.1; here per-cell alpha > 0.1). The sequence token
+  // drops superseded measurements (binding rule P-4 § 0.5.5).
+  let diagSeq = 0;
+  async function measureStudyDiagnostics(): Promise<void> {
+    const seq = ++diagSeq;
+    const st = await readState();
+    if (seq !== diagSeq) return;
+    let alive = 0;
+    let alphaMass = 0;
+    let maxAlpha = 0;
+    for (let c = 0; c < GRID * GRID; c += 1) {
+      const a = st[c * CN + 3] ?? 0;
+      if (a > 0.1) alive += 1;
+      alphaMass += a;
+      if (a > maxAlpha) maxAlpha = a;
+    }
+    panel.setDiagnostics([
+      { label: "grid / channels", value: `${GRID} × ${GRID} / ${CN}` },
+      { label: "live step", value: String(liveStep) },
+      { label: "fire rate", value: FIRE_RATE.toFixed(2) },
+      { label: "alive cells (α>0.1)", value: String(alive) },
+      { label: "alive fraction", value: (alive / (GRID * GRID)).toFixed(4) },
+      { label: "alpha mass", value: alphaMass.toFixed(1) },
+      { label: "max alpha", value: maxAlpha.toFixed(3) },
+      { label: "capture pinned to", value: "canonical 1000-step, seed 42" },
+    ]);
+  }
+
   const panel = createSettingsPanel("Growing Neural CA", {
     initial: { tier: "reference", seed: 42 },
     onCapture: captureCanonical,
     onChange: () => { reset(); liveStep = 0; },
+    modes: {
+      initial: "play",
+      onMode: (m) => {
+        suspended = m === "study";
+        if (suspended) void measureStudyDiagnostics();
+      },
+    },
+    study: {
+      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      honesty: {
+        faithful:
+          "the committed nca_inference.wgsl — the exact two-dispatch (update + mask) compute step the wgpu-native gate runs, with the converted training checkpoint; every displayed frame is a real kernel step from the single-live-cell seed",
+        simplified:
+          "the live view free-runs the seed-42 stochastic fire mask and restarts from the seed every 400 steps so the growth stays watchable; the capture re-runs the canonical 1000-step rollout from the same seed state — nothing in the live loop feeds it",
+        measured:
+          "alive-cell statistics read back from the live state buffer on entering Study (stepping is paused in Study; the view keeps presenting)",
+      },
+      verdict: {
+        gate: "capture_roundtrip + run-twice (rgba frames bit-exact vs the WGSL canonical on the real GPU; two runs byte-identical)",
+        verdict: "PASS",
+        pass: true,
+      },
+      links: [
+        {
+          label: "sim spec",
+          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/continuous-ca/neural-ca/spec-ref.md",
+        },
+        {
+          label: "audit ledger",
+          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
+        },
+      ],
+    },
   });
 
   reset();
   boot.textContent = "";
-  let liveStep = 0;
 
   function frame(): void {
     if (isCapturing()) { requestAnimationFrame(frame); return; }
-    for (let i = 0; i < STEPS_PER_FRAME; i += 1) {
-      stepOnce(liveStep, 42);
-      liveStep += 1;
-      if (liveStep > 400) { reset(); liveStep = 0; }
+    if (!suspended) {
+      for (let i = 0; i < STEPS_PER_FRAME; i += 1) {
+        stepOnce(liveStep, 42);
+        liveStep += 1;
+        if (liveStep > 400) { reset(); liveStep = 0; }
+      }
     }
     const renderBG = device.createBindGroup({
       layout: renderBGL,

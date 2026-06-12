@@ -5,18 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Growing Neural CA — Bit-Physics</title>
     <style>
-      html, body { margin: 0; height: 100%; background: #0b0d12; color: #cdd6e0;
-        font: 14px ui-monospace, monospace; overflow: hidden; }
-      #app { position: fixed; inset: 0; display: grid; place-items: center; }
-      canvas { image-rendering: pixelated; width: min(80vmin, 640px);
-        height: min(80vmin, 640px); border-radius: 6px; box-shadow: 0 0 40px rgba(0,0,0,.6);
-        background: #fff; }
-      #boot { position: fixed; bottom: 12px; left: 12px; font-size: 12px; color: #7f8a99; }
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      /* The white canvas is the model's substrate (render.wgsl composites the
+         growing pattern over white, like the reference visualisation) — kept
+         white on purpose and framed deliberately against the dark page. */
+      #view { background: #fff; border: 1px solid #1a232e;
+        image-rendering: pixelated;
+        width: min(80vmin, 640px); height: min(80vmin, 640px); }
     </style>
   </head>
   <body>
-    <div id="app"><canvas id="view" width="512" height="512"></canvas></div>
-    <div id="boot">initializing WebGPU…</div>
+    <div id="app" class="bps-stage"><canvas id="view" width="512" height="512" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
