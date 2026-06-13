@@ -53,3 +53,4 @@ tools/testkit/golden/checkpoints/**/*.bin filter=lfs diff=lfs merge=lfs -text
 # targets). Small for the synthetic scene (D-SCENE) but routed through LFS per charter §Q
 # (the phase's heaviest media footprint) + forward consistency.
 tools/testkit/golden/renders/**/*.png filter=lfs diff=lfs merge=lfs -text
+*.webm   binary
