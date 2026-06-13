@@ -173,8 +173,14 @@
 <p class="sub">Run in the browser via WebGPU. Each card names the gate its bundle was re-verified through.</p>
 <div class="grid">
   <a class="card" href="./sims/boids-3d/">
-    <img class="poster" src="./assets/boids-3d.png" loading="lazy"
-      alt="A 3-D flock of boids mid-murmuration, speed-tinted points against darkness" />
+    <!-- Motion loops (P-7, ratified): progressive enhancement — the source
+         attaches lazily in view, never under prefers-reduced-motion; the
+         poster still is the default and the no-JS fallback. -->
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/boids-3d.png"
+      aria-label="A 3-D flock of boids mid-murmuration, speed-tinted points against darkness">
+      <source data-src="./assets/boids-3d.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Boids 3D</div>
       <div class="phys">A murmuration from three local rules — separation,
@@ -187,8 +193,11 @@
     </div>
   </a>
   <a class="card" href="./sims/physarum/">
-    <img class="poster" src="./assets/physarum.png" loading="lazy"
-      alt="A glowing transport network grown by simulated slime-mold agents" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/physarum.png"
+      aria-label="A glowing transport network grown by simulated slime-mold agents">
+      <source data-src="./assets/physarum.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Physarum Transport Network</div>
       <div class="phys">A million blind agents deposit and follow chemical
@@ -202,8 +211,11 @@
     </div>
   </a>
   <a class="card" href="./sims/reaction-diffusion-2d/">
-    <img class="poster" src="./assets/reaction-diffusion-2d.png" loading="lazy"
-      alt="Gray-Scott reaction-diffusion patterns: labyrinthine spots and stripes" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/reaction-diffusion-2d.png"
+      aria-label="Gray-Scott reaction-diffusion patterns: labyrinthine spots and stripes">
+      <source data-src="./assets/reaction-diffusion-2d.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Gray-Scott Reaction-Diffusion</div>
       <div class="phys">Two chemicals feed, react, and diffuse — Turing&rsquo;s
@@ -261,8 +273,11 @@
     </div>
   </a>
   <a class="card" href="./sims/strange-attractors/">
-    <img class="poster" src="./assets/strange-attractors.png" loading="lazy"
-      alt="The Lorenz attractor's butterfly traced as a glowing point trajectory" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/strange-attractors.png"
+      aria-label="The Lorenz attractor's butterfly traced as a glowing point trajectory">
+      <source data-src="./assets/strange-attractors.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Lorenz Strange Attractor</div>
       <div class="phys">Three coupled equations, RK4-integrated into the
@@ -349,5 +364,26 @@
 </footer>
 
 </div>
+<script>
+  // Motion loops are progressive enhancement (Lane B P-7, ratified): muted,
+  // lazy — a loop's source attaches only when its card scrolls into view,
+  // and never under prefers-reduced-motion. With JS off (or motion reduced)
+  // the <video poster> still renders the same poster image the cards always
+  // had. This is the page's only script.
+  (() => {
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const v = e.target;
+        if (e.isIntersecting) {
+          const s = v.querySelector("source[data-src]");
+          if (s) { s.src = s.dataset.src; s.removeAttribute("data-src"); v.load(); }
+          v.play().catch(() => {});
+        } else if (!v.paused) { v.pause(); }
+      }
+    }, { rootMargin: "120px" });
+    document.querySelectorAll("video.poster").forEach((v) => io.observe(v));
+  })();
+</script>
 </body>
 </html>
