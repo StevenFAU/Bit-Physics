@@ -222,3 +222,21 @@ highest-leverage polish is generating proper 1200×630 OG renders (extend the
 existing poster generator's RAF-pump discipline; landscape framing per sim) so a
 shared link previews as a designed card rather than a cropped square — closing the
 "shareable destination" loop visually. Single recommendation, not a menu.
+
+## § 12 — Evidence + Convention #12 back-fill (after push)
+
+- Stage commit SHAs in § 1, pushed before this audit. Final local validate at
+  HEAD: 7/7 GREEN, zero 404; link-checker 142 refs / zero missing + favicon
+  byte-identity OK.
+- `integrity --all`: **0 HARD_FAIL, 26 SOFT_WARN** — identical pre-existing set
+  to the P-6/P-7 back-fill records (phase-1/2/5 + Lane A c1-u* notes); none
+  against this audit or the P-8 commits.
+- S.5 CI sweep at back-fill time: Stage-2 `0f74e5f` all green (ts-strict,
+  cpp-strict, determinism); Stage-3 `548e3e5` all green **except `cpp-strict`** —
+  the documented R-CPPB2 runner-drift flake on presentation-only diffs (Stage 3
+  is zero C++; the immediately-prior `0f74e5f` had cpp-strict GREEN on the
+  identical C++ tree). Carries the standing exemption (P-3§7, P-4§8, P-5§8,
+  P-6§9, P-7).
+- p8_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p8_audit_commit_sha: d3fab59  # Convention #12 back-fill (§ 12)
