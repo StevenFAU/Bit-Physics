@@ -15,6 +15,7 @@
 // .github/workflows/web-deploy.yml — the workflow is the source of truth.
 
 import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import { createHash } from "node:crypto";
 import { tmpdir } from "node:os";
 import { dirname, extname, join, posix, relative } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,6 +28,20 @@ const SIMS = [
   "reaction-diffusion-2d", "mandelbulb-explorer", "neural-ca",
   "ising-classical", "strange-attractors", "boids-3d", "physarum",
 ];
+
+// The confirmed GitHub Pages base (P-8) — observed live (HTTP 200) in the
+// phase-5 launch audit, and recorded in phase-5-productization.md. Per-sim
+// pages emit ABSOLUTE og:url/og:image on this base (social scrapers fetch them
+// off the live deploy); we map those back into the assembled tree and confirm
+// the targets exist. The trailing slash is NOT included so both "/sims/x/" and
+// "/assets/x.png" map cleanly.
+const PAGES_BASE = "https://stevenfau.github.io/Bit-Physics";
+
+// The universal chrome nav hrefs injected by common-web panel-shell.ts (P-8).
+// They live in each sim's bundled JS (runtime DOM), not static HTML, so the
+// HTML walk can't see them — we scan the bundle for the literals AND resolve
+// each from the sim page location.
+const NAV_HREFS = ["../../", "../../about.html"];
 
 async function assembleReplica(out) {
   // REPLICA of web-deploy.yml "Assemble site" (P-7 copy list):
@@ -55,6 +70,21 @@ async function* walk(dir) {
 
 const ATTR_RE = /(?:href|src|poster)\s*=\s*["']([^"']+)["']/gi;
 const URL_RE = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+// Social-card refs: og:url / og:image / twitter:image content values (mirrors
+// the per-sim head generator's property|name → content attribute order).
+const META_RE =
+  /<meta\s+(?:property|name)=["'](?:og:url|og:image|twitter:image)["']\s+content=["']([^"']+)["']/gi;
+
+function metaRefsOf(text) {
+  return [...text.matchAll(META_RE)].map((m) => m[1]);
+}
+
+// Map an absolute Pages-base URL to its in-tree path (leading "/"); returns null
+// for any other absolute URL (genuinely external — skip).
+function pagesPath(ref) {
+  if (!ref.startsWith(`${PAGES_BASE}/`)) return null;
+  return ref.slice(PAGES_BASE.length); // e.g. "/sims/boids-3d/", "/assets/x.png"
+}
 
 function refsOf(text, ext) {
   const out = [];
@@ -102,7 +132,67 @@ for await (const file of walk(tree)) {
       missing.push(`${posix.normalize(relative(tree, file))} -> ${ref}`);
     }
   }
+  // Social-card refs (P-8): og:url / og:image / twitter:image. Absolute
+  // Pages-base URLs map back into the tree and must resolve; relative ones
+  // resolve like any other ref; truly-external absolutes are skipped.
+  if (ext === ".html") {
+    for (const ref of metaRefsOf(text)) {
+      const mapped = pagesPath(ref);
+      if (mapped === null && isExternal(ref)) continue; // external, not Pages base
+      checked += 1;
+      const resolvable = mapped ?? ref;
+      if (!(await resolves(tree, file, resolvable))) {
+        missing.push(`${posix.normalize(relative(tree, file))} -> ${ref} (meta)`);
+      }
+    }
+  }
 }
+
+// Chrome nav hrefs (P-8): runtime-injected by panel-shell.ts, so they live in
+// each sim's bundled JS rather than static HTML. Confirm the bundle still
+// carries each literal AND that it resolves from the sim page location.
+for (const sim of SIMS) {
+  const simDir = join(tree, "sims", sim);
+  const simIndex = join(simDir, "index.html");
+  let js = "";
+  try {
+    for await (const f of walk(simDir)) {
+      if (extname(f) === ".js") js += await readFile(f, "utf8");
+    }
+  } catch { /* missing bundle already reported by assemble */ }
+  for (const href of NAV_HREFS) {
+    checked += 1;
+    if (!js.includes(`"${href}"`)) {
+      missing.push(`sims/${sim} bundle -> nav href "${href}" absent from JS`);
+    } else if (!(await resolves(tree, simIndex, href))) {
+      missing.push(`sims/${sim} -> ${href} (nav, unresolved)`);
+    }
+  }
+}
+
+// Favicon cross-copy byte-identity (P-8 amendment): the deployed favicon is one
+// canonical asset replicated per-sim (vite public/ → dist), not single-file
+// dedup — so all copies in the tree must be sha256-identical. Catches future
+// drift between the canonical pages/assets copy and any per-sim bundle.
+const faviconFiles = [
+  join(tree, "assets", "favicon.svg"),
+  ...SIMS.map((s) => join(tree, "sims", s, "favicon.svg")),
+];
+const faviconHashes = await Promise.all(
+  faviconFiles.map(async (f) => {
+    try { return createHash("sha256").update(await readFile(f)).digest("hex"); }
+    catch { return `MISSING:${posix.normalize(relative(tree, f))}`; }
+  }),
+);
+const faviconUniq = [...new Set(faviconHashes)];
+const faviconOk = faviconUniq.length === 1 && !faviconUniq[0].startsWith("MISSING");
+if (faviconOk) {
+  console.log(`favicon byte-identity: ${faviconFiles.length} copies all sha256 ${faviconUniq[0].slice(0, 12)}…`);
+} else {
+  console.log(`favicon byte-identity FAIL — ${faviconUniq.length} distinct value(s):`);
+  faviconFiles.forEach((f, i) => console.log(`  ${posix.normalize(relative(tree, f))} ${faviconHashes[i].slice(0, 16)}`));
+}
+
 console.log(`checked ${checked} internal refs across the assembled tree (${tree})`);
 if (missing.length) {
   console.log(`MISSING (${missing.length}):`);
@@ -111,4 +201,4 @@ if (missing.length) {
   console.log("zero missing — assembled tree is self-consistent");
 }
 if (scratch) await rm(scratch, { recursive: true, force: true });
-process.exit(missing.length ? 1 : 0);
+process.exit(missing.length || !faviconOk ? 1 : 0);
