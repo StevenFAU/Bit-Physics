@@ -191,3 +191,10 @@ reads the trajectory buffer, not the draw count.
   record (all pre-existing in phase-1/2/5 and Lane A c1-u* notes; none
   against this audit or the P-7 commits).
 - p7_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p7_audit_commit_sha: bdf0e6f  # Convention #12 back-fill (§ 9)
+
+Back-fill record: final S.5 sweep at back-fill time — `148b63d` 32/37
+complete all green, 5 in flight; `bdf0e6f` (docs-only) queued. No completed
+non-green check on either SHA beyond the cpp-strict flake already recorded
+at `4485563` (§ 8).
