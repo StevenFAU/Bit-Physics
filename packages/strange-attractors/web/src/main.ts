@@ -304,6 +304,7 @@ async function main(): Promise<void> {
       queue.writeBuffer(liveTraj, 0, frameForDisplay(raw));
       panel.setStatus(`live view: ${r.label} — capture stays pinned to classic seed-42`);
     }
+    if (!suspended) traceFrame = 0; // re-trace the regime's trajectory in Play
     if (suspended) {
       renderFrame();
       void measureStudyDiagnostics();
@@ -351,7 +352,20 @@ async function main(): Promise<void> {
   let suspended = false;
   let rafQueued = false;
 
+  // Boot trace-in (P-7, presentation-only): the page formerly presented the
+  // fully-integrated trajectory complete from the first frame; the point
+  // COUNT now ramps over the first TRACE_IN_FRAMES live frames, so the
+  // attractor draws itself in integration order — the motion shown is the
+  // trajectory's own time axis, not a camera move. Host-side draw-count
+  // only: same buffer, same shader, ru.n stays nPoints (stable colour
+  // gradient); frame-indexed, so it is deterministic under the poster/loop
+  // generator's RAF pump. Re-armed on preset change in Play (a frozen Study
+  // view keeps the full cloud); nothing here is read by the capture path.
+  const TRACE_IN_FRAMES = 600;
+  let traceFrame = 0;
+
   function renderFrame(): void {
+    const drawn = Math.max(2, Math.min(nPoints, Math.ceil((nPoints * traceFrame) / TRACE_IN_FRAMES)));
     queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, nPoints, 0]));
     const enc = device.createCommandEncoder();
     const pass = enc.beginRenderPass({
@@ -361,7 +375,7 @@ async function main(): Promise<void> {
     });
     pass.setPipeline(renderPipeline);
     pass.setBindGroup(0, renderBG);
-    pass.draw(nPoints);
+    pass.draw(drawn);
     pass.end();
     queue.submit([enc.finish()]);
   }
@@ -377,6 +391,7 @@ async function main(): Promise<void> {
     if (isCapturing()) { queueFrame(); return; }
     if (suspended) return; // Study mode: RAF chain ends here (D-P1.2(b))
     if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
+    if (traceFrame < TRACE_IN_FRAMES) traceFrame += 1;
     renderFrame();
     queueFrame();
   }
@@ -445,7 +460,7 @@ async function main(): Promise<void> {
         faithful:
           "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs (σ=10, ρ=28, β=8⁄3, dt=0.01, seed-42 jittered IC); the point cloud is that trajectory, untouched",
         simplified:
-          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; presets and cursor drive the live view only (non-classic regimes are auto-framed for display), while the capture stays pinned to the classic seed-42 params",
+          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; presets and cursor drive the live view only (non-classic regimes are auto-framed for display), while the capture stays pinned to the classic seed-42 params; the boot trace-in is presentation-side draw order — the points revealed are the same already-integrated trajectory, nothing re-integrates",
         measured: "ranges read back from the displayed regime's raw trajectory on entering Study and on preset change — for classic, the same buffer the capture exports",
       },
       verdict: {
