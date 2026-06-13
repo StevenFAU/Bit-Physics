@@ -231,3 +231,10 @@ byte-identical everywhere; no tolerance touched anywhere.
   c1-u4-landing / c1-u5-probe front-matter warnings; none against this
   audit or the P-6 commits).
 - p6_audit_commit_sha: *(back-filled below per Convention #12 — never `--amend`)*
+
+p6_audit_commit_sha: d6928fb  # Convention #12 back-fill (§ 10)
+
+Back-fill record: final S.5 sweep at back-fill time — `6d7f80f` 34/37
+complete all green, 3 in flight (cpp-strict among the completed greens);
+`d6928fb` (docs-only) 36 queued/in-flight, 1 green. No completed non-green
+check on either SHA.
