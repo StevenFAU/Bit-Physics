@@ -1,0 +1,114 @@
+// Site link-resolution check (Lane B, dispatch P-7).
+//
+// Deploys are operator-only, so this is the LOCAL proof that the published
+// tree is self-consistent: it replicates the web-deploy.yml "Assemble site"
+// step's copy commands into a temp tree (sim bundles stand in from each
+// package's built web/dist), then verifies that every href/src/poster
+// attribute and every CSS url(...) reference in every assembled .html/.css
+// file resolves to a file inside the tree. External URLs (scheme or
+// protocol-relative) and pure fragments are skipped. Exit 0 = zero missing.
+//
+// Usage:  node check-links.mjs               (assemble replica + check)
+//         node check-links.mjs --tree DIR    (check an existing tree)
+//
+// Keep the REPLICA block in sync with the Assemble-site step in
+// .github/workflows/web-deploy.yml — the workflow is the source of truth.
+
+import { cp, mkdir, mkdtemp, readdir, readFile, rm, stat } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { dirname, extname, join, posix, relative } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = dirname(fileURLToPath(import.meta.url)); // .../web/pages
+const REPO = join(HERE, "../../../../..");
+
+// The 7 published sims — mirrors pipeline.py GATE_KIND / the discover job.
+const SIMS = [
+  "reaction-diffusion-2d", "mandelbulb-explorer", "neural-ca",
+  "ising-classical", "strange-attractors", "boids-3d", "physarum",
+];
+
+async function assembleReplica(out) {
+  // REPLICA of web-deploy.yml "Assemble site" (P-7 copy list):
+  //   cp pages/index.html site/index.html
+  //   cp pages/about.html site/about.html
+  //   cp -r pages/assets  site/assets
+  //   cp -r <validated bundle>  site/sims/<sim>   (here: packages/<sim>/web/dist)
+  await mkdir(join(out, "sims"), { recursive: true });
+  await cp(join(HERE, "index.html"), join(out, "index.html"));
+  await cp(join(HERE, "about.html"), join(out, "about.html"));
+  await cp(join(HERE, "assets"), join(out, "assets"), { recursive: true });
+  for (const sim of SIMS) {
+    const dist = join(REPO, "packages", sim, "web", "dist");
+    await stat(dist).catch(() => { throw new Error(`missing built bundle for ${sim} (${dist}) — run the validate pipeline build first`); });
+    await cp(dist, join(out, "sims", sim), { recursive: true });
+  }
+}
+
+async function* walk(dir) {
+  for (const e of await readdir(dir, { withFileTypes: true })) {
+    const p = join(dir, e.name);
+    if (e.isDirectory()) yield* walk(p);
+    else yield p;
+  }
+}
+
+const ATTR_RE = /(?:href|src|poster)\s*=\s*["']([^"']+)["']/gi;
+const URL_RE = /url\(\s*["']?([^"')]+)["']?\s*\)/gi;
+
+function refsOf(text, ext) {
+  const out = [];
+  if (ext === ".html") for (const m of text.matchAll(ATTR_RE)) out.push(m[1]);
+  for (const m of text.matchAll(URL_RE)) out.push(m[1]); // inline <style> + .css
+  return out;
+}
+
+function isExternal(ref) {
+  return /^[a-z][a-z0-9+.-]*:/i.test(ref) || ref.startsWith("//") || ref.startsWith("#") || ref.startsWith("data:");
+}
+
+async function resolves(tree, fromFile, ref) {
+  const clean = ref.split("#")[0].split("?")[0];
+  if (clean === "") return true; // pure fragment/query
+  const base = clean.startsWith("/") ? tree : dirname(fromFile);
+  const target = join(base, clean);
+  const s = await stat(target).catch(() => null);
+  if (!s) return false;
+  if (s.isDirectory()) return (await stat(join(target, "index.html")).catch(() => null)) !== null;
+  return true;
+}
+
+const treeArg = process.argv.indexOf("--tree");
+let tree;
+let scratch = null;
+if (treeArg !== -1) {
+  tree = process.argv[treeArg + 1];
+} else {
+  scratch = await mkdtemp(join(tmpdir(), "bp-site-"));
+  tree = scratch;
+  await assembleReplica(tree);
+}
+
+let checked = 0;
+const missing = [];
+for await (const file of walk(tree)) {
+  const ext = extname(file);
+  if (ext !== ".html" && ext !== ".css") continue;
+  const text = await readFile(file, "utf8");
+  for (const ref of refsOf(text, ext)) {
+    if (isExternal(ref)) continue;
+    checked += 1;
+    if (!(await resolves(tree, file, ref))) {
+      missing.push(`${posix.normalize(relative(tree, file))} -> ${ref}`);
+    }
+  }
+}
+console.log(`checked ${checked} internal refs across the assembled tree (${tree})`);
+if (missing.length) {
+  console.log(`MISSING (${missing.length}):`);
+  for (const m of missing) console.log(`  ${m}`);
+} else {
+  console.log("zero missing — assembled tree is self-consistent");
+}
+if (scratch) await rm(scratch, { recursive: true, force: true });
+process.exit(missing.length ? 1 : 0);
