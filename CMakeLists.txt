@@ -53,3 +53,8 @@ add_subdirectory(packages/lattice-boltzmann-d3q19-frontier-moment-encoded)
 # surface; charter docs/phases/phase-6/c1-charter.md § 3.4, ratified § 10). D11-style
 # CMake-only registration (NOT a uv member), AFTER common/common-cpp.
 add_subdirectory(packages/eulerian-smoke-frontier-clebsch-pfm)
+
+# Phase-6 C-1 unit U-5 — Stack-C frontier-vpfm (vorticity on particle flow maps,
+# reusing the U-4 PFM substrate; charter docs/phases/phase-6/c1-charter.md § 3.5,
+# ratified § 10). D11-style CMake-only registration (NOT a uv member).
+add_subdirectory(packages/eulerian-smoke-frontier-vpfm)
