@@ -148,6 +148,18 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
   letter-spacing: .08em; text-transform: uppercase; color: var(--txt);
 }
 
+/* Top nav (P-8): portfolio + about, same chip idiom as the landing nav. */
+.bps-nav { display: flex; gap: 6px; margin: 0 0 10px; }
+.bps-nav a {
+  color: var(--dim); text-decoration: none;
+  border: 1px solid var(--line); border-radius: 3px;
+  padding: 2px 8px; font: 500 10.5px/1.5 var(--mono); letter-spacing: .05em;
+}
+.bps-nav a:hover { color: var(--accent); border-color: var(--accent-d); }
+
+/* Per-sim physics caption (P-8): the landing .phys copy, under the title. */
+.bps-caption { margin: 0 0 10px; color: var(--dim); font: 12px/1.45 var(--mono); }
+
 /* Play/Study segmented toggle (house convention § 5.2) */
 .bps-mode { display: inline-flex; border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
 .bps-mode button {

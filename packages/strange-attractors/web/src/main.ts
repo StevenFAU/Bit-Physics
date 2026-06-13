@@ -431,6 +431,7 @@ async function main(): Promise<void> {
   canvas.addEventListener("pointercancel", endDrag);
 
   const panel = createSettingsPanel("Lorenz Attractor", {
+    caption: "Three coupled equations, RK4-integrated into the butterfly that started chaos theory — deterministic, never repeating, forever on the attractor.",
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
     presets: REGIMES.map((r) => ({

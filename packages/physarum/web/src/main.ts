@@ -304,6 +304,7 @@ async function main(): Promise<void> {
   }
 
   const panel = createSettingsPanel("Physarum Network", {
+    caption: "A million blind agents deposit and follow chemical trails — an efficient transport network emerges, with order-independent atomics conserving every unit of mass.",
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
     presets: REGIMES.map((r) => ({

@@ -102,6 +102,12 @@ export interface PanelShellOptions {
    */
   modes?: { initial?: Mode; onMode?: (mode: Mode) => void };
   study?: StudySpec;
+  /**
+   * One-line physics caption — the landing card copy for this sim — rendered
+   * under the title as the page's visible per-sim identity (P-8). Absent option
+   * ⇒ absent DOM. The top portfolio/about nav is universal and needs no option.
+   */
+  caption?: string;
 }
 
 export interface PanelShell {
@@ -155,6 +161,24 @@ export function createSettingsPanel(
   root.setAttribute("data-bp-panel", "true");
   root.setAttribute("data-bp2-shell", "2");
 
+  // top nav (P-8): back-to-portfolio + about — universal across all 7 sims
+  // (one edit here, all inherit), same chip idiom as the P-6 landing nav.
+  // Relative so they resolve under the Pages subpath from /sims/<sim>/:
+  // ../../ → landing root, ../../about.html → the methodology page. New
+  // elements use the data-bp2 namespace (the v1 data-bp contract is frozen).
+  const nav = el("nav", "bps-nav", "nav");
+  const navLink = (label: string, href: string): HTMLAnchorElement => {
+    const a = el("a");
+    a.textContent = label;
+    a.href = href;
+    return a;
+  };
+  nav.append(
+    navLink("← portfolio", "../../"),
+    navLink("about", "../../about.html"),
+  );
+  root.appendChild(nav);
+
   // header: title + (optional) Play/Study toggle
   const head = el("header", "bps-head");
   const h = el("h3", "bps-title");
@@ -175,6 +199,14 @@ export function createSettingsPanel(
     head.appendChild(seg);
   }
   root.appendChild(head);
+
+  // physics caption (P-8): the landing card copy, rendered alongside the title
+  // as the page's visible per-sim identity — consistent across card/head/page.
+  if (options.caption) {
+    const cap = el("p", "bps-caption", "caption");
+    cap.textContent = options.caption;
+    root.appendChild(cap);
+  }
 
   // preset bar (house § 5.3 — live-loop only per D-P1.2(a))
   const presetButtons = new Map<string, HTMLButtonElement>();

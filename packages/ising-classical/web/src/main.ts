@@ -351,6 +351,7 @@ async function main(): Promise<void> {
   }
 
   const panel = createSettingsPanel("2D Ising — Metropolis", {
+    caption: "Lattice spins at T = 2.27 — the critical point, where fluctuations live at every scale. Checkerboard Monte Carlo, statistics verified against a CPU ensemble.",
     initial: { tier: "reference", seed: 42 },
     onCapture: captureCanonical,
     onChange: (st) => { void loadIC(st.seed); },

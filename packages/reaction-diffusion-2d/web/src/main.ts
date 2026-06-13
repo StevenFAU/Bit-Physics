@@ -430,6 +430,7 @@ async function main(): Promise<void> {
   }
 
   const panel = createSettingsPanel("Reaction-Diffusion 2D", {
+    caption: "Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE.",
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
     onChange: (st) => {

@@ -293,6 +293,7 @@ async function main(): Promise<void> {
   canvas.addEventListener("pointercancel", endDrag);
 
   const panel = createSettingsPanel("Mandelbulb Explorer", {
+    caption: "The 3-D cousin of the Mandelbrot set, sphere-traced in real time by a distance-estimator ray march — infinite detail from one formula.",
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
     modes: {

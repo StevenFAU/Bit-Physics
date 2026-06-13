@@ -261,6 +261,7 @@ async function main(): Promise<void> {
   }
 
   const panel = createSettingsPanel("Growing Neural CA", {
+    caption: "A cellular automaton whose update rule is a trained neural network: one seed cell grows into a stable organism. One checkpoint, bit-exact in the browser.",
     initial: { tier: "reference", seed: 42 },
     onCapture: captureCanonical,
     onChange: () => { reset(); liveStep = 0; },

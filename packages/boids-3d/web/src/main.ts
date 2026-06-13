@@ -310,6 +310,7 @@ async function main(): Promise<void> {
   }
 
   const panel = createSettingsPanel("Boids 3D", {
+    caption: "A murmuration from three local rules — separation, alignment, cohesion. No leader, no plan; the flock is the physics.",
     initial: { tier: "test", seed: 42 },
     onCapture: captureCanonical,
     presets: REGIMES.map((r) => ({
