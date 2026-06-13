@@ -31,12 +31,13 @@ const REPO = join(HERE, "../../../../../..");
 // zoom: crop to the bright-content bounding box (sparse point renders read
 //   as voids at card size otherwise). pixelated: crisp CA texels, no smoothing.
 const SIMS = {
-  // P-5: plain shot — the P-2 long-exposure trail stack is obsolete since the
-  // P-4 point-size fix (agents draw as ~5 px sprites, directly visible);
-  // photographic zoom-to-content like strange-attractors, mild exposure only.
-  // frames 240 = condensed flock stream still inside the fixed render frame
-  // (the kernel has no world bounds; later frames drift out — P-5 audit § 5).
-  "boids-3d": { frames: 240, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.8) saturate(1.4)" },
+  // P-6: third regen — the P-6 display-only camera-fit (render.wgsl, ratified)
+  // removed the P-5 "flock drifts out of the fixed frame" ceiling, so frames
+  // can sit at 420 where the murmuration wisps are fully developed. Exposure
+  // softened 1.8→1.35 (fit-framed sprites are denser; 1.8 washed the speed
+  // palette to white). The auto-fit makes raw framing converge by readback
+  // timing, not frame count alone; the zoom-to-content crop normalizes it.
+  "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
   physarum: { frames: 650, px: 512 },
   "reaction-diffusion-2d": { frames: 2200, px: 512 },
