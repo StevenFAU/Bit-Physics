@@ -330,7 +330,7 @@ async function main(): Promise<void> {
         faithful:
           "the committed boids.wgsl Reynolds kernel — the same flocking compute the wgpu-native gate runs (w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5, v_max 3, dt 0.05; seed-42 IC); every displayed frame is a real kernel step",
         simplified:
-          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; presets and cursor drive the live loop only — the capture re-runs from the seed-42 IC with the canonical params; the live flock restarts from the IC every 1000 steps",
+          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; presets and cursor drive the live loop only — the capture re-runs from the seed-42 IC with the canonical params; the live flock restarts from the IC every 1000 steps; camera framing is presentation-side (a position readback drives display-only scale/center render uniforms) — simulation state unaffected",
         measured:
           "flock statistics read back from the live position/velocity buffers on entering Study and on preset change (stepping is paused in Study; the view keeps rendering)",
       },
@@ -362,6 +362,54 @@ async function main(): Promise<void> {
   // render-without-step is a clean separation — the frozen flock stays
   // orbitable while the physics is suspended (D-P1.2(b)).
   let suspended = false;
+
+  // Auto-framing (P-6 Stage 1b, over the D-P1.2(c)-ratified fit slots — see
+  // render.wgsl header): a low-rate position READBACK through the SAME readBuf
+  // path the capture and Study diagnostics use measures the flock's bounding
+  // box; the RAF loop damps the displayed fit toward it (smooth follow, no
+  // snaps). Display-only: the values land in the render uniform alone, written
+  // ONLY inside frame() — which early-returns while isCapturing(), so the
+  // capture path never renders a fitted frame; nothing here is read by
+  // stepLive/stepCanonical/captureCanonical. The orbit spins around y, so the
+  // horizontal bound uses the worst-case xz radius (rotation-safe).
+  const FIT_MARGIN = 0.8; // flock half-extent targets ~80% of the frame
+  const FIT_DAMP = 0.04; // per-frame exponential approach (~0.4 s at 60 fps)
+  const FIT_READBACK_MS = 250;
+  const FIT_SCALE_MIN = 0.05; // zoom-out floor (flocklets dispersal)
+  const FIT_SCALE_MAX = 2.0; // zoom-in ceiling (tight swarm)
+  const fit = { scale: 1, cx: 0, cy: 0, cz: 0 };
+  const fitTarget = { scale: 1, cx: 0, cy: 0, cz: 0 };
+  async function measureFitTarget(): Promise<void> {
+    try {
+      if (!isCapturing()) {
+        const pos = await readBuf(posB[s]!);
+        let lx = Infinity, ly = Infinity, lz = Infinity, hx = -Infinity, hy = -Infinity, hz = -Infinity;
+        for (let a = 0; a < NA; a += 1) {
+          const x = pos[a * 3]!, y = pos[a * 3 + 1]!, z = pos[a * 3 + 2]!;
+          if (x < lx) lx = x; if (x > hx) hx = x;
+          if (y < ly) ly = y; if (y > hy) hy = y;
+          if (z < lz) lz = z; if (z > hz) hz = z;
+        }
+        const cx = (lx + hx) / 2, cy = (ly + hy) / 2, cz = (lz + hz) / 2;
+        let rxz2 = 0;
+        for (let a = 0; a < NA; a += 1) {
+          const dx = pos[a * 3]! - cx, dz = pos[a * 3 + 2]! - cz;
+          const r2 = dx * dx + dz * dz;
+          if (r2 > rxz2) rxz2 = r2;
+        }
+        const rxz = Math.max(Math.sqrt(rxz2), 1e-3);
+        const ry = Math.max((hy - ly) / 2, 1e-3);
+        const aspect = canvas.width / canvas.height;
+        const sH = (FIT_MARGIN * aspect) / (0.06 * rxz);
+        const sV = FIT_MARGIN / (0.06 * ry);
+        fitTarget.scale = Math.min(Math.max(Math.min(sH, sV), FIT_SCALE_MIN), FIT_SCALE_MAX);
+        fitTarget.cx = cx; fitTarget.cy = cy; fitTarget.cz = cz;
+      }
+    } finally {
+      setTimeout(() => void measureFitTarget(), FIT_READBACK_MS);
+    }
+  }
+  void measureFitTarget();
 
   // Cursor-as-camera (house § 5.1, D-P1.2(a) class): drag orbits the flock by
   // driving the SAME render-uniform angle slot the auto-orbit writes — live
@@ -404,7 +452,11 @@ async function main(): Promise<void> {
       if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
     }
     if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
-    queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0, 0, 0, 0, 1]));
+    fit.scale += (fitTarget.scale - fit.scale) * FIT_DAMP;
+    fit.cx += (fitTarget.cx - fit.cx) * FIT_DAMP;
+    fit.cy += (fitTarget.cy - fit.cy) * FIT_DAMP;
+    fit.cz += (fitTarget.cz - fit.cz) * FIT_DAMP;
+    queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0, fit.cx, fit.cy, fit.cz, fit.scale]));
     const renderBG = device.createBindGroup({
       layout: renderBGL,
       entries: [
