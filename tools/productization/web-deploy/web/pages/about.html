@@ -1,0 +1,259 @@
+<!doctype html>
+<!--
+  Bit-Physics — about / methodology page (Lane B dispatch P-6, 2026-06-12).
+  Linked from the landing nav; served verbatim next to index.html by the
+  web-deploy deploy job. Curation, not invention: every claim on this page
+  is checkable against an in-repo file it links (dispatch P-6 § 2 measure-
+  live rule). Zero JS. House style: docs/design/house-style.md — IBM Plex
+  Mono / IBM Plex Sans Condensed, dark instrument palette, #36e0cf accent.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bit-Physics — about &amp; methodology</title>
+<meta name="description" content="How Bit-Physics is verified: deterministic seeded runs, pinned canonical captures, measured-then-declared tolerances, four-state verdicts, and an append-only audit ledger — with links to re-run all of it." />
+<style>
+  /* Self-hosted house fonts (P-3 Stage 1 — no Google Fonts runtime fetch).
+     Source of truth: common/common-web/fonts/ (OFL 1.1); this page is served
+     verbatim with no build step, so it shares the landing's ./assets/ copy. */
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 300;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-300.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-400.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 600;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 500;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-500.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 600;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-600.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Sans Condensed'; font-style: normal; font-weight: 700;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-sans-condensed-latin-700.woff2') format('woff2'); }
+
+  :root {
+    --bg: #06090d;
+    --panel: rgba(10, 15, 21, .80);
+    --line: #1a232e;
+    --txt: #c3cfd8;
+    --dim: #74828f;
+    --faint: #475461;
+    --accent: #36e0cf;
+    --accent-d: #0f3a37;
+    --warm: #ff7a3c;
+    --bad: #ff5d6c;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+    --cond: 'IBM Plex Sans Condensed', var(--mono);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--txt);
+    font: 14px/1.55 var(--mono); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 52px 20px 64px; }
+
+  header { border-bottom: 1px solid var(--line); padding-bottom: 28px; }
+  nav.crumb { font-size: 12.5px; color: var(--dim); margin-bottom: 18px; }
+  h1 { margin: 0 0 4px; font-family: var(--cond); font-size: 34px;
+    font-weight: 700; letter-spacing: .5px; }
+  h1 .tld { color: var(--accent); }
+  .tag { color: var(--dim); font-size: 14px; }
+
+  h2 { margin: 44px 0 6px; font-family: var(--cond); font-size: 17px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 2.5px;
+    color: var(--dim); }
+  h2::before { content: "// "; color: var(--accent-d); font-family: var(--mono); }
+  .sub { color: var(--dim); font-size: 12.5px; margin: 0 0 18px; }
+
+  p { max-width: 76ch; }
+  p b { color: var(--txt); font-weight: 600; }
+  code { color: var(--txt); background: var(--panel); border: 1px solid var(--line);
+    border-radius: 3px; padding: 1px 5px; font-size: 12.5px; }
+
+  .posture { margin-top: 14px; padding: 16px 18px; background: var(--panel);
+    border: 1px solid var(--line); border-left: 3px solid var(--accent-d);
+    border-radius: 4px; font-size: 13px; }
+  .posture b { color: var(--accent); font-weight: 600; }
+
+  ul.claims { list-style: none; padding: 0; margin: 14px 0 0; font-size: 13px; }
+  ul.claims li { padding: 11px 0; border-bottom: 1px dashed var(--line); }
+  ul.claims li:last-child { border-bottom: 0; }
+  ul.claims .what { color: var(--txt); }
+  ul.claims .where { display: block; margin-top: 3px; color: var(--dim);
+    font-size: 12px; }
+
+  .exhibit { background: var(--panel); border: 1px solid var(--line);
+    border-radius: 6px; padding: 16px 18px; font-size: 12.8px; margin-top: 14px; }
+  .exhibit h3 { margin: 0 0 8px; font-family: var(--cond); font-size: 14.5px;
+    font-weight: 600; letter-spacing: 1px; color: var(--txt); }
+  .exhibit p { margin: 0 0 8px; color: var(--dim); }
+  .exhibit p:last-child { margin-bottom: 0; }
+  .exhibit .verdict-chip { font-size: 10.5px; letter-spacing: .5px;
+    color: var(--bad); border: 1px solid var(--line); border-radius: 3px;
+    padding: 2px 7px; background: var(--bg); white-space: nowrap; }
+  .exhibit .verdict-chip.ok { color: var(--accent); border-color: var(--accent-d); }
+
+  pre { background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; font-size: 12px; line-height: 1.6; overflow-x: auto;
+    color: var(--txt); }
+  pre .c { color: var(--faint); }
+
+  footer { margin-top: 52px; border-top: 1px solid var(--line);
+    padding-top: 18px; color: var(--faint); font-size: 12px; }
+  footer p { margin: 0 0 10px; color: var(--dim); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <nav class="crumb"><a href="./">&larr; bit-physics.sim — the simulations</a></nav>
+  <h1>about<span class="tld"> / methodology</span></h1>
+  <div class="tag">what it means when this project says &ldquo;verified&rdquo;</div>
+</header>
+
+<h2>The posture</h2>
+<p>
+  Bit-Physics is a portfolio of GPU physics and emergence simulations built
+  around one discipline: <b>no claim ships before it is measured, and no
+  measurement is discarded after it ships</b>. Every simulation runs from a
+  committed, seeded initial state; its behaviour is captured, the capture is
+  pinned, and every later build — native or browser — must re-earn agreement
+  with that pinned evidence through an explicit gate. The records of those
+  gates form an append-only ledger that ships with the code.
+</p>
+<div class="posture">
+  Tolerances are <b>measured, then declared — never widened</b> to make a
+  failing gate pass. Audits close with four-state verdicts —
+  <b>CONFIRMED / SHIFTED / REFUTED / DEFERRED</b> — and when reality
+  disagrees with the plan, the audit records the SHIFT instead of rewriting
+  the claim.
+</div>
+<ul class="claims">
+  <li>
+    <span class="what">Deterministic, seeded runs — the browser boids flock steps from the same committed seed-42 initial state every load, and its gate requires two independent runs to be byte-identical.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/packages/boids-3d/web/public/boids-ic-seed42.bin">boids-ic-seed42.bin</a> (the committed IC) · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/productization/web-deploy/verify.py">verify.py</a> (the run-twice gate)</span>
+  </li>
+  <li>
+    <span class="what">Pinned canonical captures — reference runs are committed artifacts (HDF5 + manifest), not numbers in a wiki; gates compare against them field by field.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/tree/main/tests/fixtures/legacy-captures">tests/fixtures/legacy-captures/</a> (e.g. boids-3d-ref.h5 / .json)</span>
+  </li>
+  <li>
+    <span class="what">Tolerances under version control — every equivalence tolerance lives in a committed ledger with a CI check that refuses silent widening.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/testkit/equivalence/tolerance.toml">tolerance.toml</a> · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/testkit/equivalence/tolerance-budget.toml">tolerance-budget.toml</a> · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/.github/workflows/tolerance-budget-check.yml">tolerance-budget-check.yml</a></span>
+  </li>
+  <li>
+    <span class="what">Four-state verdicts — the audit vocabulary is defined once, in the architecture document, and used everywhere.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/architecture.md">docs/architecture.md</a> (&ldquo;Four-state verdicts&rdquo;)</span>
+  </li>
+  <li>
+    <span class="what">Append-only audit chain with SHA evidence — audits are never amended; commit SHAs are back-filled as new appends, so the evidence trail can be replayed against git history.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits">docs/_audits/</a> (phase 0 → 6) · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md">phase-5 close</a></span>
+  </li>
+</ul>
+
+<h2>The discipline, in action</h2>
+<p class="sub">Three exhibits from the current polish lane — the rule is &ldquo;measure before naming&rdquo;, and the interesting part is what it rejects.</p>
+
+<div class="exhibit">
+  <h3>The flocking preset that measurement refuted <span class="verdict-chip">REFUTED</span></h3>
+  <p>A boids preset named &ldquo;schooling&rdquo; (alignment weight 3.0) was
+  proposed for the live page. Measured before shipping, its global
+  polarization came back 0.015 — local schools cancel, nothing globally
+  &ldquo;schools&rdquo; — so the name was refuted by the measurement and the
+  preset was rejected. The four presets that did ship each carry their
+  measured order parameters.</p>
+  <p>→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-6/laneB-P4-dispatch-audit-2026-06-12T02-30-00Z.md">Lane B P-4 audit § 7</a></p>
+</div>
+
+<div class="exhibit">
+  <h3>The presets that honestly don&rsquo;t exist <span class="verdict-chip">SKIPPED</span></h3>
+  <p>Growing Neural CA exposes only two live knobs without touching its
+  trained kernel. Both were measured: synchronous fire-rate kills the pattern
+  (0 alive cells — blank canvas), sparse fire-rate is indistinct from
+  canonical. No measured-distinct watchable regime exists, so the sim shipped
+  <b>without</b> presets rather than with decorative ones.</p>
+  <p>→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-6/laneB-P5-dispatch-audit-2026-06-12T03-45-08Z.md">Lane B P-5 audit § 5.1</a></p>
+</div>
+
+<div class="exhibit">
+  <h3>The critical magnet, anchored to theory <span class="verdict-chip ok">CONFIRMED</span></h3>
+  <p>The Ising temperature presets are named against the exact Onsager
+  critical temperature T<sub>c</sub> = 2/ln(1+&radic;2), cited from the
+  in-repo spec and golden table — not from memory. At the critical preset the
+  measured energy per spin, &minus;1.428, sits at the exact critical value
+  &minus;&radic;2 &asymp; &minus;1.414, and magnetization collapses above
+  T<sub>c</sub> as theory demands.</p>
+  <p>→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-6/laneB-P5-dispatch-audit-2026-06-12T03-45-08Z.md">Lane B P-5 audit § 5.3</a> · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/lattice-spin/ising-classical/spec-ref.md">ising spec</a> · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/testkit/golden/tables/ising-classical-critical-temperature.json">golden table</a></p>
+</div>
+
+<h2>Interactive without contamination</h2>
+<p>
+  The live pages are playable — presets, cursor forces, orbit cameras — and
+  none of it can leak into the evidence. The pattern is <b>capture
+  pinning</b>: live interaction drives one parameter buffer, while the
+  capture path re-runs from the committed seed with a second, canonical
+  buffer whose call sites are disjoint (a one-grep proof recorded per audit).
+  Every sim&rsquo;s Study mode shows an <b>honesty note</b> stating exactly
+  what is faithful, what is simplified, and what is measured live — including
+  that camera framing is presentation-side and simulation state is
+  unaffected.
+</p>
+<ul class="claims">
+  <li>
+    <span class="what">The two-buffer pinning split, in code — <code>stepCanonical()</code> appears only inside the capture loop, <code>stepLive()</code> only in the animation loop.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/packages/boids-3d/web/src/main.ts">boids-3d main.ts</a> · proof transcripts in <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-6/laneB-P5-dispatch-audit-2026-06-12T03-45-08Z.md">P-5 audit § 4</a></span>
+  </li>
+  <li>
+    <span class="what">The honesty-note contract every sim fills in — faithful / simplified / measured, plus the gate verdict it shipped under.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/common/common-web/src/panel-shell.ts">common-web panel-shell.ts</a></span>
+  </li>
+  <li>
+    <span class="what">Display-only changes are ratified, isolated, and proven byte-stable — the boids camera-fit landed as a standalone commit with pre/post frame hashes and an unchanged capture digest.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/packages/boids-3d/web/src/render.wgsl">render.wgsl</a> (header documents the proof) · <a href="https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits/phase-6">phase-6 audit ledger</a></span>
+  </li>
+</ul>
+
+<h2>Don&rsquo;t trust it — re-run it</h2>
+<p class="sub">Everything above is re-runnable from a clone. The browser gate needs a WebGPU-capable Chromium.</p>
+<pre>
+<span class="c"># build the seven web sims and re-apply each one's own gate
+# in a real headless browser-WebGPU session (7/7 must pass):</span>
+python tools/productization/web-deploy/pipeline.py validate \
+    --artifacts /tmp/out --json
+</pre>
+<ul class="claims">
+  <li>
+    <span class="what">The validate pipeline — vite build &rarr; headless browser drive &rarr; the sim&rsquo;s established gate re-applied to the browser-emitted capture. No DOM-load substitutes.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/productization/web-deploy/pipeline.py">pipeline.py</a> · <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/tools/productization/web-deploy/verify.py">verify.py</a></span>
+  </li>
+  <li>
+    <span class="what">The audit chain — start at the phase-5 close (7/7 browser-WebGPU green on CI) and walk the phase-6 lane audits forward; every push cites its validate artifacts.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits">docs/_audits/</a></span>
+  </li>
+  <li>
+    <span class="what">Release binaries — native Stack-C capture binaries with SHA256SUMS, validated in the publishing run itself; verify the digests against the release body and the ledger.</span>
+    <span class="where">→ <a href="https://github.com/StevenFAU/Bit-Physics/releases/tag/v0.5.0-phase-5">release v0.5.0-phase-5</a></span>
+  </li>
+</ul>
+
+<h2>Who builds this</h2>
+<p>
+  One developer, with AI agents doing the execution under operator-ratified
+  dispatches: the operator scopes and ratifies each unit of work, agents
+  build and measure it, and the audit ledger records what actually happened —
+  including the rejections. The verification posture predates the pixels:
+  the gates and the append-only ledger have been in place since phase 0.
+</p>
+
+<footer>
+  bit-physics · about / methodology (Lane B P-6) ·
+  house style: <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/design/house-style.md">docs/design/house-style.md</a> ·
+  this page curates in-repo evidence and adds no new verification claims ·
+  <a href="./">back to the simulations</a>
+</footer>
+
+</div>
+</body>
+</html>

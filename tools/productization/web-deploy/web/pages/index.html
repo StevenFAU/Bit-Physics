@@ -59,7 +59,13 @@
   .wrap { max-width: 1060px; margin: 0 auto; padding: 52px 20px 64px; }
 
   /* hero */
-  header { border-bottom: 1px solid var(--line); padding-bottom: 32px; }
+  header { border-bottom: 1px solid var(--line); padding-bottom: 32px;
+    position: relative; }
+  nav.top { position: absolute; top: 4px; right: 0; font-size: 12.5px; }
+  nav.top a { color: var(--dim); border: 1px solid var(--line);
+    border-radius: 3px; padding: 4px 10px; letter-spacing: .5px; }
+  nav.top a:hover { color: var(--accent); border-color: var(--accent-d);
+    text-decoration: none; }
   h1 { margin: 0 0 4px; font-family: var(--cond); font-size: 40px;
     font-weight: 700; letter-spacing: .5px; }
   h1 .tld { color: var(--accent); }
@@ -139,6 +145,7 @@
 <div class="wrap">
 
 <header>
+  <nav class="top"><a href="./about.html">about / methodology</a></nav>
   <h1>bit-physics<span class="tld">.sim</span></h1>
   <div class="tag">GPU-accelerated physics &amp; emergence — a portfolio with a verification spine</div>
   <p class="story">
