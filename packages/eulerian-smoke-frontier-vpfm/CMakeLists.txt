@@ -23,6 +23,7 @@ if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
   add_library(bit_physics_vpfm
     src/vpfm.cpp
     src/vpfm_math.cpp
+    src/vpfm_particles.cpp
     ${VPFM_CURL_SPV}
     ${VPFM_DIV_SPV}
   )
