@@ -247,7 +247,10 @@ async function main(): Promise<void> {
       { binding: 2, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
     ],
   });
-  const renderUniform = device.createBuffer({ size: 16, usage: U.UNIFORM | U.COPY_DST });
+  // 32 bytes: [aspect, angle, n, _pad, fit_center.xyz, fit_scale] — the P-6
+  // ratified display-only camera-fit slots (render.wgsl header). Identity
+  // (center 0, scale 1) reproduces the pre-fit framing bit-exactly.
+  const renderUniform = device.createBuffer({ size: 32, usage: U.UNIFORM | U.COPY_DST });
   const renderPipeline = await device.createRenderPipelineAsync({
     layout: device.createPipelineLayout({ bindGroupLayouts: [renderBGL] }),
     vertex: { module: renderModule, entryPoint: "vs_main" },
@@ -401,7 +404,7 @@ async function main(): Promise<void> {
       if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
     }
     if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
-    queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0]));
+    queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0, 0, 0, 0, 1]));
     const renderBG = device.createBindGroup({
       layout: renderBGL,
       entries: [

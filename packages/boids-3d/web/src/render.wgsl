@@ -8,8 +8,18 @@
 // sprite (6 vertices per agent, vertex_index decomposed below). Same storage
 // reads, same world transform, same speed palette; no sim state read/written
 // differently.
+//
+// DISPLAY-ONLY camera fit (Lane B P-6, D-P1.2(c) ratified): the Reynolds
+// kernel has no world bounds, so under the former constant framing the flock
+// eventually drifted out of view. RU gains two slots — fit_center/fit_scale —
+// written by the host from a position READBACK (never by compute); the world
+// transform becomes (p - fit_center) * 0.06 * fit_scale, consumed at render
+// time only. Identity (center 0, scale 1) reproduces the previous framing
+// bit-exactly: x - 0.0 and x * 1.0 are IEEE-754 identity operations on the
+// unchanged x * 0.06 product. Same storage reads, no new bindings; zero
+// kernel/step/capture-path bytes change.
 
-struct RU { aspect: f32, angle: f32, n: f32, _p: f32, };
+struct RU { aspect: f32, angle: f32, n: f32, _p: f32, fit_center: vec3<f32>, fit_scale: f32, };
 @group(0) @binding(0) var<uniform> ru: RU;
 @group(0) @binding(1) var<storage, read> pos: array<f32>;
 @group(0) @binding(2) var<storage, read> vel: array<f32>;
@@ -23,7 +33,7 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VSOut {
   let agent = vi / 6u;
   let corner = vi % 6u;
   let o = agent * 3u;
-  let p = vec3<f32>(pos[o], pos[o + 1u], pos[o + 2u]) * 0.06;
+  let p = (vec3<f32>(pos[o], pos[o + 1u], pos[o + 2u]) - ru.fit_center) * 0.06 * ru.fit_scale;
   let a = ru.angle;
   let ca = cos(a); let sa = sin(a);
   let rx = vec3<f32>(p.x * ca - p.z * sa, p.y, p.x * sa + p.z * ca);
