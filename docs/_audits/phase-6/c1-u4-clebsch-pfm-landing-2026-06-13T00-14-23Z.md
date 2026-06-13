@@ -11,7 +11,7 @@
 > (stage-1a scaffold + RED 9/9, evidence footer-hashed `13580a91…`) → `1400f83` →
 > `38d24c1` → `54717e4` (stage-1b GREEN 9/9) → `5ae657c` → `c8de5fc` → `6c43902`
 > (stage-1c: spec sheet + REFRAMED gate + cascadic-init fix + capture + corpus + perf)
-> → `3ca0f97` (§ 12 handoff append) → *(stage-2 SHA back-filled per Convention #12)*.
+> → `3ca0f97` (§ 12 handoff append) → `ce70309` (stage-2 landing fold; SHA back-filled per Convention #12).
 
 ## Push-unblock record (session 3, this fold's precondition)
 
