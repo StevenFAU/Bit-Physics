@@ -247,3 +247,38 @@ then `git -c lfs.standalonetransferagent= push git@github.com:StevenFAU/Bit-Phys
 watch the full sweep, and the next session does the U-4 stage-2 landing fold
 (landing report under `docs/_audits/phase-6/`, ledger row 23 → landed, Convention
 #12 SHA back-fill) before resuming U-5 vpfm (which reuses the U-4 PFM substrate).
+
+## § 13 — Continuation handoff #3 — build session 3 (2026-06-15T15-44Z, appended at a clean U-6 stage-0/1a boundary)
+
+`CONTINUE_FROM: next-step=U-6 stage-1a (eulerian-smoke-frontier-edge scaffold); last-commit=479412a (origin/main, clean — 0 ahead); partial-work=U-6 stage-0 probe DONE; blocked-on=none`
+
+**State (supersedes the § 12 CONTINUE_FROM, now STALE):** U-4 clebsch-pfm **landed**
+(`ce70309`) and U-5 vpfm **landed** this session (`c65ba08`; full § S.5 sweep GREEN —
+all 10 workflows incl. `python-strict` through R2). Both LFS objects in R2 + GitHub LFS.
+origin/main = `479412a`.
+
+**U-5 resolution (this session, by measurement — Convention M):** resumed mid-stage-1c;
+the prior session's canonical capture was **NaN-poisoned** (the descriptor dt=0.005
+crosses the 128³ inviscid-TG CFL ceiling 1/(n·dt)=1.56 and blows up by step 250 — root
+cause confirmed by code-read: pure advective feedback, no dissipation/clamp). Re-derived
+the **dt=0.00125** CFL-safe SHIFT (measured-then-declared; 500 steps = physical t=0.625,
+pre-cascade), regenerated a fully-physical 11-frame capture (witness `41caa46f…`, payload
+`1e04a359…`), **authored the missing `test_reframed_equivalence.py`** (referenced by spec
+§ 3.5 but absent), filled spec TBD-1c, and landed: stage-1c-i `2739112` → 1c-ii `9850116`
+→ stage-2 fold `76bbedd` → SHA back-fill `c65ba08`. The REFRAMED result is stronger than
+U-4 (frame-0 ~50× tighter via the direct vorticity lift; physical for ALL 500 steps, no
+saturation regime, vs the parent's ~20-order blowup).
+
+**Next unit (U-6, ratified § 4 order — the flow-map family's final C-1 member):** the
+stage-0 probe is committed (`479412a`, `docs/_audits/phase-6/c1-u6-edge-probe-2026-06-15T15-42-50Z.md`)
+— anchor EDGE proper (DOI 10.1145/3731193, D-1 ratified, incompressible grid flow maps,
+NOT the compressible-flowmap paper …3731192) re-verified LIVE. **Plan of record:**
+GRID-side buffer-free flow maps (backward map ψ + on-grid gradient evolution ∇ψ +
+tetrahedron epsilon-difference higher derivatives + Hermite interpolation) — INDEPENDENT
+of the U-4/U-5 particle substrate; copy-adapt only the Stack-C grid layer (MAC grid,
+periodic MG Poisson, staggered curl/div f64 kernels, capture/determinism harness, TG
+anchor) from vpfm. The **O(1)-memory-independent-of-flow-map-length** claim is the
+distinctive rigorous measurable gate (perf-ledger memory row + `backward_map_memory_constant`
+PBT). **Build-time risks flagged:** size the CFL-safe dt at 128³ before the canonical
+capture (the U-5 lesson — do NOT assume 0.005); solid-boundary DEFERRED (periodic
+descriptor). Then U-7 (gaussian-fluids, Stack E) + U-8a (sph-water-stack-e, D-4) remain.
