@@ -1,0 +1,100 @@
+{
+  "frames": [
+    {
+      "density_mass": 0.015749583035781604,
+      "density_second_moment": 0.00047248050568362047,
+      "enstrophy": 14.786579415377433,
+      "kinetic_energy": 0.1249498036189147,
+      "step": 0,
+      "u_max": 0.9988961038881464
+    },
+    {
+      "density_mass": 0.015916541313012157,
+      "density_second_moment": 0.0005177795917586448,
+      "enstrophy": 15.029163939993824,
+      "kinetic_energy": 0.12497594827143915,
+      "step": 50,
+      "u_max": 0.9918605268642224
+    },
+    {
+      "density_mass": 0.016096483095485246,
+      "density_second_moment": 0.0006314621832477767,
+      "enstrophy": 15.783770349969474,
+      "kinetic_energy": 0.125006881967679,
+      "step": 100,
+      "u_max": 0.9734435634631728
+    },
+    {
+      "density_mass": 0.01630141988883857,
+      "density_second_moment": 0.0008125987638599555,
+      "enstrophy": 17.142760753395205,
+      "kinetic_energy": 0.12504474739516325,
+      "step": 150,
+      "u_max": 0.95133582501089
+    },
+    {
+      "density_mass": 0.016541843671868957,
+      "density_second_moment": 0.0010570729560260722,
+      "enstrophy": 19.25106166341908,
+      "kinetic_energy": 0.12509339031445244,
+      "step": 200,
+      "u_max": 0.9369889713409669
+    },
+    {
+      "density_mass": 0.016819405134170087,
+      "density_second_moment": 0.0013561958459438754,
+      "enstrophy": 22.30351565598191,
+      "kinetic_energy": 0.1251571936144787,
+      "step": 250,
+      "u_max": 0.9363181637731433
+    },
+    {
+      "density_mass": 0.017123942848626277,
+      "density_second_moment": 0.0016968952104423115,
+      "enstrophy": 26.548652196981656,
+      "kinetic_energy": 0.12524468600036742,
+      "step": 300,
+      "u_max": 0.9440353347993758
+    },
+    {
+      "density_mass": 0.017446582027165723,
+      "density_second_moment": 0.0020644784951505575,
+      "enstrophy": 32.245166335787005,
+      "kinetic_energy": 0.1253584448128473,
+      "step": 350,
+      "u_max": 0.9467552166597443
+    },
+    {
+      "density_mass": 0.017793348112387884,
+      "density_second_moment": 0.0024464358375829334,
+      "enstrophy": 39.84003044896803,
+      "kinetic_energy": 0.1255182741158356,
+      "step": 400,
+      "u_max": 0.9363750700377247
+    },
+    {
+      "density_mass": 0.018163252406017766,
+      "density_second_moment": 0.002833278497334952,
+      "enstrophy": 50.12013510246375,
+      "kinetic_energy": 0.1257339746701056,
+      "step": 450,
+      "u_max": 0.9093059424567564
+    },
+    {
+      "density_mass": 0.018492581014904422,
+      "density_second_moment": 0.0032134106231686606,
+      "enstrophy": 65.63337139144457,
+      "kinetic_energy": 0.12616667027233547,
+      "step": 500,
+      "u_max": 0.9329203598377143
+    }
+  ],
+  "n": 128,
+  "sim": {
+    "category": "volumetric-grid",
+    "name": "eulerian-smoke",
+    "variant": "frontier-vpfm"
+  },
+  "source_manifest": "/home/clipbird/Projects/Bit-Physics/captures/eulerian-smoke-frontier-vpfm/taylor-green-128cube-seed42-step500.json",
+  "source_payload_checksum": "sha256:1e04a35918a763997bcedc6f6603e8a8b84363b6f370dad5306c6d0ad0a218ae"
+}
