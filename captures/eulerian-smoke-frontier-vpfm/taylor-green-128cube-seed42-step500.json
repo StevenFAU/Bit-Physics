@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      128,
+      128,
+      128
+    ],
+    "dtype": "f64",
+    "params": {
+      "dt": 0.00125,
+      "ic": "taylor-green-3d",
+      "init_velocity_residual": 0.00010034538674541515,
+      "n_g": 5.0,
+      "n_v": 20.0,
+      "particles_per_cell": 8.0,
+      "poisson_vcycles": 4.0
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:1e04a35918a763997bcedc6f6603e8a8b84363b6f370dad5306c6d0ad0a218ae",
+    "format": "hdf5",
+    "path": "taylor-green-128cube-seed42-step500.h5"
+  },
+  "run": {
+    "capture_interval": 50,
+    "start_utc": "2026-06-15T15:04:52Z",
+    "step_count": 500,
+    "wall_clock_seconds": 0.0
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "volumetric-grid",
+    "name": "eulerian-smoke",
+    "variant": "frontier-vpfm"
+  },
+  "stack": {
+    "build_id": "phase-6-c1-u5",
+    "name": "cpp",
+    "version": "0.0.0"
+  }
+}
