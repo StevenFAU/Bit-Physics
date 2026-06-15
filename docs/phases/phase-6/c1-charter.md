@@ -282,3 +282,15 @@ distinctive rigorous measurable gate (perf-ledger memory row + `backward_map_mem
 PBT). **Build-time risks flagged:** size the CFL-safe dt at 128³ before the canonical
 capture (the U-5 lesson — do NOT assume 0.005); solid-boundary DEFERRED (periodic
 descriptor). Then U-7 (gaussian-fluids, Stack E) + U-8a (sph-water-stack-e, D-4) remain.
+
+**CI note (cpp-strict Mesa/lavapipe flake — re-anchor question #4, ANSWERED):** the
+`cpp-strict` workflow is container-pinned but **still flakes transiently**. Instance:
+the docs-only commit `45d9fcd` (charter § 13 append) flaked `cpp-strict` (the broad
+ctest step) RED while the byte-identical cpp config passed on `9850116` (U-5
+substantive push, all 10 workflows green) AND `c65ba08`. PROVEN a flake, not a
+regression: full local `ctest` is **16/16 GREEN at HEAD** (incl. every group named in
+the failed step — smoke/interop/substrate/capture/cloth/determinism); registry.toml is
+0-line-diff vs the green `9850116`. No GH write-token in this env → cannot re-run the
+job; this doc commit re-triggers the sweep on green-code HEAD. The U-5 LANDING itself
+sits on the all-green `9850116`. If a future sweep flakes `cpp-strict` on an unchanged
+cpp tree, re-run the job (operator) — it is not a code regression.
