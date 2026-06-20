@@ -294,3 +294,54 @@ the failed step — smoke/interop/substrate/capture/cloth/determinism); registry
 job; this doc commit re-triggers the sweep on green-code HEAD. The U-5 LANDING itself
 sits on the all-green `9850116`. If a future sweep flakes `cpp-strict` on an unchanged
 cpp tree, re-run the job (operator) — it is not a code regression.
+
+## § 14 — Continuation handoff #4 — build session 4 (2026-06-20, appended at a clean U-6 stage-1a boundary)
+
+`CONTINUE_FROM: next-step=U-6 stage-1b (eulerian-smoke-frontier-edge GREEN trajectory); last-LOCAL-commit=616f116 (1 ahead of origin/main dd71cc9 — RED-by-design, UNPUSHED); partial-work=U-6 stage-1a scaffold DONE (committed local, RED 9/9); blocked-on=none`
+
+**State (supersedes the § 13 CONTINUE_FROM):** session opened on a fully-green
+origin (`dd71cc9 == origin/main == HEAD`, working tree clean). Re-anchor questions
+ANSWERED by measurement: (1) U-5 vpfm **landed + green** (`c65ba08`); (2) the § 13
+`cpp-strict` Mesa flake is **RESOLVED** — HEAD `dd71cc9` is **37/37 check-runs green**
+incl. `cpp-strict` + `python-strict` (R2) + `ts-strict` (the docs-commit re-trigger
+landed green on the byte-identical cpp tree, exactly as § 13 predicted); (3) U-6 was at
+the stage-0/1a boundary (probe `479412a`, no `edge` package on disk). **EDGE anchor
+re-verified LIVE** this session (Convention #8): pearseven.github.io/EDGEProject/ —
+title + 6-author list + venue + the O(1)-memory + 37.89→10.79/8.54 GB ≈90% figures
+verbatim, all matching the probe.
+
+**U-6 stage-1a DONE (`616f116`, LOCAL — UNPUSHED, RED by design):** the
+`eulerian-smoke-frontier-edge` Stack-C package scaffold — `edge.hpp` public API
+(EdgeConfig with `reinit_interval` = the flow-map-length / O(1)-memory lever and a
+DESCRIPTOR-NOMINAL `dt` flagged for CFL-safe measurement at 1c; EdgeResult with
+`backward_map_peak_bytes` [the O(1) headline] + `max_gradient_fd_residual`), RED-stubbed
+impl (every public surface throws), the 9-case acceptance suite surfacing gates 3/4/11
+(A1 closed-form/identity/golden, A2 gradient-evolution ∇ψ-vs-FD + the
+`backward_map_memory_constant` O(1) PBT, A3 steady 2D-TG, Kelvin PBT, determinism,
+capture), CMake (copy-adapt vpfm) + top-level `add_subdirectory`. **Verified:** edge
+target builds clean; `ctest` **16/16 siblings GREEN, `edge_tests` #17 RED-by-design**
+(all 9 throw the stub exception; RED-output sha256
+`4be97e88671641c1cb6fc5e9aa411806ce21c0d109ac26ff0929f846a0ec2d16`). Every test ceiling
+is a DECLARED placeholder to be MEASURED-then-tightened at 1b (never widened).
+
+**Why UNPUSHED:** the tree is RED by construction (failing-tests-first, spec § 1.3
+step 4). Per "full § S.5 sweep green per push", the stage-1a + 1b commits push together
+on the **1b GREEN tip** (the U-4 § 12 local-chain precedent — a whole unit built locally,
+pushed once green). Stopping at the 1a boundary rather than opening the multi-hour 1b
+stage mid-context is the ratified session discipline.
+
+**Next step (U-6 stage-1b, GREEN trajectory):** copy-adapt the vpfm Stack-C grid layer
+(MAC grid, periodic MG Poisson, staggered curl/div f64 NoContraction kernels +
+`parallel_for` + B-spline interp + `mac_to_centres` + capture/determinism harness + TG
+closed forms — promote into `edge_math.cpp`/new `edge_detail.hpp` + `shaders/edge_*.comp`),
+then build the NEW core: grid backward flow map ψ + on-grid gradient evolution ∇ψ
+(anchor § 3 item 1) → tetrahedron ε-difference higher derivatives (item 2) → Hermite
+departure-point sampling (item 3) → per-step MG projection, plus the O(1)-memory
+peak-working-set measurement (item 4 — `backward_map_peak_bytes`). Turn the 9 RED cases
+GREEN one anchor at a time, MEASURING each declared bound and pairing it with its backing
+measurement in the landing note. **CFL-safe dt sized at build before the canonical
+capture** (U-5 lesson — the descriptor 0.005 is NOT assumed). Then 1c (canonical
+`taylor-green-128cube-seed42-step500` capture + spec de-stub `spec-frontier-edge.md` +
+REFRAMED gate + the `backward_map_memory_constant` perf-ledger memory row) → 2 landing
+fold (ledger row 24 → landed, Convention #12 SHA back-fill). HARD-STOPs unchanged. After
+U-6: U-7 (gaussian-fluids, Stack E) + U-8a (sph-water-stack-e, D-4).
