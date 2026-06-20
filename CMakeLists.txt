@@ -58,3 +58,10 @@ add_subdirectory(packages/eulerian-smoke-frontier-clebsch-pfm)
 # reusing the U-4 PFM substrate; charter docs/phases/phase-6/c1-charter.md § 3.5,
 # ratified § 10). D11-style CMake-only registration (NOT a uv member).
 add_subdirectory(packages/eulerian-smoke-frontier-vpfm)
+
+# Phase-6 C-1 unit U-6 — Stack-C frontier-edge (EDGE proper, DOI 10.1145/3731193:
+# buffer-free GRID flow maps, O(1) memory independent of flow-map length; charter
+# docs/phases/phase-6/c1-charter.md § 3.6, ratified § 10 incl. D-1). INDEPENDENT of the
+# U-4/U-5 particle substrate (grid-side); copy-adapts only the Stack-C grid layer.
+# D11-style CMake-only registration (NOT a uv member).
+add_subdirectory(packages/eulerian-smoke-frontier-edge)
