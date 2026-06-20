@@ -1,0 +1,57 @@
+#version 450
+// Staggered curl u = ∇×Ψ (periodic) — Stack-C f64 (NoContraction).
+// C-1 U-6 (EDGE): the compatible stencil pair copy-adapted VERBATIM from the U-5 vpfm
+// curl shader (the div∘curl identity is what makes the gate-11 PBT-1 div(u) FP-noise).
+//
+// Edge layout (+owner convention, probe § 4.3): for cell c = (i,j,k),
+//   Ψx[c] lives at (i+½, j+1, k+1)·dx   (x-aligned edge on the +y+z corner)
+//   Ψy[c] lives at (i+1, j+½, k+1)·dx   (y-aligned edge on the +x+z corner)
+//   Ψz[c] lives at (i+1, j+1, k+½)·dx   (z-aligned edge on the +x+y corner)
+// Face layout (U-4 convention): ux[c] at (i+1, j+½, k+½) etc. (+axis-owner).
+//
+//   ux[c] = (Ψz[c] − Ψz[c−ŷ] − Ψy[c] + Ψy[c−ẑ]) / dx
+//   uy[c] = (Ψx[c] − Ψx[c−ẑ] − Ψz[c] + Ψz[c−x̂]) / dx
+//   uz[c] = (Ψy[c] − Ψy[c−x̂] − Ψx[c] + Ψx[c−ŷ]) / dx
+//
+// Paired with the MAC divergence stencil (vpfm_divergence.comp) this is the discrete
+// exterior-calculus identity div∘curl ≡ 0: every edge value cancels exactly in the
+// 6-face sum, so div(u) is FP-noise, not truncation (gate-11 PBT 1). Element-wise,
+// no atomics; `precise` -> NoContraction.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly  buffer Px { double psx[]; };
+layout(std430, binding = 1) readonly  buffer Py { double psy[]; };
+layout(std430, binding = 2) readonly  buffer Pz { double psz[]; };
+layout(std430, binding = 3) writeonly buffer Ux { double ux[]; };
+layout(std430, binding = 4) writeonly buffer Uy { double uy[]; };
+layout(std430, binding = 5) writeonly buffer Uz { double uz[]; };
+layout(push_constant) uniform Params {
+    uint n;
+    uint pad0;
+    double dx;
+} p;
+
+void main() {
+    uint n = p.n;
+    uint ncell = n * n * n;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    uint i = cell % n;
+    uint j = (cell / n) % n;
+    uint k = cell / (n * n);
+    uint im = (i + n - 1u) % n;
+    uint jm = (j + n - 1u) % n;
+    uint km = (k + n - 1u) % n;
+    uint cxm = (k * n + j) * n + im;
+    uint cym = (k * n + jm) * n + i;
+    uint czm = (km * n + j) * n + i;
+
+    precise double rx = (psz[cell] - psz[cym]) - (psy[cell] - psy[czm]);
+    precise double ry = (psx[cell] - psx[czm]) - (psz[cell] - psz[cxm]);
+    precise double rz = (psy[cell] - psy[cxm]) - (psx[cell] - psx[cym]);
+    ux[cell] = rx / p.dx;
+    uy[cell] = ry / p.dx;
+    uz[cell] = rz / p.dx;
+}

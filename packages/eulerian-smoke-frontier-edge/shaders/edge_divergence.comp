@@ -1,0 +1,44 @@
+#version 450
+// MAC divergence (periodic) — Stack-C f64 (NoContraction).
+// C-1 U-6 (EDGE): copy-adapted VERBATIM from the U-5 vpfm divergence shader (the MAC
+// stencil paired with edge_curl.comp gives the exact discrete div∘curl ≡ 0 identity).
+//
+// div(i,j,k) = ((ux_f(i,j,k) - ux_f(i-1,j,k)) + (uy_f(i,j,k) - uy_f(i,j-1,k))
+//             + (uz_f(i,j,k) - uz_f(i,j,k-1))) / dx
+// where u*_f[cell] is the face owned by the cell on its +axis side (the U-4 MAC
+// convention). On curl-reconstructed faces (vpfm_curl.comp) this is the exact
+// discrete identity div∘curl ≡ 0 — the kernel MEASURES it (gate-11 PBT 1).
+// Element-wise, no atomics; `precise` -> NoContraction.
+#extension GL_ARB_gpu_shader_fp64 : require
+
+layout(local_size_x = 64) in;
+layout(std430, binding = 0) readonly  buffer Ux  { double ux[];  };
+layout(std430, binding = 1) readonly  buffer Uy  { double uy[];  };
+layout(std430, binding = 2) readonly  buffer Uz  { double uz[];  };
+layout(std430, binding = 3) writeonly buffer Div { double dvg[]; };
+layout(push_constant) uniform Params {
+    uint n;
+    uint pad0;
+    double dx;
+} p;
+
+void main() {
+    uint n = p.n;
+    uint ncell = n * n * n;
+    uint cell = gl_GlobalInvocationID.x;
+    if (cell >= ncell) return;
+
+    uint i = cell % n;
+    uint j = (cell / n) % n;
+    uint k = cell / (n * n);
+    uint im = (i + n - 1u) % n;
+    uint jm = (j + n - 1u) % n;
+    uint km = (k + n - 1u) % n;
+    uint cxm = (k * n + j) * n + im;
+    uint cym = (k * n + jm) * n + i;
+    uint czm = (km * n + j) * n + i;
+
+    precise double d = ((ux[cell] - ux[cxm]) + (uy[cell] - uy[cym]))
+                       + (uz[cell] - uz[czm]);
+    dvg[cell] = d / p.dx;
+}

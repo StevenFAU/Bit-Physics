@@ -1,8 +1,8 @@
 // C-1 U-6 acceptance suite — gates 3/4/11 surface (doctest). Committed RED at stage 1a
-// (spec § 1.3 step 4): the impl is stubbed; every run_edge/helper call throws. Every
-// numeric ceiling below is a DECLARED placeholder to be MEASURED-then-tightened at stage
-// 1b (the U-5 discipline — each declared bound is paired in the 1b/1c landing note with
-// the measurement that backs it; never widened to pass).
+// (spec § 1.3 step 4; RED-output sha256 4be97e88…); the GREEN trajectory + measured-
+// then-declared ceilings land at stage 1b. Each numeric ceiling below is now paired
+// with the MEASURED value that backs it (the U-5 discipline — tightened to ~3-5x the
+// measurement, never widened to pass; FP-identity surfaces declared at FP-scale).
 //
 // A1 (exact discrete structure + analytic golden):
 //   - closed-form: taylor_green_vorticity IS ∇×taylor_green_velocity (FD cross-check of
@@ -159,8 +159,9 @@ TEST_CASE("A1 golden: reconstruction from analytic 2D-TG vorticity converges to 
         err[idx++] = emax;
     }
     CHECK(err[1] < err[0]);
-    CHECK(err[0] / err[1] >= 3.0);  // O(dx²): 4x expected; gate at 3x (MEASURE 1b)
-    CHECK(err[1] <= 5e-3);          // DECLARED placeholder — MEASURE 1b
+    CHECK(err[0] / err[1] >= 3.0);  // O(dx²): 4x expected; gate at 3x (measured 3.96x)
+    CHECK(err[1] <= 5e-3);          // MEASURED 1b: 1.600e-3 at n=32 (~3x margin; the
+                                    // shared U-5 reconstruct value, as expected)
 }
 
 TEST_CASE("A2 gradient evolution: evolved grad-psi matches finite-difference of psi") {
@@ -178,8 +179,12 @@ TEST_CASE("A2 gradient evolution: evolved grad-psi matches finite-difference of 
         CHECK(res.max_gradient_fd_residual > 0.0);  // genuinely measured, not a no-op
         resid[idx++] = res.max_gradient_fd_residual;
     }
+    // MEASURED 1b: resid 1.097e-2 (n=16) → 3.414e-3 (n=32), converging ~3.2x (the
+    // evolved ∇ψ tracks the central difference of the evolved map ψ — an index/sign
+    // defect would NOT converge). Ceilings declared at ~3.5x the measured values.
     CHECK(resid[1] < resid[0]);  // resolution-converging (the discriminator)
-    CHECK(resid[0] <= 0.25);     // DECLARED placeholder — MEASURE 1b
+    CHECK(resid[0] <= 0.04);     // measured 1.097e-2 at n=16 (~3.6x margin)
+    CHECK(resid[1] <= 0.012);    // measured 3.414e-3 at n=32 (~3.5x margin)
 }
 
 TEST_CASE("A2 O(1) memory: backward-map peak working set is constant in flow-map length") {
@@ -208,10 +213,15 @@ TEST_CASE("A3 steady anchor: z-invariant TG is preserved (drift + energy bounded
     const StepFrame& fT = res.frames.back();
     double drift = std::max({max_abs_diff(f0.u, fT.u), max_abs_diff(f0.v, fT.v),
                              max_abs_diff(f0.w, fT.w)});
-    CHECK(drift <= 2e-3);  // DECLARED placeholder — MEASURE 1b
+    // MEASURED 1b (n=32, 50 steps, reinit 20): drift 2.974e-4, energy rel 2.624e-5,
+    // init residual 1.600e-3. The interpolating Catmull-Rom departure-point resample
+    // (anchor § 3 item 3) is what holds the steady anchor — the smoothing B-spline
+    // gather drove energy down ~2%. Ceilings declared at ~4-5x margins (never widened).
+    CHECK(drift <= 1.5e-3);  // measured 2.974e-4 (~5x margin)
     CHECK(std::fabs(res.energy_final - res.energy_initial) <=
-          3e-3 * std::fabs(res.energy_initial));
-    CHECK(res.init_velocity_residual <= 5e-3);  // grid IC seed lands near analytic TG
+          1e-4 * std::fabs(res.energy_initial));  // measured rel 2.624e-5 (~3.8x margin)
+    CHECK(res.init_velocity_residual <= 5e-3);  // measured 1.600e-3 (the shared U-5
+                                                // reconstruct truncation; ~3x margin)
 }
 
 TEST_CASE("PBT sweep: exact div identity + Kelvin budgets + finiteness across regimes") {
@@ -227,9 +237,15 @@ TEST_CASE("PBT sweep: exact div identity + Kelvin budgets + finiteness across re
             EdgeConfig cfg = small_cfg(16, 8, ic);
             cfg.reinit_interval = L;
             EdgeResult res = run_edge(cfg, nullptr);
+            // MEASURED 1b across all 6 regimes: div ≤ 3.82e-15 (the div∘curl identity);
+            // total vorticity ≤ 7.21e-14 and circulation drift ≤ 1.16e-11 — BOTH at
+            // FP-identity scale (the grid Cauchy transport has no P2G scatter, so the
+            // Kelvin budgets of the analytically-zero TG integrals stay at FP zero, far
+            // tighter than the U-5 particle method's ~4e-5 budget). Declared as
+            // FP-identity bounds with generous headroom, NOT the loose 1a placeholders.
             CHECK(res.max_div_postproj <= 1e-12);      // FP identity, not truncation
-            CHECK(res.max_total_vorticity <= 2e-4);    // Kelvin budget — MEASURE 1b
-            CHECK(res.max_circulation_drift <= 1e-2);  // loop circulation — MEASURE 1b
+            CHECK(res.max_total_vorticity <= 1e-9);    // measured 7.21e-14 (FP-scale)
+            CHECK(res.max_circulation_drift <= 1e-8);  // measured 1.16e-11 (FP-scale)
             for (const StepFrame& fr : res.frames)
                 for (const auto* f : {&fr.u, &fr.v, &fr.w})
                     for (double x : *f) CHECK(std::isfinite(x));

@@ -15,13 +15,23 @@
 # No atomics anywhere.
 
 if (TARGET bit_physics_common_cpp_vulkan AND TARGET bit_physics_common_cpp_hdf5)
+  # --- SPIR-V shaders -------------------------------------------------------------
+  # The compatible curl/div stencil pair (copy-adapted VERBATIM from U-5 vpfm — the
+  # div∘curl identity that makes gate-11 PBT-1 div(u) FP-noise).
+  bitphysics_embed_compute_shader(EDGE_CURL_SPV
+    shaders/edge_curl.comp kEdgeCurlSpv)
+  bitphysics_embed_compute_shader(EDGE_DIV_SPV
+    shaders/edge_divergence.comp kEdgeDivergenceSpv)
+
   # --- Variant library ------------------------------------------------------------
-  # STAGE 1a: edge.cpp + edge_math.cpp are RED stubs (every public surface throws). The
-  # Vulkan curl/div SPIR-V shaders + the NEW grid-flow-map core (edge_flowmap.cpp +
-  # edge_detail.hpp) land at stage 1b.
+  # STAGE 1b: edge_math.cpp (analytic + numerics), edge_flowmap.cpp (the NEW grid
+  # backward-flow-map core), edge.cpp (Vulkan reconstruct + the trajectory).
   add_library(bit_physics_edge
     src/edge.cpp
     src/edge_math.cpp
+    src/edge_flowmap.cpp
+    ${EDGE_CURL_SPV}
+    ${EDGE_DIV_SPV}
   )
   target_include_directories(bit_physics_edge
     PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
