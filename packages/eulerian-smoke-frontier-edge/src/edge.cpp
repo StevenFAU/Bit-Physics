@@ -282,8 +282,19 @@ EdgeResult run_edge(const EdgeConfig& cfg, const std::filesystem::path* capture_
         double e0 = kinetic_energy(frames[0].u, frames[0].v, frames[0].w, dx);
 
         for (uint32_t step = 0; step < cfg.steps; ++step) {
-            if (step % 50 == 0)
-                std::fprintf(stderr, "[edge] run step %u/%u\n", step, cfg.steps);
+            if (step % 50 == 0) {
+                // Progress + live CFL monitor: u_max over the current MAC faces and the
+                // advective Courant number C = u_max·dt/dx = u_max·dt·n (the flow-map
+                // departure-point displacement in cells). The fixed canonical dt at 128³
+                // is sized from this trace — measured-then-declared, NEVER inherited from
+                // the descriptor 0.005 (the U-5 cascade lesson; spec § 1 / § 5).
+                double umax = 0.0;
+                for (std::size_t c = 0; c < ux.size(); ++c)
+                    umax = std::max({umax, std::fabs(ux[c]), std::fabs(uy[c]),
+                                     std::fabs(uz[c])});
+                std::fprintf(stderr, "[edge] run step %u/%u  u_max=%.6g  C=%.4g\n", step,
+                             cfg.steps, umax, umax * cfg.dt * n);
+            }
             // reinit the flow map every L steps (bounds the map length; O(1) memory)
             if (step > 0 && step % cfg.reinit_interval == 0)
                 detail::flowmap_reinit(fm, wx, wy, wz);

@@ -506,3 +506,32 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# eulerian-smoke-frontier-edge (Stack C / Vulkan-lavapipe + deterministic host
+# transport; phase-6 C-1 unit U-6; EDGE proper DOI 10.1145/3731193 — INCOMPRESSIBLE-Euler
+# GRID flow maps, NOT the compressible-flowmap paper DOI 10.1145/3731192). Buffer-free
+# grid backward flow map: the displacement-to-origin field d = ψ − x + its on-grid first
+# Jacobian J = ∇ψ are EVOLVED DIRECTLY on the grid (anchor § 3 item 1 gradient evolution
+# — M = ∂x_dep/∂x built from the evolved ∇u via the RK4 variational equation, never an FD
+# of a stored velocity buffer); Cauchy vorticity transport ω = J^{-1}·ω_ref(ψ);
+# interpolating Catmull-Rom departure-point resample (anchor § 3 item 3 Hermite-class
+# sampling); per-L reinit (d←0, J←I, ω_ref←current). The persistent map state (d+J+ω_ref)
+# is CONSTANT in the flow-map length L — the O(1)-memory headline (anchor § 3 item 4;
+# backward_map_memory_constant PBT). Gather-only fixed-order grid transfers (no particles,
+# no APIC scatter; INDEPENDENT of the U-4/U-5 particle substrate), fixed-cycle MG
+# vector-potential solves + device curl (the U-5 compatible curl/divergence stencil pair:
+# div(u) MEASURED ≤ 3.82e-15 — an exact discrete identity), f64 NoContraction Vulkan
+# kernels for the grid vector arithmetic (host f64 elsewhere; same glibc both witness
+# runs). MEASURED bit-identical 2-run at every run_edge invocation (in-run
+# assert_deterministic_run witness, tolerance 0.0; witness run #2 IS the capture run, so
+# the capture bytes are the asserted-identical bytes). Also MEASURED bit-identical across
+# -O0 vs -O3 -ffp-contract=off builds (strict-IEEE per-target optimization, no FMA
+# fusion). atomic_ops = "none" (gather-only; sequential global reductions). No EFECT.
+# Declared + MEASURED at C-1 U-6 stage 1b/1c; HOLDS.
+[volumetric-grid.eulerian-smoke-frontier-edge]
+stack = "C"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "none"
+subgroup_ops = "none"
+seed_pinned = true
