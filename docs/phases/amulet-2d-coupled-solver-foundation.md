@@ -61,24 +61,29 @@ $$\nabla\!\cdot\!\Big(-\tfrac{1}{\rho}\nabla p\Big) - \frac{\omega^2}{\rho c^2}\
 ### 3.2 PLA shell — time-harmonic linear elastodynamics (Navier–Cauchy)
 $$\nabla\!\cdot\!\sigma + \rho_s\,\omega^2\,\mathbf{u} = 0,\qquad \sigma = \mathbf{C}\!:\!\varepsilon,\qquad \varepsilon=\tfrac12(\nabla\mathbf{u}+\nabla\mathbf{u}^{\!\top}).$$
 Isotropic form: $\mu\nabla^2\mathbf{u} + (\lambda+\mu)\nabla(\nabla\!\cdot\!\mathbf{u}) + \rho_s\omega^2\mathbf{u} = 0$.
-**What it means for you:** two complex vector-component unknowns per node in 2D (displacement $u_x, u_y$). This operator carries **both** wave speeds — $c_P=\sqrt{(\lambda+2\mu)/\rho_s}$ and $c_S=\sqrt{\mu/\rho_s}$ — which is exactly the shear physics pressure-acoustics throws away. Add a complex modulus (loss factor $\eta$) to represent PLA damping; this sets how fast Path 2 decays and how wide the cavity resonances are.
+**2D reduction — plane STRAIN (binding).** Take the cross-section under **plane strain** ($\varepsilon_{zz}=\varepsilon_{xz}=\varepsilon_{yz}=0$) — the correct reduction for a thick body extended out-of-plane and the COMSOL 2D Solid Mechanics default. Plane *stress* ($\sigma_{zz}=0$, for thin in-plane-loaded plates) is **wrong** here. The choice fixes the effective Lamé constants: in plane strain use $\lambda=E\nu/((1+\nu)(1-2\nu))$ with the dilatational modulus $\lambda+2\mu$, so $c_P=\sqrt{(\lambda+2\mu)/\rho_s}$ as written below; plane stress would substitute $\lambda^*=2\lambda\mu/(\lambda+2\mu)$ and give a different (lower) $c_P$. **Both the fluid–solid R/T-vs-angle oracle (§ 11.4) and the § 6 wavelength table are computed with the plane-strain $c_P$.** The AMULET is a compact 6.2 cm spiral (not infinitely long), so plane strain is an approximation; its error is a 2D≠3D contributor logged in the UQ budget (gate G-uq).
+
+**What it means for you:** two complex vector-component unknowns per node in 2D (displacement $u_x, u_y$). This operator carries **both** wave speeds — $c_P=\sqrt{(\lambda+2\mu)/\rho_s}$ and $c_S=\sqrt{\mu/\rho_s}$ — which is exactly the shear physics pressure-acoustics throws away. Represent PLA damping with a **complex modulus $M(1+i\eta)$** (loss factor $\eta\approx0.01$–$0.05$): under the $e^{i\omega t}$ convention used here, the **$+i\eta$** sign gives spatial decay of a propagating wave — $M(1-i\eta)$ would give unphysical growth. This sets how fast Path 2 decays and how wide the cavity resonances are.
 
 ### 3.3 Air cavity — thermoviscous acoustics (full linearized Navier–Stokes)
 Solve for pressure $p$, velocity $\mathbf{u}$, and acoustic temperature $T$ simultaneously:
 $$\text{Continuity: } i\omega\rho = -\rho_0(\nabla\!\cdot\!\mathbf{u}),\quad \rho=\rho_0(\beta_T p - \alpha_p T)$$
 $$\text{Momentum: } i\omega\rho_0\mathbf{u} = \nabla\!\cdot\!\Big[-pI + \mu(\nabla\mathbf{u}+\nabla\mathbf{u}^{\!\top}) + (\mu_B-\tfrac23\mu)(\nabla\!\cdot\!\mathbf{u})I\Big]$$
 $$\text{Energy: } i\omega\rho_0 C_p T = \nabla\!\cdot\!(\kappa\nabla T) + i\omega\alpha_p T_0\,p$$
-**What it means for you:** this is the expensive physics — **four coupled complex unknowns per node** ($p, u_x, u_y, T$) — but it is the *only* model that captures the viscous and thermal boundary-layer losses that dominate the cavity ring-down (Path 3). Given the over-not-under stance, this is the **primary** air-channel model. The efficient equivalent is Kampinga's **Sequential LNS (SLNS)** — three weakly-coupled scalar Helmholtz solves (a viscous scaling field, a thermal scaling field, and the pressure), available as COMSOL 6.3's "Thermoviscous Acoustics, SLNS Approximation" and "computationally efficient [while capturing] most thermoviscous losses correctly." Use full LNS as the truth model and SLNS as the GPU-affordable production form; the cheaper LRF / Boundary-Layer-Impedance surrogates are documented in §5 as fallbacks only.
+**What it means for you:** this is the expensive physics — **four coupled complex unknowns per node** ($p, u_x, u_y, T$) — but it is the *only* model that captures the viscous and thermal boundary-layer losses that dominate the cavity ring-down (Path 3). Given the over-not-under stance, this is the **primary** air-channel model. The efficient equivalent is Kampinga's **Sequential LNS (SLNS)** — three weakly-coupled scalar Helmholtz solves (a viscous scaling field, a thermal scaling field, and the pressure), available as COMSOL 6.3's "Thermoviscous Acoustics, SLNS Approximation" and "computationally efficient [while capturing] most thermoviscous losses correctly." Use full LNS as the truth model and SLNS as the GPU-affordable production form; the cheaper LRF / Boundary-Layer-Impedance surrogates are documented in §5 as fallbacks only. **Cross-check SLNS at curvature, not just a straight channel.** SLNS rests on a locally-1D wall-normal boundary-layer correction — an assumption most strained at the spiral's **tight curvature and corners/cusps** (the same regime that breaks the related Berggren Wentzell surrogate, §5). Since the production (θ, f) Figure-6 sweep is computed with SLNS, the FLNS↔SLNS equivalence must be established on **both** a straight canonical slit/tube **and** a curved/cornered channel representative of the spiral, with the tolerance measured in *that* geometry, before SLNS is trusted for the headline product.
 
 ---
 
 ## 4. Coupling conditions (the off-diagonal blocks that make it one problem)
 
 ### 4.1 Inviscid fluid ↔ solid (water/PLA — the Acoustic–Structure Boundary)
-Two conditions, because an inviscid fluid allows slip — coupling acts **only along the normal**:
-- **Load on solid:** $\mathbf{F} = p_t\,\mathbf{n}$ (surface force = total pressure × normal).
-- **Normal-acceleration continuity:** the fluid's normal acceleration equals the structure's: $-\mathbf{n}\!\cdot\!(-\tfrac1{\rho}\nabla p_t) = -\omega^2\,\mathbf{n}\!\cdot\!\mathbf{u}$.
-Tangential traction on the fluid side is zero. This is the standard fluid–solid set (continuity of normal velocity/displacement; normal traction = −pressure; zero tangential traction).
+Two conditions, because an inviscid fluid allows slip — coupling acts **only along the normal**.
+
+**Normal-orientation convention (pin this before assembly).** Each interface term uses its **own domain's outward normal**: $\mathbf{n}_s$ (pointing solid → fluid) for the load on the solid, $\mathbf{n}_f=-\mathbf{n}_s$ (pointing fluid → solid) for the fluid-side Neumann acceleration term. The two normals are antiparallel; that opposite-normal bookkeeping is what produces the minus sign on the right-hand side below even though the fluid's normal acceleration **physically equals** the structure's.
+- **Load on solid:** $\mathbf{F} = p_t\,\mathbf{n}_s$ (surface force = total pressure × solid outward normal).
+- **Normal-acceleration continuity** (fluid normal acceleration = structure normal acceleration): $-\mathbf{n}_f\!\cdot\!(-\tfrac1{\rho}\nabla p_t) = -\omega^2\,\mathbf{n}_s\!\cdot\!\mathbf{u}$.
+
+This is exactly the sign pattern of the unsymmetric $(u,p)$ block in § 4.4 (off-diagonals $-C$ and $+\rho_f\omega^2 C^{\!\top}$ with $C=\oint_\Gamma N_u^{\!\top}\,\mathbf{n}\,N_p\,d\Gamma$, $\mathbf{n}=\mathbf{n}_s$). **Do not "fix" the minus sign by inspection** — its correctness is confirmed by the energy-balance gate (incident = reflected + transmitted + dissipated, § 11.6) and the Brekhovskikh R/T-vs-angle oracle (§ 11.4), both of which fail loudly on a wrong-sign coupling. Tangential traction on the fluid side is zero. This is the standard fluid–solid set (continuity of normal velocity/displacement; normal traction = −pressure; zero tangential traction).
 
 ### 4.2 Thermoviscous fluid ↔ solid (air/PLA — the Thermoviscous Acoustic–Structure Boundary)
 A viscous fluid sticks to the wall, so the coupling is **full-vector, not just normal**:
@@ -88,7 +93,7 @@ A viscous fluid sticks to the wall, so the coupling is **full-vector, not just n
 **The contrast that matters:** §4.1 couples one component (normal, slip); §4.2 couples the whole velocity vector plus full stress plus temperature (no-slip). Getting §4.2 right is what makes the air-cavity losses physical.
 
 ### 4.3 Thermoviscous fluid ↔ inviscid fluid (air cavity mouth ↔ water/air bulk)
-Continuity of pressure and normal velocity. Standard practice (and the only affordable practice): use thermoviscous **only** in the narrow channels, inviscid Helmholtz everywhere else, and stitch at this boundary.
+Continuity of pressure and normal velocity. Standard practice (and the only affordable practice): use thermoviscous **only** in the narrow channels, inviscid Helmholtz everywhere else, and stitch at this boundary. The energy equation also needs a **thermal condition at the mouth**: continuity of heat flux (adiabatic, $\partial T/\partial n = 0$) is the right default here — valid because the thermal boundary layer does not reach the mouth (§ 5). Tangential velocity and temperature are otherwise left natural (free) on the inviscid side, which carries neither field.
 
 ### 4.4 Weak form & assembled system (for the from-scratch build)
 Multiply each strong form by a conjugate test function, integrate by parts; the interface integrals produce the coupling blocks. The non-symmetric displacement–pressure (u/p) system:
@@ -114,10 +119,10 @@ The regime is set by two dimensionless groups (Beltman 1999; Tijdeman 1975): the
 
 **Model choice (over not under):**
 - **Primary / truth:** full linearized Navier–Stokes (FLNS) in the air channels, with a resolved boundary-layer mesh. Most complete; most expensive.
-- **Production:** SLNS (three Helmholtz solves) — captures the same losses at a fraction of the DOF; GPU-friendly. Cross-check against FLNS on one canonical channel.
+- **Production:** SLNS (three Helmholtz solves) — captures the same losses at a fraction of the DOF; GPU-friendly. Cross-check against FLNS on **both a straight canonical channel and a curved/cornered channel representative of the spiral** (§ 3.3) — its locally-1D boundary-layer assumption is weakest at curvature.
 - **Documented fallbacks (not primary):** LRF "slit" equivalent fluid (complex wavenumber $k_c$, complex impedance $Z_c$ via the $\Psi_v$, $\Psi_h$, $\gamma$ functions) embedded in pressure acoustics; or the thermoviscous-boundary-layer-impedance wall condition; or the Berggren–Bernland–Noreland single-field Wentzell-BC method (note: it "does not apply to surfaces with large curvatures" — relevant given the spiral). Keep these for fast design sweeps once FLNS/SLNS has validated them.
 
-**Signature of correctness:** when thermoviscous losses are switched on, cavity resonances **shift down in frequency and broaden** — the canonical thermoviscous effect (COMSOL: losses are "most pronounced at resonances, broadening them and shifting them down in frequency"). If your resonances don't move when you add losses, the coupling is wrong.
+**Signature of correctness:** when thermoviscous losses are switched on, cavity resonances **shift down in frequency and broaden** — the canonical thermoviscous effect (COMSOL: losses are "most pronounced at resonances, broadening them and shifting them down in frequency"). If your resonances don't move when you add losses, the coupling is wrong. **This is verified quantitatively, not qualitatively** (gate G-coupling): the *magnitudes* of the downward shift Δf and the broadening ΔQ must **converge against the FLNS truth model** within a measured-then-declared tolerance — "they moved" is necessary but **not sufficient**, since a miscalibrated § 4.2 stress/thermal coupling can still produce *some* shift. Where reachable, a thermoviscous channel terminated by a **compliant (elastic) wall** provides an additional semi-analytic oracle for § 4.2 — the only coupling that otherwise lacks the quantitative angle-resolved oracle that § 4.1 gets from Brekhovskikh (§ 11.4).
 
 ---
 
@@ -132,6 +137,8 @@ The regime is set by two dimensionless groups (Beltman 1999; Tijdeman 1975): the
 | PLA P-wave | ~1680–2167 m/s | 17.5–22.6 mm | — |
 | **PLA S-wave** | ~790–1000 m/s | **8.2–10.4 mm** | **solid mesh (shortest elastic λ)** |
 
+The PLA P/S speeds are the literature ranges (§ 10) used here as conservative **mesh-sizing** bounds; the elastic *operator* and the fluid–solid R/T oracle (§ 11.4) use the **plane-strain** $c_P,c_S$ of § 3.2, which fall within these ranges and are calibrated against measured samples (Caveats).
+
 - **Element order & density:** quadratic (P2) Lagrange minimum, **6–8 elements per shortest wavelength** (above the standard 5–6; over not under), i.e. $h_{\max}\le \lambda_{\min}/6$. The shortest controlling wavelength is the **PLA shear wave (~8 mm)** and **air (~3.6 mm)** — air's short wavelength plus the fine cavity features make the air region the densest. Consider P3 in the water if the high-frequency Helmholtz **pollution (dispersion) error** shows up over the many-wavelength water box (Ihlenburg) — verify with a convergence study at 96 kHz.
 - **Thermoviscous region — mixed elements:** P2 velocity + P2 temperature + **P1 pressure** (Taylor–Hood-type) to satisfy the inf-sup / LBB condition and avoid spurious pressure modes — the same stability requirement as incompressible Stokes. Equal-order interpolation requires stabilization; don't.
 - **Boundary-layer mesh (the expensive, non-negotiable part):** a structured graded mesh on **all** channel walls. Over-not-under: **≥8 graded layers** within the viscous penetration depth, first-layer thickness ≪ δ_v at 96 kHz (target ~1 µm, i.e. ≲ δ_v/7), growth ratio ~1.2–1.3. This is the single biggest mesh cost and the main reason SLNS exists.
@@ -141,6 +148,8 @@ The regime is set by two dimensionless groups (Beltman 1999; Tijdeman 1975): the
 ## 7. Open-domain truncation — PML
 
 Use a **frequency-domain Perfectly Matched Layer** wrapping the water box (and the elastic PML form on any solid that reaches the boundary). PML applies complex coordinate stretching so the layer is reflectionless at matched impedance and absorbs at all incidence angles, "not only plane waves… also efficient at very oblique angles." Settings (conservative): polynomial stretching, scaling factor 1, curvature parameter 3, **8–10 mesh layers** across the PML, regular element shape. In the frequency domain the PML's physical thickness is unimportant (real stretching scales it to wavelength); mesh regularity is what matters. Verify spurious reflection < −40 dB on a plane-wave-through-box test before trusting anything coupled. Alternatives if PML misbehaves on the elastic side: first-order absorbing BCs (cheaper, worse at grazing) or infinite elements (what Actran/Simcenter use).
+
+**Elastic PML — verify it separately, and note what is NOT a risk here.** Because PLA's impedance is close to water, real energy enters the solid (Path 2), so the elastic field genuinely reaches the truncation boundary; the **elastic PML must carry its own absorption gate**, not inherit the water-side one. Run a plane-wave-through-box reflection test on the elastic PML with **separate P-wave and S-wave** incidence, swept to **grazing** angles (S near grazing is the worst case), spurious reflection < −40 dB (verification ladder § 11.2). The classic elastic-PML *instability* (exponential blow-up that motivates a Multiaxial PML / M-PML) is a **time-domain** failure mode of the PML time-integration ODEs; **this is a frequency-domain solver, so that instability is moot — no M-PML is needed.** The only residual frequency-domain risk is grazing-incidence *accuracy*, mitigated by added PML layers / stretching and verified by the P/S grazing-reflection gate above.
 
 ---
 
@@ -179,12 +188,14 @@ All three reduce to: Helmholtz fluid + elastodynamic solid + interface coupling 
 
 ## 11. Verification — build confidence block-by-block (each with an analytic oracle)
 
-1. **Helmholtz (water) alone:** Method of Manufactured Solutions (expect O(h³) for P2); plane-wave-through-PML box (spurious reflection < −40 dB); oscillating-cylinder Hankel-function analytic field.
-2. **Elastodynamics (PLA) alone:** MMS for Navier; analytic P/S dispersion; rod/plate eigenfrequencies.
+1. **Helmholtz (water) alone:** Method of Manufactured Solutions — expect **L² observed order $O(h^{3})$ for P2** (the H¹/energy-norm rate is one order lower, $O(h^{2})$; **measure and report the norm** so a correct H¹ rate is not misread as a failed L²); plane-wave-through-PML box (spurious reflection < −40 dB); oscillating-cylinder Hankel-function analytic field.
+2. **Elastodynamics (PLA) alone:** MMS for Navier (plane strain, § 3.2); analytic P/S dispersion; rod/plate eigenfrequencies; **elastic-PML plane-wave-through-box reflection — separate P- and S-wave incidence swept to grazing, spurious reflection < −40 dB** (§ 7; PLA≈water means energy reaches the elastic boundary, so this gate is not optional).
 3. **Thermoviscous (air) alone:** analytic LRF slit/tube complex wavenumber and impedance (Kirchhoff/Zwikker–Kosten) vs FLNS solve; reproduce the Stokes boundary-layer velocity profile.
 4. **Fluid–solid interface — the most important coupling check:** analytic plane-wave **reflection/transmission coefficients at a fluid–solid interface vs incidence angle** (Brekhovskikh), including mode conversion to P and S and the P/S critical angles. This directly tests the "solid path" physics — if R/T and critical angles match, Path 2 is right.
 5. **Cavity modes:** Bessel-function eigenmodes of a cylindrical/annular cavity — validates the resonant reverberance (Path 3) and your forced-response machinery.
 6. **End-to-end:** mesh- and PML-convergence at 96 kHz; energy balance (incident = reflected + transmitted + dissipated); reciprocity (swap source/receiver). Then compare the assembled (θ, f) map to Figure 6.
+
+> **No direct analytic oracle for the spiral thermoviscous field.** None exists for the spiral geometry; its correctness rests on the chain *verified-FLNS on canonical channels (item 3) + mesh/PML convergence (item 6) + FLNS↔SLNS agreement including a curved/cornered channel (§ 3.3)*. State this dependency explicitly in the Unit-C / Unit-E reports — the absence of a direct oracle is a known, bounded limitation, not an oversight.
 
 ---
 
