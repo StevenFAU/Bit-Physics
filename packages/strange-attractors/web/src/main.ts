@@ -39,6 +39,7 @@ import renderWgsl from "./render.wgsl?raw";
 import V from "./generated/verification.json";
 import { installExplainPanel } from "./explain.js";
 import { installVerifyPanel } from "./verify-panel.js";
+import { installInstruments } from "./instruments.js";
 
 const N_STEPS = 10000;
 const CAPTURE_INTERVAL = 1000;
@@ -115,6 +116,14 @@ function injectStyles(): void {
   background: rgba(0, 0, 0, .35); border: 1px solid var(--line); border-radius: 4px;
   padding: 2px 4px; outline: none; cursor: pointer; }
 .lz-select:focus { border-color: var(--accent-d); }
+.lz-chiprow { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0 6px; }
+.lz-chip { font: inherit; font-size: 9.5px; color: var(--dim); background: rgba(0, 0, 0, .3);
+  border: 1px solid var(--line); border-radius: 9px; padding: 1px 7px; cursor: pointer; }
+.lz-chip:hover { color: var(--accent); border-color: var(--accent-d); }
+.lz-inset { margin: 8px 0; }
+.lz-inset-cap { font-size: 10px; color: var(--dim); margin-bottom: 3px; cursor: help; }
+.lz-inset canvas { width: 100%; height: auto; display: block; background: rgba(0, 0, 0, .25);
+  border: 1px solid var(--line); border-radius: 4px; }
 `;
   document.head.appendChild(style);
 }
@@ -493,13 +502,13 @@ async function main(): Promise<void> {
     return REGIMES.find((r) => r.sigma === params.sigma && r.rho === params.rho && r.beta === params.beta) ?? null;
   }
 
-  function paramsPayload(dx: number): ArrayBuffer {
+  function paramsPayload(dx: number, rhoOverride?: number): ArrayBuffer {
     const pp = new ArrayBuffer(48);
     const dv = new DataView(pp);
     dv.setUint32(0, N_STEPS, true);
     dv.setUint32(4, 0, true);
     dv.setFloat32(8, params.sigma, true);
-    dv.setFloat32(12, params.rho, true);
+    dv.setFloat32(12, rhoOverride ?? params.rho, true);
     dv.setFloat32(16, params.beta, true);
     dv.setFloat32(20, DT, true);
     dv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0] + dx, true);
@@ -585,11 +594,15 @@ async function main(): Promise<void> {
   // RAW values (buffers are never framed) — plus butterfly divergence when the
   // ghost is enabled. The sequence token drops superseded measurements.
   let diagSeq = 0;
+  // instruments (spec § 3.2) install after the panel exists; diagnostics
+  // feed them the same readback so Study costs one liveTraj map, not two
+  let instruments: ReturnType<typeof installInstruments> | null = null;
   async function measureStudyDiagnostics(): Promise<void> {
     const seq = ++diagSeq;
     const all = await readBuffer(liveTraj);
     const ghost = butterflyOn ? await readBuffer(ghostTraj) : null;
     if (seq !== diagSeq) return;
+    instruments?.update(all, { ...params });
     const lo = [Infinity, Infinity, Infinity];
     const hi = [-Infinity, -Infinity, -Infinity];
     for (let s = 0; s < nPoints; s += 1) {
@@ -631,6 +644,32 @@ async function main(): Promise<void> {
         { label: "‖Δ‖ at end (ghost)", value: dFinal.toExponential(2) },
         { label: "first ‖Δ‖ > 1", value: firstBig === null ? "never" : `step ${firstBig}` },
       );
+      // live largest-Lyapunov estimate (spec § 3.2.c): least-squares slope of
+      // ln‖Δ(t)‖ over the clean exponential-growth decades. The window is
+      // ‖Δ‖ ∈ [1e-4, 1]: below 1e-4 the f32 pair sits near its rounding
+      // noise floor (Δ₀ = 1e-6 ≈ f32 relative ε at state ~O(10)), above ~1
+      // the separation starts saturating at attractor size — both regimes
+      // bias the slope low. Measured, then compared to the literature value.
+      let sx = 0, sy = 0, sxx = 0, sxy = 0, m = 0;
+      for (let s = 1; s <= N_STEPS; s += 1) {
+        const dx = all[s * 3]! - ghost[s * 3]!;
+        const dy = all[s * 3 + 1]! - ghost[s * 3 + 1]!;
+        const dz = all[s * 3 + 2]! - ghost[s * 3 + 2]!;
+        const d2 = dx * dx + dy * dy + dz * dz;
+        if (d2 >= 1) break; // saturation: past the exponential window
+        if (d2 < 1e-8) continue; // f32 noise floor: not yet clean growth
+        const t = s * DT;
+        const y = 0.5 * Math.log(d2);
+        sx += t; sy += y; sxx += t * t; sxy += t * y; m += 1;
+      }
+      const denomL = m * sxx - sx * sx;
+      if (m >= 20 && denomL > 0) {
+        const lam = (m * sxy - sx * sy) / denomL;
+        const lit = matchRegime()?.label === "classic" ? " (lit. ≈ 0.9056)" : "";
+        rows.push({ label: "λ₁, slope of ln‖Δ‖", value: `${lam.toFixed(3)}${lit}` });
+      } else {
+        rows.push({ label: "λ₁, slope of ln‖Δ‖", value: "n/a — separation saturated too fast" });
+      }
     }
     rows.push({ label: "capture pinned to", value: "classic, seed 42" });
     panel.setDiagnostics(rows);
@@ -1007,6 +1046,34 @@ async function main(): Promise<void> {
       { v: 350, title: "global limit cycle" },
     ],
   );
+  // the real Lorenz bifurcation sequence as clickable bookmarks (expansion
+  // spec § 3.2.e) — chips instead of slider ticks because 1 / 13.93 / 24.06 /
+  // 24.74 all land within 7% of the linear 0–350 track and labels collide
+  {
+    const RHO_MARKS = [
+      { v: 1, label: "1 pitchfork", title: "ρ=1 — the origin loses stability; the C± fixed points are born" },
+      { v: 13.93, label: "13.93 homoclinic", title: "ρ≈13.93 — homoclinic explosion; transient chaos appears" },
+      { v: 24.06, label: "24.06 crisis", title: "ρ≈24.06 — the chaotic attractor becomes stable (coexists with C± until 24.74)" },
+      { v: 24.74, label: "24.74 Hopf", title: "ρ≈24.74 — subcritical Hopf; C± lose stability, chaos is the only attractor" },
+      { v: 99.65, label: "99.65 window", title: "ρ≈99.65 — a periodic window inside the chaotic range" },
+    ];
+    const chipRow = document.createElement("div");
+    chipRow.className = "lz-chiprow";
+    for (const mrk of RHO_MARKS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "lz-chip";
+      b.textContent = mrk.label;
+      b.title = mrk.title;
+      b.addEventListener("click", () => {
+        params.rho = mrk.v;
+        syncSliders();
+        onParamsChanged();
+      });
+      chipRow.appendChild(b);
+    }
+    paramGroup.appendChild(chipRow);
+  }
   const sBeta = addSlider(paramGroup, "β", 0.5, 5, 0.005, params.beta, fmtBeta, (v) => {
     params.beta = v;
     onParamsChanged();
@@ -1132,6 +1199,46 @@ async function main(): Promise<void> {
   trailNote.className = "lz-note-line";
   trailNote.textContent = "afterglow trails — render-side accumulation, zero = off";
   displayGroup.appendChild(trailNote);
+
+  // ------------------------------------- instruments (expansion spec § 3.2) --
+  // Measured from Study readbacks of the DISPLAY buffer; the bifurcation
+  // sweep re-dispatches the committed kernel into a dedicated scratch buffer
+  // (PROVE pattern) — the capture path and liveTraj are never touched.
+  const instrumentsGroup = panel.addGroup("instruments — measured, not asserted");
+  {
+    const sweepParamBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+    const sweepScratch = device.createBuffer({
+      size: trajBytes,
+      usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC,
+    });
+    const sweepRB = device.createBuffer({ size: trajBytes, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    const sweepBG = device.createBindGroup({
+      layout: computeBGL,
+      entries: [
+        { binding: 0, resource: { buffer: sweepParamBuf } },
+        { binding: 1, resource: { buffer: sweepScratch } },
+      ],
+    });
+    instruments = installInstruments({
+      group: instrumentsGroup,
+      nPoints,
+      dt: DT,
+      integrateScratch: async (rho, out) => {
+        queue.writeBuffer(sweepParamBuf, 0, paramsPayload(0, rho));
+        const enc = device.createCommandEncoder();
+        const pass = enc.beginComputePass();
+        pass.setPipeline(computePipeline);
+        pass.setBindGroup(0, sweepBG);
+        pass.dispatchWorkgroups(1);
+        pass.end();
+        enc.copyBufferToBuffer(sweepScratch, 0, sweepRB, 0, trajBytes);
+        queue.submit([enc.finish()]);
+        await sweepRB.mapAsync(GPUMapMode.READ);
+        out.set(new Float32Array(sweepRB.getMappedRange()));
+        sweepRB.unmap();
+      },
+    });
+  }
 
   // EXPLAIN + PROVE layers (spec §§ 3.2–3.3)
   installExplainPanel(panel);
