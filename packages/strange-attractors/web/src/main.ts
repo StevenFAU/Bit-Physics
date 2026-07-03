@@ -496,6 +496,13 @@ async function main(): Promise<void> {
   let paramsDirty = false; // consumed at most once per RAF (spec § 3.1 hot path)
   let suspended = false;
   let angle = 0;
+  let elev = 0; // camera pitch (spec § 3.4.a) — render uniform only
+  let dist = 1; // zoom — render uniform only
+  let scrubT = 1; // Study timeline scrub: fraction of the trajectory drawn
+  // display-only IC nudge (spec § 3.4.c): deterministic hash of a click
+  // counter, ±1e-3 per axis; capture stays pinned to seed-42 regardless
+  const nudge: [number, number, number] = [0, 0, 0];
+  let nudgeK = 0;
   let rafQueued = false;
 
   function matchRegime(): Regime | null {
@@ -511,9 +518,9 @@ async function main(): Promise<void> {
     dv.setFloat32(12, rhoOverride ?? params.rho, true);
     dv.setFloat32(16, params.beta, true);
     dv.setFloat32(20, DT, true);
-    dv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0] + dx, true);
-    dv.setFloat32(28, CANONICAL_IC[1] + SEED42_OFFSET[1], true);
-    dv.setFloat32(32, CANONICAL_IC[2] + SEED42_OFFSET[2], true);
+    dv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0] + nudge[0] + dx, true);
+    dv.setFloat32(28, CANONICAL_IC[1] + SEED42_OFFSET[1] + nudge[1], true);
+    dv.setFloat32(32, CANONICAL_IC[2] + SEED42_OFFSET[2] + nudge[2], true);
     return pp;
   }
 
@@ -698,8 +705,8 @@ async function main(): Promise<void> {
     ruData[10] = DT;
     ruData[11] = colorMode;
     ruData[12] = proj;
-    ruData[13] = 0;
-    ruData[14] = 0;
+    ruData[13] = elev;
+    ruData[14] = dist;
     ruData[15] = 0;
     ruData.set(cmap, 16);
     queue.writeBuffer(buf, 0, ruData);
@@ -721,7 +728,11 @@ async function main(): Promise<void> {
   writeBlit();
 
   function renderFrame(): void {
-    const drawn = Math.max(2, Math.min(nPoints, Math.ceil((nPoints * traceFrame) / TRACE_IN_FRAMES)));
+    // Study: the timeline scrub owns the draw front (spec § 3.4.b);
+    // Play: the boot trace-in ramp (frame-indexed, poster-deterministic)
+    const drawn = suspended
+      ? Math.max(2, Math.min(nPoints, Math.ceil(nPoints * scrubT)))
+      : Math.max(2, Math.min(nPoints, Math.ceil((nPoints * traceFrame) / TRACE_IN_FRAMES)));
     writeRU(ruPrimaryBuf, drawn - 1, 1.0, cmapPrimary, 0);
     if (butterflyOn) writeRU(ruGhostBuf, drawn - 1, 0.8, cmapGhost, 0);
     if (projectionsOn) {
@@ -838,7 +849,18 @@ async function main(): Promise<void> {
     }, 60);
   }
 
+  // Share params in the URL (spec § 3.4.d): the hash carries the live view —
+  // σ/ρ/β + look — for portfolio deep links. Display/live-loop state only;
+  // the capture stays pinned to classic seed-42 whatever the hash says.
+  // replaceState so slider sweeps do not spam history.
+  let readHash: (() => boolean) | null = null; // installed with the display UI
+  let writeHash: (() => void) | null = null;
+  function updateHash(): void {
+    writeHash?.();
+  }
+
   function announceParams(): void {
+    updateHash();
     const m = matchRegime();
     panel.setActivePreset(m ? m.label : null);
     panel.setStatus(
@@ -878,21 +900,28 @@ async function main(): Promise<void> {
   // Study (RAF suspended) a drag one-shot-renders the frozen cloud instead.
   const AUTO_ORBIT_IDLE_MS = 4000;
   const DRAG_RAD_PER_PX = 0.008;
+  const ELEV_RAD_PER_PX = 0.006;
   let lastPointerMs = -AUTO_ORBIT_IDLE_MS; // boot: auto-orbit live immediately
   let dragPointer: number | null = null;
   let dragX = 0;
+  let dragY = 0;
   canvas.style.cursor = "grab";
   canvas.addEventListener("pointerdown", (e) => {
     dragPointer = e.pointerId;
     dragX = e.clientX;
+    dragY = e.clientY;
     lastPointerMs = performance.now();
     canvas.setPointerCapture(e.pointerId);
     canvas.style.cursor = "grabbing";
   });
   canvas.addEventListener("pointermove", (e) => {
     if (dragPointer !== e.pointerId) return;
+    // full 3D orbit (spec § 3.4.a): yaw on the auto-orbit's own angle slot,
+    // pitch on the new elevation uniform — both display-only
     angle += (e.clientX - dragX) * DRAG_RAD_PER_PX;
+    elev = Math.min(1.35, Math.max(-1.35, elev - (e.clientY - dragY) * ELEV_RAD_PER_PX));
     dragX = e.clientX;
+    dragY = e.clientY;
     lastPointerMs = performance.now();
     if (suspended && !isCapturing()) renderFrame();
   });
@@ -904,6 +933,16 @@ async function main(): Promise<void> {
   };
   canvas.addEventListener("pointerup", endDrag);
   canvas.addEventListener("pointercancel", endDrag);
+  canvas.addEventListener(
+    "wheel",
+    (e) => {
+      e.preventDefault();
+      dist = Math.min(3, Math.max(0.35, dist * Math.exp(-e.deltaY * 0.0012)));
+      lastPointerMs = performance.now();
+      if (suspended && !isCapturing()) renderFrame();
+    },
+    { passive: false },
+  );
 
   const panel = createSettingsPanel("Lorenz Attractor", {
     caption: "Three coupled equations, RK4-integrated into the butterfly that started chaos theory — deterministic, never repeating, forever on the attractor.",
@@ -1113,6 +1152,50 @@ async function main(): Promise<void> {
     if (suspended) scheduleStudyApply();
   });
 
+  // reseed nudger (spec § 3.4.c): jitter the DISPLAY IC by a deterministic
+  // hash of the click counter (±1e-3 per axis) and re-integrate the live
+  // buffers — same committed kernel; capture stays pinned to seed-42
+  {
+    const hash01 = (n: number): number => {
+      const s = Math.sin(n * 127.1 + 311.7) * 43758.5453;
+      return (s - Math.floor(s)) * 2 - 1; // [-1, 1)
+    };
+    const row = document.createElement("div");
+    row.className = "lz-chiprow";
+    const nudgeBtn = document.createElement("button");
+    nudgeBtn.type = "button";
+    nudgeBtn.className = "lz-chip";
+    nudgeBtn.textContent = "nudge IC (±1e-3)";
+    nudgeBtn.title =
+      "Re-integrates the display trajectory from a jittered initial condition — deterministic per click count. The capture never sees it.";
+    const resetBtn = document.createElement("button");
+    resetBtn.type = "button";
+    resetBtn.className = "lz-chip";
+    resetBtn.textContent = "reset IC";
+    resetBtn.title = "Back to the canonical seed-42 initial condition.";
+    row.append(nudgeBtn, resetBtn);
+    paramGroup.appendChild(row);
+    const applyNudge = (): void => {
+      paramsDirty = true;
+      if (suspended) scheduleStudyApply();
+    };
+    nudgeBtn.addEventListener("click", () => {
+      nudgeK += 1;
+      nudge[0] = 1e-3 * hash01(nudgeK * 3);
+      nudge[1] = 1e-3 * hash01(nudgeK * 3 + 1);
+      nudge[2] = 1e-3 * hash01(nudgeK * 3 + 2);
+      panel.setStatus(`IC nudged (#${nudgeK}) — display only; capture stays pinned to seed-42`);
+      applyNudge();
+    });
+    resetBtn.addEventListener("click", () => {
+      nudge[0] = 0;
+      nudge[1] = 0;
+      nudge[2] = 0;
+      panel.setStatus("IC reset to canonical seed-42");
+      applyNudge();
+    });
+  }
+
   // ------------------------------------------------ display (render) group --
   // All of it presentation-only (spec § 3.1): colormap + color-by drive the
   // RU uniform block, background/exposure/vignette drive the blit uniforms.
@@ -1120,6 +1203,7 @@ async function main(): Promise<void> {
   const displayGroup = panel.addGroup("display");
 
   function displayChanged(): void {
+    updateHash();
     if (suspended && !isCapturing()) renderFrame();
   }
 
@@ -1151,22 +1235,79 @@ async function main(): Promise<void> {
     return sel;
   }
 
-  addSelect(displayGroup, "map", COLORMAPS.map((c) => c.name), colormapName, (v) => {
+  const setColormap = (v: string): void => {
     colormapName = v;
     cmapPrimary = packColormap(getColormap(v));
     cmapGhost = packColormap(ghostFor(v));
+  };
+  const mapSel = addSelect(displayGroup, "map", COLORMAPS.map((c) => c.name), colormapName, (v) => {
+    setColormap(v);
     displayChanged();
   });
   const COLOR_MODES = ["speed", "z-height", "age", "lobe", "curvature"] as const;
-  addSelect(displayGroup, "color by", COLOR_MODES, COLOR_MODES[colorMode]!, (v) => {
+  const cbSel = addSelect(displayGroup, "color by", COLOR_MODES, COLOR_MODES[colorMode]!, (v) => {
     colorMode = Math.max(0, COLOR_MODES.indexOf(v as (typeof COLOR_MODES)[number]));
     displayChanged();
   });
-  addSelect(displayGroup, "theme", BG_THEMES.map((t) => t.name), BG_THEMES[bgTheme]!.name, (v) => {
+  const themeSel = addSelect(displayGroup, "theme", BG_THEMES.map((t) => t.name), BG_THEMES[bgTheme]!.name, (v) => {
     bgTheme = Math.max(0, BG_THEMES.findIndex((t) => t.name === v));
     writeBlit();
     displayChanged();
   });
+
+  // hash read/write (spec § 3.4.d) — installed here where the look controls
+  // live so a deep link restores selects and sliders coherently
+  writeHash = () => {
+    const q = new URLSearchParams();
+    if (params.sigma !== SIGMA) q.set("s", String(params.sigma));
+    if (params.rho !== RHO) q.set("r", String(params.rho));
+    if (params.beta !== BETA) q.set("b", params.beta === 8 / 3 ? "8/3" : String(params.beta));
+    if (colormapName !== "aurora") q.set("map", colormapName);
+    if (colorMode !== 0) q.set("cb", COLOR_MODES[colorMode]!);
+    if (bgTheme !== 0) q.set("th", BG_THEMES[bgTheme]!.name);
+    const s = q.toString();
+    history.replaceState(null, "", s ? `#${s}` : window.location.pathname + window.location.search);
+  };
+  readHash = () => {
+    const raw = window.location.hash.slice(1);
+    if (!raw) return false;
+    const q = new URLSearchParams(raw);
+    const num = (k: string, lo: number, hi: number): number | null => {
+      const v = q.get(k);
+      if (v === null) return null;
+      const n = v === "8/3" ? 8 / 3 : Number(v);
+      return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : null;
+    };
+    let dirty = false;
+    const s = num("s", 1, 30);
+    if (s !== null && s !== params.sigma) { params.sigma = s; dirty = true; }
+    const r = num("r", 0, 350);
+    if (r !== null && r !== params.rho) { params.rho = r; dirty = true; }
+    const b = num("b", 0.5, 5);
+    if (b !== null && b !== params.beta) { params.beta = b; dirty = true; }
+    const map = q.get("map");
+    if (map && COLORMAPS.some((c) => c.name === map)) {
+      setColormap(map);
+      mapSel.value = map;
+    }
+    const cb = q.get("cb") as (typeof COLOR_MODES)[number] | null;
+    if (cb && COLOR_MODES.includes(cb)) {
+      colorMode = COLOR_MODES.indexOf(cb);
+      cbSel.value = cb;
+    }
+    const th = q.get("th");
+    const thIdx = BG_THEMES.findIndex((t) => t.name === th);
+    if (thIdx >= 0) {
+      bgTheme = thIdx;
+      themeSel.value = th!;
+      writeBlit();
+    }
+    if (dirty) {
+      syncSliders();
+      announceParams();
+    }
+    return dirty;
+  };
   addSlider(displayGroup, "exposure", 0.3, 3, 0.01, exposure, (v) => v.toFixed(2), (v) => {
     exposure = v;
     writeBlit();
@@ -1205,6 +1346,21 @@ async function main(): Promise<void> {
   // sweep re-dispatches the committed kernel into a dedicated scratch buffer
   // (PROVE pattern) — the capture path and liveTraj are never touched.
   const instrumentsGroup = panel.addGroup("instruments — measured, not asserted");
+  // timeline scrub (spec § 3.4.b): in Study the draw front follows this
+  // slider instead of the trace-in ramp — step through integration order
+  addSlider(
+    instrumentsGroup,
+    "scrub",
+    0,
+    1,
+    0.001,
+    scrubT,
+    (v) => `${Math.round(v * 100)}%`,
+    (v) => {
+      scrubT = v;
+      if (suspended && !isCapturing()) renderFrame();
+    },
+  );
   {
     const sweepParamBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
     const sweepScratch = device.createBuffer({
@@ -1255,11 +1411,21 @@ async function main(): Promise<void> {
 
   panel.setActivePreset("classic");
 
+  // deep link restore (spec § 3.4.d) — before the boot framing so a linked
+  // regime integrates + frames once. Empty hash = zero effect on the
+  // poster/loop path (no history writes until the user changes something).
+  const hashDirty = readHash?.() ?? false;
+
   // boot framing: measure the canonical trajectory once and snap the fit —
   // the poster/loop path (classic, no param changes) is then fully
   // deterministic, no async fit updates in flight
   measureFit(await readTrajectory());
   Object.assign(fit, fitTarget);
+  if (hashDirty) {
+    paramsDirty = false;
+    integrateLive();
+    await refreshFit(true);
+  }
 
   boot.textContent = "";
   queueFrame();

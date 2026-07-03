@@ -39,8 +39,8 @@ struct RU {
   dt: f32,
   color_mode: f32,         // 0 speed · 1 z-height · 2 age · 3 lobe · 4 curvature
   proj: f32,               // 0 normal · 1 flatten x (YZ) · 2 flatten y (XZ) · 3 flatten z (XY)
-  _p0: f32,
-  _p1: f32,
+  elev: f32,               // camera pitch, radians (spec § 3.4.a)
+  dist: f32,               // zoom factor, 1 = house framing
   _p2: f32,
   cmap: array<vec4<f32>, 8>,  // packed colormap stops (common-web colormap.ts)
   cmap_meta: vec4<f32>,       // x = stop count
@@ -82,11 +82,16 @@ fn view_of(p_raw: vec3<f32>) -> View {
   if (pr == 3u) { p.z = -0.98; }
   let ca = cos(ru.angle);
   let sa = sin(ru.angle);
-  let rx = vec3<f32>(p.x * ca - p.z * sa, p.y, p.x * sa + p.z * ca);
+  var rx = vec3<f32>(p.x * ca - p.z * sa, p.y, p.x * sa + p.z * ca);
+  // pitch (elevation) about the view x-axis, then zoom — both render
+  // uniforms, so the full 3D orbit stays frame-indexed and display-only
+  let ce = cos(ru.elev);
+  let se = sin(ru.elev);
+  rx = vec3<f32>(rx.x, rx.y * ce - rx.z * se, rx.y * se + rx.z * ce);
   let zc = clamp(rx.z, -1.2, 1.2);
   let persp = 1.55 / (1.55 - zc * 0.9);
   var v: View;
-  v.clip = vec3<f32>(rx.x * persp, rx.y * persp, clamp(0.5 - rx.z * 0.3, 0.02, 0.98));
+  v.clip = vec3<f32>(rx.x * persp * ru.dist, rx.y * persp * ru.dist, clamp(0.5 - rx.z * 0.3, 0.02, 0.98));
   v.persp = persp;
   v.depth_t = clamp((zc + 1.2) / 2.4, 0.0, 1.0);
   return v;
@@ -181,7 +186,7 @@ fn vs_glow(@builtin(vertex_index) vi: u32) -> GlowOut {
   let v = view_of(fetch(i));
   let boost = head_boost(i);
   // head sprite swells: the comet head of the trace-in
-  let size = ru.px * v.persp * (0.8 + 0.55 * boost);
+  let size = ru.px * v.persp * ru.dist * (0.8 + 0.55 * boost);
   let d = corners[corner] * size;
   // sample-density compensation: fast segments space their samples widely, so
   // per-sprite intensity drops to keep luminance ~uniform per arc length —
