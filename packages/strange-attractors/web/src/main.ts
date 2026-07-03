@@ -25,6 +25,14 @@ import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
 import type { CaptureManifestLike, CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
+import {
+  COLORMAPS,
+  PACKED_FLOATS,
+  emitColormapWgsl,
+  getColormap,
+  ghostFor,
+  packColormap,
+} from "../../../../common/common-web/src/colormap.js";
 
 import computeWgsl from "../../src/lorenz_rk4.wgsl?raw";
 import renderWgsl from "./render.wgsl?raw";
@@ -103,6 +111,10 @@ function injectStyles(): void {
 .lz-hash .ok { color: var(--accent); }
 .lz-hash .no { color: var(--bad); }
 .lz-note-line { font-size: 10px; color: var(--warm); margin: 6px 0 2px; }
+.lz-select { flex: 1; min-width: 0; font: inherit; font-size: 11.5px; color: var(--txt);
+  background: rgba(0, 0, 0, .35); border: 1px solid var(--line); border-radius: 4px;
+  padding: 2px 4px; outline: none; cursor: pointer; }
+.lz-select:focus { border-color: var(--accent-d); }
 `;
   document.head.appendChild(style);
 }
@@ -239,7 +251,12 @@ async function main(): Promise<void> {
   const accumView = accumTex.createView();
   const postSampler = device.createSampler({ magFilter: "linear", minFilter: "linear" });
 
-  const renderModule = device.createShaderModule({ code: renderWgsl, label: "lorenz-render" });
+  // render.wgsl + the shared colormap sampler (data-driven mix chain over the
+  // RU uniform stops — map switches are uniform writes, never pipeline builds)
+  const renderModule = device.createShaderModule({
+    code: renderWgsl + emitColormapWgsl({ stopsExpr: "ru.cmap", countExpr: "ru.cmap_meta.x" }),
+    label: "lorenz-render",
+  });
   const drawBGL = device.createBindGroupLayout({
     entries: [
       { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
@@ -250,6 +267,7 @@ async function main(): Promise<void> {
     entries: [
       { binding: 2, visibility: GPUShaderStage.FRAGMENT, sampler: {} },
       { binding: 3, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+      { binding: 4, visibility: GPUShaderStage.FRAGMENT, buffer: { type: "uniform" } },
     ],
   });
   const drawLayout = device.createPipelineLayout({ bindGroupLayouts: [drawBGL] });
@@ -307,27 +325,36 @@ async function main(): Promise<void> {
     }),
   ]);
 
-  const ruPrimaryBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-  const ruGhostBuf = device.createBuffer({ size: 48, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
-  const drawBGPrimary = device.createBindGroup({
-    layout: drawBGL,
-    entries: [
-      { binding: 0, resource: { buffer: ruPrimaryBuf } },
-      { binding: 1, resource: { buffer: liveTraj } },
-    ],
-  });
-  const drawBGGhost = device.createBindGroup({
-    layout: drawBGL,
-    entries: [
-      { binding: 0, resource: { buffer: ruGhostBuf } },
-      { binding: 1, resource: { buffer: ghostTraj } },
-    ],
-  });
+  // RU = 16 base floats + packed colormap block (8×vec4 + meta) = 208 bytes
+  const RU_FLOATS = 16 + PACKED_FLOATS;
+  const RU_BYTES = RU_FLOATS * 4;
+  const makeRU = (): GPUBuffer =>
+    device.createBuffer({ size: RU_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
+  const ruPrimaryBuf = makeRU();
+  const ruGhostBuf = makeRU();
+  // wall projections (spec § 3.1.c): three extra line-strip draws of the SAME
+  // live display buffer with a flattened view — one RU per wall
+  const ruProjBufs = [makeRU(), makeRU(), makeRU()] as const;
+  const bindTraj = (ru: GPUBuffer, buf: GPUBuffer): GPUBindGroup =>
+    device.createBindGroup({
+      layout: drawBGL,
+      entries: [
+        { binding: 0, resource: { buffer: ru } },
+        { binding: 1, resource: { buffer: buf } },
+      ],
+    });
+  const drawBGPrimary = bindTraj(ruPrimaryBuf, liveTraj);
+  const drawBGGhost = bindTraj(ruGhostBuf, ghostTraj);
+  const drawBGProj = ruProjBufs.map((b) => bindTraj(b, liveTraj));
+  // blit "look" uniforms (spec § 3.1.d): the former fs_blit magic constants,
+  // now data — exposure, vignette, background theme
+  const blitBuf = device.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST });
   const postBGFrame = device.createBindGroup({
     layout: postBGL,
     entries: [
       { binding: 2, resource: postSampler },
       { binding: 3, resource: frameView },
+      { binding: 4, resource: { buffer: blitBuf } },
     ],
   });
   const postBGAccum = device.createBindGroup({
@@ -335,6 +362,7 @@ async function main(): Promise<void> {
     entries: [
       { binding: 2, resource: postSampler },
       { binding: 3, resource: accumView },
+      { binding: 4, resource: { buffer: blitBuf } },
     ],
   });
 
@@ -441,6 +469,21 @@ async function main(): Promise<void> {
   const params = { sigma: SIGMA, rho: RHO, beta: BETA };
   let butterflyOn = false;
   let trail = 0.55;
+  // display look state (spec § 3.1) — presentation-only; defaults reproduce
+  // the pre-expansion output exactly, so poster/loop calibration is unchanged
+  let colormapName = "aurora";
+  let colorMode = 0; // 0 speed · 1 z-height · 2 age · 3 lobe · 4 curvature
+  let projectionsOn = false;
+  const BG_THEMES = [
+    { name: "deep-space", mode: 0, base: [0.008, 0.011, 0.018] },
+    { name: "paper", mode: 1, base: [0.94, 0.93, 0.9] },
+    { name: "blueprint", mode: 0, base: [0.02, 0.055, 0.13] },
+  ] as const;
+  let bgTheme = 0;
+  let exposure = 1.08;
+  let vignette = 0.55;
+  let cmapPrimary = packColormap(getColormap(colormapName));
+  let cmapGhost = packColormap(ghostFor(colormapName));
   let paramsDirty = false; // consumed at most once per RAF (spec § 3.1 hot path)
   let suspended = false;
   let angle = 0;
@@ -601,8 +644,8 @@ async function main(): Promise<void> {
   const TRACE_IN_FRAMES = 600;
   let traceFrame = 0;
 
-  const ruData = new Float32Array(12);
-  function writeRU(buf: GPUBuffer, head: number, ramp: number, gain: number): void {
+  const ruData = new Float32Array(RU_FLOATS);
+  function writeRU(buf: GPUBuffer, head: number, gain: number, cmap: Float32Array, proj: number): void {
     ruData[0] = canvas.width / canvas.height;
     ruData[1] = angle;
     ruData[2] = nPoints;
@@ -611,17 +654,40 @@ async function main(): Promise<void> {
     ruData[5] = fit.cy;
     ruData[6] = fit.cz;
     ruData[7] = fit.scale;
-    ruData[8] = ramp;
-    ruData[9] = 5.2 / canvas.height; // glow sprite half-size, clip units
-    ruData[10] = gain;
-    ruData[11] = DT;
+    ruData[8] = 5.2 / canvas.height; // glow sprite half-size, clip units
+    ruData[9] = gain;
+    ruData[10] = DT;
+    ruData[11] = colorMode;
+    ruData[12] = proj;
+    ruData[13] = 0;
+    ruData[14] = 0;
+    ruData[15] = 0;
+    ruData.set(cmap, 16);
     queue.writeBuffer(buf, 0, ruData);
   }
 
+  const blitData = new Float32Array(8);
+  function writeBlit(): void {
+    const t = BG_THEMES[bgTheme]!;
+    blitData[0] = exposure;
+    blitData[1] = vignette;
+    blitData[2] = t.mode;
+    blitData[3] = 0;
+    blitData[4] = t.base[0];
+    blitData[5] = t.base[1];
+    blitData[6] = t.base[2];
+    blitData[7] = 0;
+    queue.writeBuffer(blitBuf, 0, blitData);
+  }
+  writeBlit();
+
   function renderFrame(): void {
     const drawn = Math.max(2, Math.min(nPoints, Math.ceil((nPoints * traceFrame) / TRACE_IN_FRAMES)));
-    writeRU(ruPrimaryBuf, drawn - 1, 0, 1.0);
-    if (butterflyOn) writeRU(ruGhostBuf, drawn - 1, 1, 0.8);
+    writeRU(ruPrimaryBuf, drawn - 1, 1.0, cmapPrimary, 0);
+    if (butterflyOn) writeRU(ruGhostBuf, drawn - 1, 0.8, cmapGhost, 0);
+    if (projectionsOn) {
+      for (let k = 0; k < 3; k += 1) writeRU(ruProjBufs[k]!, drawn - 1, 0.22, cmapPrimary, k + 1);
+    }
     const enc = device.createCommandEncoder();
     // 1. additive ribbon + glow into the MSAA scene, resolved to frameTex
     const scene = enc.beginRenderPass({
@@ -636,6 +702,13 @@ async function main(): Promise<void> {
       ],
     });
     scene.setPipeline(linePipeline);
+    if (projectionsOn) {
+      // faint wall shadows first, so the primary ribbon reads over them
+      for (const bg of drawBGProj) {
+        scene.setBindGroup(0, bg);
+        scene.draw(drawn);
+      }
+    }
     scene.setBindGroup(0, drawBGPrimary);
     scene.draw(drawn);
     if (butterflyOn) {
@@ -831,7 +904,7 @@ async function main(): Promise<void> {
         faithful:
           "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs; every trajectory on screen (classic, presets, sliders, butterfly ghost) is that kernel re-integrated live on this GPU and drawn straight from its output buffer",
         simplified:
-          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; sliders/presets/butterfly drive live display buffers only while the capture stays pinned to the classic seed-42 params; ribbon, glow, trails and the damped auto-framing are render-side presentation over unmodified trajectory data (colour = its finite-difference speed), and the boot trace-in is draw order, not re-integration",
+          "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; sliders/presets/butterfly drive live display buffers only while the capture stays pinned to the classic seed-42 params; ribbon, glow, trails, wall projections and the damped auto-framing are render-side presentation over unmodified trajectory data (colour = a data-derived driver, finite-difference speed by default; colormap/theme/exposure are uniforms), and the boot trace-in is draw order, not re-integration",
         measured:
           "ranges — and butterfly divergence when enabled — read back from the displayed trajectory's raw values on entering Study and on parameter change; the capture reads the separate canonical buffer, integrated once at boot",
       },
@@ -974,10 +1047,86 @@ async function main(): Promise<void> {
   });
 
   // ------------------------------------------------ display (render) group --
+  // All of it presentation-only (spec § 3.1): colormap + color-by drive the
+  // RU uniform block, background/exposure/vignette drive the blit uniforms.
+  // In Study (RAF suspended) any change one-shot re-renders the frozen cloud.
   const displayGroup = panel.addGroup("display");
+
+  function displayChanged(): void {
+    if (suspended && !isCapturing()) renderFrame();
+  }
+
+  function addSelect(
+    group: HTMLElement,
+    label: string,
+    options: readonly string[],
+    value: string,
+    onSet: (v: string) => void,
+  ): HTMLSelectElement {
+    const row = document.createElement("div");
+    row.className = "lz-row";
+    const lab = document.createElement("label");
+    lab.textContent = label;
+    const sel = document.createElement("select");
+    sel.className = "lz-select";
+    for (const o of options) {
+      const opt = document.createElement("option");
+      opt.value = o;
+      opt.textContent = o;
+      sel.appendChild(opt);
+    }
+    sel.value = value;
+    sel.addEventListener("change", () => {
+      onSet(sel.value);
+    });
+    row.append(lab, sel);
+    group.appendChild(row);
+    return sel;
+  }
+
+  addSelect(displayGroup, "map", COLORMAPS.map((c) => c.name), colormapName, (v) => {
+    colormapName = v;
+    cmapPrimary = packColormap(getColormap(v));
+    cmapGhost = packColormap(ghostFor(v));
+    displayChanged();
+  });
+  const COLOR_MODES = ["speed", "z-height", "age", "lobe", "curvature"] as const;
+  addSelect(displayGroup, "color by", COLOR_MODES, COLOR_MODES[colorMode]!, (v) => {
+    colorMode = Math.max(0, COLOR_MODES.indexOf(v as (typeof COLOR_MODES)[number]));
+    displayChanged();
+  });
+  addSelect(displayGroup, "theme", BG_THEMES.map((t) => t.name), BG_THEMES[bgTheme]!.name, (v) => {
+    bgTheme = Math.max(0, BG_THEMES.findIndex((t) => t.name === v));
+    writeBlit();
+    displayChanged();
+  });
+  addSlider(displayGroup, "exposure", 0.3, 3, 0.01, exposure, (v) => v.toFixed(2), (v) => {
+    exposure = v;
+    writeBlit();
+    displayChanged();
+  });
+  addSlider(displayGroup, "vignette", 0, 1, 0.01, vignette, (v) => v.toFixed(2), (v) => {
+    vignette = v;
+    writeBlit();
+    displayChanged();
+  });
   addSlider(displayGroup, "trail", 0, 0.94, 0.01, trail, (v) => v.toFixed(2), (v) => {
     trail = v;
-    if (suspended && !isCapturing()) renderFrame();
+    displayChanged();
+  });
+  const projRow = document.createElement("label");
+  projRow.className = "lz-check";
+  const projInput = document.createElement("input");
+  projInput.type = "checkbox";
+  const projText = document.createElement("span");
+  projText.textContent = "wall projections (XY / XZ / YZ)";
+  projRow.title =
+    "Faint shadow of the trajectory flattened onto each axis plane — extra draws of the same display buffer; presentation only.";
+  projRow.append(projInput, projText);
+  displayGroup.appendChild(projRow);
+  projInput.addEventListener("change", () => {
+    projectionsOn = projInput.checked;
+    displayChanged();
   });
   const trailNote = document.createElement("div");
   trailNote.className = "lz-note-line";
