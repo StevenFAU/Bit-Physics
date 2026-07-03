@@ -336,10 +336,13 @@ item 1) → the boundary-crossing kernel work → full validate.
    Aizawa, Sprott-A) first (reference fields exist, clean invariants). Confirm or
    reorder. Note X-B/X-C additionally require the `spec-ref.md` § 1 scope
    amendment (§ 3.3) — opening them is a charter decision, not just sequencing.
-2. **Pickover** — pin an authoritative source for the continuous ODE already
-   derived in `algebraic.md` § 6 and ship it with Cluster A, or drop it from
-   the chartered family with cause. (v0 framed this as "map vs ODE"; the repo
-   has already committed the continuous form — only the source pin is open.)
+2. **Pickover — RESOLVED 2026-07-03: deferred-with-cause (operator-voidable).**
+   The X-A implementation probe refuted the v0.1 reframe: the `algebraic.md`
+   § 6 continuous form, RK4-integrated from four ICs, either diverges
+   unboundedly in y (3 of 4) or dies at a stable fixed point — it is the
+   classical discrete *map* mislabeled with dots, and v0's "map vs ODE"
+   instinct was right. X-A lands Rössler/Aizawa/Sprott-A (4 of 5 chartered);
+   measured evidence recorded in `algebraic.md` § 6 and spec-ref § 7.
 3. **Lane-B first, or interleave?** — recommend landing L-1..L-3 as a polish
    cluster before opening any ratified X-* cluster, so the boundary-crossing work
    is cleanly isolated.

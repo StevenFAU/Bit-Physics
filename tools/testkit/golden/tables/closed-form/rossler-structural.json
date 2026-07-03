@@ -1,0 +1,120 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "rossler-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/rossler-structural.md",
+    "upstream": "Rossler-1976",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "fixed_points",
+        "a": 0.2,
+        "b": 0.2,
+        "c": 5.7
+      },
+      "expected": {
+        "P_in": [
+          0.007026204834100129,
+          -0.035131024170500645,
+          0.035131024170500645
+        ],
+        "P_out": [
+          5.6929737951659,
+          -28.4648689758295,
+          28.4648689758295
+        ]
+      },
+      "independent_reference": {
+        "source": "Rossler, O. E. (1976), 'An equation for continuous chaos', Phys. Lett. A 57 (5), 397-398, Eq. (1) defines the field and the canonical (a, b, c) = (0.2, 0.2, 5.7). The fixed-point coordinates follow from elementary algebra on Eq. (1): y = -z, x = a*z, and a*z^2 - c*z + b = 0 (hand-derivation in the derivation .md section 1). Three independent derivation routes agree: the hand algebra, the SymPy symbolic generator, and the sim-side numerical solve (numpy) exercised by the golden test.",
+        "doi": "10.1016/0375-9601(76)90101-8",
+        "derived_by": "hand-derivation of the quadratic fixed-point condition; SymPy generator re-derives symbolically; numpy root cross-check in the sim test",
+        "expected": {
+          "P_in": [
+            0.007026204834100129,
+            -0.035131024170500645,
+            0.035131024170500645
+          ],
+          "P_out": [
+            5.6929737951659,
+            -28.4648689758295,
+            28.4648689758295
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "inner_fixed_point_jacobian_eigenvalues",
+        "a": 0.2,
+        "b": 0.2,
+        "c": 5.7
+      },
+      "expected": {
+        "eigenvalues_re_im_sorted": [
+          [
+            -5.686975507342862,
+            0.0
+          ],
+          [
+            0.09700085608848111,
+            -0.9951934910299535
+          ],
+          [
+            0.09700085608848111,
+            0.9951934910299535
+          ]
+        ],
+        "note": "saddle-focus: one strongly stable real eigenvalue, one unstable spiral pair \u2014 the single-scroll winding mechanism"
+      },
+      "independent_reference": {
+        "source": "Eigenvalues of the closed-form Jacobian [[0,-1,-1],[1,a,0],[z,0,x-c]] evaluated at the inner fixed point (derivation .md section 2). Three independent routes agree: SymPy symbolic eigenvalues (generator), numpy.linalg.eigvals on the hand-derived Jacobian (sim test), and the characteristic-polynomial hand expansion in the derivation .md.",
+        "derived_by": "SymPy eigenvals of J(P_in); numpy.linalg.eigvals cross-check; hand characteristic polynomial",
+        "expected": {
+          "eigenvalues_re_im_sorted": [
+            [
+              -5.686975507342862,
+              0.0
+            ],
+            [
+              0.09700085608848111,
+              -0.9951934910299535
+            ],
+            [
+              0.09700085608848111,
+              0.9951934910299535
+            ]
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence",
+        "a": 0.2,
+        "b": 0.2,
+        "c": 5.7
+      },
+      "expected": {
+        "form": "div f = a + (x - c) \u2014 linear in x, parameter-independent slope",
+        "at_inner_fixed_point": -5.4929737951658995,
+        "at_origin": -5.5
+      },
+      "independent_reference": {
+        "source": "Trace of the closed-form Jacobian: only dfy/dy = a and dfz/dz = x - c are nonzero on the diagonal (derivation .md section 3). Hand trace, SymPy trace (generator) and central-difference numerical divergence (sim PBT invariant) agree.",
+        "derived_by": "hand trace; SymPy trace; central-difference PBT cross-check",
+        "expected": {
+          "at_inner_fixed_point": -5.4929737951658995,
+          "at_origin": -5.5
+        }
+      }
+    }
+  ]
+}

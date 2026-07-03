@@ -112,7 +112,92 @@ function ledgerSeconds(stack) {
   return Number(m[1]);
 }
 
-// --- 5. Emit -----------------------------------------------------------------
+// --- 5. X-A family systems (spec § 4 data-spine extension) ------------------
+// Per-system committed sources, verbatim: the backend capture manifest
+// (params/checksum/determinism), the structural golden table (tolerances),
+// and exact-substring anchors into the ratified display kernel. Same
+// FAIL-HARD contract as the Lorenz anchors.
+
+const FIELDS_WGSL_PATH = "packages/strange-attractors/web/src/fields/attractors_rk4.wgsl";
+const fieldsWgsl = read(FIELDS_WGSL_PATH);
+const fieldsLines = fieldsWgsl.split("\n");
+function fieldsAnchor(label, needle) {
+  const hits = fieldsLines
+    .map((text, i) => ({ text, line: i + 1 }))
+    .filter(({ text }) => text.includes(needle));
+  if (hits.length !== 1) {
+    fail(`${FIELDS_WGSL_PATH}: anchor "${label}" (${needle}) matched ${hits.length} lines (want 1)`);
+  }
+  return { line: hits[0].line, text: hits[0].text.trim() };
+}
+
+const FAMILY = {
+  rossler: {
+    anchors: {
+      dx: fieldsAnchor("rossler_dx", "-s.y - s.z,"),
+      dy: fieldsAnchor("rossler_dy", "s.x + P.p0 * s.y,"),
+      dz: fieldsAnchor("rossler_dz", "P.p1 + s.z * (s.x - P.p2),"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/rossler-structural.json",
+    derivation: "tools/testkit/golden/derivations/rossler-structural.md",
+  },
+  aizawa: {
+    anchors: {
+      dx: fieldsAnchor("aizawa_dx", "(s.z - P.p1) * s.x - P.p3 * s.y,"),
+      dy: fieldsAnchor("aizawa_dy", "P.p3 * s.x + (s.z - P.p1) * s.y,"),
+      dz: fieldsAnchor("aizawa_dz", "P.p2 + P.p0 * s.z - (s.z * s.z * s.z) / 3.0"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/aizawa-structural.json",
+    derivation: "tools/testkit/golden/derivations/aizawa-structural.md",
+  },
+  sprott_a: {
+    anchors: {
+      dx: fieldsAnchor("sprott_a_dx", "s.y,  // sprott-a: dx/dt"),
+      dy: fieldsAnchor("sprott_a_dy", "-s.x + s.y * s.z,"),
+      dz: fieldsAnchor("sprott_a_dz", "1.0 - s.y * s.y,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/sprott-a-structural.json",
+    derivation: "tools/testkit/golden/derivations/sprott-a-structural.md",
+  },
+};
+
+const systems = {};
+for (const [name, cfg] of Object.entries(FAMILY)) {
+  const manifestPath = `captures/strange-attractors-ref/${name}-trajectory-seed42-step10000.json`;
+  const m = JSON.parse(read(manifestPath));
+  for (const [path, val] of [
+    ["config.params", m.config?.params],
+    ["config.seed", m.config?.seed],
+    ["run.step_count", m.run?.step_count],
+    ["payload.checksum", m.payload?.checksum],
+    ["determinism.claimed", m.determinism?.claimed],
+  ]) {
+    if (val === undefined) fail(`${manifestPath}: missing field ${path}`);
+  }
+  if (/^sha256:0+$/.test(m.payload.checksum) || m.payload.checksum.length < 71) {
+    fail(`${manifestPath}: payload checksum is not a real digest`);
+  }
+  const golden = JSON.parse(read(cfg.golden));
+  if (!golden.tolerance || !Array.isArray(golden.test_points) || golden.test_points.length < 3) {
+    fail(`${cfg.golden}: expected tolerance block + >=3 test points`);
+  }
+  systems[name] = {
+    descriptor: `${name}-trajectory-seed42-step10000`,
+    seed: m.config.seed,
+    step_count: m.run.step_count,
+    params: m.config.params,
+    payload_sha256: m.payload.checksum,
+    determinism_claimed: m.determinism.claimed,
+    golden_table: cfg.golden,
+    golden_tolerance: golden.tolerance,
+    golden_quantities: golden.test_points.map((tp) => tp.inputs.quantity),
+    derivation: cfg.derivation,
+    manifest: manifestPath,
+    code_anchors: cfg.anchors,
+  };
+}
+
+// --- 6. Emit -----------------------------------------------------------------
 
 const out = {
   _generated_by: "packages/strange-attractors/web/gen-verification.mjs — do not edit by hand",

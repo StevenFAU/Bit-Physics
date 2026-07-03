@@ -35,3 +35,14 @@ bounded by the `closed_form` defaults at
   that different seeds yield distinct captures.
 
 Stage 2 ships only the test stubs that fail with module-not-found.
+
+## X-A family expansion (2026-07-03)
+
+The Rössler / Aizawa / Sprott-A canonical captures inherit this
+declaration unchanged: the same `rk4_evolve` driver, no atomic ops, no
+subgroup ops, no FP reductions — nothing in the nondeterminism-source
+table above gains a row. **Measured at landing:** for each system,
+`sim_runner_for(<name>)` run twice at seed 42 produced byte-identical
+HDF5 payloads, and seed 43 produced a distinct payload (cross-seed
+sanity). Per-system rows share the `closed_form` tolerance defaults
+(no overrides).

@@ -1,0 +1,47 @@
+{
+  "config": {
+    "dims": [
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "a": 0.95,
+      "b": 0.7,
+      "c": 0.6,
+      "d": 3.5,
+      "dt": 0.01,
+      "e": 0.25,
+      "f": 0.1,
+      "ic_jitter_scale": 1e-06
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:2d7c115462dd193ac9fe44968eae576bc65ddb627959a16bd06d473d24117c13",
+    "format": "hdf5",
+    "path": "aizawa-trajectory-seed42-step10000.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-07-03T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.10529711200069869
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "strange-attractors",
+    "variant": "aizawa"
+  },
+  "stack": {
+    "build_id": "phase-6-xa-expansion",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

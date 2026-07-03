@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "aizawa-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/aizawa-structural.md",
+    "upstream": "Aizawa-1982/Sprott-2003-catalog",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "axis_fixed_points",
+        "a": 0.95,
+        "c": 0.6
+      },
+      "expected": {
+        "z_roots_ascending": [
+          -1.105021367630836,
+          -0.838243008543318,
+          1.943264376174154
+        ],
+        "form": "on the z-axis (x = y = 0) the field reduces to c + a*z - z^3/3 = 0, i.e. z^3 - 3a*z - 3c = 0; positive discriminant at canonical (a, c) gives three real on-axis fixed points"
+      },
+      "independent_reference": {
+        "source": "Field form per Aizawa, Y. (1982), Prog. Theor. Phys. 68 (1), 64-84, as cataloged in Sprott, J. C. (2003), 'Chaos and Time-Series Analysis' (ISBN 978-0-19-850839-7); canonical (a..f) = (0.95, 0.7, 0.6, 3.5, 0.25, 0.1) per the repo's algebraic anchor (algebraic.md section 4). The on-axis reduction is hand-derived in the derivation .md section 1; SymPy real_roots (generator) and numpy.roots (sim test) independently reproduce the three roots.",
+        "derived_by": "hand reduction to the depressed cubic; SymPy real_roots; numpy.roots cross-check",
+        "expected": {
+          "z_roots_ascending": [
+            -1.105021367630836,
+            -0.838243008543318,
+            1.943264376174154
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "axis_jacobian_eigenvalues",
+        "a": 0.95,
+        "b": 0.7,
+        "d": 3.5
+      },
+      "expected": {
+        "form": "at (0, 0, z*) the Jacobian is block-diagonal: (x, y) block [[z-b, -d], [d, z-b]] gives (z - b) +/- d*i; the z-row gives a - z^2",
+        "per_root": {
+          "z=-1.10502136763": {
+            "spiral_pair_re": -1.805021367630836,
+            "spiral_pair_im_abs": 3.5,
+            "real_eigenvalue": -0.2710722229207232
+          },
+          "z=-0.838243008543": {
+            "spiral_pair_re": -1.538243008543318,
+            "spiral_pair_im_abs": 3.5,
+            "real_eigenvalue": 0.24734865862824695
+          },
+          "z=1.94326437617": {
+            "spiral_pair_re": 1.243264376174154,
+            "spiral_pair_im_abs": 3.5,
+            "real_eigenvalue": -2.826276435707524
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Block-diagonal structure of J at on-axis points, hand-derived in the derivation .md section 2 (all x/y cross-terms of the z-row vanish at x = y = 0). SymPy eigenvals (generator) and numpy.linalg.eigvals on the full Jacobian (sim test) agree with the closed form.",
+        "derived_by": "hand block-diagonal argument; SymPy eigenvals; numpy.linalg.eigvals cross-check",
+        "expected": {
+          "per_root": {
+            "z=-1.10502136763": {
+              "spiral_pair_re": -1.805021367630836,
+              "spiral_pair_im_abs": 3.5,
+              "real_eigenvalue": -0.2710722229207232
+            },
+            "z=-0.838243008543": {
+              "spiral_pair_re": -1.538243008543318,
+              "spiral_pair_im_abs": 3.5,
+              "real_eigenvalue": 0.24734865862824695
+            },
+            "z=1.94326437617": {
+              "spiral_pair_re": 1.243264376174154,
+              "spiral_pair_im_abs": 3.5,
+              "real_eigenvalue": -2.826276435707524
+            }
+          }
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence_and_origin_probe",
+        "a": 0.95,
+        "b": 0.7,
+        "c": 0.6,
+        "e": 0.25,
+        "f": 0.1
+      },
+      "expected": {
+        "divergence_form": "div f = 2*(z - b) + a - z^2 - e*(x^2 + y^2) + f*x^3",
+        "divergence_at_origin": -0.45,
+        "field_at_origin": [
+          0.0,
+          0.0,
+          0.6
+        ]
+      },
+      "independent_reference": {
+        "source": "Trace of the hand-derived Jacobian (derivation .md section 3); the origin field value is read directly off the field definition (only the constant c survives at the origin). SymPy trace (generator) and central-difference divergence (sim PBT invariant) agree.",
+        "derived_by": "hand trace; SymPy trace; central-difference PBT cross-check",
+        "expected": {
+          "divergence_at_origin": -0.45,
+          "field_at_origin": [
+            0.0,
+            0.0,
+            0.6
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -1,17 +1,23 @@
-"""SimRunner adapter — Lorenz canonical trajectory.
+"""SimRunner adapters — canonical trajectories for the attractor family.
 
-Spec descriptor (Appendix D § D.2.3): ``lorenz-trajectory-seed42-step10000``.
+Spec descriptor (Appendix D § D.2.3): ``<name>-trajectory-seed42-step<N>``
+per system; the Phase-1 canonical is ``lorenz-trajectory-seed42-step10000``.
 
-The canonical IC is ``(1, 1, 1)`` (the textbook small starting point);
-``seed`` adds a tiny per-component jitter so distinct seeds yield
-distinct captures (driving ``test_cross_seed_distinct``) while
-``seed = 42`` is reproducible and the basis for
-``run_twice_and_diff`` bit-equality.
+The Lorenz entry points (``sim_runner_seeded`` and friends) keep their
+exact Phase-2 behavior; the X-A expansion adds the system-generic path
+(``sim_runner_for`` / ``compute_trajectory``) over the
+``strange_attractors.system.SYSTEMS`` registry (spec-ref § 5 protocol).
+
+Each system's canonical IC is fixed; ``seed`` adds a tiny per-component
+jitter so distinct seeds yield distinct captures (driving
+``test_cross_seed_distinct``) while ``seed = 42`` is reproducible and the
+basis for ``run_twice_and_diff`` bit-equality.
 """
 
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Final
 
@@ -20,6 +26,7 @@ from capture import CaptureManifest, StepState, write_capture
 
 from .integrator import rk4_evolve
 from .reference.lorenz import lorenz_field
+from .system import SYSTEMS, System, get_system
 
 CANONICAL_DESCRIPTOR: Final[str] = "lorenz-trajectory-seed42-step10000"
 CANONICAL_STEP_COUNT: Final[int] = 10000
@@ -85,7 +92,11 @@ def _build_manifest(
         payload={
             "format": "hdf5",
             "path": payload_name,
-            "checksum": "sha256:" + "0" * 64,
+            # Sentinel only: the capture writer hashes the payload it just
+            # wrote and replaces this before the manifest reaches disk
+            # (tools/testkit/capture/writer.py) — the zero digest was a
+            # false statement about a real artifact and is retired.
+            "checksum": "sha256:computed-at-write-time",
         },
         determinism={
             "claimed": "bit-exact-same-hw",
@@ -262,16 +273,150 @@ def short_run(
     )
 
 
+# --------------------------------------------------------------------------
+# System-generic path (X-A expansion; spec-ref § 5 System protocol).
+# The Lorenz-specific functions above keep their exact Phase-2 behavior;
+# everything below reads the SYSTEMS registry.
+
+#: Pinned per the capture-manifest convention (the Lorenz canonical pins
+#: its own Phase-1 date above); X-A canonicals pin the X-A landing date.
+_XA_START_UTC: Final[str] = "2026-07-03T00:00:00Z"
+
+
+def _build_manifest_for(
+    system: System,
+    seed: int,
+    wall_clock_seconds: float,
+    payload_name: str,
+) -> CaptureManifest:
+    params: dict[str, float] = dict(system.canonical_params)
+    params["dt"] = system.canonical_dt
+    params["ic_jitter_scale"] = system.ic_jitter_scale
+    return CaptureManifest(
+        schema_version="1.0.0",
+        sim={
+            "name": "strange-attractors",
+            "category": "closed-form",
+            "variant": system.name,
+        },
+        stack={
+            "name": "numpy-reference",
+            "version": "0.0.1",
+            "build_id": "phase-6-xa-expansion",
+        },
+        config={
+            "tier": "test",
+            "dims": [3],
+            "dtype": "f64",
+            "seed": int(seed),
+            "params": params,
+        },
+        run={
+            "step_count": int(system.canonical_step_count),
+            "capture_interval": int(system.canonical_capture_interval),
+            "wall_clock_seconds": float(wall_clock_seconds),
+            "start_utc": _XA_START_UTC,
+        },
+        payload={
+            "format": "hdf5",
+            "path": payload_name,
+            # Sentinel; the writer computes the real digest (see above).
+            "checksum": "sha256:computed-at-write-time",
+        },
+        determinism={
+            "claimed": "bit-exact-same-hw",
+            "atomic_ops": False,
+            "subgroup_ops": False,
+        },
+    )
+
+
+def _trajectory_steps_for(
+    system: System,
+    initial_state: np.ndarray,
+) -> list[StepState]:
+    n_steps = system.canonical_step_count
+    capture_interval = system.canonical_capture_interval
+    traj = rk4_evolve(
+        system,
+        initial_state,
+        dt=system.canonical_dt,
+        n_steps=n_steps,
+        capture_interval=capture_interval,
+    )
+    step_indices: list[int] = [0]
+    for i in range(1, n_steps + 1):
+        if i % capture_interval == 0 or i == n_steps:
+            step_indices.append(i)
+    rows: list[StepState] = []
+    for idx, step_n in enumerate(step_indices):
+        pos = traj[idx]
+        rows.append(
+            StepState(
+                step=int(step_n),
+                state={"position": np.asarray(pos, dtype=np.float64).copy()},
+                diagnostics={"radius": float(np.linalg.norm(pos))},
+            )
+        )
+    return rows
+
+
+def sim_runner_for(name: str) -> Callable[[int, Path], Path]:
+    """SimRunner Protocol factory — canonical capture for any registry system.
+
+    ``sim_runner_for("lorenz")`` reproduces ``sim_runner_seeded``'s numbers
+    exactly (same field, params, IC jitter, horizon); the Lorenz entry
+    point is kept because the determinism registry row and Phase-2 tests
+    name it directly.
+    """
+    system = get_system(name)
+
+    def runner(seed: int, out_dir: Path) -> Path:
+        out = Path(out_dir)
+        out.mkdir(parents=True, exist_ok=True)
+        initial = system.seeded_initial_condition(seed)
+        t0 = time.perf_counter()
+        rows = _trajectory_steps_for(system, initial)
+        wall = time.perf_counter() - t0
+        payload_name = f"{system.descriptor}.h5"
+        manifest = _build_manifest_for(system, seed, wall, payload_name)
+        return write_capture(rows, manifest, out)
+
+    runner.__name__ = f"sim_runner_{name}"
+    return runner
+
+
+def compute_trajectory(
+    name: str,
+    seed: int = 42,
+    *,
+    n_steps: int | None = None,
+    capture_interval: int = 1,
+) -> np.ndarray:
+    """In-memory canonical trajectory for any registry system (no I/O)."""
+    system = get_system(name)
+    return rk4_evolve(
+        system,
+        system.seeded_initial_condition(seed),
+        dt=system.canonical_dt,
+        n_steps=n_steps if n_steps is not None else system.canonical_step_count,
+        capture_interval=capture_interval,
+    )
+
+
 __all__ = [
     "CANONICAL_CAPTURE_INTERVAL",
     "CANONICAL_DESCRIPTOR",
     "CANONICAL_DT",
     "CANONICAL_IC",
     "CANONICAL_STEP_COUNT",
+    "SYSTEMS",
     "compute_canonical_trajectory",
+    "compute_trajectory",
     "parameter_sweep_final_z",
     "precision_pair_at_canonical",
     "short_run",
+    "sim_runner_for",
     "sim_runner_seeded",
 ]
 

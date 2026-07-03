@@ -18,6 +18,13 @@ No per-sim override. The defaults sit within the
 `tolerance-budget.toml` cap for the closed-form category, so no
 operator-approved tolerance-budget amendment is required (spec § 2.6).
 
+**X-A family expansion (2026-07-03):** the Rössler / Aizawa / Sprott-A
+variants consume the same `closed_form` default row — one tolerance
+row per category, no per-variant overrides. Nothing was measured that
+requires widening; per-system dt was calibrated against the RK4
+step-halving probe instead (halving error ≤ 3.1e-7 over the first 10%
+of each canonical horizon; see the golden derivation docs).
+
 ## Cross-stack scope
 
 | Pair | Status at Phase 1 close | Phase that lands the harness |

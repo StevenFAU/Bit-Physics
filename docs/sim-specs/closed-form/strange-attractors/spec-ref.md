@@ -73,8 +73,9 @@ This sim exercises the following Roy 2005 V&V levels:
 - `tools/testkit/golden/tables/closed-form/lorenz-structural.json`
   (≥ 3 independent-reference anchors per spec § 2.4; verified by
   `tools/testkit/golden/generator/lorenz_structural.py`).
-- Phase 2+ extends with Rössler / Aizawa / Sprott-A / Pickover
-  structural golden tables; Phase 1 ships Lorenz only.
+- Extended 2026-07-03 (X-A): Rössler / Aizawa / Sprott-A structural
+  golden tables landed (see § 7 for the full table); Pickover
+  deferred-with-cause (§ 7). Phase 1 shipped Lorenz only.
 
 **Pass criterion:** numerical fixed-point coordinates and origin-Jacobian
 eigenvalues, evaluated by the sim's Python reference at canonical
@@ -103,6 +104,12 @@ defined.
 - Gates 1, 2, 3 of spec § 3.5 exercised in this phase.
 - Gates 4–10 deferred to the per-sim implementation phase per
   spec § 2.5.
+- **X-A family expansion (2026-07-03):** per-system golden-value code
+  verification (§ 6.1 tables for rossler / aizawa / sprott_a), PBT
+  invariants (§ 6.6 items 3–7), run-twice byte-identical canonical
+  captures with real payload checksums, and perf-ledger baseline rows
+  are landed and green for the three non-Lorenz systems; Pickover is
+  deferred-with-cause (§ 7).
 
 ### 6.6 PBT-covered invariants (≥ 2 per R9 amendment / spec § 2.14)
 The sim declares the following property-based invariants for Phase 2+
@@ -122,18 +129,48 @@ is deferred per the standing-order constraint.
    $dt \in (0, 0.05]$, verify $\|\mathbf{x}_0 - R(F(\mathbf{x}_0, dt, N), -dt, N)\| < C \cdot dt^4$.
 
 Implementation lives at
-`packages/strange-attractors/strange_attractors/invariants/`
-(deferred to Phase 2+; Stage 2 ships only the test stubs that fail
-with module-not-found).
+`packages/strange-attractors/strange_attractors/invariants.py` (landed
+Phase 2; the module-not-found posture above is the historical Stage 2
+state).
+
+**X-A family extension (ratified 2026-07-03) — per-system invariants,
+all implemented and green:**
+
+3. **`rossler_divergence_affine_in_x`** — Rössler's $\nabla\cdot f =
+   a + (x - c)$ (state-dependent, unlike Lorenz) matches a
+   central-difference estimate at arbitrary sampled points.
+4. **`rossler_fixed_points_null_field`** — the closed-form fixed
+   points $y = -z$, $x = az$, $az^2 - cz + b = 0$ annihilate the field
+   for arbitrary valid $(a, b, c)$.
+5. **`aizawa_divergence_matches_closed_form`** — the trace formula
+   $2(z-b) + a - z^2 - e(x^2{+}y^2) + fx^3$ holds anywhere.
+6. **`aizawa_axis_fixed_points_null_field`** — every real root of the
+   on-axis cubic $z^3 - 3az - 3c = 0$ is a genuine fixed point for
+   arbitrary $(a, c)$.
+7. **`sprott_a_parity_equivariance`** — $f(Px) = Pf(x)$ exactly for
+   $P = \mathrm{diag}(-1,-1,1)$ (the case-A symmetry), complementing
+   invariant 2 to give Sprott-A its ≥ 2.
 
 ## 7. Golden values / Manufactured solutions
 
-Golden table:
-[`tools/testkit/golden/tables/closed-form/lorenz-structural.json`](../../../../tools/testkit/golden/tables/closed-form/lorenz-structural.json).
-Derivation:
-[`tools/testkit/golden/derivations/lorenz-structural.md`](../../../../tools/testkit/golden/derivations/lorenz-structural.md).
-Generator:
-[`tools/testkit/golden/generator/lorenz_structural.py`](../../../../tools/testkit/golden/generator/lorenz_structural.py).
+Golden tables (one per implemented system; the X-A family expansion,
+ratified 2026-07-03, added the three non-Lorenz rows):
+
+| System | Table | Derivation | Generator |
+|---|---|---|---|
+| lorenz | [`lorenz-structural.json`](../../../../tools/testkit/golden/tables/closed-form/lorenz-structural.json) | [`lorenz-structural.md`](../../../../tools/testkit/golden/derivations/lorenz-structural.md) | [`lorenz_structural.py`](../../../../tools/testkit/golden/generator/lorenz_structural.py) |
+| rossler | [`rossler-structural.json`](../../../../tools/testkit/golden/tables/closed-form/rossler-structural.json) | [`rossler-structural.md`](../../../../tools/testkit/golden/derivations/rossler-structural.md) | [`rossler_structural.py`](../../../../tools/testkit/golden/generator/rossler_structural.py) |
+| aizawa | [`aizawa-structural.json`](../../../../tools/testkit/golden/tables/closed-form/aizawa-structural.json) | [`aizawa-structural.md`](../../../../tools/testkit/golden/derivations/aizawa-structural.md) | [`aizawa_structural.py`](../../../../tools/testkit/golden/generator/aizawa_structural.py) |
+| sprott_a | [`sprott-a-structural.json`](../../../../tools/testkit/golden/tables/closed-form/sprott-a-structural.json) | [`sprott-a-structural.md`](../../../../tools/testkit/golden/derivations/sprott-a-structural.md) | [`sprott_a_structural.py`](../../../../tools/testkit/golden/generator/sprott_a_structural.py) |
+
+**Pickover — deferred-with-cause (operator-voidable), 2026-07-03.** The
+commonly cataloged form (algebraic.md § 6) integrates as an ODE but is
+**not a strange attractor**: measured under RK4, trajectories from 3 of 4
+probe ICs diverge unboundedly in y (max|y| > 2×10⁴) and the fourth
+converges to a stable fixed point. It is the classical discrete *map*
+mislabeled with dots; a map iterator sits outside § 3 (RK4-only). The
+chartered family therefore lands 4 of 5; re-opening requires a source
+that documents a genuinely chaotic continuous variant.
 
 No MMS (no PDE).
 

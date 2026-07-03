@@ -107,6 +107,19 @@ Canonical: $a=2.24,\;b=0.43,\;c=-0.65,\;d=-2.43$. **INFERENCE** — the
 exact Pickover canonical set varies across references; the
 implementation phase will pin a specific source.
 
+**RESOLVED at X-A implementation (2026-07-03) — deferred-with-cause.**
+The form above, integrated as an ODE (RK4, probe dt 0.02–0.05, four
+ICs), is **not a strange attractor**: three of four probe trajectories
+diverge unboundedly in $y$ (max $|y| > 2\times 10^4$; $x$ pins near a
+$\sin x$ zero and $\dot z$ drifts), the fourth converges to the stable
+fixed point $(0, 1.94, -0.93)$. The catalog entry is the classical
+discrete **map** written with dots. Structural facts that *are*
+anchorable were measured before deferral: principal fixed-point branch
+$x=0$, $\cos(dy)=0 \Rightarrow y=(\pi/2)/d$, $z=\sin(ay)$ — at the
+canonical set $(0, -0.6464182414793813, -0.9924671657092096)$ with
+$\operatorname{div} f = d$ there. Deferral is operator-voidable on a
+source that documents a genuinely chaotic continuous variant.
+
 ## 7. Mandelbulb cross-link
 
 The mandelbulb-explorer sim (paired in this stage per charter § 7.4)
