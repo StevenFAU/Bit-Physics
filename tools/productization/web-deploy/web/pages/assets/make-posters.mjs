@@ -43,7 +43,12 @@ const SIMS = {
   "reaction-diffusion-2d": { frames: 2200, px: 512 },
   "ising-classical": { frames: 600, px: 512 },
   "mandelbulb-explorer": { frames: 200, px: 360 },
-  "strange-attractors": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.9) saturate(1.4)" },
+  // verification-demo rework: the v2 render (HDR additive ribbon+glow, GPU-side
+  // exposure) needs no photographic rescue — boost drops 1.9→1.1. Frames move
+  // 420→2094 (one full auto-orbit revolution, 2π/0.003): the 600-frame
+  // trace-in completes, the afterglow settles, and the camera returns to the
+  // face-on butterfly.
+  "strange-attractors": { frames: 2094, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.1) saturate(1.2)" },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

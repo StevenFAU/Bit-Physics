@@ -1,0 +1,68 @@
+{
+  "_generated_by": "packages/strange-attractors/web/gen-verification.mjs — do not edit by hand",
+  "sim": "strange-attractors",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "new_canonical + run-twice",
+    "tolerances": {
+      "strange_minmaxstd_rel": 0.12,
+      "strange_mean_abs": 1.5
+    }
+  },
+  "determinism": {
+    "reference_claimed": "bit-exact-same-hw",
+    "browser_claimed": "epsilon",
+    "run_twice": "byte-identical"
+  },
+  "canonical": {
+    "descriptor": "lorenz-trajectory-seed42-step10000",
+    "seed": 42,
+    "step_count": 10000,
+    "params": {
+      "beta": 2.6666666666666665,
+      "dt": 0.01,
+      "ic_jitter_scale": 0.000001,
+      "rho": 28,
+      "sigma": 10
+    },
+    "payload_sha256": "sha256:9d34df5f64ab980b2482d1b2023888e3fe7bd3756d3a82f450fdadb68d231450",
+    "wall_clock_reference_s": 0.061,
+    "wall_clock_browser_s": 0.86
+  },
+  "code_anchors": {
+    "sigma_term": {
+      "line": 28,
+      "text": "P.sigma * (s.y - s.x),"
+    },
+    "rho_term": {
+      "line": 29,
+      "text": "s.x * (P.rho - s.z) - s.y,"
+    },
+    "beta_term": {
+      "line": 30,
+      "text": "s.x * s.y - P.beta * s.z,"
+    },
+    "rk4": {
+      "start": 35,
+      "end": 39,
+      "lines": [
+        "let k1 = field(s);",
+        "let k2 = field(s + 0.5 * P.dt * k1);",
+        "let k3 = field(s + 0.5 * P.dt * k2);",
+        "let k4 = field(s + P.dt * k3);",
+        "return s + (P.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4);"
+      ]
+    },
+    "entry": {
+      "line": 42
+    }
+  },
+  "links": {
+    "kernel": "packages/strange-attractors/src/lorenz_rk4.wgsl",
+    "spec": "docs/sim-specs/closed-form/strange-attractors/spec-ref.md",
+    "algebraic": "docs/sim-specs/closed-form/strange-attractors/algebraic.md",
+    "determinism": "docs/sim-specs/closed-form/strange-attractors/determinism.md",
+    "audit": "docs/_audits/phase-5/sub-phase-web-deploy-5.1-landing-2026-06-09T04-12-03Z.md",
+    "perf_ledger": "docs/perf-ledger.md"
+  }
+}

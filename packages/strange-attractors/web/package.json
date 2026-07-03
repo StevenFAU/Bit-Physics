@@ -4,6 +4,6 @@
   "private": true,
   "type": "module",
   "description": "Stack-B WebGPU web build — Lorenz strange attractor (classical RK4). Ships the committed lorenz_rk4.wgsl through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
-  "scripts": { "build": "vite build", "dev": "vite", "preview": "vite preview", "typecheck": "tsc --noEmit" },
+  "scripts": { "gen": "node gen-verification.mjs", "prebuild": "node gen-verification.mjs", "predev": "node gen-verification.mjs", "build": "vite build", "dev": "vite", "preview": "vite preview", "typecheck": "tsc --noEmit" },
   "devDependencies": { "@webgpu/types": "0.1.70", "typescript": "6.0.3", "vite": "6.4.3" }
 }

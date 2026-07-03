@@ -1,0 +1,162 @@
+// gen-verification.mjs — per-sim verification data spine (spec § 4).
+//
+// Reads the sim's COMMITTED sources of truth and emits
+// src/generated/verification.json, which main.ts imports statically. Values
+// are copied verbatim — never retyped — so the in-browser verification card
+// cannot drift from the repository. The emitted file is committed; this
+// script re-runs on prebuild/predev and must be idempotent (acceptance § 7.4:
+// `node gen-verification.mjs && git diff --exit-code`).
+//
+// FAIL-HARD CONTRACT (spec § 4): any missing source file, WGSL anchor pattern
+// that does not match exactly once, or unparsed verify.py/perf-ledger value
+// aborts with a non-zero exit. No silent fallbacks.
+//
+// Node builtins only — this is the repo's first web codegen script and the
+// template the other six sims may adopt; it must stay dependency-free.
+
+import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(here, "../../..");
+
+function fail(msg) {
+  console.error(`gen-verification: FAIL — ${msg}`);
+  process.exit(1);
+}
+
+function read(relPath) {
+  try {
+    return readFileSync(join(repoRoot, relPath), "utf8");
+  } catch {
+    fail(`missing source file: ${relPath}`);
+  }
+}
+
+// --- 1. Canonical capture manifest (params/checksum/determinism, verbatim) --
+
+const MANIFEST_PATH =
+  "captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.json";
+const manifest = JSON.parse(read(MANIFEST_PATH));
+for (const [path, val] of [
+  ["config.params", manifest.config?.params],
+  ["config.seed", manifest.config?.seed],
+  ["run.step_count", manifest.run?.step_count],
+  ["payload.checksum", manifest.payload?.checksum],
+  ["determinism.claimed", manifest.determinism?.claimed],
+]) {
+  if (val === undefined) fail(`${MANIFEST_PATH}: missing field ${path}`);
+}
+
+// --- 2. Gate thresholds (anchored regex over verify.py ESTABLISHED block) ---
+
+const VERIFY_PATH = "tools/productization/web-deploy/verify.py";
+const verifyPy = read(VERIFY_PATH);
+function threshold(name) {
+  const m = verifyPy.match(new RegExp(`"${name}":\\s*"([0-9.]+)"`, "g"));
+  if (!m || m.length !== 1) {
+    fail(`${VERIFY_PATH}: threshold "${name}" matched ${m ? m.length : 0} times (want 1)`);
+  }
+  return Number(m[0].match(/"([0-9.]+)"$/)[1]);
+}
+const tolerances = {
+  strange_minmaxstd_rel: threshold("strange_minmaxstd_rel"),
+  strange_mean_abs: threshold("strange_mean_abs"),
+};
+
+// --- 3. WGSL code anchors (exact-substring, must match exactly once) -------
+
+const WGSL_PATH = "packages/strange-attractors/src/lorenz_rk4.wgsl";
+const wgsl = read(WGSL_PATH);
+const wgslLines = wgsl.split("\n");
+function anchorLine(label, needle) {
+  const hits = wgslLines
+    .map((text, i) => ({ text, line: i + 1 }))
+    .filter(({ text }) => text.includes(needle));
+  if (hits.length !== 1) {
+    fail(`${WGSL_PATH}: anchor "${label}" (${needle}) matched ${hits.length} lines (want 1)`);
+  }
+  return { line: hits[0].line, text: hits[0].text.trim() };
+}
+const sigmaA = anchorLine("sigma_term", "P.sigma * (s.y - s.x)");
+const rhoA = anchorLine("rho_term", "s.x * (P.rho - s.z) - s.y");
+const betaA = anchorLine("beta_term", "s.x * s.y - P.beta * s.z");
+const rk4Start = anchorLine("rk4_start", "let k1 = field(s);");
+const rk4End = anchorLine("rk4_end", "(P.dt / 6.0) * (k1 + 2.0 * k2 + 2.0 * k3 + k4)");
+const entryA = anchorLine("entry", "@compute @workgroup_size(1)");
+if (rk4End.line <= rk4Start.line) fail(`${WGSL_PATH}: rk4 anchor range inverted`);
+const codeAnchors = {
+  sigma_term: sigmaA,
+  rho_term: rhoA,
+  beta_term: betaA,
+  rk4: {
+    start: rk4Start.line,
+    end: rk4End.line,
+    lines: wgslLines.slice(rk4Start.line - 1, rk4End.line).map((l) => l.replace(/^  /, "")),
+  },
+  entry: { line: entryA.line },
+};
+
+// --- 4. Measured wall-clocks (perf-ledger rows, anchored) -------------------
+
+const LEDGER_PATH = "docs/perf-ledger.md";
+const ledger = read(LEDGER_PATH);
+function ledgerSeconds(stack) {
+  const re = new RegExp(
+    `^\\| strange-attractors \\| ${stack} \\| lorenz-trajectory-seed42-step10000 \\| ([0-9.]+) \\|`,
+    "m",
+  );
+  const m = ledger.match(re);
+  if (!m) fail(`${LEDGER_PATH}: no row for stack "${stack}"`);
+  return Number(m[1]);
+}
+
+// --- 5. Emit -----------------------------------------------------------------
+
+const out = {
+  _generated_by: "packages/strange-attractors/web/gen-verification.mjs — do not edit by hand",
+  sim: "strange-attractors",
+  repo_blob_base: "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  gate: {
+    kind: "new_canonical + run-twice",
+    tolerances,
+  },
+  determinism: {
+    reference_claimed: manifest.determinism.claimed,
+    browser_claimed: "epsilon",
+    run_twice: "byte-identical",
+  },
+  canonical: {
+    descriptor: "lorenz-trajectory-seed42-step10000",
+    seed: manifest.config.seed,
+    step_count: manifest.run.step_count,
+    params: manifest.config.params,
+    payload_sha256: manifest.payload.checksum,
+    wall_clock_reference_s: ledgerSeconds("numpy-reference"),
+    wall_clock_browser_s: ledgerSeconds("webgpu-headless-chromium"),
+  },
+  code_anchors: codeAnchors,
+  links: {
+    kernel: WGSL_PATH,
+    spec: "docs/sim-specs/closed-form/strange-attractors/spec-ref.md",
+    algebraic: "docs/sim-specs/closed-form/strange-attractors/algebraic.md",
+    determinism: "docs/sim-specs/closed-form/strange-attractors/determinism.md",
+    audit: "docs/_audits/phase-5/sub-phase-web-deploy-5.1-landing-2026-06-09T04-12-03Z.md",
+    perf_ledger: LEDGER_PATH,
+  },
+};
+
+// links must resolve at HEAD — a moved doc must break the build, not the card
+for (const [k, rel] of Object.entries(out.links)) {
+  try {
+    readFileSync(join(repoRoot, rel));
+  } catch {
+    fail(`links.${k}: ${rel} does not resolve at HEAD`);
+  }
+}
+
+const outDir = join(here, "src", "generated");
+mkdirSync(outDir, { recursive: true });
+writeFileSync(join(outDir, "verification.json"), JSON.stringify(out, null, 2) + "\n");
+console.log("gen-verification: OK — src/generated/verification.json");
