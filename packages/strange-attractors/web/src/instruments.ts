@@ -1,31 +1,56 @@
-// Pedagogical instruments (feature-expansion-spec § 3.2) — Lane B.
+// Pedagogical instruments (feature-expansion-spec §§ 3.2/3.3 item 10) — the
+// return map (z-maxima), Poincaré section, and parameter-sweep bifurcation
+// diagram, generalized across the attractor registry.
 //
-// Return map (z-maxima), Poincaré section, and the ρ-sweep bifurcation
-// diagram. All measurement + canvas2d presentation over CPU readbacks of the
-// DISPLAY trajectory (never the capture path). The bifurcation sweep
-// re-dispatches the COMMITTED Lorenz kernel into scratch buffers — the exact
-// PROVE "run it twice" pattern (verify-panel.ts) — one dispatch per ρ.
+// All measurement + canvas2d presentation over CPU readbacks of the DISPLAY
+// trajectory (never the capture path). The bifurcation sweep re-dispatches
+// the active system's committed kernel into scratch buffers — the PROVE
+// "run it twice" dispatch pattern — one dispatch per swept value. The
+// section plane and sweep parameter come from the attractor registry
+// (attractors.ts) via the context main.ts passes on each Study measure.
 //
 // Nothing here animates on wall-clock: insets redraw on Study measurement
-// (entry/param change) and on explicit button clicks, so poster/loop
+// (entry/param/system change) and on explicit button clicks, so poster/loop
 // determinism is untouched.
+
+export interface SectionLive {
+  axis: 0 | 1 | 2;
+  value: number;
+  label: string;
+}
+
+export interface SweepSpecLive {
+  /** Display label of the swept parameter (e.g. "ρ", "c"). */
+  label: string;
+  lo: number;
+  hi: number;
+}
+
+export interface InstrumentContext {
+  section: SectionLive;
+  /** Live value of the swept parameter, for the marker; null = no sweep. */
+  sweepCurrent: number | null;
+}
 
 export interface InstrumentDeps {
   /** Container group (panel.addGroup output). */
   group: HTMLElement;
-  /** Integrate the committed kernel at the given ρ (current σ/β) into a
-   *  scratch buffer and read it back. Never touches traj/liveTraj. */
-  integrateScratch: (rho: number, out: Float32Array) => Promise<void>;
+  /** Integrate the ACTIVE system's committed kernel with the sweep
+   *  parameter overridden to `value`, into a scratch buffer, and read it
+   *  back. Never touches traj/liveTraj. */
+  integrateSweep: (value: number, out: Float32Array) => Promise<void>;
   nPoints: number;
-  dt: number;
 }
 
-interface Insets {
+export interface Insets {
   /** Recompute + redraw from a fresh display-buffer readback. */
-  update(all: Float32Array, params: { sigma: number; rho: number; beta: number }): void;
+  update(all: Float32Array, ctx: InstrumentContext): void;
+  /** Reconfigure (or disable) the bifurcation sweep — clears the cache. */
+  setSweep(spec: SweepSpecLive | null): void;
 }
 
 const TRIM = 500; // skip the fall-in transient (same policy as measureFit)
+const AXIS_NAME = ["x", "y", "z"] as const;
 
 // successive local maxima of z(t) with parabolic refinement — measurement
 // postprocessing of stored samples, not re-integration
@@ -49,7 +74,6 @@ interface Frame {
   ctx: CanvasRenderingContext2D;
   w: number;
   h: number;
-  // data → pixel
   px: (x: number) => number;
   py: (y: number) => number;
 }
@@ -88,7 +112,13 @@ function beginPlot(
   return { ctx, w, h, px, py };
 }
 
-function makeInset(group: HTMLElement, title: string, hint: string, w = 248, h = 170): HTMLCanvasElement {
+function emptyNote(f: Frame, msg: string): void {
+  f.ctx.fillStyle = cssVar("--faint", "#5a646e");
+  f.ctx.font = "10px ui-monospace, monospace";
+  f.ctx.fillText(msg, 36, f.h / 2);
+}
+
+function makeInset(group: HTMLElement, title: string, hint: string, w = 248, h = 170): { canvas: HTMLCanvasElement; cap: HTMLDivElement } {
   const wrap = document.createElement("div");
   wrap.className = "lz-inset";
   const cap = document.createElement("div");
@@ -104,7 +134,7 @@ function makeInset(group: HTMLElement, title: string, hint: string, w = 248, h =
   ctx.fillStyle = cssVar("--faint", "#5a646e");
   ctx.font = "10px ui-monospace, monospace";
   ctx.fillText("enter Study to measure", 12, h / 2);
-  return canvas;
+  return { canvas, cap };
 }
 
 export function installInstruments(d: InstrumentDeps): Insets {
@@ -112,90 +142,123 @@ export function installInstruments(d: InstrumentDeps): Insets {
   const warm = (): string => cssVar("--warm", "#e8a44c");
 
   // ---- return map: zₙ vs zₙ₊₁ ------------------------------------------
-  const rmCanvas = makeInset(
+  const rm = makeInset(
     d.group,
     "return map — zₙ₊₁ vs zₙ",
     "Successive z-maxima of the displayed trajectory. For Lorenz this collapses to a near-1D tent — order hidden in chaos (Lorenz 1963).",
   );
 
-  // ---- Poincaré section: crossings of z = ρ−1 -----------------------------
-  const pcCanvas = makeInset(
+  // ---- Poincaré section ---------------------------------------------------
+  const pc = makeInset(
     d.group,
-    "Poincaré section — z = ρ−1",
-    "Points where the displayed trajectory crosses the plane through the C± fixed-point height; the fractal cross-section of the attractor.",
+    "Poincaré section",
+    "Points where the displayed trajectory crosses the registry-declared section plane for this system; the fractal cross-section of the attractor.",
   );
 
-  // ---- bifurcation diagram: z-maxima vs ρ ---------------------------------
-  const bifCanvas = makeInset(
+  // ---- bifurcation diagram ------------------------------------------------
+  const bif = makeInset(
     d.group,
-    "bifurcation — z-maxima vs ρ",
-    "Sweeps ρ, re-integrating the SAME committed kernel into scratch buffers per value (the PROVE dispatch pattern), and plots the post-transient z-maxima. The vertical line is the live slider ρ.",
+    "bifurcation — z-maxima vs parameter",
+    "Sweeps the registry-declared parameter, re-integrating the active system's committed kernel into scratch buffers per value (the PROVE dispatch pattern), and plots the post-transient z-maxima. The vertical line is the live slider value.",
   );
   const bifBtn = document.createElement("button");
   bifBtn.type = "button";
   bifBtn.className = "bps-btn";
-  bifBtn.textContent = "Compute bifurcation sweep";
-  bifBtn.title = "~160 re-dispatches of the committed kernel at the current σ/β — a few seconds of GPU time.";
   const bifStatus = document.createElement("div");
   bifStatus.className = "lz-note-line";
-  bifStatus.textContent = "on demand — heavier than the other instruments";
   d.group.append(bifBtn, bifStatus);
 
-  const BIF_RHO0 = 1, BIF_RHO1 = 250, BIF_COLS = 160;
+  const BIF_COLS = 160;
+  let sweep: SweepSpecLive | null = null;
   let bifImage: ImageData | null = null; // cached sweep pixels (sans marker)
-  let bifParams = { sigma: 10, beta: 8 / 3 };
-  let lastParams = { sigma: 10, rho: 28, beta: 8 / 3 };
+  let bifRange: { yLo: number; yHi: number } | null = null;
+  let sweepCurrent: number | null = null;
   let bifBusy = false;
 
-  function drawBif(): void {
-    const f = beginPlot(bifCanvas, BIF_RHO0, BIF_RHO1, 0, 300, "ρ", "z-max");
-    if (!bifImage) {
-      f.ctx.fillStyle = cssVar("--faint", "#5a646e");
-      f.ctx.font = "10px ui-monospace, monospace";
-      f.ctx.fillText("not computed yet", 40, f.h / 2);
+  function applySweepUI(): void {
+    if (!sweep) {
+      bifBtn.style.display = "none";
+      bifStatus.textContent = "no sweep parameter chartered for this system";
+      bif.cap.textContent = "bifurcation — (no sweep for this system)";
+      const f = beginPlot(bif.canvas, 0, 1, 0, 1, "", "z-max");
+      emptyNote(f, "conservative system — no dissipative sweep");
       return;
     }
+    bifBtn.style.display = "";
+    bifBtn.textContent = `Compute bifurcation sweep (${sweep.label})`;
+    bifBtn.title = `~${BIF_COLS} re-dispatches of the active committed kernel — a few seconds of GPU time.`;
+    bifStatus.textContent = "on demand — heavier than the other instruments";
+    bif.cap.textContent = `bifurcation — z-maxima vs ${sweep.label}`;
+    const f = beginPlot(bif.canvas, sweep.lo, sweep.hi, 0, 1, sweep.label, "z-max");
+    emptyNote(f, "not computed yet");
+  }
+
+  function drawBif(): void {
+    if (!sweep) return;
+    if (!bifImage || !bifRange) {
+      applySweepUI();
+      if (sweep && sweepCurrent !== null) {
+        // marker over the empty frame so the coupling is visible pre-compute
+        const f = beginPlot(bif.canvas, sweep.lo, sweep.hi, 0, 1, sweep.label, "z-max");
+        emptyNote(f, "not computed yet");
+        const x = f.px(Math.min(Math.max(sweepCurrent, sweep.lo), sweep.hi));
+        f.ctx.strokeStyle = warm();
+        f.ctx.beginPath();
+        f.ctx.moveTo(x, 6);
+        f.ctx.lineTo(x, f.h - 18);
+        f.ctx.stroke();
+      }
+      return;
+    }
+    const f = beginPlot(bif.canvas, sweep.lo, sweep.hi, bifRange.yLo, bifRange.yHi, sweep.label, "z-max");
     f.ctx.putImageData(bifImage, 0, 0);
-    // live-ρ marker (the slider ↔ diagram coupling)
-    const x = f.px(Math.min(Math.max(lastParams.rho, BIF_RHO0), BIF_RHO1));
-    f.ctx.strokeStyle = warm();
-    f.ctx.beginPath();
-    f.ctx.moveTo(x, 6);
-    f.ctx.lineTo(x, f.h - 18);
-    f.ctx.stroke();
-    if (bifParams.sigma !== lastParams.sigma || bifParams.beta !== lastParams.beta) {
-      f.ctx.fillStyle = warm();
-      f.ctx.font = "9px ui-monospace, monospace";
-      f.ctx.fillText("σ/β changed — recompute", 36, 14);
+    if (sweepCurrent !== null) {
+      const x = f.px(Math.min(Math.max(sweepCurrent, sweep.lo), sweep.hi));
+      f.ctx.strokeStyle = warm();
+      f.ctx.beginPath();
+      f.ctx.moveTo(x, 6);
+      f.ctx.lineTo(x, f.h - 18);
+      f.ctx.stroke();
     }
   }
 
   async function computeBif(): Promise<void> {
-    if (bifBusy) return;
+    if (bifBusy || !sweep) return;
+    const spec = sweep;
     bifBusy = true;
     bifBtn.disabled = true;
-    bifParams = { sigma: lastParams.sigma, beta: lastParams.beta };
     const scratch = new Float32Array(d.nPoints * 3);
-    // draw dots straight onto the canvas, then cache the image for marker redraws
-    const f = beginPlot(bifCanvas, BIF_RHO0, BIF_RHO1, 0, 300, "ρ", "z-max");
-    f.ctx.fillStyle = accent();
-    f.ctx.globalAlpha = 0.28;
     try {
+      // pass 1: collect columns (so the y-range adapts to the system)
+      const columns: { v: number; maxima: number[] }[] = [];
+      let yLo = Infinity, yHi = -Infinity;
       for (let c = 0; c < BIF_COLS; c += 1) {
-        const rho = BIF_RHO0 + ((BIF_RHO1 - BIF_RHO0) * c) / (BIF_COLS - 1);
-        await d.integrateScratch(rho, scratch);
-        const maxima = zMaxima(scratch, d.nPoints, Math.floor(d.nPoints / 2));
-        const x = f.px(rho);
+        const v = spec.lo + ((spec.hi - spec.lo) * c) / (BIF_COLS - 1);
+        await d.integrateSweep(v, scratch);
+        const maxima = zMaxima(scratch, d.nPoints, Math.floor(d.nPoints / 2)).filter(Number.isFinite);
         for (const m of maxima) {
-          if (!Number.isFinite(m)) continue;
-          const y = f.py(Math.min(Math.max(m, 0), 300));
-          f.ctx.fillRect(x - 0.5, y - 0.5, 1, 1);
+          if (m < yLo) yLo = m;
+          if (m > yHi) yHi = m;
         }
-        if (c % 8 === 0) bifStatus.textContent = `sweeping… ρ = ${rho.toFixed(1)} (${c + 1}/${BIF_COLS})`;
+        columns.push({ v, maxima });
+        if (c % 8 === 0) bifStatus.textContent = `sweeping… ${spec.label} = ${v.toFixed(2)} (${c + 1}/${BIF_COLS})`;
+      }
+      if (!(yHi > yLo)) {
+        bifStatus.textContent = "sweep produced no finite z-maxima";
+        return;
+      }
+      const pad = (yHi - yLo) * 0.05;
+      bifRange = { yLo: yLo - pad, yHi: yHi + pad };
+      const f = beginPlot(bif.canvas, spec.lo, spec.hi, bifRange.yLo, bifRange.yHi, spec.label, "z-max");
+      f.ctx.fillStyle = accent();
+      f.ctx.globalAlpha = 0.28;
+      for (const col of columns) {
+        const x = f.px(col.v);
+        for (const m of col.maxima) f.ctx.fillRect(x - 0.5, f.py(m) - 0.5, 1, 1);
       }
       f.ctx.globalAlpha = 1;
       bifImage = f.ctx.getImageData(0, 0, f.w, f.h);
-      bifStatus.textContent = `swept ρ ∈ [${BIF_RHO0}, ${BIF_RHO1}] at σ=${bifParams.sigma}, β=${bifParams.beta === 8 / 3 ? "8/3" : bifParams.beta} — committed kernel, ${BIF_COLS} scratch integrations`;
+      bifStatus.textContent = `swept ${spec.label} ∈ [${spec.lo}, ${spec.hi}] — committed kernel, ${BIF_COLS} scratch integrations`;
       drawBif();
     } catch (e) {
       bifStatus.textContent = `sweep failed: ${(e as Error).message}`;
@@ -207,11 +270,19 @@ export function installInstruments(d: InstrumentDeps): Insets {
   bifBtn.addEventListener("click", () => {
     void computeBif();
   });
+  applySweepUI();
 
   return {
-    update(all, params) {
-      lastParams = { ...params };
-      // return map
+    setSweep(spec) {
+      sweep = spec;
+      bifImage = null;
+      bifRange = null;
+      applySweepUI();
+    },
+
+    update(all, ctx) {
+      sweepCurrent = ctx.sweepCurrent;
+      // return map (z-maxima — generic across the family)
       const maxima = zMaxima(all, d.nPoints, TRIM).filter(Number.isFinite);
       {
         let lo = Infinity, hi = -Infinity;
@@ -220,14 +291,11 @@ export function installInstruments(d: InstrumentDeps): Insets {
           if (m > hi) hi = m;
         }
         if (maxima.length < 3 || !(hi > lo)) {
-          const f = beginPlot(rmCanvas, 0, 1, 0, 1, "zₙ", "zₙ₊₁");
-          f.ctx.fillStyle = cssVar("--faint", "#5a646e");
-          f.ctx.font = "10px ui-monospace, monospace";
-          f.ctx.fillText("too few z-maxima in this regime", 36, f.h / 2);
+          const f = beginPlot(rm.canvas, 0, 1, 0, 1, "zₙ", "zₙ₊₁");
+          emptyNote(f, "too few z-maxima in this regime");
         } else {
           const pad = (hi - lo) * 0.06;
-          const f = beginPlot(rmCanvas, lo - pad, hi + pad, lo - pad, hi + pad, "zₙ", "zₙ₊₁");
-          // y = x reference — a fixed point of the map is a periodic orbit
+          const f = beginPlot(rm.canvas, lo - pad, hi + pad, lo - pad, hi + pad, "zₙ", "zₙ₊₁");
           f.ctx.strokeStyle = cssVar("--line", "#2a3138");
           f.ctx.beginPath();
           f.ctx.moveTo(f.px(lo - pad), f.py(lo - pad));
@@ -239,16 +307,19 @@ export function installInstruments(d: InstrumentDeps): Insets {
           }
         }
       }
-      // Poincaré section at z = ρ−1
+      // Poincaré section at the registry plane
       {
-        const c = params.rho - 1;
+        const sec = ctx.section;
+        pc.cap.textContent = `Poincaré section — ${sec.label}`;
+        const [ai, bi] = sec.axis === 0 ? [1, 2] : sec.axis === 1 ? [0, 2] : [0, 1];
+        const cVal = sec.value;
         const xs: number[] = [], ys: number[] = [];
         for (let i = TRIM; i + 1 < d.nPoints; i += 1) {
-          const z0 = all[i * 3 + 2]!, z1 = all[(i + 1) * 3 + 2]!;
-          if ((z0 - c) * (z1 - c) > 0 || z0 === z1) continue;
-          const t = (c - z0) / (z1 - z0);
-          xs.push(all[i * 3]! + t * (all[(i + 1) * 3]! - all[i * 3]!));
-          ys.push(all[i * 3 + 1]! + t * (all[(i + 1) * 3 + 1]! - all[i * 3 + 1]!));
+          const s0 = all[i * 3 + sec.axis]!, s1 = all[(i + 1) * 3 + sec.axis]!;
+          if ((s0 - cVal) * (s1 - cVal) > 0 || s0 === s1) continue;
+          const t = (cVal - s0) / (s1 - s0);
+          xs.push(all[i * 3 + ai]! + t * (all[(i + 1) * 3 + ai]! - all[i * 3 + ai]!));
+          ys.push(all[i * 3 + bi]! + t * (all[(i + 1) * 3 + bi]! - all[i * 3 + bi]!));
         }
         let xlo = Infinity, xhi = -Infinity, ylo = Infinity, yhi = -Infinity;
         for (let k = 0; k < xs.length; k += 1) {
@@ -258,13 +329,11 @@ export function installInstruments(d: InstrumentDeps): Insets {
           if (ys[k]! > yhi) yhi = ys[k]!;
         }
         if (xs.length < 3 || !(xhi > xlo) || !(yhi > ylo)) {
-          const f = beginPlot(pcCanvas, 0, 1, 0, 1, "x", "y");
-          f.ctx.fillStyle = cssVar("--faint", "#5a646e");
-          f.ctx.font = "10px ui-monospace, monospace";
-          f.ctx.fillText("no plane crossings in this regime", 36, f.h / 2);
+          const f = beginPlot(pc.canvas, 0, 1, 0, 1, AXIS_NAME[ai]!, AXIS_NAME[bi]!);
+          emptyNote(f, "no plane crossings in this regime");
         } else {
           const padx = (xhi - xlo) * 0.08, pady = (yhi - ylo) * 0.08;
-          const f = beginPlot(pcCanvas, xlo - padx, xhi + padx, ylo - pady, yhi + pady, "x", "y");
+          const f = beginPlot(pc.canvas, xlo - padx, xhi + padx, ylo - pady, yhi + pady, AXIS_NAME[ai]!, AXIS_NAME[bi]!);
           f.ctx.fillStyle = accent();
           for (let k = 0; k < xs.length; k += 1) {
             f.ctx.fillRect(f.px(xs[k]!) - 1, f.py(ys[k]!) - 1, 2, 2);

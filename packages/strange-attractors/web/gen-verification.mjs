@@ -222,6 +222,7 @@ const out = {
     wall_clock_browser_s: ledgerSeconds("webgpu-headless-chromium"),
   },
   code_anchors: codeAnchors,
+  systems,
   links: {
     kernel: WGSL_PATH,
     spec: "docs/sim-specs/closed-form/strange-attractors/spec-ref.md",

@@ -352,6 +352,18 @@ item 1) → the boundary-crossing kernel work → full validate.
 
 ## 10. Change log
 
+- **v0.2 (2026-07-03) — X-A landed.** L-1/L-2/L-3 shipped as Lane-B clusters;
+  X-A shipped as the ratified expansion: Rössler, Aizawa and Sprott-A landed
+  with the full per-system discipline (System protocol, golden anchors ×3,
+  gated captures with real checksums, ≥2 PBT invariants each, perf-ledger
+  rows, docs) plus the ratified `attractors_rk4.wgsl` display kernel, the
+  web attractor registry, per-system EXPLAIN with committed-artifact links,
+  and registry-driven instruments (section planes, sweep parameters).
+  **Pickover deferred-with-cause** (§ 9.2): the banked "continuous" form is
+  the discrete map mislabeled — measured unbounded/degenerate under RK4.
+  Capture pinning verified: exporting while a family system is selected
+  still emits the Lorenz classic seed-42 bundle.
+
 - **v0.1 (2026-07-03) — repo citation audit + corrections.** Every file:line and
   section citation was verified against the working tree; all § 3.1/3.2/3.4
   code claims held. Substantive changes:

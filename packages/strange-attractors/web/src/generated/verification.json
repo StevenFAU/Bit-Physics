@@ -57,6 +57,128 @@
       "line": 42
     }
   },
+  "systems": {
+    "rossler": {
+      "descriptor": "rossler-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "a": 0.2,
+        "b": 0.2,
+        "c": 5.7,
+        "dt": 0.02,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:8c87a0cbe6450e2bf6b4d0352f13412488633407436b742a90331edbfbdf046f",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/rossler-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "fixed_points",
+        "inner_fixed_point_jacobian_eigenvalues",
+        "divergence"
+      ],
+      "derivation": "tools/testkit/golden/derivations/rossler-structural.md",
+      "manifest": "captures/strange-attractors-ref/rossler-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 41,
+          "text": "-s.y - s.z,"
+        },
+        "dy": {
+          "line": 42,
+          "text": "s.x + P.p0 * s.y,"
+        },
+        "dz": {
+          "line": 43,
+          "text": "P.p1 + s.z * (s.x - P.p2),"
+        }
+      }
+    },
+    "aizawa": {
+      "descriptor": "aizawa-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "a": 0.95,
+        "b": 0.7,
+        "c": 0.6,
+        "d": 3.5,
+        "dt": 0.01,
+        "e": 0.25,
+        "f": 0.1,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:2d7c115462dd193ac9fe44968eae576bc65ddb627959a16bd06d473d24117c13",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/aizawa-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "axis_fixed_points",
+        "axis_jacobian_eigenvalues",
+        "divergence_and_origin_probe"
+      ],
+      "derivation": "tools/testkit/golden/derivations/aizawa-structural.md",
+      "manifest": "captures/strange-attractors-ref/aizawa-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 51,
+          "text": "(s.z - P.p1) * s.x - P.p3 * s.y,"
+        },
+        "dy": {
+          "line": 52,
+          "text": "P.p3 * s.x + (s.z - P.p1) * s.y,"
+        },
+        "dz": {
+          "line": 53,
+          "text": "P.p2 + P.p0 * s.z - (s.z * s.z * s.z) / 3.0 - r2 * (1.0 + P.p4 * s.z) + P.p5 * s.z * s.x * s.x * s.x,"
+        }
+      }
+    },
+    "sprott_a": {
+      "descriptor": "sprott_a-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "dt": 0.01,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:8bbd0cf1e5726dda3e6350d0a14715b886efcbb4229ddc29fa9b662adef9f383",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/sprott-a-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "equilibrium_count",
+        "divergence",
+        "parity_symmetry"
+      ],
+      "derivation": "tools/testkit/golden/derivations/sprott-a-structural.md",
+      "manifest": "captures/strange-attractors-ref/sprott_a-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 62,
+          "text": "s.y,  // sprott-a: dx/dt"
+        },
+        "dy": {
+          "line": 63,
+          "text": "-s.x + s.y * s.z,"
+        },
+        "dz": {
+          "line": 64,
+          "text": "1.0 - s.y * s.y,"
+        }
+      }
+    }
+  },
   "links": {
     "kernel": "packages/strange-attractors/src/lorenz_rk4.wgsl",
     "spec": "docs/sim-specs/closed-form/strange-attractors/spec-ref.md",

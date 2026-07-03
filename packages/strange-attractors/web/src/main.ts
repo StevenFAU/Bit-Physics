@@ -35,11 +35,13 @@ import {
 } from "../../../../common/common-web/src/colormap.js";
 
 import computeWgsl from "../../src/lorenz_rk4.wgsl?raw";
+import fieldsWgsl from "./fields/attractors_rk4.wgsl?raw";
 import renderWgsl from "./render.wgsl?raw";
 import V from "./generated/verification.json";
 import { installExplainPanel } from "./explain.js";
 import { installVerifyPanel } from "./verify-panel.js";
 import { installInstruments } from "./instruments.js";
+import { ATTRACTORS, getAttractor } from "./attractors.js";
 
 const N_STEPS = 10000;
 const CAPTURE_INTERVAL = 1000;
@@ -66,6 +68,25 @@ if (
   V.canonical.params.dt !== DT
 ) {
   throw new Error("verification.json canonical params drifted from compute constants — rerun gen-verification.mjs");
+}
+
+// Same drift contract for the X-A family: every registry system's canonical
+// params + dt must match the committed capture manifest carried by the spine.
+interface SystemSpineParams {
+  params: Record<string, number>;
+}
+for (const def of ATTRACTORS) {
+  if (def.fieldId === 0) continue;
+  const spine = (V.systems as Record<string, SystemSpineParams>)[def.key];
+  if (!spine) throw new Error(`verification.json has no systems entry for ${def.key} — rerun gen-verification.mjs`);
+  for (const p of def.params) {
+    if (spine.params[p.key] !== p.canonical) {
+      throw new Error(`registry canonical ${def.key}.${p.key} drifted from the committed capture manifest`);
+    }
+  }
+  if (spine.params.dt !== def.dt) {
+    throw new Error(`registry dt for ${def.key} drifted from the committed capture manifest`);
+  }
 }
 
 const blobUrl = (path: string, anchor?: string): string =>
@@ -180,10 +201,22 @@ async function main(): Promise<void> {
       { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
     ],
   });
-  const computePipeline = await device.createComputePipelineAsync({
-    layout: device.createPipelineLayout({ bindGroupLayouts: [computeBGL] }),
-    compute: { module: computeModule, entryPoint: "main" },
-  });
+  const computeLayout = device.createPipelineLayout({ bindGroupLayouts: [computeBGL] });
+  // Ratified X-A family display kernel (fields/attractors_rk4.wgsl): shares
+  // the bind-group layout with the committed Lorenz kernel, so the SAME live
+  // display bind groups serve both pipelines. It never touches `traj` — the
+  // capture path stays pinned to the Lorenz kernel below.
+  const fieldsModule = device.createShaderModule({ code: fieldsWgsl, label: "attractors-family" });
+  const [computePipeline, familyPipeline] = await Promise.all([
+    device.createComputePipelineAsync({
+      layout: computeLayout,
+      compute: { module: computeModule, entryPoint: "main" },
+    }),
+    device.createComputePipelineAsync({
+      layout: computeLayout,
+      compute: { module: fieldsModule, entryPoint: "main" },
+    }),
+  ]);
   const computeBG = device.createBindGroup({
     layout: computeBGL,
     entries: [
@@ -475,7 +508,11 @@ async function main(): Promise<void> {
   ];
 
   // ------------------------------------------------------ live-view state --
-  const params = { sigma: SIGMA, rho: RHO, beta: BETA };
+  // Active attractor (X-A wiring): the registry drives the parameter set,
+  // display kernel, section plane and sweep. Lorenz keeps the committed
+  // kernel; the capture path is pinned to Lorenz classic seed-42 regardless.
+  let sysDef = getAttractor("lorenz");
+  const params: Record<string, number> = { sigma: SIGMA, rho: RHO, beta: BETA };
   let butterflyOn = false;
   let trail = 0.55;
   // display look state (spec § 3.1) — presentation-only; defaults reproduce
@@ -506,23 +543,44 @@ async function main(): Promise<void> {
   let rafQueued = false;
 
   function matchRegime(): Regime | null {
+    if (sysDef.key !== "lorenz") return null;
     return REGIMES.find((r) => r.sigma === params.sigma && r.rho === params.rho && r.beta === params.beta) ?? null;
   }
 
-  function paramsPayload(dx: number, rhoOverride?: number): ArrayBuffer {
+  // Compute-uniform payload for the ACTIVE system. Lorenz keeps the committed
+  // kernel's layout verbatim; family systems use the ratified kernel's
+  // field_id + registry-ordered p0..p5 slots. `override` swaps one parameter
+  // (the bifurcation sweep). Both layouts are 48 bytes.
+  function paramsPayload(dx: number, override?: { key: string; value: number }): ArrayBuffer {
+    const val = (k: string): number => (override && override.key === k ? override.value : params[k]!);
     const pp = new ArrayBuffer(48);
     const dv = new DataView(pp);
     dv.setUint32(0, N_STEPS, true);
-    dv.setUint32(4, 0, true);
-    dv.setFloat32(8, params.sigma, true);
-    dv.setFloat32(12, rhoOverride ?? params.rho, true);
-    dv.setFloat32(16, params.beta, true);
-    dv.setFloat32(20, DT, true);
-    dv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0] + nudge[0] + dx, true);
-    dv.setFloat32(28, CANONICAL_IC[1] + SEED42_OFFSET[1] + nudge[1], true);
-    dv.setFloat32(32, CANONICAL_IC[2] + SEED42_OFFSET[2] + nudge[2], true);
+    if (sysDef.fieldId === 0) {
+      dv.setUint32(4, 0, true);
+      dv.setFloat32(8, val("sigma"), true);
+      dv.setFloat32(12, val("rho"), true);
+      dv.setFloat32(16, val("beta"), true);
+      dv.setFloat32(20, DT, true);
+      dv.setFloat32(24, CANONICAL_IC[0] + SEED42_OFFSET[0] + nudge[0] + dx, true);
+      dv.setFloat32(28, CANONICAL_IC[1] + SEED42_OFFSET[1] + nudge[1], true);
+      dv.setFloat32(32, CANONICAL_IC[2] + SEED42_OFFSET[2] + nudge[2], true);
+      return pp;
+    }
+    dv.setUint32(4, sysDef.fieldId, true);
+    sysDef.params.forEach((p, i) => {
+      dv.setFloat32(8 + i * 4, val(p.key), true);
+    });
+    dv.setFloat32(32, sysDef.dt, true);
+    // Same seed-42 jitter as the backend runners (default_rng(42) is
+    // system-independent), so the display IC mirrors the gated capture's.
+    dv.setFloat32(36, sysDef.ic[0] + SEED42_OFFSET[0] + nudge[0] + dx, true);
+    dv.setFloat32(40, sysDef.ic[1] + SEED42_OFFSET[1] + nudge[1], true);
+    dv.setFloat32(44, sysDef.ic[2] + SEED42_OFFSET[2] + nudge[2], true);
     return pp;
   }
+
+  const activePipeline = (): GPUComputePipeline => (sysDef.fieldId === 0 ? computePipeline : familyPipeline);
 
   // Re-integrate the SAME committed kernel into the live display buffer(s)
   // with the current slider params. One dispatch per trajectory; the render
@@ -533,7 +591,7 @@ async function main(): Promise<void> {
     if (butterflyOn) queue.writeBuffer(ghostParamBuf, 0, paramsPayload(BUTTERFLY_DX));
     const enc = device.createCommandEncoder();
     const pass = enc.beginComputePass();
-    pass.setPipeline(computePipeline);
+    pass.setPipeline(activePipeline());
     pass.setBindGroup(0, liveComputeBG);
     pass.dispatchWorkgroups(1);
     if (butterflyOn) {
@@ -609,7 +667,14 @@ async function main(): Promise<void> {
     const all = await readBuffer(liveTraj);
     const ghost = butterflyOn ? await readBuffer(ghostTraj) : null;
     if (seq !== diagSeq) return;
-    instruments?.update(all, { ...params });
+    instruments?.update(all, {
+      section: {
+        axis: sysDef.section.axis,
+        value: sysDef.section.value(params),
+        label: sysDef.section.label,
+      },
+      sweepCurrent: sysDef.sweep ? params[sysDef.sweep.paramKey]! : null,
+    });
     const lo = [Infinity, Infinity, Infinity];
     const hi = [-Infinity, -Infinity, -Infinity];
     for (let s = 0; s < nPoints; s += 1) {
@@ -621,11 +686,15 @@ async function main(): Promise<void> {
     }
     const fx = all[N_STEPS * 3]!, fy = all[N_STEPS * 3 + 1]!, fz = all[N_STEPS * 3 + 2]!;
     const r = (i: number): string => `${lo[i]!.toFixed(1)} … ${hi[i]!.toFixed(1)}`;
-    const beta = params.beta === 8 / 3 ? "8/3" : String(params.beta);
+    const fmtP = (k: string): string => (k === "beta" && params[k] === 8 / 3 ? "8/3" : String(params[k]));
+    const paramLine = sysDef.params.length
+      ? sysDef.params.map((p) => `${p.label} ${fmtP(p.key)}`).join(" · ")
+      : "none — parameter-free";
     const rows = [
-      { label: "live regime", value: matchRegime()?.label ?? "custom" },
-      { label: "σ / ρ / β", value: `${params.sigma} / ${params.rho} / ${beta}` },
-      { label: "integrator", value: `RK4, dt ${DT}` },
+      { label: "system", value: sysDef.label + (sysDef.conservative ? " (conservative)" : "") },
+      ...(sysDef.key === "lorenz" ? [{ label: "live regime", value: matchRegime()?.label ?? "custom" }] : []),
+      { label: "params", value: paramLine },
+      { label: "integrator", value: `RK4, dt ${sysDef.dt}` },
       { label: "steps", value: String(N_STEPS) },
       { label: "x range", value: r(0) },
       { label: "y range", value: r(1) },
@@ -665,7 +734,7 @@ async function main(): Promise<void> {
         const d2 = dx * dx + dy * dy + dz * dz;
         if (d2 >= 1) break; // saturation: past the exponential window
         if (d2 < 1e-8) continue; // f32 noise floor: not yet clean growth
-        const t = s * DT;
+        const t = s * sysDef.dt;
         const y = 0.5 * Math.log(d2);
         sx += t; sy += y; sxx += t * t; sxy += t * y; m += 1;
       }
@@ -702,7 +771,7 @@ async function main(): Promise<void> {
     ruData[7] = fit.scale;
     ruData[8] = 5.2 / canvas.height; // glow sprite half-size, clip units
     ruData[9] = gain;
-    ruData[10] = DT;
+    ruData[10] = sysDef.dt; // physics-honest speed normalization per system
     ruData[11] = colorMode;
     ruData[12] = proj;
     ruData[13] = elev;
@@ -861,6 +930,13 @@ async function main(): Promise<void> {
 
   function announceParams(): void {
     updateHash();
+    if (sysDef.key !== "lorenz") {
+      panel.setActivePreset(null);
+      panel.setStatus(
+        `live view: ${sysDef.label} — ratified family kernel in display buffers; capture stays pinned to Lorenz classic seed-42`,
+      );
+      return;
+    }
     const m = matchRegime();
     panel.setActivePreset(m ? m.label : null);
     panel.setStatus(
@@ -877,6 +953,7 @@ async function main(): Promise<void> {
   }
 
   async function applyRegime(r: Regime): Promise<void> {
+    if (sysDef.key !== "lorenz") switchSystem("lorenz"); // regimes are Lorenz bookmarks
     params.sigma = r.sigma;
     params.rho = r.rho;
     params.beta = r.beta;
@@ -944,8 +1021,8 @@ async function main(): Promise<void> {
     { passive: false },
   );
 
-  const panel = createSettingsPanel("Lorenz Attractor", {
-    caption: "Three coupled equations, RK4-integrated into the butterfly that started chaos theory — deterministic, never repeating, forever on the attractor.",
+  const panel = createSettingsPanel("Strange Attractors", {
+    caption: "Coupled ODEs, RK4-integrated live on your GPU — Lorenz's butterfly and its chartered family, deterministic, never repeating, forever on the attractor.",
     initial: { tier: "test", seed: V.canonical.seed },
     onCapture: captureCanonical,
     presets: REGIMES.map((r) => ({
@@ -980,7 +1057,7 @@ async function main(): Promise<void> {
       diagnostics: [{ label: "diagnostics", value: "measuring…" }],
       honesty: {
         faithful:
-          "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs; every trajectory on screen (classic, presets, sliders, butterfly ghost) is that kernel re-integrated live on this GPU and drawn straight from its output buffer",
+          "the committed lorenz_rk4.wgsl — the exact f32 RK4 compute kernel the wgpu-native gate runs — for every Lorenz trajectory (classic, presets, sliders, butterfly ghost); the X-A family systems (Rössler / Aizawa / Sprott-A) run the operator-ratified attractors_rk4.wgsl display kernel, the same RK4 scheme over each system's committed reference field, each backed by its own gated backend capture, golden anchors and PBT invariants",
         simplified:
           "f32 on GPU — for a chaotic system the pointwise match to the f64 canonical decays by trajectory end, so the gate is structural (determinism + attractor envelope), not pointwise; sliders/presets/butterfly drive live display buffers only while the capture stays pinned to the classic seed-42 params; ribbon, glow, trails, wall projections and the damped auto-framing are render-side presentation over unmodified trajectory data (colour = a data-derived driver, finite-difference speed by default; colormap/theme/exposure are uniforms), and the boot trace-in is draw order, not re-integration",
         measured:
@@ -997,6 +1074,56 @@ async function main(): Promise<void> {
       ],
     },
   });
+
+  // ------------------------------------------- INTERACT: attractor selector --
+  // Registry-driven (spec § 4). Switching systems swaps the display kernel,
+  // parameter sliders, EXPLAIN content, section plane and sweep; the export
+  // capture stays pinned to Lorenz classic seed-42 (spec § 7.6).
+  const sysGroup = panel.addGroup("attractor");
+  const sysRow = document.createElement("div");
+  sysRow.className = "lz-row";
+  const sysLab = document.createElement("label");
+  sysLab.textContent = "system";
+  const sysSel = document.createElement("select");
+  sysSel.className = "lz-select";
+  for (const a of ATTRACTORS) {
+    const opt = document.createElement("option");
+    opt.value = a.key;
+    opt.textContent = a.label + (a.conservative ? " · conservative" : "");
+    sysSel.appendChild(opt);
+  }
+  sysRow.append(sysLab, sysSel);
+  const sysCaption = document.createElement("div");
+  sysCaption.className = "lz-note-line";
+  sysCaption.textContent = sysDef.caption;
+  sysGroup.append(sysRow, sysCaption);
+  sysSel.addEventListener("change", () => {
+    switchSystem(sysSel.value);
+  });
+
+  function switchSystem(key: string): void {
+    if (key === sysDef.key) return;
+    sysDef = getAttractor(key);
+    sysSel.value = key;
+    sysCaption.textContent = sysDef.caption;
+    for (const k of Object.keys(params)) delete params[k];
+    for (const p of sysDef.params) params[p.key] = p.canonical;
+    buildParamUI();
+    explain.setSystem(key);
+    instruments?.setSweep(
+      sysDef.sweep
+        ? {
+            label: sysDef.params.find((p) => p.key === sysDef.sweep!.paramKey)?.label ?? sysDef.sweep.paramKey,
+            lo: sysDef.sweep.lo,
+            hi: sysDef.sweep.hi,
+          }
+        : null,
+    );
+    if (!suspended) traceFrame = 0; // re-trace the new system in Play
+    paramsDirty = true;
+    announceParams();
+    if (suspended) scheduleStudyApply();
+  }
 
   // ---------------------------------------------- INTERACT: parameter group --
   const paramGroup = panel.addGroup("parameters — live re-integration");
@@ -1060,72 +1187,88 @@ async function main(): Promise<void> {
     return { input, val, fmt };
   }
 
-  const fmtSigma = (v: number): string => v.toFixed(1);
-  const fmtRho = (v: number): string => v.toFixed(2);
-  const fmtBeta = (v: number): string => (v === 8 / 3 ? "8/3" : v.toFixed(3));
-  const sSigma = addSlider(paramGroup, "σ", 1, 30, 0.1, params.sigma, fmtSigma, (v) => {
-    params.sigma = v;
-    onParamsChanged();
-  });
-  const sRho = addSlider(
-    paramGroup,
-    "ρ",
-    0,
-    350,
-    0.05,
-    params.rho,
-    fmtRho,
-    (v) => {
-      params.rho = v;
-      onParamsChanged();
-    },
-    [
-      { v: 24.74, title: "subcritical Hopf — chaos onset" },
-      { v: 99.65, title: "periodic window" },
-      { v: 350, title: "global limit cycle" },
-    ],
-  );
+  // Parameter sliders are registry-driven (spec § 4): rebuilt on system
+  // switch. Lorenz keeps its ρ ticks + bifurcation-sequence chips; other
+  // systems get one slider per registry ParamSpec.
+  const paramBox = document.createElement("div");
+  paramGroup.appendChild(paramBox);
+  let sliderHandles: Record<string, SliderHandle> = {};
+
+  const stepDecimals = (step: number): number => Math.max(0, -Math.floor(Math.log10(step)));
+  const fmtFor = (key: string, step: number): ((v: number) => string) =>
+    key === "beta"
+      ? (v: number): string => (v === 8 / 3 ? "8/3" : v.toFixed(3))
+      : (v: number): string => v.toFixed(stepDecimals(step));
+
+  const RHO_TICKS = [
+    { v: 24.74, title: "subcritical Hopf — chaos onset" },
+    { v: 99.65, title: "periodic window" },
+    { v: 350, title: "global limit cycle" },
+  ];
   // the real Lorenz bifurcation sequence as clickable bookmarks (expansion
   // spec § 3.2.e) — chips instead of slider ticks because 1 / 13.93 / 24.06 /
   // 24.74 all land within 7% of the linear 0–350 track and labels collide
-  {
-    const RHO_MARKS = [
-      { v: 1, label: "1 pitchfork", title: "ρ=1 — the origin loses stability; the C± fixed points are born" },
-      { v: 13.93, label: "13.93 homoclinic", title: "ρ≈13.93 — homoclinic explosion; transient chaos appears" },
-      { v: 24.06, label: "24.06 crisis", title: "ρ≈24.06 — the chaotic attractor becomes stable (coexists with C± until 24.74)" },
-      { v: 24.74, label: "24.74 Hopf", title: "ρ≈24.74 — subcritical Hopf; C± lose stability, chaos is the only attractor" },
-      { v: 99.65, label: "99.65 window", title: "ρ≈99.65 — a periodic window inside the chaotic range" },
-    ];
-    const chipRow = document.createElement("div");
-    chipRow.className = "lz-chiprow";
-    for (const mrk of RHO_MARKS) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "lz-chip";
-      b.textContent = mrk.label;
-      b.title = mrk.title;
-      b.addEventListener("click", () => {
-        params.rho = mrk.v;
-        syncSliders();
-        onParamsChanged();
-      });
-      chipRow.appendChild(b);
+  const RHO_MARKS = [
+    { v: 1, label: "1 pitchfork", title: "ρ=1 — the origin loses stability; the C± fixed points are born" },
+    { v: 13.93, label: "13.93 homoclinic", title: "ρ≈13.93 — homoclinic explosion; transient chaos appears" },
+    { v: 24.06, label: "24.06 crisis", title: "ρ≈24.06 — the chaotic attractor becomes stable (coexists with C± until 24.74)" },
+    { v: 24.74, label: "24.74 Hopf", title: "ρ≈24.74 — subcritical Hopf; C± lose stability, chaos is the only attractor" },
+    { v: 99.65, label: "99.65 window", title: "ρ≈99.65 — a periodic window inside the chaotic range" },
+  ];
+
+  function buildParamUI(): void {
+    paramBox.textContent = "";
+    sliderHandles = {};
+    for (const p of sysDef.params) {
+      const ticks = sysDef.key === "lorenz" && p.key === "rho" ? RHO_TICKS : undefined;
+      sliderHandles[p.key] = addSlider(
+        paramBox,
+        p.label,
+        p.min,
+        p.max,
+        p.step,
+        params[p.key]!,
+        fmtFor(p.key, p.step),
+        (v) => {
+          params[p.key] = v;
+          onParamsChanged();
+        },
+        ticks,
+      );
+      if (sysDef.key === "lorenz" && p.key === "rho") {
+        const chipRow = document.createElement("div");
+        chipRow.className = "lz-chiprow";
+        for (const mrk of RHO_MARKS) {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "lz-chip";
+          b.textContent = mrk.label;
+          b.title = mrk.title;
+          b.addEventListener("click", () => {
+            params.rho = mrk.v;
+            syncSliders();
+            onParamsChanged();
+          });
+          chipRow.appendChild(b);
+        }
+        paramBox.appendChild(chipRow);
+      }
     }
-    paramGroup.appendChild(chipRow);
+    if (!sysDef.params.length) {
+      const note = document.createElement("div");
+      note.className = "lz-note-line";
+      note.textContent = "parameter-free system — the field has no dials to turn";
+      paramBox.appendChild(note);
+    }
   }
-  const sBeta = addSlider(paramGroup, "β", 0.5, 5, 0.005, params.beta, fmtBeta, (v) => {
-    params.beta = v;
-    onParamsChanged();
-  });
+  buildParamUI();
 
   function syncSliders(): void {
-    for (const [h, v] of [
-      [sSigma, params.sigma],
-      [sRho, params.rho],
-      [sBeta, params.beta],
-    ] as const) {
-      h.input.value = String(v);
-      h.val.textContent = h.fmt(v);
+    for (const p of sysDef.params) {
+      const h = sliderHandles[p.key];
+      if (!h) continue;
+      h.input.value = String(params[p.key]!);
+      h.val.textContent = h.fmt(params[p.key]!);
     }
   }
 
@@ -1259,9 +1402,17 @@ async function main(): Promise<void> {
   // live so a deep link restores selects and sliders coherently
   writeHash = () => {
     const q = new URLSearchParams();
-    if (params.sigma !== SIGMA) q.set("s", String(params.sigma));
-    if (params.rho !== RHO) q.set("r", String(params.rho));
-    if (params.beta !== BETA) q.set("b", params.beta === 8 / 3 ? "8/3" : String(params.beta));
+    if (sysDef.key !== "lorenz") q.set("sys", sysDef.key);
+    if (sysDef.key === "lorenz") {
+      // legacy short keys for the flagship system's deep links
+      if (params.sigma !== SIGMA) q.set("s", String(params.sigma));
+      if (params.rho !== RHO) q.set("r", String(params.rho));
+      if (params.beta !== BETA) q.set("b", params.beta === 8 / 3 ? "8/3" : String(params.beta));
+    } else {
+      for (const p of sysDef.params) {
+        if (params[p.key] !== p.canonical) q.set(`p_${p.key}`, String(params[p.key]));
+      }
+    }
     if (colormapName !== "aurora") q.set("map", colormapName);
     if (colorMode !== 0) q.set("cb", COLOR_MODES[colorMode]!);
     if (bgTheme !== 0) q.set("th", BG_THEMES[bgTheme]!.name);
@@ -1272,19 +1423,36 @@ async function main(): Promise<void> {
     const raw = window.location.hash.slice(1);
     if (!raw) return false;
     const q = new URLSearchParams(raw);
+    let dirty = false;
+    const sys = q.get("sys");
+    if (sys && sys !== sysDef.key && ATTRACTORS.some((a) => a.key === sys)) {
+      switchSystem(sys); // sets paramsDirty; boot integrates below
+      dirty = true;
+    }
     const num = (k: string, lo: number, hi: number): number | null => {
       const v = q.get(k);
       if (v === null) return null;
       const n = v === "8/3" ? 8 / 3 : Number(v);
       return Number.isFinite(n) ? Math.min(hi, Math.max(lo, n)) : null;
     };
-    let dirty = false;
-    const s = num("s", 1, 30);
-    if (s !== null && s !== params.sigma) { params.sigma = s; dirty = true; }
-    const r = num("r", 0, 350);
-    if (r !== null && r !== params.rho) { params.rho = r; dirty = true; }
-    const b = num("b", 0.5, 5);
-    if (b !== null && b !== params.beta) { params.beta = b; dirty = true; }
+    if (sysDef.key === "lorenz") {
+      const legacy: Record<string, string> = { sigma: "s", rho: "r", beta: "b" };
+      for (const p of sysDef.params) {
+        const v = num(legacy[p.key]!, p.min, p.max);
+        if (v !== null && v !== params[p.key]) {
+          params[p.key] = v;
+          dirty = true;
+        }
+      }
+    } else {
+      for (const p of sysDef.params) {
+        const v = num(`p_${p.key}`, p.min, p.max);
+        if (v !== null && v !== params[p.key]) {
+          params[p.key] = v;
+          dirty = true;
+        }
+      }
+    }
     const map = q.get("map");
     if (map && COLORMAPS.some((c) => c.name === map)) {
       setColormap(map);
@@ -1378,12 +1546,13 @@ async function main(): Promise<void> {
     instruments = installInstruments({
       group: instrumentsGroup,
       nPoints,
-      dt: DT,
-      integrateScratch: async (rho, out) => {
-        queue.writeBuffer(sweepParamBuf, 0, paramsPayload(0, rho));
+      integrateSweep: async (value, out) => {
+        const key = sysDef.sweep?.paramKey;
+        if (!key) throw new Error("no sweep parameter chartered for this system");
+        queue.writeBuffer(sweepParamBuf, 0, paramsPayload(0, { key, value }));
         const enc = device.createCommandEncoder();
         const pass = enc.beginComputePass();
-        pass.setPipeline(computePipeline);
+        pass.setPipeline(activePipeline());
         pass.setBindGroup(0, sweepBG);
         pass.dispatchWorkgroups(1);
         pass.end();
@@ -1394,10 +1563,12 @@ async function main(): Promise<void> {
         sweepRB.unmap();
       },
     });
+    // Lorenz boots as the active system: arm its ρ sweep
+    instruments.setSweep({ label: "ρ", lo: sysDef.sweep!.lo, hi: sysDef.sweep!.hi });
   }
 
   // EXPLAIN + PROVE layers (spec §§ 3.2–3.3)
-  installExplainPanel(panel);
+  const explain = installExplainPanel(panel);
   installVerifyPanel({
     panel,
     device,
