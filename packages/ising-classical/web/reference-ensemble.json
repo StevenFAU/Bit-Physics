@@ -1,0 +1,31 @@
+{
+  "_provenance": {
+    "generated": "2026-07-03",
+    "command": "uv run --no-sync python — mirrors _gate_ising's np_run() verbatim (tools/productization/web-deploy/verify.py:344-354): for seed in 42..47: initial_condition(p, seed); rng = np.random.default_rng(seed + 1); 10000 × metropolis_sweep; energy_per_spin(final)",
+    "source_oracle": "packages/ising-classical/ising_classical/reference/ising_numpy.py",
+    "note": "recorded once (a 6-seed ensemble is ~35 s — too slow for prebuild/predev); gen-verification.mjs cross-checks these values against the committed docs/perf-ledger.md browser row (mean and z) and FAILS the build on drift. Regenerate with the command above if the reference oracle ever changes.",
+    "consistency": "z recomputed from these stats against the ledger's browser energy −1.47 rounds to the ledger's z=1.46"
+  },
+  "protocol": {
+    "n": 128,
+    "J": 1.0,
+    "h": 0.0,
+    "T": 2.27,
+    "sweeps": 10000,
+    "seeds": [42, 43, 44, 45, 46, 47],
+    "rng": "np.random.default_rng(seed + 1)"
+  },
+  "energies_per_spin": [
+    -1.3935546875,
+    -1.37939453125,
+    -1.414306640625,
+    -1.39404296875,
+    -1.48583984375,
+    -1.439208984375
+  ],
+  "mean": -1.417724609375,
+  "std": 0.035886734198683226,
+  "sem": 0.014650697886943478,
+  "spread": 0.035886734198683226,
+  "spread_convention": "max(SEM, full σ) = full σ — verify.py:354 treats the browser as an independent single sample, not an ensemble member"
+}

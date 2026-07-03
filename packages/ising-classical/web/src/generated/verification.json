@@ -1,0 +1,185 @@
+{
+  "_generated_by": "packages/ising-classical/web/gen-verification.mjs — do not edit by hand",
+  "sim": "ising-classical",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "observable",
+    "z_threshold": 3,
+    "n_seeds": 6,
+    "criterion": "z = |E_browser − μ_ref| / spread < z_threshold, spread = max(SEM, σ) over the NumPy ensemble",
+    "recorded_browser": {
+      "energy_per_spin": -1.47,
+      "ensemble_mean": -1.418,
+      "z": 1.46,
+      "backend": "ANGLE-Vulkan RX 6800 XT",
+      "date": "2026-06-09"
+    },
+    "run_twice": "byte-identical"
+  },
+  "reference_ensemble": {
+    "n_seeds": 6,
+    "seeds": [
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "energies_per_spin": [
+      -1.3935546875,
+      -1.37939453125,
+      -1.414306640625,
+      -1.39404296875,
+      -1.48583984375,
+      -1.439208984375
+    ],
+    "mean": -1.417724609375,
+    "std": 0.035886734198683226,
+    "sem": 0.014650697886943478,
+    "spread": 0.035886734198683226,
+    "spread_convention": "max(SEM, full σ) = full σ — verify.py:354 treats the browser as an independent single sample, not an ensemble member",
+    "source": "ising_classical.reference.ising_numpy metropolis_sweep — the gate's own oracle",
+    "provenance": "uv run --no-sync python — mirrors _gate_ising's np_run() verbatim (tools/productization/web-deploy/verify.py:344-354): for seed in 42..47: initial_condition(p, seed); rng = np.random.default_rng(seed + 1); 10000 × metropolis_sweep; energy_per_spin(final)"
+  },
+  "analytic": {
+    "Tc": 2.269185314213022,
+    "Tc_formula": "2 / ln(1 + √2)",
+    "kramers_wannier": "sinh(2 β_c J) = 1 (1941 duality — the same T_c from self-duality)",
+    "yang_formula": "m(T) = (1 − sinh⁻⁴(2/T))^(1/8) for T < T_c; 0 above",
+    "yang_points": [
+      {
+        "T": 0.5,
+        "m": 0.9999997746272086
+      },
+      {
+        "T": 1,
+        "m": 0.9992757519570612
+      },
+      {
+        "T": 1.5,
+        "m": 0.9864996026214945
+      },
+      {
+        "T": 2,
+        "m": 0.911319377877496
+      },
+      {
+        "T": 2.2,
+        "m": 0.7847551313839213
+      },
+      {
+        "T": 2.25,
+        "m": 0.671854026683279
+      }
+    ],
+    "magnetization_rel": 0.05,
+    "critical_temp_rel": 0.001,
+    "golden_tables": {
+      "critical_temperature": "tools/testkit/golden/tables/ising-classical-critical-temperature.json",
+      "magnetization": "tools/testkit/golden/tables/ising-classical-magnetization.json"
+    }
+  },
+  "determinism": {
+    "claimed": "bit-exact-same-hw",
+    "run_twice": "byte-identical",
+    "field_note": "the in-shader PCG hash differs from the reference's PCG64 — microstates differ by design, statistics agree; that is why the gate is `observable`, not a field compare"
+  },
+  "canonical": {
+    "descriptor": "metropolis-128sq-T2.27-seed42-step10000",
+    "seed": 42,
+    "grid": [
+      128,
+      128
+    ],
+    "sweeps": 10000,
+    "capture_interval": 1000,
+    "params": {
+      "J": 1,
+      "T": 2.27,
+      "h": 0
+    },
+    "payload_sha256": "sha256:cf844e5d0485a228f2bf9d7acc738097f6c09f7b5534d76d6dd096feb7ca9cbc",
+    "wall_clock_reference_s": 5.558,
+    "wall_clock_browser_s": 38.17
+  },
+  "falsify": {
+    "wrong_T": 1.5,
+    "note": "falsifiability-probe protocol (spec § 3.3): the SAME gate criterion run at a deliberately wrong temperature — NOT a gate parameter; the ordered-phase energy sits far outside the reference ensemble"
+  },
+  "surfaces": {
+    "numpy_reference_s": 5.558,
+    "pypi_wheel": "bit-exact 0.0/0.0 (fresh-venv wheel re-emits the canonical capture)",
+    "pypi_wall_s": 36.3,
+    "webgpu_headless_s": 38.17
+  },
+  "ic_asset": {
+    "asset": "ising-ic-seed42.bin",
+    "bytes": 65536,
+    "sha256": "4c206dc14c81ecb09759cfb2b65e4c590ece0154078b78a33dd0eccb08918e2a",
+    "provenance": "the committed seed-42 ±1 lattice the canonical protocol replays — shipped verbatim"
+  },
+  "code_anchors": {
+    "checkerboard": {
+      "line": 64,
+      "text": "if (((gid.x + gid.y) & 1u) != params.color) { return; }"
+    },
+    "neighbour_sum": {
+      "start": 70,
+      "end": 72,
+      "lines": [
+        "let neighbour_sum = f32(",
+        "    spin_at(i - 1, j) + spin_at(i + 1, j)",
+        "  + spin_at(i, j - 1) + spin_at(i, j + 1));"
+      ]
+    },
+    "delta_e": {
+      "line": 75,
+      "text": "let delta_e = 2.0 * s * (params.J * neighbour_sum + params.h);"
+    },
+    "accept": {
+      "start": 76,
+      "end": 79,
+      "lines": [
+        "let accept_prob = exp(-delta_e / params.T);",
+        "if (uniform01(gid.x, gid.y) < accept_prob) {",
+        "  let idx = gid.y * params.n + gid.x;",
+        "  spins[idx] = -spins[idx];"
+      ]
+    },
+    "pcg": {
+      "start": 47,
+      "end": 57,
+      "lines": [
+        "fn pcg_hash(input: u32) -> u32 {",
+        "let state = input * 747796405u + 2891336453u;",
+        "let word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;",
+        "return (word >> 22u) ^ word;",
+        "}",
+        "",
+        "fn uniform01(i: u32, j: u32) -> f32 {",
+        "let key = (j * params.n + i) ^ (params.seed * 2654435761u)",
+        "        ^ (params.step * 40503u) ^ (params.color * 19349663u);",
+        "let h = pcg_hash(key);",
+        "return f32(h) * (1.0 / 4294967296.0);"
+      ]
+    },
+    "entry": {
+      "line": 60,
+      "text": "@compute @workgroup_size(8, 8, 1)"
+    }
+  },
+  "links": {
+    "kernel": "packages/ising-classical/src/metropolis.wgsl",
+    "spec": "docs/sim-specs/lattice-spin/ising-classical/spec-ref.md",
+    "derivation": "tools/testkit/golden/derivations/ising-onsager.md",
+    "golden_tc": "tools/testkit/golden/tables/ising-classical-critical-temperature.json",
+    "golden_m": "tools/testkit/golden/tables/ising-classical-magnetization.json",
+    "capture_manifest": "captures/ising-classical-ref/metropolis-128sq-T2.27-seed42-step10000.json",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "perf_ledger": "docs/perf-ledger.md",
+    "reference_ensemble": "packages/ising-classical/web/reference-ensemble.json",
+    "resolution_audit": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md"
+  }
+}

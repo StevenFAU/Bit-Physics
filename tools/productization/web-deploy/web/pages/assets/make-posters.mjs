@@ -44,7 +44,12 @@ const SIMS = {
   // in-shader tonemap) regenerated at the same frame count — no boost needed,
   // the shader carries its own exposure; hiDPI boot sizing is dpr=1 headless.
   "reaction-diffusion-2d": { frames: 2200, px: 512 },
-  "ising-classical": { frames: 600, px: 512 },
+  // verification-demo rework (ising): render.wgsl v2 (AA-nearest two-tone +
+  // domain-wall emphasis + flip-activity layer, in-shader tonemap). Frames
+  // drop 600→150: at the critical default T the seed-42 trajectory has gone
+  // majority-up by 600 — 150 freezes the mixed-phase critical texture (both
+  // tones + luminous walls), the poster-worthy face of the transition.
+  "ising-classical": { frames: 150, px: 512 },
   "mandelbulb-explorer": { frames: 200, px: 360 },
   // verification-demo rework: the v2 render (HDR additive ribbon+glow, GPU-side
   // exposure) needs no photographic rescue — boost drops 1.9→1.1. Frames move
