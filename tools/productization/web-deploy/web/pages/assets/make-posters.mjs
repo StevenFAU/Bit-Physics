@@ -40,6 +40,9 @@ const SIMS = {
   "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
   physarum: { frames: 650, px: 512 },
+  // verification-demo rework (rd2d): render.wgsl v2 (bilinear + relief +
+  // in-shader tonemap) regenerated at the same frame count — no boost needed,
+  // the shader carries its own exposure; hiDPI boot sizing is dpr=1 headless.
   "reaction-diffusion-2d": { frames: 2200, px: 512 },
   "ising-classical": { frames: 600, px: 512 },
   "mandelbulb-explorer": { frames: 200, px: 360 },

@@ -19,7 +19,10 @@
       /* Pre-bundle paint only — the canon is common-web/src/theme.css,
          imported by src/main.ts and bundled by Vite. */
       html, body { margin: 0; height: 100%; background: #06090d; }
-      #view { image-rendering: pixelated; width: min(90vmin, 720px); height: min(90vmin, 720px); }
+      /* Bilinear reconstruction lives in the fragment shader now (render.wgsl
+         v2) and the backing store is sized to CSS × dpr at boot — no CSS
+         pixelation hint; the raw-grid toggle is the honest texel view. */
+      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); }
     </style>
   </head>
   <body>

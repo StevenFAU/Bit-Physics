@@ -1,0 +1,140 @@
+{
+  "_generated_by": "packages/reaction-diffusion-2d/web/gen-verification.mjs — do not edit by hand",
+  "sim": "reaction-diffusion-2d",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "capture_roundtrip",
+    "declared": {
+      "relative": 0.0001,
+      "absolute": 0
+    },
+    "criterion": "max_abs_err <= absolute + relative * max|field|, per captured field",
+    "measured_max_abs": 0.000026414220577697378,
+    "measured_equals_wgpu_native": true,
+    "run_twice": "byte-identical"
+  },
+  "postmortem": {
+    "prefix_step200_max_abs": 0.000001,
+    "prefix_step2000_max_abs": 0.074,
+    "root_cause": "frontend harness race (capture/live-loop shared ping-pong state) — the cross-backend-f32 hypothesis was REFUTED by measurement",
+    "tolerance_widened": false,
+    "postfix_max_abs": 0.000026414220577697378,
+    "contingency": {
+      "status": "opt-in, dormant, pending-lavapipe",
+      "bounds": "undeclared (measured-then-declared)",
+      "short_horizon_max_step": 200,
+      "short_horizon_abs": 0.0001,
+      "field_bound": 0.001
+    },
+    "audits": {
+      "charter": "docs/_audits/phase-5/browser-divergence-charter-2026-06-09T12-49-00Z.md",
+      "resolution": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md"
+    },
+    "perf_ledger_prefix_row": "docs/perf-ledger.md"
+  },
+  "determinism": {
+    "reference_claimed": "bit-exact-same-hw",
+    "browser_claimed": "epsilon",
+    "run_twice": "byte-identical"
+  },
+  "canonical": {
+    "descriptor": "gray-scott-lambda-128sq-seed42-step2000",
+    "seed": 42,
+    "grid": [
+      128,
+      128
+    ],
+    "step_count": 2000,
+    "capture_interval": 200,
+    "params": {
+      "Du": 0.16,
+      "Dv": 0.08,
+      "F": 0.0367,
+      "dt": 1,
+      "dx": 1,
+      "k": 0.0649
+    },
+    "payload_sha256": "sha256:bcae544ae58ceb1fb06f9b8be2441f9116eebd8ea5d21dd616f2daf6f92148f0",
+    "wall_clock_reference_s": 0.931,
+    "wall_clock_browser_s": 1.88
+  },
+  "canonical_final_fields": {
+    "asset": "rd2d-canonical-step2000.bin",
+    "sha256": "493ffbbae5c124b599aff2628f03a397b514bf161acd748d814e30869fad2e4f",
+    "bytes": 262144,
+    "dtype": "<f8",
+    "layout": "U[128*128] ++ V[128*128], row-major",
+    "step": 2000,
+    "extracted_from": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5"
+  },
+  "ic_asset": {
+    "asset": "rd2d-ic-seed42.bin",
+    "bytes": 131072,
+    "sha256": "68af1f36d01b9e0fe81b93508ebd32d093f4fa55024b6720edeb7116693f67f4",
+    "provenance": "numpy PCG64 uniform(-1e-3, 1e-3) seed-42 perturbation — not reproducible in-browser, shipped verbatim"
+  },
+  "surfaces": {
+    "stacks": [
+      "numpy-reference",
+      "taichi-cpu",
+      "vulkan-cpp",
+      "webgpu-headless"
+    ],
+    "native_binary": "reaction-diffusion-2d-stack-c"
+  },
+  "code_anchors": {
+    "wrap": {
+      "start": 28,
+      "end": 30,
+      "lines": [
+        "fn wrap(i: i32, n: i32) -> i32 {",
+        "let m = i % n;",
+        "return select(m, m + n, m < 0);"
+      ]
+    },
+    "laplacian": {
+      "start": 49,
+      "end": 54,
+      "lines": [
+        "let lap_u = (cell(i - 1, j, 0u) + cell(i + 1, j, 0u)",
+        "           + cell(i, j - 1, 0u) + cell(i, j + 1, 0u)",
+        "           - 4.0 * u) / (params.dx * params.dx);",
+        "let lap_v = (cell(i - 1, j, 1u) + cell(i + 1, j, 1u)",
+        "           + cell(i, j - 1, 1u) + cell(i, j + 1, 1u)",
+        "           - 4.0 * v) / (params.dx * params.dx);"
+      ]
+    },
+    "reaction": {
+      "line": 56,
+      "text": "let uvv = u * v * v;"
+    },
+    "feed": {
+      "line": 57,
+      "text": "let du  = params.Du * lap_u - uvv + params.F * (1.0 - u);"
+    },
+    "kill": {
+      "line": 58,
+      "text": "let dv  = params.Dv * lap_v + uvv - (params.F + params.k) * v;"
+    },
+    "euler": {
+      "start": 61,
+      "end": 62,
+      "lines": [
+        "state_out[idx + 0u] = u + params.dt * du;",
+        "state_out[idx + 1u] = v + params.dt * dv;"
+      ]
+    }
+  },
+  "links": {
+    "kernel": "packages/reaction-diffusion-2d/src/gray_scott.wgsl",
+    "spec": "docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref.md",
+    "algebraic": "docs/sim-specs/continuous-ca/reaction-diffusion-2d/algebraic.md",
+    "determinism": "docs/sim-specs/continuous-ca/reaction-diffusion-2d/determinism.md",
+    "charter_audit": "docs/_audits/phase-5/browser-divergence-charter-2026-06-09T12-49-00Z.md",
+    "resolution_audit": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md",
+    "perf_ledger": "docs/perf-ledger.md",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "capture_manifest": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json"
+  }
+}

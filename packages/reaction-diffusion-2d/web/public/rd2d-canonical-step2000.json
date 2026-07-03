@@ -1,0 +1,15 @@
+{
+  "_generated_by": "packages/reaction-diffusion-2d/web/extract-canonical-fields.py",
+  "asset": "rd2d-canonical-step2000.bin",
+  "sha256": "493ffbbae5c124b599aff2628f03a397b514bf161acd748d814e30869fad2e4f",
+  "bytes": 262144,
+  "dtype": "<f8",
+  "layout": "U[128*128] ++ V[128*128], row-major",
+  "step": 2000,
+  "grid": [
+    128,
+    128
+  ],
+  "extracted_from": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.h5",
+  "source_payload_sha256": "sha256:bcae544ae58ceb1fb06f9b8be2441f9116eebd8ea5d21dd616f2daf6f92148f0"
+}
