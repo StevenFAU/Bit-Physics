@@ -1,0 +1,76 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "halvorsen-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/halvorsen-structural.md",
+    "upstream": "Sprott-2003-catalog",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "origin_jacobian_eigenvalues",
+        "a": 1.4
+      },
+      "expected": {
+        "form": "J(0) = -a*I - 4*(ones - I) is a symmetric circulant: -a-8 on the diagonal direction, -a+4 (twice) on its complement",
+        "eigenvalues_ascending": [
+          -9.4,
+          2.6,
+          2.6
+        ]
+      },
+      "independent_reference": {
+        "source": "Halvorsen system as cataloged in Sprott, J. C. (2003), 'Chaos and Time-Series Analysis' (ISBN 978-0-19-850839-7), canonical a = 1.4. Circulant eigenstructure hand-derived in the derivation .md section 1; SymPy eigenvals (generator) and numpy.linalg.eigvals (sim test) agree.",
+        "derived_by": "hand circulant argument; SymPy eigenvals; numpy.linalg.eigvals cross-check",
+        "expected": {
+          "eigenvalues_ascending": [
+            -9.4,
+            2.6,
+            2.6
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence",
+        "a": 1.4
+      },
+      "expected": {
+        "divergence": -4.2,
+        "form": "div f = -3*a (constant)"
+      },
+      "independent_reference": {
+        "source": "Trace of the hand-derived Jacobian (derivation .md section 2). SymPy trace (generator) and the central-difference PBT invariant agree.",
+        "derived_by": "hand trace; SymPy trace; central-difference PBT cross-check",
+        "expected": {
+          "divergence": -4.2
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "cyclic_symmetry",
+        "a": 1.4
+      },
+      "expected": {
+        "residual": 0.0,
+        "form": "f(Cx) = C f(x) exactly, C = cyclic rotation (x,y,z)->(y,z,x)"
+      },
+      "independent_reference": {
+        "source": "Direct substitution \u2014 each component maps onto the next under the rotation (derivation .md section 3). SymPy symbolic residual is exactly zero (generator); the sim PBT invariant samples the identity at random points.",
+        "derived_by": "hand substitution; SymPy symbolic residual = 0; PBT numerical sampling",
+        "expected": {
+          "residual": 0.0
+        }
+      }
+    }
+  ]
+}

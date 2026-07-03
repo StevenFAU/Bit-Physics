@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fourwing-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/fourwing-structural.md",
+    "upstream": "Sprott-2010-Elegant-Chaos-class",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "origin_jacobian_eigenvalues",
+        "a": 0.2,
+        "b": -0.01,
+        "d": -0.4,
+        "e": -1
+      },
+      "expected": {
+        "form": "J(0) = [[a,0,0],[b,d,0],[0,0,e]] is lower triangular: eigenvalues (a, d, e); b shifts eigenvectors only",
+        "eigenvalues_ascending": [
+          -1.0,
+          -0.4,
+          0.2
+        ]
+      },
+      "independent_reference": {
+        "source": "Four-wing catalog form (the class is cataloged in Sprott, J. C. (2010), 'Elegant Chaos: Algebraically Simple Chaotic Flows', World Scientific; canonical parameter set per the repo's expansion spec section 3.3.1). Triangularity read off the hand-derived Jacobian (derivation .md section 1); SymPy eigenvals (generator) and numpy.linalg.eigvals (sim test) agree.",
+        "derived_by": "hand triangular argument; SymPy eigenvals; numpy.linalg.eigvals cross-check",
+        "expected": {
+          "eigenvalues_ascending": [
+            -1.0,
+            -0.4,
+            0.2
+          ]
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence",
+        "a": 0.2,
+        "d": -0.4,
+        "e": -1
+      },
+      "expected": {
+        "divergence": -1.2,
+        "form": "div f = a + d + e (constant)"
+      },
+      "independent_reference": {
+        "source": "Trace of the hand-derived Jacobian (derivation .md section 2). SymPy trace (generator) and the central-difference PBT invariant agree.",
+        "derived_by": "hand trace; SymPy trace; central-difference PBT cross-check",
+        "expected": {
+          "divergence": -1.2
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "parity_symmetry",
+        "a": 0.2,
+        "b": -0.01,
+        "c": 1,
+        "d": -0.4,
+        "e": -1,
+        "f": -1
+      },
+      "expected": {
+        "residual": 0.0,
+        "form": "f(-x, -y, z) = (-f_x, -f_y, f_z)(x, y, z) exactly \u2014 the four wings come in two parity pairs"
+      },
+      "independent_reference": {
+        "source": "Direct substitution (derivation .md section 3): the x- and y-components are odd under P = diag(-1,-1,1), the z-component even. SymPy symbolic residual is exactly zero (generator); the sim PBT invariant samples the identity at random points.",
+        "derived_by": "hand substitution; SymPy symbolic residual = 0; PBT numerical sampling",
+        "expected": {
+          "residual": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "config": {
+    "dims": [
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "b": 0.208186,
+      "dt": 0.05,
+      "ic_jitter_scale": 1e-06
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:6178a87a1354c573f7de4d4c3facf7660483ced74c19dba76539482232c8ead0",
+    "format": "hdf5",
+    "path": "thomas-trajectory-seed42-step10000.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-07-03T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.09186503299861215
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "strange-attractors",
+    "variant": "thomas"
+  },
+  "stack": {
+    "build_id": "phase-6-xa-expansion",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

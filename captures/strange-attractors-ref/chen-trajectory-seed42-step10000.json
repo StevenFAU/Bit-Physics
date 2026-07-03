@@ -1,0 +1,44 @@
+{
+  "config": {
+    "dims": [
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "a": 35.0,
+      "b": 3.0,
+      "c": 28.0,
+      "dt": 0.002,
+      "ic_jitter_scale": 1e-06
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:5b0e093c61db93913b92499d38f21e127d1829cebd140370c18a2826eb8b56c0",
+    "format": "hdf5",
+    "path": "chen-trajectory-seed42-step10000.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-07-03T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.08313403799911612
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "strange-attractors",
+    "variant": "chen"
+  },
+  "stack": {
+    "build_id": "phase-6-xa-expansion",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

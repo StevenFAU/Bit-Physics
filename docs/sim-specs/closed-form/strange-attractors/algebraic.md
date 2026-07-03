@@ -125,3 +125,76 @@ source that documents a genuinely chaotic continuous variant.
 The mandelbulb-explorer sim (paired in this stage per charter § 7.4)
 covers the 3D fractal distance estimator. See
 [`docs/sim-specs/closed-form/mandelbulb-explorer/algebraic.md`](../mandelbulb-explorer/algebraic.md).
+
+## 8. Scope-amendment systems (X-B / X-C, ratified 2026-07-03)
+
+Sections 9–13 extend the algebraic anchor beyond the original chartered
+family per the operator-ratified X-B/X-C scope amendment (spec-ref § 1;
+`packages/strange-attractors/web/feature-expansion-spec.md` § 3.3).
+Full derivations, calibration measurements and independent-reference
+routes live in each system's
+`tools/testkit/golden/derivations/<name>-structural.md`.
+
+## 9. Thomas (X-B)
+
+**FACT — citation.** Thomas, R. (1999), "Deterministic chaos seen in
+terms of feedback circuits", *Int. J. Bifurcation Chaos* 9 (10),
+1889–1905, DOI
+[10.1142/S0218127499001383](https://doi.org/10.1142/S0218127499001383)
+(Crossref-verified at implementation). Canonical $b = 0.208186$ per the
+Sprott 2003 catalog usage.
+
+$$\dot{x} = \sin y - bx,\quad \dot{y} = \sin z - by,\quad \dot{z} = \sin x - bz.$$
+
+Cyclically symmetric under $(x,y,z)\to(y,z,x)$;
+$\operatorname{div} f = -3b$ (constant);
+$J(0) = -bI + P$ gives eigenvalues $-b + \sqrt[3]{1}$.
+
+## 10. Halvorsen (X-B)
+
+**FACT — citation.** Cataloged in Sprott 2003 (ISBN 978-0-19-850839-7).
+Canonical $a = 1.4$.
+
+$$\dot{x} = -ax - 4y - 4z - y^2 \quad (\text{and cyclically}).$$
+
+Cyclically symmetric; $\operatorname{div} f = -3a$;
+$J(0)$ is a symmetric circulant with eigenvalues $-a-8,\ -a+4,\ -a+4$.
+
+## 11. Dadras (X-C)
+
+**FACT — citation.** Dadras, S., Momeni, H. R. (2009), *Phys. Lett. A*
+373 (40), 3637–3642, DOI
+[10.1016/j.physleta.2009.07.088](https://doi.org/10.1016/j.physleta.2009.07.088)
+(Crossref-verified). Canonical $(p,o,r,c,e) = (3, 2.7, 1.7, 2, 9)$.
+
+$$\dot{x} = y - px + oyz,\quad \dot{y} = ry - xz + z,\quad \dot{z} = cxy - ez.$$
+
+Origin fixed point with triangular $J(0)$: eigenvalues $(-p, r, -e)$;
+$\operatorname{div} f = -p + r - e$.
+
+## 12. Chen (X-C)
+
+**FACT — citation.** Chen, G., Ueta, T. (1999), "Yet another chaotic
+attractor", *Int. J. Bifurcation Chaos* 9 (7), 1465–1466, DOI
+[10.1142/S0218127499001024](https://doi.org/10.1142/S0218127499001024)
+(Crossref-verified). Canonical $(a,b,c) = (35, 3, 28)$.
+
+$$\dot{x} = a(y-x),\quad \dot{y} = (c-a)x - xz + cy,\quad \dot{z} = xy - bz.$$
+
+Lorenz-sibling algebra: $C_\pm = (\pm\sqrt{b(2c-a)}, \pm\sqrt{b(2c-a)}, 2c-a)$;
+block-triangular $J(0)$; $\operatorname{div} f = c - a - b$. **Fast at
+canonical parameters — dt = 0.002 measured** (expansion spec § 3.3.1).
+
+## 13. Four-wing (X-C)
+
+**FACT — class citation.** The four-wing class is cataloged in Sprott,
+J. C. (2010), *Elegant Chaos*, World Scientific
+(ISBN 978-981-283-881-0); canonical set
+$(a,\dots,f) = (0.2, -0.01, 1, -0.4, -1, -1)$ per the expansion spec
+§ 3.3.1 table.
+
+$$\dot{x} = ax + cyz,\quad \dot{y} = bx + dy - xz,\quad \dot{z} = ez + fxy.$$
+
+Parity-equivariant under $\mathrm{diag}(-1,-1,1)$ (the two wing pairs);
+triangular $J(0)$ with eigenvalues $(a, d, e)$;
+$\operatorname{div} f = a + d + e$.

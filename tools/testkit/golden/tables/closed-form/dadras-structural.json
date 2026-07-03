@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "dadras-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/dadras-structural.md",
+    "upstream": "Dadras-Momeni-2009",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "origin_jacobian_eigenvalues",
+        "p": 3,
+        "o": 2.7,
+        "r": 1.7,
+        "c": 2,
+        "e": 9
+      },
+      "expected": {
+        "form": "J(0) = [[-p,1,0],[0,r,1],[0,0,-e]] is upper triangular: eigenvalues (-p, r, -e)",
+        "eigenvalues_ascending": [
+          -9.0,
+          -3.0,
+          1.7
+        ]
+      },
+      "independent_reference": {
+        "source": "Dadras, S., Momeni, H. R. (2009), 'A novel three-dimensional autonomous chaotic system generating two, three and four-scroll attractors', Phys. Lett. A 373 (40), 3637-3642, defines the field and canonical parameters (DOI verified against Crossref at implementation). Triangularity is read off the hand-derived Jacobian (derivation .md section 1); SymPy eigenvals (generator) and numpy.linalg.eigvals (sim test) agree.",
+        "derived_by": "hand triangular argument; SymPy eigenvals; numpy.linalg.eigvals cross-check",
+        "expected": {
+          "eigenvalues_ascending": [
+            -9.0,
+            -3.0,
+            1.7
+          ]
+        },
+        "doi": "10.1016/j.physleta.2009.07.088"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence",
+        "p": 3,
+        "r": 1.7,
+        "e": 9
+      },
+      "expected": {
+        "divergence": -10.3,
+        "form": "div f = -p + r - e (constant)"
+      },
+      "independent_reference": {
+        "source": "Trace of the hand-derived Jacobian (derivation .md section 2). SymPy trace (generator) and the central-difference PBT invariant agree.",
+        "derived_by": "hand trace; SymPy trace; central-difference PBT cross-check",
+        "expected": {
+          "divergence": -10.3
+        },
+        "doi": "10.1016/j.physleta.2009.07.088"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "origin_field_probe",
+        "p": 3,
+        "o": 2.7,
+        "r": 1.7,
+        "c": 2,
+        "e": 9
+      },
+      "expected": {
+        "field_at_origin": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "form": "the origin is a fixed point (every term carries a state factor)"
+      },
+      "independent_reference": {
+        "source": "Read directly off the field definition (derivation .md section 3); the sim test asserts the residual numerically.",
+        "derived_by": "inspection; SymPy substitution; sim residual check",
+        "expected": {
+          "field_at_origin": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        }
+      }
+    }
+  ]
+}

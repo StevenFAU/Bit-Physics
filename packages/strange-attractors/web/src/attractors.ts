@@ -115,6 +115,90 @@ export const ATTRACTORS: readonly AttractorDef[] = [
     sweep: null,
     conservative: true,
   },
+  // ---- X-B cluster (scope amendment, ratified 2026-07-03) ----
+  {
+    key: "thomas",
+    label: "Thomas",
+    fieldId: 4,
+    params: [{ key: "b", label: "b", min: 0.01, max: 0.5, step: 0.001, canonical: 0.208186 }],
+    dt: 0.05,
+    ic: [1.1, 1.1, -0.01],
+    caption:
+      "Thomas 1999 — cyclically symmetric feedback: three sines chasing each other. Lower b toward zero and it walks the labyrinth.",
+    section: { axis: 2, value: () => 0, label: "z = 0" },
+    sweep: { paramKey: "b", lo: 0.02, hi: 0.45 },
+    conservative: false,
+  },
+  {
+    key: "halvorsen",
+    label: "Halvorsen",
+    fieldId: 5,
+    params: [{ key: "a", label: "a", min: 0.5, max: 3, step: 0.005, canonical: 1.4 }],
+    dt: 0.005,
+    ic: [-1.48, -1.51, 2.04],
+    caption:
+      "Halvorsen — a cyclically symmetric three-lobe: one equation, rotated three ways, sharing a single proboscis.",
+    section: { axis: 2, value: () => 0, label: "z = 0" },
+    sweep: { paramKey: "a", lo: 0.5, hi: 3 },
+    conservative: false,
+  },
+  // ---- X-C cluster (scope amendment, ratified 2026-07-03) ----
+  {
+    key: "dadras",
+    label: "Dadras",
+    fieldId: 6,
+    params: [
+      { key: "p", label: "p", min: 1, max: 6, step: 0.01, canonical: 3 },
+      { key: "o", label: "o", min: 0.5, max: 5, step: 0.01, canonical: 2.7 },
+      { key: "r", label: "r", min: 0.5, max: 3, step: 0.01, canonical: 1.7 },
+      { key: "c", label: "c", min: 0.5, max: 5, step: 0.01, canonical: 2 },
+      { key: "e", label: "e", min: 4, max: 12, step: 0.01, canonical: 9 },
+    ],
+    dt: 0.005,
+    ic: [1, 1, 1],
+    caption:
+      "Dadras–Momeni 2009 — the scroll-counter: sweep its parameters and it grows two, three, then four scrolls.",
+    section: { axis: 2, value: () => 0, label: "z = 0" },
+    sweep: { paramKey: "r", lo: 0.5, hi: 3 },
+    conservative: false,
+  },
+  {
+    key: "chen",
+    label: "Chen",
+    fieldId: 7,
+    params: [
+      { key: "a", label: "a", min: 20, max: 45, step: 0.05, canonical: 35 },
+      { key: "b", label: "b", min: 0.5, max: 8, step: 0.01, canonical: 3 },
+      { key: "c", label: "c", min: 15, max: 35, step: 0.05, canonical: 28 },
+    ],
+    dt: 0.002,
+    ic: [-3, 2, 20],
+    caption:
+      "Chen–Ueta 1999 — the Lorenz sibling with the feedback rewired: same C± algebra, faster and more violent (dt = 0.002, measured).",
+    section: { axis: 2, value: (p) => 2 * (p.c ?? 28) - (p.a ?? 35), label: "z = 2c−a" },
+    sweep: { paramKey: "c", lo: 18, hi: 34 },
+    conservative: false,
+  },
+  {
+    key: "fourwing",
+    label: "Four-wing",
+    fieldId: 8,
+    params: [
+      { key: "a", label: "a", min: 0.05, max: 0.35, step: 0.001, canonical: 0.2 },
+      { key: "b", label: "b", min: -0.2, max: 0.2, step: 0.001, canonical: -0.01 },
+      { key: "c", label: "c", min: 0.5, max: 2, step: 0.005, canonical: 1 },
+      { key: "d", label: "d", min: -1, max: 0, step: 0.005, canonical: -0.4 },
+      { key: "e", label: "e", min: -2, max: -0.2, step: 0.005, canonical: -1 },
+      { key: "f", label: "f", min: -2, max: -0.2, step: 0.005, canonical: -1 },
+    ],
+    dt: 0.01,
+    ic: [1.3, -0.18, 0.01],
+    caption:
+      "Four-wing — two parity-twinned wing pairs (f(−x,−y,z) = P·f): the butterfly's four-lobed cousin.",
+    section: { axis: 2, value: () => 0, label: "z = 0" },
+    sweep: { paramKey: "a", lo: 0.05, hi: 0.35 },
+    conservative: false,
+  },
 ];
 
 export function getAttractor(key: string): AttractorDef {

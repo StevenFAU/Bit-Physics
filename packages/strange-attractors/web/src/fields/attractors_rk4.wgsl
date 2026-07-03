@@ -10,9 +10,14 @@
 // the backend (captures/strange-attractors-ref/<name>-trajectory-seed42-*).
 //
 // Parameter slots p0..p5 are registry-ordered per system (web/src/attractors.ts):
-//   field_id 1 — Rössler:  p0=a, p1=b, p2=c
-//   field_id 2 — Aizawa:   p0=a, p1=b, p2=c, p3=d, p4=e, p5=f
-//   field_id 3 — Sprott-A: (no parameters)
+//   field_id 1 — Rössler:   p0=a, p1=b, p2=c
+//   field_id 2 — Aizawa:    p0=a, p1=b, p2=c, p3=d, p4=e, p5=f
+//   field_id 3 — Sprott-A:  (no parameters)
+//   field_id 4 — Thomas:    p0=b                       (X-B, ratified 2026-07-03)
+//   field_id 5 — Halvorsen: p0=a                       (X-B)
+//   field_id 6 — Dadras:    p0=p, p1=o, p2=r, p3=c, p4=e  (X-C)
+//   field_id 7 — Chen:      p0=a, p1=b, p2=c           (X-C)
+//   field_id 8 — Four-wing: p0=a, p1=b, p2=c, p3=d, p4=e, p5=f  (X-C)
 //
 // f32 on a chaotic system diverges pointwise from the f64 reference within a
 // few Lyapunov times — same posture as the Lorenz web build (structural, not
@@ -65,10 +70,60 @@ fn field_sprott_a(s: vec3<f32>) -> vec3<f32> {
   );
 }
 
+// Thomas 1999 cyclically symmetric: b=p0
+fn field_thomas(s: vec3<f32>) -> vec3<f32> {
+  return vec3<f32>(
+    sin(s.y) - P.p0 * s.x,
+    sin(s.z) - P.p0 * s.y,
+    sin(s.x) - P.p0 * s.z,
+  );
+}
+
+// Halvorsen (Sprott 2003 catalog) cyclically symmetric: a=p0
+fn field_halvorsen(s: vec3<f32>) -> vec3<f32> {
+  return vec3<f32>(
+    -P.p0 * s.x - 4.0 * s.y - 4.0 * s.z - s.y * s.y,
+    -P.p0 * s.y - 4.0 * s.z - 4.0 * s.x - s.z * s.z,
+    -P.p0 * s.z - 4.0 * s.x - 4.0 * s.y - s.x * s.x,
+  );
+}
+
+// Dadras–Momeni 2009: p=p0, o=p1, r=p2, c=p3, e=p4
+fn field_dadras(s: vec3<f32>) -> vec3<f32> {
+  return vec3<f32>(
+    s.y - P.p0 * s.x + P.p1 * s.y * s.z,
+    P.p2 * s.y - s.x * s.z + s.z,
+    P.p3 * s.x * s.y - P.p4 * s.z,
+  );
+}
+
+// Chen–Ueta 1999: a=p0, b=p1, c=p2
+fn field_chen(s: vec3<f32>) -> vec3<f32> {
+  return vec3<f32>(
+    P.p0 * (s.y - s.x),
+    (P.p2 - P.p0) * s.x - s.x * s.z + P.p2 * s.y,
+    s.x * s.y - P.p1 * s.z,
+  );
+}
+
+// Four-wing (Elegant-Chaos-class catalog): a..f = p0..p5
+fn field_fourwing(s: vec3<f32>) -> vec3<f32> {
+  return vec3<f32>(
+    P.p0 * s.x + P.p2 * s.y * s.z,
+    P.p1 * s.x + P.p3 * s.y - s.x * s.z,
+    P.p4 * s.z + P.p5 * s.x * s.y,
+  );
+}
+
 fn field(s: vec3<f32>) -> vec3<f32> {
   switch P.field_id {
     case 1u: { return field_rossler(s); }
     case 2u: { return field_aizawa(s); }
+    case 4u: { return field_thomas(s); }
+    case 5u: { return field_halvorsen(s); }
+    case 6u: { return field_dadras(s); }
+    case 7u: { return field_chen(s); }
+    case 8u: { return field_fourwing(s); }
     default: { return field_sprott_a(s); }
   }
 }

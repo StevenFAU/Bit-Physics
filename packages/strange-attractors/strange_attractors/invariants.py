@@ -37,7 +37,12 @@ from hypothesis import strategies as st
 
 from .integrator import rk4_evolve
 from .reference import aizawa as aizawa_ref
+from .reference import chen as chen_ref
+from .reference import dadras as dadras_ref
+from .reference import fourwing as fourwing_ref
+from .reference import halvorsen as halvorsen_ref
 from .reference import rossler as rossler_ref
+from .reference import thomas as thomas_ref
 from .reference.lorenz import lorenz_field
 from .reference.sprott import parity_transform, sprott_a_field
 
@@ -277,6 +282,16 @@ def sprott_a_parity_equivariance(x: float, y: float, z: float) -> None:
 
 __all__ = [
     "aizawa_axis_fixed_points_null_field",
+    "chen_divergence_constant",
+    "chen_fixed_points_null_field",
+    "dadras_divergence_constant",
+    "dadras_origin_triangular_eigenvalues",
+    "fourwing_divergence_constant",
+    "fourwing_parity_equivariance",
+    "halvorsen_cyclic_equivariance",
+    "halvorsen_divergence_constant",
+    "thomas_cyclic_equivariance",
+    "thomas_divergence_constant",
     "aizawa_divergence_matches_closed_form",
     "rk4_time_reversibility_modulo_dissipation",
     "rossler_divergence_affine_in_x",
@@ -284,3 +299,232 @@ __all__ = [
     "sprott_a_parity_equivariance",
     "volume_contraction_rate_constant",
 ]
+
+
+# ---- X-B cluster invariants (scope amendment, ratified 2026-07-03) ----
+
+
+@given(
+    b=st.floats(min_value=0.05, max_value=0.9, allow_nan=False),
+    x=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+    y=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+    z=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def thomas_divergence_constant(b: float, x: float, y: float, z: float) -> None:
+    """Thomas: div f = -3*b at every point, for any b."""
+    point = np.array([x, y, z], dtype=np.float64)
+    estimate = _central_difference_divergence(
+        lambda s: thomas_ref.thomas_field(s, b=b), point
+    )
+    assert math.isclose(estimate, -3.0 * b, abs_tol=_DIV_TOL), (
+        f"thomas div at {point.tolist()} (b={b}) = {estimate}; expected {-3.0 * b}"
+    )
+
+
+@given(
+    x=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+    y=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+    z=st.floats(min_value=-4.0, max_value=4.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def thomas_cyclic_equivariance(x: float, y: float, z: float) -> None:
+    """Thomas: f(Cx) = C f(x) exactly, C = (x,y,z) -> (y,z,x).
+
+    Component-wise the two sides evaluate the SAME float expressions, so
+    the identity is bitwise — no tolerance.
+    """
+    s = np.array([x, y, z], dtype=np.float64)
+    lhs = thomas_ref.thomas_field(thomas_ref.cyclic_transform(s))
+    rhs = thomas_ref.cyclic_transform(thomas_ref.thomas_field(s))
+    assert np.array_equal(lhs, rhs), f"thomas cyclic residual at {s.tolist()}"
+
+
+@given(
+    a=st.floats(min_value=0.5, max_value=3.0, allow_nan=False),
+    x=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+    y=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+    z=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def halvorsen_divergence_constant(a: float, x: float, y: float, z: float) -> None:
+    """Halvorsen: div f = -3*a at every point, for any a."""
+    point = np.array([x, y, z], dtype=np.float64)
+    estimate = _central_difference_divergence(
+        lambda s: halvorsen_ref.halvorsen_field(s, a=a), point
+    )
+    assert math.isclose(estimate, -3.0 * a, abs_tol=1e-5), (
+        f"halvorsen div at {point.tolist()} (a={a}) = {estimate}; expected {-3.0 * a}"
+    )
+
+
+@given(
+    x=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+    y=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+    z=st.floats(min_value=-10.0, max_value=10.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def halvorsen_cyclic_equivariance(x: float, y: float, z: float) -> None:
+    """Halvorsen: f(Cx) = C f(x) exactly (same float expressions)."""
+    s = np.array([x, y, z], dtype=np.float64)
+    lhs = halvorsen_ref.halvorsen_field(halvorsen_ref.cyclic_transform(s))
+    rhs = halvorsen_ref.cyclic_transform(halvorsen_ref.halvorsen_field(s))
+    assert np.array_equal(lhs, rhs), f"halvorsen cyclic residual at {s.tolist()}"
+
+
+# ---- X-C cluster invariants (scope amendment, ratified 2026-07-03) ----
+
+
+@given(
+    p=st.floats(min_value=1.0, max_value=6.0, allow_nan=False),
+    r=st.floats(min_value=0.5, max_value=3.0, allow_nan=False),
+    e=st.floats(min_value=4.0, max_value=12.0, allow_nan=False),
+    x=st.floats(min_value=-12.0, max_value=12.0, allow_nan=False),
+    y=st.floats(min_value=-12.0, max_value=12.0, allow_nan=False),
+    z=st.floats(min_value=-12.0, max_value=12.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def dadras_divergence_constant(
+    p: float, r: float, e: float, x: float, y: float, z: float
+) -> None:
+    """Dadras: div f = -p + r - e at every point, for any (p, r, e)."""
+    point = np.array([x, y, z], dtype=np.float64)
+    estimate = _central_difference_divergence(
+        lambda s: dadras_ref.dadras_field(s, p=p, r=r, e=e), point
+    )
+    expected = -p + r - e
+    assert math.isclose(estimate, expected, abs_tol=1e-5), (
+        f"dadras div at {point.tolist()} = {estimate}; expected {expected}"
+    )
+
+
+@given(
+    p=st.floats(min_value=1.0, max_value=6.0, allow_nan=False),
+    r=st.floats(min_value=0.5, max_value=3.0, allow_nan=False),
+    e=st.floats(min_value=4.0, max_value=12.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def dadras_origin_triangular_eigenvalues(p: float, r: float, e: float) -> None:
+    """Dadras: eig(J(0)) = (-p, r, -e) exactly, for any (p, r, e)."""
+    numeric = sorted(
+        np.linalg.eigvals(dadras_ref.jacobian([0.0, 0.0, 0.0], p=p, r=r, e=e)).real
+    )
+    closed = sorted(dadras_ref.origin_jacobian_eigenvalues(p=p, r=r, e=e))
+    for got, want in zip(numeric, closed, strict=True):
+        assert math.isclose(got, want, abs_tol=1e-9), (
+            f"dadras J(0) eigs (p={p}, r={r}, e={e}): {numeric} vs {closed}"
+        )
+
+
+@given(
+    a=st.floats(min_value=20.0, max_value=45.0, allow_nan=False),
+    b=st.floats(min_value=0.5, max_value=8.0, allow_nan=False),
+    c=st.floats(min_value=15.0, max_value=35.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def chen_fixed_points_null_field(a: float, b: float, c: float) -> None:
+    """Chen: the closed-form fixed points annihilate the field.
+
+    C± exist only when 2c > a; the origin branch is checked always.
+    """
+    fps = chen_ref.fixed_points(a=a, b=b, c=c)
+    for name, pnt in fps.items():
+        residual = chen_ref.chen_field(np.asarray(pnt, dtype=np.float64), a=a, b=b, c=c)
+        norm = float(np.linalg.norm(residual))
+        scale = 1.0 + float(np.linalg.norm(pnt)) ** 2
+        assert norm <= 1e-9 * scale, (
+            f"chen {name} at (a={a}, b={b}, c={c}): |f| = {norm}"
+        )
+
+
+@given(
+    a=st.floats(min_value=20.0, max_value=45.0, allow_nan=False),
+    b=st.floats(min_value=0.5, max_value=8.0, allow_nan=False),
+    c=st.floats(min_value=15.0, max_value=35.0, allow_nan=False),
+    x=st.floats(min_value=-40.0, max_value=40.0, allow_nan=False),
+    y=st.floats(min_value=-40.0, max_value=40.0, allow_nan=False),
+    z=st.floats(min_value=-10.0, max_value=60.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def chen_divergence_constant(
+    a: float, b: float, c: float, x: float, y: float, z: float
+) -> None:
+    """Chen: div f = c - a - b at every point, for any (a, b, c)."""
+    point = np.array([x, y, z], dtype=np.float64)
+    estimate = _central_difference_divergence(
+        lambda s: chen_ref.chen_field(s, a=a, b=b, c=c), point
+    )
+    expected = c - a - b
+    assert math.isclose(estimate, expected, abs_tol=1e-4), (
+        f"chen div at {point.tolist()} = {estimate}; expected {expected}"
+    )
+
+
+@given(
+    x=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+    y=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+    z=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def fourwing_parity_equivariance(x: float, y: float, z: float) -> None:
+    """Four-wing: f(Px) = P f(x) exactly, P = diag(-1, -1, 1)."""
+    s = np.array([x, y, z], dtype=np.float64)
+    lhs = fourwing_ref.four_wing_field(fourwing_ref.parity_transform(s))
+    rhs = fourwing_ref.parity_transform(fourwing_ref.four_wing_field(s))
+    assert np.array_equal(lhs, rhs), f"fourwing parity residual at {s.tolist()}"
+
+
+@given(
+    x=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+    y=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+    z=st.floats(min_value=-3.0, max_value=3.0, allow_nan=False),
+)
+@settings(
+    max_examples=30,
+    deadline=None,
+    suppress_health_check=[HealthCheck.function_scoped_fixture],
+)
+def fourwing_divergence_constant(x: float, y: float, z: float) -> None:
+    """Four-wing: div f = a + d + e at every canonical-parameter point."""
+    point = np.array([x, y, z], dtype=np.float64)
+    estimate = _central_difference_divergence(fourwing_ref.four_wing_field, point)
+    expected = fourwing_ref.divergence()
+    assert math.isclose(estimate, expected, abs_tol=_DIV_TOL), (
+        f"fourwing div at {point.tolist()} = {estimate}; expected {expected}"
+    )

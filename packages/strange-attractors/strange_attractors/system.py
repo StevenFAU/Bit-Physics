@@ -25,9 +25,14 @@ from types import MappingProxyType
 import numpy as np
 
 from .reference.aizawa import aizawa_field
+from .reference.chen import chen_field
+from .reference.dadras import dadras_field
+from .reference.fourwing import four_wing_field
+from .reference.halvorsen import halvorsen_field
 from .reference.lorenz import lorenz_field
 from .reference.rossler import rossler_field
 from .reference.sprott import sprott_a_field
+from .reference.thomas import thomas_field
 
 FieldFn = Callable[..., np.ndarray]
 
@@ -129,6 +134,69 @@ SYSTEMS: Mapping[str, System] = MappingProxyType(
             conservative=True,
             notes="Sprott 1994 case A (= Nosé–Hoover oscillator): conservative, "
             "no equilibria; IC (0, 5, 0) sits in the chaotic sea.",
+        ),
+        # ---- X-B cluster (scope amendment, ratified 2026-07-03) ----
+        "thomas": _sys(
+            name="thomas",
+            field=thomas_field,
+            canonical_params={"b": 0.208186},
+            canonical_ic=(1.1, 1.1, -0.01),
+            canonical_dt=0.05,
+            canonical_step_count=10000,
+            canonical_capture_interval=1000,
+            notes="Thomas 1999 cyclically-symmetric; slow weakly-dissipative "
+            "flow, dt=0.05 covers t=500 in the canonical horizon.",
+        ),
+        "halvorsen": _sys(
+            name="halvorsen",
+            field=halvorsen_field,
+            canonical_params={"a": 1.4},
+            canonical_ic=(-1.48, -1.51, 2.04),
+            canonical_dt=0.005,
+            canonical_step_count=10000,
+            canonical_capture_interval=1000,
+            notes="Halvorsen cyclically-symmetric three-lobe (Sprott 2003 "
+            "catalog); fast — dt=0.005 measured.",
+        ),
+        # ---- X-C cluster (scope amendment, ratified 2026-07-03) ----
+        "dadras": _sys(
+            name="dadras",
+            field=dadras_field,
+            canonical_params={"p": 3.0, "o": 2.7, "r": 1.7, "c": 2.0, "e": 9.0},
+            canonical_ic=(1.0, 1.0, 1.0),
+            canonical_dt=0.005,
+            canonical_step_count=10000,
+            canonical_capture_interval=1000,
+            notes="Dadras–Momeni 2009 multi-scroll.",
+        ),
+        "chen": _sys(
+            name="chen",
+            field=chen_field,
+            canonical_params={"a": 35.0, "b": 3.0, "c": 28.0},
+            canonical_ic=(-3.0, 2.0, 20.0),
+            canonical_dt=0.002,
+            canonical_step_count=10000,
+            canonical_capture_interval=1000,
+            notes="Chen–Ueta 1999; stiff/fast at canonical params — dt=0.002 "
+            "measured (spec § 3.3.1 calibration note honored).",
+        ),
+        "fourwing": _sys(
+            name="fourwing",
+            field=four_wing_field,
+            canonical_params={
+                "a": 0.2,
+                "b": -0.01,
+                "c": 1.0,
+                "d": -0.4,
+                "e": -1.0,
+                "f": -1.0,
+            },
+            canonical_ic=(1.3, -0.18, 0.01),
+            canonical_dt=0.01,
+            canonical_step_count=10000,
+            canonical_capture_interval=1000,
+            notes="Four-wing (Elegant-Chaos-class catalog form): four lobes, "
+            "parity-symmetric wing pairs.",
         ),
     }
 )

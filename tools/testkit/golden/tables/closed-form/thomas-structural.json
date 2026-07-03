@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "thomas-structural-invariants",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/thomas-structural.md",
+    "upstream": "Thomas-1999",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-10,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "origin_jacobian_eigenvalues",
+        "b": 0.208186
+      },
+      "expected": {
+        "form": "J(0) = -b*I + P (P = cyclic permutation); eigenvalues are -b + cube roots of unity",
+        "real_eigenvalue": 0.791814,
+        "spiral_pair_re": -0.708186,
+        "spiral_pair_im_abs": 0.8660254037844386
+      },
+      "independent_reference": {
+        "source": "Thomas, R. (1999), 'Deterministic chaos seen in terms of feedback circuits', Int. J. Bifurcation Chaos 9 (10), 1889-1905, defines the field; canonical b = 0.208186 per the Sprott 2003 catalog usage. The eigenvalue closed form follows from J(0) = -b*I + P with P the cyclic permutation matrix whose eigenvalues are the cube roots of unity (hand derivation in the derivation .md section 1); SymPy eigenvals (generator) and numpy.linalg.eigvals (sim test) agree.",
+        "derived_by": "hand cube-roots-of-unity argument; SymPy eigenvals; numpy.linalg.eigvals cross-check",
+        "expected": {
+          "real_eigenvalue": 0.791814
+        },
+        "doi": "10.1142/S0218127499001383"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "diagonal_fixed_points",
+        "b": 0.208186
+      },
+      "expected": {
+        "form": "on the symmetry diagonal x = y = z the field reduces to sin(u) = b*u: u = 0 and u = \u00b1u* in (pi/2, pi)",
+        "u_star": 2.575647587674765
+      },
+      "independent_reference": {
+        "source": "Restriction of the field to the invariant diagonal (hand derivation in the derivation .md section 2). The transcendental root is anchored by three independent numerical routes: mpmath.findroot at 30 dps (generator), the sim reference's bisection, and the field-residual assertion in the sim test.",
+        "derived_by": "hand diagonal reduction; mpmath 30-dps root; bisection + residual cross-check",
+        "expected": {
+          "u_star": 2.575647587674765
+        }
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "divergence_and_cyclic_symmetry",
+        "b": 0.208186
+      },
+      "expected": {
+        "divergence": -0.624558,
+        "divergence_form": "div f = -3*b (constant \u2014 uniform contraction)",
+        "cyclic_symmetry_residual": 0.0,
+        "symmetry_form": "f(Cx) = C f(x) exactly, C = cyclic rotation (x,y,z)->(y,z,x)"
+      },
+      "independent_reference": {
+        "source": "Trace of the hand-derived Jacobian (three -b diagonal entries; derivation .md section 3); the cyclic equivariance is direct substitution. SymPy verifies both symbolically (generator); the sim PBT invariants sample both numerically.",
+        "derived_by": "hand trace + substitution; SymPy symbolic; PBT numerical sampling",
+        "expected": {
+          "divergence": -0.624558
+        },
+        "doi": "10.1142/S0218127499001383"
+      }
+    }
+  ]
+}

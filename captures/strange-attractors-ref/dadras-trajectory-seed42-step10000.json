@@ -1,0 +1,46 @@
+{
+  "config": {
+    "dims": [
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "c": 2.0,
+      "dt": 0.005,
+      "e": 9.0,
+      "ic_jitter_scale": 1e-06,
+      "o": 2.7,
+      "p": 3.0,
+      "r": 1.7
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:961e4d68200ce0f999b092f7a659f0319a5094ec57b32415814ff3480057ec93",
+    "format": "hdf5",
+    "path": "dadras-trajectory-seed42-step10000.h5"
+  },
+  "run": {
+    "capture_interval": 1000,
+    "start_utc": "2026-07-03T00:00:00Z",
+    "step_count": 10000,
+    "wall_clock_seconds": 0.08848685599878081
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "closed-form",
+    "name": "strange-attractors",
+    "variant": "dadras"
+  },
+  "stack": {
+    "build_id": "phase-6-xa-expansion",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}

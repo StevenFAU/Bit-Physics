@@ -87,6 +87,46 @@ const FAMILY_EQS: Record<string, { eqs: [string, string, string]; meanings: [str
       "z pumps until y² balances 1 (Nosé–Hoover)",
     ],
   },
+  thomas: {
+    eqs: ["ẋ = sin y − b·x", "ẏ = sin z − b·y", "ż = sin x − b·z"],
+    meanings: [
+      "each axis chases the sine of the next",
+      "the same law, rotated once",
+      "and once more — cyclic symmetry, div f = −3b",
+    ],
+  },
+  halvorsen: {
+    eqs: ["ẋ = −a·x − 4y − 4z − y²", "ẏ = −a·y − 4z − 4x − z²", "ż = −a·z − 4x − 4y − x²"],
+    meanings: [
+      "damped, cross-coupled, one square term",
+      "the same law, rotated once",
+      "and once more — three lobes, one proboscis",
+    ],
+  },
+  dadras: {
+    eqs: ["ẋ = y − p·x + o·y·z", "ẏ = r·y − x·z + z", "ż = c·x·y − e·z"],
+    meanings: [
+      "damped x fed by a y·z pump",
+      "gently unstable y folded by x·z",
+      "the scroll counter: x·y drives, e drains",
+    ],
+  },
+  chen: {
+    eqs: ["ẋ = a(y − x)", "ẏ = (c−a)x − x·z + c·y", "ż = x·y − b·z"],
+    meanings: [
+      "Lorenz's convective coupling, faster",
+      "the rewired feedback that isn't Lorenz",
+      "the same nonlinear drain — C± algebra survives",
+    ],
+  },
+  fourwing: {
+    eqs: ["ẋ = a·x + c·y·z", "ẏ = b·x + d·y − x·z", "ż = e·z + f·x·y"],
+    meanings: [
+      "weak self-growth, y·z steering",
+      "the fold between wing pairs",
+      "parity-even drain — four lobes, two mirror pairs",
+    ],
+  },
 };
 
 function eqBlock(r: OdeRow, kernelPath: string, kernelName: string): HTMLDivElement {

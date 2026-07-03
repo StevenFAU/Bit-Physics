@@ -85,15 +85,15 @@
       "manifest": "captures/strange-attractors-ref/rossler-trajectory-seed42-step10000.json",
       "code_anchors": {
         "dx": {
-          "line": 41,
+          "line": 46,
           "text": "-s.y - s.z,"
         },
         "dy": {
-          "line": 42,
+          "line": 47,
           "text": "s.x + P.p0 * s.y,"
         },
         "dz": {
-          "line": 43,
+          "line": 48,
           "text": "P.p1 + s.z * (s.x - P.p2),"
         }
       }
@@ -128,15 +128,15 @@
       "manifest": "captures/strange-attractors-ref/aizawa-trajectory-seed42-step10000.json",
       "code_anchors": {
         "dx": {
-          "line": 51,
+          "line": 56,
           "text": "(s.z - P.p1) * s.x - P.p3 * s.y,"
         },
         "dy": {
-          "line": 52,
+          "line": 57,
           "text": "P.p3 * s.x + (s.z - P.p1) * s.y,"
         },
         "dz": {
-          "line": 53,
+          "line": 58,
           "text": "P.p2 + P.p0 * s.z - (s.z * s.z * s.z) / 3.0 - r2 * (1.0 + P.p4 * s.z) + P.p5 * s.z * s.x * s.x * s.x,"
         }
       }
@@ -165,16 +165,217 @@
       "manifest": "captures/strange-attractors-ref/sprott_a-trajectory-seed42-step10000.json",
       "code_anchors": {
         "dx": {
-          "line": 62,
+          "line": 67,
           "text": "s.y,  // sprott-a: dx/dt"
         },
         "dy": {
-          "line": 63,
+          "line": 68,
           "text": "-s.x + s.y * s.z,"
         },
         "dz": {
-          "line": 64,
+          "line": 69,
           "text": "1.0 - s.y * s.y,"
+        }
+      }
+    },
+    "thomas": {
+      "descriptor": "thomas-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "b": 0.208186,
+        "dt": 0.05,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:6178a87a1354c573f7de4d4c3facf7660483ced74c19dba76539482232c8ead0",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/thomas-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "origin_jacobian_eigenvalues",
+        "diagonal_fixed_points",
+        "divergence_and_cyclic_symmetry"
+      ],
+      "derivation": "tools/testkit/golden/derivations/thomas-structural.md",
+      "manifest": "captures/strange-attractors-ref/thomas-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 76,
+          "text": "sin(s.y) - P.p0 * s.x,"
+        },
+        "dy": {
+          "line": 77,
+          "text": "sin(s.z) - P.p0 * s.y,"
+        },
+        "dz": {
+          "line": 78,
+          "text": "sin(s.x) - P.p0 * s.z,"
+        }
+      }
+    },
+    "halvorsen": {
+      "descriptor": "halvorsen-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "a": 1.4,
+        "dt": 0.005,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:2ed6e3b006c6fabca4d4c25d5eb9c50926c470b2816ab09f4483e0bf91376152",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/halvorsen-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "origin_jacobian_eigenvalues",
+        "divergence",
+        "cyclic_symmetry"
+      ],
+      "derivation": "tools/testkit/golden/derivations/halvorsen-structural.md",
+      "manifest": "captures/strange-attractors-ref/halvorsen-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 85,
+          "text": "-P.p0 * s.x - 4.0 * s.y - 4.0 * s.z - s.y * s.y,"
+        },
+        "dy": {
+          "line": 86,
+          "text": "-P.p0 * s.y - 4.0 * s.z - 4.0 * s.x - s.z * s.z,"
+        },
+        "dz": {
+          "line": 87,
+          "text": "-P.p0 * s.z - 4.0 * s.x - 4.0 * s.y - s.x * s.x,"
+        }
+      }
+    },
+    "dadras": {
+      "descriptor": "dadras-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "c": 2,
+        "dt": 0.005,
+        "e": 9,
+        "ic_jitter_scale": 0.000001,
+        "o": 2.7,
+        "p": 3,
+        "r": 1.7
+      },
+      "payload_sha256": "sha256:961e4d68200ce0f999b092f7a659f0319a5094ec57b32415814ff3480057ec93",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/dadras-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "origin_jacobian_eigenvalues",
+        "divergence",
+        "origin_field_probe"
+      ],
+      "derivation": "tools/testkit/golden/derivations/dadras-structural.md",
+      "manifest": "captures/strange-attractors-ref/dadras-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 94,
+          "text": "s.y - P.p0 * s.x + P.p1 * s.y * s.z,"
+        },
+        "dy": {
+          "line": 95,
+          "text": "P.p2 * s.y - s.x * s.z + s.z,"
+        },
+        "dz": {
+          "line": 96,
+          "text": "P.p3 * s.x * s.y - P.p4 * s.z,"
+        }
+      }
+    },
+    "chen": {
+      "descriptor": "chen-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "a": 35,
+        "b": 3,
+        "c": 28,
+        "dt": 0.002,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:5b0e093c61db93913b92499d38f21e127d1829cebd140370c18a2826eb8b56c0",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/chen-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "fixed_points",
+        "origin_jacobian_eigenvalues",
+        "divergence"
+      ],
+      "derivation": "tools/testkit/golden/derivations/chen-structural.md",
+      "manifest": "captures/strange-attractors-ref/chen-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 103,
+          "text": "P.p0 * (s.y - s.x),"
+        },
+        "dy": {
+          "line": 104,
+          "text": "(P.p2 - P.p0) * s.x - s.x * s.z + P.p2 * s.y,"
+        },
+        "dz": {
+          "line": 105,
+          "text": "s.x * s.y - P.p1 * s.z,"
+        }
+      }
+    },
+    "fourwing": {
+      "descriptor": "fourwing-trajectory-seed42-step10000",
+      "seed": 42,
+      "step_count": 10000,
+      "params": {
+        "a": 0.2,
+        "b": -0.01,
+        "c": 1,
+        "d": -0.4,
+        "dt": 0.01,
+        "e": -1,
+        "f": -1,
+        "ic_jitter_scale": 0.000001
+      },
+      "payload_sha256": "sha256:3aee64657a0b5337e73fddd603ca406c42e5ababf6eaf2bdcac60cd719c146c6",
+      "determinism_claimed": "bit-exact-same-hw",
+      "golden_table": "tools/testkit/golden/tables/closed-form/fourwing-structural.json",
+      "golden_tolerance": {
+        "absolute": 1e-10,
+        "relative": 1e-12
+      },
+      "golden_quantities": [
+        "origin_jacobian_eigenvalues",
+        "divergence",
+        "parity_symmetry"
+      ],
+      "derivation": "tools/testkit/golden/derivations/fourwing-structural.md",
+      "manifest": "captures/strange-attractors-ref/fourwing-trajectory-seed42-step10000.json",
+      "code_anchors": {
+        "dx": {
+          "line": 112,
+          "text": "P.p0 * s.x + P.p2 * s.y * s.z,"
+        },
+        "dy": {
+          "line": 113,
+          "text": "P.p1 * s.x + P.p3 * s.y - s.x * s.z,"
+        },
+        "dz": {
+          "line": 114,
+          "text": "P.p4 * s.z + P.p5 * s.x * s.y,"
         }
       }
     }

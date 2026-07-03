@@ -159,6 +159,51 @@ const FAMILY = {
     golden: "tools/testkit/golden/tables/closed-form/sprott-a-structural.json",
     derivation: "tools/testkit/golden/derivations/sprott-a-structural.md",
   },
+  thomas: {
+    anchors: {
+      dx: fieldsAnchor("thomas_dx", "sin(s.y) - P.p0 * s.x,"),
+      dy: fieldsAnchor("thomas_dy", "sin(s.z) - P.p0 * s.y,"),
+      dz: fieldsAnchor("thomas_dz", "sin(s.x) - P.p0 * s.z,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/thomas-structural.json",
+    derivation: "tools/testkit/golden/derivations/thomas-structural.md",
+  },
+  halvorsen: {
+    anchors: {
+      dx: fieldsAnchor("halvorsen_dx", "-P.p0 * s.x - 4.0 * s.y - 4.0 * s.z - s.y * s.y,"),
+      dy: fieldsAnchor("halvorsen_dy", "-P.p0 * s.y - 4.0 * s.z - 4.0 * s.x - s.z * s.z,"),
+      dz: fieldsAnchor("halvorsen_dz", "-P.p0 * s.z - 4.0 * s.x - 4.0 * s.y - s.x * s.x,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/halvorsen-structural.json",
+    derivation: "tools/testkit/golden/derivations/halvorsen-structural.md",
+  },
+  dadras: {
+    anchors: {
+      dx: fieldsAnchor("dadras_dx", "s.y - P.p0 * s.x + P.p1 * s.y * s.z,"),
+      dy: fieldsAnchor("dadras_dy", "P.p2 * s.y - s.x * s.z + s.z,"),
+      dz: fieldsAnchor("dadras_dz", "P.p3 * s.x * s.y - P.p4 * s.z,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/dadras-structural.json",
+    derivation: "tools/testkit/golden/derivations/dadras-structural.md",
+  },
+  chen: {
+    anchors: {
+      dx: fieldsAnchor("chen_dx", "P.p0 * (s.y - s.x),"),
+      dy: fieldsAnchor("chen_dy", "(P.p2 - P.p0) * s.x - s.x * s.z + P.p2 * s.y,"),
+      dz: fieldsAnchor("chen_dz", "s.x * s.y - P.p1 * s.z,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/chen-structural.json",
+    derivation: "tools/testkit/golden/derivations/chen-structural.md",
+  },
+  fourwing: {
+    anchors: {
+      dx: fieldsAnchor("fourwing_dx", "P.p0 * s.x + P.p2 * s.y * s.z,"),
+      dy: fieldsAnchor("fourwing_dy", "P.p1 * s.x + P.p3 * s.y - s.x * s.z,"),
+      dz: fieldsAnchor("fourwing_dz", "P.p4 * s.z + P.p5 * s.x * s.y,"),
+    },
+    golden: "tools/testkit/golden/tables/closed-form/fourwing-structural.json",
+    derivation: "tools/testkit/golden/derivations/fourwing-structural.md",
+  },
 };
 
 const systems = {};

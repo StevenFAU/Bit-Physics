@@ -11,6 +11,13 @@ attractor name. Stack A → B (Phase 1: Stack B target only). Non-goals:
 2D variants, neural surrogate flows, Lyapunov-spectrum estimation
 (Phase 4+).
 
+**Scope amendment (operator-ratified 2026-07-03, Phase-6 X-B/X-C).**
+The family is extended by five systems under the same full per-system
+discipline (expansion spec § 3.3): **Thomas, Halvorsen** (X-B) and
+**Dadras, Chen, Four-wing** (X-C). Algebraic anchors in
+[`algebraic.md`](./algebraic.md) §§ 9–13; golden tables per § 7.
+(Pickover remains deferred-with-cause; § 7.)
+
 ## 2. Upstream and reference anchors
 
 No vendored code at Phase 1; references are textual.
@@ -151,6 +158,22 @@ all implemented and green:**
    $P = \mathrm{diag}(-1,-1,1)$ (the case-A symmetry), complementing
    invariant 2 to give Sprott-A its ≥ 2.
 
+**X-B/X-C scope-amendment extension (ratified 2026-07-03) — all
+implemented and green:**
+
+8. **`thomas_divergence_constant`** / **`thomas_cyclic_equivariance`** —
+   $\nabla\cdot f = -3b$ anywhere for any $b$; $f(Cx) = Cf(x)$ exactly
+   under the cyclic rotation.
+9. **`halvorsen_divergence_constant`** / **`halvorsen_cyclic_equivariance`**
+   — $-3a$ for any $a$; cyclic equivariance exact.
+10. **`dadras_divergence_constant`** / **`dadras_origin_triangular_eigenvalues`**
+    — $-p + r - e$ for any $(p,r,e)$; $\mathrm{eig}(J(0)) = (-p, r, -e)$.
+11. **`chen_divergence_constant`** / **`chen_fixed_points_null_field`** —
+    $c - a - b$ for any $(a,b,c)$; the Lorenz-sibling $C_\pm$ annihilate
+    the field wherever $2c > a$.
+12. **`fourwing_divergence_constant`** / **`fourwing_parity_equivariance`**
+    — $a + d + e$; parity equivariance exact.
+
 ## 7. Golden values / Manufactured solutions
 
 Golden tables (one per implemented system; the X-A family expansion,
@@ -162,6 +185,11 @@ ratified 2026-07-03, added the three non-Lorenz rows):
 | rossler | [`rossler-structural.json`](../../../../tools/testkit/golden/tables/closed-form/rossler-structural.json) | [`rossler-structural.md`](../../../../tools/testkit/golden/derivations/rossler-structural.md) | [`rossler_structural.py`](../../../../tools/testkit/golden/generator/rossler_structural.py) |
 | aizawa | [`aizawa-structural.json`](../../../../tools/testkit/golden/tables/closed-form/aizawa-structural.json) | [`aizawa-structural.md`](../../../../tools/testkit/golden/derivations/aizawa-structural.md) | [`aizawa_structural.py`](../../../../tools/testkit/golden/generator/aizawa_structural.py) |
 | sprott_a | [`sprott-a-structural.json`](../../../../tools/testkit/golden/tables/closed-form/sprott-a-structural.json) | [`sprott-a-structural.md`](../../../../tools/testkit/golden/derivations/sprott-a-structural.md) | [`sprott_a_structural.py`](../../../../tools/testkit/golden/generator/sprott_a_structural.py) |
+| thomas (X-B) | [`thomas-structural.json`](../../../../tools/testkit/golden/tables/closed-form/thomas-structural.json) | [`thomas-structural.md`](../../../../tools/testkit/golden/derivations/thomas-structural.md) | [`thomas_structural.py`](../../../../tools/testkit/golden/generator/thomas_structural.py) |
+| halvorsen (X-B) | [`halvorsen-structural.json`](../../../../tools/testkit/golden/tables/closed-form/halvorsen-structural.json) | [`halvorsen-structural.md`](../../../../tools/testkit/golden/derivations/halvorsen-structural.md) | [`halvorsen_structural.py`](../../../../tools/testkit/golden/generator/halvorsen_structural.py) |
+| dadras (X-C) | [`dadras-structural.json`](../../../../tools/testkit/golden/tables/closed-form/dadras-structural.json) | [`dadras-structural.md`](../../../../tools/testkit/golden/derivations/dadras-structural.md) | [`dadras_structural.py`](../../../../tools/testkit/golden/generator/dadras_structural.py) |
+| chen (X-C) | [`chen-structural.json`](../../../../tools/testkit/golden/tables/closed-form/chen-structural.json) | [`chen-structural.md`](../../../../tools/testkit/golden/derivations/chen-structural.md) | [`chen_structural.py`](../../../../tools/testkit/golden/generator/chen_structural.py) |
+| fourwing (X-C) | [`fourwing-structural.json`](../../../../tools/testkit/golden/tables/closed-form/fourwing-structural.json) | [`fourwing-structural.md`](../../../../tools/testkit/golden/derivations/fourwing-structural.md) | [`fourwing_structural.py`](../../../../tools/testkit/golden/generator/fourwing_structural.py) |
 
 **Pickover — deferred-with-cause (operator-voidable), 2026-07-03.** The
 commonly cataloged form (algebraic.md § 6) integrates as an ODE but is
