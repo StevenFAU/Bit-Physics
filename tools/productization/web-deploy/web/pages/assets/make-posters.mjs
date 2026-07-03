@@ -50,7 +50,11 @@ const SIMS = {
   // majority-up by 600 — 150 freezes the mixed-phase critical texture (both
   // tones + luminous walls), the poster-worthy face of the transition.
   "ising-classical": { frames: 150, px: 512 },
-  "mandelbulb-explorer": { frames: 200, px: 360 },
+  // verification-demo rework (mandelbulb): render.wgsl v2 (orbit-trap inferno
+  // + penumbra shadows + AO + in-shader tonemap). px joins the 512 family —
+  // the old 360 hid the flat normal-shaded look; the v2 surface carries card
+  // size. Frames stay 200 (~46° of auto-orbit past the boot azimuth).
+  "mandelbulb-explorer": { frames: 200, px: 512 },
   // verification-demo rework: the v2 render (HDR additive ribbon+glow, GPU-side
   // exposure) needs no photographic rescue — boost drops 1.9→1.1. Frames move
   // 420→2094 (one full auto-orbit revolution, 2π/0.003): the 600-frame
