@@ -56,7 +56,7 @@ Lane-B cluster (no ratification, ships on `main` as polish). Then run § 3.3 as
 one ratified expansion cluster *per attractor*, isolated so the boundary-crossing
 kernel work is never "slipped into a styling commit" (charter § 3.1). The demo's
 buffer separation (`traj` = capture-only; `liveTraj`/`ghostTraj` = display-only,
-`main.ts:133`, `main.ts:189-196`) is preserved unchanged throughout.
+`packages/strange-attractors/web/src/main.ts:133`, `packages/strange-attractors/web/src/main.ts:189-196`) is preserved unchanged throughout.
 
 ---
 
@@ -65,8 +65,8 @@ buffer separation (`traj` = capture-only; `liveTraj`/`ghostTraj` = display-only,
 ### 3.1 Colormaps & render (Lane B)
 
 **FACT (baseline).** Color is hardcoded in `render.wgsl` `palette()`: a 4-stop
-cool ramp (`render.wgsl:82-84`) + a warm ghost ramp (`render.wgsl:86-88`),
-driven by log-compressed local speed (`speed_t`, `render.wgsl:94-99`). There is
+cool ramp (`packages/strange-attractors/web/src/render.wgsl:82-84`) + a warm ghost ramp (`packages/strange-attractors/web/src/render.wgsl:86-88`),
+driven by log-compressed local speed (`speed_t`, `packages/strange-attractors/web/src/render.wgsl:94-99`). There is
 **no shared colormap facility** in `common-web` — the ramp pattern is copied
 per-sim (reaction-diffusion, physarum precedents cited in the file header).
 
@@ -75,7 +75,7 @@ per-sim (reaction-diffusion, physarum precedents cited in the file header).
   **viridis, inferno, magma, plasma, turbo, cividis**, plus the existing house
   teal ("aurora") and warm ("ember"). Provide a WGSL emit helper so the ramp is
   a data-driven `mix()` chain, not hand-written per map. Selector in the
-  `display` group of the panel (`main.ts` display group, currently `main.ts:977`).
+  `display` group of the panel (`main.ts` display group, currently `packages/strange-attractors/web/src/main.ts:977`).
   - *Why:* science-literate identity; reusable by all 7 demos; template.
   - *Acceptance:* switching maps is a uniform/table swap — no pipeline rebuild;
     the butterfly ghost stays visually distinct from the primary under every map
@@ -85,12 +85,12 @@ per-sim (reaction-diffusion, physarum precedents cited in the file header).
   **z-depth**, **time/age** (index along trajectory), **lobe** (sign of x — which
   wing), **curvature** (angle between adjacent segments). All derived from data
   already in the buffer; no ODE re-implementation in presentation code (preserves
-  the "physics-honest color" contract, `render.wgsl:19`).
+  the "physics-honest color" contract, `packages/strange-attractors/web/src/render.wgsl:19`).
 - **3.1.c Projections.** Optional faint XY / XZ / YZ shadow projections onto the
   framing box walls (the canonical butterfly *is* the XZ projection). Extra
   line-strip draws with a flattened `view_of`; presentation only.
 - **3.1.d Background / exposure.** Background theme (deep-space / paper / blueprint)
-  + exposure and vignette sliders feeding `fs_blit` (`render.wgsl:207-215`),
+  + exposure and vignette sliders feeding `fs_blit` (`packages/strange-attractors/web/src/render.wgsl:207-215`),
   replacing magic constants with uniforms. Recalibrate poster/loop boost (Step 6
   discipline from `verification-demo-spec.md` § 3.4).
 
@@ -98,7 +98,7 @@ per-sim (reaction-diffusion, physarum precedents cited in the file header).
 
 These make it an *instrument*. All feasible without a new kernel: they read back
 the display buffer or re-dispatch the **committed** Lorenz shader (the PROVE
-"run twice" already dispatches it into scratch buffers, `verify-panel.ts:132-161`).
+"run twice" already dispatches it into scratch buffers, `packages/strange-attractors/web/src/verify-panel.ts:132-161`).
 Initial scope is **Lorenz** (its canonical pedagogy); § 3.3 systems inherit these
 once their kernels land.
 
@@ -106,12 +106,12 @@ once their kernels land.
   the display trajectory; plot zₙ vs zₙ₊₁ in a small inset canvas — Lorenz's
   near-1D unimodal (tent-like) return map. *The* "order hidden in chaos" reveal
   (Lorenz 1963 § "The predictability…"). CPU over one readback of `liveTraj`;
-  reuses the sequence-token pattern (`main.ts:544`).
+  reuses the sequence-token pattern (`packages/strange-attractors/web/src/main.ts:544`).
 - **3.2.b Poincaré section.** Points where the trajectory crosses a chosen plane
   (default z = ρ−1, the C± height); render as a scatter inset showing the fractal
   cross-section. CPU crossing-detection over the readback.
 - **3.2.c Live Lyapunov readout.** **The butterfly ghost is already integrated
-  and ‖Δ‖ already measured** (`main.ts:572-591`). Fit the slope of
+  and ‖Δ‖ already measured** (`packages/strange-attractors/web/src/main.ts:572-591`). Fit the slope of
   log‖Δ(t)‖ over the exponential-growth window → live estimate of the largest
   Lyapunov exponent (classic Lorenz λ₁ ≈ 0.9056). Add a row to the Study
   diagnostics + a "measured, then compared to the literature value" honesty note.
@@ -119,9 +119,9 @@ once their kernels land.
 - **3.2.d Bifurcation diagram.** Sweep ρ over a range, integrate the **committed**
   Lorenz kernel into scratch buffers per ρ (same dispatch pattern as PROVE),
   collect z-maxima, plot z-max vs ρ — the chaos-onset picture. Python precedent:
-  `sim.py:176 parameter_sweep_final_z`. Mark the demo's current ρ on the axis so
+  `packages/strange-attractors/strange_attractors/sim.py:176 parameter_sweep_final_z`. Mark the demo's current ρ on the axis so
   the slider and the diagram are coupled.
-- **3.2.e More ρ bookmarks.** Extend the ρ tick set (`main.ts:931-935`) with the
+- **3.2.e More ρ bookmarks.** Extend the ρ tick set (`packages/strange-attractors/web/src/main.ts:931-935`) with the
   real bifurcations: ρ=1 (pitchfork), ρ≈13.93 (homoclinic), ρ≈24.06 (crisis).
   (Current ticks — ρ≈24.74 Hopf, 99.65 periodic window, 350 limit cycle — are
   already present and keep their labels.)
@@ -177,7 +177,7 @@ charter already covered them. Cluster A needs no scope amendment.
    `<name>-trajectory-seed42-step<N>` (naming precedent:
    `captures/strange-attractors-ref/lorenz-trajectory-seed42-step10000.h5` +
    `.json` sidecar) with a real payload checksum (fix the `sha256:0*64`
-   placeholder, `sim.py:88`, while here).
+   placeholder, `packages/strange-attractors/strange_attractors/sim.py:88`, while here).
 6. **Determinism class + equivalence tolerance** — `determinism.md`, `equivalence.md`
    entries; closed-form defaults unless measured otherwise (spec § 2.6). Also
    update `spec-ref.md` § 6 per system (gate status § 6.5, PBT declarations
@@ -236,10 +236,10 @@ fixes the *field*, not the numerics.
 ### 3.4 Interaction & camera (Lane B)
 
 - **3.4.a Full 3D orbit + zoom.** Current drag is x-axis rotation only
-  (`main.ts:780-786`, single `angle` uniform). Add pitch + zoom via two more
+  (`packages/strange-attractors/web/src/main.ts:780-786`, single `angle` uniform). Add pitch + zoom via two more
   render uniforms (elevation, distance) — preserves the auto-orbit contract
-  (`main.ts:695`) so poster/loop determinism is unaffected (frame-indexed).
-- **3.4.b Timeline scrub / pause.** Expose the trace-in `head` (`main.ts:622`) as
+  (`packages/strange-attractors/web/src/main.ts:695`) so poster/loop determinism is unaffected (frame-indexed).
+- **3.4.b Timeline scrub / pause.** Expose the trace-in `head` (`packages/strange-attractors/web/src/main.ts:622`) as
   a scrub slider in Study; step through the trajectory.
 - **3.4.c Reseed nudger.** A "nudge IC" control re-integrating the **display**
   buffer from a fresh jittered IC (display-only; capture stays pinned to seed-42,
@@ -254,7 +254,7 @@ fixes the *field*, not the numerics.
 - **Attractor registry** — a single typed table (name → field WGSL id, canonical
   params, dt, fit seed, EXPLAIN metadata, committed-artifact links) that the
   panel selector, EXPLAIN panel, and capture manifest all read. Analogous to the
-  existing `REGIMES` table (`main.ts:417`), generalized across systems.
+  existing `REGIMES` table (`packages/strange-attractors/web/src/main.ts:417`), generalized across systems.
 - **Data-spine extension** — `gen-verification.mjs` grows a per-attractor section
   (params, anchors, gate tolerances, audit links) so EXPLAIN/PROVE stay
   data-bound and self-healing (never retyped), per `verification-demo-spec.md` § 4.
@@ -352,6 +352,20 @@ item 1) → the boundary-crossing kernel work → full validate.
 
 ## 10. Change log
 
+- **v0.4 (2026-07-03) — citation path-format housekeeping (no spec change).**
+  Every backtick `file:line` citation to `main.ts`, `render.wgsl`,
+  `verify-panel.ts` and `sim.py` was written as a bare filename; the Cat 1
+  intra-repo checker resolves citations against the **repo root**, so the bare
+  names failed as "target does not exist" and turned the `integrity` CI job red
+  (red since the spec first landed — the completion gates did not run
+  `integrity --all`). All such citations are now full repo-root paths
+  (`packages/strange-attractors/web/src/…`, `packages/strange-attractors/strange_attractors/sim.py`),
+  matching the sibling `verification-demo-spec.md` convention. No prose changed.
+  The line targets are anchored to the pre-expansion baseline (`origin/main` @
+  6588da5) this spec was authored from; several have since shifted with the
+  landed code — the checker requires only that each path resolves and the line
+  is in range, both of which now hold.
+
 - **v0.3 (2026-07-03) — X-B + X-C landed; spec fully executed.** Thomas and
   Halvorsen (X-B) plus Dadras, Chen and Four-wing (X-C) shipped with the
   full per-system discipline and the spec-ref § 1 scope amendment as an
@@ -391,6 +405,6 @@ item 1) → the boundary-crossing kernel work → full validate.
      waive with cause); note that gates 11–13 already cover PBT/perf-ledger.
   4. **Citation fixes:** charter "§ 1.8" (does not exist) → § 3.1/§ 3 +
      v2-amendment; `spec-ref.md` "§ 6.6.2" → § 6.6 invariant 2;
-     `render.wgsl:22` → `render.wgsl:19`; § 3.2.e no longer lists the ρ=99.65
+     `packages/strange-attractors/web/src/render.wgsl:22` → `packages/strange-attractors/web/src/render.wgsl:19`; § 3.2.e no longer lists the ρ=99.65
      periodic window as an addition (it is already in the tick set alongside
      24.74 and 350).
