@@ -352,6 +352,15 @@ item 1) → the boundary-crossing kernel work → full validate.
 
 ## 10. Change log
 
+- **v0.3 (2026-07-03) — X-B + X-C landed; spec fully executed.** Thomas and
+  Halvorsen (X-B) plus Dadras, Chen and Four-wing (X-C) shipped with the
+  full per-system discipline and the spec-ref § 1 scope amendment as an
+  explicit commit deliverable. Chen's dt=0.002 stiff/fast calibration note
+  (§ 3.3.1) was confirmed by measurement. 9 systems live in the instrument;
+  Pickover remains the sole deferral (with cause, operator-voidable).
+  Audits: `docs/_audits/phase-6/expansion-strange-attractors-xa-audit-2026-07-03T15-54-17Z.md`
+  and `docs/_audits/phase-6/expansion-strange-attractors-xbc-audit-2026-07-03T16-15-59Z.md`.
+
 - **v0.2 (2026-07-03) — X-A landed.** L-1/L-2/L-3 shipped as Lane-B clusters;
   X-A shipped as the ratified expansion: Rössler, Aizawa and Sprott-A landed
   with the full per-system discipline (System protocol, golden anchors ×3,
