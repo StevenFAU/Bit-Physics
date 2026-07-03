@@ -67,14 +67,14 @@
       },
       "expected": {
         "DE": 11.512925464970229,
-        "escaped_at_iteration": 1,
-        "z_at_escape": [10.0, 0.0, 100000000.0],
-        "z_mag_at_escape_squared": 1.0000000000000001e16,
-        "dz_mag_at_escape": 80000001
+        "escaped_at_iteration": 0,
+        "z_at_escape": [10.0, 0.0, 0.0],
+        "z_mag_at_escape": 10.0,
+        "dz_mag_at_escape": 1
       },
       "independent_reference": {
-        "source": "Hand-derivation in tools/testkit/golden/derivations/mandelbulb-de-samples.md § 3: z_0=(10,0,0) maps to z_0^p=(0,0,10^8), giving z_1=(10, 0, 10^8) with |z_1|^2 = 10^16 + 100 (exact). dz_1 = 8*10^7 + 1 (exact). DE = (1/2)*sqrt(10^16+100)/(8*10^7+1) * log(sqrt(10^16+100)); SymPy evaluates this to 30 digits then rounds to f64 = 11.512925464970229. Also Quilez 2009 'the far field' remark gives the leading-order asymptotic DE ~ (|c|/2)*log|c| = 5*log(10) ≈ 11.5129 in this limit, cross-checking the order of magnitude. Also re-derived symbolically by tools/testkit/golden/generator/mandelbulb_de_samples.py.",
-        "derived_by": "SymPy 30-digit precision evaluation + asymptotic order-of-magnitude cross-check + hand-derivation of the integer/surd-exact intermediate quantities",
+        "source": "Hand-derivation in tools/testkit/golden/derivations/mandelbulb-de-samples.md § 3: |z_0| = |c| = 10 > R = 2, and the escape test precedes the derivative update in both the committed kernel (packages/mandelbulb-explorer/src/mandelbulb_de.wgsl) and the SymPy generator (_de_for), so the point escapes at the FIRST radius check with z = c and dz = dz_0 = 1. DE = (1/2)*10*log(10) = 5*log(10) — exact and elementary; SymPy evaluates to 30 digits then rounds to f64 = 11.512925464970229. Quilez 2009's 'far field' asymptotic DE ~ (|c|/2)*log|c| coincides with the exact value in its leading term (a check-AFTER-update loop would give ~11.5129253, differing by ~1.44e-7 — a convention difference, not FP error; see the S4 row of docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md). Also re-derived symbolically by tools/testkit/golden/generator/mandelbulb_de_samples.py.",
+        "derived_by": "exact hand-derivation (immediate escape, dz = 1, DE = 5*log 10) + SymPy 30-digit re-evaluation + Quilez far-field asymptotic cross-check",
         "expected": {
           "DE": 11.512925464970229
         }

@@ -28,6 +28,12 @@ $$z_{n+1} = z_n^p + c,\qquad z_0 = c,\qquad dz_0 = 1,\qquad dz_{n+1} = p\,|z_n|^
 with $z^p$ expanded via spherical coordinates (Quilez 2009). The DE
 is $\,\frac{1}{2}\,|z|\,\log|z|/|dz|\,$ evaluated at the **escape**
 iteration (first $n$ where $|z_n| > R$) or at $N_{\mathrm{max}}$.
+The escape test **precedes** the derivative update — in both the
+committed kernel (`packages/mandelbulb-explorer/src/mandelbulb_de.wgsl`)
+and the SymPy generator
+(`tools/testkit/golden/generator/mandelbulb_de_samples.py`, `_de_for`)
+— so $|dz|$ at escape is $dz_n$, which does **not** include the
+escaping iterate's own chain-rule factor.
 
 ## 1. Anchor — origin $c = (0, 0, 0)$
 
@@ -73,39 +79,43 @@ $= 0.027268230020419913$ (Python f64).
 
 ## 3. Anchor — far-field point $c = (10, 0, 0)$
 
-For $|c| \gg R$, the first iteration already escapes ($|z_1| > R$):
+$|z_0| = |c| = 10 > R = 2$, and the escape test precedes the
+derivative update (header convention above, matching the committed
+kernel and the SymPy generator): the point escapes at the **first
+radius check**, with $z = c$ and $dz = dz_0 = 1$. The anchor is
+therefore **exact and elementary**:
 
-- $z_0 = (10, 0, 0)$, $|z_0| = 10$; not escaped ($10 > 2$ wait — yes, $10 > 2$, so this IS escaped at $z_0$; convention varies).
-
-The "did we escape at iteration 0" question is conventionally
-resolved by the first iteration that produces $|z_{n+1}| > R$ after
-the **squaring** step. Standard practice (Quilez 2009) is to compute
-$z^p$ and update $dz$, then test. So:
-
-- $z_0 = (10, 0, 0)$, $|z_0| = 10$; compute $z_0^p$ in spherical:
-  $r_0 = 10$, $\theta_0 = \pi/2$, $\phi_0 = 0$;
-  $z_0^p = 10^8 \cdot (\sin(4\pi),\, 0,\, \cos(4\pi)) = (0, 0, 10^8)$.
-- $z_1 = z_0^p + c = (10, 0, 10^8)$, $|z_1| \approx 10^8$; escaped.
-- $dz_1 = 8 \cdot 10^7 \cdot 1 + 1 = 8 \cdot 10^7 + 1$.
-
-$DE = \tfrac{1}{2}\,(|z_1|/|dz_1|)\,\log|z_1|$
-$\approx 0.5 \cdot \frac{10^8}{8\cdot 10^7 + 1} \cdot \log 10^8$
-$\approx 0.5 \cdot 1.25 \cdot 18.4207 \approx 11.5129$.
-
-Numerically (SymPy at 30-digit precision, rounded to f64):
-$DE = 11.512925464970229$.
+$$DE = \tfrac{1}{2}\,|c|\,\log|c| = 5\,\log 10 = 11.512925464970229\ \text{(f64)}.$$
 
 **Anchor value:** `DE = 11.512925464970229`.
 
-(A direct Python-f64 evaluation gives $11.51292532...$, differing in
-the 8th decimal — the discrepancy is from accumulated f64 rounding in
-the intermediate quantities $|z_1|, |dz_1|, \log|z_1|$; the SymPy
-value is the higher-fidelity reference. The generator script does the
-SymPy evaluation; the test suite tolerates `absolute = 1e-12`.)
+**Convention note (the value is convention-sensitive at the
+$10^{-7}$ level).** A loop that instead computed $z^p$, updated
+$dz$, and *then* tested — i.e. escape detected at
+$z_1 = (10, 0, 10^8)$ with $dz_1 = 8\cdot 10^7 + 1$ — would give
+$DE = \tfrac{1}{2}\,\sqrt{10^{16}+100}\,\log\sqrt{10^{16}+100}\,/\,(8\cdot 10^7+1)
+\approx 11.512925321$, differing from the committed value by
+$\approx 1.44\times 10^{-7}$. This is a **convention difference, not
+floating-point rounding** (an earlier revision of this document
+mis-attributed it to f64 error). The committed golden value binds the
+check-before-update convention used by the kernel and the generator;
+see the S4 row of
+`docs/_audits/phase-1/sub-phase-closed-form/stage-1-checkpoint-2026-05-20T16-42-11Z.md`
+for the original adoption decision.
+
+The classical far-field asymptotic (Quilez 2009, "the far field"):
+iterate once, $|z_1| \approx |c|^p$, $|dz_1| \approx p\,|c|^{p-1}$,
+$DE \approx \tfrac{|c|}{2}\log|c|$ — coincides with the exact value
+in its leading term, which is why both conventions agree to
+$\sim 10^{-7}$ here.
 
 **Independent references:**
-1. Hand-derivation above (this section).
-2. Asymptotic form $DE \to |c|/2 \cdot \log|c|^p / p = (|c|/2)\log|c|$ as $|c| \to \infty$ — cited in Quilez 2009 ("the far field" remark).
+1. Hand-derivation above: immediate escape, $dz = 1$, elementary
+   ($5\,\log 10$ — exactly representable arithmetic on named
+   constants).
+2. Asymptotic form $DE \to (|c|/2)\log|c|$ as $|c| \to \infty$ —
+   cited in Quilez 2009 ("the far field" remark); leading term
+   identical.
 3. SymPy symbolic re-evaluation in the generator script.
 
 ## 4. Generator contract
