@@ -106,6 +106,32 @@ T_SPH_KERNEL_F32_REL = 2e-6  # WGSL f32 kernel vs golden table (f32 rounding sco
 T_SPH_NORM_TOL = 5e-3  # kernel-normalization unit-volume mean on interior lattice
 SPH_GATE_STRIDE = 16  # committed deterministic index subsample (idx = ::16)
 
+# --- mpm-multimaterial (Phase-6 verification-demo; NEW sim, no gpu_gate.py row
+# so NOT in ESTABLISHED_THRESHOLDS — declared fresh, measured-then-declared per
+# packages/mpm-multimaterial/web/verification-demo-spec.md § 2.1). The 16-cube
+# diagnostic canonical is NON-CHAOTIC over its 50-step horizon (uniform-velocity
+# blob in free fall, floor never reached, F stays ~I so stress stays ~0), so the
+# pointwise capture-reproduction budget is real. TRAJ_REL reuses the established
+# [defaults.mpm] category tolerance verbatim (tolerance.toml, resolved via
+# [overrides.mpm-multimaterial]); the rest gate closed-form artifacts and the
+# per-material invariants (spec § 4.3).
+T_MPM_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
+T_MPM_GOLDEN_F64_ABS = 1e-15  # f64-mirror B-spline vs golden table (table's own tol)
+T_MPM_KERNEL_F32_REL = 2e-6  # WGSL f32 N(x) vs golden table (f32 rounding scope)
+T_MPM_POU_F32_ABS = 2e-6  # GPU partition-of-unity sweep |sum - 1|
+# Measured (RDNA2, 2026-07-04 step-2 harness): mirror 0.0 bit-exact (log is the
+# only op that may differ cross-engine by ~1 ulp of |lam*30| ~ 1.5e-11 — bound
+# covers it), GPU f32 7.1e-7, snow overshoot 5.1e-7, sand logdet 4.2e-6,
+# ortho 1.3e-6 — each declared bound keeps >= 20x margin over measurement.
+T_MPM_NEO_F64_ABS = 1e-10  # TS f64 mirror vs reference-computed stress fixture
+T_MPM_NEO_F32_REL = 5e-5  # WGSL f32 stress vs the same fixture (per-row peak rel)
+T_MPM_SNOW_SIGMA_SLACK = 1e-5  # f32 slack on the [1-theta_c, 1+theta_s] clamp
+T_MPM_SAND_LOGDET_ABS = 1e-4  # Case III tr(Hp)=tr(eps) via log det (f32 SVD scope)
+T_MPM_SAND_ORTHO_ABS = 5e-5  # Case II tip: ||F^T F - I||_max (stress-free witness)
+MPM_HEADROOM_FACTOR = 2  # max |cell quanta| must stay below 2^31 / this
+# (M = 4e6 after the measured 1e7 saturated 86.8% of i32 per-cell on the
+# canonical — packages/mpm-multimaterial/web/src/solver.ts FP_SCALE_DEFAULT.)
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -146,6 +172,7 @@ CANON = {
     "mandelbulb-explorer": "captures/mandelbulb-explorer-ref/de-probe-points-seed42.json",
     "physarum": "captures/physarum-ref/network-canonical-seed42-step5000.json",
     "sph-water": "captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json",
+    "mpm-multimaterial": "captures/mpm-multimaterial-stack-e/drop-impact-16cube-seed42-step50.json",
 }
 
 # Established sim categories (from each browser app's exposeCapture manifest) — used
@@ -160,6 +187,7 @@ SIM_CATEGORY = {
     "physarum": "agent-based",
     "eulerian-smoke": "volumetric-grid",
     "sph-water": "particle-fluids",
+    "mpm-multimaterial": "hybrid-pg",
 }
 
 GATE_KIND = {
@@ -172,6 +200,7 @@ GATE_KIND = {
     "physarum": "new_canonical",
     "eulerian-smoke": "new_canonical",
     "sph-water": "new_canonical",
+    "mpm-multimaterial": "new_canonical",
 }
 
 
@@ -896,6 +925,233 @@ def _gate_sph_water(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_mpm_multimaterial(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for mpm-multimaterial: POINTWISE capture reproduction.
+
+    The committed diagnostic canonical (captures/mpm-multimaterial-stack-e/
+    drop-impact-16cube-seed42-step50.h5, 5K particles, dt=1e-4) is NON-CHAOTIC
+    over its 50-step horizon: a uniform-velocity blob in free fall that never
+    reaches the sticky floor, with F ~ I so the neo-Hookean stress stays ~ 0
+    (the sph-water rigid-free-fall precedent). The browser replays the exact
+    MLS-MPM reference loop from the committed f32 step-0 IC with fixed-point
+    i32-atomic P2G (M = 1e7; masses normalized to 1 per particle, stress
+    rescaled by 1/mass_unit — exact-arithmetic-equivalent).
+
+    Gate = run-twice byte-identity over every emitted field at every step
+         + per-checkpoint pointwise position/velocity vs the committed f64
+           capture (ALL 5000 particles), max_abs <= T_MPM_TRAJ_REL *
+           max|browser field| (the established [defaults.mpm] rel=1e-4 via
+           [overrides.mpm-multimaterial]; no widening)
+         + closed-form artifacts at step 0: the in-page f64 mirror's B-spline
+           N(x) + partition-of-unity vs the committed golden table (its own
+           1e-15 tolerance); the WGSL f32 evaluations at f32 rounding scope;
+           the reference-computed neo-Hookean stress fixture (incl. the
+           log_j = -30 guard row) vs the f64 mirror AND the WGSL f32 path
+         + fixed-point transfer witnesses (EXACT integer arithmetic): P2G
+           mass leak within the deterministic 13.5-quanta-per-particle
+           rounding bound, momentum-z likewise, per-cell quanta headroom
+           below 2^31 / MPM_HEADROOM_FACTOR
+         + per-material invariants (spec § 4.3): snow post-return-map
+           singular values (recomputed f64-side from the GPU output F) inside
+           [1 - theta_c, 1 + theta_s] + slack; sand Drucker-Prager Case III
+           volume preservation tr(Hp) = tr(eps) via log det F, Case II
+           cone-tip orthogonality (stress-free separation), both cases
+           actually exercised
+         + finite fields.
+    """
+    from capture import load_capture
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and set(st["state"]) == set(s1[st["step"]]["state"])
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in st["state"]
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [0, 10, 20, 30, 40, 50]
+    if expected_steps != want:
+        return VerifyResult(
+            sim="mpm-multimaterial",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    # --- committed capture, pointwise on ALL particles -----------------------
+    cap = load_capture(REPO / CANON["mpm-multimaterial"])
+    worst = {"position": 0.0, "velocity": 0.0}
+    worst_ratio = 0.0
+    finite = True
+    for st in steps0:
+        ref = cap.step(st["step"]).state
+        for key, ref_key in (
+            ("position", "particle_pos"),
+            ("velocity", "particle_vel"),
+        ):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            rf = np.asarray(ref[ref_key], dtype=np.float64)
+            if bf.shape != rf.shape:
+                return VerifyResult(
+                    sim="mpm-multimaterial",
+                    kind="new_canonical",
+                    passed=False,
+                    run_twice_identical=twice,
+                    detail={
+                        "error": f"{key}@{st['step']}: shape {bf.shape} != {rf.shape}"
+                    },
+                )
+            max_abs = float(np.abs(bf - rf).max())
+            worst[key] = max(worst[key], max_abs)
+            budget = T_MPM_TRAJ_REL * float(np.abs(bf).max())
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+    within = worst_ratio <= 1.0
+
+    # --- closed-form artifacts (emitted at step 0) ---------------------------
+    s0 = steps0[0]
+    diag = s0.get("diagnostics", {})
+    golden = json.loads(
+        (
+            REPO / "tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json"
+        ).read_text()
+    )
+    samples = golden["test_points"][0]["expected"]["samples"]
+    table_n = np.array(list(samples.values()), dtype=np.float64)
+    b64 = _field(s0, "bspline_n_f64").astype(np.float64)
+    golden_f64_dev = float(np.abs(b64 - table_n).max())
+    pou64 = _field(s0, "pou_f64").astype(np.float64)
+    golden_f64_dev = max(golden_f64_dev, float(np.abs(pou64 - 1.0).max()))
+    golden_f64_ok = golden_f64_dev <= T_MPM_GOLDEN_F64_ABS
+    b32 = _field(s0, "bspline_n_f32").astype(np.float64)
+    scale = np.maximum(np.abs(table_n), 1e-3)
+    golden_f32_dev = float((np.abs(b32 - table_n) / scale).max())
+    golden_f32_ok = golden_f32_dev <= T_MPM_KERNEL_F32_REL
+    pou_sweep_dev = float(diag.get("pou_gpu_sweep_max_dev", math.inf))
+    pou_ok = pou_sweep_dev <= T_MPM_POU_F32_ABS
+
+    fixtures = json.loads(
+        (
+            REPO / "packages/mpm-multimaterial/web/fixtures/reference-fixtures.json"
+        ).read_text()
+    )
+    ref_stress = np.array(fixtures["neo_hookean_16"]["stress"], dtype=np.float64)
+    n_fix = ref_stress.shape[0]
+    mirror = _field(s0, "neo_stress_mirror_f64").astype(np.float64).reshape(n_fix, 9)
+    neo_f64_dev = float(np.abs(mirror - ref_stress.reshape(n_fix, 9)).max())
+    neo_f64_ok = neo_f64_dev <= T_MPM_NEO_F64_ABS
+    gpu32 = _field(s0, "neo_stress_gpu_f32").astype(np.float64).reshape(n_fix, 9)
+    peaks = np.maximum(np.abs(ref_stress.reshape(n_fix, 9)).max(axis=1), 1e-3)
+    neo_f32_dev = float(
+        (np.abs(gpu32 - ref_stress.reshape(n_fix, 9)) / peaks[:, None]).max()
+    )
+    neo_f32_ok = neo_f32_dev <= T_MPM_NEO_F32_REL
+
+    # --- fixed-point transfer witnesses (exact integer arithmetic) -----------
+    n_particles = 5000
+    mass_leak = float(diag.get("mass_leak_quanta", math.inf))
+    mom_leak = float(diag.get("mom_z_leak_quanta", math.inf))
+    leak_bound = math.ceil(13.5 * n_particles)
+    mass_ok = mass_leak <= leak_bound and mom_leak <= leak_bound
+    max_cell = float(diag.get("max_cell_quanta", math.inf))
+    headroom_ok = max_cell <= 2**31 / MPM_HEADROOM_FACTOR
+
+    # --- per-material invariants ---------------------------------------------
+    theta_c = float(diag.get("theta_c", math.nan))
+    theta_s = float(diag.get("theta_s", math.nan))
+    snow_sigma = _field(s0, "snow_sigma_f64").astype(np.float64)
+    snow_ok = bool(
+        np.isfinite(snow_sigma).all()
+        and math.isfinite(theta_c)
+        and snow_sigma.min() >= 1.0 - theta_c - T_MPM_SNOW_SIGMA_SLACK
+        and snow_sigma.max() <= 1.0 + theta_s + T_MPM_SNOW_SIGMA_SLACK
+    )
+    sand_case = _field(s0, "sand_case").astype(np.float64)
+    ld_in = _field(s0, "sand_logdet_in_f64").astype(np.float64)
+    ld_out = _field(s0, "sand_logdet_out_f64").astype(np.float64)
+    case3 = sand_case == 3.0
+    case2 = sand_case == 2.0
+    sand_logdet_dev = (
+        float(np.abs(ld_out[case3] - ld_in[case3]).max()) if case3.any() else math.inf
+    )
+    sand_ortho_dev = float(diag.get("sand_case2_ortho_dev", math.inf))
+    sand_ok = bool(
+        case2.any()
+        and case3.any()
+        and sand_logdet_dev <= T_MPM_SAND_LOGDET_ABS
+        and sand_ortho_dev <= T_MPM_SAND_ORTHO_ABS
+    )
+
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and golden_f64_ok
+        and golden_f32_ok
+        and pou_ok
+        and neo_f64_ok
+        and neo_f32_ok
+        and mass_ok
+        and headroom_ok
+        and snow_ok
+        and sand_ok
+    )
+    return VerifyResult(
+        sim="mpm-multimaterial",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_MPM_TRAJ_REL,
+            "finite": finite,
+            "golden_f64_dev": golden_f64_dev,
+            "golden_f64_ok": golden_f64_ok,
+            "golden_f32_dev": golden_f32_dev,
+            "golden_f32_ok": golden_f32_ok,
+            "pou_sweep_dev": pou_sweep_dev,
+            "pou_ok": pou_ok,
+            "neo_f64_dev": neo_f64_dev,
+            "neo_f64_ok": neo_f64_ok,
+            "neo_f32_dev": neo_f32_dev,
+            "neo_f32_ok": neo_f32_ok,
+            "mass_leak_quanta": mass_leak,
+            "mom_z_leak_quanta": mom_leak,
+            "mass_leak_bound_quanta": leak_bound,
+            "mass_ok": mass_ok,
+            "max_cell_quanta": max_cell,
+            "headroom_ok": headroom_ok,
+            "snow_sigma_min": float(snow_sigma.min()) if snow_sigma.size else None,
+            "snow_sigma_max": float(snow_sigma.max()) if snow_sigma.size else None,
+            "snow_ok": snow_ok,
+            "sand_logdet_dev": sand_logdet_dev,
+            "sand_case2_ortho_dev": sand_ortho_dev,
+            "sand_cases_seen": sorted({int(c) for c in sand_case.tolist()}),
+            "sand_ok": sand_ok,
+            "note": "pointwise reproduction of the committed 16-cube diagnostic "
+            "canonical (non-chaotic 50-step free-fall horizon) on ALL 5000 "
+            "particles at the established [defaults.mpm] rel=1e-4, plus the "
+            "golden B-spline / neo-Hookean fixture / fixed-point-leak / "
+            "snow-and-sand invariant artifact suite",
+        },
+    )
+
+
 def _gate_rd2d_observable(bundles: list[dict]) -> VerifyResult:
     """PENDING-LAVAPIPE contingency for rd2d (Decision 2, SHIFTED to opt-in).
 
@@ -1151,6 +1407,7 @@ _GATES = {
     "physarum": _gate_physarum,
     "eulerian-smoke": _gate_eulerian_smoke,
     "sph-water": _gate_sph_water,
+    "mpm-multimaterial": _gate_mpm_multimaterial,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

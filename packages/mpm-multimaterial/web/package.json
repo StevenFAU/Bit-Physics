@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-mpm-multimaterial",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — MPM multi-material (MLS-MPM: snow, sand, jelly, water in ONE grid solve). The verified neo-Hookean MLS-MPM core is a faithful f32 + fixed-point-atomic WGSL port pointwise-matched against the committed diagnostic canonical capture; snow (Stomakhin 2013), sand (Klar 2016 Drucker-Prager), and water (Tait EOS) are reference-less additive constitutive models, each shipping its own live invariant proof (Phase-6 verification-demo track).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

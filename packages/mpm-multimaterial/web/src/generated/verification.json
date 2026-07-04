@@ -1,0 +1,760 @@
+{
+  "_generated_by": "packages/mpm-multimaterial/web/gen-verification.mjs",
+  "golden": {
+    "path": "tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json",
+    "sha256": "9ccab8888e32e2f23e6a7b8b21d87e1da8e401a3ff5939363a4b9cb3e2378997",
+    "tolerance_abs": 1e-15,
+    "base_node_convention": "base = floor(p + 0.5) - 1; particle interacts with base, base+1, base+2",
+    "formula": "N(x) = 3/4 - x^2 for |x|<1/2; (1/2)(3/2 - |x|)^2 for 1/2 <= |x| < 3/2; 0 otherwise",
+    "xs": [
+      0,
+      0.5,
+      -0.5,
+      1,
+      -1,
+      1.5,
+      -1.5,
+      0.25,
+      -0.25,
+      0.3
+    ],
+    "n_values": [
+      0.75,
+      0.5,
+      0.5,
+      0.125,
+      0.125,
+      0,
+      0,
+      0.6875,
+      0.6875,
+      0.66
+    ],
+    "pou_ps": [
+      0,
+      0.3,
+      -0.7
+    ]
+  },
+  "canonical": {
+    "descriptor": "drop-impact-16cube-seed42-step50",
+    "capture_manifest": "captures/mpm-multimaterial-stack-e/drop-impact-16cube-seed42-step50.json",
+    "capture_payload_sha256": "689609bb46dd03fc03b4808e4113f94720b9072747b63f45ed07736694227c9e",
+    "params_as_run": {
+      "grid_n": 16,
+      "n_particles": 5000,
+      "dt": 0.0001,
+      "gravity_z": -9.81,
+      "youngs_modulus": 4000,
+      "poisson_ratio": 0.3,
+      "mu": 1538.4615384615383,
+      "lam": 2307.6923076923076,
+      "blob_center": [
+        0.5,
+        0.5,
+        0.65
+      ],
+      "blob_radius": 0.15,
+      "blob_initial_vz": -2,
+      "floor_z_index": 4,
+      "seed": 42,
+      "mass_per_particle": 0.0002,
+      "volume_per_particle": 0.0000028274333882308133
+    },
+    "checkpoints": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50
+    ],
+    "ic_sha256": "9de3f498946a9c44cd81d85e63d1f79cbdf9bcd4f238fcae83cb84e20136029e",
+    "refs_sha256": "d266c8db6a92f1f571e8db1a068bb25b50dce761b135001e5a0fa9a11548160f",
+    "ic_bytes": 60000,
+    "refs_bytes": 1440000,
+    "determinism_claimed": "bit-exact-same-hw",
+    "ref_capture_1m": {
+      "manifest": "captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.json",
+      "n_particles": 1000000,
+      "note": "offline/CI-scale reference capture — displayed as provenance; the live gate replays the browser-tractable 16-cube diagnostic canonical (spec § 2.1)"
+    }
+  },
+  "fixtures_sha256": "47df9d26fa773458ce9451e4aeb5241509ce89a90b60166ff9b4fb3f8a2c2eb9",
+  "tolerance": {
+    "path": "tools/testkit/equivalence/tolerance.toml",
+    "defaults_mpm_relative": 0.0001,
+    "resolution_note": "[overrides.mpm-multimaterial] resolves sim category hybrid-pg to tolerance category mpm (tolerance.toml — wiring, not a widening)"
+  },
+  "gate": {
+    "kind": "new_canonical",
+    "registered_in_pipeline": true,
+    "gate_fn": "_gate_mpm_multimaterial",
+    "thresholds": {
+      "traj_rel": 0.0001,
+      "golden_f64_abs": 1e-15,
+      "kernel_f32_rel": 0.000002,
+      "pou_f32_abs": 0.000002,
+      "neo_f64_abs": 1e-10,
+      "neo_f32_rel": 0.00005,
+      "snow_sigma_slack": 0.00001,
+      "sand_logdet_abs": 0.0001,
+      "sand_ortho_abs": 0.00005,
+      "headroom_factor": 2
+    },
+    "reference": {
+      "E": 4000,
+      "nu": 0.3,
+      "dt": 0.0001,
+      "gravity_z": -9.81,
+      "blob_radius": 0.15,
+      "blob_vz": -2,
+      "floor_z": 4,
+      "mu": 1538.4615384615383,
+      "lam": 2307.6923076923076
+    }
+  },
+  "anchors": {
+    "wgsl": {
+      "bspline_weights": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 94,
+        "end": 100,
+        "text": "fn bspline_weights(fp: f32) -> vec3f {\n  return vec3f(\n    0.5 * (1.5 - fp) * (1.5 - fp),\n    0.75 - (fp - 1.0) * (fp - 1.0),\n    0.5 * (fp - 0.5) * (fp - 0.5),\n  );\n}"
+      },
+      "bspline_n": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 103,
+        "end": 111,
+        "text": "fn bspline_n(x: f32) -> f32 {\n  let ax = abs(x);\n  if (ax < 0.5) {\n    return 0.75 - x * x;\n  }\n  if (ax < 1.5) {\n    return 0.5 * (1.5 - ax) * (1.5 - ax);\n  }\n  return 0.0;"
+      },
+      "encode_fixed": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 118,
+        "end": 120,
+        "text": "fn encode_fixed(x: f32, scale: f32) -> i32 {\n  return i32(round(x * scale));\n}"
+      },
+      "neo_hookean": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 242,
+        "end": 247,
+        "text": "fn stress_neo_hookean(f: mat3x3f, mu: f32, lam: f32) -> mat3x3f {\n  let j_det = det3(f);\n  var log_j = -30.0;\n  if (j_det > 0.0) {\n    log_j = log(j_det);\n  }"
+      },
+      "snow_stress": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 254,
+        "end": 262,
+        "text": "fn stress_snow(f_e: mat3x3f, jp: f32, m: Material) -> mat3x3f {\n  let h = clamp(exp(m.xi * (1.0 - jp)), 0.1, 20.0);\n  let mu = m.mu0 * h;\n  let lam = m.lam0 * h;\n  let s = svd3(f_e);\n  let r = s.u * transpose(s.v);\n  let j_det = det3(f_e);\n  return 2.0 * mu * (f_e - r) * transpose(f_e) + (lam * (j_det - 1.0) * j_det) * IDENTITY3;\n}"
+      },
+      "sand_stress": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 266,
+        "end": 273,
+        "text": "fn stress_sand(f_e: mat3x3f, m: Material) -> mat3x3f {\n  let s = svd3(f_e);\n  let sig = clamp(abs(s.sigma), vec3f(1e-6), vec3f(1e6));\n  let eps = log(sig); // Hencky strain (principal)\n  let tr_eps = eps.x + eps.y + eps.z;\n  let tau_p = 2.0 * m.mu0 * eps + vec3f(m.lam0 * tr_eps);\n  return s.u * diag3(tau_p) * transpose(s.u);\n}"
+      },
+      "water_stress": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 277,
+        "end": 281,
+        "text": "fn stress_water(j: f32, m: Material) -> mat3x3f {\n  let jc = clamp(j, 0.05, 4.0);\n  let p = m.k_stiff * (pow(1.0 / jc, m.gamma_exp) - 1.0);\n  return (-jc * p) * IDENTITY3;\n}"
+      },
+      "snow_return_map": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 307,
+        "end": 314,
+        "text": "fn snow_return_map(f_trial: mat3x3f, jp: ptr<function, f32>, m: Material) -> mat3x3f {\n  let s = svd3(f_trial);\n  let sig_clamped = clamp(s.sigma, vec3f(1.0 - m.theta_c), vec3f(1.0 + m.theta_s));\n  let det_trial = s.sigma.x * s.sigma.y * s.sigma.z;\n  let det_new = sig_clamped.x * sig_clamped.y * sig_clamped.z;\n  *jp = clamp((*jp) * det_trial / det_new, 0.1, 10.0);\n  return s.u * diag3(sig_clamped) * transpose(s.v);\n}"
+      },
+      "sand_return_map": {
+        "file": "packages/mpm-multimaterial/src/mpm_prelude.wgsl",
+        "start": 322,
+        "end": 341,
+        "text": "fn sand_return_map(f_trial: mat3x3f, m: Material) -> mat3x3f {\n  let s = svd3(f_trial);\n  let sig = clamp(abs(s.sigma), vec3f(1e-6), vec3f(1e6));\n  let eps = log(sig);\n  let tr_eps = eps.x + eps.y + eps.z;\n  if (tr_eps > 0.0) {\n    // Case II — expansion: project to the cone tip (stress-free separation).\n    return s.u * transpose(s.v);\n  }\n  let eps_hat = eps - vec3f(tr_eps / 3.0);\n  let eps_hat_norm = length(eps_hat);\n  let delta_gamma = eps_hat_norm\n    + m.alpha * tr_eps * (3.0 * m.lam0 + 2.0 * m.mu0) / (2.0 * m.mu0);\n  if (delta_gamma <= 0.0 || eps_hat_norm < 1e-12) {\n    // Case I — inside the cone: elastic.\n    return f_trial;\n  }\n  // Case III — project onto the cone face along the traceless direction.\n  let h = eps - (delta_gamma / eps_hat_norm) * eps_hat;\n  return s.u * diag3(exp(h)) * transpose(s.v);"
+      },
+      "p2g": {
+        "file": "packages/mpm-multimaterial/src/mpm_core.wgsl",
+        "start": 53,
+        "end": 97,
+        "text": "fn p2g(@builtin(global_invocation_id) gid: vec3u) {\n  let p = gid.x;\n  if (p >= params.n_particles) {\n    return;\n  }\n  let pt = particles[p];\n  let m = materials[pt.mat_id];\n  let tau = particle_stress(pt.F, pt.Jp, m);\n  let ws = -4.0 * params.dt * params.inv_dx * params.inv_dx * pt.vol0 * params.inv_mass_unit;\n  let eff = pt.mass * pt.C + ws * tau;\n\n  let fx = pt.pos * params.inv_dx;\n  let base = vec3i(floor(fx + vec3f(0.5))) - vec3i(1);\n  let fp = fx - vec3f(base);\n  let wx = bspline_weights(fp.x);\n  let wy = bspline_weights(fp.y);\n  let wz = bspline_weights(fp.z);\n  let n = i32(params.grid_n);\n\n  for (var di = 0; di < 3; di++) {\n    let gi = base.x + di;\n    if (gi < 0 || gi >= n) {\n      continue;\n    }\n    let dx_node = (f32(di) - fp.x) * params.dx;\n    for (var dj = 0; dj < 3; dj++) {\n      let gj = base.y + dj;\n      if (gj < 0 || gj >= n) {\n        continue;\n      }\n      let dy_node = (f32(dj) - fp.y) * params.dx;\n      for (var dk = 0; dk < 3; dk++) {\n        let gk = base.z + dk;\n        if (gk < 0 || gk >= n) {\n          continue;\n        }\n        let dz_node = (f32(dk) - fp.z) * params.dx;\n        let w = wx[di] * wy[dj] * wz[dk];\n        let dpos = vec3f(dx_node, dy_node, dz_node);\n        let mv = pt.mass * pt.vel + eff * dpos;\n        let cell = cell_index(vec3i(gi, gj, gk));\n        atomicAdd(&grid[cell].m, encode_fixed(w * pt.mass, params.fp_scale));\n        atomicAdd(&grid[cell].mx, encode_fixed(w * mv.x, params.fp_scale));\n        atomicAdd(&grid[cell].my, encode_fixed(w * mv.y, params.fp_scale));\n        atomicAdd(&grid[cell].mz, encode_fixed(w * mv.z, params.fp_scale));"
+      },
+      "grid_update": {
+        "file": "packages/mpm-multimaterial/src/mpm_core.wgsl",
+        "start": 111,
+        "end": 168,
+        "text": "fn grid_update(@builtin(global_invocation_id) gid: vec3u) {\n  let idx = gid.x;\n  let n = params.grid_n;\n  if (idx >= n * n * n) {\n    return;\n  }\n  let mq = atomicLoad(&grid[idx].m);\n  if (mq <= 0) {\n    grid_vel[idx] = vec4f(0.0);\n    return;\n  }\n  let mass = decode_fixed(mq, params.inv_fp_scale);\n  let mom = vec3f(\n    decode_fixed(atomicLoad(&grid[idx].mx), params.inv_fp_scale),\n    decode_fixed(atomicLoad(&grid[idx].my), params.inv_fp_scale),\n    decode_fixed(atomicLoad(&grid[idx].mz), params.inv_fp_scale),\n  );\n  var v = mom / mass;\n  v += params.gravity * params.dt;\n\n  // Live interaction impulses (INTERACT layer; zero-count on the gate scene).\n  let k = i32(idx % n);\n  let j = i32((idx / n) % n);\n  let i = i32(idx / (n * n));\n  let cell_pos = vec3f(f32(i), f32(j), f32(k)) * params.dx;\n  for (var q = 0u; q < params.n_pointers; q++) {\n    let d = cell_pos - pointers[q].pos;\n    let r = pointers[q].radius;\n    let d2 = dot(d, d);\n    if (d2 < r * r) {\n      let fall = 1.0 - sqrt(d2) / r;\n      v += pointers[q].vel * (pointers[q].strength * fall * params.dt);\n    }\n  }\n\n  // Boundary conditions — verbatim reference order.\n  if (k <= params.floor_z) {\n    v = vec3f(0.0);\n  }\n  if (k == 0 && v.z < 0.0) {\n    v.z = 0.0;\n  }\n  if (k == i32(n) - 1 && v.z > 0.0) {\n    v.z = 0.0;\n  }\n  if (i == 0 && v.x < 0.0) {\n    v.x = 0.0;\n  }\n  if (i == i32(n) - 1 && v.x > 0.0) {\n    v.x = 0.0;\n  }\n  if (j == 0 && v.y < 0.0) {\n    v.y = 0.0;\n  }\n  if (j == i32(n) - 1 && v.y > 0.0) {\n    v.y = 0.0;\n  }\n  grid_vel[idx] = vec4f(v, mass);"
+      },
+      "g2p": {
+        "file": "packages/mpm-multimaterial/src/mpm_core.wgsl",
+        "start": 179,
+        "end": 255,
+        "text": "fn g2p(@builtin(global_invocation_id) gid: vec3u) {\n  let p = gid.x;\n  if (p >= params.n_particles) {\n    return;\n  }\n  var pt = particles[p];\n  let fx = pt.pos * params.inv_dx;\n  let base = vec3i(floor(fx + vec3f(0.5))) - vec3i(1);\n  let fp = fx - vec3f(base);\n  let wx = bspline_weights(fp.x);\n  let wy = bspline_weights(fp.y);\n  let wz = bspline_weights(fp.z);\n  let n = i32(params.grid_n);\n\n  var v_acc = vec3f(0.0);\n  var c_acc = mat3x3f(vec3f(0.0), vec3f(0.0), vec3f(0.0));\n  for (var di = 0; di < 3; di++) {\n    let gi = base.x + di;\n    if (gi < 0 || gi >= n) {\n      continue;\n    }\n    let dx_node = (f32(di) - fp.x) * params.dx;\n    for (var dj = 0; dj < 3; dj++) {\n      let gj = base.y + dj;\n      if (gj < 0 || gj >= n) {\n        continue;\n      }\n      let dy_node = (f32(dj) - fp.y) * params.dx;\n      for (var dk = 0; dk < 3; dk++) {\n        let gk = base.z + dk;\n        if (gk < 0 || gk >= n) {\n          continue;\n        }\n        let dz_node = (f32(dk) - fp.z) * params.dx;\n        let w = wx[di] * wy[dj] * wz[dk];\n        let gv = grid_vel[cell_index(vec3i(gi, gj, gk))].xyz;\n        let dpos = vec3f(dx_node, dy_node, dz_node);\n        v_acc += w * gv;\n        // APIC affine reconstruction: C += w * v_i (x_i - x_p)^T.\n        // mat3x3f columns are the outer product's columns (column-major).\n        c_acc += mat3x3f(w * gv * dpos.x, w * gv * dpos.y, w * gv * dpos.z);\n      }\n    }\n  }\n  let affine_scale = 4.0 * params.inv_dx * params.inv_dx;\n  let c_new = affine_scale * c_acc;\n  let speed = length(v_acc);\n  if (speed > params.vmax_clamp) {\n    v_acc *= params.vmax_clamp / speed;\n  }\n  pt.vel = v_acc;\n  pt.C = c_new;\n\n  let m = materials[pt.mat_id];\n  if (m.model == 3u) {\n    // Water — J tracked as a scalar (Tampubolon 2017): J *= 1 + dt tr(C).\n    let tr_c = c_new[0][0] + c_new[1][1] + c_new[2][2];\n    pt.Jp = clamp(pt.Jp * (1.0 + params.dt * tr_c), 0.05, 4.0);\n  } else {\n    // Deformation update F <- (I + dt C) F  (Hu 2018 § 3 eq. 4).\n    let f_trial = (IDENTITY3 + params.dt * c_new) * pt.F;\n    if (m.model == 1u) {\n      var jp = pt.Jp;\n      pt.F = snow_return_map(f_trial, &jp, m);\n      pt.Jp = jp;\n    } else if (m.model == 2u) {\n      pt.F = sand_return_map(f_trial, m);\n    } else {\n      pt.F = f_trial;\n    }\n  }\n\n  // Advect + stencil-safety clamp (reference advect_particles).\n  let lo = 2.0 * params.dx;\n  let hi = (f32(params.grid_n) - 2.0) * params.dx;\n  pt.pos = clamp(pt.pos + params.dt * pt.vel, vec3f(lo), vec3f(hi));\n  particles[p] = pt;"
+      }
+    },
+    "python": {
+      "shape_n": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/shape_functions.py",
+        "start": 27,
+        "end": 45,
+        "text": "def N(x: float) -> float:\n    \"\"\"MLS-MPM quadratic B-spline shape function in 1D.\n\n    Piecewise quadratic:\n\n    - ``|x| < 1/2``    : ``3/4 - x**2``\n    - ``1/2 <= |x| < 3/2`` : ``(1/2) * (3/2 - |x|)**2``\n    - ``|x| >= 3/2``    : ``0``\n\n    Continuous + has continuous first derivative on the support\n    ``[-3/2, 3/2]`` (the value 1/2 at the inner boundaries agrees\n    across both branches; partition-of-unity is exact).\n    \"\"\"\n    ax = abs(float(x))\n    if ax < 0.5:\n        return 0.75 - x * x\n    if ax < 1.5:\n        return 0.5 * (1.5 - ax) ** 2\n    return 0.0"
+      },
+      "p2g_with_stress": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+        "start": 426,
+        "end": 455,
+        "text": "def p2g_with_stress(\n    pos: np.ndarray,\n    vel: np.ndarray,\n    mass: np.ndarray,\n    affine_c: np.ndarray,\n    stress: np.ndarray,\n    volume_p: np.ndarray,\n    grid_mass: np.ndarray,\n    grid_mom: np.ndarray,\n    grid_dx: float,\n    dt: float,\n) -> None:\n    \"\"\"P2G with stress-divergence force injection (Hu 2018 88-line variant).\n\n    Adds the force contribution ``-dt * volume_p * stress @ grad N_i``\n    to the grid momentum on top of the standard particle-momentum\n    transfer. For the MLS-MPM quadratic B-spline kernel the gradient\n    contribution simplifies to the APIC affine-velocity injection\n    augmented with a scaled per-cell ``stress @ (x_i - x_p)`` term\n    (88-line reference, eq. \"affine += dt * stress * (-4 dx_inv²)\").\n\n    For simplicity at this sub-phase the stress is folded into an\n    effective affine-velocity contribution before the regular P2G\n    sweep — equivalent to Hu 2018 § 3 + § 5 derivation but avoids a\n    separate ``∇N_i`` pass.\n    \"\"\"\n    n_particles = pos.shape[0]\n    grid_n = grid_mass.shape[0]\n    inv_dx_sq = 1.0 / (grid_dx * grid_dx)\n    stress_scale = -4.0 * dt * inv_dx_sq  # MLS-MPM 88-line coefficient."
+      },
+      "g2p": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+        "start": 183,
+        "end": 208,
+        "text": "def g2p(\n    pos: np.ndarray,\n    vel_new: np.ndarray,\n    affine_c_new: np.ndarray,\n    grid_mom: np.ndarray,\n    grid_mass: np.ndarray,\n    grid_dx: float,\n) -> None:\n    \"\"\"Grid-to-particle transfer (velocity + affine-velocity reconstruction).\n\n    For each particle ``p``:\n\n        v_p_new   = sum_i N_i(x_p) * v_i\n        C_p_new   = (4 / dx^2) * sum_i N_i(x_p) * v_i ⊗ (x_i - x_p)\n\n    where ``v_i = mom_i / mass_i`` is the grid velocity (zero if grid\n    cell has no mass). The factor ``4 / dx^2`` is the MLS-MPM\n    quadratic B-spline reconstruction coefficient (Hu 2018 § 4\n    equation for C update; this is the analytic factor that makes the\n    affine reconstruction exact for the quadratic kernel — APIC).\n\n    Same lex iteration order as ``p2g`` (R-MPM-1 mitigation).\n    \"\"\"\n    n_particles = pos.shape[0]\n    grid_n = grid_mass.shape[0]\n    affine_scale = 4.0 / (grid_dx * grid_dx)"
+      },
+      "neo_hookean": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+        "start": 409,
+        "end": 413,
+        "text": "        if j_det <= 0.0:\n            log_j = -30.0\n        else:\n            log_j = np.log(j_det)\n        s_iso = lam * log_j"
+      },
+      "grid_update": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+        "start": 542,
+        "end": 573,
+        "text": "def grid_update(\n    grid_mass: np.ndarray,\n    grid_mom: np.ndarray,\n    gravity_z: float,\n    dt: float,\n    floor_z: int,\n) -> None:\n    \"\"\"Grid-update step: apply gravity + simple floor BC.\n\n    For each grid cell with mass > 0:\n\n    1. Compute velocity v_i = mom_i / mass_i.\n    2. Apply gravity: v_i_z += gravity_z * dt.\n    3. Apply floor BC at z = floor_z: if z <= floor_z, zero v_i_z\n       (no-slip along z; sticky floor).\n    4. Re-write mom_i = mass_i * v_i.\n\n    Lex order over (i, j, k); deterministic. No atomics.\n    \"\"\"\n    grid_n = grid_mass.shape[0]\n    for i in range(grid_n):\n        for j in range(grid_n):\n            for k in range(grid_n):\n                m = grid_mass[i, j, k]\n                if m <= 0.0:\n                    continue\n                inv_m = 1.0 / m\n                vx = grid_mom[i, j, k, 0] * inv_m\n                vy = grid_mom[i, j, k, 1] * inv_m\n                vz = grid_mom[i, j, k, 2] * inv_m\n                vz += gravity_z * dt\n                if k <= floor_z:"
+      },
+      "advect": {
+        "file": "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+        "start": 595,
+        "end": 610,
+        "text": "def advect_particles(\n    pos: np.ndarray,\n    vel: np.ndarray,\n    dt: float,\n    grid_n: int,\n    grid_dx: float,\n) -> None:\n    \"\"\"Symplectic-Euler position update: x_{n+1} = x_n + dt * v_{n+1}.\n\n    Clamps positions to grid interior ``[2*dx, (n-2)*dx]`` to keep the\n    3×3×3 stencil in-bounds for the next P2G pass (R-MPM-1 boundary\n    safety; no out-of-stencil particles can corrupt determinism).\n    \"\"\"\n    n_particles = pos.shape[0]\n    lo = 2.0 * grid_dx\n    hi = (grid_n - 2) * grid_dx"
+      }
+    }
+  },
+  "measured": {
+    "status": "recorded",
+    "worst_ratio_pct": 2.72,
+    "worst_pos_abs": 5.91e-8,
+    "worst_vel_abs": 0.00000558,
+    "run_twice_identical": true,
+    "golden_f64_dev": 0,
+    "golden_f32_rel_dev": 5.06e-8,
+    "pou_f64_dev": 0,
+    "pou_gpu_sweep_max_dev": 5.97e-8,
+    "neo_mirror_max_abs": 0,
+    "neo_gpu_max_rel": 7.12e-7,
+    "mass_leak_quanta": 299,
+    "mass_leak_bound_quanta": 67500,
+    "mom_z_leak_quanta": 19,
+    "fp_scale": 4000000,
+    "headroom_ratio_at_4e6": 0.347,
+    "headroom_ratio_at_1e7": 0.868,
+    "snow_sigma_range": [
+      0.9749997615,
+      1.0075002536
+    ],
+    "sand_case3_logdet_dev": 3.39e-7,
+    "sand_case2_ortho_dev": 4.63e-7,
+    "ms_per_frame_120k_18substeps": 13.9,
+    "ms_per_frame_60k_18substeps": 7.9,
+    "ms_per_frame_20k_18substeps": 3.3,
+    "tier2_bukkit": "no-go (Tier-1 beats the section-3.3 targets)"
+  },
+  "materials": [
+    {
+      "name": "jelly",
+      "model": 0,
+      "E": 25000,
+      "nu": 0.3,
+      "rho": 1200,
+      "color": [
+        0.3,
+        0.85,
+        0.72,
+        0.6
+      ]
+    },
+    {
+      "name": "snow",
+      "model": 1,
+      "E": 50000,
+      "nu": 0.2,
+      "rho": 400,
+      "thetaC": 0.025,
+      "thetaS": 0.0075,
+      "xi": 10,
+      "color": [
+        0.93,
+        0.96,
+        1,
+        0.12
+      ]
+    },
+    {
+      "name": "sand",
+      "model": 2,
+      "E": 350000,
+      "nu": 0.3,
+      "rho": 1600,
+      "frictionDeg": 45,
+      "color": [
+        0.82,
+        0.66,
+        0.38,
+        0.05
+      ]
+    },
+    {
+      "name": "water",
+      "model": 3,
+      "rho": 1000,
+      "kStiff": 8000,
+      "gammaExp": 3,
+      "color": [
+        0.22,
+        0.55,
+        0.95,
+        0.85
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "id": "showcase",
+      "label": "showcase",
+      "title": "four materials, one grid solve — sand bed, water pour, jelly drop, snowball",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.004,
+      "budget": 55000,
+      "camera": {
+        "yaw": 0.85,
+        "pitch": 0.42,
+        "dist": 2.1
+      },
+      "blocks": [
+        {
+          "shape": "box",
+          "material": "sand",
+          "min": [
+            0.1,
+            0.1,
+            0.085
+          ],
+          "size": [
+            0.8,
+            0.34,
+            0.09
+          ]
+        },
+        {
+          "shape": "box",
+          "material": "water",
+          "min": [
+            0.12,
+            0.62,
+            0.085
+          ],
+          "size": [
+            0.3,
+            0.26,
+            0.24
+          ]
+        },
+        {
+          "shape": "box",
+          "material": "jelly",
+          "min": [
+            0.58,
+            0.58,
+            0.42
+          ],
+          "size": [
+            0.2,
+            0.2,
+            0.2
+          ],
+          "vel": [
+            0,
+            0,
+            -1
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "snow",
+          "center": [
+            0.3,
+            0.32,
+            0.66
+          ],
+          "radius": 0.1,
+          "vel": [
+            0.6,
+            0.5,
+            -2.2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snowball",
+      "label": "snowball",
+      "title": "two snowballs collide over a snow bed — watch the SVD clamp pack them",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.004,
+      "budget": 45000,
+      "camera": {
+        "yaw": 1.2,
+        "pitch": 0.3,
+        "dist": 2
+      },
+      "blocks": [
+        {
+          "shape": "box",
+          "material": "snow",
+          "min": [
+            0.15,
+            0.15,
+            0.085
+          ],
+          "size": [
+            0.7,
+            0.7,
+            0.07
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "snow",
+          "center": [
+            0.24,
+            0.5,
+            0.5
+          ],
+          "radius": 0.09,
+          "vel": [
+            3,
+            0,
+            -0.4
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "snow",
+          "center": [
+            0.76,
+            0.5,
+            0.56
+          ],
+          "radius": 0.09,
+          "vel": [
+            -3,
+            0,
+            -0.4
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sand-collapse",
+      "label": "sand collapse",
+      "title": "granular column collapse — the classic Drucker-Prager benchmark shape",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.004,
+      "budget": 50000,
+      "camera": {
+        "yaw": 0.6,
+        "pitch": 0.35,
+        "dist": 2.05
+      },
+      "blocks": [
+        {
+          "shape": "box",
+          "material": "sand",
+          "min": [
+            0.34,
+            0.34,
+            0.085
+          ],
+          "size": [
+            0.32,
+            0.32,
+            0.3
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dam-break",
+      "label": "dam break",
+      "title": "water column release — weakly-compressible Tait EOS (J-only)",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.005,
+      "budget": 60000,
+      "camera": {
+        "yaw": 0.9,
+        "pitch": 0.32,
+        "dist": 2.1
+      },
+      "blocks": [
+        {
+          "shape": "box",
+          "material": "water",
+          "min": [
+            0.08,
+            0.08,
+            0.085
+          ],
+          "size": [
+            0.28,
+            0.84,
+            0.42
+          ]
+        },
+        {
+          "shape": "box",
+          "material": "jelly",
+          "min": [
+            0.62,
+            0.42,
+            0.085
+          ],
+          "size": [
+            0.16,
+            0.16,
+            0.16
+          ]
+        }
+      ]
+    },
+    {
+      "id": "jelly-stack",
+      "label": "jelly stack",
+      "title": "neo-Hookean tower drop — the verified constitutive core, wobbling",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.004,
+      "budget": 40000,
+      "camera": {
+        "yaw": 0.75,
+        "pitch": 0.38,
+        "dist": 2
+      },
+      "blocks": [
+        {
+          "shape": "box",
+          "material": "jelly",
+          "min": [
+            0.4,
+            0.4,
+            0.1
+          ],
+          "size": [
+            0.2,
+            0.2,
+            0.14
+          ]
+        },
+        {
+          "shape": "box",
+          "material": "jelly",
+          "min": [
+            0.42,
+            0.42,
+            0.34
+          ],
+          "size": [
+            0.16,
+            0.16,
+            0.14
+          ],
+          "vel": [
+            0,
+            0,
+            -0.5
+          ]
+        },
+        {
+          "shape": "box",
+          "material": "jelly",
+          "min": [
+            0.44,
+            0.44,
+            0.58
+          ],
+          "size": [
+            0.12,
+            0.12,
+            0.14
+          ],
+          "vel": [
+            0,
+            0,
+            -1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "snow-globe",
+      "label": "snow globe",
+      "title": "mixed flurry — all four materials sprinkled, stir with the pointer",
+      "gridN": 64,
+      "floorZ": 4,
+      "frameAdvance": 0.004,
+      "budget": 40000,
+      "camera": {
+        "yaw": 1,
+        "pitch": 0.45,
+        "dist": 2.15
+      },
+      "blocks": [
+        {
+          "shape": "sphere",
+          "material": "snow",
+          "center": [
+            0.35,
+            0.35,
+            0.6
+          ],
+          "radius": 0.08,
+          "vel": [
+            0.4,
+            0.7,
+            -1
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "jelly",
+          "center": [
+            0.65,
+            0.35,
+            0.5
+          ],
+          "radius": 0.07,
+          "vel": [
+            -0.6,
+            0.4,
+            -1
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "sand",
+          "center": [
+            0.35,
+            0.65,
+            0.55
+          ],
+          "radius": 0.07,
+          "vel": [
+            0.5,
+            -0.5,
+            -1
+          ]
+        },
+        {
+          "shape": "sphere",
+          "material": "water",
+          "center": [
+            0.65,
+            0.65,
+            0.62
+          ],
+          "radius": 0.08,
+          "vel": [
+            -0.4,
+            -0.6,
+            -1
+          ]
+        }
+      ]
+    },
+    {
+      "id": "canonical-drop",
+      "label": "canonical drop",
+      "title": "the gated scene: 16-cube neo-Hookean drop-impact (E=4000, seed-42 blob)",
+      "gridN": 16,
+      "floorZ": 4,
+      "frameAdvance": 0.002,
+      "budget": 5000,
+      "camera": {
+        "yaw": 0.8,
+        "pitch": 0.35,
+        "dist": 2.2
+      },
+      "blocks": [
+        {
+          "shape": "sphere",
+          "material": "jelly",
+          "center": [
+            0.5,
+            0.5,
+            0.65
+          ],
+          "radius": 0.15,
+          "vel": [
+            0,
+            0,
+            -2
+          ]
+        }
+      ]
+    }
+  ],
+  "citations": [
+    {
+      "key": "hu2018",
+      "text": "Hu, Fang, Ge, Qu, Zhu, Pradhana, Jiang (2018) — A Moving Least Squares Material Point Method — SIGGRAPH",
+      "doi": "10.1145/3197517.3201293"
+    },
+    {
+      "key": "jiang2016",
+      "text": "Jiang, Schroeder, Teran, Stomakhin, Selle (2016) — The Material Point Method for Simulating Continuum Materials — SIGGRAPH course",
+      "doi": "10.1145/2897826.2927348"
+    },
+    {
+      "key": "stomakhin2013",
+      "text": "Stomakhin, Schroeder, Chai, Teran, Selle (2013) — A Material Point Method for Snow Simulation — ACM TOG 32(4)",
+      "doi": "10.1145/2461912.2461948"
+    },
+    {
+      "key": "klar2016",
+      "text": "Klar, Gast, Pradhana, Fu, Schroeder, Jiang, Teran (2016) — Drucker-Prager Elastoplasticity for Sand Animation — ACM TOG 35(4)",
+      "doi": "10.1145/2897824.2925906"
+    },
+    {
+      "key": "tampubolon2017",
+      "text": "Tampubolon, Gast, Klar, Fu, Teran, Jiang, Museth (2017) — Multi-species simulation of porous sand and water mixtures — ACM TOG 36(4)",
+      "doi": "10.1145/3072959.3073651"
+    },
+    {
+      "key": "defour2015",
+      "text": "Defour, Collange (2015) — Reproducible floating-point atomic addition in data-parallel environment — FedCSIS (1000/1000 distinct f32-atomic results)",
+      "doi": "10.15439/2015F86"
+    },
+    {
+      "key": "lewin2024",
+      "text": "Lewin (2024) — A Position Based Material Point Method (PB-MPM) — SIGGRAPH talk; WGSL fixed-point-atomics engineering reference (BSD 3-Clause)",
+      "doi": "10.1145/3641233.3664323"
+    },
+    {
+      "key": "wang2020",
+      "text": "Wang, Qiu, Slattery, et al. (2020) — A massively parallel and scalable multi-GPU material point method (claymore; G2P2G fusion ~2x)",
+      "doi": "10.1145/3386569.3392442"
+    }
+  ],
+  "reference_sources": [
+    "packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py",
+    "packages/mpm-multimaterial/mpm_multimaterial/reference/shape_functions.py",
+    "packages/mpm-multimaterial/mpm_multimaterial/invariants.py",
+    "packages/mpm-multimaterial/mpm_multimaterial/sim.py",
+    "tools/testkit/golden/tables/hybrid-pg/mls-mpm-shape-functions.json",
+    "tools/testkit/golden/derivations/mls-mpm-quadratic-bspline.md",
+    "captures/mpm-multimaterial-stack-e/drop-impact-16cube-seed42-step50.json",
+    "captures/mpm-multimaterial-stack-e/drop-impact-128cube-seed42-step500.json",
+    "packages/mpm-multimaterial/web/verification-demo-spec.md"
+  ]
+}

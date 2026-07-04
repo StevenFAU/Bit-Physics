@@ -64,6 +64,10 @@ GATE_KIND = {
     # Phase-6 verification-demo: new_canonical = pointwise reproduction of the
     # committed 100K canonical capture (verify.py _gate_sph_water) + run-twice.
     "sph-water": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = pointwise reproduction of the
+    # committed 16-cube diagnostic canonical (verify.py _gate_mpm_multimaterial)
+    # + closed-form golden B-spline / fixture artifacts + run-twice.
+    "mpm-multimaterial": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

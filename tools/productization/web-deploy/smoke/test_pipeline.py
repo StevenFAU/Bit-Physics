@@ -41,6 +41,7 @@ EXPECTED_SIMS = {
     "physarum",
     "eulerian-smoke",
     "sph-water",
+    "mpm-multimaterial",
 }
 
 
