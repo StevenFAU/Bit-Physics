@@ -92,6 +92,20 @@ T_SMOKE_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
 T_SMOKE_DENSITY_NEG = 1e-6  # smoke_density_nonneg at f32 rounding scope
 T_SMOKE_REF_SANITY = 2.0  # FP-edge sentinel on the live f64 reference re-run
 
+# --- sph-water (Phase-6 verification-demo; NEW sim, no gpu_gate.py row so NOT
+# in ESTABLISHED_THRESHOLDS — declared fresh, measured-then-declared per
+# packages/sph-water/web/verification-demo-spec.md § 2.1/§ 8.3). The canonical
+# scene is NON-CHAOTIC (rigid free-fall, spec § 2.0), so the pointwise
+# capture-reproduction budget is real. TRAJ_REL reuses the established
+# [defaults.sph] category tolerance verbatim (tolerance.toml, resolved via
+# [overrides.sph-water]); the remaining constants gate closed-form artifacts.
+T_SPH_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
+T_SPH_GOLDEN_F64_ABS = 1e-12  # f64-mirror kernel vs golden table (table's own tol)
+T_SPH_FIXTURE_F64_ABS = 1e-15  # two-particle continuity vs golden fixture (its tol)
+T_SPH_KERNEL_F32_REL = 2e-6  # WGSL f32 kernel vs golden table (f32 rounding scope)
+T_SPH_NORM_TOL = 5e-3  # kernel-normalization unit-volume mean on interior lattice
+SPH_GATE_STRIDE = 16  # committed deterministic index subsample (idx = ::16)
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -131,6 +145,7 @@ CANON = {
     "neural-ca": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.json",
     "mandelbulb-explorer": "captures/mandelbulb-explorer-ref/de-probe-points-seed42.json",
     "physarum": "captures/physarum-ref/network-canonical-seed42-step5000.json",
+    "sph-water": "captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json",
 }
 
 # Established sim categories (from each browser app's exposeCapture manifest) — used
@@ -144,6 +159,7 @@ SIM_CATEGORY = {
     "boids-3d": "agent-based",
     "physarum": "agent-based",
     "eulerian-smoke": "volumetric-grid",
+    "sph-water": "particle-fluids",
 }
 
 GATE_KIND = {
@@ -155,6 +171,7 @@ GATE_KIND = {
     "boids-3d": "new_canonical",
     "physarum": "new_canonical",
     "eulerian-smoke": "new_canonical",
+    "sph-water": "new_canonical",
 }
 
 
@@ -681,6 +698,204 @@ def _gate_eulerian_smoke(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_sph_water(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for sph-water: POINTWISE committed-capture reproduction.
+
+    The committed canonical (captures/sph-water-ref/dam-break-100K-particles-
+    seed42-step1000.h5) is rigid free-fall — a seeded uniform cloud under
+    pure-gravity explicit Euler with the verified density pipeline evaluated
+    at every checkpoint (spec § 2.0; the v0.1 "chaotic dam-break" framing was
+    refuted on inspection). Non-chaotic means the pointwise per-particle
+    comparison is real: the browser replays the exact reference integrator
+    from the committed f32 IC and computes density with the optimized
+    counting-sort grid at h = 0.026 — the CANONICAL_H override that actually
+    produced the capture (packages/sph-water/sph_water/sim.py; the manifest's
+    params.h = 0.05 records canonical_params()'s diagnostic default, verified
+    numerically: recomputed density matches the committed field to < 6e-14 at
+    0.026 and is ~46% off at 0.05).
+
+    Gate = run-twice byte-identity over every emitted field at every step
+         + per-checkpoint pointwise position/velocity/density vs the committed
+           f64 capture on the committed index subsample (::SPH_GATE_STRIDE),
+           max_abs <= T_SPH_TRAJ_REL * max|browser field| (the established
+           [defaults.sph] rel=1e-4 via [overrides.sph-water]; no widening)
+         + closed-form artifacts emitted at step 0: the in-page f64 mirror's
+           kernel values vs the committed golden table (table tolerance
+           1e-12) and two-particle continuity fixture (1e-15); the WGSL f32
+           kernel at f32 rounding scope; grid==brute i32 fixed-point density
+           byte-equality (the hash==brute neighbor-search proof); the
+           kernel-normalization unit-volume check; mirror-vs-CPython
+           bit-exactness flags; the cell-sort saturation flag clear
+         + finite fields and non-negative density (density_nonneg invariant).
+    """
+    from capture import load_capture
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and set(st["state"]) == set(s1[st["step"]]["state"])
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in st["state"]
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [0] + list(range(100, 1001, 100))
+    if expected_steps != want:
+        return VerifyResult(
+            sim="sph-water",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    # --- committed capture, subsampled on the committed stride ---------------
+    cap = load_capture(REPO / CANON["sph-water"])
+    worst = {"position": 0.0, "velocity": 0.0, "density": 0.0}
+    worst_ratio = 0.0
+    finite = True
+    min_density = math.inf
+    for st in steps0:
+        ref = cap.step(st["step"]).state
+        for key in ("position", "velocity", "density"):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            rf = np.asarray(ref[key], dtype=np.float64)[::SPH_GATE_STRIDE]
+            if key == "density":
+                min_density = min(min_density, float(bf.min()))
+                rf = rf.reshape(bf.shape)
+            if bf.shape != rf.shape:
+                return VerifyResult(
+                    sim="sph-water",
+                    kind="new_canonical",
+                    passed=False,
+                    run_twice_identical=twice,
+                    detail={
+                        "error": f"{key}@{st['step']}: shape {bf.shape} != {rf.shape}"
+                    },
+                )
+            max_abs = float(np.abs(bf - rf).max())
+            worst[key] = max(worst[key], max_abs)
+            budget = T_SPH_TRAJ_REL * float(np.abs(bf).max())
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+    within = worst_ratio <= 1.0
+    density_ok = min_density >= 0.0
+
+    # --- closed-form artifacts (emitted at step 0) ---------------------------
+    s0 = steps0[0]
+    diag = s0.get("diagnostics", {})
+    golden = json.loads(
+        (REPO / "tools/testkit/golden/tables/cubic-spline-kernel.json").read_text()
+    )
+    gw = np.array([tp["expected"]["W"] for tp in golden["test_points"]])
+    gg = np.array([tp["expected"]["grad_W_magnitude"] for tp in golden["test_points"]])
+    k64_w = _field(s0, "kernel_w_f64").astype(np.float64)
+    k64_g = _field(s0, "kernel_grad_f64").astype(np.float64)
+    golden_f64_dev = float(max(np.abs(k64_w - gw).max(), np.abs(k64_g - gg).max()))
+    golden_f64_ok = golden_f64_dev <= T_SPH_GOLDEN_F64_ABS
+    k32_w = _field(s0, "kernel_w_f32").astype(np.float64)
+    k32_g = _field(s0, "kernel_grad_f32").astype(np.float64)
+    scale_w = np.maximum(np.abs(gw), 1e-30)
+    scale_g = np.maximum(np.abs(gg), 1e-30)
+    golden_f32_dev = float(
+        max(
+            (np.abs(k32_w - gw) / scale_w).max(),
+            (np.abs(k32_g - gg) / scale_g).max(),
+        )
+    )
+    golden_f32_ok = golden_f32_dev <= T_SPH_KERNEL_F32_REL
+
+    fx = json.loads(
+        (
+            REPO
+            / "tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json"
+        ).read_text()
+    )
+    exp0 = fx["test_points"][0]["expected"]
+    two_drho = _field(s0, "two_particle_drho_f64").astype(np.float64)
+    two_rho = _field(s0, "two_particle_rho_f64").astype(np.float64)
+    fixture_dev = float(
+        max(
+            abs(two_drho[0] - exp0["drho_dt_0"]),
+            abs(two_rho[0] - exp0["rho_0"]),
+        )
+    )
+    fixture_ok = fixture_dev <= T_SPH_FIXTURE_F64_ABS
+
+    ns_grid = _field(s0, "nsearch_grid_fp").astype(np.float64)
+    ns_brute = _field(s0, "nsearch_brute_fp").astype(np.float64)
+    hash_brute_ok = bool(np.array_equal(ns_grid, ns_brute)) and ns_grid.size >= 4096
+
+    mirror_ok = all(
+        diag.get(k, 0.0) == 1.0
+        for k in (
+            "mirror_two_bitexact",
+            "mirror_density64_bitexact",
+            "mirror_continuity64_bitexact",
+            "mirror_corrector8_bitexact",
+        )
+    )
+    norm_dev = abs(float(diag.get("normalization_mean", math.inf)) - 1.0)
+    norm_ok = norm_dev <= T_SPH_NORM_TOL
+    sort_ok = float(diag.get("sort_saturated", 1.0)) == 0.0
+
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and density_ok
+        and golden_f64_ok
+        and golden_f32_ok
+        and fixture_ok
+        and hash_brute_ok
+        and mirror_ok
+        and norm_ok
+        and sort_ok
+    )
+    return VerifyResult(
+        sim="sph-water",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_SPH_TRAJ_REL,
+            "finite": finite,
+            "min_density": None if min_density is math.inf else min_density,
+            "density_nonneg_ok": density_ok,
+            "golden_f64_dev": golden_f64_dev,
+            "golden_f64_ok": golden_f64_ok,
+            "golden_f32_dev": golden_f32_dev,
+            "golden_f32_ok": golden_f32_ok,
+            "fixture_dev": fixture_dev,
+            "fixture_ok": fixture_ok,
+            "hash_brute_identical": hash_brute_ok,
+            "mirror_bitexact": mirror_ok,
+            "normalization_dev": norm_dev,
+            "normalization_ok": norm_ok,
+            "cell_sort_unsaturated": sort_ok,
+            "note": "pointwise reproduction of the committed 100K canonical "
+            "(rigid free-fall, non-chaotic — spec § 2.0) on the committed "
+            "::16 subsample at h=0.026 (CANONICAL_H, not the manifest's "
+            "stale 0.05), plus the closed-form golden/fixture/hash==brute/"
+            "mirror artifact suite",
+        },
+    )
+
+
 def _gate_rd2d_observable(bundles: list[dict]) -> VerifyResult:
     """PENDING-LAVAPIPE contingency for rd2d (Decision 2, SHIFTED to opt-in).
 
@@ -935,6 +1150,7 @@ _GATES = {
     "boids-3d": _gate_boids,
     "physarum": _gate_physarum,
     "eulerian-smoke": _gate_eulerian_smoke,
+    "sph-water": _gate_sph_water,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

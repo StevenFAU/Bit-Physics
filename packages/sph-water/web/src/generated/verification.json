@@ -1,0 +1,297 @@
+{
+  "_generated_by": "packages/sph-water/web/gen-verification.mjs — do not edit; every value is extracted from committed sources and HARD-FAIL verified",
+  "sim": "sph-water",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "canonical": {
+    "descriptor": "dam-break-100K-particles-seed42-step1000",
+    "n_particles": 100000,
+    "step_count": 1000,
+    "capture_interval": 100,
+    "checkpoints": [
+      0,
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800,
+      900,
+      1000
+    ],
+    "params_as_run": {
+      "h": 0.026,
+      "dt": 0.001,
+      "g_z": -9.81,
+      "rho_0": 1000,
+      "mass": 0.001,
+      "seed": 42,
+      "n_particles": 100000
+    },
+    "manifest_h_note": "capture manifest params.h=0.05 records canonical_params()'s diagnostic default; the canonical runner overrode h_override=CANONICAL_H=0.026 (sph_water/sim.py) — verified numerically against the committed density fields (<6e-14 at 0.026)",
+    "payload_sha256": "7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f",
+    "wall_clock_seconds": 1277.8699724519975,
+    "reference_determinism": "bit-exact-same-hw"
+  },
+  "gate": {
+    "kind": "new_canonical",
+    "declared_rel": 0.0001,
+    "declared_abs": 0,
+    "thresholds": {
+      "traj_rel": 0.0001,
+      "golden_f64_abs": 1e-12,
+      "fixture_f64_abs": 1e-15,
+      "kernel_f32_rel": 0.000002,
+      "norm_tol": 0.005,
+      "stride": 16
+    },
+    "criterion": "run-twice byte-identity + pointwise position/velocity/density vs the committed f64 capture on the ::16 subsample (max_abs <= rel * max|field| per checkpoint) + golden-kernel/fixture/hash==brute/mirror/normalization artifacts",
+    "measured": {
+      "status": "recorded",
+      "provenance": "RADV local headless Chromium 2026-07-04",
+      "worst_ratio_of_budget": 0.1233,
+      "worst_abs": {
+        "position": 0.0000088,
+        "velocity": 0.000061,
+        "density": 0.0029
+      },
+      "run_twice": true,
+      "kernel_f32_rel": 7.2e-8,
+      "norm_dev": 0.0028,
+      "corrector_f32_maxabs": 1.2e-7
+    }
+  },
+  "gate_assets": {
+    "ic": {
+      "path": "sph-gate-ic.bin",
+      "sha256": "6d221b95abe536690189eabafb9fed578726f2ebdfb906406e9ae47bab5fcab7",
+      "bytes": 1200000,
+      "layout": "f32le[particle][px,py,pz]; velocities all zero; masses uniform 1e-3"
+    },
+    "refs": {
+      "path": "sph-gate-refs.bin",
+      "sha256": "11cda67424336ac86a78196eaa0aa13e8f08fbe35804c3177dba5d3c805f89e5",
+      "bytes": 3850000,
+      "layout": "f64le[checkpoint][particle][px,py,pz,vx,vy,vz,rho]"
+    },
+    "subsample_stride": 16,
+    "subsample_count": 6250,
+    "fixtures_sha256": "411c463436308ba1fbfd18b66576f510173dbdc57c850097f7ac6f746d0c815f"
+  },
+  "golden": {
+    "kernel_table_sha256": "dbc11e74e7e0721dd1ff9168f10797ad74b267a64e10ecbf51093a0b24abd2de",
+    "kernel_points": [
+      {
+        "q": 0,
+        "h": 1,
+        "W": 0.3183098861837907,
+        "grad_W_magnitude": 0
+      },
+      {
+        "q": 0.25,
+        "h": 1,
+        "W": 0.2921985283327766,
+        "grad_W_magnitude": 0.19397008689324743
+      },
+      {
+        "q": 0.5,
+        "h": 1,
+        "W": 0.22878523069459955,
+        "grad_W_magnitude": 0.29841551829730373
+      },
+      {
+        "q": 0.75,
+        "h": 1,
+        "W": 0.15045115714155732,
+        "grad_W_magnitude": 0.31333629421216896
+      },
+      {
+        "q": 1,
+        "h": 1,
+        "W": 0.07957747154594767,
+        "grad_W_magnitude": 0.238732414637843
+      },
+      {
+        "q": 1.25,
+        "h": 1,
+        "W": 0.03357174580844667,
+        "grad_W_magnitude": 0.13428698323378668
+      },
+      {
+        "q": 1.5,
+        "h": 1,
+        "W": 0.009947183943243459,
+        "grad_W_magnitude": 0.05968310365946075
+      },
+      {
+        "q": 1.75,
+        "h": 1,
+        "W": 0.0012433979929054324,
+        "grad_W_magnitude": 0.014920775914865188
+      },
+      {
+        "q": 2,
+        "h": 1,
+        "W": 0,
+        "grad_W_magnitude": 0
+      }
+    ],
+    "kernel_tolerance": {
+      "absolute": 1e-12,
+      "relative": 1e-12
+    },
+    "fixture_table_sha256": "3c2ceab163c08c10d04a448825e7e0a51a34886306c182b7075e2559f41fc469",
+    "fixture_expected": {
+      "rho_0": 0.5470951168783902,
+      "drho_dt_0": -0.2984155182973038,
+      "kernel_W_at_0": 0.3183098861837907,
+      "kernel_W_at_q_0p5": 0.22878523069459955,
+      "kernel_fprime_at_q_0p5": -0.9375
+    },
+    "fixture_tolerance": {
+      "absolute": 1e-15,
+      "relative": 0
+    }
+  },
+  "determinism": {
+    "reference_claimed": "bit-exact-same-hw",
+    "browser_claimed": "device-scoped bit-exact (same-device run-twice); cross-device distributional",
+    "two_tier_note": "the live DFSPH dual solver, walls, XSPH, and impulses are BEYOND the committed Phase-1 reference (labeled in-demo); the gate binds only to committed artifacts"
+  },
+  "code_anchors": {
+    "kernel_f": {
+      "start": 91,
+      "end": 92,
+      "lines": "fn kernel_f(q: f32) -> f32 {\n  if (q < 1.0) { return 1.0 - 1.5 * q * q + 0.75 * q * q * q; }"
+    },
+    "kernel_fprime": {
+      "start": 98,
+      "end": 99,
+      "lines": "fn kernel_fprime(q: f32) -> f32 {\n  if (q < 1.0) { return -3.0 * q + 2.25 * q * q; }"
+    },
+    "kernel_W": {
+      "start": 105,
+      "end": 107,
+      "lines": "fn kernel_W(q: f32, h: f32) -> f32 {\n  return (1.0 / PI) / (h * h * h) * kernel_f(q);\n}"
+    },
+    "density_grid": {
+      "start": 281
+    },
+    "continuity_grid": {
+      "start": 374
+    },
+    "integrate_canonical": {
+      "start": 415,
+      "end": 417,
+      "lines": "fn integrate_canonical(@builtin(global_invocation_id) gid: vec3<u32>) {\n  let i = gid.x;\n  if (i >= P.n) { return; }"
+    },
+    "density_brute_fp": {
+      "start": 349
+    },
+    "cell_sort": {
+      "start": 241
+    },
+    "corrector_fixture": {
+      "start": 462
+    },
+    "df_alpha": {
+      "start": 104
+    },
+    "df_predict_density": {
+      "start": 214
+    },
+    "df_predict_divergence": {
+      "start": 256
+    },
+    "df_warm_start": {
+      "start": 201
+    }
+  },
+  "py_anchors": {
+    "f_line": 60,
+    "fprime_line": 75,
+    "W_line": 94,
+    "grad_W_line": 116,
+    "density_line": 782,
+    "density_evolution_line": 811,
+    "corrector_line": 862,
+    "canonical_params_line": 840,
+    "canonical_step_line": 244,
+    "canonical_h_line": 172
+  },
+  "reference_params": {
+    "h_diagnostic": 0.05,
+    "rho_0": 1000,
+    "dt": 0.001,
+    "g_z": -9.81,
+    "max_iter_divergence": 50,
+    "divergence_tolerance": 0.0001
+  },
+  "citations": [
+    {
+      "key": "BK15",
+      "ref": "Bender & Koschier 2015, SCA '15 — DFSPH (dual solver; eq. (5) continuity)",
+      "doi": "10.1145/2786784.2786796"
+    },
+    {
+      "key": "BK17",
+      "ref": "Bender & Koschier 2017, IEEE TVCG — DFSPH journal version (4.5+2.8 vs 50.5 iterations; 6.9x/13.4x/23.9x at dt=4ms)",
+      "doi": "10.1109/TVCG.2016.2578335"
+    },
+    {
+      "key": "Monaghan05",
+      "ref": "Monaghan 2005, Rep. Prog. Phys. 68(8) — cubic spline, SUPPORT-2h convention (repo golden table)",
+      "doi": "10.1088/0034-4885/68/8/R01"
+    },
+    {
+      "key": "Tutorial",
+      "ref": "Koschier, Bender, Solenthaler, Teschner — SPH tutorial (CFL lambda~0.4; XSPH eq. (103))",
+      "arxiv": "2009.06944"
+    },
+    {
+      "key": "Carensac22",
+      "ref": "Carensac, Pronost & Bouakaz 2022, Vis. Comput. — warm-start cyclic instability; Morton no GPU gain",
+      "doi": "10.1007/s00371-021-02379-w"
+    },
+    {
+      "key": "Hoetzlein14",
+      "ref": "Hoetzlein, GTC 2014 — counting-sort fixed-radius neighbors (15->4 kernels)",
+      "url": "https://ramakarl.com/pdfs/2014_Hoetzlein_FastFixedRadius_Neighbors.pdf"
+    },
+    {
+      "key": "Green10",
+      "ref": "Green, GDC 2010 — screen-space fluid rendering (bilateral recipe, normal reconstruction)",
+      "url": "https://developer.download.nvidia.com/presentations/2010/gdc/Direct3D_Effects.pdf"
+    },
+    {
+      "key": "TruongYuksel18",
+      "ref": "Truong & Yuksel 2018, PACMCGIT — narrow-range filter (cost ~ bilateral, better silhouettes)",
+      "doi": "10.1145/3203201"
+    },
+    {
+      "key": "vdLaan09",
+      "ref": "van der Laan, Green & Sainz 2009, I3D — SSFR with curvature flow (deferred; NRF ships instead)",
+      "doi": "10.1145/1507149.1507164"
+    },
+    {
+      "key": "GPUGems3-39",
+      "ref": "Harris, Sengupta & Owens — GPU Gems 3 ch. 39, work-efficient Blelloch scan",
+      "url": "https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda"
+    }
+  ],
+  "links": {
+    "kernel_core": "packages/sph-water/src/sph_core.wgsl",
+    "kernel_live": "packages/sph-water/src/dfsph_solver.wgsl",
+    "reference": "packages/sph-water/sph_water/reference/dfsph.py",
+    "sim": "packages/sph-water/sph_water/sim.py",
+    "invariants": "packages/sph-water/sph_water/invariants.py",
+    "golden_kernel": "tools/testkit/golden/tables/cubic-spline-kernel.json",
+    "golden_fixture": "tools/testkit/golden/tables/particle-fluids/dfsph-density-evolution.json",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "spec": "packages/sph-water/web/verification-demo-spec.md",
+    "capture_manifest": "captures/sph-water-ref/dam-break-100K-particles-seed42-step1000.json",
+    "extractor": "packages/sph-water/web/extract-gate-assets.py"
+  }
+}

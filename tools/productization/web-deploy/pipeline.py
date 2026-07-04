@@ -61,6 +61,9 @@ GATE_KIND = {
     # Phase-6 verification-demo: new_canonical = live f64 reference re-run
     # (verify.py _gate_eulerian_smoke) + run-twice (2 runs, automatic below).
     "eulerian-smoke": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = pointwise reproduction of the
+    # committed 100K canonical capture (verify.py _gate_sph_water) + run-twice.
+    "sph-water": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 
