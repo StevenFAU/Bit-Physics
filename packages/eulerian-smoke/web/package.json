@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-eulerian-smoke",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — Stam-Fedkiw stable-fluids smoke. Ships the committed stable_fluids_2d.wgsl through a Vite bundle with a settings panel, capture-export hook, and a verification-visible PROVE layer (Phase-6 verification-demo track).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

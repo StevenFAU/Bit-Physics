@@ -1,0 +1,134 @@
+{
+  "_generated_by": "packages/eulerian-smoke/web/gen-verification.mjs — do not edit by hand",
+  "sim": "eulerian-smoke",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "new_canonical",
+    "declared_rel": 0.0001,
+    "declared_abs": 0,
+    "criterion": "per checkpoint, per field (u, v, density): max_abs(browser_f32 − reference_f64) ≤ abs + rel · max|browser field|; reference recomputed LIVE from the frozen NumPy implementation",
+    "thresholds": {
+      "traj_rel": 0.0001,
+      "density_neg": 0.000001,
+      "ref_sanity": 2
+    },
+    "measured": {
+      "worst_ratio": 0.199,
+      "run_twice": "true",
+      "provenance": "worst per-checkpoint per-field max_abs as a ratio of the rel budget, measured via the repo's headless-Chromium validate run (banked in the web spec § 11 v0.3); NumPy-f32 proxy measured 0.21"
+    }
+  },
+  "determinism": {
+    "reference_claimed": "bit-exact-same-hw",
+    "browser_claimed": "epsilon",
+    "run_twice": "byte-identical"
+  },
+  "canonical": {
+    "descriptor": "taylor-green-2d-128sq-seed42-step1000",
+    "seed": 42,
+    "grid": [
+      128,
+      128
+    ],
+    "step_count": 1000,
+    "capture_interval": 100,
+    "params": {
+      "nu": 0.01,
+      "rho": 1,
+      "dx": 0.0078125,
+      "dt": 0.001,
+      "n": 128,
+      "n_jacobi": 20
+    }
+  },
+  "gate_asset": {
+    "asset": "smoke-gate-tg-step1000.bin",
+    "sha256": "3645c3feb67a944a5504c956e7c024e7d5ab4507f9e155edf2a8b40b3d9c9ce1",
+    "bytes": 393216,
+    "dtype": "<f8",
+    "layout": "u[128*128] ++ v[128*128] ++ density[128*128], row-major (Nx, Ny)",
+    "step": 1000,
+    "generated_by": "packages/eulerian-smoke/web/extract-gate-fields.py"
+  },
+  "postmortem": {
+    "quarantined_descriptor": "lid-driven-cavity-128sq-re100-seed42-step1000",
+    "quarantined_sha": "sha256:e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb",
+    "edge_cells_step1": 10,
+    "edge_fraction_value": 128,
+    "spike_max_u": 12270,
+    "spike_step": 3,
+    "ref_sanity_maxu": 2,
+    "chaos_amplification": "3×10⁴"
+  },
+  "code_anchors": {
+    "backtrace_guard": {
+      "start": 74,
+      "end": 75,
+      "lines": [
+        "x = x - floor(x / n) * n;      // np.mod semantics: x in [0, n], n at the FP edge",
+        "if (x >= n) { x = 0.0; }       // the guarded limit (see header note)"
+      ]
+    },
+    "maccormack": {
+      "start": 155,
+      "end": 157,
+      "lines": [
+        "let corr_back = bilinear_vel_aux(cb);",
+        "let pred = vel_aux[idx];",
+        "var result = pred + 0.5 * (orig - corr_back);"
+      ]
+    },
+    "diffusion": {
+      "start": 179,
+      "end": 182,
+      "lines": [
+        "let lap = (vel_in[idx_of(i - 1, j)] + vel_in[idx_of(i + 1, j)]",
+        "         + vel_in[idx_of(i, j - 1)] + vel_in[idx_of(i, j + 1)]",
+        "         - 4.0 * center) * params.inv_dx2;",
+        "vel_out[idx] = center + params.dt * params.nu * lap;"
+      ]
+    },
+    "jacobi": {
+      "start": 212,
+      "end": 216,
+      "lines": [
+        "let rhs = params.c_rhs * scalar_aux[idx];",
+        "scalar_out[idx] = 0.25 * (",
+        "    scalar_in[idx_of(i - 1, j)] + scalar_in[idx_of(i + 1, j)]",
+        "  + scalar_in[idx_of(i, j - 1)] + scalar_in[idx_of(i, j + 1)]",
+        "  - params.dx2 * rhs);"
+      ]
+    },
+    "advect_density": {
+      "start": 237,
+      "end": 241,
+      "lines": [
+        "fn advect_density(@builtin(global_invocation_id) gid: vec3<u32>) {",
+        "if (gid.x >= params.n || gid.y >= params.n) { return; }",
+        "let idx = gid.x * params.n + gid.y;",
+        "let c = backtrace_coords(gid.x, gid.y, vel_in[idx], params.dt_dx);",
+        "scalar_out[idx] = bilinear_scalar_in(c);"
+      ]
+    }
+  },
+  "py_anchors": {
+    "maccormack_line": 177,
+    "mod_edge_line": 154,
+    "diffusion_line": 338,
+    "jacobi_line": 284,
+    "density_advect_line": 125,
+    "collocated_caveat_line": 225,
+    "div_tol_line": 37
+  },
+  "links": {
+    "kernel": "packages/eulerian-smoke/src/stable_fluids_2d.wgsl",
+    "reference": "packages/eulerian-smoke/eulerian_smoke/reference/stable_fluids.py",
+    "sim_py": "packages/eulerian-smoke/eulerian_smoke/sim.py",
+    "invariants": "packages/eulerian-smoke/eulerian_smoke/invariants.py",
+    "spec": "packages/eulerian-smoke/web/verification-demo-spec.md",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "quarantined_manifest": "captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.json",
+    "extractor": "packages/eulerian-smoke/web/extract-gate-fields.py"
+  }
+}

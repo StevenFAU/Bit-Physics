@@ -39,6 +39,11 @@ const SIMS = {
   // timing, not frame count alone; the zoom-to-content crop normalizes it.
   "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
+  // Phase-6 verification-demo (eulerian-smoke): boots into the plume scene —
+  // frame-indexed emitter, 4 sim-steps/frame; ~500 frames lets the buoyant
+  // column rise past mid-canvas with rolled-up side vortices. The v2-style
+  // render (relief + glow + in-shader tonemap) carries its own exposure.
+  "eulerian-smoke": { frames: 500, px: 512, boost: "brightness(1.6) saturate(1.6)" },
   // verification-demo rework: render.wgsl v2 (bilinear + relief + flow +
   // in-shader tonemap) regenerated at the same 650 frames — the canonical
   // 500-agent network reads best mid-growth (a branching junction, before it
