@@ -53,7 +53,7 @@ def _discrete_roundtrip(a: float, b: float, c: float, n: int) -> float:
     return num / den
 
 
-@pytest.mark.parametrize("idx", [0, 1])
+@pytest.mark.parametrize("idx", [0, 1, 2])
 def test_ladder_replay_and_coefficient(golden: dict[str, object], idx: int) -> None:
     tp = golden["test_points"][idx]
     a = float(tp["inputs"]["a"])

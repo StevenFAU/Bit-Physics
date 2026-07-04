@@ -39,11 +39,12 @@ TABLE_PATH = (
 
 Frac = Fraction
 
-# Two quadratic samples f(x) = a + b x + c x^2 with the same c — the
-# linear coefficient must not contribute (b-independence check).
+# Three quadratic samples f(x) = a + b x + c x^2; rows 0/1 share c —
+# the linear coefficient must not contribute (b-independence check).
 _SAMPLES = [
     {"a": Frac(1), "b": Frac(0), "c": Frac(3)},
     {"a": Frac(1, 4), "b": Frac(-3, 2), "c": Frac(3)},
+    {"a": Frac(2), "b": Frac(1), "c": Frac(6)},
 ]
 
 _LADDER_NS = [4, 16, 64]
@@ -147,8 +148,63 @@ def compute_canonical() -> list[dict[str, object]]:
 
 def build_table() -> dict[str, object]:
     expecteds = compute_canonical()
+    # One GENUINELY DISTINCT independent anchor per test point (spec
+    # § 2.4 / integrity cat3: distinct sources, not restatements).
+    anchors = [
+        {
+            "source": (
+                "Hand derivation at tools/testkit/golden/derivations/"
+                "pic-flip-transfer-error.md § 2: smoothing contribution "
+                "5/144 f'' + interpolation contribution 11/144 f'' = "
+                "(1/9) f'' dx^2 — both piecewise polynomial integrals "
+                "evaluated in exact rational arithmetic (no floating "
+                "point enters the identity)."
+            ),
+            "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+            "derived_by": (
+                "fractions.Fraction piecewise polynomial integration; "
+                "coefficient asserted == 1/9 as a rational"
+            ),
+            "expected": {"coefficient": "1/9 (exact rational)"},
+        },
+        {
+            "source": (
+                "Zhu, Y. (2005), 'Animating Sand as a Fluid', MSc thesis, "
+                "University of British Columbia, eq. (3.8): the published "
+                "1/9 coefficient for the tent-weight / half-cell-support "
+                "round trip (verified verbatim against the thesis during "
+                "the spec v0.2 review, 2026-07-04 — including the scope "
+                "correction dropping the unsourced 1/6 other-kernel "
+                "variant). Published companion: Zhu & Bridson (2005), "
+                "ACM TOG 24(3)."
+            ),
+            "doi": "10.1145/1073204.1073298 (Zhu & Bridson 2005; thesis eq. 3.8)",
+            "derived_by": (
+                "published coefficient statement; this row's nonzero "
+                "linear term additionally witnesses the b-independence "
+                "the published expansion implies"
+            ),
+            "expected": {"coefficient": "1/9 (published)"},
+        },
+        {
+            "source": (
+                "Discrete midpoint-rule particle ladder (independent "
+                "numerical route to the same limit): finite sums over "
+                "n in {4, 16, 64} uniformly spaced particles — no "
+                "integration — computed as exact rationals, converging "
+                "monotonically at the midpoint rule's O(n^-2) to the "
+                "continuum value; asserted at generator verify time and "
+                "re-derived in binary64 by the gate-5 test."
+            ),
+            "doi": "n/a (in-repo exact finite-sum ladder; midpoint-rule convergence)",
+            "derived_by": (
+                "exact rational finite sums; monotone convergence to the continuum limit asserted"
+            ),
+            "expected": {"ladder": "monotone O(n^-2) convergence to f(x0) + (1/9) f''"},
+        },
+    ]
     test_points = []
-    for sample, expected in zip(_SAMPLES, expecteds, strict=True):
+    for sample, expected, anchor in zip(_SAMPLES, expecteds, anchors, strict=True):
         test_points.append(
             {
                 "inputs": {
@@ -174,27 +230,7 @@ def build_table() -> dict[str, object]:
                     ),
                 },
                 "expected": expected,
-                "independent_reference": {
-                    "source": (
-                        "Hand derivation at tools/testkit/golden/derivations/"
-                        "pic-flip-transfer-error.md § 2: smoothing "
-                        "contribution 5/144 f'' + interpolation contribution "
-                        "11/144 f'' = (1/9) f'' dx^2 — both integrals "
-                        "evaluated in exact rational arithmetic; the discrete "
-                        "midpoint ladder converges to the same limit "
-                        "(independent numerical confirmation)."
-                    ),
-                    "doi": (
-                        "10.1145/1073204.1073298 (Zhu & Bridson 2005); the "
-                        "coefficient statement is thesis eq. 3.8 (Zhu 2005, "
-                        "UBC MSc thesis)"
-                    ),
-                    "derived_by": (
-                        "exact rational arithmetic (piecewise polynomial "
-                        "integration; no floating point enters the identity)"
-                    ),
-                    "expected": {"coefficient": "1/9 (exact rational)"},
-                },
+                "independent_reference": anchor,
             }
         )
     return {

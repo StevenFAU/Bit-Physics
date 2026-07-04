@@ -125,22 +125,13 @@ def build_table() -> dict[str, object]:
             "upstream_path": "https://doi.org/10.1145/2766996",
         },
         "tolerance": {"absolute": 1e-15, "relative": 0.0},
+        # Three test points share the same inputs/expected block; each
+        # carries a GENUINELY DISTINCT independent anchor (spec § 2.4 /
+        # integrity cat3: distinct sources, not restatements — the
+        # mls-mpm-shape-functions.json convention).
         "test_points": [
             {
-                "inputs": {
-                    "name": "apic-weights-moments-and-dp-closed-form",
-                    "shape_function": "quadratic B-spline (identical to MLS-MPM golden)",
-                    "formula": (
-                        "N(x) = 3/4 - x^2 for |x|<1/2; "
-                        "(1/2)(3/2 - |x|)^2 for 1/2 <= |x| < 3/2; 0 otherwise"
-                    ),
-                    "base_node_convention": (
-                        "base = floor(p + 0.5) - 1; particle interacts with "
-                        "base, base+1, base+2; fp = p - base in [0.5, 1.5)"
-                    ),
-                    "fp_probes": [str(fp) for fp in _FP_PROBES],
-                    "dx_probes": [str(dx) for dx in _DX_PROBES],
-                },
+                "inputs": _inputs_block("hand-derivation-anchor"),
                 "expected": expected,
                 "independent_reference": {
                     "source": (
@@ -148,32 +139,90 @@ def build_table() -> dict[str, object]:
                         "apic-transfers.md § 2: the three weight moments are "
                         "polynomial identities in fp of degree <= 4, proven in "
                         "exact rational arithmetic (fractions.Fraction) at 6 "
-                        "distinct rational probes (5 suffice for degree 4). "
+                        "distinct rational probes (5 suffice for degree 4); "
                         "Dp = (1/4) dx^2 I follows from the tensor-product "
                         "structure + the zeroth/first moments (off-diagonals "
-                        "carry a first-moment factor = 0). Shape-function "
-                        "sample values FP-match the committed MLS-MPM golden "
-                        "tools/testkit/golden/tables/hybrid-pg/"
-                        "mls-mpm-shape-functions.json (absolute 1e-15)."
+                        "carry a first-moment factor = 0)."
+                    ),
+                    "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+                    "derived_by": (
+                        "fractions.Fraction identity proof; every expected "
+                        "value is the float() image of an exact rational"
+                    ),
+                    "expected": {"sum_w": 1.0, "sum_w_r": 0.0, "sum_w_r2": 0.25},
+                },
+            },
+            {
+                "inputs": _inputs_block("published-closed-form-anchor"),
+                "expected": expected,
+                "independent_reference": {
+                    "source": (
+                        "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), "
+                        "'The Affine Particle-In-Cell Method', ACM TOG 34(4) "
+                        "(Dp definition), and Jiang et al. (2016), 'The "
+                        "Material Point Method for Simulating Continuum "
+                        "Materials', SIGGRAPH 2016 Courses § 10.1 eq. (174): "
+                        "the published closed form Dp = (1/4) dx^2 I for the "
+                        "quadratic B-spline. Substituting the table's fp "
+                        "probes into the published piecewise weights "
+                        "reproduces every moment row."
                     ),
                     "doi": (
                         "10.1145/2766996 (Jiang et al. 2015 APIC); "
                         "10.1145/2897826.2927348 (SIGGRAPH 2016 MPM course "
-                        "notes § 10.1 eq. 174, Dp = (1/4) dx^2 I quadratic)"
+                        "notes § 10.1 eq. 174)"
                     ),
                     "derived_by": (
-                        "exact rational arithmetic (fractions.Fraction); every "
-                        "expected value is the float() image of an exact "
-                        "rational"
+                        "published closed-form statement; verified against "
+                        "the local course-notes copy during the spec v0.2 "
+                        "review (2026-07-04)"
                     ),
-                    "expected": {
-                        "sum_w": 1.0,
-                        "sum_w_r": 0.0,
-                        "sum_w_r2": 0.25,
-                    },
+                    "expected": {"sum_w_r2": 0.25},
                 },
-            }
+            },
+            {
+                "inputs": _inputs_block("repo-mls-mpm-cross-anchor"),
+                "expected": expected,
+                "independent_reference": {
+                    "source": (
+                        "Committed repo golden tools/testkit/golden/tables/"
+                        "hybrid-pg/mls-mpm-shape-functions.json (independent "
+                        "artifact, landed with the mpm-multimaterial "
+                        "sub-phase): the 10 shape-function sample values and "
+                        "the partition-of-unity rows FP-match at absolute "
+                        "1e-15 — the same stencil verified by an earlier, "
+                        "independent derivation chain (Hu 2018 88-line "
+                        "reference + Steffen-Kirby-Berzins 2008)."
+                    ),
+                    "doi": (
+                        "10.1145/3197517.3201293 (Hu et al. 2018 MLS-MPM); "
+                        "10.1002/nme.2360 (Steffen-Kirby-Berzins 2008)"
+                    ),
+                    "derived_by": (
+                        "FP cross-comparison against the committed MLS-MPM "
+                        "golden (enforced by this generator's --verify and by "
+                        "the gate-5 test)"
+                    ),
+                    "expected": {"n_at_zero": 0.75, "n_at_one": 0.125},
+                },
+            },
         ],
+    }
+
+
+def _inputs_block(anchor_name: str) -> dict[str, object]:
+    return {
+        "name": f"apic-weights-moments-and-dp-closed-form-{anchor_name}",
+        "shape_function": "quadratic B-spline (identical to MLS-MPM golden)",
+        "formula": (
+            "N(x) = 3/4 - x^2 for |x|<1/2; (1/2)(3/2 - |x|)^2 for 1/2 <= |x| < 3/2; 0 otherwise"
+        ),
+        "base_node_convention": (
+            "base = floor(p + 0.5) - 1; particle interacts with "
+            "base, base+1, base+2; fp = p - base in [0.5, 1.5)"
+        ),
+        "fp_probes": [str(fp) for fp in _FP_PROBES],
+        "dx_probes": [str(dx) for dx in _DX_PROBES],
     }
 
 
@@ -184,9 +233,13 @@ def verify(table_path: Path = TABLE_PATH) -> int:
     with table_path.open() as fh:
         table = json.load(fh)
     fresh = build_table()
-    if table["test_points"][0]["expected"] != fresh["test_points"][0]["expected"]:
-        print("FAIL: committed expected values differ from re-derivation", file=sys.stderr)
+    if len(table["test_points"]) != len(fresh["test_points"]):
+        print("FAIL: test point count drift", file=sys.stderr)
         return 1
+    for idx, (got, want) in enumerate(zip(table["test_points"], fresh["test_points"], strict=True)):
+        if got["expected"] != want["expected"]:
+            print(f"FAIL: test point {idx} expected-block drift", file=sys.stderr)
+            return 1
     # Cross-anchor: FP-match against the MLS-MPM shape-function golden.
     mls_path = (
         Path(__file__).resolve().parents[2]

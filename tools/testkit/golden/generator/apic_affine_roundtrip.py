@@ -269,8 +269,101 @@ def compute_canonical():
 
 def build_table():
     expecteds = compute_canonical()
+    # One GENUINELY DISTINCT independent anchor per test point (spec
+    # § 2.4 / integrity cat3: distinct sources, not restatements).
+    anchors = [
+        {
+            "source": (
+                "Hand derivation at tools/testkit/golden/derivations/"
+                "apic-transfers.md § 4: G2P of an affine field reconstructs "
+                "(v0 + C x_p, C) exactly (weight moments sum w = 1, "
+                "sum w r = 0, sum w r r^T = (1/4) dx^2 I), and P2G then "
+                "reproduces v0 + C x_i at every massed node for arbitrary "
+                "particle placement. Generator re-proves both as exact "
+                "rational identities at verify time; PIC deviation pinned "
+                "as the negative control."
+            ),
+            "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+            "derived_by": (
+                "fractions.Fraction identity proof; dyadic configuration "
+                "additionally bit-exact in binary64 by construction "
+                "(FP-honesty rule, sim spec docs/sim-specs/particle-fluids/"
+                "pic-flip/spec-ref.md § 7)"
+            ),
+            "expected": {
+                "roundtrip": "exact reproduction (rational identity)",
+                "pic_negative_control": "max deviation > 0 (pinned)",
+            },
+        },
+        {
+            "source": (
+                "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), 'The "
+                "Affine Particle-In-Cell Method', ACM TOG 34(4); companion "
+                "tech report Proposition 5.1 — the published affine round-"
+                "trip statement, whose motivating special case is exactly "
+                "this test point's pure rigid rotation (v = omega x r; the "
+                "APIC paper's headline claim is that the rotation survives "
+                "the grid transfer, unlike PIC). Direction grid -> particle "
+                "-> grid verified verbatim against the tech-report text "
+                "during the spec v0.2 review (2026-07-04)."
+            ),
+            "doi": "10.1145/2766996 (Jiang et al. 2015; tech-report Prop 5.1)",
+            "derived_by": (
+                "published proposition; table values are the exact-rational "
+                "instantiation at the rotation configuration"
+            ),
+            "expected": {
+                "roundtrip": "pure rotation reproduced exactly",
+            },
+        },
+        {
+            "source": (
+                "Hu, Fang, Ge, Qu, Zhu, Pradhana & Jiang (2018), 'A Moving "
+                "Least Squares Material Point Method...', ACM TOG 37(4) § 3-4 "
+                "and the committed repo MLS-MPM reference packages/"
+                "mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py: "
+                "the affine reconstruction coefficient 4/dx^2 (the "
+                "affine_scale constant in the repo's independently verified "
+                "g2p kernel) is the same constant that makes this round "
+                "trip exact — an independent, already-landed in-repo "
+                "verification chain for the reconstruction. This test "
+                "point exercises it at non-unit dx (dx = 1/2) and "
+                "non-dyadic positions."
+            ),
+            "doi": "10.1145/3197517.3201293 (Hu et al. 2018 MLS-MPM)",
+            "derived_by": (
+                "cross-anchor to the MLS-MPM verification chain; measured "
+                "f64 residual pinned under 1e-14 relative"
+            ),
+            "expected": {
+                "affine_scale": "4 / dx^2 (constant Dp inverse)",
+            },
+        },
+        {
+            "source": (
+                "Independent binary64 mirror computation: the identical "
+                "G2P -> P2G pipeline evaluated in IEEE-754 double "
+                "precision (a different arithmetic system from the "
+                "rational-arithmetic proof) reproduces the 3D affine field "
+                "bit-for-bit at every massed node under the dyadic "
+                "construction — every product, sum, and the mom/mass "
+                "division exactly representable, so agreement is by "
+                "construction, not tolerance (asserted at generator "
+                "verify time and replayed through the numba kernels by "
+                "the gate-5 test)."
+            ),
+            "doi": "n/a (in-repo binary64 mirror; IEEE-754 exactness argument)",
+            "derived_by": (
+                "f64 pipeline run compared elementwise against the exact "
+                "rationals; bit-equality asserted"
+            ),
+            "expected": {
+                "f64_bit_exact": True,
+            },
+        },
+    ]
     test_points = []
-    for cfg, expected in zip(_CONFIGS, expecteds, strict=True):
+    for cfg, expected, anchor in zip(_CONFIGS, expecteds, anchors, strict=True):
         test_points.append(
             {
                 "inputs": {
@@ -291,30 +384,7 @@ def build_table():
                     "dyadic_exact_configuration": bool(cfg["dyadic"]),
                 },
                 "expected": expected,
-                "independent_reference": {
-                    "source": (
-                        "Hand derivation at tools/testkit/golden/derivations/"
-                        "apic-transfers.md § 4: G2P of an affine field "
-                        "reconstructs (v0 + C x_p, C) exactly (weight moments "
-                        "sum w = 1, sum w r = 0, sum w r r^T = (1/4) dx^2 I), "
-                        "and P2G then reproduces v0 + C x_i at every massed "
-                        "node for arbitrary particle placement. Generator "
-                        "re-proves both as exact rational identities at "
-                        "verify time. PIC (B discarded) deviation pinned as "
-                        "the negative control."
-                    ),
-                    "doi": "10.1145/2766996 (Jiang et al. 2015, tech-report Prop 5.1)",
-                    "derived_by": (
-                        "exact rational arithmetic; dyadic rows additionally "
-                        "bit-exact in binary64 by construction (FP-honesty "
-                        "rule, sim spec docs/sim-specs/particle-fluids/"
-                        "pic-flip/spec-ref.md § 7)"
-                    ),
-                    "expected": {
-                        "roundtrip": "exact reproduction (rational identity)",
-                        "pic_negative_control": "max deviation > 0 (pinned)",
-                    },
-                },
+                "independent_reference": anchor,
             }
         )
     return {
