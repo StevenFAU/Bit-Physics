@@ -1,0 +1,569 @@
+{
+  "_generated_by": "packages/physarum/web/gen-verification.mjs — do not edit by hand",
+  "sim": "physarum",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "new_canonical",
+    "mass_rel_threshold": 0.001,
+    "criterion": "run-twice byte-identical AND |M − M_eq| / M_eq < mass_rel_threshold",
+    "atomic_strategy": "integer fixed-point atomicAdd<u32> — order-independent",
+    "recorded_browser": {
+      "total_mass": 22499.996,
+      "canonical_total_mass": 22500,
+      "mass_rel": 1.7e-7,
+      "backend": "ANGLE-Vulkan RX 6800 XT",
+      "date": "2026-06-09"
+    },
+    "run_twice": "byte-identical",
+    "cross_hw_note": "two live runs match each other on any one GPU (integer atomics remove the only ordering nondeterminism); they match the committed sha only on the reference hardware — off-reference the non-atomic float passes (sense/diffuse) round differently so the field/sha differ while the mass stays exactly conserved. That is why the gate is determinism + the mass invariant, not a field-sha match."
+  },
+  "mass_equilibrium": {
+    "formula": "d·N·(1−α)/α",
+    "canonical_value": 22500,
+    "d": 5,
+    "N": 500,
+    "alpha": 0.1,
+    "open_system_formula": "(d·N + food)·(1−α)/α",
+    "morphology_invariant_axes": [
+      "delta_phi_deg",
+      "L_sense",
+      "L_move"
+    ],
+    "value_changing_axes": [
+      "deposit",
+      "n_agents",
+      "decay_alpha"
+    ],
+    "derivation": "apply adds d·N per step (physarum.wgsl apply); diffuse is a sum-preserving 3×3 box blur ×(1−α) (physarum.wgsl diffuse); steady state M = (M + dN)(1−α) ⇒ M = dN(1−α)/α"
+  },
+  "determinism": {
+    "claimed": "bit-exact-same-hw",
+    "run_twice": "byte-identical",
+    "field_note": "the deposit atomicAdd is the sim's ONLY cross-invocation reduction — every other op (sense/rotate/move/diffuse) is a per-invocation IEEE-deterministic float computation; integerizing that one atomic (u32 fixed-point ×65536) is therefore SUFFICIENT for same-hardware bit-exactness. Float atomicAdd would be non-associative → non-deterministic."
+  },
+  "canonical": {
+    "descriptor": "network-canonical-seed42-step5000",
+    "seed": 42,
+    "grid": [
+      256,
+      256
+    ],
+    "n_agents": 500,
+    "steps": 5000,
+    "capture_interval": 500,
+    "params": {
+      "delta_phi_deg": 45,
+      "L_sense": 9,
+      "L_move": 1,
+      "deposit": 5,
+      "decay_alpha": 0.1
+    },
+    "payload_sha256": "sha256:6c0c239e85522b0f9b073f55d810b9cc6d11e4ec7b62e2bbb2610ffaaa448f40",
+    "wall_clock_reference_s": 3.128,
+    "wall_clock_browser_s": 1.66
+  },
+  "falsify": {
+    "wrong_mass_factor": 1.5,
+    "note": "falsifiability-probe target (spec § 3.3): the SAME mass criterion checked against a deliberately wrong canonical mass (1.5× the equilibrium) — NOT a gate parameter; the true conserved mass then reads mass_rel ≫ threshold → FAIL."
+  },
+  "templates": [
+    {
+      "id": "canonical",
+      "category": "morphology",
+      "title": "Jones 2010 Table-1 sensing — the capture regime.",
+      "caption": "Δφ 45°, L_sense 9, d 5, α 0.1 — the committed canonical set. Mass holds at the gated 22500.",
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 9,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      },
+      "mass_axis": "invariant",
+      "mass_equilibrium": 22500
+    },
+    {
+      "id": "reticular",
+      "category": "morphology",
+      "title": "short sensors, low decay — a dense reticular mesh.",
+      "caption": "Δφ 45°, L_sense 4, α 0.04: small-scale sensing and slow decay weave a fine closed mesh. α moves the equilibrium — the formula still predicts it.",
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 4,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.04
+      },
+      "mass_axis": "value-changing",
+      "mass_equilibrium": 60000
+    },
+    {
+      "id": "strands",
+      "category": "morphology",
+      "title": "far sensors — sparse veins and strands.",
+      "caption": "Δφ 45°, L_sense 24: long-range sensing pulls sparse, large-scale corridors. Morphology axis — mass stays 22500.",
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 24,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      },
+      "mass_axis": "invariant",
+      "mass_equilibrium": 22500
+    },
+    {
+      "id": "trunk",
+      "category": "morphology",
+      "title": "narrow steering — few straight trunk lines.",
+      "caption": "Δφ 22.5°, L_sense 9: slow turning forges few, straight, heavily reinforced trunks. Morphology axis — mass stays 22500.",
+      "params": {
+        "delta_phi_deg": 22.5,
+        "L_sense": 9,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      },
+      "mass_axis": "invariant",
+      "mass_equilibrium": 22500
+    },
+    {
+      "id": "fragments",
+      "category": "morphology",
+      "title": "short sensors, fast decay — fine fragments.",
+      "caption": "Δφ 45°, L_sense 3, α 0.2: fine sensing and fast decay break the trail into short fragments. α moves the equilibrium.",
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 3,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.2
+      },
+      "mass_axis": "value-changing",
+      "mass_equilibrium": 10000
+    },
+    {
+      "id": "dendritic",
+      "category": "morphology",
+      "title": "wide angle — branching, dendritic growth.",
+      "caption": "Δφ 60°, L_sense 12, α 0.08: wide steering near the branching boundary (Jones 2010: larger rotation angle → dendritic). α moves the equilibrium.",
+      "params": {
+        "delta_phi_deg": 60,
+        "L_sense": 12,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.08
+      },
+      "mass_axis": "value-changing",
+      "mass_equilibrium": 28750
+    },
+    {
+      "id": "tokyo-rail",
+      "category": "scenario",
+      "title": "connect the cities — Tero 2010's Tokyo-rail setup.",
+      "caption": "≈30 food sources on a schematic Kanto layout (Tero 2010 style, not survey geography). The emergent network vs the exact minimum spanning tree: Tero measured MD_MST 0.85 transport efficiency and TL_MST ≈ 1.75 cost for real Physarum — with the real rail beating it only on fault tolerance.",
+      "source": "Tero et al. 2010, Science 327:439 — Rules for Biologically Inspired Adaptive Network Design",
+      "food": [
+        [
+          130,
+          148
+        ],
+        [
+          120,
+          145
+        ],
+        [
+          122,
+          152
+        ],
+        [
+          123,
+          138
+        ],
+        [
+          132,
+          140
+        ],
+        [
+          128,
+          156
+        ],
+        [
+          112,
+          170
+        ],
+        [
+          100,
+          185
+        ],
+        [
+          95,
+          198
+        ],
+        [
+          105,
+          205
+        ],
+        [
+          80,
+          190
+        ],
+        [
+          60,
+          195
+        ],
+        [
+          175,
+          150
+        ],
+        [
+          160,
+          145
+        ],
+        [
+          200,
+          130
+        ],
+        [
+          230,
+          140
+        ],
+        [
+          155,
+          178
+        ],
+        [
+          125,
+          95
+        ],
+        [
+          105,
+          90
+        ],
+        [
+          150,
+          45
+        ],
+        [
+          185,
+          95
+        ],
+        [
+          215,
+          70
+        ],
+        [
+          70,
+          140
+        ],
+        [
+          90,
+          135
+        ],
+        [
+          72,
+          120
+        ],
+        [
+          85,
+          60
+        ],
+        [
+          40,
+          150
+        ],
+        [
+          78,
+          175
+        ],
+        [
+          85,
+          160
+        ],
+        [
+          205,
+          190
+        ]
+      ],
+      "mst_overlay": true,
+      "open_system": true,
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 12,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      }
+    },
+    {
+      "id": "cosmic-web",
+      "category": "scenario",
+      "title": "find the filaments — a 2D cosmic-web homage.",
+      "caption": "Galaxy-like food clustered into nodes with sparse bridges — a labelled 2D analogy of the 3D Monte-Carlo Physarum Machine that reconstructed dark-matter filaments from 37,000 SDSS galaxies (Burchett/Elek 2020). Not the actual 3D reconstruction.",
+      "source": "Burchett, Elek et al. 2020, ApJL 891:L35 — Revealing the Dark Threads of the Cosmic Web",
+      "food": [
+        [
+          58,
+          58
+        ],
+        [
+          66,
+          50
+        ],
+        [
+          50,
+          66
+        ],
+        [
+          70,
+          68
+        ],
+        [
+          46,
+          52
+        ],
+        [
+          192,
+          66
+        ],
+        [
+          200,
+          58
+        ],
+        [
+          184,
+          74
+        ],
+        [
+          204,
+          78
+        ],
+        [
+          186,
+          56
+        ],
+        [
+          110,
+          182
+        ],
+        [
+          118,
+          190
+        ],
+        [
+          102,
+          176
+        ],
+        [
+          122,
+          172
+        ],
+        [
+          98,
+          192
+        ],
+        [
+          200,
+          192
+        ],
+        [
+          208,
+          184
+        ],
+        [
+          190,
+          198
+        ],
+        [
+          210,
+          200
+        ],
+        [
+          196,
+          178
+        ],
+        [
+          70,
+          150
+        ],
+        [
+          62,
+          158
+        ],
+        [
+          80,
+          144
+        ],
+        [
+          128,
+          118
+        ],
+        [
+          136,
+          110
+        ],
+        [
+          120,
+          126
+        ],
+        [
+          96,
+          104
+        ],
+        [
+          150,
+          150
+        ],
+        [
+          168,
+          108
+        ],
+        [
+          88,
+          130
+        ],
+        [
+          150,
+          88
+        ],
+        [
+          176,
+          168
+        ]
+      ],
+      "mst_overlay": true,
+      "open_system": true,
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 14,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      }
+    },
+    {
+      "id": "steiner",
+      "category": "scenario",
+      "title": "the Steiner square — optimum vs emergent.",
+      "caption": "Four corners: the minimum spanning tree is three edges, but the shortest possible tree (Steiner) adds two interior junctions. Physarum grows the redundant, junction-rich network — approximation, not guaranteed optimum (cf. Adamatzky; the reality-check arXiv:1712.03139).",
+      "source": "Adamatzky — Physarum Machines (spanning / Steiner trees)",
+      "food": [
+        [
+          92,
+          92
+        ],
+        [
+          164,
+          92
+        ],
+        [
+          92,
+          164
+        ],
+        [
+          164,
+          164
+        ]
+      ],
+      "mst_overlay": true,
+      "open_system": true,
+      "params": {
+        "delta_phi_deg": 45,
+        "L_sense": 12,
+        "L_move": 1,
+        "deposit": 5,
+        "decay_alpha": 0.1
+      }
+    }
+  ],
+  "surfaces": {
+    "numpy_reference_s": 3.128,
+    "webgpu_headless_s": 1.66
+  },
+  "ic_asset": {
+    "asset": "physarum-ic-seed42.bin",
+    "bytes": 8000,
+    "sha256": "3c4b08a2164945ab75bf31da523f0c05ab5552f3d7c44539e8b5c3fc4cbc1ea4",
+    "provenance": "the committed seed-42 agent positions + headings the canonical protocol replays — shipped verbatim"
+  },
+  "code_anchors": {
+    "sense": {
+      "start": 59,
+      "end": 61,
+      "lines": [
+        "let lr = sample(p.x + P.l_sense * hl.x, p.y + P.l_sense * hl.y);",
+        "let cr = sample(p.x + P.l_sense * hh.x, p.y + P.l_sense * hh.y);",
+        "let rr = sample(p.x + P.l_sense * hr.x, p.y + P.l_sense * hr.y);"
+      ]
+    },
+    "rotate": {
+      "start": 63,
+      "end": 67,
+      "lines": [
+        "let mx = max(max(lr, cr), rr);",
+        "var nh = hh;",
+        "if (cr >= mx) { nh = hh; }",
+        "else if (lr >= rr) { nh = hl; }",
+        "else { nh = hr; }"
+      ]
+    },
+    "move": {
+      "start": 69,
+      "end": 71,
+      "lines": [
+        "let np = p + P.l_move * nh;",
+        "pos[i * 2u] = np.x; pos[i * 2u + 1u] = np.y;",
+        "head[i * 2u] = nh.x; head[i * 2u + 1u] = nh.y;"
+      ]
+    },
+    "deposit": {
+      "start": 73,
+      "end": 76,
+      "lines": [
+        "let dx = u32(wrapi(i32(round(np.x)), i32(P.w)));",
+        "let dy = u32(wrapi(i32(round(np.y)), i32(P.h)));",
+        "let add = u32(round(P.deposit * SCALE));",
+        "atomicAdd(&dep[dx * P.h + dy], add);"
+      ]
+    },
+    "scale": {
+      "line": 15,
+      "text": "const SCALE: f32 = 65536.0;"
+    },
+    "deposit_scale": {
+      "line": 75,
+      "text": "let add = u32(round(P.deposit * SCALE));"
+    },
+    "apply": {
+      "start": 84,
+      "end": 85,
+      "lines": [
+        "let d = f32(atomicLoad(&dep[idx])) / SCALE;",
+        "T_out[idx] = T_in[idx] + d;"
+      ]
+    },
+    "diffuse": {
+      "start": 96,
+      "end": 103,
+      "lines": [
+        "for (var di = -1; di <= 1; di = di + 1) {",
+        "  for (var dj = -1; dj <= 1; dj = dj + 1) {",
+        "    let xx = u32(wrapi(i32(gid.x) + di, w));",
+        "    let yy = u32(wrapi(i32(gid.y) + dj, h));",
+        "    sum = sum + T_in[xx * P.h + yy];",
+        "  }",
+        "}",
+        "T_out[gid.x * P.h + gid.y] = (sum / 9.0) * (1.0 - P.decay_alpha);"
+      ]
+    }
+  },
+  "links": {
+    "kernel": "packages/physarum/src/physarum.wgsl",
+    "spec": "docs/sim-specs/agent-based/physarum/spec-ref.md",
+    "algebraic": "docs/sim-specs/agent-based/physarum/algebraic.md",
+    "capture_manifest": "captures/physarum-ref/network-canonical-seed42-step5000.json",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "perf_ledger": "docs/perf-ledger.md",
+    "resolution_audit": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md"
+  }
+}
