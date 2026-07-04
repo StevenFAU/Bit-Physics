@@ -87,7 +87,13 @@ jobs:
           else
             echo "lfs fetch route: GitHub LFS"
           fi
-          git lfs pull --include="captures/**" || echo "no LFS captures for this sim (surrogate)"
+          # P6-FPEDGE follow-up: captures/** alone starved the torch-family
+          # gates — 3dgs-mpm{,-sh-update} read LFS golden renders
+          # (tools/testkit/golden/renders/**) and neural-ca's re-emit loads the
+          # LFS safetensors checkpoint (tools/testkit/golden/checkpoints/**);
+          # unsmudged pointers surfaced as PIL.UnidentifiedImageError /
+          # load_file failures the first time this workflow fired on a PR.
+          git lfs pull --include="captures/**,tools/testkit/golden/**" || echo "no LFS artifacts for this sim (surrogate)"
       - name: Sync Python env for the host-side compare (testkit + declared deps)
         # P6-FPEDGE latent-break fix: the workspace root declares NO default
         # deps, so a bare `uv run` on a fresh runner syncs an EMPTY env and the
