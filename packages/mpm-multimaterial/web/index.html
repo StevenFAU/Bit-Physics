@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MPM Multi-Material — snow · sand · jelly · water (verified) — Bit-Physics</title>
+    <meta
+      name="description"
+      content="Snow, sand, jelly and water coupled in ONE MLS-MPM grid solve — WebGPU, fixed-point deterministic P2G, golden-verified B-spline, live per-material invariant proofs."
+    />
+    <meta property="og:title" content="MPM Multi-Material — Bit-Physics" />
+    <meta
+      property="og:description"
+      content="Four materials, one grid solve, verification visible: golden B-spline readout, mass-conservation, run-twice bit-identity, snow/sand invariants."
+    />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common/common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #06090d;
+      }
+      #view {
+        width: min(90vmin, 720px);
+        height: min(90vmin, 720px);
+        touch-action: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage">
+      <canvas id="view" width="720" height="720" class="bps-canvas"></canvas>
+    </div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

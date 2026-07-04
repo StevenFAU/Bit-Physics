@@ -61,6 +61,11 @@ const SIMS = {
   // covers frames 30..330 (~the whole violent phase); frame-indexed live
   // loop, deterministic per device. Loop wraps with a cut (declared).
   "sph-water": { start: 30, shots: 300, gap: 1, fps: 30, px: 512, crf: 46 },
+  // Phase-6 mpm-multimaterial: the showcase drop — snowball flight + splash,
+  // jelly drop, water flooding the sand bed; frames 10..310 cover the whole
+  // multi-material impact phase. Frame-indexed live loop, deterministic per
+  // device; loop wraps with a cut (declared, boids precedent).
+  "mpm-multimaterial": { start: 10, shots: 300, gap: 1, fps: 30, px: 512, crf: 46 },
   // Phase-6 eulerian-smoke: motion IS the physics (buoyant plume rising +
   // rolling up); boots into the plume scene with a frame-indexed emitter, so
   // the loop is deterministic. Loop wraps with a cut (declared, boids

@@ -1,0 +1,39 @@
+{
+  "descriptor": "drop-impact-16cube-seed42-step50",
+  "capture_payload_sha256": "689609bb46dd03fc03b4808e4113f94720b9072747b63f45ed07736694227c9e",
+  "params_as_run": {
+    "grid_n": 16,
+    "n_particles": 5000,
+    "dt": 0.0001,
+    "gravity_z": -9.81,
+    "youngs_modulus": 4000.0,
+    "poisson_ratio": 0.3,
+    "mu": 1538.4615384615383,
+    "lam": 2307.6923076923076,
+    "blob_center": [
+      0.5,
+      0.5,
+      0.65
+    ],
+    "blob_radius": 0.15,
+    "blob_initial_vz": -2.0,
+    "floor_z_index": 4,
+    "seed": 42,
+    "mass_per_particle": 0.0002,
+    "volume_per_particle": 2.8274333882308133e-06
+  },
+  "checkpoints": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50
+  ],
+  "ref_layout": "f64le[checkpoint][particle][px,py,pz,vx,vy,vz]",
+  "ic_layout": "f32le[particle][px,py,pz]; velocities uniform (0,0,blob_initial_vz); masses uniform 1/N; F=I, C=0, material_id=0 at step 0",
+  "ic_sha256": "9de3f498946a9c44cd81d85e63d1f79cbdf9bcd4f238fcae83cb84e20136029e",
+  "refs_sha256": "d266c8db6a92f1f571e8db1a068bb25b50dce761b135001e5a0fa9a11548160f",
+  "ic_bytes": 60000,
+  "refs_bytes": 1440000
+}

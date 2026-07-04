@@ -43,6 +43,12 @@ const SIMS = {
   // ~150 RAF frames is the crown-splash moment (column collapsed, spray up
   // the far wall) under the SSFR render, which carries its own exposure.
   "sph-water": { frames: 150, px: 512 },
+  // Phase-6 verification-demo (mpm-multimaterial): boots into the showcase
+  // preset (sand bed + water pour + jelly drop + snowball, one grid solve);
+  // ~240 RAF frames = water flooding the sand shore, snowball packed in its
+  // crater, jelly settled — all four materials legible. The sphere-impostor
+  // + density-shadow render carries its own exposure.
+  "mpm-multimaterial": { frames: 240, px: 512 },
   // Phase-6 verification-demo (eulerian-smoke): boots into the plume scene —
   // frame-indexed emitter, 4 sim-steps/frame; ~500 frames lets the buoyant
   // column rise past mid-canvas with rolled-up side vortices. The v2-style
