@@ -87,14 +87,28 @@ jobs:
           else
             echo "lfs fetch route: GitHub LFS"
           fi
-          git lfs pull --include="captures/**" || echo "no LFS captures for this sim (surrogate)"
+          # P6-FPEDGE follow-up: captures/** alone starved the torch-family
+          # gates — 3dgs-mpm{,-sh-update} read LFS golden renders
+          # (tools/testkit/golden/renders/**) and neural-ca's re-emit loads the
+          # LFS safetensors checkpoint (tools/testkit/golden/checkpoints/**);
+          # unsmudged pointers surfaced as PIL.UnidentifiedImageError /
+          # load_file failures the first time this workflow fired on a PR.
+          git lfs pull --include="captures/**,tools/testkit/golden/**" || echo "no LFS artifacts for this sim (surrogate)"
+      - name: Sync Python env for the host-side compare (testkit + declared deps)
+        # P6-FPEDGE latent-break fix: the workspace root declares NO default
+        # deps, so a bare `uv run` on a fresh runner syncs an EMPTY env and the
+        # host-side `from equivalence.harness import compare_captures` dies with
+        # ModuleNotFoundError (first exposed the first time this workflow fired
+        # on a pull_request). Same sync-then---no-sync discipline as
+        # web-deploy.yml.
+        run: uv sync --package bit-physics-testkit
       - name: Lint pyproject (§ 6.3; namespace divergence is SHIFTED, not fail)
         run: |
-          PP=$(uv run python -c "import json; d=[s for s in json.load(open('/dev/stdin')) if s['name']=='${{ matrix.sim }}'][0]; print(d['metadata']['pyproject'])" < <(uv run python tools/productization/pypi-release/pipeline.py discover --json))
-          uv run python tools/productization/pypi-release/lint.py "$PP" || true
+          PP=$(uv run --no-sync python -c "import json; d=[s for s in json.load(open('/dev/stdin')) if s['name']=='${{ matrix.sim }}'][0]; print(d['metadata']['pyproject'])" < <(uv run --no-sync python tools/productization/pypi-release/pipeline.py discover --json))
+          uv run --no-sync python tools/productization/pypi-release/lint.py "$PP" || true
       - name: Build + bootstrap-validate (§ 3.8 gate)
         run: |
-          uv run python tools/productization/pypi-release/pipeline.py validate \
+          uv run --no-sync python tools/productization/pypi-release/pipeline.py validate \
             --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" --json > result.json
           cat result.json
       - name: Surface result

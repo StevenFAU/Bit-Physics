@@ -1,0 +1,73 @@
+{
+  "_generated_by": "packages/eulerian-smoke/web/extract-gate-fields.py",
+  "asset": "smoke-gate-tg-step1000.bin",
+  "sha256": "3645c3feb67a944a5504c956e7c024e7d5ab4507f9e155edf2a8b40b3d9c9ce1",
+  "bytes": 393216,
+  "dtype": "<f8",
+  "layout": "u[128*128] ++ v[128*128] ++ density[128*128], row-major (Nx, Ny)",
+  "step": 1000,
+  "grid": [
+    128,
+    128
+  ],
+  "ic": "taylor-green-2d + centered gaussian density blob, cell centers (i+0.5)/n",
+  "params": {
+    "nu": 0.01,
+    "rho": 1.0,
+    "dx": 0.0078125,
+    "dt": 0.001,
+    "n": 128,
+    "n_jacobi": 20
+  },
+  "fp_edge_sentinel": {
+    "max_abs_vel_bound": 2.0,
+    "held_for_all_steps": true
+  },
+  "checkpoint_diagnostics": {
+    "0": {
+      "energy": 4096.0,
+      "mass_density": 257.3592701820759
+    },
+    "100": {
+      "energy": 3320.984045785948,
+      "mass_density": 250.9755279096436
+    },
+    "200": {
+      "energy": 2667.7286524092824,
+      "mass_density": 248.86701231308518
+    },
+    "300": {
+      "energy": 2167.716118438253,
+      "mass_density": 254.10741108341233
+    },
+    "400": {
+      "energy": 1777.192730043996,
+      "mass_density": 262.0110399984225
+    },
+    "500": {
+      "energy": 1467.3404200300897,
+      "mass_density": 269.8318227444227
+    },
+    "600": {
+      "energy": 1218.4319201859105,
+      "mass_density": 276.62491514337745
+    },
+    "700": {
+      "energy": 1016.4613953951832,
+      "mass_density": 282.31443435506253
+    },
+    "800": {
+      "energy": 851.2154961011335,
+      "mass_density": 287.0914855489122
+    },
+    "900": {
+      "energy": 715.0848188876922,
+      "mass_density": 291.1731902702295
+    },
+    "1000": {
+      "energy": 602.2962123884112,
+      "mass_density": 294.7369917694434
+    }
+  },
+  "computed_by": "frozen NumPy f64 reference (eulerian_smoke.reference.stable_fluids), public API only"
+}

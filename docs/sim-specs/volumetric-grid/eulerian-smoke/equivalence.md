@@ -31,6 +31,44 @@ widening (spec § 2.6). FIFTH per-sim override.
 
 ---
 
+## P6-FPEDGE ADDENDUM (2026-07-03) — the 2D "chaotic-regime" witness is RE-ATTRIBUTED to a reference bug
+
+> **Read this before the witness sections below.** The Phase-6 web-port work
+> discovered that the Phase-1 reference's semi-Lagrangian periodic wrap guarded
+> the FP edge (`np.mod(-tiny, N) == N`) on the integer index but NOT on the
+> interpolation fraction — `fx = x_back - i0` became `N`, a ×N bilinear
+> EXTRAPOLATION. On the 2D lid-shear canonical's own IC this fired **in f64**
+> (10 cells at the first advection; `max|u| ≈ 12270` by step 3). The 2D
+> "Kelvin-Helmholtz chaotic blow-up" documented in § 2–§ 5 below (reference
+> `u → 1.6e3` by step 5) was **this bug, not physics**: with the fraction
+> guarded, the true 2D trajectory is a quiet diffusive shear-layer decay
+> (`max|vel| ≤ 0.98` over all 1000 steps). Full evidence: the P6-FPEDGE
+> discovery audit (`docs/_audits/phase-6/`).
+>
+> **What changed (all three implementations + both committed 2D captures):**
+> the fraction-complete guard landed in the NumPy reference, the Stack-D Taichi
+> port, and the Stack-E Warp port; all three 2D canonicals were regenerated.
+> New payload sha256s: reference `6ae7c981…c6c41a`, stack-d `6fe0c997…`,
+> stack-e `d04cf0b4…` (manifests are authoritative). Post-fix gate-14 (2D):
+> Stack-E is **BIT-EXACT again** (`max_abs_err = 0.0`, `within_tolerance=True`);
+> Stack-D matches to **1.4e-16** (near machine epsilon) with
+> `within_tolerance=False` surviving ONLY as the zero-field relative-criterion
+> degeneracy — the symmetric IC keeps reference `v` at exactly-zero scale
+> (~1e-17), so `rel·max|field|` collapses below round-off. That residual False
+> is a criterion property, not a physics or port statement (an absolute-term
+> tolerance amendment would clear it; operator-gated per § 2.6).
+>
+> **What did NOT change:** the 3D `taylor-green-128cube` canonical. An
+> instrumented full-horizon replay (500 steps, 128³) measured **zero** edge
+> events and bit-exact agreement with the committed capture at steps
+> 50/250/500 — the 3D blow-up documented below is a REAL parameter-level
+> instability (explicit-diffusion CFL `ν·dt/dx² ≈ 0.82` far above the 7-point
+> bound ~1/6), unchanged by the fix, still Option-2-routed. The 2D rows in
+> § 2–§ 5 below are retained as the historical record of the contaminated
+> trajectory (old reference sha `e13b0d05…3ceb`); the 3D rows remain current.
+
+---
+
 # Cross-Stack Equivalence — IC-15 chaotic-regime witness (CHAOTIC-REGIME TEMPLATE)
 
 > **The FIFTH per-sim cross-stack pair, and the FIRST of the five spec-Phase-2
@@ -233,6 +271,7 @@ The two captures are genuinely independent runs, not a copy or a wiring artifact
 | Axis | LEFT (NumPy reference) | RIGHT (Warp Stack-E) |
 |---|---|---|
 | `.h5` checksum (2D / 3D) | `e13b0d05…` / `4604ebdc…` | `aa67929f…` / `6b5158e8…` |
+| `.h5` checksum, 2D post-P6-FPEDGE regen | `6ae7c981…` | `d04cf0b4…` (bit-exact HELD: `max_abs_err=0.0`) |
 | `stack.{build_id, name}` | `sub-phase-eulerian-smoke` / `numpy-reference` | `sub-phase-eulerian-smoke-stack-e` / `warp-stack-e` |
 | `run.start_utc` | 2026-05-22 | 2026-05-25 |
 | `run.wall_clock_seconds` (2D / 3D) | 5.087s / 691.047s | 5.897s / 541.977s |

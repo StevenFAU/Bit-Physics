@@ -6,9 +6,22 @@ readme = "README.md"
 license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
+# Runtime deps declared at P6-FPEDGE (previously empty — a Phase-1 TDD-bootstrap
+# gap masked by the full dev venv; CI's per-sim `uv sync --package eulerian-smoke`
+# built a bare env and the web-deploy verify step failed on `import numpy`).
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "h5py>=3.10",
+  "numpy>=2.0",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["hypothesis>=6.0", "pytest>=8.0"]
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -23,7 +23,7 @@
     "subgroup_ops": false
   },
   "payload": {
-    "checksum": "sha256:e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb",
+    "checksum": "sha256:6ae7c981aea0b90a4a01a71cda1081b79a051bfe7cfafce87cda99cf96c6c41a",
     "format": "hdf5",
     "path": "lid-driven-cavity-128sq-re100-seed42-step1000.h5"
   },
@@ -31,7 +31,7 @@
     "capture_interval": 100,
     "start_utc": "2026-05-22T00:00:00Z",
     "step_count": 1000,
-    "wall_clock_seconds": 5.087066581007093
+    "wall_clock_seconds": 5.438512953995087
   },
   "schema_version": "1.0.0",
   "sim": {

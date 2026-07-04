@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Eulerian Smoke — Stable Fluids (verified) — Bit-Physics</title>
+    <meta name="description" content="Stam's Stable Fluids, verification-visible: finger-paint incompressible Navier-Stokes, watch the divergence residual live, and re-run the gate on your own GPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Eulerian Smoke — Stable Fluids (verified) — Bit-Physics" />
+    <meta property="og:description" content="Stam's Stable Fluids, verification-visible: finger-paint incompressible Navier-Stokes, watch the divergence residual live, and re-run the gate on your own GPU." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/eulerian-smoke/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/eulerian-smoke.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Eulerian Smoke — Stable Fluids (verified) — Bit-Physics" />
+    <meta name="twitter:description" content="Stam's Stable Fluids, verification-visible: finger-paint incompressible Navier-Stokes, watch the divergence residual live, and re-run the gate on your own GPU." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/eulerian-smoke.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="512" height="512" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

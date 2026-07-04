@@ -58,6 +58,9 @@ GATE_KIND = {
     "strange-attractors": "new_canonical",
     "boids-3d": "new_canonical",
     "physarum": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = live f64 reference re-run
+    # (verify.py _gate_eulerian_smoke) + run-twice (2 runs, automatic below).
+    "eulerian-smoke": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

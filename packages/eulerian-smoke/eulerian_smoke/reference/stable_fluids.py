@@ -89,10 +89,14 @@ def canonical_params_2d() -> dict[str, Any]:
         "dx": 1.0 / 128.0,
         "dt": 0.001,  # CFL: U_lid·dt/dx ≈ 0.128 — well under SL stability;
         # the explicit-diffusion CFL ν·dt/dx² ≈ 0.16 is also safe. dt=0.005
-        # was unstable (overflow at step ~50 due to lid-shear-layer vortex
-        # CFL exceedance on the collocated-grid periodic-BC approximation
-        # of the lid-driven cavity). The 5× drop preserves the canonical
-        # ``step1000`` cadence (1000 steps × dt = 1.0s of simulated time).
+        # is unstable because it violates the EXPLICIT-DIFFUSION bound:
+        # ν·dt/dx² ≈ 0.82 > 0.25 (measured post-P6-FPEDGE-fix: blow-up at
+        # step ~9 with the advection edge guarded, so the instability is the
+        # diffusion stencil's, not advection's — the earlier "lid-shear-layer
+        # vortex CFL exceedance" attribution predated the FP-edge discovery
+        # and conflated the two; see the P6-FPEDGE discovery audit). The 5×
+        # drop preserves the canonical ``step1000`` cadence (1000 steps ×
+        # dt = 1.0s of simulated time).
         "n_jacobi": _DEFAULT_N_JACOBI,
     }
 
@@ -150,10 +154,18 @@ def semi_lagrangian_advect_2d(
     # Periodic wrap to [0, N). np.mod is positive-modulus per numpy.
     x_back = np.mod(x_back, float(Nx))
     y_back = np.mod(y_back, float(Ny))
-    # Float-precision guard: np.mod can return exactly N for tiny negative
-    # inputs (e.g., np.mod(-1e-17, 128.0) == 128.0 because -1e-17 + 128.0
-    # rounds to 128.0 in float64). Re-apply the integer modulus so i0 ∈
-    # [0, N) even at this FP edge. (Pure-NumPy elementwise; no branching.)
+    # Float-precision guard, FRACTION-COMPLETE (P6-FPEDGE fix): np.mod can
+    # return exactly N for tiny negative inputs (e.g., np.mod(-1e-17, 128.0)
+    # == 128.0 because -1e-17 + 128.0 rounds to 128.0 in float64). The
+    # original guard re-applied an integer modulus to i0 alone, which left
+    # the interpolation fraction fx = x_back - i0 equal to N — a ×N bilinear
+    # EXTRAPOLATION (measured firing on the lid-shear canonical IC: 10 cells
+    # at the first advection, max|u| ≈ 12270 by step 3; see the P6-FPEDGE
+    # discovery audit). Wrapping the COORDINATE itself to 0.0 — the limit the
+    # intended semantics compute — fixes index and fraction together.
+    # (Pure-NumPy elementwise; no branching.)
+    x_back = np.where(x_back >= float(Nx), 0.0, x_back)
+    y_back = np.where(y_back >= float(Ny), 0.0, y_back)
     i0 = x_back.astype(np.int64) % Nx
     j0 = y_back.astype(np.int64) % Ny
     i1 = (i0 + 1) % Nx
@@ -372,7 +384,11 @@ def semi_lagrangian_advect_3d(
     x_back = np.mod(is_ - u * dt / dx, float(Nx))
     y_back = np.mod(js - v * dt / dx, float(Ny))
     z_back = np.mod(ks - w * dt / dx, float(Nz))
-    # FP-edge guard — see semi_lagrangian_advect_2d's docstring.
+    # Fraction-complete FP-edge guard (P6-FPEDGE fix) — see
+    # semi_lagrangian_advect_2d's inline note.
+    x_back = np.where(x_back >= float(Nx), 0.0, x_back)
+    y_back = np.where(y_back >= float(Ny), 0.0, y_back)
+    z_back = np.where(z_back >= float(Nz), 0.0, z_back)
     i0 = x_back.astype(np.int64) % Nx
     j0 = y_back.astype(np.int64) % Ny
     k0 = z_back.astype(np.int64) % Nz

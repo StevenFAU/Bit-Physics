@@ -84,6 +84,14 @@ T_NCA_SHORTHORIZON_STEP = 50  # first captured frame
 T_NCA_SHORTHORIZON_ABS = 1e-2  # early agreement before any cross-backend drift
 T_NCA_ALPHA_MIN_MASS = 1.0  # final-frame alpha mass > 0 -> the pattern is alive
 
+# --- eulerian-smoke (Phase-6 verification-demo; NEW sim, no gpu_gate.py row so
+# NOT in ESTABLISHED_THRESHOLDS — these are declared fresh, measured-then-
+# declared per the web spec v0.3 change log). TRAJ_REL reuses the established
+# [defaults.smoke] category tolerance verbatim (tolerance.toml; budget-capped).
+T_SMOKE_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
+T_SMOKE_DENSITY_NEG = 1e-6  # smoke_density_nonneg at f32 rounding scope
+T_SMOKE_REF_SANITY = 2.0  # FP-edge sentinel on the live f64 reference re-run
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -135,6 +143,7 @@ SIM_CATEGORY = {
     "strange-attractors": "closed-form",
     "boids-3d": "agent-based",
     "physarum": "agent-based",
+    "eulerian-smoke": "volumetric-grid",
 }
 
 GATE_KIND = {
@@ -145,6 +154,7 @@ GATE_KIND = {
     "strange-attractors": "new_canonical",
     "boids-3d": "new_canonical",
     "physarum": "new_canonical",
+    "eulerian-smoke": "new_canonical",
 }
 
 
@@ -545,6 +555,132 @@ def _gate_physarum(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_eulerian_smoke(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for eulerian-smoke: LIVE f64 reference re-run.
+
+    The browser's canonical descriptor is taylor-green-2d-128sq-seed42-step1000
+    — the demo's OWN canonical scene (the boids/strange live-reference
+    precedent), NOT the committed lid-driven-cavity capture. Measured-then-
+    declared rationale (web spec v0.3 change log): (a) the committed 2D capture
+    is a fingerprint of a reference FP-edge bug (the unguarded interpolation
+    fraction fires IN f64 on its own IC — max|u| spikes ~12270 by step 3;
+    backend fix task filed), so no correct port can or should reproduce it;
+    (b) the chaotic scenes amplify f32-scale perturbations to O(1) (the boids
+    fallback philosophy: pointwise short-horizon is the f32-fragile property).
+    The decaying Taylor-Green scene is perturbation-contracting and provably
+    edge-dormant in f64 (extractor sentinel max|vel| <= T_SMOKE_REF_SANITY), so
+    the pointwise per-checkpoint comparison there is real.
+
+    Gate = run-twice byte-identity over u/v/density at every checkpoint
+         + per-checkpoint per-field max_abs(browser_f32 - reference_f64)
+           <= T_SMOKE_TRAJ_REL * max|browser field|   (the established
+           [defaults.smoke] rel=1e-4; measured worst ratio ~0.2 of budget on
+           the NumPy-f32 proxy — no tolerance added or widened)
+         + the sim's own invariants surfaced: finite fields, density >=
+           -T_SMOKE_DENSITY_NEG (smoke_density_nonneg at f32 rounding scope).
+    """
+    sys.path.insert(0, str(REPO / "packages/eulerian-smoke"))
+    from eulerian_smoke.reference.stable_fluids import (  # type: ignore
+        canonical_params_2d,
+        semi_lagrangian_advect_2d,
+        stable_fluids_step,
+    )
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in ("u", "v", "density")
+            )
+            for st in steps0
+        )
+
+    params = canonical_params_2d()
+    n = int(params["n"])
+    dt, dx = float(params["dt"]), float(params["dx"])
+    # the demo's canonical TG IC — the same closed form main.ts evaluates
+    idx = (np.arange(n, dtype=np.float64) + 0.5) / n
+    x, y = np.meshgrid(idx, idx, indexing="ij")
+    k2pi = 2.0 * np.pi
+    u = np.sin(k2pi * x) * np.cos(k2pi * y)
+    v = -np.cos(k2pi * x) * np.sin(k2pi * y)
+    density = np.exp(-((x - 0.5) ** 2 + (y - 0.5) ** 2) / (2.0 * 0.05 * 0.05))
+    p = np.zeros_like(u)
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [0] + list(range(100, 1001, 100))
+    if expected_steps != want:
+        return VerifyResult(
+            sim="eulerian-smoke",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    ref = {0: (u.copy(), v.copy(), density.copy())}
+    ref_peak = max(float(np.abs(u).max()), float(np.abs(v).max()))
+    for i in range(1, 1001):
+        u, v, p = stable_fluids_step(u, v, p, params)
+        density = semi_lagrangian_advect_2d(density, u, v, dt, dx)
+        ref_peak = max(ref_peak, float(np.abs(u).max()), float(np.abs(v).max()))
+        if i % 100 == 0:
+            ref[i] = (u.copy(), v.copy(), density.copy())
+    # FP-edge sentinel on the live reference run (see docstring)
+    ref_sane = ref_peak <= T_SMOKE_REF_SANITY
+
+    worst = {"u": 0.0, "v": 0.0, "density": 0.0}
+    worst_ratio = 0.0
+    finite = True
+    min_density = math.inf
+    for st in steps0:
+        ru, rv, rd = ref[st["step"]]
+        for key, reff in (("u", ru), ("v", rv), ("density", rd)):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            if key == "density":
+                min_density = min(min_density, float(bf.min()))
+            max_abs = float(np.abs(bf - reff).max())
+            worst[key] = max(worst[key], max_abs)
+            budget = T_SMOKE_TRAJ_REL * float(np.abs(bf).max())
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+    within = worst_ratio <= 1.0
+    density_ok = min_density >= -T_SMOKE_DENSITY_NEG
+    passed = bool(
+        (twice is not False) and within and finite and density_ok and ref_sane
+    )
+    return VerifyResult(
+        sim="eulerian-smoke",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_SMOKE_TRAJ_REL,
+            "finite": finite,
+            "min_density": None if min_density is math.inf else min_density,
+            "density_nonneg_ok": density_ok,
+            "reference_edge_dormant": ref_sane,
+            "reference_peak_vel": ref_peak,
+            "note": "live f64 reference re-run (boids/strange precedent); rel "
+            "budget reuses the established [defaults.smoke] 1e-4 — the lid-shear "
+            "capture's FP-edge contamination was FIXED + regenerated at "
+            "P6-FPEDGE (docs/_audits/phase-6/p6-fpedge-discovery-landing-*)",
+        },
+    )
+
+
 def _gate_rd2d_observable(bundles: list[dict]) -> VerifyResult:
     """PENDING-LAVAPIPE contingency for rd2d (Decision 2, SHIFTED to opt-in).
 
@@ -798,6 +934,7 @@ _GATES = {
     "strange-attractors": _gate_strange,
     "boids-3d": _gate_boids,
     "physarum": _gate_physarum,
+    "eulerian-smoke": _gate_eulerian_smoke,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

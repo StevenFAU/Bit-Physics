@@ -591,6 +591,10 @@ def _capture_roundtrip(
         [
             "uv",
             "run",
+            # --no-sync: inherit the caller-prepared env (CI syncs
+            # bit-physics-testkit; a bare re-sync would strip it — the
+            # workspace root has no default deps). P6-FPEDGE latent-break fix.
+            "--no-sync",
             "python",
             "-c",
             cmp_snippet,

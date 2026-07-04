@@ -57,6 +57,11 @@ const SIMS = {
   // in-shader tonemap); same frame range, still no boost — the shader
   // carries its own exposure.
   "reaction-diffusion-2d": { start: 400, shots: 300, gap: 6, fps: 30, px: 512, crf: 46 },
+  // Phase-6 eulerian-smoke: motion IS the physics (buoyant plume rising +
+  // rolling up); boots into the plume scene with a frame-indexed emitter, so
+  // the loop is deterministic. Loop wraps with a cut (declared, boids
+  // precedent). Boost matches the poster config (exposure, not physics).
+  "eulerian-smoke": { start: 150, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, boost: "brightness(1.6) saturate(1.6)" },
   // the P-7 boot trace-in: the trajectory draws itself in integration order;
   // start 1 + 600-frame trace = the loop restart IS the trace restarting.
   // Boost 1.9→1.1: the v2 render carries its own GPU-side exposure.

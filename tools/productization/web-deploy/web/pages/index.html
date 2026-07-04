@@ -150,7 +150,7 @@
   <h1>bit-physics<span class="tld">.sim</span></h1>
   <div class="tag">GPU-accelerated physics &amp; emergence — a portfolio with a verification spine</div>
   <p class="story">
-    Seven interactive simulations — flocks, chemical gardens, slime
+    Eight interactive simulations — smoke, flocks, chemical gardens, slime
     intelligence, critical magnets, learned life, fractal geometry, chaos —
     each running real compute kernels in your browser over WebGPU. Built
     solo with AI agents under an audit discipline where
@@ -162,11 +162,13 @@
     ledger</b>: each simulation ships with golden-value anchors, determinism
     contracts, property-based invariants, and cross-stack equivalence gates
     whose tolerances are <b>measured, then declared — never widened</b>. The
-    seven browser sims below are the exact bundles that passed each
+    browser sims below are the exact bundles that passed each
     sim&rsquo;s own established gate inside a real headless browser-WebGPU
-    session (CI: Mesa lavapipe, 7/7 green; canonical equivalence proven on
-    RADV/wgpu-native). This page only publishes those validated bundles —
-    it adds no new verification claims.
+    session (Phase-5 close: CI Mesa lavapipe 7/7 green; canonical equivalence
+    proven on RADV/wgpu-native; the Phase-6 smoke port validated on local
+    browser-WebGPU, its lavapipe run rides the next deploy dispatch). This
+    page only publishes those validated bundles — it adds no new
+    verification claims.
   </div>
 </header>
 
@@ -208,6 +210,24 @@
         <span class="chip">agent-based</span>
         <span class="chip">WGSL compute</span>
         <span class="chip gate">gate: new_canonical (mass conservation)</span>
+      </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/eulerian-smoke/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/eulerian-smoke.png"
+      aria-label="Colorful smoke swirling under Stam's stable-fluids solver">
+      <source data-src="./assets/eulerian-smoke.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Eulerian Smoke — Stable Fluids</div>
+      <div class="phys">Stam&rsquo;s advect-diffuse-project split solves
+        incompressible Navier&ndash;Stokes in real time — with the divergence
+        residual on screen and the gate re-runnable on your own GPU.</div>
+      <div class="badges">
+        <span class="chip">volumetric-grid</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
       </div>
     </div>
   </a>
