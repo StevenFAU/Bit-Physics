@@ -258,6 +258,8 @@ def transfer_cycle_step_2d(
     Burgers-protocol advection OOA both use this cycle; spec-ref
     §§ 6.1/6.4). Mutates ``pos``/``vel``/``affine_c``.
     """
+    if mode not in ("pic", "flip", MODE_APIC):
+        raise ValueError(f"unknown transfer mode {mode!r} (expected pic/flip/apic)")
     grid_mass = np.zeros((nx, ny), dtype=np.float64)
     grid_mom = np.zeros((nx, ny, 2), dtype=np.float64)
     c_for_p2g = affine_c if mode == MODE_APIC else np.zeros_like(affine_c)

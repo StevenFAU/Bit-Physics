@@ -82,3 +82,19 @@ def test_sample_matches_g2p_velocity() -> None:
     v2 = np.empty_like(vel)
     apic.sample_grid_2d(pos, gv, _DX, v2)
     assert np.array_equal(v1, v2)
+
+
+def test_unknown_mode_rejected() -> None:
+    """A typo'd mode must fail loudly, not silently run as FLIP/PIC
+    (manifest honesty — the capture advertises the mode it ran)."""
+    import pytest
+
+    from pic_flip.reference.apic import apic_step_2d, default_params_2d
+
+    pos, vel, mass, c = _particles(7)
+    params = default_params_2d()
+    params["mode"] = "apci"
+    with pytest.raises(ValueError, match="unknown transfer mode"):
+        apic_step_2d(pos, vel, mass, c, params)
+    with pytest.raises(ValueError, match="unknown transfer mode"):
+        transfer_cycle_step_2d(pos, vel, mass, c, _DX, 1e-3, _N, _N, "APIC")

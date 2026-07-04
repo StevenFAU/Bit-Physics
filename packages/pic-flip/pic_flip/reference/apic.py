@@ -911,6 +911,8 @@ def apic_step_2d(
     rho = float(params.get("rho", 1.0))
     gravity = float(params.get("gravity", -9.81))
     mode = str(params.get("mode", MODE_APIC))
+    if mode not in (MODE_PIC, MODE_FLIP, MODE_APIC):
+        raise ValueError(f"unknown transfer mode {mode!r} (expected pic/flip/apic)")
     n_wall = int(params.get("n_wall", 2))
     regularize = bool(params.get("regularizers", True))
 
@@ -967,7 +969,7 @@ def apic_step_2d(
         g2p_2d(pos, grid_vel, dx, True, vel_new, c_new)
     elif mode == MODE_PIC:
         g2p_2d(pos, grid_vel, dx, False, vel_new, c_new)
-    else:  # FLIP: v_p += S(new) - S(old).
+    else:  # MODE_FLIP (validated above): v_p += S(new) - S(old).
         g2p_2d(pos, grid_vel, dx, False, vel_new, c_new)
         old_sample = np.empty_like(vel)
         sample_grid_2d(pos, grid_vel_old, dx, old_sample)
@@ -1025,6 +1027,8 @@ def apic_step_3d(
     rho = float(params.get("rho", 1.0))
     gravity = float(params.get("gravity", -9.81))
     mode = str(params.get("mode", MODE_APIC))
+    if mode not in (MODE_PIC, MODE_FLIP, MODE_APIC):
+        raise ValueError(f"unknown transfer mode {mode!r} (expected pic/flip/apic)")
     n_wall = int(params.get("n_wall", 2))
     regularize = bool(params.get("regularizers", True))
 
@@ -1072,7 +1076,7 @@ def apic_step_3d(
         g2p_3d(pos, grid_vel, dx, True, vel_new, c_new)
     elif mode == MODE_PIC:
         g2p_3d(pos, grid_vel, dx, False, vel_new, c_new)
-    else:
+    else:  # MODE_FLIP (validated above).
         g2p_3d(pos, grid_vel, dx, False, vel_new, c_new)
         old_sample = np.empty_like(vel)
         sample_grid_3d(pos, grid_vel_old, dx, old_sample)
