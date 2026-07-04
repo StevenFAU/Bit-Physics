@@ -14,10 +14,9 @@
 // checkpoint per-field at the established [defaults.smoke] rel=1e-4, plus
 // run-twice byte-identity and the sim's own invariants. Why not
 // capture_roundtrip against the committed lid-driven-cavity capture: that
-// trajectory is contaminated by a reference FP-edge bug this port discovered
-// (see the PROVE post-mortem panel; backend fix task filed) — and its true
-// physics is chaotic, which no f32 port can track pointwise. Measured, shown,
-// never laundered.
+// trajectory was contaminated by a reference FP-edge bug this port discovered
+// (see the PROVE post-mortem panel; the backend fix + canonical regeneration
+// landed at P6-FPEDGE). Measured, shown, never laundered.
 //
 // HARD SEPARATION (spec § 7): the capture path reloads the canonical TG IC
 // and steps ONLY with the canonical paramBuf (flags=0: MacCormack, no

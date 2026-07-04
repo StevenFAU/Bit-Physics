@@ -53,6 +53,9 @@
   "postmortem": {
     "quarantined_descriptor": "lid-driven-cavity-128sq-re100-seed42-step1000",
     "quarantined_sha": "sha256:e13b0d052489ed365ccc929873138251c46875e4e568d1ffd8a997bf43123ceb",
+    "regenerated_sha": "sha256:6ae7c981aea0b90a4a01a71cda1081b79a051bfe7cfafce87cda99cf96c6c41a",
+    "fix_landed": true,
+    "discovery_audit": "docs/_audits/phase-6/p6-fpedge-discovery-landing-2026-07-04T03-10-44Z.md",
     "edge_cells_step1": 10,
     "edge_fraction_value": 128,
     "spike_max_u": 12270,
@@ -62,16 +65,16 @@
   },
   "code_anchors": {
     "backtrace_guard": {
-      "start": 74,
-      "end": 75,
+      "start": 75,
+      "end": 76,
       "lines": [
         "x = x - floor(x / n) * n;      // np.mod semantics: x in [0, n], n at the FP edge",
         "if (x >= n) { x = 0.0; }       // the guarded limit (see header note)"
       ]
     },
     "maccormack": {
-      "start": 155,
-      "end": 157,
+      "start": 156,
+      "end": 158,
       "lines": [
         "let corr_back = bilinear_vel_aux(cb);",
         "let pred = vel_aux[idx];",
@@ -79,8 +82,8 @@
       ]
     },
     "diffusion": {
-      "start": 179,
-      "end": 182,
+      "start": 180,
+      "end": 183,
       "lines": [
         "let lap = (vel_in[idx_of(i - 1, j)] + vel_in[idx_of(i + 1, j)]",
         "         + vel_in[idx_of(i, j - 1)] + vel_in[idx_of(i, j + 1)]",
@@ -89,8 +92,8 @@
       ]
     },
     "jacobi": {
-      "start": 212,
-      "end": 216,
+      "start": 213,
+      "end": 217,
       "lines": [
         "let rhs = params.c_rhs * scalar_aux[idx];",
         "scalar_out[idx] = 0.25 * (",
@@ -100,8 +103,8 @@
       ]
     },
     "advect_density": {
-      "start": 237,
-      "end": 241,
+      "start": 238,
+      "end": 242,
       "lines": [
         "fn advect_density(@builtin(global_invocation_id) gid: vec3<u32>) {",
         "if (gid.x >= params.n || gid.y >= params.n) { return; }",
@@ -112,12 +115,12 @@
     }
   },
   "py_anchors": {
-    "maccormack_line": 177,
-    "mod_edge_line": 154,
-    "diffusion_line": 338,
-    "jacobi_line": 284,
-    "density_advect_line": 125,
-    "collocated_caveat_line": 225,
+    "maccormack_line": 189,
+    "mod_edge_line": 158,
+    "diffusion_line": 350,
+    "jacobi_line": 296,
+    "density_advect_line": 129,
+    "collocated_caveat_line": 237,
     "div_tol_line": 37
   },
   "links": {
@@ -129,6 +132,7 @@
     "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
     "gate_source": "tools/productization/web-deploy/verify.py",
     "quarantined_manifest": "captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.json",
+    "discovery_audit": "docs/_audits/phase-6/p6-fpedge-discovery-landing-2026-07-04T03-10-44Z.md",
     "extractor": "packages/eulerian-smoke/web/extract-gate-fields.py"
   }
 }

@@ -147,6 +147,14 @@ def _k_sl_advect_2d(
         yb = ti.cast(j, ti.f64) - v[i, j] * dt / dx
         xb = xb - ti.floor(xb / fnx) * fnx
         yb = yb - ti.floor(yb / fny) * fny
+        # Fraction-complete FP-edge guard (P6-FPEDGE fix, mirrors the NumPy
+        # reference): the floored modulus rounds to exactly n for tiny
+        # negative inputs; wrap the coordinate to 0.0 so the interpolation
+        # fraction can never reach n (a xn extrapolation otherwise).
+        if xb >= fnx:
+            xb = 0.0
+        if yb >= fny:
+            yb = 0.0
         i0 = ti.cast(xb, ti.i32) % nx
         j0 = ti.cast(yb, ti.i32) % ny
         i1 = (i0 + 1) % nx
@@ -188,6 +196,13 @@ def _k_sl_advect_3d(
         xb = xb - ti.floor(xb / fnx) * fnx
         yb = yb - ti.floor(yb / fny) * fny
         zb = zb - ti.floor(zb / fnz) * fnz
+        # Fraction-complete FP-edge guard (P6-FPEDGE fix) — see the 2D kernel.
+        if xb >= fnx:
+            xb = 0.0
+        if yb >= fny:
+            yb = 0.0
+        if zb >= fnz:
+            zb = 0.0
         i0 = ti.cast(xb, ti.i32) % nx
         j0 = ti.cast(yb, ti.i32) % ny
         k0 = ti.cast(zb, ti.i32) % nz

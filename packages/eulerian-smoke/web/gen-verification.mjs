@@ -158,12 +158,33 @@ const measured = browserRatio !== null
       provenance: "NumPy-f32 proxy measurement (web spec § 11 v0.3); browser validate value pending",
     };
 
-// --- 5. Quarantined committed canonical (post-mortem provenance) --------------
+// --- 5. The lid canonical: contaminated -> FIXED + regenerated (P6-FPEDGE) ----
+// The discovery audit is the committed source for the historical (contaminated)
+// sha; the regenerated manifest is the source for the current one (the rd2d
+// resolution-audit parsing pattern).
 
 const QUAR_MANIFEST = "captures/eulerian-smoke-ref/lid-driven-cavity-128sq-re100-seed42-step1000.json";
 const quar = JSON.parse(read(QUAR_MANIFEST));
 if (!quar.payload?.checksum || quar.payload.checksum.length < 71) {
   fail(`${QUAR_MANIFEST}: missing payload checksum`);
+}
+const AUDIT_GLOB = "docs/_audits/phase-6/p6-fpedge-discovery-landing-2026-07-04T03-10-44Z.md";
+const audit = read(AUDIT_GLOB);
+const oldSha = matchOne(
+  "contaminated payload sha",
+  audit,
+  AUDIT_GLOB,
+  /historical record:\s*\n\s*`(sha256:[0-9a-f]{64})`/,
+)[1];
+matchOne("audit verdict", audit, AUDIT_GLOB, /^verdict: LANDED$/m);
+const regenShaLine = matchOne(
+  "regenerated ref sha (audit front-matter)",
+  audit,
+  AUDIT_GLOB,
+  /"captures\/eulerian-smoke-ref\/lid-driven-cavity-128sq-re100-seed42-step1000\.h5": "(sha256:[0-9a-f]{64})"/,
+)[1];
+if (regenShaLine !== quar.payload.checksum) {
+  fail(`${AUDIT_GLOB}: audited regenerated sha ${regenShaLine} != committed manifest ${quar.payload.checksum}`);
 }
 
 // --- 6. WGSL + NumPy code anchors (exact-substring, exactly once) --------------
@@ -224,7 +245,7 @@ const INV_PATH = "packages/eulerian-smoke/eulerian_smoke/invariants.py";
 const invLines = read(INV_PATH).split("\n");
 const pyAnchors = {
   maccormack_line: anchorLine(REF_PATH, refLines, "maccormack def", "def maccormack_advect_2d(").line,
-  mod_edge_line: anchorLine(REF_PATH, refLines, "mod edge note", "np.mod(-1e-17, 128.0) == 128.0").line,
+  mod_edge_line: anchorLine(REF_PATH, refLines, "mod edge note", "np.mod(-1e-17, 128.0)").line,
   diffusion_line: anchorLine(REF_PATH, refLines, "diffusion", "u_adv = u_adv + dt * nu * _laplacian_5point_periodic(u_adv, inv_dx2)").line,
   jacobi_line: anchorLine(REF_PATH, refLines, "jacobi sweep", "p = 0.25 * (").line,
   density_advect_line: anchorLine(REF_PATH, refLines, "sl advect def", "def semi_lagrangian_advect_2d(").line,
@@ -293,7 +314,10 @@ const out = {
   },
   postmortem: {
     quarantined_descriptor: "lid-driven-cavity-128sq-re100-seed42-step1000",
-    quarantined_sha: quar.payload.checksum,
+    quarantined_sha: oldSha,
+    regenerated_sha: quar.payload.checksum,
+    fix_landed: true,
+    discovery_audit: AUDIT_GLOB,
     edge_cells_step1: Number(edge[1]),
     edge_fraction_value: Number(edge[2]),
     spike_max_u: Number(spike[1]),
@@ -312,6 +336,7 @@ const out = {
     tolerance_table: TOL_PATH,
     gate_source: VERIFY_PATH,
     quarantined_manifest: QUAR_MANIFEST,
+    discovery_audit: AUDIT_GLOB,
     extractor: "packages/eulerian-smoke/web/extract-gate-fields.py",
   },
 };

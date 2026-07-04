@@ -674,8 +674,9 @@ def _gate_eulerian_smoke(bundles: list[dict]) -> VerifyResult:
             "reference_edge_dormant": ref_sane,
             "reference_peak_vel": ref_peak,
             "note": "live f64 reference re-run (boids/strange precedent); rel "
-            "budget reuses the established [defaults.smoke] 1e-4 — the committed "
-            "lid-shear capture is quarantined (reference FP-edge bug; fix filed)",
+            "budget reuses the established [defaults.smoke] 1e-4 — the lid-shear "
+            "capture's FP-edge contamination was FIXED + regenerated at "
+            "P6-FPEDGE (docs/_audits/phase-6/p6-fpedge-discovery-landing-*)",
         },
     )
 

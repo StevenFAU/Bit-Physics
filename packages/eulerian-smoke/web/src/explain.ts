@@ -155,7 +155,7 @@ export function installExplainPanel(panel: PanelShell): void {
   const nameNote = document.createElement("div");
   nameNote.className = "es-note-line";
   nameNote.textContent =
-    "naming honesty: the committed backend canonical is called \"lid-driven-cavity\" but is a periodic lid-shear-layer IC approximation — its own docstring says so (and it is quarantined here; see the post-mortem). This demo's canonical is the Taylor-Green scene.";
+    "naming honesty: the committed backend canonical is called \"lid-driven-cavity\" but is a periodic lid-shear-layer IC approximation — its own docstring says so (its FP-edge contamination was fixed + regenerated at P6-FPEDGE; see the post-mortem). This demo's canonical is the Taylor-Green scene.";
   body.appendChild(nameNote);
 
   const prov = document.createElement("div");

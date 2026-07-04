@@ -379,11 +379,13 @@ function installPostmortem(d: VerifyPanelDeps): void {
   );
   item(
     "quarantined, not laundered.",
-    "No f32 port can (or should) reproduce a bug's fingerprint. The committed capture is quarantined as a gate target; a backend fix + canonical regeneration task is filed. The lid-shear scene in this demo runs the guarded port — its true physics is a quiet diffusive shear layer.",
+    "No f32 port can (or should) reproduce a bug's fingerprint. The contaminated capture was quarantined as a gate target, and the gate re-anchored to the Taylor-Green scene, where the reference is provably edge-dormant " +
+      `(the extractor asserts max|u| ≤ ${pm.ref_sanity_maxu} over the whole run) — and this WGSL port carries the fraction-complete guard (see equations → code).`,
   );
   item(
-    "re-anchored.",
-    `The gate binds to the Taylor-Green scene instead, where the frozen reference is provably edge-dormant (the extractor asserts max|u| ≤ ${pm.ref_sanity_maxu} over the whole run) — and the WGSL port carries the fraction-complete guard (see equations → code).`,
+    "fixed, everywhere.",
+    `The fraction guard landed in the NumPy reference AND the Taichi/Warp cross-stack ports; all three 2D canonicals were regenerated (reference payload now ${pm.regenerated_sha.slice(7, 19)}…). ` +
+      "The true lid-shear physics is a quiet diffusive decay; the Warp port is bit-exact against the clean trajectory again. Full record: the P6-FPEDGE discovery audit (linked below).",
   );
   g.appendChild(ol);
 
@@ -410,8 +412,9 @@ function installPostmortem(d: VerifyPanelDeps): void {
   const links = document.createElement("div");
   links.className = "bps-links";
   for (const [label, path] of [
-    ["quarantined capture manifest", V.links.quarantined_manifest],
-    ["reference (the unguarded wrap)", V.links.reference],
+    ["discovery audit (P6-FPEDGE)", V.links.discovery_audit],
+    ["capture manifest (regenerated)", V.links.quarantined_manifest],
+    ["reference (the fixed wrap)", V.links.reference],
     ["web spec (measurement log)", V.links.spec],
   ] as const) {
     const a = document.createElement("a");

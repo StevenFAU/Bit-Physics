@@ -77,7 +77,14 @@ def canonical_params_3d() -> dict[str, Any]:
 @wp.func
 def _pmod(x: wp.float64, n: wp.float64) -> wp.float64:
     # NumPy-positive modulus (np.mod): result carries the divisor's sign.
-    return x - n * wp.floor(x / n)
+    m = x - n * wp.floor(x / n)
+    # Fraction-complete FP-edge guard (P6-FPEDGE fix, mirrors the NumPy
+    # reference): the floored modulus rounds to exactly n for tiny negative x;
+    # the derived interpolation fraction would then be n — a xn extrapolation.
+    # Wrap the coordinate to 0.0, the limit the intended semantics compute.
+    if m >= n:
+        m = wp.float64(0.0)
+    return m
 
 
 @wp.kernel

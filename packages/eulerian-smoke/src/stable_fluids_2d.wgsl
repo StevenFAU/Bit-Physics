@@ -16,9 +16,10 @@
 // x - floor(x/n)*n can return exactly n for tiny negative x (rounding). The
 // NumPy reference guards the derived integer INDEX but not the interpolation
 // FRACTION, so fx = x_back - i0 becomes n — a ×n bilinear extrapolation. That
-// unguarded fraction fires in the f64 reference on the committed lid-shear
-// canonical's own IC (see the web demo's post-mortem panel; backend fix task
-// filed). This port wraps the COORDINATE itself (x >= n -> 0), which is the
+// unguarded fraction fired in the f64 reference on the committed lid-shear
+// canonical's own IC (see the web demo's post-mortem panel; the backend fix
+// landed at P6-FPEDGE and the canonicals were regenerated). This port wraps
+// the COORDINATE itself (x >= n -> 0), which is the
 // limit the intended semantics compute and is identical to the reference on
 // every non-edge input.
 //
