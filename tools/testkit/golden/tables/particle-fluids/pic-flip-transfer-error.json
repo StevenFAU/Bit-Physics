@@ -1,0 +1,119 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "pic-flip-tent-halfcell-transfer-error-coefficient",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/pic-flip-transfer-error.md",
+    "upstream": "Zhu-2005-UBC-MSc-thesis-eq-3.8",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://www.cs.ubc.ca/~rbridson/docs/yzhu_msc.pdf"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "quadratic-f-tent-halfcell-roundtrip-b=0.0",
+        "f": "f(x) = a + b x + c x^2",
+        "a": 1.0,
+        "b": 0.0,
+        "c": 3.0,
+        "exact": {
+          "a": "1",
+          "b": "0",
+          "c": "3"
+        },
+        "dx": 1.0,
+        "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+        "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+      },
+      "expected": {
+        "f_at_x0": 1.0,
+        "f_second_derivative": 6.0,
+        "f_tilde_continuum": 1.6666666666666667,
+        "f_tilde_continuum_exact_rational": "5/3",
+        "error_exact_rational": "2/3",
+        "coefficient_exact_rational": "1/9",
+        "coefficient": 0.1111111111111111,
+        "particle_ladder": {
+          "n=4": {
+            "f_tilde": 1.6875,
+            "f_tilde_exact_rational": "27/16",
+            "abs_residual_vs_continuum": 0.020833333333333332
+          },
+          "n=16": {
+            "f_tilde": 1.66796875,
+            "f_tilde_exact_rational": "427/256",
+            "abs_residual_vs_continuum": 0.0013020833333333333
+          },
+          "n=64": {
+            "f_tilde": 1.666748046875,
+            "f_tilde_exact_rational": "6827/4096",
+            "abs_residual_vs_continuum": 8.138020833333333e-05
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Hand derivation at tools/testkit/golden/derivations/pic-flip-transfer-error.md \u00a7 2: smoothing contribution 5/144 f'' + interpolation contribution 11/144 f'' = (1/9) f'' dx^2 \u2014 both integrals evaluated in exact rational arithmetic; the discrete midpoint ladder converges to the same limit (independent numerical confirmation).",
+        "doi": "10.1145/1073204.1073298 (Zhu & Bridson 2005); the coefficient statement is thesis eq. 3.8 (Zhu 2005, UBC MSc thesis)",
+        "derived_by": "exact rational arithmetic (piecewise polynomial integration; no floating point enters the identity)",
+        "expected": {
+          "coefficient": "1/9 (exact rational)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "quadratic-f-tent-halfcell-roundtrip-b=-1.5",
+        "f": "f(x) = a + b x + c x^2",
+        "a": 0.25,
+        "b": -1.5,
+        "c": 3.0,
+        "exact": {
+          "a": "1/4",
+          "b": "-3/2",
+          "c": "3"
+        },
+        "dx": 1.0,
+        "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+        "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+      },
+      "expected": {
+        "f_at_x0": 0.25,
+        "f_second_derivative": 6.0,
+        "f_tilde_continuum": 0.9166666666666666,
+        "f_tilde_continuum_exact_rational": "11/12",
+        "error_exact_rational": "2/3",
+        "coefficient_exact_rational": "1/9",
+        "coefficient": 0.1111111111111111,
+        "particle_ladder": {
+          "n=4": {
+            "f_tilde": 0.9375,
+            "f_tilde_exact_rational": "15/16",
+            "abs_residual_vs_continuum": 0.020833333333333332
+          },
+          "n=16": {
+            "f_tilde": 0.91796875,
+            "f_tilde_exact_rational": "235/256",
+            "abs_residual_vs_continuum": 0.0013020833333333333
+          },
+          "n=64": {
+            "f_tilde": 0.916748046875,
+            "f_tilde_exact_rational": "3755/4096",
+            "abs_residual_vs_continuum": 8.138020833333333e-05
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Hand derivation at tools/testkit/golden/derivations/pic-flip-transfer-error.md \u00a7 2: smoothing contribution 5/144 f'' + interpolation contribution 11/144 f'' = (1/9) f'' dx^2 \u2014 both integrals evaluated in exact rational arithmetic; the discrete midpoint ladder converges to the same limit (independent numerical confirmation).",
+        "doi": "10.1145/1073204.1073298 (Zhu & Bridson 2005); the coefficient statement is thesis eq. 3.8 (Zhu 2005, UBC MSc thesis)",
+        "derived_by": "exact rational arithmetic (piecewise polynomial integration; no floating point enters the identity)",
+        "expected": {
+          "coefficient": "1/9 (exact rational)"
+        }
+      }
+    }
+  ]
+}

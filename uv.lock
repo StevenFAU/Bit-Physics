@@ -63,6 +63,7 @@ members = [
     "neural-ca-frontier-difflogic",
     "particle-lenia",
     "physarum",
+    "pic-flip",
     "pinn-poisson",
     "reaction-diffusion-2d",
     "reaction-diffusion-2d-diff",
@@ -3454,6 +3455,34 @@ requires-dist = [
     { name = "bit-physics-testkit", editable = "tools/testkit" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "pic-flip"
+version = "0.0.0"
+source = { editable = "packages/pic-flip" }
+dependencies = [
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numba" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "numba", specifier = ">=0.60" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]

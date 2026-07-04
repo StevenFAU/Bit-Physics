@@ -1,0 +1,53 @@
+{
+  "config": {
+    "dims": [
+      7680,
+      3
+    ],
+    "dtype": "f64",
+    "params": {
+      "drift_k": 0.05,
+      "dt": 0.002,
+      "dx": 0.041666666666666664,
+      "gravity": -9.81,
+      "mode": "apic",
+      "n_jacobi": 3000,
+      "n_particles": 7680,
+      "nx": 24,
+      "ny": 24,
+      "nz": 24,
+      "push_apart_radius_factor": 0.25,
+      "regularizers": true,
+      "rho_rest_measured_frame0": 8.405491491707565
+    },
+    "seed": 42,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": false,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:f0caba96b885bd2fa0c8cb505589c6770456dd63636c0cbe0d7ee9add30ec332",
+    "format": "hdf5",
+    "path": "dam-break-3d-apic-24cube-seed42-step120.h5"
+  },
+  "run": {
+    "capture_interval": 20,
+    "start_utc": "2026-07-04T00:00:00Z",
+    "step_count": 120,
+    "wall_clock_seconds": 50.70914629701292
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "particle-fluids",
+    "name": "pic-flip",
+    "variant": "apic-jiang-2015-collocated"
+  },
+  "stack": {
+    "build_id": "phase-6-lane-c-pic-flip",
+    "name": "numpy-reference",
+    "version": "0.0.1"
+  }
+}
