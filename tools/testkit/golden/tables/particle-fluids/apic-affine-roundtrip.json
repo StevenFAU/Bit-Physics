@@ -1,0 +1,426 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "apic-affine-roundtrip-grid-particle-grid",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/apic-transfers.md",
+    "upstream": "Jiang-APIC-2015-tech-report-prop-5.1",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://cs.ucr.edu/~craigs/papers/2015-apic/tech-doc.pdf"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-14,
+    "note": "dyadic test points assert bit-for-bit f64 equality (tolerance 0); the generic point pins its measured f64 residual under the 1e-14 relative bound"
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "2d-dyadic-general-affine",
+        "dx": 1.0,
+        "v0": [
+          0.5,
+          -0.25
+        ],
+        "C": [
+          [
+            0.125,
+            -0.5
+          ],
+          [
+            0.25,
+            0.0625
+          ]
+        ],
+        "positions": [
+          [
+            3.0,
+            3.0
+          ],
+          [
+            4.25,
+            3.5
+          ]
+        ],
+        "masses": [
+          1.0,
+          2.0
+        ],
+        "exact": {
+          "dx": "1",
+          "v0": [
+            "1/2",
+            "-1/4"
+          ],
+          "C": [
+            [
+              "1/8",
+              "-1/2"
+            ],
+            [
+              "1/4",
+              "1/16"
+            ]
+          ],
+          "positions": [
+            [
+              "3",
+              "3"
+            ],
+            [
+              "17/4",
+              "7/2"
+            ]
+          ],
+          "masses": [
+            "1",
+            "2"
+          ]
+        },
+        "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+        "dyadic_exact_configuration": true
+      },
+      "expected": {
+        "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+        "n_massed_nodes_checked": 11,
+        "sample_node": [
+          3,
+          4
+        ],
+        "sample_node_velocity": [
+          -1.125,
+          0.75
+        ],
+        "sample_node_velocity_exact_rational": [
+          "-9/8",
+          "3/4"
+        ],
+        "pic_max_abs_deviation": 0.625,
+        "pic_max_abs_deviation_exact_rational": "5/8",
+        "f64_bit_exact": true,
+        "f64_max_rel_err_measured": 0.0,
+        "f64_pic_max_abs_deviation_measured": 0.625
+      },
+      "independent_reference": {
+        "source": "Hand derivation at tools/testkit/golden/derivations/apic-transfers.md \u00a7 4: G2P of an affine field reconstructs (v0 + C x_p, C) exactly (weight moments sum w = 1, sum w r = 0, sum w r r^T = (1/4) dx^2 I), and P2G then reproduces v0 + C x_i at every massed node for arbitrary particle placement. Generator re-proves both as exact rational identities at verify time; PIC deviation pinned as the negative control.",
+        "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+        "derived_by": "fractions.Fraction identity proof; dyadic configuration additionally bit-exact in binary64 by construction (FP-honesty rule, sim spec docs/sim-specs/particle-fluids/pic-flip/spec-ref.md \u00a7 7)",
+        "expected": {
+          "roundtrip": "exact reproduction (rational identity)",
+          "pic_negative_control": "max deviation > 0 (pinned)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "2d-dyadic-pure-rotation",
+        "dx": 1.0,
+        "v0": [
+          0.0,
+          0.0
+        ],
+        "C": [
+          [
+            0.0,
+            -0.5
+          ],
+          [
+            0.5,
+            0.0
+          ]
+        ],
+        "positions": [
+          [
+            3.0,
+            3.0
+          ],
+          [
+            3.75,
+            4.5
+          ]
+        ],
+        "masses": [
+          1.0,
+          0.5
+        ],
+        "exact": {
+          "dx": "1",
+          "v0": [
+            "0",
+            "0"
+          ],
+          "C": [
+            [
+              "0",
+              "-1/2"
+            ],
+            [
+              "1/2",
+              "0"
+            ]
+          ],
+          "positions": [
+            [
+              "3",
+              "3"
+            ],
+            [
+              "15/4",
+              "9/2"
+            ]
+          ],
+          "masses": [
+            "1",
+            "1/2"
+          ]
+        },
+        "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+        "dyadic_exact_configuration": true
+      },
+      "expected": {
+        "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+        "n_massed_nodes_checked": 13,
+        "sample_node": [
+          3,
+          5
+        ],
+        "sample_node_velocity": [
+          -2.5,
+          1.5
+        ],
+        "sample_node_velocity_exact_rational": [
+          "-5/2",
+          "3/2"
+        ],
+        "pic_max_abs_deviation": 0.625,
+        "pic_max_abs_deviation_exact_rational": "5/8",
+        "f64_bit_exact": true,
+        "f64_max_rel_err_measured": 0.0,
+        "f64_pic_max_abs_deviation_measured": 0.625
+      },
+      "independent_reference": {
+        "source": "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), 'The Affine Particle-In-Cell Method', ACM TOG 34(4); companion tech report Proposition 5.1 \u2014 the published affine round-trip statement, whose motivating special case is exactly this test point's pure rigid rotation (v = omega x r; the APIC paper's headline claim is that the rotation survives the grid transfer, unlike PIC). Direction grid -> particle -> grid verified verbatim against the tech-report text during the spec v0.2 review (2026-07-04).",
+        "doi": "10.1145/2766996 (Jiang et al. 2015; tech-report Prop 5.1)",
+        "derived_by": "published proposition; table values are the exact-rational instantiation at the rotation configuration",
+        "expected": {
+          "roundtrip": "pure rotation reproduced exactly"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "2d-generic-nondyadic",
+        "dx": 0.5,
+        "v0": [
+          0.3333333333333333,
+          -0.2857142857142857
+        ],
+        "C": [
+          [
+            0.1111111111111111,
+            -0.18181818181818182
+          ],
+          [
+            0.38461538461538464,
+            0.14285714285714285
+          ]
+        ],
+        "positions": [
+          [
+            1.15,
+            1.35
+          ],
+          [
+            1.85,
+            1.65
+          ]
+        ],
+        "masses": [
+          0.42857142857142855,
+          1.4
+        ],
+        "exact": {
+          "dx": "1/2",
+          "v0": [
+            "1/3",
+            "-2/7"
+          ],
+          "C": [
+            [
+              "1/9",
+              "-2/11"
+            ],
+            [
+              "5/13",
+              "1/7"
+            ]
+          ],
+          "positions": [
+            [
+              "23/20",
+              "27/20"
+            ],
+            [
+              "37/20",
+              "33/20"
+            ]
+          ],
+          "masses": [
+            "3/7",
+            "7/5"
+          ]
+        },
+        "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+        "dyadic_exact_configuration": false
+      },
+      "expected": {
+        "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+        "n_massed_nodes_checked": 15,
+        "sample_node": [
+          3,
+          3
+        ],
+        "sample_node_velocity": [
+          0.22727272727272727,
+          0.5054945054945055
+        ],
+        "sample_node_velocity_exact_rational": [
+          "5/22",
+          "46/91"
+        ],
+        "pic_max_abs_deviation": 0.3,
+        "pic_max_abs_deviation_exact_rational": "3/10",
+        "f64_bit_exact": false,
+        "f64_max_rel_err_measured": 5.358213872597163e-15,
+        "f64_pic_max_abs_deviation_measured": 0.3
+      },
+      "independent_reference": {
+        "source": "Hu, Fang, Ge, Qu, Zhu, Pradhana & Jiang (2018), 'A Moving Least Squares Material Point Method...', ACM TOG 37(4) \u00a7 3-4 and the committed repo MLS-MPM reference packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py: the affine reconstruction coefficient 4/dx^2 (the affine_scale constant in the repo's independently verified g2p kernel) is the same constant that makes this round trip exact \u2014 an independent, already-landed in-repo verification chain for the reconstruction. This test point exercises it at non-unit dx (dx = 1/2) and non-dyadic positions.",
+        "doi": "10.1145/3197517.3201293 (Hu et al. 2018 MLS-MPM)",
+        "derived_by": "cross-anchor to the MLS-MPM verification chain; measured f64 residual pinned under 1e-14 relative",
+        "expected": {
+          "affine_scale": "4 / dx^2 (constant Dp inverse)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "3d-dyadic-general-affine",
+        "dx": 1.0,
+        "v0": [
+          0.5,
+          -0.25,
+          0.375
+        ],
+        "C": [
+          [
+            0.125,
+            -0.5,
+            0.25
+          ],
+          [
+            0.25,
+            0.0625,
+            -0.125
+          ],
+          [
+            -0.375,
+            0.5,
+            0.03125
+          ]
+        ],
+        "positions": [
+          [
+            3.0,
+            3.0,
+            3.0
+          ],
+          [
+            4.25,
+            3.5,
+            2.75
+          ]
+        ],
+        "masses": [
+          1.0,
+          2.0
+        ],
+        "exact": {
+          "dx": "1",
+          "v0": [
+            "1/2",
+            "-1/4",
+            "3/8"
+          ],
+          "C": [
+            [
+              "1/8",
+              "-1/2",
+              "1/4"
+            ],
+            [
+              "1/4",
+              "1/16",
+              "-1/8"
+            ],
+            [
+              "-3/8",
+              "1/2",
+              "1/32"
+            ]
+          ],
+          "positions": [
+            [
+              "3",
+              "3",
+              "3"
+            ],
+            [
+              "17/4",
+              "7/2",
+              "11/4"
+            ]
+          ],
+          "masses": [
+            "1",
+            "2"
+          ]
+        },
+        "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+        "dyadic_exact_configuration": true
+      },
+      "expected": {
+        "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+        "n_massed_nodes_checked": 33,
+        "sample_node": [
+          3,
+          4,
+          3
+        ],
+        "sample_node_velocity": [
+          -0.375,
+          0.375,
+          1.34375
+        ],
+        "sample_node_velocity_exact_rational": [
+          "-3/8",
+          "3/8",
+          "43/32"
+        ],
+        "pic_max_abs_deviation": 0.90625,
+        "pic_max_abs_deviation_exact_rational": "29/32",
+        "f64_bit_exact": true,
+        "f64_max_rel_err_measured": 0.0,
+        "f64_pic_max_abs_deviation_measured": 0.90625
+      },
+      "independent_reference": {
+        "source": "Independent binary64 mirror computation: the identical G2P -> P2G pipeline evaluated in IEEE-754 double precision (a different arithmetic system from the rational-arithmetic proof) reproduces the 3D affine field bit-for-bit at every massed node under the dyadic construction \u2014 every product, sum, and the mom/mass division exactly representable, so agreement is by construction, not tolerance (asserted at generator verify time and replayed through the numba kernels by the gate-5 test).",
+        "doi": "n/a (in-repo binary64 mirror; IEEE-754 exactness argument)",
+        "derived_by": "f64 pipeline run compared elementwise against the exact rationals; bit-equality asserted",
+        "expected": {
+          "f64_bit_exact": true
+        }
+      }
+    }
+  ]
+}

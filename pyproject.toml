@@ -27,6 +27,9 @@ members = [
   "packages/eulerian-smoke",
   "packages/lattice-boltzmann-d3q19",
   "packages/mpm-multimaterial",
+  # Phase-6 Lane-C sim #1 (full posture): APIC/PIC/FLIP free-surface
+  # particle fluid. Registered at backend Stage-1a per spec-ref § 11.
+  "packages/pic-flip",
   # Common module — Stack D / Python (Taichi-backed sims). Registered
   # at sub-phase-taichi-integration per D2 row 2 ratification.
   "common/common-py",

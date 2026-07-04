@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "pic-flip-tent-halfcell-transfer-error-coefficient",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/pic-flip-transfer-error.md",
+    "upstream": "Zhu-2005-UBC-MSc-thesis-eq-3.8",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://www.cs.ubc.ca/~rbridson/docs/yzhu_msc.pdf"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "quadratic-f-tent-halfcell-roundtrip-b=0.0",
+        "f": "f(x) = a + b x + c x^2",
+        "a": 1.0,
+        "b": 0.0,
+        "c": 3.0,
+        "exact": {
+          "a": "1",
+          "b": "0",
+          "c": "3"
+        },
+        "dx": 1.0,
+        "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+        "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+      },
+      "expected": {
+        "f_at_x0": 1.0,
+        "f_second_derivative": 6.0,
+        "f_tilde_continuum": 1.6666666666666667,
+        "f_tilde_continuum_exact_rational": "5/3",
+        "error_exact_rational": "2/3",
+        "coefficient_exact_rational": "1/9",
+        "coefficient": 0.1111111111111111,
+        "particle_ladder": {
+          "n=4": {
+            "f_tilde": 1.6875,
+            "f_tilde_exact_rational": "27/16",
+            "abs_residual_vs_continuum": 0.020833333333333332
+          },
+          "n=16": {
+            "f_tilde": 1.66796875,
+            "f_tilde_exact_rational": "427/256",
+            "abs_residual_vs_continuum": 0.0013020833333333333
+          },
+          "n=64": {
+            "f_tilde": 1.666748046875,
+            "f_tilde_exact_rational": "6827/4096",
+            "abs_residual_vs_continuum": 8.138020833333333e-05
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Hand derivation at tools/testkit/golden/derivations/pic-flip-transfer-error.md \u00a7 2: smoothing contribution 5/144 f'' + interpolation contribution 11/144 f'' = (1/9) f'' dx^2 \u2014 both piecewise polynomial integrals evaluated in exact rational arithmetic (no floating point enters the identity).",
+        "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+        "derived_by": "fractions.Fraction piecewise polynomial integration; coefficient asserted == 1/9 as a rational",
+        "expected": {
+          "coefficient": "1/9 (exact rational)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "quadratic-f-tent-halfcell-roundtrip-b=-1.5",
+        "f": "f(x) = a + b x + c x^2",
+        "a": 0.25,
+        "b": -1.5,
+        "c": 3.0,
+        "exact": {
+          "a": "1/4",
+          "b": "-3/2",
+          "c": "3"
+        },
+        "dx": 1.0,
+        "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+        "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+      },
+      "expected": {
+        "f_at_x0": 0.25,
+        "f_second_derivative": 6.0,
+        "f_tilde_continuum": 0.9166666666666666,
+        "f_tilde_continuum_exact_rational": "11/12",
+        "error_exact_rational": "2/3",
+        "coefficient_exact_rational": "1/9",
+        "coefficient": 0.1111111111111111,
+        "particle_ladder": {
+          "n=4": {
+            "f_tilde": 0.9375,
+            "f_tilde_exact_rational": "15/16",
+            "abs_residual_vs_continuum": 0.020833333333333332
+          },
+          "n=16": {
+            "f_tilde": 0.91796875,
+            "f_tilde_exact_rational": "235/256",
+            "abs_residual_vs_continuum": 0.0013020833333333333
+          },
+          "n=64": {
+            "f_tilde": 0.916748046875,
+            "f_tilde_exact_rational": "3755/4096",
+            "abs_residual_vs_continuum": 8.138020833333333e-05
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Zhu, Y. (2005), 'Animating Sand as a Fluid', MSc thesis, University of British Columbia, eq. (3.8): the published 1/9 coefficient for the tent-weight / half-cell-support round trip (verified verbatim against the thesis during the spec v0.2 review, 2026-07-04 \u2014 including the scope correction dropping the unsourced 1/6 other-kernel variant). Published companion: Zhu & Bridson (2005), ACM TOG 24(3).",
+        "doi": "10.1145/1073204.1073298 (Zhu & Bridson 2005; thesis eq. 3.8)",
+        "derived_by": "published coefficient statement; this row's nonzero linear term additionally witnesses the b-independence the published expansion implies",
+        "expected": {
+          "coefficient": "1/9 (published)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "quadratic-f-tent-halfcell-roundtrip-b=1.0",
+        "f": "f(x) = a + b x + c x^2",
+        "a": 2.0,
+        "b": 1.0,
+        "c": 6.0,
+        "exact": {
+          "a": "2",
+          "b": "1",
+          "c": "6"
+        },
+        "dx": 1.0,
+        "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+        "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+      },
+      "expected": {
+        "f_at_x0": 2.0,
+        "f_second_derivative": 12.0,
+        "f_tilde_continuum": 3.3333333333333335,
+        "f_tilde_continuum_exact_rational": "10/3",
+        "error_exact_rational": "4/3",
+        "coefficient_exact_rational": "1/9",
+        "coefficient": 0.1111111111111111,
+        "particle_ladder": {
+          "n=4": {
+            "f_tilde": 3.375,
+            "f_tilde_exact_rational": "27/8",
+            "abs_residual_vs_continuum": 0.041666666666666664
+          },
+          "n=16": {
+            "f_tilde": 3.3359375,
+            "f_tilde_exact_rational": "427/128",
+            "abs_residual_vs_continuum": 0.0026041666666666665
+          },
+          "n=64": {
+            "f_tilde": 3.33349609375,
+            "f_tilde_exact_rational": "6827/2048",
+            "abs_residual_vs_continuum": 0.00016276041666666666
+          }
+        }
+      },
+      "independent_reference": {
+        "source": "Discrete midpoint-rule particle ladder (independent numerical route to the same limit): finite sums over n in {4, 16, 64} uniformly spaced particles \u2014 no integration \u2014 computed as exact rationals, converging monotonically at the midpoint rule's O(n^-2) to the continuum value; asserted at generator verify time and re-derived in binary64 by the gate-5 test.",
+        "doi": "n/a (in-repo exact finite-sum ladder; midpoint-rule convergence)",
+        "derived_by": "exact rational finite sums; monotone convergence to the continuum limit asserted",
+        "expected": {
+          "ladder": "monotone O(n^-2) convergence to f(x0) + (1/9) f''"
+        }
+      }
+    }
+  ]
+}

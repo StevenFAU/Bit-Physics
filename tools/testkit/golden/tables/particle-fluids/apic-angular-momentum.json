@@ -1,0 +1,513 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "apic-angular-momentum-transfer-conservation",
+  "category": "particle-fluids",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/apic-transfers.md",
+    "upstream": "Jiang-APIC-2015-tech-report-props-5.4-5.5",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://cs.ucr.edu/~craigs/papers/2015-apic/tech-doc.pdf"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-14,
+    "note": "dyadic test points assert bit-for-bit f64 equality (tolerance 0); the generic point pins its measured f64 residual under the 1e-14 relative bound"
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "2d-dyadic-two-particles-disjoint-stencils",
+        "dx": 1.0,
+        "particles": [
+          {
+            "x": [
+              2.0,
+              2.0
+            ],
+            "m": 1.0,
+            "v": [
+              0.5,
+              -0.25
+            ],
+            "B": [
+              [
+                0.25,
+                -0.5
+              ],
+              [
+                0.125,
+                0.375
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                1.0,
+                -2.0
+              ],
+              [
+                0.5,
+                1.5
+              ]
+            ],
+            "exact": {
+              "x": [
+                "2",
+                "2"
+              ],
+              "m": "1",
+              "v": [
+                "1/2",
+                "-1/4"
+              ],
+              "B": [
+                [
+                  "1/4",
+                  "-1/2"
+                ],
+                [
+                  "1/8",
+                  "3/8"
+                ]
+              ]
+            }
+          },
+          {
+            "x": [
+              6.0,
+              3.0
+            ],
+            "m": 2.0,
+            "v": [
+              1.5,
+              0.75
+            ],
+            "B": [
+              [
+                -0.125,
+                0.25
+              ],
+              [
+                0.5,
+                -0.75
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                -0.5,
+                1.0
+              ],
+              [
+                2.0,
+                -3.0
+              ]
+            ],
+            "exact": {
+              "x": [
+                "6",
+                "3"
+              ],
+              "m": "2",
+              "v": [
+                "3/2",
+                "3/4"
+              ],
+              "B": [
+                [
+                  "-1/8",
+                  "1/4"
+                ],
+                [
+                  "1/2",
+                  "-3/4"
+                ]
+              ]
+            }
+          }
+        ],
+        "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+        "dyadic_exact_configuration": true
+      },
+      "expected": {
+        "l_total_particles_before": [
+          -0.375
+        ],
+        "l_total_grid_after_p2g": [
+          -0.375
+        ],
+        "l_total_particles_after_apic_g2p": [
+          -0.375
+        ],
+        "l_total_particles_after_pic_g2p": [
+          -1.5
+        ],
+        "l_exact_rational": [
+          "-3/8"
+        ],
+        "l_after_pic_exact_rational": [
+          "-3/2"
+        ],
+        "f64_bit_exact": true,
+        "f64_max_rel_err_measured": 0.0
+      },
+      "independent_reference": {
+        "source": "Hand derivation at tools/testkit/golden/derivations/apic-transfers.md \u00a7 3: Props 5.4/5.5 re-derived from the weight moments (sum w = 1, sum w r = 0, sum w r r^T = (1/4) dx^2 I); the generator re-proves the conservation equalities in exact rational arithmetic (fractions.Fraction) at verify time \u2014 identities, not tolerances. The PIC row is the paired negative control.",
+        "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+        "derived_by": "fractions.Fraction identity proof over the full P2G/G2P pipeline; dyadic configuration additionally bit-exact in binary64 by construction (FP-honesty rule, sim spec docs/sim-specs/particle-fluids/pic-flip/spec-ref.md \u00a7 7)",
+        "expected": {
+          "conservation_identity": "L_before == L_grid == L_after (exact)",
+          "pic_negative_control": "L_after_pic != L_before"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "2d-generic-two-particles-overlapping-stencils",
+        "dx": 1.0,
+        "particles": [
+          {
+            "x": [
+              2.3,
+              2.7
+            ],
+            "m": 0.42857142857142855,
+            "v": [
+              0.3333333333333333,
+              -0.2857142857142857
+            ],
+            "B": [
+              [
+                0.1111111111111111,
+                -0.18181818181818182
+              ],
+              [
+                0.38461538461538464,
+                0.14285714285714285
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                0.4444444444444444,
+                -0.7272727272727273
+              ],
+              [
+                1.5384615384615385,
+                0.5714285714285714
+              ]
+            ],
+            "exact": {
+              "x": [
+                "23/10",
+                "27/10"
+              ],
+              "m": "3/7",
+              "v": [
+                "1/3",
+                "-2/7"
+              ],
+              "B": [
+                [
+                  "1/9",
+                  "-2/11"
+                ],
+                [
+                  "5/13",
+                  "1/7"
+                ]
+              ]
+            }
+          },
+          {
+            "x": [
+              3.7,
+              3.3
+            ],
+            "m": 1.4,
+            "v": [
+              -0.5555555555555556,
+              0.36363636363636365
+            ],
+            "B": [
+              [
+                0.2857142857142857,
+                0.375
+              ],
+              [
+                -0.16666666666666666,
+                0.2222222222222222
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                1.1428571428571428,
+                1.5
+              ],
+              [
+                -0.6666666666666666,
+                0.8888888888888888
+              ]
+            ],
+            "exact": {
+              "x": [
+                "37/10",
+                "33/10"
+              ],
+              "m": "7/5",
+              "v": [
+                "-5/9",
+                "4/11"
+              ],
+              "B": [
+                [
+                  "2/7",
+                  "3/8"
+                ],
+                [
+                  "-1/6",
+                  "2/9"
+                ]
+              ]
+            }
+          }
+        ],
+        "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+        "dyadic_exact_configuration": false
+      },
+      "expected": {
+        "l_total_particles_before": [
+          3.2673800009514293
+        ],
+        "l_total_grid_after_p2g": [
+          3.2673800009514293
+        ],
+        "l_total_particles_after_apic_g2p": [
+          3.2673800009514293
+        ],
+        "l_total_particles_after_pic_g2p": [
+          3.7167239567091617
+        ],
+        "l_exact_rational": [
+          "13736719/4204200"
+        ],
+        "l_after_pic_exact_rational": [
+          "42449186443007/11421129720000"
+        ],
+        "f64_bit_exact": false,
+        "f64_max_rel_err_measured": 2.7183199365898557e-16
+      },
+      "independent_reference": {
+        "source": "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), 'The Affine Particle-In-Cell Method', ACM TOG 34(4); companion tech report Propositions 5.4 (P2G preserves total angular momentum) and 5.5 (G2P preserves it under the lumped grid mass), stated for ARBITRARY particle configurations \u2014 this test point's overlapping-stencil, non-dyadic configuration exercises exactly the published generality (propositions read in full during the spec v0.2 review, 2026-07-04).",
+        "doi": "10.1145/2766996 (Jiang et al. 2015; tech-report Props 5.4/5.5)",
+        "derived_by": "published proposition; table values are the exact-rational instantiation at this configuration with the measured f64 residual pinned under 1e-14 relative",
+        "expected": {
+          "conservation_identity": "holds for arbitrary configurations"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "name": "3d-dyadic-two-particles-disjoint-stencils",
+        "dx": 1.0,
+        "particles": [
+          {
+            "x": [
+              2.0,
+              2.0,
+              2.0
+            ],
+            "m": 1.0,
+            "v": [
+              0.5,
+              -0.25,
+              0.375
+            ],
+            "B": [
+              [
+                0.25,
+                -0.5,
+                0.125
+              ],
+              [
+                0.125,
+                0.375,
+                -0.25
+              ],
+              [
+                -0.375,
+                0.0625,
+                0.5
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                1.0,
+                -2.0,
+                0.5
+              ],
+              [
+                0.5,
+                1.5,
+                -1.0
+              ],
+              [
+                -1.5,
+                0.25,
+                2.0
+              ]
+            ],
+            "exact": {
+              "x": [
+                "2",
+                "2",
+                "2"
+              ],
+              "m": "1",
+              "v": [
+                "1/2",
+                "-1/4",
+                "3/8"
+              ],
+              "B": [
+                [
+                  "1/4",
+                  "-1/2",
+                  "1/8"
+                ],
+                [
+                  "1/8",
+                  "3/8",
+                  "-1/4"
+                ],
+                [
+                  "-3/8",
+                  "1/16",
+                  "1/2"
+                ]
+              ]
+            }
+          },
+          {
+            "x": [
+              6.0,
+              3.0,
+              2.0
+            ],
+            "m": 2.0,
+            "v": [
+              1.5,
+              0.75,
+              -0.5
+            ],
+            "B": [
+              [
+                -0.125,
+                0.25,
+                0.1875
+              ],
+              [
+                0.5,
+                -0.75,
+                0.0625
+              ],
+              [
+                0.25,
+                -0.125,
+                0.375
+              ]
+            ],
+            "C_equals_4B_over_dx2": [
+              [
+                -0.5,
+                1.0,
+                0.75
+              ],
+              [
+                2.0,
+                -3.0,
+                0.25
+              ],
+              [
+                1.0,
+                -0.5,
+                1.5
+              ]
+            ],
+            "exact": {
+              "x": [
+                "6",
+                "3",
+                "2"
+              ],
+              "m": "2",
+              "v": [
+                "3/2",
+                "3/4",
+                "-1/2"
+              ],
+              "B": [
+                [
+                  "-1/8",
+                  "1/4",
+                  "3/16"
+                ],
+                [
+                  "1/2",
+                  "-3/4",
+                  "1/16"
+                ],
+                [
+                  "1/4",
+                  "-1/8",
+                  "3/8"
+                ]
+              ]
+            }
+          }
+        ],
+        "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+        "dyadic_exact_configuration": true
+      },
+      "expected": {
+        "l_total_particles_before": [
+          -4.8125,
+          12.625,
+          -0.375
+        ],
+        "l_total_grid_after_p2g": [
+          -4.8125,
+          12.625,
+          -0.375
+        ],
+        "l_total_particles_after_apic_g2p": [
+          -4.8125,
+          12.625,
+          -0.375
+        ],
+        "l_total_particles_after_pic_g2p": [
+          -4.75,
+          12.25,
+          -1.5
+        ],
+        "l_exact_rational": [
+          "-77/16",
+          "101/8",
+          "-3/8"
+        ],
+        "l_after_pic_exact_rational": [
+          "-19/4",
+          "49/4",
+          "-3/2"
+        ],
+        "f64_bit_exact": true,
+        "f64_max_rel_err_measured": 0.0
+      },
+      "independent_reference": {
+        "source": "Jiang, Schroeder & Teran (2017), 'An angular momentum conserving affine-particle-in-cell method', J. Comput. Phys. 338, 137-164: the lumped-mass angular-momentum analysis in three dimensions (axial-vector form axial(B) = (B32-B23, B13-B31, B21-B12) used by this 3D test point), including the filtering property of the APIC transfers relied on for the vector identity.",
+        "doi": "10.1016/j.jcp.2017.02.050 (arXiv:1603.06188)",
+        "derived_by": "published 3D analysis; table values are the exact-rational instantiation, bit-exact in binary64 via the dyadic construction",
+        "expected": {
+          "conservation_identity": "3D vector L conserved componentwise"
+        }
+      }
+    }
+  ]
+}
