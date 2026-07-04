@@ -39,6 +39,10 @@ const SIMS = {
   // timing, not frame count alone; the zoom-to-content crop normalizes it.
   "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
+  // verification-demo rework: render.wgsl v2 (bilinear + relief + flow +
+  // in-shader tonemap) regenerated at the same 650 frames — the canonical
+  // 500-agent network reads best mid-growth (a branching junction, before it
+  // contracts to a couple of trunks); the shader carries its own exposure.
   physarum: { frames: 650, px: 512 },
   // verification-demo rework (rd2d): render.wgsl v2 (bilinear + relief +
   // in-shader tonemap) regenerated at the same frame count — no boost needed,
