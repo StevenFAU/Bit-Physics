@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SPH Water — DFSPH (verified) — Bit-Physics</title>
+    <meta name="description" content="The first DFSPH water in a browser, verification-visible: pour and splash screen-space-rendered SPH water, then watch the kernel match the committed golden table and the 100K canonical capture reproduce pointwise on your own GPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="SPH Water — DFSPH (verified) — Bit-Physics" />
+    <meta property="og:description" content="The first DFSPH water in a browser, verification-visible: pour and splash screen-space-rendered SPH water, then watch the kernel match the committed golden table and the 100K canonical capture reproduce pointwise on your own GPU." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/sph-water/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/sph-water.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="SPH Water — DFSPH (verified) — Bit-Physics" />
+    <meta name="twitter:description" content="The first DFSPH water in a browser, verification-visible: pour and splash screen-space-rendered SPH water, then watch the kernel match the committed golden table and the 100K canonical capture reproduce pointwise on your own GPU." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/sph-water.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); touch-action: none; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="720" height="720" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -57,6 +57,10 @@ const SIMS = {
   // in-shader tonemap); same frame range, still no boost — the shader
   // carries its own exposure.
   "reaction-diffusion-2d": { start: 400, shots: 300, gap: 6, fps: 30, px: 512, crf: 46 },
+  // Phase-6 sph-water: the dam-break collapse + crown splash — the loop
+  // covers frames 30..330 (~the whole violent phase); frame-indexed live
+  // loop, deterministic per device. Loop wraps with a cut (declared).
+  "sph-water": { start: 30, shots: 300, gap: 1, fps: 30, px: 512, crf: 46 },
   // Phase-6 eulerian-smoke: motion IS the physics (buoyant plume rising +
   // rolling up); boots into the plume scene with a frame-indexed emitter, so
   // the loop is deterministic. Loop wraps with a cut (declared, boids

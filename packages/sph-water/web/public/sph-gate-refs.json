@@ -1,0 +1,35 @@
+{
+  "descriptor": "dam-break-100K-particles-seed42-step1000",
+  "capture_payload_sha256": "7590149221180f82170b41a20d14c0e197a6b3f570cfcf9307543947c5683d2f",
+  "params_as_run": {
+    "h": 0.026,
+    "dt": 0.001,
+    "g_z": -9.81,
+    "rho_0": 1000.0,
+    "mass": 0.001,
+    "seed": 42,
+    "n_particles": 100000
+  },
+  "manifest_h_note": "capture manifest params.h=0.05 records canonical_params()'s diagnostic default; the canonical runner overrode h_override=CANONICAL_H=0.026 (sph_water/sim.py) \u2014 verified numerically against the committed density fields (<6e-14 at 0.026)",
+  "checkpoints": [
+    0,
+    100,
+    200,
+    300,
+    400,
+    500,
+    600,
+    700,
+    800,
+    900,
+    1000
+  ],
+  "subsample_stride": 16,
+  "subsample_count": 6250,
+  "ref_layout": "f64le[checkpoint][particle][px,py,pz,vx,vy,vz,rho]",
+  "ic_layout": "f32le[particle][px,py,pz]; velocities all zero; masses uniform 1e-3",
+  "ic_sha256": "6d221b95abe536690189eabafb9fed578726f2ebdfb906406e9ae47bab5fcab7",
+  "refs_sha256": "11cda67424336ac86a78196eaa0aa13e8f08fbe35804c3177dba5d3c805f89e5",
+  "ic_bytes": 1200000,
+  "refs_bytes": 3850000
+}

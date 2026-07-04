@@ -39,6 +39,10 @@ const SIMS = {
   // timing, not frame count alone; the zoom-to-content crop normalizes it.
   "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
+  // Phase-6 verification-demo (sph-water): boots into the dam-break preset —
+  // ~150 RAF frames is the crown-splash moment (column collapsed, spray up
+  // the far wall) under the SSFR render, which carries its own exposure.
+  "sph-water": { frames: 150, px: 512 },
   // Phase-6 verification-demo (eulerian-smoke): boots into the plume scene —
   // frame-indexed emitter, 4 sim-steps/frame; ~500 frames lets the buoyant
   // column rise past mid-canvas with rolled-up side vortices. The v2-style

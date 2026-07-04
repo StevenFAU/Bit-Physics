@@ -40,6 +40,7 @@ EXPECTED_SIMS = {
     "boids-3d",
     "physarum",
     "eulerian-smoke",
+    "sph-water",
 }
 
 
