@@ -35,6 +35,11 @@ members = [
   # execution per docs/sim-specs/volumetric-grid/schrodinger-smoke/
   # spec-ref.md § 11.
   "packages/schrodinger-smoke",
+  # Phase-6: curl-noise (Bridson 2007 + divergence-free-noise frontier)
+  # f64 reference — closed-form category, structural sibling of
+  # strange-attractors. Registered at backend execution per
+  # docs/sim-specs/closed-form/curl-noise/spec-ref.md § 11.
+  "packages/curl-noise",
   # Common module — Stack D / Python (Taichi-backed sims). Registered
   # at sub-phase-taichi-integration per D2 row 2 ratification.
   "common/common-py",

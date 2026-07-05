@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "curl-noise-gradient-mms",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/curl-noise-gradient-mms.md",
+    "upstream": "McEwan-et-al-2012 (webgl-noise, algorithm only)",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "gradient_fd_convergence",
+        "points": "200 uniform in [-8,8]^3, seed 3",
+        "steps": [
+          0.001,
+          0.0001
+        ]
+      },
+      "expected": {
+        "grad_fd_err_h1e-3": 1.0538276042693084e-05,
+        "grad_fd_err_h1e-4": 1.0538613293142873e-07,
+        "grad_mms_order": 1.9999861017432845
+      },
+      "independent_reference": {
+        "source": "McEwan, Sheets, Gustavson, Richardson (2012), 'Efficient Computational Noise in GLSL', JGT 16(2) / arXiv:1204.1461 (the webgl-noise noise3Dgrad analytic-derivative lineage, MIT \u2014 the gated basis, spec-ref section 2.5); central-difference Taylor truncation O(h^2) hand derivation (derivation .md section 2).",
+        "derived_by": "Taylor-truncation hand derivation + NumPy recompute",
+        "expected": "order 2.00 (measured 1.9-2.1 window)"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "hessian_fd_convergence",
+        "points": "same sweep, FD of the analytic gradient",
+        "steps": [
+          0.001,
+          0.0001
+        ]
+      },
+      "expected": {
+        "hess_fd_err_h1e-3": 0.000163344103352836,
+        "hess_fd_err_h1e-4": 1.6334153458696932e-06,
+        "hess_mms_order": 2.000006829812588
+      },
+      "independent_reference": {
+        "source": "Gustavson & McEwan (2022), 'Tiling Simplex Noise and Flow Noise in Two and Three Dimensions', JCGT 11(1) \u2014 exact analytic FIRST derivatives in the paper body plus the optional analytic SECOND derivatives of the supplementary GLSL (+18% cost there) as the published precedent for closed-form simplex Hessians; the same O(h^2) central-difference truncation argument applies to the FD of the analytic gradient (derivation .md section 2).",
+        "derived_by": "hand product-rule Hessian derivation + NumPy recompute",
+        "expected": "order 2.00 (measured 1.9-2.1 window)"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "kernel_symbolic_identities"
+      },
+      "expected": {
+        "kernel_gradient_sympy_identity": "zero",
+        "kernel_hessian_sympy_identity": "zero"
+      },
+      "independent_reference": {
+        "source": "SymPy symbolic differentiation of the simplex kernel m^4 (p.x), m = F - |x|^2 (derivation .md section 1) \u2014 an algebra-system derivation fully independent of the NumPy implementation; cross-checked against stegu's sdnoise1234 C reference implementation of analytic simplex derivatives (structure reference, no code ported).",
+        "derived_by": "SymPy simplify(grad - formula) == 0 and simplify(hess - formula) == 0, recomputed at every --verify",
+        "expected": "both 'zero' \u2014 SymPy confirms the closed-form gradient -8 m^3 (p.x) x + m^4 p and the Hessian 48 m^2 (p.x) xx^T - 8 m^3 (xp^T+px^T) - 8 m^3 (p.x) I"
+      }
+    }
+  ]
+}
