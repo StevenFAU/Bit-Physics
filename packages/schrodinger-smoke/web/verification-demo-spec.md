@@ -252,14 +252,25 @@ measured cost and default off on weak adapters.
 
 ## 5.6 · MEASURED block (execution 2026-07-05, RADV; every number from a live run)
 
-- **Deploy gate (local web-deploy validate, snap-chromium):** PASS —
+- **Deploy gate (local web-deploy validate, snap-chromium/RADV):** PASS —
   `run_twice_identical: true` (the WGSL Stockham FFT is device-scoped
-  bit-exact end to end), worst per-checkpoint max_abs **3.28e-5** (u) /
-  2.24e-5 (v) / 2.66e-5 (w) vs the LIVE f64 reference re-run = **0.34 of the
-  [defaults.isf] 1e-4 budget** (complex64-proxy prediction was 1.4e-5 —
-  the real WGSL f32 path lands 2.3× the proxy, comfortably inside; no
+  bit-exact end to end), worst per-checkpoint ratio **0.157 of the
+  [defaults.isf] 1e-4 budget** vs the LIVE f64 reference re-run (no
   tolerance widened). Browser norm_l2 flat at f32 scope; reference re-run
   max div 9.9e-13, headroom 0.158.
+- **CROSS-BACKEND TRIG DISCOVERY (CI lavapipe, run 1):** with WGSL BUILTIN
+  sin/cos/atan2 the gate was run-twice byte-identical on lavapipe but
+  **63× over budget** (worst 1.26e-2, norm not flat). Root cause: the
+  Vulkan spec only guarantees builtin sin/cos to 2⁻¹¹ (~4.9e-4) absolute
+  error and llvmpipe implements exactly that floor; the per-step trig noise
+  accumulates ~×24. RADV's hardware trig masked it locally (0.34 of budget).
+  Fix: ALL gated-path trig replaced with range-reduced polynomial forms in
+  `packages/schrodinger-smoke/web/src/isf_core.wgsl` (quadrant-reduced
+  Taylor r⁷/r⁸ for sin/cos ≈3e-7 abs; Cephes-reduction atan2 ≈8e-9) —
+  uniformly accurate across drivers AND it improved RADV itself to 0.157
+  of budget (builtin trig was the dominant f32 error term everywhere).
+  The trig-bound CUDA lesson generalizes: on GPUs, trig is a PRECISION
+  hazard, not just a throughput one.
 - **In-browser goldens (PROVE panel, this device):** golden B closed-form
   phase max err 0.0; golden E two-spectra max rel err 0.0; golden A live
   pure-JS f64 FFT norm drift 6.24e-14 ≤ 1e-13; Parseval 2.07e-14 ≤ 1e-13;

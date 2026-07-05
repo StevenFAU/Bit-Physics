@@ -824,7 +824,7 @@ async function start(): Promise<void> {
         applyConstraintUniforms();
       } else if (sceneConstraint) {
         const u = sceneConstraint.u;
-        omegaT += ((u[0] ** 2 + u[1] ** 2 + u[2] ** 2) / (2 * st.hbar)) * st.dt;
+        omegaT = (omegaT + ((u[0] ** 2 + u[1] ** 2 + u[2] ** 2) / (2 * st.hbar)) * st.dt) % (2 * Math.PI);
         applyConstraintUniforms();
       }
       st.gpu.encodeStep(enc);

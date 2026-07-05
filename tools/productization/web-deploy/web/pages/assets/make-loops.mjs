@@ -78,6 +78,11 @@ const SIMS = {
   // start 1 + 600-frame trace = the loop restart IS the trace restarting.
   // Boost 1.9→1.1: the v2 render carries its own GPU-side exposure.
   "strange-attractors": { start: 1, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, boost: "brightness(1.1) saturate(1.2)" },
+  // Phase-6 schrodinger-smoke: the vortex ring punching through its dye disk
+  // and rolling up the wake — frames 60..660 at the 24 steps/s wall cadence
+  // (~step 20..250). Frame-indexed deterministic per device; loop wraps with
+  // a cut (declared, boids precedent).
+  "schrodinger-smoke": { start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
 };
 
 const MIME = {

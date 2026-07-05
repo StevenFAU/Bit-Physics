@@ -60,6 +60,67 @@ fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
 }
 
 // ---------------------------------------------------------------------------
+// Precision trig (load-bearing, CI-measured): the Vulkan spec only guarantees
+// builtin sin/cos to 2^-11 (~4.9e-4) absolute error, and llvmpipe/lavapipe
+// implements exactly that floor — in-shader builtin trig accumulated to a
+// 1.26e-2 field error over the 24-step gate (63x the [defaults.isf] budget,
+// run-twice still byte-identical) while RADV's hardware trig masked it.
+// Every trig call in the GATED path below uses these range-reduced polynomial
+// forms (~1e-7 abs — Taylor to r^7/r^8 after quadrant reduction), which are
+// deterministic per device AND uniformly accurate across drivers.
+// ---------------------------------------------------------------------------
+
+fn sin_poly4(r: f32) -> f32 {
+  // |r| <= pi/4
+  let r2 = r * r;
+  return r * (1.0 + r2 * (-0.16666667 + r2 * (0.0083333310 - r2 * 0.00019840874)));
+}
+
+fn cos_poly4(r: f32) -> f32 {
+  // |r| <= pi/4
+  let r2 = r * r;
+  return 1.0 + r2 * (-0.5 + r2 * (0.041666668 + r2 * (-0.0013888889 + r2 * 0.000024801587)));
+}
+
+// returns vec2(cos x, sin x) with quadrant reduction (accurate for |x| <~ 64)
+fn cs_p(x: f32) -> vec2<f32> {
+  let k = round(x * 0.6366197723675814); // x / (pi/2)
+  let r = x - k * 1.5707963267948966;
+  let q = i32(k) & 3;
+  let s = sin_poly4(r);
+  let c = cos_poly4(r);
+  if (q == 0) { return vec2<f32>(c, s); }
+  if (q == 1) { return vec2<f32>(-s, c); }
+  if (q == 2) { return vec2<f32>(-c, -s); }
+  return vec2<f32>(s, -c);
+}
+
+fn atan_poly(z_in: f32) -> f32 {
+  // 0 <= z_in <= 1 — Cephes atanf reduction: fold at tan(pi/8) so the
+  // polynomial only ever sees |w| <= 0.4142 (~1e-7 abs there)
+  var w = z_in;
+  var base = 0.0;
+  if (w > 0.4142135623730951) {
+    w = (w - 1.0) / (w + 1.0);
+    base = 0.7853981633974483;
+  }
+  let z = w * w;
+  return base + (((8.05374449538e-2 * z - 1.38776856032e-1) * z + 1.99777106478e-1) * z - 3.33329491539e-1) * z * w + w;
+}
+
+fn atan2_p(y: f32, x: f32) -> f32 {
+  let ax = abs(x);
+  let ay = abs(y);
+  let hi = max(ax, ay);
+  let lo = min(ax, ay);
+  if (hi == 0.0) { return 0.0; }
+  var a = atan_poly(lo / hi);
+  if (ay > ax) { a = 1.5707963267948966 - a; }
+  if (x < 0.0) { a = 3.141592653589793 - a; }
+  return select(a, -a, y < 0.0);
+}
+
+// ---------------------------------------------------------------------------
 // Stockham radix-2 pass along P.axis (batched over the other two axes).
 // Classic autosort butterfly: with L = 2^(stage+1), Ls = L/2,
 //   out[i*L + j]      = in[i*Ls + j] + w * in[i*Ls + j + N/2]
@@ -100,7 +161,7 @@ fn butterfly_indices(gid: u32) -> Butterfly {
   out.ib = coord_of(line_id, i * ls + j + half_line);
   out.ic = coord_of(line_id, i * l + j);
   out.id = coord_of(line_id, i * l + j + ls);
-  out.w = vec2<f32>(cos(ang), sin(ang));
+  out.w = cs_p(ang);
   return out;
 }
 
@@ -181,7 +242,7 @@ fn inner_arg(a: vec4<f32>, b: vec4<f32>) -> f32 {
   // <a,b>_C = conj(a1)b1 + conj(a2)b2
   let re = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
   let im = a.x * b.y - a.y * b.x + a.z * b.w - a.w * b.z;
-  return atan2(im, re);
+  return atan2_p(im, re);
 }
 
 fn eta_at(p: vec3<u32>) -> vec3<f32> {
@@ -224,7 +285,8 @@ fn gauge_apply(@builtin(global_invocation_id) g: vec3<u32>) {
   let n3 = U.n * U.n * U.n;
   if (g.x >= n3) { return; }
   let phi = scA[g.x].x;
-  let w = vec2<f32>(cos(phi), -sin(phi));
+  let csv = cs_p(phi);
+  let w = vec2<f32>(csv.x, -csv.y);
   let v = bufA[g.x];
   bufA[g.x] = vec4<f32>(cmul(v.xy, w), cmul(v.zw, w));
 }
@@ -249,7 +311,7 @@ fn constraint_blend(@builtin(global_invocation_id) g: vec3<u32>) {
   }
   if (!inside) { return; }
   let phase = dot(U.c_kvec, pos) - U.c_omega_t;
-  let w = vec2<f32>(cos(phase), sin(phase));
+  let w = cs_p(phase);
   let i = idx3(g);
   let v = bufA[i];
   let m1 = length(v.xy);
@@ -265,7 +327,7 @@ fn buoyancy_apply(@builtin(global_invocation_id) g: vec3<u32>) {
   // linear potential on psi2 only (paper § 3.3): psi2 *= exp(-i * g*y * dt / hbar)
   let y = f32((g.x / U.n) % U.n) * U.dx;
   let ang = -U.buoyancy * y;
-  let w = vec2<f32>(cos(ang), sin(ang));
+  let w = cs_p(ang);
   let v = bufA[g.x];
   bufA[g.x] = vec4<f32>(v.xy, cmul(v.zw, w));
 }
@@ -283,5 +345,5 @@ fn velocity_write(@builtin(global_invocation_id) g: vec3<u32>) {
   let e = eta_at(g);
   let u = e * (U.hbar / U.dx);
   let v = bufA[idx3(g)];
-  textureStore(velOut, vec3<i32>(g), vec4<f32>(u, atan2(v.y, v.x)));
+  textureStore(velOut, vec3<i32>(g), vec4<f32>(u, atan2_p(v.y, v.x)));
 }
