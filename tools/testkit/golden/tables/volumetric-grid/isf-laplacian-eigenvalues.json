@@ -1,0 +1,167 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-laplacian-eigenvalues-two-spectra",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-laplacian-eigenvalues.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 32,
+        "mode": [
+          1,
+          0,
+          0
+        ],
+        "dx": 0.03125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -39.47841760435743,
+        "lambda_discrete": -39.35174573418404,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern et al. (2016), Schr\u00f6dinger's Smoke, ACM TOG 35(4), Appendix E Eqs. 17-18: the explicit two-spectra assignment (Eq. 18 continuous for the free step, Eq. 17 discrete sin^2 for the projection).",
+        "doi": "10.1145/2897824.2925868",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 32,
+        "mode": [
+          5,
+          3,
+          2
+        ],
+        "dx": 0.03125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -1500.1798689655825,
+        "lambda_discrete": -1411.2371141971266,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "trig-identity",
+        "source": "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) sin^2(k dx/2), asserted inside the generator at every case (tools/testkit/golden/generator/isf_laplacian_eigenvalues.py closed_form).",
+        "doi": "n/a-in-generator-identity",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 32,
+        "mode": [
+          16,
+          0,
+          0
+        ],
+        "dx": 0.03125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -10106.474906715503,
+        "lambda_discrete": -4096.0,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "identity",
+        "source": "Fourier symbol of the continuum Laplacian on the periodic box: Delta e^{2 pi i k x} = -(2 pi k)^2 e^{2 pi i k x} (Trefethen, Spectral Methods in MATLAB, Ch. 3).",
+        "doi": "n/a-textbook",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          1,
+          1,
+          1
+        ],
+        "dx": 0.015625,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -118.4352528130723,
+        "lambda_discrete": -118.34015730408933,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "empirical-teeth",
+        "source": "packages/schrodinger-smoke/tests/test_isf_invariants.py test_two_spectra_rule_is_load_bearing: the wrong-spectrum (continuous) projection residual measures >= 10^3 x the discrete solve on the canonical scene.",
+        "doi": "n/a-in-repo-regression-test",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          10,
+          20,
+          30
+        ],
+        "dx": 0.015625,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -55269.78464610041,
+        "lambda_discrete": -31194.304346101497,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern et al. (2016), Schr\u00f6dinger's Smoke, ACM TOG 35(4), Appendix E Eqs. 17-18: the explicit two-spectra assignment (Eq. 18 continuous for the free step, Eq. 17 discrete sin^2 for the projection).",
+        "doi": "10.1145/2897824.2925868",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          7,
+          7,
+          7
+        ],
+        "dx": 0.0078125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -5803.3273878405425,
+        "lambda_discrete": -5746.4522162483245,
+        "assignment": "continuous -> free step (paper Eq. 18); discrete -> pressure projection (paper Eq. 17). NEVER MIX (spec-ref.md \u00a7 3 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "trig-identity",
+        "source": "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) sin^2(k dx/2), asserted inside the generator at every case (tools/testkit/golden/generator/isf_laplacian_eigenvalues.py closed_form).",
+        "doi": "n/a-in-generator-identity",
+        "expected": {
+          "mixing_consequence": "projection divergence gate fails at an O(h^2) floor"
+        }
+      }
+    }
+  ]
+}

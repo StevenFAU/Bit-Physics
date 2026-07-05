@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-free-gaussian-dispersion-exact-propagator",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-gaussian-dispersion.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 1e-13,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "row": "analytic-sigma",
+        "sigma0": 0.04,
+        "hbar": 0.02,
+        "t_final": 0.08
+      },
+      "expected": {
+        "sigma_T_analytic": 0.044721359549995794
+      },
+      "independent_reference": {
+        "derived_by": "closed-form",
+        "source": "Standard QM free Gaussian packet: heat kernel at complex diffusivity i*hbar/2, sigma_t^2 = sigma0^2*(1+(hbar*t/(2*sigma0^2))^2) (Sakurai, Modern Quantum Mechanics, \u00a7 2.5; any QM text).",
+        "doi": "n/a-textbook",
+        "expected": {
+          "sigma_T": "sqrt(a*(1+(hbar*T/(2a))^2)), a = sigma0^2"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "row": "exact-propagator-flatline",
+        "sigma0": 0.04,
+        "hbar": 0.02,
+        "t_final": 0.08,
+        "n": 64,
+        "dt_ladder_steps": [
+          2,
+          4,
+          8,
+          16
+        ],
+        "note": "NOT a dt-order probe: the free step IS the exact propagator (review catch #2); dt order lives in the full-split Richardson study (packages/schrodinger-smoke/tests/test_isf_mms.py)."
+      },
+      "expected": {
+        "flatline_ceiling": 1e-13,
+        "flatline_errs_at_generation": {
+          "2": 2.2765906479188517e-14,
+          "4": 2.285590362987482e-14,
+          "8": 2.30248895827765e-14,
+          "16": 2.3372866641695057e-14
+        }
+      },
+      "independent_reference": {
+        "derived_by": "operator-identity",
+        "source": "The FFT phase multiply IS e^{-iH dt} (exact propagator): for band-limited data the error vs the closed form has NO dt dependence \u2014 flatness across the dt-halving ladder is itself the check (tools/testkit/golden/derivations/isf-gaussian-dispersion.md \u00a7 2; Chern 2017 thesis Alg. 2).",
+        "doi": "10.7907/Z98050N3",
+        "expected": {
+          "error_dt_dependence": "none (flat at the FP/band-limit floor)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "row": "spectral-dx-collapse",
+        "sigma0": 0.04,
+        "hbar": 0.02,
+        "t_final": 0.08,
+        "n_ladder": [
+          16,
+          24,
+          32,
+          48
+        ],
+        "steps": 4
+      },
+      "expected": {
+        "spectral_ceilings": {
+          "16": 0.031,
+          "24": 0.00013,
+          "32": 6.8e-08,
+          "48": 1e-12
+        },
+        "spectral_errs_at_generation": {
+          "16": 0.0076314364090403495,
+          "24": 3.1310634861392024e-05,
+          "32": 1.699299538237822e-08,
+          "48": 2.272700955296579e-14
+        }
+      },
+      "independent_reference": {
+        "derived_by": "theory-envelope",
+        "source": "Spectral accuracy: Fourier truncation of an analytic function converges super-algebraically (Trefethen, Spectral Methods in MATLAB, Ch. 4); the measured N-ladder tracks the exp(-(pi*N*sigma0)^2) Gaussian-tail envelope, incl. the periodization bound of spec \u00a7 6.1.",
+        "doi": "n/a-textbook",
+        "expected": {
+          "envelope": "exp(-(pi*N*sigma0)^2) of peak"
+        }
+      }
+    }
+  ]
+}

@@ -39,6 +39,22 @@ absolute = 0.0
 relative = 1e-5
 absolute = 0.0
 
+# [defaults.isf]  — MEASURED on schrodinger-smoke (Phase-6, spec-ref § 13.2).
+# NEW category (operator decision 2, spec-ref § 13.4 — recommended and taken):
+# ISF's f32<->f64 boundary is spectral-solver-specific (f32 WGSL Stockham FFT
+# accumulation vs f64 pocketfft over the full split), not the Stam-smoke
+# semi-Lagrangian/Jacobi budget, so reusing [defaults.smoke] would conflate
+# two different numerical-method taxonomies. DECLARED 1e-4 from measurement
+# (2026-07-05, NumPy-complex64 proxy of the WGSL path — f64-precomputed
+# multiplier tables cast to f32, the web-spec § 1 plan — vs the f64 reference
+# on the canonical translating-ring 64^3 x 96-step scene): worst
+# per-checkpoint max_abs 1.4e-5 of field peak, x 4.05 (worst observed
+# RADV->lavapipe family spread, charter round 2) = 5.8e-5, x ~1.75 margin
+# = 1e-4. Capped by [budgets.isf] (tolerance-budget.toml).
+[defaults.isf]
+relative = 1e-4
+absolute = 0.0
+
 # -----------------------------------------------------------------------------
 # Phase-5 bootstrap-verification defaults for single-stack CAPTURE-bearing sims.
 # -----------------------------------------------------------------------------
@@ -183,6 +199,23 @@ category = "smoke"
 # Cross-stack-non-trivial surface: the fixed-cap (n_jacobi=20) Jacobi
 # pressure-projection FP-accumulation (deferred IC-15 aspect #5, in its
 # determinism-safe fixed-iteration-count form — D5).
+
+[overrides.schrodinger-smoke]
+category = "isf"
+# Resolves sim.category='volumetric-grid' (physics-family taxonomy)
+# to tolerance-category='isf' (numerical-method taxonomy — NEW category,
+# see [defaults.isf] for the MEASURED-then-declared provenance).
+# AT-BUDGET per [defaults.isf]: relative=1e-4, absolute=0.0.
+# NOT a widening of [defaults.smoke]: ISF is a spectral split-step spinor
+# solver (Chern et al. 2016), a different numerical method from the Stam
+# parent — the pic-flip/lbm-quantized new-category pattern.
+# Sixth per-sim override after reaction-diffusion-2d + sph-water
+# + lattice-boltzmann-d3q19 + mpm-multimaterial + pic-flip (+ the
+# eulerian-smoke wiring row).
+# Cross-stack-non-trivial surface: f32 WGSL Stockham-FFT accumulation
+# (fixed butterfly order, device-scoped bit-exact) vs f64 pocketfft;
+# gated by the web-deploy new_canonical live-f64-reference re-run
+# (spec-ref § 13.2).
 
 # -----------------------------------------------------------------------------
 # Phase-3 render-similarity thresholds (D-SCHEMA Stage-1a lean; SCHEMA ONLY).

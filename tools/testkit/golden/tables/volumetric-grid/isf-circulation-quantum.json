@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-vortex-ring-circulation-quantum",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-circulation-quantum.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 0.002
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 32,
+        "hbar": 0.05,
+        "scene": "translating-ring (slab imprint, 8 settling projections)",
+        "loop": "ring_probe_loop (axis-aligned rectangle threading the ring once)"
+      },
+      "expected": {
+        "circulation_measured": 0.3141342817314445,
+        "circulation_target": 0.3141592653589793,
+        "rel_err_at_generation": 7.952535637071818e-05,
+        "rel_err_ceiling": 0.002
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern et al. (2016), Schr\u00f6dinger's Smoke, ACM TOG 35(4), Theorem 1 / \u00a7 4.4: vorticity is the exact Hopf-pullback of the S^2 area form; filament circulation is quantized to 2*pi*hbar*n (the paper's own language: 'approximately 2 pi hbar_h' on the grid).",
+        "doi": "10.1145/2897824.2925868",
+        "expected": {
+          "circulation": "2*pi*hbar*n exactly in the continuum"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 48,
+        "hbar": 0.05,
+        "scene": "translating-ring (slab imprint, 8 settling projections)",
+        "loop": "ring_probe_loop (axis-aligned rectangle threading the ring once)"
+      },
+      "expected": {
+        "circulation_measured": 0.3141310585000388,
+        "circulation_target": 0.3141592653589793,
+        "rel_err_at_generation": 8.978522058954352e-05,
+        "rel_err_ceiling": 0.002
+      },
+      "independent_reference": {
+        "derived_by": "published-equation",
+        "source": "Onsager-Feynman circulation quantum Gamma = 2*pi*kappa*hbar/m, kappa integer (arXiv:2003.03590 Eq. 44); in hbar-normalized ISF units (m=1) the loop integral is 2*pi*hbar*n. The refuted non-dimensional Gamma=2*pi form (missing hbar/m) is on the spec \u00a7 2 do-NOT-cite list.",
+        "doi": "10.48550/arXiv.2003.03590",
+        "expected": {
+          "circulation": "2*pi*hbar*n exactly in the continuum"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "hbar": 0.05,
+        "scene": "translating-ring (slab imprint, 8 settling projections)",
+        "loop": "ring_probe_loop (axis-aligned rectangle threading the ring once)"
+      },
+      "expected": {
+        "circulation_measured": 0.3141296502666735,
+        "circulation_target": 0.3141592653589793,
+        "rel_err_at_generation": 9.426776661185631e-05,
+        "rel_err_ceiling": 0.002
+      },
+      "independent_reference": {
+        "derived_by": "published-construction",
+        "source": "Tao, Ren, Tong, Xiong (2021), Construction and evolution of knotted vortex tubes in incompressible Schr\u00f6dinger flow, Phys. Fluids 33, 077112 \u2014 confirms the same circulation quantum on polynomial knot ICs.",
+        "doi": "10.1063/5.0058109",
+        "expected": {
+          "circulation": "2*pi*hbar*n exactly in the continuum"
+        }
+      }
+    }
+  ],
+  "status_label": "measured-convergent-approximate (continuum-exact, O(h) on the grid; paper's own 'approximately 2*pi*hbar_h') \u2014 NOT machine-exact"
+}

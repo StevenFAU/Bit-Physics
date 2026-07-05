@@ -60,3 +60,18 @@ absolute = 1.0e-5
 [budgets.picflip-observable.cross_stack]
 relative = 1.0e-2
 absolute = 0.0
+
+# [budgets.isf.cross_stack] — Phase-6 schrodinger-smoke web gate (spec-ref
+#   § 13.2): pointwise per-checkpoint comparison of the WGSL f32 spectral
+#   split-step (Stockham FFT, f64-precomputed multiplier tables) against the
+#   live f64 NumPy reference on the NON-CHAOTIC canonical translating-ring
+#   scene. NEW category (the lbm-quantized / picflip-observable pattern),
+#   NOT a [budgets.smoke] amendment — different numerical method (spectral
+#   spinor vs semi-Lagrangian/Jacobi). MEASURED 2026-07-05 (NumPy-complex64
+#   proxy of the WGSL path, 64^3 x 96 steps): worst per-checkpoint max_abs
+#   1.4e-5 of field peak; DECLARED 1e-4 = measured x 4.05 (worst observed
+#   RADV->lavapipe family spread, charter round 2) x ~1.75 margin.
+#   At-declared cap (no headroom beyond the documented measurement margin).
+[budgets.isf.cross_stack]
+relative = 1.0e-4
+absolute = 0.0
