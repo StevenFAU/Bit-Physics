@@ -90,6 +90,12 @@ const SIMS = {
   // mid-flight with the mushroom wake fully rolled up. The additive tracer
   // render carries its own density-normalized exposure.
   "schrodinger-smoke": { frames: 380, px: 512 },
+  // Phase-6 curl-noise: boots into the gated flow-past-sphere scene with the
+  // persistence-trail stack ON (the poster look, web spec § 5 — trails are
+  // the genre's wow feature and cost-independent of count). ~420 RAF frames
+  // fills the trail buffer to its steady-state wisps around the obstacle
+  // wireframe. The trail composite carries its own exposure normalization.
+  "curl-noise": { frames: 420, px: 512 },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

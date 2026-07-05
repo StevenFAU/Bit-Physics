@@ -83,6 +83,9 @@ const SIMS = {
   // (~step 20..250). Frame-indexed deterministic per device; loop wraps with
   // a cut (declared, boids precedent).
   "schrodinger-smoke": { start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
+  // Phase-6 curl-noise: trails developed by ~frame 120; the loop rides the
+  // auto-orbit through the wisp field around the sphere.
+  "curl-noise": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
 };
 
 const MIME = {

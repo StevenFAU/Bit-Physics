@@ -177,6 +177,16 @@ T_ISF_NORM_FLAT_REL = 1e-4  # browser norm_l2 diagnostic flat across checkpoints
 # backend's — the browser witnesses flatness at its own precision)
 T_ISF_HEADROOM_MAX = 1.0  # no principal-branch re-wrap during the gate window
 
+# curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
+# [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
+# resolved via [overrides.curl-noise]; capped by [budgets.curl-noise]) —
+# MEASURED basis: NumPy-f32 proxy of the full WGSL gated pipeline worst
+# iso-residual 1.79e-5 of the iso-value scale, x 4.05 family spread x ~2.7
+# margin. The gated observable is CHAOS-IMMUNE (distance to the iso
+# manifold), never a pointwise trajectory match (spec-ref § 9).
+T_CURL_REL = 2e-4  # per-checkpoint: ||f64 f(x_f32) - f0_f32|| <= rel * iso scale
+T_CURL_IC_ABS = 1e-6  # browser IC vs committed seeded_tracers(42): f32 quantization
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -1860,6 +1870,102 @@ def _gate_schrodinger_smoke(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
+    """curl-noise new_canonical gate (spec-ref § 13.2, chaos-immune).
+
+    1. run-twice byte-identity across the two browser bundles;
+    2. browser IC == committed seeded_tracers(42) canonical seeds (f32
+       quantization slack T_CURL_IC_ABS);
+    3. LIVE f64 reference: recompute the iso values f(x) in f64 at every
+       browser f32 checkpoint position and gate
+       max ||f64 f(x) - f0_f32|| <= T_CURL_REL * iso_scale — invariant
+       under along-manifold drift, hence chaos-immune (never pointwise);
+    4. machine-exact goldens recomputed live: matched staggered DIV.CURL
+       telescoping + the corrected golden-F confinement identities.
+    """
+    sys.path.insert(0, str(REPO / "packages/curl-noise"))
+    from curl_noise.reference.curlnoise import seeded_tracers  # type: ignore
+    from curl_noise.reference.discrete import (  # type: ignore
+        matched_curl_2d,
+        matched_divergence_2d,
+    )
+    from curl_noise.reference.fields import (  # type: ignore
+        CANONICAL_CONFIG,
+        CurlNoiseConfig,
+        clebsch_helicity_integrand,
+        gradient_orthogonality,
+        velocity,
+    )
+    from curl_noise.reference.manifold import iso_values  # type: ignore
+
+    def positions(b: dict) -> list[np.ndarray]:
+        return [
+            np.asarray(_field(s, "positions"), dtype=np.float64)
+            for s in _bundle_steps(b)
+        ]
+
+    p1 = positions(bundles[0])
+    p2 = positions(bundles[1]) if len(bundles) > 1 else None
+    twice = bool(
+        p2 is not None
+        and len(p1) == len(p2)
+        and all(np.array_equal(a, b) for a, b in zip(p1, p2))
+    )
+
+    steps0 = _bundle_steps(bundles[0])
+    f0 = np.asarray(steps0[0]["state"]["f0"]["data"], dtype=np.float64).reshape(-1, 2)
+
+    ic_ref = seeded_tracers(42)
+    ic_browser = p1[0].reshape(-1, 3)
+    ic_dev = float(np.abs(ic_browser - ic_ref).max())
+    ic_ok = ic_dev <= T_CURL_IC_ABS
+
+    iso_scale = float(max(np.abs(f0).max(), 1e-9))
+    worst = 0.0
+    for pos in p1:
+        f = iso_values(pos.reshape(-1, 3), CANONICAL_CONFIG)
+        worst = max(worst, float(np.linalg.norm(f - f0, axis=1).max()))
+    resid_ok = worst <= T_CURL_REL * iso_scale
+
+    # live machine-exact goldens (cheap; the committed tables' identities)
+    rng = np.random.default_rng(64)
+    psi = rng.standard_normal((65, 65))
+    u, w = matched_curl_2d(psi, 1.0 / 64)
+    div = matched_divergence_2d(u, w, 1.0 / 64)
+    flux = max(np.abs(u).max(), np.abs(w).max()) * 64
+    matched_ok = bool(np.abs(div).max() <= 1e-13 * flux)
+    cfg_open = CurlNoiseConfig(construction="crossprod", octaves=3, ell0=0.5)
+    pts = rng.uniform(-2.0, 2.0, size=(64, 3))
+    og1, og2 = gradient_orthogonality(pts, cfg_open)
+    cle = clebsch_helicity_integrand(pts, cfg_open)
+    vscale = float(np.abs(velocity(pts, cfg_open)).max())
+    conf_ok = bool(
+        max(np.abs(og1).max(), np.abs(og2).max(), np.abs(cle).max())
+        <= 1e-12 * max(vscale, 1.0)
+    )
+
+    return VerifyResult(
+        sim="curl-noise",
+        kind="new_canonical",
+        passed=bool(twice and ic_ok and resid_ok and matched_ok and conf_ok),
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "ic_matches_canonical_seeds": ic_ok,
+            "ic_max_abs_dev": ic_dev,
+            "iso_residual_worst": worst,
+            "iso_scale": iso_scale,
+            "iso_budget_abs": T_CURL_REL * iso_scale,
+            "iso_fraction_of_budget": round(worst / (T_CURL_REL * iso_scale), 4),
+            "live_matched_divergence_machine_zero": matched_ok,
+            "live_confinement_identities_machine_zero": conf_ok,
+            "note": "chaos-immune live-f64 gate: f64-recomputed iso residual at "
+            "browser f32 positions vs browser f32 iso anchors; NEVER a pointwise "
+            "trajectory match (spec-ref § 9). No tolerance widened.",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -1873,6 +1979,7 @@ _GATES = {
     "mpm-multimaterial": _gate_mpm_multimaterial,
     "pic-flip": _gate_pic_flip,
     "schrodinger-smoke": _gate_schrodinger_smoke,
+    "curl-noise": _gate_curl_noise,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

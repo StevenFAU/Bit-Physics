@@ -1,0 +1,49 @@
+{
+  "tolerance": {
+    "relative": 0.0002
+  },
+  "gate": {
+    "kind": "new_canonical",
+    "fn": "_gate_curl_noise"
+  },
+  "goldens": {
+    "E · ABC ground truth": {
+      "ok": true,
+      "note": "recomputed EXACTLY (closed form)"
+    },
+    "F · confinement + Clebsch": {
+      "ok": true,
+      "note": "identities re-verified on 200 JS points (max 3.6e-15 / vscale 13.8)"
+    },
+    "C · div = trace(J) identity": {
+      "ok": true,
+      "note": "max |trace| 5.7e-14 on 200 JS points"
+    },
+    "F · kinetic helicity NONZERO": {
+      "ok": true,
+      "note": "the refuted v0.2 claim, kept as a control row (-4*x*y)"
+    },
+    "A · matched DIV∘CURL ≡ 0": {
+      "ok": true,
+      "note": "normalized 0.0e+0 on a JS 64² grid (telescoping)"
+    },
+    "B · analytic gradient (MMS)": {
+      "ok": true,
+      "note": "max |FD−analytic| 8.7e-10 at h=1e-5 (O(h²))"
+    },
+    "D · v·n = 0 on the sphere": {
+      "ok": true,
+      "note": "max |v·n| 2.7e-15 at |v| ≤ 8.7 (triple product)"
+    }
+  },
+  "wgsl_checks": {
+    "falloff 0.5 (not Perlin 0.6)": true,
+    "integer permutation (34x+10)x mod 289": true,
+    "no float-emulated mod289": true,
+    "no builtin sin/cos/atan in gated field": true,
+    "NOISE_SCALE == 22.0": true,
+    "no f16 in gated WGSL": true
+  },
+  "gate_ic_sha256": "3cfd225b99c91a35c395332f38429d8d4778c6deafdd9cd8903ca0ff2626d6ed",
+  "generated_note": "pure-JS f64 mirror recompute at build (curlnoise64.mjs); RNG-tied table rows embedded verbatim, identities re-verified on independent points"
+}
