@@ -3,7 +3,7 @@
 These exercise the parts of the browser-delivery pipeline that DO NOT require a
 headless browser (unavailable in this environment — see the probe report § 4):
 
-  * sim discovery (the 8 qualifying Stack-B web frontends),
+  * sim discovery (the qualifying Stack-B web frontends),
   * the smoke-results JSON contract (phase plan § 5.5),
   * `verify.py` — the per-sim gate applied to a browser-emitted capture — exercised
     against a browser-shaped bundle reconstructed from each sim's COMMITTED canonical,
@@ -37,12 +37,15 @@ EXPECTED_SIMS = {
     "neural-ca",
     "ising-classical",
     "strange-attractors",
+    "boids-2d",
     "boids-3d",
-    "physarum",
+    "curl-noise",
     "eulerian-smoke",
-    "sph-water",
     "mpm-multimaterial",
+    "physarum",
     "pic-flip",
+    "schrodinger-smoke",
+    "sph-water",
 }
 
 
@@ -68,7 +71,7 @@ def verify() -> ModuleType:
 # --------------------------------------------------------------------------- #
 # Discovery
 # --------------------------------------------------------------------------- #
-def test_discover_finds_the_eight_qualifying_sims(pipeline: ModuleType) -> None:
+def test_discover_finds_the_qualifying_sims(pipeline: ModuleType) -> None:
     sims = pipeline.discover_qualifying_sims()
     names = {s.name for s in sims}
     assert names == EXPECTED_SIMS

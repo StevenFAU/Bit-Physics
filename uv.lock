@@ -41,6 +41,7 @@ members = [
     "bit-physics-diagnostics",
     "bit-physics-integrity",
     "bit-physics-testkit",
+    "boids-2d",
     "boids-3d",
     "curl-noise",
     "eulerian-smoke",
@@ -698,6 +699,34 @@ requires-dist = [
     { name = "scikit-image", specifier = ">=0.26" },
     { name = "sympy", specifier = ">=1.13" },
     { name = "torch", specifier = ">=2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "boids-2d"
+version = "0.0.0"
+source = { editable = "packages/boids-2d" }
+dependencies = [
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
 ]
 provides-extras = ["dev"]
 

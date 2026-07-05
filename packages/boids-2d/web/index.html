@@ -803,7 +803,8 @@ function ingest(f, n, st, halfW, halfH, fluid){
     lastCheckpointStep=simStep; refreshScrub();
   }
 }
-/* exact integer GPU reduction consumer (D-9): φ, m (vs lag-1 COM), v_cm, momentum, KE, dispersion.
+/* exact integer GPU reduction consumer (D-9): φ, m (Tunström current-COM O_r),
+   v_cm, momentum, KE, dispersion.
    totals are exact integer sums of the per-workgroup i32 partials (float64-exact below 2^53). */
 function ingestReduction(t){
   const n=t.cnt||1;
@@ -1745,9 +1746,9 @@ function updateHUD(fps){
     $('sFluidRes').textContent = fOn&&curFluidResidual>0 ? curFluidResidual.toExponential(2) : '—'; }
   $('sNaN').textContent = curNaN>0 ? ('⚠ '+curNaN) : 'clean';
   $('sNaN').style.color = curNaN>0 ? 'var(--bad)' : '#eef2ff';
-  // D-9: above 200k, φ/m come from the exact GPU reduction; m is measured against the lag-1 COM,
-  // structure measures are sampled at slow cadence, and rewind checkpoints are disabled (memory).
-  $('lblM').textContent = reduceActive ? 'rotation m (COM lag-1)' : 'rotation m';
+  // D-9: above 200k, φ/m come from the exact GPU current-COM reduction; structure measures
+  // are sampled at slow cadence, and rewind checkpoints are disabled (memory).
+  $('lblM').textContent = reduceActive ? 'rotation m (current COM)' : 'rotation m';
   $('measNote').textContent = LARGE ? 'sampled · above 200k agents ξ/NND/g(r)/clusters use CAP-700/900 subsets of the slow-cadence readback' : '';
   const sc=$('scrub');
   if(sc){ sc.disabled=LARGE; sc.style.opacity=LARGE?0.35:1;
@@ -2205,17 +2206,19 @@ ${WGSL_RULE_ACCUM}
 ${WGSL_RULE_INTEGRATE}
 }`;
 /* D-9: exact integer order-parameter reduction — its own small module + layout; both backends
-   share it. Per workgroup of 256: i32 fixed-point partial sums of unit velocity (2^20), position
-   (2^14), cross(r-hat, v-hat) vs the PREVIOUS-frame COM from params (2^20), |r| dispersion (2^14),
-   raw velocity (2^26), kinetic energy (2^28), and count. Workgroup-shared i32 tree reduction
-   (integer = associative = deterministic); one partial struct per workgroup. */
+   share it. Large-N frames run three ordered GPU dispatches: (1) integer per-workgroup
+   position/velocity partials, (2) one workgroup finalizes the CURRENT COM to a tiny storage
+   buffer, and (3) the same integer partial pass recomputes cross(r-hat, v-hat) against that
+   current COM. This keeps Tunström O_r honest at 10^6 agents without a CPU readback stall. */
 const WGSL_REDUCE = `
 ${WGSL_BOID}
 ${WGSL_PARAMS}
 struct RPart { vhx:i32, vhy:i32, px:i32, py:i32, cr:i32, rd:i32, vx:i32, vy:i32, ke:i32, cnt:u32 };
+struct RGlobal { comX:f32, comY:f32, cnt:u32, _pad:u32 };
 @group(0) @binding(0) var<uniform> P: Params;
 @group(0) @binding(1) var<storage, read> inB: array<Boid>;
 @group(0) @binding(2) var<storage, read_write> partials: array<RPart>;
+@group(0) @binding(3) var<storage, read_write> rg: RGlobal;
 const RFV: f32 = 1048576.0;    // 2^20: unit velocity, cross  (|sum| <= 256*2^20 = 2^28, fits i32)
 const RFP: f32 = 16384.0;      // 2^14: position, dispersion  (|pos| <= ~28 at 1M -> 28*256*2^14 ~ 1.2e8)
 const RFS: f32 = 67108864.0;   // 2^26: raw velocity          (|v| <= 0.013*1.7 -> ~3.8e8 worst-case sum)
@@ -2225,6 +2228,8 @@ var<workgroup> sP2: array<vec2<i32>, 256>;
 var<workgroup> sC: array<vec2<i32>, 256>;
 var<workgroup> sW: array<vec2<i32>, 256>;
 var<workgroup> sK: array<vec2<i32>, 256>;
+var<workgroup> sPF: array<vec2<f32>, 256>;
+var<workgroup> sU: array<u32, 256>;
 @compute @workgroup_size(256)
 fn reduceOrder(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) wid: vec3<u32>) {
   let i = gid.x; let n = arrayLength(&inB); let t = lid.x;
@@ -2235,7 +2240,7 @@ fn reduceOrder(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_inv
     let u = b.vel / spd;
     vh = vec2<i32>(i32(round(u.x * RFV)), i32(round(u.y * RFV)));
     ps = vec2<i32>(i32(round(b.pos.x * RFP)), i32(round(b.pos.y * RFP)));
-    let r = b.pos - vec2<f32>(P.prevComX, P.prevComY);
+    let r = b.pos - vec2<f32>(rg.comX, rg.comY);
     let rl = max(length(r), 1e-9);
     let rh = r / rl;
     cd = vec2<i32>(i32(round((rh.x * u.y - rh.y * u.x) * RFV)), i32(round(rl * RFP)));
@@ -2253,6 +2258,41 @@ fn reduceOrder(@builtin(global_invocation_id) gid: vec3<u32>, @builtin(local_inv
   workgroupBarrier();
   if (t == 0u) {
     partials[wid.x] = RPart(sV[0].x, sV[0].y, sP2[0].x, sP2[0].y, sC[0].x, sC[0].y, sW[0].x, sW[0].y, sK[0].x, u32(sK[0].y));
+  }
+}
+@compute @workgroup_size(256)
+fn finalizeCom(@builtin(local_invocation_id) lid: vec3<u32>) {
+  let t = lid.x;
+  var ps = vec2<f32>(0.0, 0.0);
+  var cnt = 0u;
+  var k = t;
+  let m = arrayLength(&partials);
+  loop {
+    if (k >= m) { break; }
+    let p = partials[k];
+    ps = ps + vec2<f32>(f32(p.px), f32(p.py));
+    cnt = cnt + p.cnt;
+    k = k + 256u;
+  }
+  sPF[t] = ps;
+  sU[t] = cnt;
+  var s = 128u;
+  loop {
+    if (s == 0u) { break; }
+    workgroupBarrier();
+    if (t < s) {
+      sPF[t] = sPF[t] + sPF[t+s];
+      sU[t] = sU[t] + sU[t+s];
+    }
+    s = s >> 1u;
+  }
+  workgroupBarrier();
+  if (t == 0u) {
+    let c = max(f32(sU[0]), 1.0);
+    rg.comX = sPF[0].x / RFP / c;
+    rg.comY = sPF[0].y / RFP / c;
+    rg.cnt = sU[0];
+    rg._pad = 0u;
   }
 }`;
 
@@ -2625,12 +2665,12 @@ function GpuEngine(){
   // counting-sort broadphase pipelines (one module, many entry points; D-3 sequence)
   let clearCountsPipe, histPipe, scanBlocksPipe, scanSumsPipe, addOffPipe, seedCursorPipe, scatterPipe, simSortPipe;
   let sortLayout=null, sortBGL=null;                         // explicit pipeline layout shared by all sort kernels
-  let reducePipe=null, reduceSupported=false;                // D-9 order-parameter reduction (own module + layout)
+  let reducePipe=null, reduceFinalizePipe=null, reduceSupported=false; // D-9 order-parameter reduction (own module + layout)
   let paramBuf, fxBuf, triBuf, obsBuf, diagFlagsBuf;
   let boidBufs=[null,null], computeBG=[null,null], renderBG, fxBGfade, presentBG, vortBuf, specBuf;
   let cellCountBuf=null, cellStartBuf=null, blockSumsBuf=null, sortedIdxBuf=null; // counting-sort storage (D-3: cellCount doubles as the scatter cursor)
   let blockSumsFlagOff=0;                                    // byte offset of the D-6 flag slot in blockSums
-  let partialsBuf=null, reduceBG=[null,null], numWG=0, rdInFlight=false;          // D-9 reduction
+  let partialsBuf=null, reduceGlobalBuf=null, reduceBGL=null, reduceLayout=null, reduceBG=[null,null], numWG=0, rdInFlight=false; // D-9 reduction
   let sortBG=[null,null];                                    // one bind group per ping/pong (all bindings, explicit layout)
   let sortSupported=false;                                   // sort pipelines compiled OK (else fall back to brute)
   let numCells=0, numBlocks=0;                               // current scan dims
@@ -2639,7 +2679,7 @@ function GpuEngine(){
   let tsQuerySet=null, tsResolve=null, tsRead=null, tsSupported=false, tsInFlight=false; // GPU timestamp perf
   let histTex=null, histView=null, sampler;
   let N=0, ping=0, firstFrame=true, _halfW=1, _halfH=1, running=false, lostEarly=false;
-  let prevComX=0, prevComY=0;                                 // lag-1 COM for the m reduction (D-9)
+  let prevComX=0, prevComY=0;                                 // legacy params slots; COM reduction now uses reduceGlobalBuf
   const P=new Float32Array(84), FX=new Float32Array(8);
   let mapInFlight=false, gridMapInFlight=false, flagMapInFlight=false, pendingN=0, orderTick=0, stepFlag=false;
   // ---- two-way fluid coupling state (D-F1: separate post-sim pass, own modules/layouts) ----
@@ -2737,7 +2777,16 @@ function GpuEngine(){
     try{
       const ri=await redMod.getCompilationInfo();
       if(ri.messages.filter(x=>x.type==='error').length===0){
-        reducePipe=device.createComputePipeline({layout:'auto',compute:{module:redMod,entryPoint:'reduceOrder'}});
+        const rst=(ro)=>({buffer:{type:ro?'read-only-storage':'storage'}});
+        reduceBGL=device.createBindGroupLayout({entries:[
+          {binding:0,visibility:GPUShaderStage.COMPUTE,buffer:{type:'uniform'}},
+          {binding:1,visibility:GPUShaderStage.COMPUTE,...rst(true)},
+          {binding:2,visibility:GPUShaderStage.COMPUTE,...rst(false)},
+          {binding:3,visibility:GPUShaderStage.COMPUTE,...rst(false)}]});
+        reduceLayout=device.createPipelineLayout({bindGroupLayouts:[reduceBGL]});
+        const rmk=(ep)=>device.createComputePipeline({layout:reduceLayout,compute:{module:redMod,entryPoint:ep}});
+        reducePipe=rmk('reduceOrder');
+        reduceFinalizePipe=rmk('finalizeCom');
         reduceSupported=true;
       }
     }catch(e){ console.warn('order-parameter reduction unavailable:', e&&e.message); }
@@ -2864,18 +2913,23 @@ function GpuEngine(){
     if(reduceSupported){
       numWG=Math.max(1,Math.ceil(n/256));
       if(partialsBuf){ try{partialsBuf.destroy();}catch(e){} }
+      if(reduceGlobalBuf){ try{reduceGlobalBuf.destroy();}catch(e){} }
       partialsBuf=device.createBuffer({size:numWG*40,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST|GPUBufferUsage.COPY_SRC});
+      reduceGlobalBuf=device.createBuffer({size:16,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST|GPUBufferUsage.COPY_SRC});
+      device.queue.writeBuffer(reduceGlobalBuf,0,new Float32Array([0,0,0,0]));
       for(let k=0;k<2;k++){
-        reduceBG[k]=device.createBindGroup({layout:reducePipe.getBindGroupLayout(0),entries:[
+        reduceBG[k]=device.createBindGroup({layout:reduceBGL,entries:[
           {binding:0,resource:{buffer:paramBuf}},
           {binding:1,resource:{buffer:boidBufs[k]}},
-          {binding:2,resource:{buffer:partialsBuf}}]});
+          {binding:2,resource:{buffer:partialsBuf}},
+          {binding:3,resource:{buffer:reduceGlobalBuf}}]});
       }
     }
     ping=0; firstFrame=true; phaseHist=[]; phiWindow=[]; metricLog=[]; curChi=0;
     simStep=0; checkpoints=[]; lastCheckpointStep=-1; liveScrub=true; scrubbing=false;
     gridN_cols=0; gridN_rows=0; gridN=0; curGridDropped=0; curGridOverflowCells=0; curGridMaxCell=0; // force grid resource rebuild for new N
     prevComX=0; prevComY=0;
+    if(reduceGlobalBuf) device.queue.writeBuffer(reduceGlobalBuf,0,new Float32Array([0,0,0,0]));
     clearSatFlags();
     if(fluidReady){ rebuildCoupleBG(); fluidZero(); }   // couple binds the (new) boid buffers
     refreshScrub();
@@ -2926,7 +2980,7 @@ function GpuEngine(){
     P[38]=S.flowType; P[39]=S.flowAmp; P[40]=S.flowScale; P[41]=pure?0:performance.now()*0.001;
     P[42]=S.nfType; P[43]=S.nfAmp;
     const sc=speciesConfig(); P[44]=sc.NS;
-    P[45]=prevComX; P[46]=prevComY; P[47]=0;                    // lag-1 COM for the m reduction (D-9)
+    P[45]=prevComX; P[46]=prevComY; P[47]=0;                    // legacy slots; current-COM reduction uses reduceGlobalBuf
     for(let k=0;k<16;k++){ P[48+k]=sc.gc[k]; P[64+k]=sc.ga[k]; }
     P[80]=sc.spd[0]; P[81]=sc.spd[1]; P[82]=sc.spd[2]; P[83]=sc.spd[3];
     device.queue.writeBuffer(paramBuf,0,P);
@@ -3150,6 +3204,11 @@ function GpuEngine(){
     if(mode==='grid') return;
     cp.setPipeline(simSortPipe);     cp.setBindGroup(0,sortBG[pp]); cp.dispatchWorkgroups(Math.ceil(N/256)); // (6) sim
   }
+  function encodeCurrentComReduction(cp, bg){
+    cp.setPipeline(reducePipe); cp.setBindGroup(0,bg); cp.dispatchWorkgroups(numWG);
+    cp.setPipeline(reduceFinalizePipe); cp.setBindGroup(0,bg); cp.dispatchWorkgroups(1);
+    cp.setPipeline(reducePipe); cp.setBindGroup(0,bg); cp.dispatchWorkgroups(numWG);
+  }
 
   function setObstacles(arr){
     const f=new Float32Array(128); // 16 obstacles x 8 floats: ax,ay,bx,by,rad,sgn,kind,pad
@@ -3193,7 +3252,7 @@ function GpuEngine(){
       if(fluidRun) fluidStep(enc, drawBuf);   // D-F1: couple mutates vel in place on the just-written output buffer
       if(useReduce){
         const rp=enc.beginComputePass(timeIt?{timestampWrites:{querySet:tsQuerySet,endOfPassWriteIndex:1}}:undefined);
-        rp.setPipeline(reducePipe); rp.setBindGroup(0,reduceBG[drawBuf]); rp.dispatchWorkgroups(numWG); rp.end();
+        encodeCurrentComReduction(rp, reduceBG[drawBuf]); rp.end();
       } else if(timeIt && fluidRun){
         const tp=enc.beginComputePass({timestampWrites:{querySet:tsQuerySet,endOfPassWriteIndex:1}}); tp.end(); // close the 3–5 timing window
       }
@@ -3309,7 +3368,7 @@ function GpuEngine(){
           let vhx=0,vhy=0,px=0,py=0,cr=0,rd=0,vx=0,vy=0,ke=0,cnt=0;
           for(let w=0;w<wgs;w++){ const o=w*10; vhx+=a[o];vhy+=a[o+1];px+=a[o+2];py+=a[o+3];cr+=a[o+4];rd+=a[o+5];vx+=a[o+6];vy+=a[o+7];ke+=a[o+8];cnt+=(a[o+9]>>>0); }
           if(cnt===rN && rN===N && hashBusy===0){
-            prevComX=px/RED_FPP/cnt; prevComY=py/RED_FPP/cnt;    // lag-1 COM for next frame's m
+            prevComX=px/RED_FPP/cnt; prevComY=py/RED_FPP/cnt;    // diagnostic mirror; shader already used current COM
             ingestReduction({vhx,vhy,px,py,cr,rd,vx,vy,ke,cnt});
           }
         }catch(e){}
@@ -3462,9 +3521,9 @@ function GpuEngine(){
   }
   // D-9: hashOrderRun — the scalable bit-exact evidence at 10^6 where trajectory hashing is
   // infeasible. Advances frames purely and SHA-256s the concatenated EXACT i64-summed integer
-  // reduction totals per step (Σ unit-velocity x/y for φ, Σ cross for m — the integer artifacts,
-  // not the divided floats, so the hash is exactly representable). Caller reseeds first
-  // (reseed zeroes the lag-1 COM chain, making the φ-series exactly repeatable).
+  // reduction totals per step (Σ unit-velocity x/y for φ, Σ current-COM cross for m — the
+  // integer artifacts, not the divided floats, so the hash is exactly representable). Caller
+  // reseeds first; the current-COM reduction is fully on-GPU and deterministic.
   async function hashOrderRun(nSteps){
     if(!running) return { hash:'engine-not-running' };
     if(!reduceSupported) return { hash:'reduce-unavailable' };
@@ -3485,7 +3544,7 @@ function GpuEngine(){
         // so the φ-series includes the coupled velocities (value-identical to v3 at cpl=0).
         if(S.coupleStr>0 && fluidSupported){ rebuildFluid(); if(fluidReady){ writeFP(true); fluidStep(enc, out); } }
         const rp = enc.beginComputePass();
-        rp.setPipeline(reducePipe); rp.setBindGroup(0,reduceBG[out]); rp.dispatchWorkgroups(numWG);
+        encodeCurrentComReduction(rp, reduceBG[out]);
         rp.end();
         simStep++;
         const stg = device.createBuffer({size:numWG*40, usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
@@ -3497,7 +3556,7 @@ function GpuEngine(){
         stg.unmap(); stg.destroy();
         let vhx=0,vhy=0,px=0,py=0,cr=0,cnt=0;
         for(let w=0;w<numWG;w++){ const o=w*10; vhx+=a[o];vhy+=a[o+1];px+=a[o+2];py+=a[o+3];cr+=a[o+4];cnt+=(a[o+9]>>>0); }
-        prevComX=px/RED_FPP/Math.max(cnt,1); prevComY=py/RED_FPP/Math.max(cnt,1);  // deterministic lag-1 COM chain
+        prevComX=px/RED_FPP/Math.max(cnt,1); prevComY=py/RED_FPP/Math.max(cnt,1);  // diagnostic mirror
         series[step*3]=BigInt(vhx); series[step*3+1]=BigInt(vhy); series[step*3+2]=BigInt(cr);
       }
       const digest = await crypto.subtle.digest('SHA-256', series.buffer);
@@ -3555,7 +3614,7 @@ function GpuEngine(){
   this.frame=(adv)=>frame(adv);
   this.setCount=(n)=>{ if(running) rebuildBoids(n); };
   this.setObstacles=(arr)=>{ if(running) setObstacles(arr); };
-  this.reseed=(s)=>{ if(running){ device.queue.writeBuffer(boidBufs[0],0,makeInitData(N,s,_halfW,_halfH)); device.queue.writeBuffer(specBuf,0,makeSpeciesData(N,s)); ping=0; firstFrame=true; phaseHist=[]; phiWindow=[]; metricLog=[]; curChi=0; simStep=0; checkpoints=[]; lastCheckpointStep=-1; liveScrub=true; scrubbing=false; prevComX=0; prevComY=0; clearSatFlags(); if(fluidReady){ rebuildFluid(); fluidZero(); } refreshScrub(); if(S.paused) stepFlag=true; } }; // D-F6: reseed zeroes the field, so hashed runs start from u=0
+  this.reseed=(s)=>{ if(running){ device.queue.writeBuffer(boidBufs[0],0,makeInitData(N,s,_halfW,_halfH)); device.queue.writeBuffer(specBuf,0,makeSpeciesData(N,s)); ping=0; firstFrame=true; phaseHist=[]; phiWindow=[]; metricLog=[]; curChi=0; simStep=0; checkpoints=[]; lastCheckpointStep=-1; liveScrub=true; scrubbing=false; prevComX=0; prevComY=0; if(reduceGlobalBuf) device.queue.writeBuffer(reduceGlobalBuf,0,new Float32Array([0,0,0,0])); clearSatFlags(); if(fluidReady){ rebuildFluid(); fluidZero(); } refreshScrub(); if(S.paused) stepFlag=true; } }; // D-F6: reseed zeroes the field, so hashed runs start from u=0
   this.restoreState=(cp)=>restoreStateGPU(cp);
   this.step=()=>{ stepFlag=true; };
   this.debugSort=()=>debugSort();                 // verification harness: consistent sorted-grid snapshot (with positions)
