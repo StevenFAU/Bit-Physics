@@ -1884,7 +1884,11 @@ def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
        telescoping + the corrected golden-F confinement identities.
     """
     sys.path.insert(0, str(REPO / "packages/curl-noise"))
-    from curl_noise.reference.curlnoise import seeded_tracers  # type: ignore
+    from curl_noise.reference.curlnoise import (  # type: ignore
+        CANONICAL_CAPTURE_INTERVAL,
+        CANONICAL_STEPS,
+        seeded_tracers,
+    )
     from curl_noise.reference.discrete import (  # type: ignore
         matched_curl_2d,
         matched_divergence_2d,
@@ -1903,6 +1907,23 @@ def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
             np.asarray(_field(s, "positions"), dtype=np.float64)
             for s in _bundle_steps(b)
         ]
+
+    # the capture must carry EXACTLY the canonical checkpoint set — a
+    # bundle that stops at step 0 (zero residual by construction) or skips
+    # the final step must not pass (PR #14 review)
+    expected_steps = [0] + [
+        s
+        for s in range(1, CANONICAL_STEPS + 1)
+        if s % CANONICAL_CAPTURE_INTERVAL == 0 or s == CANONICAL_STEPS
+    ]
+
+    def step_ids(b: dict) -> list[int]:
+        return [int(s["step"]) for s in _bundle_steps(b)]
+
+    steps_ok = bool(
+        step_ids(bundles[0]) == expected_steps
+        and (len(bundles) < 2 or step_ids(bundles[1]) == expected_steps)
+    )
 
     p1 = positions(bundles[0])
     p2 = positions(bundles[1]) if len(bundles) > 1 else None
@@ -1947,9 +1968,12 @@ def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
     return VerifyResult(
         sim="curl-noise",
         kind="new_canonical",
-        passed=bool(twice and ic_ok and resid_ok and matched_ok and conf_ok),
+        passed=bool(
+            steps_ok and twice and ic_ok and resid_ok and matched_ok and conf_ok
+        ),
         run_twice_identical=twice,
         detail={
+            "canonical_checkpoint_set": steps_ok,
             "run_twice_identical": twice,
             "ic_matches_canonical_seeds": ic_ok,
             "ic_max_abs_dev": ic_dev,

@@ -395,23 +395,37 @@ struct CU { stops: array<vec4<f32>, 8>, cmeta: vec4<f32> }
 
   // --- uniform packing -----------------------------------------------------------
   const fuData = new Float32Array(36);
-  function writeFU(forCapture = false): void {
+  function writeFU(): void {
     const t = st.template;
     const obs = t.obstacle;
     fuData.set(obs ? [...obstacleCenter, obs.radius] : [0, 0, 0, 0], 0);
-    fuData.set([obs?.ramp ?? 0.15, obs?.namp ?? 1.0, 0.37, forCapture ? 0 : simTime * st.timePan], 4);
+    fuData.set([obs?.ramp ?? 0.15, obs?.namp ?? 1.0, 0.37, simTime * st.timePan], 4);
     fuData.set([st.ell0, st.template.lacunarity, st.gain, t.amplitude], 8);
     fuData.set(
-      [CONSTRUCTION_ID[t.construction], forCapture ? t.octaves : st.octaves, 0, t.boundary2d ?? 0],
+      [CONSTRUCTION_ID[t.construction], st.octaves, 0, t.boundary2d ?? 0],
       12,
     );
-    const g = forCapture ? [0, 0, 0] : gustVec;
-    fuData.set([...g, 0], 16);
-    fuData.set(forCapture ? [0, 0, 0, 0] : [brush.x, brush.y, brush.z, brush.amp], 20);
+    fuData.set([...gustVec, 0], 16);
+    fuData.set([brush.x, brush.y, brush.z, brush.amp], 20);
     fuData.set([brush.ax, brush.ay, brush.az, brush.sigma], 24);
-    const att = !forCapture && t.attractor ? 3.0 : 0.0;
+    const att = t.attractor ? 3.0 : 0.0;
     fuData.set([...attractorPos, att], 28);
     fuData.set(t.abc ? [...t.abc, 0] : [1, 1, 1, 0], 32);
+    device.queue.writeBuffer(fuBuf, 0, fuData);
+  }
+
+  // GATE capture uniforms come from the COMMITTED ic.params — never the
+  // live UI state (a dragged obstacle or slider tweak before Capture must
+  // not leak into the canonical scene the manifest claims — PR #14 review)
+  function writeFUCanonical(ic: GateIc): void {
+    const P = ic.params;
+    fuData.fill(0);
+    fuData.set([...P.obstacle_center, P.obstacle_radius], 0);
+    fuData.set([P.obstacle_ramp_width, P.obstacle_noise_amp, 0.37, 0], 4);
+    fuData.set([P.ell0, P.lacunarity, P.gain, P.amplitude], 8);
+    fuData.set([CONSTRUCTION_ID[P.construction], P.octaves, 0, 0], 12);
+    // gust/brush/attractor blocks stay zero; abc defaults are unused
+    fuData.set([1, 1, 1, 0], 32);
     device.queue.writeBuffer(fuBuf, 0, fuData);
   }
 
@@ -798,8 +812,9 @@ struct CU { stops: array<vec4<f32>, 8>, cmeta: vec4<f32> }
         pos[i * 4 + 3] = 0;
       }
       device.queue.writeBuffer(gTracer, 0, pos);
-      // canonical FU/TU (capture mode: t=0, no interactions, no wrap, RK4 + reproject)
-      writeFU(true);
+      // canonical FU/TU from the COMMITTED params (t=0, no interactions,
+      // no wrap, RK4 + reproject) — independent of any UI state
+      writeFUCanonical(ic);
       writeTU({ dt: ic.params.dt, count: n, wrap: 0, reproject: 1, rk4: 1 });
       const gAdvectBG = mkComputeBG(advectPipe, gTracer, gF0);
       const gAnchorBG = mkComputeBG(anchorPipe, gTracer, gF0);
