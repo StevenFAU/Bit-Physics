@@ -42,6 +42,7 @@ members = [
     "bit-physics-integrity",
     "bit-physics-testkit",
     "boids-3d",
+    "curl-noise",
     "eulerian-smoke",
     "eulerian-smoke-diff",
     "eulerian-smoke-neural",
@@ -1164,6 +1165,34 @@ nvrtc = [
 nvtx = [
     { name = "nvidia-nvtx" },
 ]
+
+[[package]]
+name = "curl-noise"
+version = "0.0.0"
+source = { editable = "packages/curl-noise" }
+dependencies = [
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "hypothesis" },
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", marker = "extra == 'dev'", specifier = ">=6.0" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "cycler"

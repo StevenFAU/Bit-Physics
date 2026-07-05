@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "curl-noise-analytic-fields",
+  "category": "closed-form",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/curl-noise-analytic-fields.md",
+    "upstream": "Dombre-1986 / Taylor-Green (closed forms)",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "n/a-no-vendored-code"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "quantity": "abc_flow_ground_truth",
+        "params": {
+          "A": 1.0,
+          "B": 1.0,
+          "C": 1.0
+        },
+        "sample_points": [
+          [
+            0.3,
+            1.1,
+            -0.7
+          ],
+          [
+            2.0,
+            -1.0,
+            0.5
+          ],
+          [
+            -0.4,
+            0.9,
+            2.2
+          ]
+        ]
+      },
+      "expected": {
+        "abc_velocity_samples": [
+          [
+            -0.1906215658121137,
+            1.060362393945828,
+            1.8465438491870414
+          ],
+          [
+            1.0197278444723428,
+            1.7868799887160545,
+            -1.2576178213550389
+          ],
+          [
+            1.4301063720902545,
+            -0.9779194595639964,
+            1.7043879036303684
+          ]
+        ],
+        "abc_beltrami_residual": 0.0,
+        "abc_fd_probe_div_max": 0.0,
+        "abc_div_sympy": "zero"
+      },
+      "independent_reference": {
+        "source": "Dombre, Frisch, Greene, Henon, Mehr, Soward (1986), 'Chaotic streamlines in the ABC flows', J. Fluid Mech. 167:353-391; Arnold (1965) C. R. Acad. Sci. Paris 261 (Beltrami property). div v == 0 term-by-term (each component's own-axis partial vanishes \u2014 hand proof, derivation .md section 1; SymPy recheck in this generator); the FD probe is bit-zero at ANY stencil for the same structural reason.",
+        "doi": "10.1017/S0022112086002859",
+        "derived_by": "hand term-by-term proof + SymPy + NumPy recompute",
+        "expected": "velocity samples match the closed form; Beltrami residual bit-zero; FD probe bit-zero; SymPy 'zero'"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "taylor_green_stream_function"
+      },
+      "expected": {
+        "taylor_green_fd_probe_div_max_h1e-3": 1.270095140171179e-13
+      },
+      "independent_reference": {
+        "source": "Taylor, G. I. (1923), 'On the decay of vortices in a viscous fluid' lineage (the classical Taylor-Green cellular stream function); psi = sin x sin y => v = (sin x cos y, -cos x sin y), div = psi_yx - psi_xy = 0 by Schwarz mixed-partial symmetry (hand proof, derivation .md section 2).",
+        "derived_by": "Schwarz hand proof + NumPy FD-probe recompute",
+        "expected": "probe ~1e-13 (O(g^2) truncation at g=1e-3)"
+      }
+    },
+    {
+      "inputs": {
+        "quantity": "fbm_linearity_matched_grid"
+      },
+      "expected": {
+        "fbm_matched_normalized_div_max": 2.4025132281352016e-16
+      },
+      "independent_reference": {
+        "source": "Linearity of the discrete curl operator (hand proof, derivation .md section 3): the octave-summed potential's matched-grid divergence telescopes to machine zero exactly as any single octave's \u2014 the same per-node +1/-1 cancellation of Hyman & Shashkov (1999), Eqs. 1.7-1.10 (DIV.CURL == 0 for the natural compatible pair).",
+        "doi": "10.1137/S0036142996314044",
+        "derived_by": "telescoping + linearity hand proofs + NumPy recompute",
+        "expected": "normalized div <= 1e-13 (machine-zero telescoping, octave-summed potential)"
+      }
+    }
+  ]
+}

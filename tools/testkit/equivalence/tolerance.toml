@@ -529,3 +529,37 @@ lpips_max = 0.15
 [defaults.lbm-quantized]
 relative = 5.0e-2
 absolute = 1.0e-5
+
+# [defaults.curl-noise]  — MEASURED on curl-noise (Phase-6, spec-ref § 13.2).
+# NEW category (operator decision 5, spec-ref § 13.4 — recommended and taken):
+# the f32<->f64 boundary is noise-evaluator-specific (per-tracer analytic
+# simplex evaluation with exact-integer hash/gradient selection), not any
+# existing grid/solver budget. The gated observable is CHAOS-IMMUNE: the
+# f64-recomputed iso-value residual ||f(x_f32) - f0_f32|| on the canonical
+# cross-product sphere-obstacle scene (spec-ref § 9), normalized by the
+# iso-value scale — NEVER a long-window pointwise trajectory match.
+# DECLARED 2e-4 from measurement (2026-07-05, NumPy-f32 proxy of the full
+# WGSL gated pipeline — integer-hash noise, FBM, obstacle potentials, RK4,
+# 1-iteration Newton reprojection, f32-stored positions — vs the f64
+# reference on the canonical 4096-tracer x 64-step scene): worst
+# f64-recomputed iso-residual 1.19e-5 abs = 1.79e-5 of iso-value scale
+# 0.666, x 4.05 (worst observed RADV->lavapipe family spread, charter
+# round 2) = 7.25e-5, x ~2.7 margin (GPU FMA contraction not modeled by
+# the NumPy proxy) = 2e-4. Capped by [budgets.curl-noise] (tolerance-
+# budget.toml). CRITICAL basis fact: with FLOAT-emulated mod289 hash the
+# same proxy measured O(1) — the integer-hash deviation (spec-ref § 2.5)
+# is what makes this category tight.
+[defaults.curl-noise]
+relative = 2.0e-4
+absolute = 0.0
+
+[overrides.curl-noise]
+category = "curl-noise"
+# Resolves sim.category='closed-form' (physics-family taxonomy) to
+# tolerance-category='curl-noise' (numerical-method taxonomy — NEW
+# category, see [defaults.curl-noise] for the MEASURED-then-declared
+# provenance). AT-BUDGET per [defaults.curl-noise]: relative=2e-4,
+# absolute=0.0. NOT a widening of [defaults.closed_form]: the closed-form
+# parent rows are exact-arithmetic structural invariants; this category
+# prices a per-point f32 GPU noise evaluator against its f64 twin — the
+# isf/pic-flip new-category pattern.

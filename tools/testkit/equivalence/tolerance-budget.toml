@@ -75,3 +75,19 @@ absolute = 0.0
 [budgets.isf.cross_stack]
 relative = 1.0e-4
 absolute = 0.0
+
+# [budgets.curl-noise.cross_stack] — Phase-6 curl-noise web gate (spec-ref
+#   § 13.2): CHAOS-IMMUNE comparison of the WGSL f32 gated pipeline against
+#   the live f64 NumPy reference on the canonical cross-product
+#   sphere-obstacle scene — f64-recomputed iso-value residual at the f32
+#   positions vs the f32-stored initial iso values, normalized by the
+#   iso-value scale (plus run-twice byte-identity and the machine-exact
+#   golden recomputes; NEVER pointwise trajectories, spec-ref § 9). NEW
+#   category (the isf / picflip-observable pattern). MEASURED 2026-07-05
+#   (NumPy-f32 proxy of the full WGSL pipeline): 1.79e-5 relative x 4.05
+#   (worst RADV->lavapipe family spread, charter round 2) x ~2.7 margin
+#   (GPU FMA contraction unmodeled by the proxy).
+#   At-declared cap (no headroom beyond the documented measurement margin).
+[budgets.curl-noise.cross_stack]
+relative = 2.0e-4
+absolute = 0.0
