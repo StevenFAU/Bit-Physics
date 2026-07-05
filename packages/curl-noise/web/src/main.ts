@@ -705,7 +705,20 @@ struct CU { stops: array<vec4<f32>, 8>, cmeta: vec4<f32> }
   });
 
   // --- instruments loop -----------------------------------------------------------------
+  let instrumentsBusy = false; // lavapipe lesson: a 1 Hz tick can fire
+  // while the previous mapAsync is still pending — submitting the copy
+  // then raises "used in submit while pending map" (CI-fatal)
   async function readInstruments(): Promise<void> {
+    if (instrumentsBusy) return;
+    instrumentsBusy = true;
+    try {
+      await readInstrumentsInner();
+    } finally {
+      instrumentsBusy = false;
+    }
+  }
+
+  async function readInstrumentsInner(): Promise<void> {
     const enc = device.createCommandEncoder();
     const pass = enc.beginComputePass();
     pass.setPipeline(instPipe);
