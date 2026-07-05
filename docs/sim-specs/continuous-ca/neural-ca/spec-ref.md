@@ -206,15 +206,32 @@ between the D-inference and B-inference captures, asserted against
 `[render_similarity.continuous-ca.neural-ca]` in
 `tools/testkit/equivalence/tolerance.toml`. NOT `compare_captures`.
 
-**MEASURED + LOCKED at Stage 1c** (mean over the 20 non-seed frame pairs):
-PSNR 23.92 (`psnr_min = 23.0`), SSIM 0.824 (`ssim_min = 0.80`), LPIPS_alex
-0.0316 (`lpips_max = 0.05`). **QUALITY-CONCERN flag (NOT auto-fail; learned =
-distributional):** PSNR 23.92 < § 2.12 floor 28 and SSIM 0.824 < floor 0.85 —
-dragged down by the stochastic per-cell fire-mask RNG divergence (`torch.rand` vs
-WGSL PCG). The PERCEPTUAL metric **LPIPS_alex 0.0316 PASSES the floor (≤ 0.15)**:
-the D and B patterns are perceptually equivalent. Companion doc:
+**MEASURED + RE-LOCKED at Phase-4 A6 (current — the matched-PCG fix).** The
+gate (mean over the 20 non-seed frame pairs of the two committed step-1000
+captures) now measures **mean PSNR 144.562, SSIM 1.0000, LPIPS_alex 0.0000**,
+CLEARING all three § 2.12 floors (28 / 0.85 / 0.15). The row was RE-LOCKED with
+margin BELOW the measured means (a **TIGHTENING**, not a § 2.6 widening):
+`psnr_min = 140.0`, `ssim_min = 0.99`, `lpips_max = 0.01` in
+`tools/testkit/equivalence/tolerance.toml:339-364`. The residual ~144 dB (not ∞)
+is the GPU-vs-CPU f32 conv-reduction order ONLY; the gate stays **STATISTICAL,
+not bit-exact** (spec § 2.6 `docs/architecture.md:414` + § 5.12). Companion doc:
 `docs/sim-specs/continuous-ca/neural-ca/equivalence.md` (RD-2D template, marked
 **statistical**).
+
+**Pre-A6 history (the QUALITY-CONCERN that was fixed, not laundered).** At Stage
+1c the two stacks drew DIFFERENT fire masks — PyTorch from `torch.rand`, WGSL
+from the oracle `pcg_fire(x,y,step,seed)` hash — so the pixel-wise metrics were
+dragged below the then-floors: **PSNR 23.92 (< 28), SSIM 0.824 (< 0.85),
+LPIPS_alex 0.0316 (≤ 0.15, PASSED)** at `psnr_min = 23.0` / `ssim_min = 0.80` /
+`lpips_max = 0.05`. An honest QUALITY-CONCERN close, root-caused (H1
+RNG-divergence ≈ 100% of the shortfall; H2 f32-chaos negligible) in
+`docs/_audits/phase-3/neural-ca-gate14-divergence-diagnosis-20260529T120252Z.md`.
+The A6 fix gave `model.forward(…, step=t, seed=seed)` the matched stateless PCG
+mask (identical to WGSL/oracle) and regenerated the D capture, so D and B now
+consume the SAME per-cell mask — which is what lifted the gate from 23.92 dB to
+144.562 dB. **The matched PCG fire mask is the load-bearing determinism device**
+(§ 8): it is why a stochastic learned update is bit-reproducible within a stack
+and near-identical across stacks.
 
 ## 10. Diagnostics
 
