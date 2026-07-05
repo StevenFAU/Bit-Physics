@@ -1,0 +1,33 @@
+[project]
+name = "boids-2d"
+version = "0.0.0"
+description = "Agent-based Phase-6 verification demo — 2D Reynolds/Vicsek flocking lab with WebGPU counting-sort broadphase and wet-inspired stable-fluid coupling."
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "h5py>=3.10",
+  "hypothesis>=6.0",
+  "numpy>=2.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["boids_2d"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }

@@ -34,6 +34,10 @@ tests + goldens / MMS; sim implementation deferred to per-sim Phase
 
 - [boids-3d](agent-based/boids-3d/) — Reynolds 1987 three-rule
   flocking. Stack B. Charter § 7.5.
+- [boids-2d](agent-based/boids-2d/) — 2D Reynolds/Vicsek flocking
+  lab with counting-sort broadphase, live active-matter observables,
+  and two-way stable-fluid coupling. Stack B. Phase-6 verification
+  demo.
 - [physarum](agent-based/physarum/) — Jones 2010 mold transport.
   Stack B. Charter § 7.5.
 

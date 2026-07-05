@@ -1,6 +1,6 @@
 """Phase-5 web-deploy pipeline (phase plan § 5.5 shape; § 6.1 criteria; sub-phase 5.1).
 
-Build-and-validate the 7 Stack-B web frontends (built by the web-build track) into
+Build-and-validate the Stack-B web frontends (built by the web-build track) into
 headless-deployable bundles and re-verify each through the BROWSER:
 
   1. build    — ``npm ci`` + ``vite build`` per qualifying sim → ``web/dist`` (§6.1).
@@ -48,7 +48,7 @@ TOOL = Path(__file__).resolve().parent
 DRIVER = TOOL / "web" / "headless" / "driver.mjs"
 SUB_PHASE = "web-deploy"
 
-# The 7 Stack-B web frontends + their CHARTER-named gate kind (web-build track).
+# Stack-B web frontends + their CHARTER-named gate kind (web-build track).
 # new_canonical sims need TWO browser runs (run-twice byte-identity).
 GATE_KIND = {
     "reaction-diffusion-2d": "capture_roundtrip",
@@ -57,6 +57,10 @@ GATE_KIND = {
     "ising-classical": "observable",
     "strange-attractors": "new_canonical",
     "boids-3d": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = run-twice browser observable
+    # capture for the v4-derived 2D lab (verify.py _gate_boids_2d) + the
+    # app's in-page adapter-local brute-sort/fluid proof rows.
+    "boids-2d": "new_canonical",
     "physarum": "new_canonical",
     # Phase-6 verification-demo: new_canonical = live f64 reference re-run
     # (verify.py _gate_eulerian_smoke) + run-twice (2 runs, automatic below).

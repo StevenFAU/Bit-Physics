@@ -20,6 +20,10 @@ members = [
   # convergence-file discipline; resolves banked items B7, B13, B15).
   "packages/strange-attractors",
   "packages/mandelbulb-explorer",
+  # Phase-6 verification-demo: Stack-B boids-2d web lab. The simulation kernel is
+  # browser-native, but the workspace member declares the verifier/testkit deps
+  # consumed by web-deploy's per-sim `uv sync --package boids-2d` contract.
+  "packages/boids-2d",
   "packages/boids-3d",
   "packages/physarum",
   "packages/reaction-diffusion-3d",

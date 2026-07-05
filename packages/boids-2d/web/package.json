@@ -1,0 +1,18 @@
+{
+  "name": "@bit-physics/web-boids-2d",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build - Boids 2D verification lab with counting-sort broadphase, Vicsek observables, and two-way stable-fluid coupling.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

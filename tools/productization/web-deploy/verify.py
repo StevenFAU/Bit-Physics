@@ -239,6 +239,7 @@ SIM_CATEGORY = {
     "mandelbulb-explorer": "closed-form",
     "strange-attractors": "closed-form",
     "boids-3d": "agent-based",
+    "boids-2d": "agent-based",
     "physarum": "agent-based",
     "eulerian-smoke": "volumetric-grid",
     "sph-water": "particle-fluids",
@@ -253,6 +254,7 @@ GATE_KIND = {
     "mandelbulb-explorer": "new_canonical",
     "strange-attractors": "new_canonical",
     "boids-3d": "new_canonical",
+    "boids-2d": "new_canonical",
     "physarum": "new_canonical",
     "eulerian-smoke": "new_canonical",
     "sph-water": "new_canonical",
@@ -619,6 +621,92 @@ def _gate_boids(bundles: list[dict]) -> VerifyResult:
             "short_horizon_threshold": T_BOIDS_SHORT,
             "v_max_observed": round(vmax_obs, 4),
             "v_max_clamp_ok": clamp_ok,
+        },
+    )
+
+
+def _gate_boids_2d(bundles: list[dict]) -> VerifyResult:
+    """new_canonical observable gate for the v4-derived boids-2d lab.
+
+    The full page contains the expensive adapter-local GPU rows (scan, sorted
+    permutation, brute-sort hashes, and coupled-fluid hashes). The deploy gate
+    stays fast and browser-portable: it verifies the deterministic observable
+    capture emitted by the page's standard `exposeCapture` bridge.
+    """
+
+    def fields_by_step(bundle: dict) -> dict[int, tuple[np.ndarray, np.ndarray]]:
+        return {
+            int(s["step"]): (_field(s, "order"), _field(s, "fluid_probe"))
+            for s in _bundle_steps(bundle)
+        }
+
+    f1 = fields_by_step(bundles[0])
+    twice = None
+    if len(bundles) > 1:
+        f2 = fields_by_step(bundles[1])
+        twice = set(f1) == set(f2) and all(
+            np.array_equal(f1[k][0], f2[k][0]) and np.array_equal(f1[k][1], f2[k][1])
+            for k in f1
+        )
+
+    steps = sorted(f1)
+    expected = list(range(0, 121, 20))
+    if steps != expected:
+        return VerifyResult(
+            sim="boids-2d",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {steps} != canonical {expected}"},
+        )
+
+    series = np.stack([f1[k][0].astype(np.float64) for k in steps], axis=0)
+    fluid = f1[steps[-1]][1].astype(np.float64)
+    finite = bool(np.isfinite(series).all() and np.isfinite(fluid).all())
+    phi = series[:, 0]
+    rotation = series[:, 1]
+    noisy_phi = series[:, 2]
+    speed_max = series[:, 5]
+    bounded = bool(
+        np.all((phi >= 0.0) & (phi <= 1.0))
+        and np.all((rotation >= 0.0) & (rotation <= 1.0))
+        and np.all((noisy_phi >= 0.0) & (noisy_phi <= 1.0))
+    )
+    vmax = float(np.max(speed_max))
+    speed_ok = vmax <= 0.012 * (1.0 + 1e-3)
+    final_ordered = float(phi[-1])
+    final_noisy = float(noisy_phi[-1])
+    noise_response = final_ordered > final_noisy + 0.03
+    initial_div = float(fluid[0])
+    final_div = float(fluid[1])
+    fluid_improves = final_div < initial_div
+    passed = bool(
+        (twice is not False)
+        and finite
+        and bounded
+        and speed_ok
+        and noise_response
+        and fluid_improves
+    )
+    return VerifyResult(
+        sim="boids-2d",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "finite": finite,
+            "bounded_order_parameters": bounded,
+            "final_ordered_phi": final_ordered,
+            "final_noisy_phi": final_noisy,
+            "noise_response_ok": noise_response,
+            "v_max_observed": vmax,
+            "v_max_clamp_ok": speed_ok,
+            "fluid_initial_divergence": initial_div,
+            "fluid_final_divergence": final_div,
+            "fluid_projection_improves": fluid_improves,
+            "note": "fast browser observable gate; heavy brute-sort and coupled-fluid "
+            "adapter-local proof rows run inside the boids-2d page.",
         },
     )
 
@@ -1997,6 +2085,7 @@ _GATES = {
     "mandelbulb-explorer": _gate_mandelbulb,
     "strange-attractors": _gate_strange,
     "boids-3d": _gate_boids,
+    "boids-2d": _gate_boids_2d,
     "physarum": _gate_physarum,
     "eulerian-smoke": _gate_eulerian_smoke,
     "sph-water": _gate_sph_water,
