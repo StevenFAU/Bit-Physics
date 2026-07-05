@@ -1,0 +1,248 @@
+{
+  "_generated_by": "packages/neural-ca/web/gen-verification.mjs — do not edit by hand",
+  "sim": "neural-ca",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "gate": {
+    "kind": "capture_roundtrip",
+    "declared": {
+      "relative": 0,
+      "absolute": 0
+    },
+    "criterion": "max_abs == 0.0 (bit-exact) vs the WGSL canonical, field rgba, all frames",
+    "tolerance": "[defaults.continuous-ca] 0.0 / 0.0 (bit-exact, no row added)",
+    "measured_max_abs_radv": 0,
+    "measured_equals_wgpu_native": true,
+    "run_twice": "byte-identical",
+    "n_frames": 21,
+    "backend_conditional": true,
+    "known_bitexact_family": "RADV / Vulkan (SPIR-V) — RX 6800 XT"
+  },
+  "determinism": {
+    "within_wgsl": "bit-exact (same-stack-same-hw)",
+    "manifest_claimed": "epsilon",
+    "cross_stack": "statistical (render-similarity)",
+    "training": "non-deterministic",
+    "training_efect_3sigma_upper": 0.07,
+    "inference": "bit-exact (same-stack-same-hw)",
+    "run_twice": "byte-identical"
+  },
+  "cross_stack": {
+    "psnr": 144.562,
+    "ssim": 1,
+    "lpips_alex": 0,
+    "psnr_min": 140,
+    "ssim_min": 0.99,
+    "lpips_max": 0.01,
+    "history_psnr": 23.92,
+    "history_ssim": 0.824,
+    "history_lpips": 0.0316,
+    "why_statistical": "residual ~144 dB (not ∞) is the GPU-vs-CPU f32 conv-reduction order; the earlier 23.92 dB was the torch.rand≠WGSL-PCG fire-mask divergence, fixed at Phase-4 A6 by drawing the matched stateless PCG in PyTorch too",
+    "numpy_oracle_max_abs": 0.0000035
+  },
+  "model": {
+    "grid": [
+      64,
+      64
+    ],
+    "channels": 16,
+    "hidden": 12,
+    "perception": "identity + Sobel-x + Sobel-y (48-vec)",
+    "mlp": "48 → 128 → 16 (final zero-init = residual)",
+    "fire_rate": 0.5,
+    "alive_threshold": 0.1,
+    "regime": "persistent",
+    "target": "disk",
+    "checkpoint": "neural-ca-emoji-disk",
+    "weights_sha256": "c98a467879559bf215dd44713778868eeccdfc14599a873de05ebc9df59e4039",
+    "weights_matches_golden": true
+  },
+  "canonical": {
+    "descriptor": "growing-emoji-64sq-seed42-step1000-wgsl",
+    "seed": 42,
+    "grid": [
+      64,
+      64
+    ],
+    "step_count": 1000,
+    "capture_interval": 50,
+    "payload_sha256": "sha256:078be96736186fe6c517e6f00c38e85f4d1f9452b3c0a6e55a7544747c13d8c7",
+    "payload_sha256_is": "the HDF5 payload FILE hash — NOT the rgba-frame digest",
+    "persistent_hold_step": 1000,
+    "growing_overgrow_step": 200
+  },
+  "canonical_frames": {
+    "asset": "neural-ca-canonical-frames.bin",
+    "sha256": "ff959c010cf5f8866ed79d0c4f7a6d8acd69292c8ce46cd532d91ad74915c2aa",
+    "bytes": 1376256,
+    "dtype": "<f4",
+    "n_frames": 21,
+    "steps": [
+      0,
+      50,
+      100,
+      150,
+      200,
+      250,
+      300,
+      350,
+      400,
+      450,
+      500,
+      550,
+      600,
+      650,
+      700,
+      750,
+      800,
+      850,
+      900,
+      950,
+      1000
+    ],
+    "layout": "frame-major: 21 × rgba[64*64*4] row-major, clamped [0,1]",
+    "extracted_from": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.h5"
+  },
+  "postmortem": {
+    "prefix_browser_vs_canonical": "0.72–0.79",
+    "prefix_within_dawn_step100": "0.46–0.68",
+    "root_cause": "frontend capture/live-RAF harness race (shared ping-pong state) — the cross-backend-f32 hypothesis was REFUTED by measurement",
+    "tolerance_widened": false,
+    "postfix_max_abs_radv": 0,
+    "residual_axis": "bit-exactness is backend-conditional — confirmed on RADV-family backends only; the _gate_neural_ca_observable contingency is authored + declared and opt-in via BITPHYSICS_BROWSER_OBSERVABLE_FALLBACK",
+    "contingency": {
+      "short_horizon_step": 50,
+      "short_horizon_abs": 0.01,
+      "alpha_min_mass": 1,
+      "declared_short_horizon_abs": 0.0000018,
+      "status": "opt-in, pending-lavapipe"
+    },
+    "audits": {
+      "charter": "docs/_audits/phase-5/browser-divergence-charter-2026-06-09T12-49-00Z.md",
+      "resolution": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md"
+    },
+    "perf_ledger": "docs/perf-ledger.md"
+  },
+  "pypi_reemit": {
+    "max_abs": 0,
+    "n_fields": 21
+  },
+  "templates": [
+    {
+      "id": "grow-from-seed",
+      "caption": "one live centre cell → a stable disk; the residual MLP does nothing until the fire mask lets it.",
+      "source": "Mordvintsev et al., Distill 2020"
+    },
+    {
+      "id": "persistent-hold",
+      "caption": "the Persistent regime's defining property: holds the pattern to step 1000. A Growing checkpoint would overgrow by ~step 200.",
+      "source": "perf-ledger.md — pool-trained checkpoint"
+    },
+    {
+      "id": "damage-measure",
+      "caption": "erase a disk of cells → watch the α-mass recover. Persistent ≠ damage-trained Regenerating: expect PARTIAL recovery, measured live.",
+      "source": "Distill 2020 — “some regenerative properties… but not full re-growth”"
+    },
+    {
+      "id": "multi-seed",
+      "caption": "drop several seeds → interacting organisms competing for the grid.",
+      "source": "Distill 2020 — seed placement"
+    },
+    {
+      "id": "fire-rate-sweep",
+      "caption": "vary the Bernoulli fire rate → the learned update is robust to asynchrony (live only; the gate re-runs pinned at 0.5).",
+      "source": "Distill 2020 — stochastic update"
+    },
+    {
+      "id": "hidden-channel-tour",
+      "caption": "false-color the 12 invisible hidden channels — the CA's “chemical” signals driving growth.",
+      "source": "spec-ref.md § 3 — unbounded hidden state"
+    },
+    {
+      "id": "backend-divergence-probe",
+      "caption": "re-run the canonical rollout on YOUR GPU and score all 21 frames against the committed golden — bit-identical on a matching backend, tiny f32 drift otherwise.",
+      "source": "verify.py _gate_neural_ca — full-sweep mirror"
+    }
+  ],
+  "code_anchors": {
+    "perception": {
+      "start": 87,
+      "end": 96,
+      "lines": [
+        "var perc : array<f32, 48>;",
+        "for (var c : u32 = 0u; c < CN; c = c + 1u) {",
+        "  let v00 = sample(0u, xi - 1, yi - 1, c); let v01 = sample(0u, xi, yi - 1, c); let v02 = sample(0u, xi + 1, yi - 1, c);",
+        "  let v10 = sample(0u, xi - 1, yi,     c); let v11 = sample(0u, xi, yi,     c); let v12 = sample(0u, xi + 1, yi,     c);",
+        "  let v20 = sample(0u, xi - 1, yi + 1, c); let v21 = sample(0u, xi, yi + 1, c); let v22 = sample(0u, xi + 1, yi + 1, c);",
+        "  let sx = (-v00 + v02 - 2.0 * v10 + 2.0 * v12 - v20 + v22) / 8.0;",
+        "  let sy = (-v00 - 2.0 * v01 - v02 + v20 + 2.0 * v21 + v22) / 8.0;",
+        "  perc[3u * c + 0u] = v11;",
+        "  perc[3u * c + 1u] = sx;",
+        "  perc[3u * c + 2u] = sy;"
+      ]
+    },
+    "mlp": {
+      "start": 100,
+      "end": 111,
+      "lines": [
+        "var dx : array<f32, 16>;",
+        "for (var c : u32 = 0u; c < CN; c = c + 1u) { dx[c] = 0.0; }",
+        "for (var o : u32 = 0u; o < HID; o = o + 1u) {",
+        "  var acc : f32 = weights[P.b1_off + o];",
+        "  let row = P.w1_off + o * PERC;",
+        "  for (var j : u32 = 0u; j < PERC; j = j + 1u) {",
+        "    acc = acc + weights[row + j] * perc[j];",
+        "  }",
+        "  let h = max(acc, 0.0);",
+        "  if (h != 0.0) {",
+        "    for (var c : u32 = 0u; c < CN; c = c + 1u) {",
+        "      dx[c] = dx[c] + weights[P.w2_off + c * HID + o] * h;"
+      ]
+    },
+    "pcg_fire": {
+      "start": 56,
+      "end": 62,
+      "lines": [
+        "fn pcg_fire(x : u32, y : u32, step : u32, seed : u32) -> f32 {",
+        "var v : u32 = x * 1973u + y * 9277u + step * 26699u;",
+        "v = v + seed * 2654435761u;",
+        "v = v * 747796405u + 2891336453u;",
+        "var word : u32 = ((v >> ((v >> 28u) + 4u)) ^ v) * 277803737u;",
+        "word = (word >> 22u) ^ word;",
+        "return f32(word) / 4294967296.0;"
+      ]
+    },
+    "fire_apply": {
+      "line": 119,
+      "text": "state_out[base + c] = state_in[base + c] + dx[c] * fire;"
+    },
+    "alive": {
+      "start": 66,
+      "end": 73,
+      "lines": [
+        "fn alive(buf_sel : u32, x : i32, y : i32) -> bool {",
+        "var m : f32 = -1.0e30;",
+        "for (var dy : i32 = -1; dy <= 1; dy = dy + 1) {",
+        "  for (var dx : i32 = -1; dx <= 1; dx = dx + 1) {",
+        "    m = max(m, sample(buf_sel, x + dx, y + dy, 3u));",
+        "  }",
+        "}",
+        "return m > 0.1;"
+      ]
+    },
+    "alive_apply": {
+      "line": 133,
+      "text": "state_out[base + c] = state_mid[base + c] * keep;"
+    }
+  },
+  "links": {
+    "kernel": "packages/neural-ca/typescript/src/nca_inference.wgsl",
+    "spec": "docs/sim-specs/continuous-ca/neural-ca/spec-ref.md",
+    "determinism_registry": "tools/testkit/determinism/registry.toml",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "charter_audit": "docs/_audits/phase-5/browser-divergence-charter-2026-06-09T12-49-00Z.md",
+    "resolution_audit": "docs/_audits/phase-5/browser-divergence-resolution-landing-2026-06-09T13-24-25Z.md",
+    "perf_ledger": "docs/perf-ledger.md",
+    "capture_manifest": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.json"
+  }
+}
