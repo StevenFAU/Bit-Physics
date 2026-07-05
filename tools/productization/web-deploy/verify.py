@@ -162,6 +162,21 @@ T_PICFLIP_STILL_DVOL = 4.0  # |fluid-node-count drift| over the still probe
 T_PICFLIP_HYDRO_REL = 2e-2  # |dP/dz - rho g_z| / |rho g_z| (compact adjoint pair)
 PICFLIP_HEADROOM_FACTOR = 2  # max |cell quanta| below 2^31 / this (M = 2^21)
 
+# --- schrodinger-smoke (Phase-6 verification-demo; NEW sim — declared fresh,
+# measured-then-declared per docs/sim-specs/volumetric-grid/schrodinger-smoke/
+# spec-ref.md § 6.5b). The web-gate canonical is the NON-CHAOTIC translating
+# vortex ring at the 32^3 tier (pic-flip reduced-tier precedent), so pointwise
+# per-checkpoint comparison against a LIVE f64 reference re-run is real
+# (eulerian-smoke live-reference precedent). TRAJ_REL is the NEW
+# [defaults.isf] category tolerance verbatim (tolerance.toml, resolved via
+# [overrides.schrodinger-smoke]; capped by [budgets.isf]) — MEASURED basis:
+# complex64 proxy worst 1.4e-5 of field peak, x 4.05 family spread x ~1.75.
+T_ISF_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
+T_ISF_NORM_FLAT_REL = 1e-4  # browser norm_l2 diagnostic flat across checkpoints
+# (f32 renormalization scope; the machine-exact <=1e-13 row is the f64
+# backend's — the browser witnesses flatness at its own precision)
+T_ISF_HEADROOM_MAX = 1.0  # no principal-branch re-wrap during the gate window
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -1738,6 +1753,113 @@ def _gate_pic_flip(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_schrodinger_smoke(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for schrodinger-smoke: LIVE f64 reference re-run.
+
+    The browser's canonical is translating-ring-32cube-hbar0.05-step24-webgate
+    — the demo's OWN web-gate tier (pic-flip precedent: the visible demo runs
+    64^3-128^3; the gate bundle stays small at 32^3 x 4 checkpoints). The
+    scene is NON-CHAOTIC (spec-ref § 9: pointwise comparison is physically
+    meaningful; the 3D-TG-blows-up lesson), and the browser builds + settles
+    its IC in pure-JS f64 with the backend's own algorithm, so the pointwise
+    per-checkpoint comparison against the LIVE f64 reference is real.
+
+    Gate = run-twice byte-identity over u/v/w at every checkpoint
+         + per-checkpoint per-field max_abs(browser - reference_f64)
+           <= T_ISF_TRAJ_REL * max|browser field|  (the NEW [defaults.isf]
+           1e-4; MEASURED complex64-proxy worst 1.4e-5 of peak — no tolerance
+           widened)
+         + finite fields + the browser's own norm_l2 diagnostic flat across
+           checkpoints at f32 scope (the unitary-norm gate's browser shadow).
+    """
+    sys.path.insert(0, str(REPO / "packages/schrodinger-smoke"))
+    from schrodinger_smoke.reference.isf import IsfConfig, run_isf  # type: ignore
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in ("u", "v", "w")
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [0, 8, 16, 24]
+    if expected_steps != want:
+        return VerifyResult(
+            sim="schrodinger-smoke",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    # live f64 reference re-run (2-run bit-identity witnessed inside run_isf)
+    cfg = IsfConfig(
+        n=32,
+        hbar=0.05,
+        dt=1.0 / 24.0,
+        steps=24,
+        scene="translating-ring",
+        capture_every=8,
+    )
+    res = run_isf(cfg)
+    ref = {step: cap for step, cap in zip(res.capture_steps, res.captures, strict=True)}
+
+    worst = {"u": 0.0, "v": 0.0, "w": 0.0}
+    worst_ratio = 0.0
+    finite = True
+    norms = []
+    for st in steps0:
+        cap = ref[st["step"]]
+        norms.append(float(st["diagnostics"].get("norm_l2", np.nan)))
+        for fi, key in enumerate(("u", "v", "w")):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            max_abs = float(np.abs(bf - cap[fi]).max())
+            worst[key] = max(worst[key], max_abs)
+            budget = T_ISF_TRAJ_REL * float(np.abs(bf).max())
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+    within = worst_ratio <= 1.0
+    norm_arr = np.asarray(norms)
+    norm_flat = bool(
+        np.isfinite(norm_arr).all()
+        and float(np.abs(norm_arr - norm_arr[0]).max())
+        <= T_ISF_NORM_FLAT_REL * norm_arr[0]
+    )
+    passed = bool((twice is not False) and within and finite and norm_flat)
+    return VerifyResult(
+        sim="schrodinger-smoke",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_ISF_TRAJ_REL,
+            "finite": finite,
+            "norm_flat_f32_scope": norm_flat,
+            "reference_witness_sha256": res.determinism_witness_sha256,
+            "reference_max_div_postproj": res.max_div_postproj,
+            "reference_edge_phase_headroom": res.edge_phase_headroom,
+            "note": "live f64 reference re-run (eulerian-smoke precedent); rel "
+            "budget is the NEW [defaults.isf] 1e-4 (MEASURED complex64-proxy "
+            "worst 1.4e-5 of peak; spec-ref § 6.5b MEASURED block)",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -1750,6 +1872,7 @@ _GATES = {
     "sph-water": _gate_sph_water,
     "mpm-multimaterial": _gate_mpm_multimaterial,
     "pic-flip": _gate_pic_flip,
+    "schrodinger-smoke": _gate_schrodinger_smoke,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

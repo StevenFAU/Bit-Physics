@@ -18,8 +18,16 @@
 > **Gate kind:** `new_canonical` (moat = closed-form spectral goldens + run-twice
 > device-scoped bit-identity + robust observables; precedent `eulerian-smoke`).
 >
-> **Status:** SPEC (research + design). Not built. This is the "how to implement"
-> deliverable, matching the smoke/sph/mpm/pic-flip cadence.
+> **Status:** **EXECUTED 2026-07-05** (v0.2 spec; backend landed first at
+> PR #11). Implementation notes vs spec: WGSL Tier-1 Stockham FFT shipped
+> (Tier-2 shared-memory deferred until a MEASURED need); grids 32/64/128
+> (radix-2 — the 96³ option dropped); web-gate canonical =
+> `translating-ring-32cube-hbar0.05-step24-webgate` (pic-flip reduced-tier
+> precedent; the visible demo runs 64³/128³); IC built AND settled in
+> pure-JS f64 (`packages/schrodinger-smoke/web/src/isf64.mjs`, the backend
+> algorithm) so the only IC divergence vs the f64 reference is one f32 cast;
+> core-line raymarch deferred (HUD-honest), divergence/headroom live via the
+> stats readback. MEASURED numbers in the § 5.5 block below the gate run.
 >
 > **The hook:** the wavefunction grid is small (64³–128³) but the tracer cloud is
 > **millions** — the "max particles on screen" architecture the user asked for, and
@@ -241,6 +249,44 @@ sorted alpha, E(k) panel — three extra FFTs on demand) each display their own
 measured cost and default off on weak adapters.
 
 ---
+
+## 5.6 · MEASURED block (execution 2026-07-05, RADV; every number from a live run)
+
+- **Deploy gate (local web-deploy validate, snap-chromium/RADV):** PASS —
+  `run_twice_identical: true` (the WGSL Stockham FFT is device-scoped
+  bit-exact end to end), worst per-checkpoint ratio **0.157 of the
+  [defaults.isf] 1e-4 budget** vs the LIVE f64 reference re-run (no
+  tolerance widened). Browser norm_l2 flat at f32 scope; reference re-run
+  max div 9.9e-13, headroom 0.158.
+- **CROSS-BACKEND TRIG DISCOVERY (CI lavapipe, run 1):** with WGSL BUILTIN
+  sin/cos/atan2 the gate was run-twice byte-identical on lavapipe but
+  **63× over budget** (worst 1.26e-2, norm not flat). Root cause: the
+  Vulkan spec only guarantees builtin sin/cos to 2⁻¹¹ (~4.9e-4) absolute
+  error and llvmpipe implements exactly that floor; the per-step trig noise
+  accumulates ~×24. RADV's hardware trig masked it locally (0.34 of budget).
+  Fix: ALL gated-path trig replaced with range-reduced polynomial forms in
+  `packages/schrodinger-smoke/web/src/isf_core.wgsl` (quadrant-reduced
+  Taylor r⁷/r⁸ for sin/cos ≈3e-7 abs; Cephes-reduction atan2 ≈8e-9) —
+  uniformly accurate across drivers AND it improved RADV itself to 0.157
+  of budget (builtin trig was the dominant f32 error term everywhere).
+  The trig-bound CUDA lesson generalizes: on GPUs, trig is a PRECISION
+  hazard, not just a throughput one.
+- **In-browser goldens (PROVE panel, this device):** golden B closed-form
+  phase max err 0.0; golden E two-spectra max rel err 0.0; golden A live
+  pure-JS f64 FFT norm drift 6.24e-14 ≤ 1e-13; Parseval 2.07e-14 ≤ 1e-13;
+  total cost 25 ms.
+- **Sustained figures (RADV, 1400×1100):** 165 FPS at **4.19M tracers**
+  (adaptive controller topped out at the 4M cap) on the 64³ grid; encode
+  ~0.1 ms. All 10 templates exercised headlessly with zero console errors;
+  live headroom 1–46% of π across scenes (jet/buoyant/street highest —
+  constraint-driven flows).
+- **Implementation lessons (recorded):** (1) one-sim-step-per-frame
+  fast-forwards the physics on high-Hz displays — the loop now steps at the
+  paper's 24 steps/s wall cadence; (2) uniform tracer seeding in an
+  incompressible flow stays uniform forever — the iconic look needs per-scene
+  dye seed regions (disk for rings, nozzle slab for jets), added as
+  `SceneSpec.seed`; (3) additive glow must normalize by tracer count or 4M
+  points saturate to white.
 
 ## 6 · Data spine (build-time)
 

@@ -74,6 +74,12 @@ GATE_KIND = {
     # golden suite + on-device atomic==lex-oracle transfer bit-identity +
     # run-twice (verify.py _gate_pic_flip).
     "pic-flip": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = LIVE f64 reference re-run of
+    # the NON-CHAOTIC translating-ring web-gate canonical at the 32^3 tier
+    # (pointwise per-checkpoint, [defaults.isf] rel budget) + run-twice
+    # byte-identity (verify.py _gate_schrodinger_smoke). The eulerian-smoke
+    # live-reference precedent at the pic-flip reduced-tier scale.
+    "schrodinger-smoke": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

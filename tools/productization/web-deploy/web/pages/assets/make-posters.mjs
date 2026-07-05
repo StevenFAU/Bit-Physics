@@ -84,6 +84,12 @@ const SIMS = {
   // trace-in completes, the afterglow settles, and the camera returns to the
   // face-on butterfly.
   "strange-attractors": { frames: 2094, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.1) saturate(1.2)" },
+  // Phase-6 schrodinger-smoke: boots into the gated translating-ring scene
+  // (dye disk + 24 sim-steps/s wall cadence; the f64 IC settle blocks RAF for
+  // a few seconds first). ~380 RAF frames ≈ 150 sim steps = the vortex ring
+  // mid-flight with the mushroom wake fully rolled up. The additive tracer
+  // render carries its own density-normalized exposure.
+  "schrodinger-smoke": { frames: 380, px: 512 },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

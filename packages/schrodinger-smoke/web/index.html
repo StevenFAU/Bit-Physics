@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Schrödinger's Smoke — Incompressible Schrödinger Flow (verified) — Bit-Physics</title>
+    <meta name="description" content="The first browser Schrödinger's Smoke we could find: a quantum wavefunction whose phase IS the fluid. Millions of tracers, quantized vortex rings and knots — with machine-exact spectral verification gates re-run live on your GPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Schrödinger's Smoke — ISF (verified) — Bit-Physics" />
+    <meta property="og:description" content="Incompressible Schrödinger Flow in WebGPU: vortex rings, leapfrogging, trefoil knots — verification-visible, with the FFT solver's machine-exact gates re-run in your browser." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/schrodinger-smoke/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/schrodinger-smoke.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Schrödinger's Smoke — ISF (verified) — Bit-Physics" />
+    <meta name="twitter:description" content="A quantum wavefunction whose phase IS the fluid — first browser 3D ISF we could find, verification-visible." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/schrodinger-smoke.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(92vmin, 780px); height: min(92vmin, 780px); touch-action: none; }
+      .ss-hud {
+        position: fixed; left: 12px; bottom: 10px; z-index: 30;
+        font: 11px/1.5 ui-monospace, monospace; color: #8fa8bd;
+        background: rgba(6, 9, 13, 0.72); padding: 4px 8px; border-radius: 6px;
+        max-width: min(92vw, 780px); pointer-events: none;
+      }
+      .ss-explain, .ss-verify {
+        position: relative; margin: 10px auto; width: min(92vmin, 780px);
+        font: 13px/1.55 system-ui, sans-serif; color: #b7c7d6;
+        background: #0a1017; border: 1px solid #17222e; border-radius: 8px;
+        padding: 8px 14px;
+      }
+      .ss-explain summary, .ss-verify summary {
+        cursor: pointer; font-weight: 600; color: #d7e4f0; padding: 4px 0;
+      }
+      .ss-honesty { border-left: 3px solid #b08c2e; padding-left: 10px; }
+      .ss-vrow { display: flex; gap: 8px; align-items: baseline; padding: 3px 0;
+        border-bottom: 1px dotted #14202c; }
+      .ss-badge { flex: none; font: 10px/1.6 ui-monospace, monospace;
+        padding: 0 6px; border-radius: 4px; background: #12314a; color: #9fd0f5; }
+      .ss-badge.no { background: #4a1212; color: #f5a09f; }
+      .ss-vlabel { flex: none; min-width: 220px; color: #d7e4f0; }
+      .ss-vvalue { color: #8fa8bd; font: 12px/1.5 ui-monospace, monospace; }
+      .ss-verify .bps-btn { margin: 6px 6px 6px 0; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="900" height="900" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
