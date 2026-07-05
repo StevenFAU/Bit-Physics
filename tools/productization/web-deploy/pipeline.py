@@ -80,6 +80,12 @@ GATE_KIND = {
     # byte-identity (verify.py _gate_schrodinger_smoke). The eulerian-smoke
     # live-reference precedent at the pic-flip reduced-tier scale.
     "schrodinger-smoke": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = CHAOS-IMMUNE live f64
+    # reference re-run (verify.py _gate_curl_noise: f64-recomputed
+    # iso-value residual at the browser's f32 canonical-scene positions
+    # vs its f32 iso anchors, [defaults.curl-noise] budget) + committed-IC
+    # match + live machine-exact goldens + run-twice byte-identity.
+    "curl-noise": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

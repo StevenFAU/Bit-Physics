@@ -1,4 +1,4 @@
-# curl-noise — WebGPU verification demo spec (v0.2)
+# curl-noise — WebGPU verification demo spec (v0.3)
 
 > **Status:** **SPEC v0.3 — EXECUTED 2026-07-05** (v0.2 review pass 2026-07-05:
 > noise-basis correction — psrdnoise is NOT trig-free, default basis is
@@ -11,6 +11,20 @@
 > flagship identities are gradient orthogonality `v·∇f₁ ≡ v·∇f₂ ≡ 0` (the
 > chaos-immunity mechanism) and the Clebsch integrand `ψ·v ≡ 0`, `ψ = f₁∇f₂`;
 > kinetic helicity is displayed honestly NONZERO — §§ 3–4 instruments corrected.)
+> **EXECUTED RESULTS (2026-07-05, RADV):** gate GREEN — run-twice byte-identical,
+> browser IC matches the committed canonical seeds to 3.0e-8, live-f64 iso-residual
+> worst 1.175e-5 = **0.088 of the [defaults.curl-noise] budget** (and within 1% of
+> the NumPy-f32 proxy that set the tolerance — the measure-then-declare basis
+> validated end-to-end); local `pipeline.py validate --sim curl-noise` PASS.
+> **Execution deviations (deferred-with-cause, v1 ships without):** hero ribbons,
+> iso-contour raymarch, sorted-alpha, half-res particle target, adaptive count
+> controller and per-pass GPU-timestamp HUD (frame-ms + count HUD ships; the heavy
+> options were § 5.5 default-off extras — roadmap, not gate surface). Template 10
+> compares **Bridson multiplicative vs Curl-Flow additive** live; the Ding-Batty C¹
+> construction is documented (2D-only, backend § 2) but NOT ported — its medial-axis
+> problem statement is exercised in the backend test suite instead. Template 12
+> ships as a quasi-static draggable SDF (exact tangency holds instantaneously);
+> Bridson Eq. 6's full rigid-body potential is roadmap.
 > Backend contract: `docs/sim-specs/closed-form/curl-noise/spec-ref.md`. Research
 > task `w96xgvh0g` (25 confirmed / 0 refuted at research; one v0.2 review claim —
 > the helicity zero — refuted at execution).

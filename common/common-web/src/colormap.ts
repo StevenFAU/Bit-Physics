@@ -93,6 +93,16 @@ export const COLORMAPS: readonly Colormap[] = [
     [0.5554, 0.5378, 0.4711], [0.696, 0.6483, 0.4401],
     [0.8492, 0.7719, 0.3597], [0.9957, 0.9093, 0.2178],
   ]),
+  // CYCLIC map (CET-C6-style, first stop == last stop): for ANGULAR
+  // quantities — curl-noise streamline-angle hue (atan2 is cyclic, and a
+  // linear map puts a false seam at the +-pi wrap; added at the curl-noise
+  // web demo, spec packages/curl-noise/web/verification-demo-spec.md § 5).
+  srgb("cyclic", [
+    [0.086, 0.196, 0.804], [0.31, 0.113, 0.708],
+    [0.768, 0.183, 0.51], [0.965, 0.427, 0.216],
+    [0.85, 0.73, 0.152], [0.394, 0.775, 0.312],
+    [0.13, 0.585, 0.744], [0.086, 0.196, 0.804],
+  ]),
 ];
 
 export function getColormap(name: string): Colormap {
