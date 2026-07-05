@@ -68,6 +68,12 @@ GATE_KIND = {
     # committed 16-cube diagnostic canonical (verify.py _gate_mpm_multimaterial)
     # + closed-form golden B-spline / fixture artifacts + run-twice.
     "mpm-multimaterial": "new_canonical",
+    # Phase-6 verification-demo (Lane C): new_canonical = ROBUST-OBSERVABLE
+    # reproduction of the committed 12-cube web-gate dam break (chaotic —
+    # pointwise rejected per spec § 9) + the Props 5.1/5.4/5.5 closed-form
+    # golden suite + on-device atomic==lex-oracle transfer bit-identity +
+    # run-twice (verify.py _gate_pic_flip).
+    "pic-flip": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

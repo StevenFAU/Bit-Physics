@@ -1,0 +1,42 @@
+{
+  "descriptor": "web-gate-dam-break-3d-apic-12cube-seed42-step60",
+  "params_as_run": {
+    "nx": 12,
+    "ny": 12,
+    "nz": 12,
+    "dx": 0.08333333333333333,
+    "dt": 0.002,
+    "gravity": -9.81,
+    "rho": 1.0,
+    "mode": "apic",
+    "n_jacobi": 600,
+    "n_extrapolation_layers": 3,
+    "n_wall": 2,
+    "cfl": 0.5,
+    "regularizers": true,
+    "push_apart_radius_factor": 0.25,
+    "push_apart_iters": 2,
+    "drift_k": 0.05,
+    "n_particles": 432,
+    "seed": 42,
+    "rho_rest_measured_frame0": 7.938973846330224
+  },
+  "step_count": 60,
+  "capture_interval": 10,
+  "checkpoints": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60
+  ],
+  "ic_layout": "f32le[particle][px,py,pz]; velocities zero, masses uniform 1, C zero",
+  "refs_layout": "f64le[checkpoint][ke, px, py, pz, com_x, com_y, com_z, max_speed, fluid_node_count, max_column_height]",
+  "observables_note": "ROBUST-OBSERVABLE gate: per-particle pointwise comparison is rejected for this sim (chaotic dam break + fixed-point-atomic P2G != f64 lex reference; web spec \u00a7 2.1). The reference ran from the f32-quantized IC in this directory.",
+  "ic_bytes": 5184,
+  "refs_bytes": 560,
+  "ic_sha256": "1b7799d687288cccc8a51ec2970f60cb308de7520d7a83d70c4f95a26a79eb7c",
+  "refs_sha256": "74792555453233529aad5b4627398094e71051534c5d6b286d70f734790eb4b2"
+}

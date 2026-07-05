@@ -1,0 +1,1561 @@
+{
+  "_generated_by": "packages/pic-flip/web/gen-verification.mjs — do not edit; every value is extracted from committed sources and HARD-FAIL verified",
+  "sim": "pic-flip",
+  "repo_blob_base": "https://github.com/StevenFAU/Bit-Physics/blob/main/",
+  "canonical": {
+    "descriptor": "dam-break-3d-apic-24cube-seed42-step120",
+    "step_count": 120,
+    "capture_interval": 20,
+    "n_jacobi": 3000,
+    "params_as_run": {
+      "drift_k": 0.05,
+      "dt": 0.002,
+      "dx": 0.041666666666666664,
+      "gravity": -9.81,
+      "mode": "apic",
+      "n_jacobi": 3000,
+      "n_particles": 7680,
+      "nx": 24,
+      "ny": 24,
+      "nz": 24,
+      "push_apart_radius_factor": 0.25,
+      "regularizers": true,
+      "rho_rest_measured_frame0": 8.405491491707565
+    },
+    "payload_sha256": "f0caba96b885bd2fa0c8cb505589c6770456dd63636c0cbe0d7ee9add30ec332",
+    "wall_clock_seconds": 50.70914629701292,
+    "reference_determinism": "bit-exact-same-hw",
+    "checkpoints": [
+      0,
+      20,
+      40,
+      60,
+      80,
+      100,
+      120
+    ],
+    "observables": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0.2500101397303775,
+        0.2499940751328792,
+        0.395853820327406,
+        0,
+        1296,
+        17
+      ],
+      [
+        428.9538539424003,
+        369.59326452966155,
+        369.8058292939052,
+        -2327.137236358051,
+        0.251011587216238,
+        0.2509959513475988,
+        0.38940221179059353,
+        0.40573289106904975,
+        1296,
+        17
+      ],
+      [
+        1637.7758581479522,
+        796.7242263711946,
+        797.835955550862,
+        -4444.720675357464,
+        0.25406524290328564,
+        0.2540537878837002,
+        0.3714790966021885,
+        0.8071978262641848,
+        1239,
+        16
+      ],
+      [
+        3455.7321012962657,
+        1366.0237426785234,
+        1369.4203552866243,
+        -6203.43885441431,
+        0.25973214820624174,
+        0.25972519025488094,
+        0.3438978941564214,
+        1.2158139284948737,
+        1243,
+        16
+      ],
+      [
+        5632.53251957839,
+        2116.930613749159,
+        2115.9730212444574,
+        -7443.214819734312,
+        0.26883317485940794,
+        0.2688343499627172,
+        0.3088014783680924,
+        1.6680304424050856,
+        1266,
+        16
+      ],
+      [
+        7832.15694069283,
+        3060.54548815321,
+        3059.8176955392073,
+        -7982.341766351343,
+        0.28240361252442187,
+        0.28240625307614686,
+        0.2696925133385545,
+        2.057664281065385,
+        1272,
+        15
+      ],
+      [
+        9693.25695829064,
+        4159.979864959842,
+        4157.031925218289,
+        -7679.35914057012,
+        0.3014134065993187,
+        0.30141068521779524,
+        0.23078351900550997,
+        2.422606493097685,
+        1281,
+        15
+      ]
+    ],
+    "observables_layout": "[ke, px, py, pz, com_x, com_y, com_z, max_speed, fluid_node_count, max_column_height]"
+  },
+  "gate": {
+    "kind": "new_canonical",
+    "declared_rel": 0.01,
+    "thresholds": {
+      "obs_rel": 0.01,
+      "golden_f64_abs": 1e-13,
+      "ladder_f64_abs": 1e-15,
+      "weights_f32_rel": 0.000002,
+      "pou_f32_abs": 0.000002,
+      "am_f32_rel": 0.00001,
+      "rt_f32_rel": 0.00001,
+      "still_maxspeed": 0.02,
+      "still_dvol": 4,
+      "hydro_rel": 0.02,
+      "headroom_factor": 2
+    },
+    "criterion": "run-twice byte-identity + ROBUST OBSERVABLES (KE/momentum/com/max-speed/fluid-nodes/column-height) vs the committed f64 web-gate references within rel 0.01 of per-observable scale (chaotic dam break — per-particle pointwise REJECTED per spec § 9) + Props 5.1/5.4/5.5 golden suite with PIC negative controls + Zhu 1/9 dyadic-exact ladder + on-device atomic==lex-oracle bit identity + still-pool inertness + adjoint-compact-pair hydrostatic probe",
+    "measured": {
+      "status": "recorded",
+      "provenance": "RADV via snap-chromium headless 2026-07-04",
+      "worst_ratio_of_budget": 0.138,
+      "worst_observable": "momentum_x@50",
+      "run_twice": true,
+      "weights_f32_rel": 5.06e-8,
+      "pou_f32_abs": 5.97e-8,
+      "am_f32_cons_rel": 3.18e-7,
+      "rt_f32_rel": 1.86e-7,
+      "bit_identity": true,
+      "fp_headroom": 0.00776,
+      "still_max_speed": 4.59e-8,
+      "hydro_dpdz_rel": 0.00000137
+    }
+  },
+  "gate_assets": {
+    "ic": {
+      "path": "picflip-gate-ic.bin",
+      "sha256": "1b7799d687288cccc8a51ec2970f60cb308de7520d7a83d70c4f95a26a79eb7c",
+      "bytes": 5184,
+      "layout": "f32le[particle][px,py,pz]; velocities zero, masses uniform 1, C zero"
+    },
+    "refs": {
+      "path": "picflip-gate-refs.bin",
+      "sha256": "74792555453233529aad5b4627398094e71051534c5d6b286d70f734790eb4b2",
+      "bytes": 560,
+      "layout": "f64le[checkpoint][ke, px, py, pz, com_x, com_y, com_z, max_speed, fluid_node_count, max_column_height]"
+    },
+    "ic_sha256": "1b7799d687288cccc8a51ec2970f60cb308de7520d7a83d70c4f95a26a79eb7c",
+    "refs_sha256": "74792555453233529aad5b4627398094e71051534c5d6b286d70f734790eb4b2",
+    "descriptor": "web-gate-dam-break-3d-apic-12cube-seed42-step60",
+    "params_as_run": {
+      "nx": 12,
+      "ny": 12,
+      "nz": 12,
+      "dx": 0.08333333333333333,
+      "dt": 0.002,
+      "gravity": -9.81,
+      "rho": 1,
+      "mode": "apic",
+      "n_jacobi": 600,
+      "n_extrapolation_layers": 3,
+      "n_wall": 2,
+      "cfl": 0.5,
+      "regularizers": true,
+      "push_apart_radius_factor": 0.25,
+      "push_apart_iters": 2,
+      "drift_k": 0.05,
+      "n_particles": 432,
+      "seed": 42,
+      "rho_rest_measured_frame0": 7.938973846330224
+    },
+    "step_count": 60,
+    "capture_interval": 10,
+    "checkpoints": [
+      0,
+      10,
+      20,
+      30,
+      40,
+      50,
+      60
+    ],
+    "ref_rows": [
+      [
+        0,
+        0,
+        0,
+        0,
+        0.29163798320762535,
+        0.29162632435974145,
+        0.4166217064829888,
+        0,
+        112,
+        8
+      ],
+      [
+        5.603028205217925,
+        11.649337042563667,
+        11.58188737937271,
+        -63.969435596105036,
+        0.2919351867056655,
+        0.29192206711489316,
+        0.41496330985462776,
+        0.19462330277614343,
+        112,
+        8
+      ],
+      [
+        20.860953057292416,
+        23.45069030538637,
+        23.27647623915496,
+        -121.99348690536269,
+        0.2927745354639168,
+        0.2927556472214758,
+        0.41050650839925895,
+        0.39970619676665703,
+        112,
+        8
+      ],
+      [
+        44.15522924498444,
+        35.79379293230402,
+        35.49440218043888,
+        -175.35209548089975,
+        0.29417433372700463,
+        0.29414424479855683,
+        0.4034855785903968,
+        0.6153244570972488,
+        112,
+        8
+      ],
+      [
+        73.7180349504695,
+        49.052123587371376,
+        48.72370880390961,
+        -223.78612929699287,
+        0.29616952173196587,
+        0.2961226991033092,
+        0.3942147230941508,
+        0.8226909276010866,
+        101,
+        8
+      ],
+      [
+        107.61918930334554,
+        62.51982382530448,
+        62.20979329885067,
+        -266.8669065629987,
+        0.29878721828710986,
+        0.2987295522606853,
+        0.38324159529715246,
+        1.0382632617817382,
+        96,
+        7
+      ],
+      [
+        145.88768409301636,
+        77.47824070026475,
+        77.12788485536038,
+        -306.6937812156208,
+        0.30206619062756795,
+        0.3019924703171976,
+        0.3707226644859955,
+        1.2391167264121323,
+        96,
+        7
+      ]
+    ],
+    "observables_layout": "f64le[checkpoint][ke, px, py, pz, com_x, com_y, com_z, max_speed, fluid_node_count, max_column_height]"
+  },
+  "golden": {
+    "weights_table_sha256": "280249ff340bb8aac7713619a0425791da69168b01e6e8c5dd6d655d99824211",
+    "weights_sample_xs": [
+      0,
+      0.5,
+      -0.5,
+      1,
+      -1,
+      1.5,
+      -1.5,
+      0.25,
+      -0.25,
+      0.3
+    ],
+    "weights_sample_ns": [
+      0.75,
+      0.5,
+      0.5,
+      0.125,
+      0.125,
+      0,
+      0,
+      0.6875,
+      0.6875,
+      0.66
+    ],
+    "weights_fp_probes": [
+      1,
+      0.5,
+      0.75,
+      1.3,
+      1.1666666666666667,
+      1.475
+    ],
+    "weights_fp_probes_exact": [
+      "1",
+      "1/2",
+      "3/4",
+      "13/10",
+      "7/6",
+      "59/40"
+    ],
+    "weights_tolerance": {
+      "absolute": 1e-15,
+      "relative": 0
+    },
+    "am_table_sha256": "862856ee88d0c337e217f6c52c8fb1f047d0ade27902edbd5646a17e4da18086",
+    "am_points": [
+      {
+        "inputs": {
+          "name": "2d-dyadic-two-particles-disjoint-stencils",
+          "dx": 1,
+          "particles": [
+            {
+              "x": [
+                2,
+                2
+              ],
+              "m": 1,
+              "v": [
+                0.5,
+                -0.25
+              ],
+              "B": [
+                [
+                  0.25,
+                  -0.5
+                ],
+                [
+                  0.125,
+                  0.375
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  1,
+                  -2
+                ],
+                [
+                  0.5,
+                  1.5
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "2",
+                  "2"
+                ],
+                "m": "1",
+                "v": [
+                  "1/2",
+                  "-1/4"
+                ],
+                "B": [
+                  [
+                    "1/4",
+                    "-1/2"
+                  ],
+                  [
+                    "1/8",
+                    "3/8"
+                  ]
+                ]
+              }
+            },
+            {
+              "x": [
+                6,
+                3
+              ],
+              "m": 2,
+              "v": [
+                1.5,
+                0.75
+              ],
+              "B": [
+                [
+                  -0.125,
+                  0.25
+                ],
+                [
+                  0.5,
+                  -0.75
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  -0.5,
+                  1
+                ],
+                [
+                  2,
+                  -3
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "6",
+                  "3"
+                ],
+                "m": "2",
+                "v": [
+                  "3/2",
+                  "3/4"
+                ],
+                "B": [
+                  [
+                    "-1/8",
+                    "1/4"
+                  ],
+                  [
+                    "1/2",
+                    "-3/4"
+                  ]
+                ]
+              }
+            }
+          ],
+          "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+          "dyadic_exact_configuration": true
+        },
+        "expected": {
+          "l_total_particles_before": [
+            -0.375
+          ],
+          "l_total_grid_after_p2g": [
+            -0.375
+          ],
+          "l_total_particles_after_apic_g2p": [
+            -0.375
+          ],
+          "l_total_particles_after_pic_g2p": [
+            -1.5
+          ],
+          "l_exact_rational": [
+            "-3/8"
+          ],
+          "l_after_pic_exact_rational": [
+            "-3/2"
+          ],
+          "f64_bit_exact": true,
+          "f64_max_rel_err_measured": 0
+        },
+        "independent_reference": {
+          "source": "Hand derivation at tools/testkit/golden/derivations/apic-transfers.md § 3: Props 5.4/5.5 re-derived from the weight moments (sum w = 1, sum w r = 0, sum w r r^T = (1/4) dx^2 I); the generator re-proves the conservation equalities in exact rational arithmetic (fractions.Fraction) at verify time — identities, not tolerances. The PIC row is the paired negative control.",
+          "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+          "derived_by": "fractions.Fraction identity proof over the full P2G/G2P pipeline; dyadic configuration additionally bit-exact in binary64 by construction (FP-honesty rule, sim spec docs/sim-specs/particle-fluids/pic-flip/spec-ref.md § 7)",
+          "expected": {
+            "conservation_identity": "L_before == L_grid == L_after (exact)",
+            "pic_negative_control": "L_after_pic != L_before"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "2d-generic-two-particles-overlapping-stencils",
+          "dx": 1,
+          "particles": [
+            {
+              "x": [
+                2.3,
+                2.7
+              ],
+              "m": 0.42857142857142855,
+              "v": [
+                0.3333333333333333,
+                -0.2857142857142857
+              ],
+              "B": [
+                [
+                  0.1111111111111111,
+                  -0.18181818181818182
+                ],
+                [
+                  0.38461538461538464,
+                  0.14285714285714285
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  0.4444444444444444,
+                  -0.7272727272727273
+                ],
+                [
+                  1.5384615384615385,
+                  0.5714285714285714
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "23/10",
+                  "27/10"
+                ],
+                "m": "3/7",
+                "v": [
+                  "1/3",
+                  "-2/7"
+                ],
+                "B": [
+                  [
+                    "1/9",
+                    "-2/11"
+                  ],
+                  [
+                    "5/13",
+                    "1/7"
+                  ]
+                ]
+              }
+            },
+            {
+              "x": [
+                3.7,
+                3.3
+              ],
+              "m": 1.4,
+              "v": [
+                -0.5555555555555556,
+                0.36363636363636365
+              ],
+              "B": [
+                [
+                  0.2857142857142857,
+                  0.375
+                ],
+                [
+                  -0.16666666666666666,
+                  0.2222222222222222
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  1.1428571428571428,
+                  1.5
+                ],
+                [
+                  -0.6666666666666666,
+                  0.8888888888888888
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "37/10",
+                  "33/10"
+                ],
+                "m": "7/5",
+                "v": [
+                  "-5/9",
+                  "4/11"
+                ],
+                "B": [
+                  [
+                    "2/7",
+                    "3/8"
+                  ],
+                  [
+                    "-1/6",
+                    "2/9"
+                  ]
+                ]
+              }
+            }
+          ],
+          "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+          "dyadic_exact_configuration": false
+        },
+        "expected": {
+          "l_total_particles_before": [
+            3.2673800009514293
+          ],
+          "l_total_grid_after_p2g": [
+            3.2673800009514293
+          ],
+          "l_total_particles_after_apic_g2p": [
+            3.2673800009514293
+          ],
+          "l_total_particles_after_pic_g2p": [
+            3.7167239567091617
+          ],
+          "l_exact_rational": [
+            "13736719/4204200"
+          ],
+          "l_after_pic_exact_rational": [
+            "42449186443007/11421129720000"
+          ],
+          "f64_bit_exact": false,
+          "f64_max_rel_err_measured": 2.7183199365898557e-16
+        },
+        "independent_reference": {
+          "source": "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), 'The Affine Particle-In-Cell Method', ACM TOG 34(4); companion tech report Propositions 5.4 (P2G preserves total angular momentum) and 5.5 (G2P preserves it under the lumped grid mass), stated for ARBITRARY particle configurations — this test point's overlapping-stencil, non-dyadic configuration exercises exactly the published generality (propositions read in full during the spec v0.2 review, 2026-07-04).",
+          "doi": "10.1145/2766996 (Jiang et al. 2015; tech-report Props 5.4/5.5)",
+          "derived_by": "published proposition; table values are the exact-rational instantiation at this configuration with the measured f64 residual pinned under 1e-14 relative",
+          "expected": {
+            "conservation_identity": "holds for arbitrary configurations"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "3d-dyadic-two-particles-disjoint-stencils",
+          "dx": 1,
+          "particles": [
+            {
+              "x": [
+                2,
+                2,
+                2
+              ],
+              "m": 1,
+              "v": [
+                0.5,
+                -0.25,
+                0.375
+              ],
+              "B": [
+                [
+                  0.25,
+                  -0.5,
+                  0.125
+                ],
+                [
+                  0.125,
+                  0.375,
+                  -0.25
+                ],
+                [
+                  -0.375,
+                  0.0625,
+                  0.5
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  1,
+                  -2,
+                  0.5
+                ],
+                [
+                  0.5,
+                  1.5,
+                  -1
+                ],
+                [
+                  -1.5,
+                  0.25,
+                  2
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "2",
+                  "2",
+                  "2"
+                ],
+                "m": "1",
+                "v": [
+                  "1/2",
+                  "-1/4",
+                  "3/8"
+                ],
+                "B": [
+                  [
+                    "1/4",
+                    "-1/2",
+                    "1/8"
+                  ],
+                  [
+                    "1/8",
+                    "3/8",
+                    "-1/4"
+                  ],
+                  [
+                    "-3/8",
+                    "1/16",
+                    "1/2"
+                  ]
+                ]
+              }
+            },
+            {
+              "x": [
+                6,
+                3,
+                2
+              ],
+              "m": 2,
+              "v": [
+                1.5,
+                0.75,
+                -0.5
+              ],
+              "B": [
+                [
+                  -0.125,
+                  0.25,
+                  0.1875
+                ],
+                [
+                  0.5,
+                  -0.75,
+                  0.0625
+                ],
+                [
+                  0.25,
+                  -0.125,
+                  0.375
+                ]
+              ],
+              "C_equals_4B_over_dx2": [
+                [
+                  -0.5,
+                  1,
+                  0.75
+                ],
+                [
+                  2,
+                  -3,
+                  0.25
+                ],
+                [
+                  1,
+                  -0.5,
+                  1.5
+                ]
+              ],
+              "exact": {
+                "x": [
+                  "6",
+                  "3",
+                  "2"
+                ],
+                "m": "2",
+                "v": [
+                  "3/2",
+                  "3/4",
+                  "-1/2"
+                ],
+                "B": [
+                  [
+                    "-1/8",
+                    "1/4",
+                    "3/16"
+                  ],
+                  [
+                    "1/2",
+                    "-3/4",
+                    "1/16"
+                  ],
+                  [
+                    "1/4",
+                    "-1/8",
+                    "3/8"
+                  ]
+                ]
+              }
+            }
+          ],
+          "angular_momentum_definition": "L = sum_p m_p (x_p cross v_p) + sum_p m_p axial(B_p); 2D axial(B) = B21 - B12 (scalar); 3D axial(B) = (B32-B23, B13-B31, B21-B12); B = C * Dp with Dp = (1/4) dx^2 I",
+          "dyadic_exact_configuration": true
+        },
+        "expected": {
+          "l_total_particles_before": [
+            -4.8125,
+            12.625,
+            -0.375
+          ],
+          "l_total_grid_after_p2g": [
+            -4.8125,
+            12.625,
+            -0.375
+          ],
+          "l_total_particles_after_apic_g2p": [
+            -4.8125,
+            12.625,
+            -0.375
+          ],
+          "l_total_particles_after_pic_g2p": [
+            -4.75,
+            12.25,
+            -1.5
+          ],
+          "l_exact_rational": [
+            "-77/16",
+            "101/8",
+            "-3/8"
+          ],
+          "l_after_pic_exact_rational": [
+            "-19/4",
+            "49/4",
+            "-3/2"
+          ],
+          "f64_bit_exact": true,
+          "f64_max_rel_err_measured": 0
+        },
+        "independent_reference": {
+          "source": "Jiang, Schroeder & Teran (2017), 'An angular momentum conserving affine-particle-in-cell method', J. Comput. Phys. 338, 137-164: the lumped-mass angular-momentum analysis in three dimensions (axial-vector form axial(B) = (B32-B23, B13-B31, B21-B12) used by this 3D test point), including the filtering property of the APIC transfers relied on for the vector identity.",
+          "doi": "10.1016/j.jcp.2017.02.050 (arXiv:1603.06188)",
+          "derived_by": "published 3D analysis; table values are the exact-rational instantiation, bit-exact in binary64 via the dyadic construction",
+          "expected": {
+            "conservation_identity": "3D vector L conserved componentwise"
+          }
+        }
+      }
+    ],
+    "am_tolerance": {
+      "absolute": 0,
+      "relative": 1e-14,
+      "note": "dyadic test points assert bit-for-bit f64 equality (tolerance 0); the generic point pins its measured f64 residual under the 1e-14 relative bound"
+    },
+    "rt_table_sha256": "5bc6434719a916f7e1a84a8a593c8ff6df6da8293f36894b8b7354b99f800e91",
+    "rt_points": [
+      {
+        "inputs": {
+          "name": "2d-dyadic-general-affine",
+          "dx": 1,
+          "v0": [
+            0.5,
+            -0.25
+          ],
+          "C": [
+            [
+              0.125,
+              -0.5
+            ],
+            [
+              0.25,
+              0.0625
+            ]
+          ],
+          "positions": [
+            [
+              3,
+              3
+            ],
+            [
+              4.25,
+              3.5
+            ]
+          ],
+          "masses": [
+            1,
+            2
+          ],
+          "exact": {
+            "dx": "1",
+            "v0": [
+              "1/2",
+              "-1/4"
+            ],
+            "C": [
+              [
+                "1/8",
+                "-1/2"
+              ],
+              [
+                "1/4",
+                "1/16"
+              ]
+            ],
+            "positions": [
+              [
+                "3",
+                "3"
+              ],
+              [
+                "17/4",
+                "7/2"
+              ]
+            ],
+            "masses": [
+              "1",
+              "2"
+            ]
+          },
+          "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+          "dyadic_exact_configuration": true
+        },
+        "expected": {
+          "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+          "n_massed_nodes_checked": 11,
+          "sample_node": [
+            3,
+            4
+          ],
+          "sample_node_velocity": [
+            -1.125,
+            0.75
+          ],
+          "sample_node_velocity_exact_rational": [
+            "-9/8",
+            "3/4"
+          ],
+          "pic_max_abs_deviation": 0.625,
+          "pic_max_abs_deviation_exact_rational": "5/8",
+          "f64_bit_exact": true,
+          "f64_max_rel_err_measured": 0,
+          "f64_pic_max_abs_deviation_measured": 0.625
+        },
+        "independent_reference": {
+          "source": "Hand derivation at tools/testkit/golden/derivations/apic-transfers.md § 4: G2P of an affine field reconstructs (v0 + C x_p, C) exactly (weight moments sum w = 1, sum w r = 0, sum w r r^T = (1/4) dx^2 I), and P2G then reproduces v0 + C x_i at every massed node for arbitrary particle placement. Generator re-proves both as exact rational identities at verify time; PIC deviation pinned as the negative control.",
+          "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+          "derived_by": "fractions.Fraction identity proof; dyadic configuration additionally bit-exact in binary64 by construction (FP-honesty rule, sim spec docs/sim-specs/particle-fluids/pic-flip/spec-ref.md § 7)",
+          "expected": {
+            "roundtrip": "exact reproduction (rational identity)",
+            "pic_negative_control": "max deviation > 0 (pinned)"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "2d-dyadic-pure-rotation",
+          "dx": 1,
+          "v0": [
+            0,
+            0
+          ],
+          "C": [
+            [
+              0,
+              -0.5
+            ],
+            [
+              0.5,
+              0
+            ]
+          ],
+          "positions": [
+            [
+              3,
+              3
+            ],
+            [
+              3.75,
+              4.5
+            ]
+          ],
+          "masses": [
+            1,
+            0.5
+          ],
+          "exact": {
+            "dx": "1",
+            "v0": [
+              "0",
+              "0"
+            ],
+            "C": [
+              [
+                "0",
+                "-1/2"
+              ],
+              [
+                "1/2",
+                "0"
+              ]
+            ],
+            "positions": [
+              [
+                "3",
+                "3"
+              ],
+              [
+                "15/4",
+                "9/2"
+              ]
+            ],
+            "masses": [
+              "1",
+              "1/2"
+            ]
+          },
+          "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+          "dyadic_exact_configuration": true
+        },
+        "expected": {
+          "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+          "n_massed_nodes_checked": 13,
+          "sample_node": [
+            3,
+            5
+          ],
+          "sample_node_velocity": [
+            -2.5,
+            1.5
+          ],
+          "sample_node_velocity_exact_rational": [
+            "-5/2",
+            "3/2"
+          ],
+          "pic_max_abs_deviation": 0.625,
+          "pic_max_abs_deviation_exact_rational": "5/8",
+          "f64_bit_exact": true,
+          "f64_max_rel_err_measured": 0,
+          "f64_pic_max_abs_deviation_measured": 0.625
+        },
+        "independent_reference": {
+          "source": "Jiang, Schroeder, Selle, Teran & Stomakhin (2015), 'The Affine Particle-In-Cell Method', ACM TOG 34(4); companion tech report Proposition 5.1 — the published affine round-trip statement, whose motivating special case is exactly this test point's pure rigid rotation (v = omega x r; the APIC paper's headline claim is that the rotation survives the grid transfer, unlike PIC). Direction grid -> particle -> grid verified verbatim against the tech-report text during the spec v0.2 review (2026-07-04).",
+          "doi": "10.1145/2766996 (Jiang et al. 2015; tech-report Prop 5.1)",
+          "derived_by": "published proposition; table values are the exact-rational instantiation at the rotation configuration",
+          "expected": {
+            "roundtrip": "pure rotation reproduced exactly"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "2d-generic-nondyadic",
+          "dx": 0.5,
+          "v0": [
+            0.3333333333333333,
+            -0.2857142857142857
+          ],
+          "C": [
+            [
+              0.1111111111111111,
+              -0.18181818181818182
+            ],
+            [
+              0.38461538461538464,
+              0.14285714285714285
+            ]
+          ],
+          "positions": [
+            [
+              1.15,
+              1.35
+            ],
+            [
+              1.85,
+              1.65
+            ]
+          ],
+          "masses": [
+            0.42857142857142855,
+            1.4
+          ],
+          "exact": {
+            "dx": "1/2",
+            "v0": [
+              "1/3",
+              "-2/7"
+            ],
+            "C": [
+              [
+                "1/9",
+                "-2/11"
+              ],
+              [
+                "5/13",
+                "1/7"
+              ]
+            ],
+            "positions": [
+              [
+                "23/20",
+                "27/20"
+              ],
+              [
+                "37/20",
+                "33/20"
+              ]
+            ],
+            "masses": [
+              "3/7",
+              "7/5"
+            ]
+          },
+          "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+          "dyadic_exact_configuration": false
+        },
+        "expected": {
+          "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+          "n_massed_nodes_checked": 15,
+          "sample_node": [
+            3,
+            3
+          ],
+          "sample_node_velocity": [
+            0.22727272727272727,
+            0.5054945054945055
+          ],
+          "sample_node_velocity_exact_rational": [
+            "5/22",
+            "46/91"
+          ],
+          "pic_max_abs_deviation": 0.3,
+          "pic_max_abs_deviation_exact_rational": "3/10",
+          "f64_bit_exact": false,
+          "f64_max_rel_err_measured": 5.358213872597163e-15,
+          "f64_pic_max_abs_deviation_measured": 0.3
+        },
+        "independent_reference": {
+          "source": "Hu, Fang, Ge, Qu, Zhu, Pradhana & Jiang (2018), 'A Moving Least Squares Material Point Method...', ACM TOG 37(4) § 3-4 and the committed repo MLS-MPM reference packages/mpm-multimaterial/mpm_multimaterial/reference/mls_mpm.py: the affine reconstruction coefficient 4/dx^2 (the affine_scale constant in the repo's independently verified g2p kernel) is the same constant that makes this round trip exact — an independent, already-landed in-repo verification chain for the reconstruction. This test point exercises it at non-unit dx (dx = 1/2) and non-dyadic positions.",
+          "doi": "10.1145/3197517.3201293 (Hu et al. 2018 MLS-MPM)",
+          "derived_by": "cross-anchor to the MLS-MPM verification chain; measured f64 residual pinned under 1e-14 relative",
+          "expected": {
+            "affine_scale": "4 / dx^2 (constant Dp inverse)"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "3d-dyadic-general-affine",
+          "dx": 1,
+          "v0": [
+            0.5,
+            -0.25,
+            0.375
+          ],
+          "C": [
+            [
+              0.125,
+              -0.5,
+              0.25
+            ],
+            [
+              0.25,
+              0.0625,
+              -0.125
+            ],
+            [
+              -0.375,
+              0.5,
+              0.03125
+            ]
+          ],
+          "positions": [
+            [
+              3,
+              3,
+              3
+            ],
+            [
+              4.25,
+              3.5,
+              2.75
+            ]
+          ],
+          "masses": [
+            1,
+            2
+          ],
+          "exact": {
+            "dx": "1",
+            "v0": [
+              "1/2",
+              "-1/4",
+              "3/8"
+            ],
+            "C": [
+              [
+                "1/8",
+                "-1/2",
+                "1/4"
+              ],
+              [
+                "1/4",
+                "1/16",
+                "-1/8"
+              ],
+              [
+                "-3/8",
+                "1/2",
+                "1/32"
+              ]
+            ],
+            "positions": [
+              [
+                "3",
+                "3",
+                "3"
+              ],
+              [
+                "17/4",
+                "7/2",
+                "11/4"
+              ]
+            ],
+            "masses": [
+              "1",
+              "2"
+            ]
+          },
+          "direction": "grid -> particle (G2P) -> grid (P2G), dt = 0",
+          "dyadic_exact_configuration": true
+        },
+        "expected": {
+          "roundtrip_identity": "mom_i/m_i == v0 + C x_i at every massed node (exact)",
+          "n_massed_nodes_checked": 33,
+          "sample_node": [
+            3,
+            4,
+            3
+          ],
+          "sample_node_velocity": [
+            -0.375,
+            0.375,
+            1.34375
+          ],
+          "sample_node_velocity_exact_rational": [
+            "-3/8",
+            "3/8",
+            "43/32"
+          ],
+          "pic_max_abs_deviation": 0.90625,
+          "pic_max_abs_deviation_exact_rational": "29/32",
+          "f64_bit_exact": true,
+          "f64_max_rel_err_measured": 0,
+          "f64_pic_max_abs_deviation_measured": 0.90625
+        },
+        "independent_reference": {
+          "source": "Independent binary64 mirror computation: the identical G2P -> P2G pipeline evaluated in IEEE-754 double precision (a different arithmetic system from the rational-arithmetic proof) reproduces the 3D affine field bit-for-bit at every massed node under the dyadic construction — every product, sum, and the mom/mass division exactly representable, so agreement is by construction, not tolerance (asserted at generator verify time and replayed through the numba kernels by the gate-5 test).",
+          "doi": "n/a (in-repo binary64 mirror; IEEE-754 exactness argument)",
+          "derived_by": "f64 pipeline run compared elementwise against the exact rationals; bit-equality asserted",
+          "expected": {
+            "f64_bit_exact": true
+          }
+        }
+      }
+    ],
+    "rt_tolerance": {
+      "absolute": 0,
+      "relative": 1e-14,
+      "note": "dyadic test points assert bit-for-bit f64 equality (tolerance 0); the generic point pins its measured f64 residual under the 1e-14 relative bound"
+    },
+    "te_table_sha256": "bcf03bc9e6e42a98fe5da988a906b40a12fb3e9286c9bb83e19ac711f8d67c3f",
+    "te_points": [
+      {
+        "inputs": {
+          "name": "quadratic-f-tent-halfcell-roundtrip-b=0.0",
+          "f": "f(x) = a + b x + c x^2",
+          "a": 1,
+          "b": 0,
+          "c": 3,
+          "exact": {
+            "a": "1",
+            "b": "0",
+            "c": "3"
+          },
+          "dx": 1,
+          "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+          "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+        },
+        "expected": {
+          "f_at_x0": 1,
+          "f_second_derivative": 6,
+          "f_tilde_continuum": 1.6666666666666667,
+          "f_tilde_continuum_exact_rational": "5/3",
+          "error_exact_rational": "2/3",
+          "coefficient_exact_rational": "1/9",
+          "coefficient": 0.1111111111111111,
+          "particle_ladder": {
+            "n=4": {
+              "f_tilde": 1.6875,
+              "f_tilde_exact_rational": "27/16",
+              "abs_residual_vs_continuum": 0.020833333333333332
+            },
+            "n=16": {
+              "f_tilde": 1.66796875,
+              "f_tilde_exact_rational": "427/256",
+              "abs_residual_vs_continuum": 0.0013020833333333333
+            },
+            "n=64": {
+              "f_tilde": 1.666748046875,
+              "f_tilde_exact_rational": "6827/4096",
+              "abs_residual_vs_continuum": 0.00008138020833333333
+            }
+          }
+        },
+        "independent_reference": {
+          "source": "Hand derivation at tools/testkit/golden/derivations/pic-flip-transfer-error.md § 2: smoothing contribution 5/144 f'' + interpolation contribution 11/144 f'' = (1/9) f'' dx^2 — both piecewise polynomial integrals evaluated in exact rational arithmetic (no floating point enters the identity).",
+          "doi": "n/a (in-repo hand-derivation, exact rational arithmetic)",
+          "derived_by": "fractions.Fraction piecewise polynomial integration; coefficient asserted == 1/9 as a rational",
+          "expected": {
+            "coefficient": "1/9 (exact rational)"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "quadratic-f-tent-halfcell-roundtrip-b=-1.5",
+          "f": "f(x) = a + b x + c x^2",
+          "a": 0.25,
+          "b": -1.5,
+          "c": 3,
+          "exact": {
+            "a": "1/4",
+            "b": "-3/2",
+            "c": "3"
+          },
+          "dx": 1,
+          "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+          "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+        },
+        "expected": {
+          "f_at_x0": 0.25,
+          "f_second_derivative": 6,
+          "f_tilde_continuum": 0.9166666666666666,
+          "f_tilde_continuum_exact_rational": "11/12",
+          "error_exact_rational": "2/3",
+          "coefficient_exact_rational": "1/9",
+          "coefficient": 0.1111111111111111,
+          "particle_ladder": {
+            "n=4": {
+              "f_tilde": 0.9375,
+              "f_tilde_exact_rational": "15/16",
+              "abs_residual_vs_continuum": 0.020833333333333332
+            },
+            "n=16": {
+              "f_tilde": 0.91796875,
+              "f_tilde_exact_rational": "235/256",
+              "abs_residual_vs_continuum": 0.0013020833333333333
+            },
+            "n=64": {
+              "f_tilde": 0.916748046875,
+              "f_tilde_exact_rational": "3755/4096",
+              "abs_residual_vs_continuum": 0.00008138020833333333
+            }
+          }
+        },
+        "independent_reference": {
+          "source": "Zhu, Y. (2005), 'Animating Sand as a Fluid', MSc thesis, University of British Columbia, eq. (3.8): the published 1/9 coefficient for the tent-weight / half-cell-support round trip (verified verbatim against the thesis during the spec v0.2 review, 2026-07-04 — including the scope correction dropping the unsourced 1/6 other-kernel variant). Published companion: Zhu & Bridson (2005), ACM TOG 24(3).",
+          "doi": "10.1145/1073204.1073298 (Zhu & Bridson 2005; thesis eq. 3.8)",
+          "derived_by": "published coefficient statement; this row's nonzero linear term additionally witnesses the b-independence the published expansion implies",
+          "expected": {
+            "coefficient": "1/9 (published)"
+          }
+        }
+      },
+      {
+        "inputs": {
+          "name": "quadratic-f-tent-halfcell-roundtrip-b=1.0",
+          "f": "f(x) = a + b x + c x^2",
+          "a": 2,
+          "b": 1,
+          "c": 6,
+          "exact": {
+            "a": "2",
+            "b": "1",
+            "c": "6"
+          },
+          "dx": 1,
+          "kernel": "linear interpolation to particles (tent radius dx) + tent-weighted gather at the node; particles uniform over the half-cell |y - x0| <= dx/2",
+          "scaling_note": "error scales as f''(x0) dx^2; the table is stated at unit spacing (coefficient is dimensionless)"
+        },
+        "expected": {
+          "f_at_x0": 2,
+          "f_second_derivative": 12,
+          "f_tilde_continuum": 3.3333333333333335,
+          "f_tilde_continuum_exact_rational": "10/3",
+          "error_exact_rational": "4/3",
+          "coefficient_exact_rational": "1/9",
+          "coefficient": 0.1111111111111111,
+          "particle_ladder": {
+            "n=4": {
+              "f_tilde": 3.375,
+              "f_tilde_exact_rational": "27/8",
+              "abs_residual_vs_continuum": 0.041666666666666664
+            },
+            "n=16": {
+              "f_tilde": 3.3359375,
+              "f_tilde_exact_rational": "427/128",
+              "abs_residual_vs_continuum": 0.0026041666666666665
+            },
+            "n=64": {
+              "f_tilde": 3.33349609375,
+              "f_tilde_exact_rational": "6827/2048",
+              "abs_residual_vs_continuum": 0.00016276041666666666
+            }
+          }
+        },
+        "independent_reference": {
+          "source": "Discrete midpoint-rule particle ladder (independent numerical route to the same limit): finite sums over n in {4, 16, 64} uniformly spaced particles — no integration — computed as exact rationals, converging monotonically at the midpoint rule's O(n^-2) to the continuum value; asserted at generator verify time and re-derived in binary64 by the gate-5 test.",
+          "doi": "n/a (in-repo exact finite-sum ladder; midpoint-rule convergence)",
+          "derived_by": "exact rational finite sums; monotone convergence to the continuum limit asserted",
+          "expected": {
+            "ladder": "monotone O(n^-2) convergence to f(x0) + (1/9) f''"
+          }
+        }
+      }
+    ],
+    "te_tolerance": {
+      "absolute": 1e-15,
+      "relative": 0
+    }
+  },
+  "determinism": {
+    "reference_claimed": "bit-exact-same-hw",
+    "browser_claimed": "device-scoped bit-exact (same-device run-twice; fixed-point i32-atomic P2G is order-independent); cross-device distributional",
+    "deviations_note": "DECLARED deviations from the reference: (1) push-apart is a symmetric Jacobi accumulate over id-sorted CSR neighbors instead of the serial Gauss-Seidel sweep (deterministic, exactly inert at rest, transients differ — absorbed by the robust-observable budget); (2) the live path may use RBGS+SOR and warm start (labeled, never gated); (3) f32 state + fixed-point P2G quanta (2^-21) vs the f64 reference — why the gate is observable-level, never pointwise"
+  },
+  "code_anchors": {
+    "bspline_weights": {
+      "start": 133,
+      "end": 139,
+      "lines": "fn bspline_weights(fp: f32) -> vec3<f32> {\n  return vec3<f32>(\n    0.5 * (1.5 - fp) * (1.5 - fp),\n    0.75 - (fp - 1.0) * (fp - 1.0),\n    0.5 * (fp - 0.5) * (fp - 0.5),\n  );\n}"
+    },
+    "p2g": {
+      "start": 191
+    },
+    "p2g_oracle": {
+      "start": 918
+    },
+    "compute_rhs": {
+      "start": 326
+    },
+    "jacobi_iter": {
+      "start": 387
+    },
+    "rbgs_red": {
+      "start": 415
+    },
+    "grad_update": {
+      "start": 424
+    },
+    "extrap_layer": {
+      "start": 488
+    },
+    "g2p": {
+      "start": 564
+    },
+    "advect": {
+      "start": 650
+    },
+    "pp_jacobi": {
+      "start": 845
+    }
+  },
+  "py_anchors": {
+    "p2g_3d_line": 461,
+    "g2p_3d_line": 649,
+    "advect_rk2_3d_line": 764,
+    "apic_step_3d_line": 1012,
+    "n_substeps_line": 885,
+    "divergence_line": 139,
+    "jacobi_line": 154,
+    "project_line": 219,
+    "extrapolate_line": 306,
+    "push_apart_3d_line": 316,
+    "drift_rhs_line": 182,
+    "rest_density_line": 164,
+    "canonical_n_jacobi_line": 100
+  },
+  "citations": [
+    {
+      "key": "JSSTS15",
+      "ref": "Jiang, Schroeder, Selle, Teran & Stomakhin 2015, ACM TOG 34(4) — APIC; tech-report Props 5.1/5.4/5.5 are the golden anchors",
+      "doi": "10.1145/2766996"
+    },
+    {
+      "key": "JST17",
+      "ref": "Jiang, Schroeder & Teran 2017, JCP 338 — angular-momentum-conserving APIC; the integrator caveat (transfer-level exactness needs a compatible integrator end-to-end)",
+      "doi": "10.1016/j.jcp.2017.02.050"
+    },
+    {
+      "key": "ZB05",
+      "ref": "Zhu & Bridson 2005, ACM TOG 24(3) — graphics PIC/FLIP; thesis eq. (3.8) is the 1/9 transfer-error golden",
+      "doi": "10.1145/1073204.1073298"
+    },
+    {
+      "key": "Course16",
+      "ref": "Jiang et al., SIGGRAPH 2016 course — Dp = (1/4) dx^2 I for the quadratic B-spline (§ 10.1 eq. 174)",
+      "doi": "10.1145/2897826.2927348"
+    },
+    {
+      "key": "Hu18",
+      "ref": "Hu et al. 2018 — MLS-MPM; the shared affine-transfer stencil (repo cross-anchor to the MPM golden)",
+      "doi": "10.1145/3197517.3201293"
+    },
+    {
+      "key": "Muller-TMP18",
+      "ref": "Müller, Ten Minute Physics #18 — the practitioner FLIP recipe: push-apart + density drift compensation ('necessary'), solid-face restore; his k=1 survives only an unconverged solve (backend § 3 measured deviation: k=0.05 vs a converged masked solve)",
+      "url": "https://matthias-research.github.io/pages/tenMinutePhysics/18-flip.html"
+    },
+    {
+      "key": "GPUGems3-30",
+      "ref": "Crane, Llamas & Tariq — GPU Gems 3 ch. 30: Jacobi/GS propagate ~1 cell/sweep — 'water sinks through the tank floor' at shallow iteration counts (the backend's pinned documented-failure: 20 sweeps retain 100% of g dt)",
+      "url": "https://developer.nvidia.com/gpugems/gpugems3/part-v-physics-simulation/chapter-30-real-time-simulation-and-rendering-3d-fluids"
+    },
+    {
+      "key": "Ding20",
+      "ref": "Ding, Shinar & Schroeder 2020 — APIC on MAC grids (the v2 formulation); APIC dissipates even at dt=0 where FLIP does not (honesty caveat c)",
+      "arxiv": "1911.09883"
+    },
+    {
+      "key": "TruongYuksel18",
+      "ref": "Truong & Yuksel 2018, PACMCGIT — narrow-range filter (the SSFR pipeline, reused from sph-water)",
+      "doi": "10.1145/3203201"
+    },
+    {
+      "key": "GPUGems3-39",
+      "ref": "Harris, Sengupta & Owens — GPU Gems 3 ch. 39, work-efficient Blelloch scan (the counting-sort broadphase, reused from sph-water)",
+      "url": "https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda"
+    },
+    {
+      "key": "jeantimex",
+      "ref": "jeantimex/fluid — closest browser peer (WebGPU PIC/FLIP, RBGS ~2x Jacobi, whitewater); no APIC, no conservation instrumentation, no correctness claim",
+      "url": "https://github.com/jeantimex/fluid"
+    },
+    {
+      "key": "matsuoka",
+      "ref": "matsuoka-601 WebGPU-Ocean / WaterBall — MLS-MPM with Tait EOS: NO pressure Poisson at all (the positioning FACT: the famous WebGPU water demos avoid the solver this demo verifies)",
+      "url": "https://github.com/matsuoka-601/webgpu-ocean"
+    }
+  ],
+  "links": {
+    "kernel_core": "packages/pic-flip/src/picflip_core.wgsl",
+    "reference_apic": "packages/pic-flip/pic_flip/reference/apic.py",
+    "reference_poisson": "packages/pic-flip/pic_flip/reference/poisson_masked.py",
+    "reference_regularizers": "packages/pic-flip/pic_flip/reference/regularizers.py",
+    "sim": "packages/pic-flip/pic_flip/sim.py",
+    "invariants": "packages/pic-flip/pic_flip/invariants.py",
+    "spec_ref": "docs/sim-specs/particle-fluids/pic-flip/spec-ref.md",
+    "algebraic": "docs/sim-specs/particle-fluids/pic-flip/algebraic.md",
+    "golden_weights": "tools/testkit/golden/tables/particle-fluids/apic-transfer-weights.json",
+    "golden_am": "tools/testkit/golden/tables/particle-fluids/apic-angular-momentum.json",
+    "golden_rt": "tools/testkit/golden/tables/particle-fluids/apic-affine-roundtrip.json",
+    "golden_te": "tools/testkit/golden/tables/particle-fluids/pic-flip-transfer-error.json",
+    "derivation_transfers": "tools/testkit/golden/derivations/apic-transfers.md",
+    "derivation_te": "tools/testkit/golden/derivations/pic-flip-transfer-error.md",
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "gate_source": "tools/productization/web-deploy/verify.py",
+    "spec": "packages/pic-flip/web/verification-demo-spec.md",
+    "capture_manifest": "tests/fixtures/legacy-captures/dam-break-3d-apic-24cube-seed42-step120.json",
+    "gate_refs_generator": "packages/pic-flip/web/tools/gen-gate-refs.py",
+    "canonical_extractor": "packages/pic-flip/web/tools/extract-canonical-obs.py"
+  }
+}

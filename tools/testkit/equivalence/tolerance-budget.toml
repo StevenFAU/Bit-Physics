@@ -45,3 +45,18 @@ absolute = 0.0
 [budgets.lbm-quantized.cross_stack]
 relative = 5.0e-2
 absolute = 1.0e-5
+
+# [budgets.picflip-observable.cross_stack] — Phase-6 Lane C pic-flip web gate
+#   (web spec § 2.1): ROBUST-OBSERVABLE comparison (KE/momentum/com/max-speed/
+#   fluid-nodes/column-height vs committed f64 refs) of the WGSL f32 +
+#   fixed-point-atomic browser stack against the f64 reference on the CHAOTIC
+#   60-step web-gate dam break — a different comparison FORM from the sph
+#   category's pointwise cross-stack budget (which stays 1e-4 and continues to
+#   gate non-chaotic pointwise scenes; per-particle pointwise is REJECTED for
+#   this scene, spec § 9). MEASURED 2026-07-04 (RADV step-2 harness): worst
+#   observable 1.4e-3 of per-observable scale; DECLARED 1e-2 = measured x 4.05
+#   (worst observed RADV->lavapipe family spread, charter round 2) x ~1.75
+#   margin. NEW category, not an sph amendment — the lbm-quantized pattern.
+[budgets.picflip-observable.cross_stack]
+relative = 1.0e-2
+absolute = 0.0
