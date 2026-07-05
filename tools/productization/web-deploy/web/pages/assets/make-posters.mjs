@@ -49,6 +49,10 @@ const SIMS = {
   // crater, jelly settled — all four materials legible. The sphere-impostor
   // + density-shadow render carries its own exposure.
   "mpm-multimaterial": { frames: 240, px: 512 },
+  // Phase-6 verification-demo (pic-flip): boots into the dam-break preset —
+  // ~36 RAF frames (3 sim steps each at dt=1/180 ≈ 0.6 s simulated) = the
+  // column mid-collapse, surge running up the far wall; SSFR default view.
+  "pic-flip": { frames: 36, px: 512 },
   // Phase-6 verification-demo (eulerian-smoke): boots into the plume scene —
   // frame-indexed emitter, 4 sim-steps/frame; ~500 frames lets the buoyant
   // column rise past mid-canvas with rolled-up side vortices. The v2-style

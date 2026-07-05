@@ -132,6 +132,36 @@ MPM_HEADROOM_FACTOR = 2  # max |cell quanta| must stay below 2^31 / this
 # (M = 4e6 after the measured 1e7 saturated 86.8% of i32 per-cell on the
 # canonical — packages/mpm-multimaterial/web/src/solver.ts FP_SCALE_DEFAULT.)
 
+# --- pic-flip (Phase-6 verification-demo, Lane C; NEW sim — declared fresh,
+# measured-then-declared per packages/pic-flip/web/verification-demo-spec.md
+# § 2.1). The web-gate canonical is a CHAOTIC dam break, so per-particle
+# pointwise reproduction is REJECTED (spec § 9: chaos + fixed-point-atomic
+# P2G != f64 lex reference); the trajectory gate is ROBUST OBSERVABLES
+# (energy, momentum, centre of mass, bulk shape) vs the committed f64
+# references at packages/pic-flip/web/public/, from the committed f32 IC.
+# OBS_REL is resolved from tolerance.toml [overrides.pic-flip] (fresh
+# declaration for the observable-level comparison — NOT the particle-fluids
+# cross-stack pointwise 1e-4, which gates non-chaotic scenes only). The
+# remaining constants gate the chaos-immune closed-form artifact suite
+# (Jiang 2015 Props 5.1/5.4/5.5 + weights/Dp + Zhu 1/9 + bit-identity).
+# MEASURED (RADV, 2026-07-04 step-2 harness): worst observable 1.4e-3 of scale
+# (69% of a 2e-3 scratch budget) over the 60-step chaotic horizon; run-twice
+# byte-identical. DECLARED 1e-2: measured 1.4e-3 x the 4.05x worst observed
+# cross-backend family spread (RADV->lavapipe, boids/neural-ca charter round 2)
+# = 5.7e-3, x ~1.75 margin. Chaotic-observable scope only — the closed-form
+# suite below is where the exactness claims live.
+T_PICFLIP_OBS_REL = 1e-2  # per-observable: |browser - ref| <= rel * max|ref|
+T_PICFLIP_GOLDEN_F64_ABS = 1e-13  # f64 mirror vs golden tables (dyadic rows ~0)
+T_PICFLIP_LADDER_F64_ABS = 1e-15  # 1/9 midpoint ladder — dyadic, f64-EXACT
+T_PICFLIP_WEIGHTS_F32_REL = 2e-6  # WGSL f32 N(x)/weights vs table (f32 scope)
+T_PICFLIP_POU_F32_ABS = 2e-6  # GPU partition-of-unity sweep |sum w - 1|
+T_PICFLIP_AM_F32_REL = 1e-5  # f32 conservation residual |L' - L|/|L| (Props 5.4/5.5)
+T_PICFLIP_RT_F32_REL = 1e-5  # f32 affine round-trip max node err / field scale
+T_PICFLIP_STILL_MAXSPEED = 2e-2  # still-pool null test, regularizers ON (30 steps)
+T_PICFLIP_STILL_DVOL = 4.0  # |fluid-node-count drift| over the still probe
+T_PICFLIP_HYDRO_REL = 2e-2  # |dP/dz - rho g_z| / |rho g_z| (compact adjoint pair)
+PICFLIP_HEADROOM_FACTOR = 2  # max |cell quanta| below 2^31 / this (M = 2^21)
+
 # Cross-backend contingency charter, round 1 (ratified post-run-#3): the mechanism
 # lands with the numeric bounds UNDECLARED — measured-then-declared requires one
 # RADV + one lavapipe measurement pass over the charter observables first. While a
@@ -188,6 +218,7 @@ SIM_CATEGORY = {
     "eulerian-smoke": "volumetric-grid",
     "sph-water": "particle-fluids",
     "mpm-multimaterial": "hybrid-pg",
+    "pic-flip": "particle-fluids",
 }
 
 GATE_KIND = {
@@ -201,6 +232,7 @@ GATE_KIND = {
     "eulerian-smoke": "new_canonical",
     "sph-water": "new_canonical",
     "mpm-multimaterial": "new_canonical",
+    "pic-flip": "new_canonical",
 }
 
 
@@ -1397,6 +1429,315 @@ def _gate_boids_observable(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_pic_flip(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for pic-flip: ROBUST-OBSERVABLE canonical replay +
+    the chaos-immune closed-form artifact suite.
+
+    The web-gate canonical (packages/pic-flip/web/public/, 12-cube APIC dam
+    break, Jacobi 600 = the backend's measured-converged diagnostic cap, 60
+    steps, regularizers ON-declared) is CHAOTIC, so per-particle pointwise
+    reproduction is rejected by the spec (§ 9: chaos + fixed-point-atomic
+    P2G != the f64 lex reference); the trajectory check compares the ten
+    per-checkpoint robust observables [KE, momentum xyz, com xyz, max
+    speed, fluid-node count, max column height] against the committed f64
+    references generated from the committed f32-quantized IC
+    (tools/gen-gate-refs.py), each within T_PICFLIP_OBS_REL of its
+    per-observable reference scale.
+
+    Gate = run-twice byte-identity over every emitted field at every step
+         + the observable-trajectory budget above
+         + closed-form artifacts at step 0 (browser f64 mirror AND WGSL
+           f32, measured residuals, never asserted zeros):
+             weights/moments/Dp golden (apic-transfer-weights.json),
+             angular-momentum conservation + PIC negative control
+             (apic-angular-momentum.json, Props 5.4/5.5),
+             affine round trip grid->particle->grid + PIC control
+             (apic-affine-roundtrip.json, Prop 5.1),
+             the Zhu 1/9 discrete midpoint ladder — dyadic, f64-EXACT
+             (pic-flip-transfer-error.json)
+         + transfer bit-identity: parallel fixed-point-atomic P2G ==
+           single-thread lex-order oracle, BOTH on-device, i32-exact
+           (the sph-water hash==brute structure), with i32 headroom
+         + still-pool inertness (regularizers ON, invariant 6) and the
+           hydrostatic dP/dz probe (the adjoint compact operator pair —
+           the load-bearing spec-ref v0.3 deviation this port must keep)
+         + finite fields, expected checkpoint set, sort-cap unsaturated.
+    """
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and set(st["state"]) == set(s1[st["step"]]["state"])
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in st["state"]
+            )
+            for st in steps0
+        )
+
+    refs_dir = REPO / "packages/pic-flip/web/public"
+    meta = json.loads((refs_dir / "picflip-gate-refs.json").read_text())
+    want = list(meta["checkpoints"])
+    expected_steps = [st["step"] for st in steps0]
+    if expected_steps != want:
+        return VerifyResult(
+            sim="pic-flip",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+    refs = np.frombuffer((refs_dir / "picflip-gate-refs.bin").read_bytes(), dtype="<f8")
+    refs = refs.reshape(len(want), 10)
+
+    # --- robust-observable trajectory ---------------------------------------
+    obs_keys = [
+        "kinetic_energy",
+        "momentum_x",
+        "momentum_y",
+        "momentum_z",
+        "com_x",
+        "com_y",
+        "com_z",
+        "max_speed",
+        "fluid_node_count",
+        "max_column_height",
+    ]
+    scale = np.max(np.abs(refs), axis=0)
+    finite = True
+    worst_ratio = 0.0
+    worst_obs = ""
+    sort_ok = True
+    for ci, st in enumerate(steps0):
+        for key in ("position", "velocity"):
+            if not np.isfinite(_field(st, key)).all():
+                finite = False
+        diag = st.get("diagnostics", {})
+        if float(diag.get("sort_saturated", 0.0)) != 0.0:
+            sort_ok = False
+        for oi, key in enumerate(obs_keys):
+            got = float(diag.get(key, math.inf))
+            budget = T_PICFLIP_OBS_REL * float(scale[oi])
+            if budget > 0:
+                ratio = abs(got - float(refs[ci, oi])) / budget
+                if ratio > worst_ratio:
+                    worst_ratio = ratio
+                    worst_obs = f"{key}@{st['step']}"
+    within = worst_ratio <= 1.0
+
+    # --- closed-form artifacts (emitted at step 0) ---------------------------
+    s0 = steps0[0]
+    diag0 = s0.get("diagnostics", {})
+    tables = REPO / "tools/testkit/golden/tables/particle-fluids"
+    wt = json.loads((tables / "apic-transfer-weights.json").read_text())
+    exp0 = wt["test_points"][0]["expected"]
+    n_expected = np.array(list(exp0["samples"].values()), dtype=np.float64)
+    n64 = _field(s0, "golden_weights_n_f64").astype(np.float64)
+    n32 = _field(s0, "golden_weights_n_f32").astype(np.float64)
+    weights_f64_dev = float(np.abs(n64 - n_expected).max())
+    mom64 = _field(s0, "golden_moments_f64").astype(np.float64).reshape(-1, 3)
+    mom32 = _field(s0, "golden_moments_f32").astype(np.float64).reshape(-1, 3)
+    mom_expected = np.array([1.0, 0.0, 0.25])
+    weights_f64_dev = max(weights_f64_dev, float(np.abs(mom64 - mom_expected).max()))
+    weights_f64_ok = weights_f64_dev <= T_PICFLIP_GOLDEN_F64_ABS
+    n_scale = np.maximum(np.abs(n_expected), 1e-30)
+    weights_f32_dev = float(
+        max(
+            (np.abs(n32 - n_expected) / n_scale).max(),
+            np.abs(mom32 - mom_expected).max(),
+        )
+    )
+    weights_f32_ok = weights_f32_dev <= T_PICFLIP_WEIGHTS_F32_REL
+    pou_dev = float(diag0.get("pou_max_dev_f32", math.inf))
+    pou_ok = pou_dev <= T_PICFLIP_POU_F32_ABS
+
+    am = json.loads((tables / "apic-angular-momentum.json").read_text())
+    am2_pts = [
+        tp
+        for tp in am["test_points"]
+        if len(tp["expected"]["l_total_particles_before"]) == 1
+    ]
+    am3_pts = [
+        tp
+        for tp in am["test_points"]
+        if len(tp["expected"]["l_total_particles_before"]) == 3
+    ]
+    am2_64 = _field(s0, "golden_am2_f64").astype(np.float64).reshape(-1, 4)
+    am2_32 = _field(s0, "golden_am2_f32").astype(np.float64).reshape(-1, 4)
+    am3_64 = _field(s0, "golden_am3_f64").astype(np.float64).reshape(-1, 12)
+    am3_32 = _field(s0, "golden_am3_f32").astype(np.float64).reshape(-1, 12)
+    am_f64_dev = 0.0
+    am_f32_cons = 0.0
+    pic_control_ok = True
+    for row, tp in zip(am2_64, am2_pts):
+        e = tp["expected"]
+        exp = np.array(
+            [
+                e["l_total_particles_before"][0],
+                e["l_total_grid_after_p2g"][0],
+                e["l_total_particles_after_apic_g2p"][0],
+                e["l_total_particles_after_pic_g2p"][0],
+            ]
+        )
+        am_f64_dev = max(
+            am_f64_dev, float(np.abs(row - exp).max() / max(1.0, np.abs(exp).max()))
+        )
+    for row, tp in zip(am3_64, am3_pts):
+        e = tp["expected"]
+        exp = np.array(
+            e["l_total_particles_before"]
+            + e["l_total_grid_after_p2g"]
+            + e["l_total_particles_after_apic_g2p"]
+            + e["l_total_particles_after_pic_g2p"]
+        )
+        am_f64_dev = max(
+            am_f64_dev, float(np.abs(row - exp).max() / max(1.0, np.abs(exp).max()))
+        )
+    for row, tp in zip(am2_32, am2_pts):
+        e = tp["expected"]
+        s = max(1e-30, abs(e["l_total_particles_before"][0]))
+        am_f32_cons = max(
+            am_f32_cons, abs(row[1] - row[0]) / s, abs(row[2] - row[0]) / s
+        )
+        loss_expected = abs(
+            e["l_total_particles_after_pic_g2p"][0] - e["l_total_particles_before"][0]
+        )
+        if abs(row[3] - row[0]) < 0.5 * loss_expected:
+            pic_control_ok = False
+    for row, tp in zip(am3_32, am3_pts):
+        e = tp["expected"]
+        lb = np.array(e["l_total_particles_before"])
+        s = max(1e-30, float(np.abs(lb).max()))
+        am_f32_cons = max(
+            am_f32_cons,
+            float(np.abs(row[3:6] - row[0:3]).max() / s),
+            float(np.abs(row[6:9] - row[0:3]).max() / s),
+        )
+        loss_expected = float(
+            np.abs(np.array(e["l_total_particles_after_pic_g2p"]) - lb).max()
+        )
+        if float(np.abs(row[9:12] - row[0:3]).max()) < 0.5 * loss_expected:
+            pic_control_ok = False
+    am_f64_ok = am_f64_dev <= T_PICFLIP_GOLDEN_F64_ABS
+    am_f32_ok = am_f32_cons <= T_PICFLIP_AM_F32_REL
+
+    rt = json.loads((tables / "apic-affine-roundtrip.json").read_text())
+    rt_64 = _field(s0, "golden_rt_f64").astype(np.float64).reshape(-1, 7)
+    rt_32 = _field(s0, "golden_rt_f32").astype(np.float64).reshape(-1, 7)
+    rt_f64_dev = 0.0
+    rt_f32_rel = 0.0
+    rt_pic_ok = True
+    rt_massed_ok = True
+    for row64, row32, tp in zip(rt_64, rt_32, rt["test_points"]):
+        e = tp["expected"]
+        ndim = len(tp["inputs"]["v0"])
+        scale_f = max(1e-30, row64[1])
+        rt_f64_dev = max(rt_f64_dev, row64[0] / scale_f)
+        if int(row64[2]) != int(e["n_massed_nodes_checked"]):
+            rt_massed_ok = False
+        sv = np.array(e["sample_node_velocity"], dtype=np.float64)
+        rt_f64_dev = max(
+            rt_f64_dev,
+            float(np.abs(row64[3 : 3 + ndim] - sv).max() / max(1.0, np.abs(sv).max())),
+        )
+        pic_dev_exp = float(e["pic_max_abs_deviation"])
+        rt_f64_dev = max(
+            rt_f64_dev, abs(row64[6] - pic_dev_exp) / max(1.0, pic_dev_exp)
+        )
+        rt_f32_rel = max(rt_f32_rel, row32[0] / max(1e-30, row32[1]))
+        if row32[6] < 10.0 * T_PICFLIP_RT_F32_REL * row32[1]:
+            rt_pic_ok = False
+    rt_f64_ok = rt_f64_dev <= T_PICFLIP_GOLDEN_F64_ABS
+    rt_f32_ok = rt_f32_rel <= T_PICFLIP_RT_F32_REL
+
+    te = json.loads((tables / "pic-flip-transfer-error.json").read_text())
+    ladder = _field(s0, "golden_transfer_ladder_f64").astype(np.float64)
+    ladder_exp = np.array(
+        [
+            tp["expected"]["particle_ladder"][f"n={n}"]["f_tilde"]
+            for tp in te["test_points"]
+            for n in (4, 16, 64)
+        ]
+    )
+    ladder_dev = float(np.abs(ladder - ladder_exp).max())
+    ladder_ok = ladder_dev <= T_PICFLIP_LADDER_F64_ABS
+
+    p2g_atomic = _field(s0, "p2g_atomic_fp").astype(np.float64)
+    p2g_oracle = _field(s0, "p2g_oracle_fp").astype(np.float64)
+    bit_ok = bool(np.array_equal(p2g_atomic, p2g_oracle)) and p2g_atomic.size >= 4096
+    headroom = float(diag0.get("fp_headroom_ratio", math.inf))
+    headroom_ok = headroom <= 1.0 / PICFLIP_HEADROOM_FACTOR
+
+    still_speed = float(diag0.get("still_max_speed", math.inf))
+    still_dvol = abs(float(diag0.get("still_fluid_nodes_delta", math.inf)))
+    hydro_rel = float(diag0.get("hydro_dpdz_rel", math.inf))
+    still_ok = still_speed <= T_PICFLIP_STILL_MAXSPEED
+    dvol_ok = still_dvol <= T_PICFLIP_STILL_DVOL
+    hydro_ok = hydro_rel <= T_PICFLIP_HYDRO_REL
+
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and sort_ok
+        and weights_f64_ok
+        and weights_f32_ok
+        and pou_ok
+        and am_f64_ok
+        and am_f32_ok
+        and pic_control_ok
+        and rt_f64_ok
+        and rt_f32_ok
+        and rt_pic_ok
+        and rt_massed_ok
+        and ladder_ok
+        and bit_ok
+        and headroom_ok
+        and still_ok
+        and dvol_ok
+        and hydro_ok
+    )
+    return VerifyResult(
+        sim="pic-flip",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_obs_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_observable": worst_obs,
+            "obs_rel": T_PICFLIP_OBS_REL,
+            "finite": finite,
+            "sort_unsaturated": sort_ok,
+            "weights_f64_dev": weights_f64_dev,
+            "weights_f32_dev": weights_f32_dev,
+            "pou_max_dev_f32": pou_dev,
+            "am_f64_dev_rel": am_f64_dev,
+            "am_f32_conservation_rel": am_f32_cons,
+            "am_pic_negative_control_ok": pic_control_ok,
+            "rt_f64_dev_rel": rt_f64_dev,
+            "rt_f32_err_rel": rt_f32_rel,
+            "rt_pic_negative_control_ok": rt_pic_ok,
+            "rt_massed_nodes_ok": rt_massed_ok,
+            "transfer_ladder_f64_dev": ladder_dev,
+            "bit_identity_ok": bit_ok,
+            "fp_headroom_ratio": headroom,
+            "still_max_speed": still_speed,
+            "still_fluid_nodes_delta": still_dvol,
+            "hydro_dpdz_rel": hydro_rel,
+            "note": "robust-observable canonical (chaotic dam break — pointwise "
+            "rejected per spec § 9) + Props 5.1/5.4/5.5 golden suite with PIC "
+            "negative controls, Zhu 1/9 dyadic-exact ladder, on-device "
+            "atomic==lex-oracle bit identity, still-pool inertness and the "
+            "adjoint-compact-pair hydrostatic probe",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -1408,6 +1749,7 @@ _GATES = {
     "eulerian-smoke": _gate_eulerian_smoke,
     "sph-water": _gate_sph_water,
     "mpm-multimaterial": _gate_mpm_multimaterial,
+    "pic-flip": _gate_pic_flip,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

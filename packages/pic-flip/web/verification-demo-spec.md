@@ -8,7 +8,7 @@
 > **Reuse (verified machinery):** `eulerian-smoke` collocated pressure projection + its MMS (`packages/eulerian-smoke/eulerian_smoke/reference/stable_fluids.py`; the divergence-residual heatmap + Poisson-MMS UI patterns from its web spec); `mpm-multimaterial` quadratic B-spline transfers + golden + fixed-point-atomic P2G determinism (`packages/mpm-multimaterial/...`); `sph-water` **screen-space fluid rendering** pipeline (`packages/sph-water/web/`, § 3.3 there).
 > **Method precedent:** the Lane-A fluid specs (smoke/SPH/MPM) — adopts their four-layer structure (INTERACT / EXPLAIN / PROVE / RENDER), build-time data-spine discipline, prior-art survey, rejected-with-cause ledger, and the `new_canonical` chaos-immune gate design.
 > **Research basis:** deep web-research report (2026-07-04; 22 sources, 25 claims 3-vote adversarially verified, 22 confirmed / 3 refuted) — cited inline; the honesty caveats (§ 3, § 9) are load-bearing.
-> **Status:** v0.2 — DRAFT, pre-implementation. First Lane-C sim; ships *after* the backend reference lands. v0.2 = review pass (2026-07-04): field survey of every notable shipped browser fluid demo + primary-source re-verification; brought up to the `sph-water` v0.2 conventions (template gallery, perf budget, free foam stack). See § 11.
+> **Status:** v0.3 — EXECUTED 2026-07-04 (§ 12 execution record; MEASURED block below is machine-read by gen-verification.mjs). v0.2 was the pre-implementation review pass. First Lane-C sim; ships *after* the backend reference lands. v0.2 = review pass (2026-07-04): field survey of every notable shipped browser fluid demo + primary-source re-verification; brought up to the `sph-water` v0.2 conventions (template gallery, perf budget, free foam stack). See § 11.
 > **Kernel:** NEW WGSL over a NEW verified reference. The verification story is the strongest of the fluid set: APIC's **exact angular-momentum conservation** and **affine round-trip** are formally-proven closed-form golden tests unique to this method.
 
 ---
@@ -163,3 +163,42 @@ Per the backend § 3 (collocated-first APIC; MAC-staggered v2; **3D canonical** 
 
 - **v0.2 (2026-07-04):** review pass — repo audit + primary-source re-verification + full browser-field survey. **Load-bearing changes:** (1) **the two practitioner regularizers** (push-apart + density drift compensation, Müller's "necessary" pair) added end-to-end, with the drift toggle shipped as a *teachable failure mode* ("Watch it sink" template + volume readout); (2) **projection honesty** — the masked free-surface Poisson is new WGSL over new verified reference code (the smoke solve is periodic-only; only operator shapes reuse), live/canonical solver split (RBGS+SOR live, pinned Jacobi canonical), solver-depth honesty in the HUD (GPU Gems 3 ch. 30); (3) **post-projection BC pass** (solid-face restore ⇒ moving obstacles that throw water; air-cell extrapolation ⇒ splashes that don't die); (4) **§ 3.1 performance budget** added — the grid, not N, is the lever (austinEng's grid-bound curve); targets bracketed by in-repo sph/mpm measurements, not by the Poisson-free MLS-MPM demos' numbers; (5) **INTERACT raised to the sph-water bar** — named template gallery (incl. two verification-run presets), draw-water, moving obstacle, device-orientation tilt, URL-shareable state (no surveyed fluid demo has it), labeled FLIP-ratio slider, A/B split as measured stretch; (6) **RENDER** — free foam stack + velocity-stretched sprites v1, Ihmsen 2012 whitewater deferred-with-recipe (neighbor-count classification — *not* Weber), narrow-range filter per the sph-water pipeline; (7) **FP/citation honesty** — Prop 5.1 direction corrected (grid→particle→grid), measured-f32-residual language replaces asserted machine-ε (TS f64 mirror shows ~1e-15), Ding/Shinar/Schroeder 2020 for APIC-MAC (v0.1 misattribution), arXiv:2603.03860 recharacterized (proposes adaptive blending), APIC's Δt=0 dissipation (Ding 2020) added to the caveats. Positioning upgraded from INFERENCE to FACT: the famous WebGPU water demos solve no Poisson at all; no browser APIC exists.
 - **v0.1 (2026-07-04):** initial draft. First Lane-C sim, **full posture** — a new verified backend (`spec-ref.md`) + this WGSL frontend. Load-bearing decisions: (1) **pure APIC** primary, PIC/FLIP as discrete live-comparison modes (not a blend); (2) the moat is **formally-proven closed-form** — exact angular-momentum conservation (Props 5.4/5.5) + affine round-trip (Prop 5.1), unique to APIC, plus inherited Poisson-MMS (smoke) + transfer conservation (MPM) + fixed-point-atomic determinism; (3) **collocated-first** (reuse + the 2015 collocated conservation proof + smoke consistency), MAC-staggered v2; (4) honest caveats surfaced in-demo — transfer/dt=0 vs end-to-end conservation (needs symplectic integrator), collocated-vs-MAC proof scope, APIC-dissipation-comparable-to-FLIP, checkerboard null-space; (5) `new_canonical` gate (closed-form + transfer bit-identity + robust-observable), reusing the SPH/MPM chaos-immune design. Grounded in a 25-claim adversarially-verified research report (22 confirmed / 3 refuted) and the smoke/SPH/MPM/boids-2d precedents. Opens Lane C.
+
+## 12. Execution record (v0.3, 2026-07-04)
+
+Backend landed first (PR #7, spec-ref v0.3, 43 tests green, canonical LFS
+capture); this frontend executed per § 6 steps 1–6. Deviations-with-cause:
+
+- **Web-gate tier vs the 24³ canonical (§ 2.1 refinement).** The GATED
+  in-browser replay runs the backend's diagnostic tier (12³, Jacobi 600 =
+  its measured-converged cap) extended to 60 steps, from a committed
+  f32-quantized IC (`tools/gen-gate-refs.py`) — 60×600 Jacobi dispatches
+  finish in ~0.2 s on RADV and stay tractable on CI lavapipe, where
+  120×3000 would not. The full 24³/3000/120 canonical ships as a
+  user-triggered PROVE extra (`picflip-canonical-ic.bin` = h5 frame 0,
+  measured deviation displayed, not gated). Robust-observable gate as
+  specified: per-particle pointwise REJECTED (§ 9) for this chaotic scene.
+- **Push-apart is a symmetric Jacobi accumulate** over id-sorted CSR
+  neighbor lists (the sph-water counting-sort machinery) instead of the
+  reference's serial Gauss-Seidel sweep — deterministic, exactly inert at
+  rest (invariant 6 both schemes), transients differ; absorbed by the
+  observable budget, DECLARED in the demo honesty panel and the data spine.
+- **Rotating-disk flagship runs in the in-page f64 mirror** (bit-exact
+  same-op-order port of `transfer_cycle_step_2d`), not WGSL — the
+  conservation showcase should carry no f32 caveat; the WGSL f32 story is
+  carried by the golden AM evaluation on the visitor's GPU. Measured over
+  200 cycles: APIC |ΔL|/L = 1.36e-3 (advection-clamp scope), PIC 8.2e-1.
+- **Observable budget declared 1e-2** (tolerance.toml [overrides.pic-flip],
+  fresh observable-level declaration): measured 1.4e-3-of-scale worst
+  (RADV) × 4.05 worst observed cross-backend family spread × ~1.75 margin.
+- **Split-screen A/B mode race (stretch): NOT shipped** — the measured
+  win is the PROVE energy-comparison plot (3 modes, same scene, measured
+  curves) at a fraction of the complexity; revisit with v2 whitewater.
+
+MEASURED (browser, RADV via snap-chromium headless 2026-07-04): worst_ratio_of_budget=1.38e-1; worst_observable=momentum_x@50; run_twice=true; weights_f32_rel=5.06e-8; pou_f32_abs=5.97e-8; am_f32_cons_rel=3.18e-7; rt_f32_rel=1.86e-7; bit_identity=true; fp_headroom=7.76e-3; still_max_speed=4.59e-8; hydro_dpdz_rel=1.37e-6
+
+Perf (RADV, 40³ grid, dam-break, RBGS 40): 1.8 ms/step → ~5.4 ms sim/frame
+at 3 steps/frame; 32³ floor 2.3 ms/step; adaptive-grid probe drops to 32³
+above 34 ms/frame (declared in HUD). Hydrostatic probe: dP/dz = −9.80999
+(rel 1.37e-6) at the converged cap; the 20-sweep documented failure ships
+as the PROVE falsifiability button.

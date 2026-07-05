@@ -148,6 +148,28 @@ category = "mpm"
 # Fourth per-sim override after reaction-diffusion-2d + sph-water + lattice-boltzmann-d3q19.
 # Same 1e-4 tolerance as RD-2D + sph-water (looser than LBM's 1e-5).
 
+[overrides.pic-flip]
+category = "picflip-observable"
+relative = 1e-2
+# pic-flip browser gate (Phase-6 Lane C, web spec § 2.1): the web-gate
+# canonical is a CHAOTIC dam break, so the browser comparison is
+# ROBUST-OBSERVABLE (KE / momentum / com / bulk shape vs the committed f64
+# references), NOT the pointwise particle-fluids cross-stack form — the
+# explicit relative=2e-3 here is a FRESH measured-then-declared budget for
+# that observable-level comparison (verify.py T_PICFLIP_OBS_REL), not a
+# widening of [defaults.sph] (which continues to gate non-chaotic pointwise
+# scenes at 1e-4). category='sph' wires the particle-fluids physics-family
+# taxonomy to the established numerical-method taxonomy for everything else.
+# DECLARED 1e-2 from measurement (2026-07-04 RADV step-2 harness): worst
+# observable 1.4e-3 of per-observable scale over the 60-step chaotic
+# horizon, x 4.05 (worst observed RADV->lavapipe family spread, charter
+# round 2) = 5.7e-3, x ~1.75 margin. Capped by the NEW
+# [budgets.picflip-observable] category (tolerance-budget.toml — the
+# lbm-quantized different-comparison-form pattern, NOT an sph widening;
+# a future true cross-stack pointwise port must use the sph 1e-4 form).
+# Fifth per-sim override; measured value recorded in
+# packages/pic-flip/web/verification-demo-spec.md MEASURED block.
+
 [overrides.eulerian-smoke]
 category = "smoke"
 # Resolves sim.category='volumetric-grid' (physics-family taxonomy)

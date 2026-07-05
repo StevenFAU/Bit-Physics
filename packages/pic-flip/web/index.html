@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PIC / FLIP / APIC Water (verified) — Bit-Physics</title>
+    <meta name="description" content="The first browser APIC fluid, verification-visible: pour screen-space-rendered water driven by a real masked pressure projection, switch PIC/FLIP/APIC live, and watch APIC's proven angular-momentum conservation hold on your own GPU while PIC's decays." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="PIC / FLIP / APIC Water (verified) — Bit-Physics" />
+    <meta property="og:description" content="The first browser APIC fluid, verification-visible: pour screen-space-rendered water driven by a real masked pressure projection, switch PIC/FLIP/APIC live, and watch APIC's proven angular-momentum conservation hold on your own GPU while PIC's decays." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/pic-flip/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/pic-flip.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PIC / FLIP / APIC Water (verified) — Bit-Physics" />
+    <meta name="twitter:description" content="The first browser APIC fluid, verification-visible: pour screen-space-rendered water driven by a real masked pressure projection, switch PIC/FLIP/APIC live, and watch APIC's proven angular-momentum conservation hold on your own GPU while PIC's decays." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/pic-flip.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); touch-action: none; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="720" height="720" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -66,6 +66,9 @@ const SIMS = {
   // multi-material impact phase. Frame-indexed live loop, deterministic per
   // device; loop wraps with a cut (declared, boids precedent).
   "mpm-multimaterial": { start: 10, shots: 300, gap: 1, fps: 30, px: 512, crf: 46 },
+  // Phase-6 pic-flip: the dam-break collapse — frame-indexed live loop,
+  // deterministic per device. Loop wraps with a cut (declared).
+  "pic-flip": { start: 20, shots: 300, gap: 1, fps: 30, px: 512, crf: 46 },
   // Phase-6 eulerian-smoke: motion IS the physics (buoyant plume rising +
   // rolling up); boots into the plume scene with a frame-indexed emitter, so
   // the loop is deterministic. Loop wraps with a cut (declared, boids

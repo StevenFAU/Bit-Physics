@@ -42,6 +42,7 @@ EXPECTED_SIMS = {
     "eulerian-smoke",
     "sph-water",
     "mpm-multimaterial",
+    "pic-flip",
 }
 
 
