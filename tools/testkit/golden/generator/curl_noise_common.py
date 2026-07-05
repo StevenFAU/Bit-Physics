@@ -23,7 +23,8 @@ from pathlib import Path
 
 import numpy as np
 
-_REPO = Path(__file__).resolve().parents[3]
+# workspace root: generator/ -> golden/ -> testkit/ -> tools/ -> REPO ROOT
+_REPO = Path(__file__).resolve().parents[4]
 for _p in (str(_REPO / "packages" / "curl-noise"),):
     if _p not in sys.path:
         sys.path.insert(0, _p)

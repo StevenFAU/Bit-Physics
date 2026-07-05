@@ -41,6 +41,9 @@ from .fields import (
 )
 
 CANONICAL_DESCRIPTOR: Final[str] = "curl-noise-sphere-seed42-step64"
+# non-default seeds get their own descriptor (artifact names must not
+# collide or mislabel — sim_runner_seeded(seed) below)
+DESCRIPTOR_TEMPLATE: Final[str] = "curl-noise-sphere-seed{seed}-step64"
 CANONICAL_TRACERS: Final[int] = 4096
 CANONICAL_STEPS: Final[int] = 64
 CANONICAL_DT: Final[float] = 2e-4
@@ -250,7 +253,7 @@ def sim_runner_seeded(seed: int, out_dir: Path) -> Path:
         )
         for idx, step in enumerate(result.checkpoint_steps)
     ]
-    payload_name = f"{CANONICAL_DESCRIPTOR}.h5"
+    payload_name = f"{DESCRIPTOR_TEMPLATE.format(seed=int(seed))}.h5"
     manifest = _build_manifest(seed, wall, payload_name)
     return write_capture(rows, manifest, out_dir)
 
