@@ -1,0 +1,39 @@
+{
+  "_generated_by": "packages/neural-ca/web/extract-canonical-frames.py",
+  "asset": "neural-ca-canonical-frames.bin",
+  "sha256": "ff959c010cf5f8866ed79d0c4f7a6d8acd69292c8ce46cd532d91ad74915c2aa",
+  "bytes": 1376256,
+  "dtype": "<f4",
+  "n_frames": 21,
+  "steps": [
+    0,
+    50,
+    100,
+    150,
+    200,
+    250,
+    300,
+    350,
+    400,
+    450,
+    500,
+    550,
+    600,
+    650,
+    700,
+    750,
+    800,
+    850,
+    900,
+    950,
+    1000
+  ],
+  "grid": [
+    64,
+    64
+  ],
+  "channels": 4,
+  "layout": "frame-major: 21 \u00d7 rgba[64*64*4] row-major, clamped [0,1]",
+  "extracted_from": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.h5",
+  "source_payload_sha256": "sha256:078be96736186fe6c517e6f00c38e85f4d1f9452b3c0a6e55a7544747c13d8c7"
+}

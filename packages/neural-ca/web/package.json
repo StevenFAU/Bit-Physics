@@ -5,6 +5,9 @@
   "type": "module",
   "description": "Stack-B WebGPU web build — Growing Neural CA forward inference. Ships the committed nca_inference.wgsl + converted checkpoint through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
   "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
