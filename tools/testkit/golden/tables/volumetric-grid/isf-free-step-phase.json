@@ -1,0 +1,117 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-free-step-per-mode-phase",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-free-step-phase.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "mode": [
+          1,
+          0,
+          0
+        ],
+        "hbar": 0.05,
+        "dt": 0.041666666666666664,
+        "n": 32
+      },
+      "expected": {
+        "phase": -0.04112335167120573,
+        "formula": "wrap(-(hbar*dt/2) * (2*pi)^2 * |mode|^2)",
+        "measured_phase_at_generation": -0.04112335167120562
+      },
+      "independent_reference": {
+        "derived_by": "identity",
+        "source": "Fourier diagonalization of the Laplacian on T^3: Delta e^{ikx} = -|k|^2 e^{ikx}, so the propagator phase is exactly -(hbar*dt/2)|k|^2 per mode (Trefethen, Spectral Methods in MATLAB, Ch. 3).",
+        "doi": "n/a-textbook",
+        "expected": {
+          "phase": "-(hbar*dt/2)|k|^2 exactly (per-mode exact propagator)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "mode": [
+          2,
+          3,
+          1
+        ],
+        "hbar": 0.05,
+        "dt": 0.041666666666666664,
+        "n": 32
+      },
+      "expected": {
+        "phase": -0.5757269233968794,
+        "formula": "wrap(-(hbar*dt/2) * (2*pi)^2 * |mode|^2)",
+        "measured_phase_at_generation": -0.575726923396879
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern et al. (2016), Schr\u00f6dinger's Smoke, ACM TOG 35(4), Alg. 2 + App. E Eq. 18: the free step is defined as this multiplier on the CONTINUOUS spectrum (the two-spectra rule is pinned by tools/testkit/golden/tables/volumetric-grid/isf-laplacian-eigenvalues.json).",
+        "doi": "10.1145/2897824.2925868",
+        "expected": {
+          "phase": "-(hbar*dt/2)|k|^2 exactly (per-mode exact propagator)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "mode": [
+          0,
+          0,
+          5
+        ],
+        "hbar": 0.1,
+        "dt": 0.020833333333333332,
+        "n": 32
+      },
+      "expected": {
+        "phase": -1.0280837917801415,
+        "formula": "wrap(-(hbar*dt/2) * (2*pi)^2 * |mode|^2)",
+        "measured_phase_at_generation": -1.0280837917801415
+      },
+      "independent_reference": {
+        "derived_by": "hand-derivation",
+        "source": "Hand mod-2pi reduction in tools/testkit/golden/derivations/isf-free-step-phase.md \u00a7 2: at 128^3-class grids (hbar*dt/2)|k|^2 reaches tens of radians; the committed value is the principal-branch wrap, the same reduction the WGSL port's f64-precomputed multiplier tables require.",
+        "doi": "n/a-in-repo-hand-derivation",
+        "expected": {
+          "phase": "-(hbar*dt/2)|k|^2 exactly (per-mode exact propagator)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "mode": [
+          7,
+          7,
+          7
+        ],
+        "hbar": 0.02,
+        "dt": 0.041666666666666664,
+        "n": 32
+      },
+      "expected": {
+        "phase": -2.4180530782668925,
+        "formula": "wrap(-(hbar*dt/2) * (2*pi)^2 * |mode|^2)",
+        "measured_phase_at_generation": -2.4180530782668925
+      },
+      "independent_reference": {
+        "derived_by": "cross-golden",
+        "source": "Exact-propagator corollary: the Gaussian-dispersion flatline golden (tools/testkit/golden/tables/volumetric-grid/isf-gaussian-dispersion.json) independently witnesses that the composed per-mode multiplier carries no dt error.",
+        "doi": "n/a-in-repo-cross-golden",
+        "expected": {
+          "phase": "-(hbar*dt/2)|k|^2 exactly (per-mode exact propagator)"
+        }
+      }
+    }
+  ]
+}

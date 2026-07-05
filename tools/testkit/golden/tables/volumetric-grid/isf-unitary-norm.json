@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-free-step-unitary-l2-norm",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-unitary-norm.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 1e-13,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "hbar": 0.05,
+        "n": 32,
+        "dt": 0.041666666666666664,
+        "seed": 42,
+        "ic": "band-limited-random-spinor(|k|<=2, +2 bias, normalized)"
+      },
+      "expected": {
+        "norm_rel_drift_ceiling": 1e-13,
+        "measured_rel_drift_at_generation": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "theorem",
+        "source": "Stone's theorem / unitarity of exp(-iHt) for self-adjoint H: the free Schr\u00f6dinger group preserves the L2 norm exactly (Reed & Simon, Methods of Modern Mathematical Physics I, Theorem VIII.7; any QM text).",
+        "doi": "n/a-textbook",
+        "expected": {
+          "norm_rel_drift": "0 (exact arithmetic)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "hbar": 0.1,
+        "n": 32,
+        "dt": 0.020833333333333332,
+        "seed": 42,
+        "ic": "band-limited-random-spinor(|k|<=2, +2 bias, normalized)"
+      },
+      "expected": {
+        "norm_rel_drift_ceiling": 1e-13,
+        "measured_rel_drift_at_generation": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern (2017), Fluid Dynamics with Incompressible Schr\u00f6dinger Flow, Caltech PhD thesis, Alg. 2: the free step is a per-mode multiplication by the unit-modulus phase exp(-i(hbar*dt/2)|k|^2) \u2014 modulus preserved per mode by construction.",
+        "doi": "10.7907/Z98050N3",
+        "expected": {
+          "norm_rel_drift": "0 (exact arithmetic)"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "hbar": 0.3,
+        "n": 16,
+        "dt": 0.041666666666666664,
+        "seed": 42,
+        "ic": "band-limited-random-spinor(|k|<=2, +2 bias, normalized)"
+      },
+      "expected": {
+        "norm_rel_drift_ceiling": 1e-13,
+        "measured_rel_drift_at_generation": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "identity",
+        "source": "Parseval/Plancherel: sum|Psi|^2 = (1/N^3) sum|Psi_hat|^2 for the discrete Fourier transform (Trefethen, Spectral Methods in MATLAB, Ch. 2), transferring per-mode modulus preservation to the spatial L2 norm; independently gated by the Parseval row in packages/schrodinger-smoke/tests/test_isf_invariants.py.",
+        "doi": "n/a-in-repo-cross-gate",
+        "expected": {
+          "norm_rel_drift": "0 (exact arithmetic)"
+        }
+      }
+    }
+  ]
+}

@@ -48,7 +48,8 @@ jobs:
               packages/eulerian-smoke \
               packages/lattice-boltzmann-d3q19 \
               packages/mpm-multimaterial \
-              packages/pic-flip; do
+              packages/pic-flip \
+              packages/schrodinger-smoke; do
             echo "=== ${pkg} ==="
             (cd "${pkg}" && uv run pytest tests/test_determinism.py -v)
           done

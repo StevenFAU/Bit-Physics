@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "isf-spherical-clebsch-taylor-green-velocity",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/isf-clebsch-velocity.md",
+    "upstream": "Chern-et-al-2016-Schrodingers-Smoke-ACM-TOG-35-4",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1145/2897824.2925868"
+  },
+  "tolerance": {
+    "absolute": 1e-13,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "index": [
+          0,
+          0,
+          0
+        ],
+        "n": 32,
+        "hbar": 0.1,
+        "fixture": "taylor_green_wave_2d (landed clebsch-pfm A1 port)"
+      },
+      "expected": {
+        "psi1_re": -6.11796030531625e-17,
+        "psi1_im": 2.5407925755780245e-18,
+        "psi2_re": -0.9991387409946791,
+        "psi2_im": -0.041494291698586455,
+        "u_face_x": -1.4144648030948356e-17,
+        "u_face_y": -0.19571952665283732,
+        "u_face_z": 9.150807036512156e-18
+      },
+      "independent_reference": {
+        "derived_by": "landed-fixture",
+        "source": "Faithful f64 port of the validated C++ fixture packages/eulerian-smoke-frontier-clebsch-pfm/src/clebsch_pfm_math.cpp taylor_green_wave_2d (validated at that package's A1 surface; spec docs/sim-specs/volumetric-grid/eulerian-smoke/spec-frontier-clebsch-pfm.md \u00a7 2).",
+        "doi": "n/a-in-repo-landed-fixture",
+        "expected": {
+          "unit_norm": "1 exact-to-FP by construction"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "index": [
+          5,
+          9,
+          0
+        ],
+        "n": 32,
+        "hbar": 0.1,
+        "fixture": "taylor_green_wave_2d (landed clebsch-pfm A1 port)"
+      },
+      "expected": {
+        "psi1_re": 0.3833878128236983,
+        "psi1_im": 0.27427845060897454,
+        "psi2_re": 0.7172681484768804,
+        "psi2_im": -0.5131388892788667,
+        "u_face_x": -1.2825203670470684e-16,
+        "u_face_y": -1.1557679350385381,
+        "u_face_z": 9.036802336439117e-17
+      },
+      "independent_reference": {
+        "derived_by": "primary-source",
+        "source": "Chern (2017) thesis App. 1.C: eta_e = hbar*arg<Psi_a,Psi_b> is the EXACT circulation of the geodesically CP1-interpolated velocity 1-form \u2014 the discrete readout under test.",
+        "doi": "10.7907/Z98050N3",
+        "expected": {
+          "unit_norm": "1 exact-to-FP by construction"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "index": [
+          12,
+          3,
+          7
+        ],
+        "n": 32,
+        "hbar": 0.1,
+        "fixture": "taylor_green_wave_2d (landed clebsch-pfm A1 port)"
+      },
+      "expected": {
+        "psi1_re": -0.8130102363857582,
+        "psi1_im": -0.4388254164531123,
+        "psi2_re": -0.336759866259137,
+        "psi2_im": 0.18176743900890063,
+        "u_face_x": 7.626893316446489e-17,
+        "u_face_y": 0.9194773203770197,
+        "u_face_z": -6.802404361034138e-17
+      },
+      "independent_reference": {
+        "derived_by": "shared-primitive",
+        "source": "Li et al. (2025), Clebsch Gauge Fluid on Particle Flow Maps, ACM TOG 44(4), Eq. 12 u = hbar<grad Psi, i Psi>_R \u2014 the same velocity readout in an independently landed stack.",
+        "doi": "10.1145/3731194",
+        "expected": {
+          "unit_norm": "1 exact-to-FP by construction"
+        }
+      }
+    },
+    {
+      "inputs": {
+        "index": [
+          20,
+          20,
+          20
+        ],
+        "n": 32,
+        "hbar": 0.1,
+        "fixture": "taylor_green_wave_2d (landed clebsch-pfm A1 port)"
+      },
+      "expected": {
+        "psi1_re": -0.5809250278075875,
+        "psi1_im": 0.7183867361387094,
+        "psi2_re": -0.24062702523987003,
+        "psi2_im": -0.2975655291375954,
+        "u_face_x": 1.3484279804730475e-17,
+        "u_face_y": -1.134711946775406,
+        "u_face_z": -2.3632995813262806e-17
+      },
+      "independent_reference": {
+        "derived_by": "sign-pin-test",
+        "source": "Plane-wave sign pin: psi1 = e^{i k x} must give u = +hbar*k (u = +hbar*Im(conj(psi) grad psi); the Re/Im flip yields the negative) \u2014 asserted by packages/schrodinger-smoke/tests/test_isf_invariants.py test_velocity_sign_plane_wave.",
+        "doi": "n/a-in-repo-unit-test",
+        "expected": {
+          "unit_norm": "1 exact-to-FP by construction"
+        }
+      }
+    }
+  ],
+  "fixture": {
+    "n": 32,
+    "hbar": 0.1,
+    "unit_norm_max_err_at_generation": 2.220446049250313e-16,
+    "unit_norm_ceiling": 1e-15
+  }
+}
