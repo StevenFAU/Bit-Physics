@@ -17,7 +17,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Bit-Physics — GPU physics &amp; emergence, verified</title>
-<meta name="description" content="A GPU-accelerated physics and emergence simulation portfolio with an append-only verification ledger. Seven browser-WebGPU sims, each re-verified through its own established gate." />
+<meta name="description" content="A GPU-accelerated physics and emergence simulation portfolio with an append-only verification ledger. Browser-WebGPU sims, each re-verified through its own established gate." />
 <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
 <style>
   /* Self-hosted house fonts (P-3 Stage 1 — no Google Fonts runtime fetch).
@@ -150,7 +150,7 @@
   <h1>bit-physics<span class="tld">.sim</span></h1>
   <div class="tag">GPU-accelerated physics &amp; emergence — a portfolio with a verification spine</div>
   <p class="story">
-    Eight interactive simulations — smoke, flocks, chemical gardens, slime
+    Interactive simulations — smoke, flocks, chemical gardens, slime
     intelligence, critical magnets, learned life, fractal geometry, chaos —
     each running real compute kernels in your browser over WebGPU. Built
     solo with AI agents under an audit discipline where
@@ -175,6 +175,21 @@
 <h2>Simulations</h2>
 <p class="sub">Run in the browser via WebGPU. Each card names the gate its bundle was re-verified through.</p>
 <div class="grid">
+  <a class="card" href="./sims/boids-2d/">
+    <img class="poster" src="./assets/boids-2d.png"
+      alt="A dense flocking field with bright motion trails against darkness" />
+    <div class="body">
+      <div class="name">Boids 2D Lab</div>
+      <div class="phys">The full v4 flocking lab: million-agent counting sort,
+        Vicsek order-disorder observables, brute-sort proof rows, and opt-in
+        two-way stable-fluid coupling.</div>
+      <div class="badges">
+        <span class="chip">agent-based</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical observable + in-page GPU proof</span>
+      </div>
+    </div>
+  </a>
   <a class="card" href="./sims/boids-3d/">
     <!-- Motion loops (P-7, ratified): progressive enhancement — the source
          attaches lazily in view, never under prefers-reduced-motion; the

@@ -57,6 +57,10 @@ GATE_KIND = {
     "ising-classical": "observable",
     "strange-attractors": "new_canonical",
     "boids-3d": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = run-twice browser observable
+    # capture for the v4-derived 2D lab (verify.py _gate_boids_2d) + the
+    # app's in-page adapter-local brute-sort/fluid proof rows.
+    "boids-2d": "new_canonical",
     "physarum": "new_canonical",
     # Phase-6 verification-demo: new_canonical = live f64 reference re-run
     # (verify.py _gate_eulerian_smoke) + run-twice (2 runs, automatic below).
