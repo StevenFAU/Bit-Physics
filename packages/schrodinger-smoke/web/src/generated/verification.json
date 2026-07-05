@@ -1,0 +1,131 @@
+{
+  "generated_by": "gen-verification.mjs (fail-hard data spine; web spec § 6)",
+  "gate": {
+    "kind": "new_canonical",
+    "n": 32,
+    "hbar": 0.05,
+    "dt": 0.041666666666666664,
+    "steps": 24,
+    "capture_interval": 8,
+    "descriptor": "translating-ring-32cube-hbar0.05-step24-webgate"
+  },
+  "tolerance": {
+    "category": "isf",
+    "relative": 0.0001,
+    "measured_basis": "2026-07-05 complex64 proxy worst 1.4e-5 of field peak x 4.05 family spread x ~1.75 margin (spec-ref § 6.5b)"
+  },
+  "reference_bin": {
+    "file": "isf-gate-ring32-step24.bin",
+    "sha256": "51db4500403152e593ae6279295973d79070f76d981f9b2ee088621c29edf34e",
+    "layout": "checkpoints[0,8,16,24] x fields[u,v,w] x 32^3 row-major (x*n+y)*n+z",
+    "witness_sha256": "51db4500403152e593ae6279295973d79070f76d981f9b2ee088621c29edf34e"
+  },
+  "goldens": {
+    "laplacian_table": "tools/testkit/golden/tables/volumetric-grid/isf-laplacian-eigenvalues.json",
+    "free_step_phase_points": [
+      {
+        "mode": [
+          1,
+          0,
+          0
+        ],
+        "hbar": 0.05,
+        "dt": 0.041666666666666664,
+        "phase": -0.04112335167120573
+      },
+      {
+        "mode": [
+          2,
+          3,
+          1
+        ],
+        "hbar": 0.05,
+        "dt": 0.041666666666666664,
+        "phase": -0.5757269233968794
+      },
+      {
+        "mode": [
+          0,
+          0,
+          5
+        ],
+        "hbar": 0.1,
+        "dt": 0.020833333333333332,
+        "phase": -1.0280837917801415
+      },
+      {
+        "mode": [
+          7,
+          7,
+          7
+        ],
+        "hbar": 0.02,
+        "dt": 0.041666666666666664,
+        "phase": -2.4180530782668925
+      }
+    ],
+    "laplacian_points": [
+      {
+        "n": 32,
+        "mode": [
+          1,
+          0,
+          0
+        ],
+        "lambda_continuous": -39.47841760435743,
+        "lambda_discrete": -39.35174573418404
+      },
+      {
+        "n": 32,
+        "mode": [
+          5,
+          3,
+          2
+        ],
+        "lambda_continuous": -1500.1798689655825,
+        "lambda_discrete": -1411.2371141971266
+      },
+      {
+        "n": 32,
+        "mode": [
+          16,
+          0,
+          0
+        ],
+        "lambda_continuous": -10106.474906715503,
+        "lambda_discrete": -4096
+      },
+      {
+        "n": 64,
+        "mode": [
+          1,
+          1,
+          1
+        ],
+        "lambda_continuous": -118.4352528130723,
+        "lambda_discrete": -118.34015730408933
+      },
+      {
+        "n": 64,
+        "mode": [
+          10,
+          20,
+          30
+        ],
+        "lambda_continuous": -55269.78464610041,
+        "lambda_discrete": -31194.304346101497
+      },
+      {
+        "n": 128,
+        "mode": [
+          7,
+          7,
+          7
+        ],
+        "lambda_continuous": -5803.3273878405425,
+        "lambda_discrete": -5746.4522162483245
+      }
+    ],
+    "js_f64_recompute": "unitary-norm + Parseval verified at build with the in-repo pure-JS radix-2 f64 FFT (N=32); HARD-FAIL on drift"
+  }
+}

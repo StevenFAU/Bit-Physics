@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-schrodinger-smoke",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — Incompressible Schrödinger Flow (Chern et al. 2016). WGSL Stockham 3D-FFT split-step spinor solver with f64-precomputed spectral tables, a passive million-tracer cloud, and a verification-visible PROVE layer with machine-exact spectral goldens re-run live (Phase-6 verification-demo track).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "file": "isf-gate-ring32-step24.bin",
+  "sha256": "51db4500403152e593ae6279295973d79070f76d981f9b2ee088621c29edf34e",
+  "dtype": "f64",
+  "layout": "checkpoints[0,8,16,24] x fields[u,v,w] x 32^3 row-major (x*n+y)*n+z",
+  "params": {
+    "n": 32,
+    "hbar": 0.05,
+    "dt": 0.041666666666666664,
+    "steps": 24,
+    "capture_interval": 8,
+    "ring_radius": 0.22,
+    "ring_thickness": 0.08,
+    "settle_iterations": 8,
+    "scheme": "lie"
+  },
+  "diagnostics": [
+    {
+      "step": 0,
+      "max_abs_u": 2.7079421794747995
+    },
+    {
+      "step": 8,
+      "max_abs_u": 1.9914059601081222
+    },
+    {
+      "step": 16,
+      "max_abs_u": 0.9270837040836053
+    },
+    {
+      "step": 24,
+      "max_abs_u": 0.780885083503885
+    }
+  ],
+  "determinism_witness_sha256": "51db4500403152e593ae6279295973d79070f76d981f9b2ee088621c29edf34e",
+  "source": "packages/schrodinger-smoke/schrodinger_smoke/reference/isf.py run_isf (2-run bit-identity witnessed)"
+}
