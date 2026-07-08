@@ -100,8 +100,13 @@ f64 run-twice witness ${V.reference_bin.witness_sha256.slice(0, 16)}…).`;
             worstRatio = Math.max(worstRatio, maxAbs / (V.tolerance.relative * peak));
           }
         });
-        const pass = worstRatio <= 1;
-        gate.out.textContent = ` ${pass ? "PASS" : "FAIL"} — worst max_abs ${worst.toExponential(2)}, ${(worstRatio * 100).toFixed(1)}% of budget; worst spectral pinned-mode rel err ${run.worstModeRelErr.toExponential(2)} (≤ ${V.gate.mode_rel_threshold})`;
+        // the verdict enforces BOTH advertised gate conditions (review
+        // 3544911181): pointwise budget AND the pinned-mode threshold
+        const modeOk =
+          Number.isFinite(run.worstModeRelErr) &&
+          run.worstModeRelErr <= V.gate.mode_rel_threshold;
+        const pass = worstRatio <= 1 && modeOk;
+        gate.out.textContent = ` ${pass ? "PASS" : "FAIL"} — worst max_abs ${worst.toExponential(2)}, ${(worstRatio * 100).toFixed(1)}% of budget; worst spectral pinned-mode rel err ${run.worstModeRelErr.toExponential(2)} (≤ ${V.gate.mode_rel_threshold}: ${modeOk ? "ok" : "EXCEEDED"})`;
         gate.out.className = pass ? "he-pass" : "he-fail";
       } catch (e) {
         gate.out.textContent = ` ERROR: ${e instanceof Error ? e.message : String(e)}`;

@@ -2049,15 +2049,17 @@ def _gate_heat_equation(bundles: list[dict]) -> VerifyResult:
     }
     worst = {"t_ftcs": 0.0, "t_spec": 0.0}
     worst_ratio = 0.0
-    worst_mode = 0.0
-    worst_parseval = 0.0
     finite = True
     heats = []
+    # NaN discipline (review 3544911172): a missing or NaN diagnostic must
+    # FAIL the gate, never be silently swallowed by a max(0.0, nan) -> 0.0
+    # accumulator. Collect into lists and reduce with np.max (NaN-
+    # propagating); the isfinite checks below then reject missing/NaN.
+    parsevals: list[float] = []
+    mode_errs: list[float] = []
     for st in steps0:
         heats.append(float(st["diagnostics"].get("total_heat_ftcs", np.nan)))
-        worst_parseval = max(
-            worst_parseval, float(st["diagnostics"].get("parseval_rel_err", np.nan))
-        )
+        parsevals.append(float(st["diagnostics"].get("parseval_rel_err", np.nan)))
         for key, ref in (("t_ftcs", ref_f), ("t_spec", ref_s)):
             bf = _field(st, key).astype(np.float64)
             if not np.isfinite(bf).all():
@@ -2073,7 +2075,14 @@ def _gate_heat_equation(bundles: list[dict]) -> VerifyResult:
             for m, k in DIAG_MODES:
                 measured = float(st["diagnostics"].get(f"amp_spec_{m}_{k}", np.nan))
                 expected = amp0[(m, k)] * continuous_decay(cfg.alpha, m, k, t_now)
-                worst_mode = max(worst_mode, abs(measured - expected) / abs(expected))
+                mode_errs.append(abs(measured - expected) / abs(expected))
+    worst_parseval = float(np.max(np.asarray(parsevals)))
+    expected_mode_count = (len(want) - 1) * len(DIAG_MODES)
+    worst_mode = (
+        float(np.max(np.asarray(mode_errs)))
+        if len(mode_errs) == expected_mode_count
+        else float("nan")
+    )
     within = worst_ratio <= 1.0
     heat_arr = np.asarray(heats)
     heat_flat = bool(
