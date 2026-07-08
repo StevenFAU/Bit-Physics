@@ -39,6 +39,10 @@ members = [
   # execution per docs/sim-specs/volumetric-grid/schrodinger-smoke/
   # spec-ref.md § 11.
   "packages/schrodinger-smoke",
+  # Phase-6: 2D heat equation (FTCS + machine-exact spectral/ETD1) f64
+  # reference — volumetric-grid family. Registered at backend execution
+  # per docs/sim-specs/volumetric-grid/heat-equation/spec-ref.md § 11.
+  "packages/heat-equation",
   # Phase-6: curl-noise (Bridson 2007 + divergence-free-noise frontier)
   # f64 reference — closed-form category, structural sibling of
   # strange-attractors. Registered at backend execution per

@@ -563,3 +563,38 @@ category = "curl-noise"
 # parent rows are exact-arithmetic structural invariants; this category
 # prices a per-point f32 GPU noise evaluator against its f64 twin — the
 # isf/pic-flip new-category pattern.
+
+# [defaults.heat-equation] — MEASURED on heat-equation (Phase-6, spec-ref
+# § 9 / § 13.2). NEW category (operator decision 2, spec-ref § 13.2 —
+# recommended and taken): the gated surface is BOTH a 5-point FTCS stencil
+# field AND an f32 Stockham-FFT spectral field against their f64 twins on
+# the canonical fourier-multi 128^2 x 512-step gate scene — the spectral
+# side is FFT-accumulation-specific (the [defaults.isf] rationale), the
+# FTCS side is stencil-local; reusing either the reaction-diffusion or the
+# isf row would conflate taxonomies. DECLARED 1e-4 from measurement
+# (2026-07-08, NumPy-f32/complex64 proxy of the WGSL path — FTCS in
+# float32; scipy complex64 FFT with the f64-precomputed per-mode decay
+# tables cast to f32, the committed-buffer plan of spec-ref § 5.2 — vs the
+# f64 reference): worst per-checkpoint per-field max_abs/max|field| =
+# 1.19e-5 (spectral; FTCS worst 1.42e-7 rides far under the same budget),
+# x 4.05 (worst observed RADV->lavapipe family spread, charter round 2)
+# = 4.8e-5, x ~2 margin (GPU FMA contraction not modeled by the proxy)
+# = 1e-4. Per-mode-amplitude PROVE diagnostic measured 4.98e-5 worst
+# (f32 decay-table application accumulating over 512 steps) -> declared
+# 5e-4 as T_HEAT_MODE_REL in web-deploy verify.py, same provenance chain.
+# Capped by [budgets.heat-equation] (tolerance-budget.toml).
+[defaults.heat-equation]
+relative = 1.0e-4
+absolute = 0.0
+
+[overrides.heat-equation]
+category = "heat-equation"
+# Resolves sim.category='volumetric-grid' (physics-family taxonomy) to
+# tolerance-category='heat-equation' (numerical-method taxonomy — NEW
+# category, see [defaults.heat-equation] for the MEASURED-then-declared
+# provenance). AT-BUDGET per [defaults.heat-equation]: relative=1e-4,
+# absolute=0.0. NOT a widening of [defaults.reaction-diffusion] or
+# [defaults.isf]: the gate prices a dual-path (FTCS stencil + spectral
+# FFT) f32 browser stack against the f64 reference — the isf/pic-flip/
+# curl-noise new-category pattern. Gated by the web-deploy new_canonical
+# live-f64-reference re-run (_gate_heat_equation, spec-ref § 13.1).
