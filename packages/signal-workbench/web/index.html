@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Signal Workbench — verified DSP instrument — Bit-Physics</title>
+    <meta
+      name="description"
+      content="A WebGPU + WebAudio signal generator and analyzer where every display is gated live against the closed-form transform of its own generator — FM sidebands are exactly J_n(I), leakage is exactly the window's DTFT."
+    />
+    <meta property="og:title" content="Signal Workbench — verified DSP instrument" />
+    <meta
+      property="og:description"
+      content="Hear the signal, watch its measured spectrum sit on the exact Bessel stems. Every number gated on your GPU."
+    />
+    <style>
+      /* Pre-bundle inline styles ONLY (the canon is common-web/src/theme.css) */
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #06090d;
+      }
+      #view {
+        width: min(92vmin, 780px);
+        height: min(92vmin, 780px);
+        touch-action: none;
+      }
+      .sw-ctl {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        font-size: 12px;
+        color: #9fb2c8;
+        margin: 2px 0;
+      }
+      .sw-ctl input[type="range"] {
+        flex: 1;
+      }
+      .sw-explain,
+      .sw-verify {
+        max-width: 780px;
+        margin: 12px auto;
+        color: #b7c7da;
+        font: 13px/1.5 system-ui, sans-serif;
+        background: #0b1118;
+        border: 1px solid #1d2937;
+        border-radius: 8px;
+        padding: 8px 14px;
+      }
+      .sw-verify button {
+        background: #12314f;
+        color: #cfe4ff;
+        border: 1px solid #2b4c72;
+        border-radius: 5px;
+        padding: 3px 10px;
+        margin: 3px 0;
+        cursor: pointer;
+      }
+      .sw-vrow {
+        margin: 4px 0;
+      }
+      .sw-vcard {
+        background: #0e1620;
+        border-left: 3px solid #2b4c72;
+        padding: 6px 10px;
+        margin: 6px 0;
+      }
+      .sw-pass {
+        color: #6fe3a1;
+      }
+      .sw-fail {
+        color: #ff7a8a;
+      }
+      code {
+        color: #8fd0ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage">
+      <canvas id="view" width="900" height="900" class="bps-canvas"></canvas>
+    </div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -195,6 +195,9 @@ T_HEAT_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
 T_HEAT_MODE_REL = 5e-4  # f32 spectral pinned-mode amplitude vs continuous f64
 T_HEAT_MASS_FLAT_REL = 1e-5  # browser total_heat diagnostic flat across checkpoints
 T_HEAT_PARSEVAL = 1e-12  # JS-f64 Parseval diagnostic on the browser field
+T_SW_REL = 2e-6  # signal-workbench per-field: max_abs <= rel * max|spectrum| ([defaults.signal-workbench])
+T_SW_LINE_REL = 2e-6  # browser measured-vs-analytic line/skirt diagnostic, rel of peak
+T_SW_PARSEVAL = 5e-6  # f32-pipeline Parseval (measured proxy 3.8e-7 x 4.05 family x ~2 margin, rounded)
 
 # curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
 # [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
@@ -1977,6 +1980,133 @@ def _gate_schrodinger_smoke(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_signal_workbench(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for signal-workbench: LIVE f64 reference re-run
+    over BOTH gated analysis paths (spec-ref section 13.1).
+
+    The browser's canonical is fm-bessel-plus-hann-leak-N4096-webgate — a
+    single-frame, closed-form scene (no chaos, no stepping): path A is the
+    coherent Chowning FM frame under a rectangular window (every sideband
+    on-bin; the f64 truth is the exact folded J_n(I) line spectrum), path B
+    the off-bin hann-windowed tone (truth = the exact shifted-Dirichlet
+    window-DTFT skirt). Signals are CPU-f64-synthesized in the browser and
+    cast to f32; the gated surface is the shared poly-trig Stockham WGSL
+    FFT.
+
+    Gate = run-twice byte-identity over all six captured fields
+         + per-field max_abs(browser - reference_f64)
+           <= T_SW_REL * max|reference| (time fields against the signal
+           peak; spectrum fields against the complex-spectrum peak)
+         + finite fields
+         + browser JS-f64 measured-vs-analytic diagnostics
+           (max_line_err_fm / max_skirt_err_leak) <= T_SW_LINE_REL
+         + browser f32-pipeline Parseval residuals <= T_SW_PARSEVAL.
+    """
+    sys.path.insert(0, str(REPO / "packages/signal-workbench"))
+    from signal_workbench.sim import gate_config, run_canonical
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    field_keys = ("x_fm", "X_fm_re", "X_fm_im", "x_leak", "X_leak_re", "X_leak_im")
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in field_keys
+            )
+            for st in steps0
+        )
+
+    if [st["step"] for st in steps0] != [0]:
+        return VerifyResult(
+            sim="signal-workbench",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {[st['step'] for st in steps0]} != [0]"},
+        )
+    st0 = steps0[0]
+
+    # LIVE f64 reference re-run (2-run bit-identity witnessed inside)
+    res = run_canonical(gate_config())
+    refs: dict[str, np.ndarray] = {
+        "x_fm": res.x_fm,
+        "X_fm_re": np.real(res.spec_fm),
+        "X_fm_im": np.imag(res.spec_fm),
+        "x_leak": res.x_leak,
+        "X_leak_re": np.real(res.spec_leak),
+        "X_leak_im": np.imag(res.spec_leak),
+    }
+    peaks: dict[str, float] = {
+        "x_fm": float(np.abs(res.x_fm).max()),
+        "X_fm_re": float(np.abs(res.spec_fm).max()),
+        "X_fm_im": float(np.abs(res.spec_fm).max()),
+        "x_leak": float(np.abs(res.x_leak).max()),
+        "X_leak_re": float(np.abs(res.spec_leak).max()),
+        "X_leak_im": float(np.abs(res.spec_leak).max()),
+    }
+    worst: dict[str, float] = {}
+    worst_ratio = 0.0
+    finite = True
+    for key in field_keys:
+        bf = _field(st0, key).astype(np.float64)
+        if not np.isfinite(bf).all():
+            finite = False
+            continue
+        max_abs = float(np.abs(bf - refs[key]).max())
+        worst[key] = max_abs
+        budget = T_SW_REL * peaks[key]
+        if budget > 0:
+            worst_ratio = max(worst_ratio, max_abs / budget)
+    diags = st0["diagnostics"]
+    line_err = float(diags.get("max_line_err_fm", np.nan))
+    skirt_err = float(diags.get("max_skirt_err_leak", np.nan))
+    pars_fm = float(diags.get("parseval_rel_err_fm", np.nan))
+    pars_leak = float(diags.get("parseval_rel_err_leak", np.nan))
+    line_ok = bool(
+        np.isfinite(line_err)
+        and np.isfinite(skirt_err)
+        and max(line_err, skirt_err) <= T_SW_LINE_REL
+    )
+    parseval_ok = bool(
+        np.isfinite(pars_fm)
+        and np.isfinite(pars_leak)
+        and max(pars_fm, pars_leak) <= T_SW_PARSEVAL
+    )
+    within = worst_ratio <= 1.0
+    passed = bool(
+        (twice is not False) and within and finite and line_ok and parseval_ok
+    )
+    return VerifyResult(
+        sim="signal-workbench",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_SW_REL,
+            "finite": finite,
+            "browser_max_line_err_fm": line_err,
+            "browser_max_skirt_err_leak": skirt_err,
+            "line_rel_budget": T_SW_LINE_REL,
+            "worst_parseval_rel": max(pars_fm, pars_leak),
+            "parseval_budget": T_SW_PARSEVAL,
+            "reference_witness_sha256": res.determinism_witness_sha256,
+            "note": "live f64 reference re-run over BOTH analysis paths "
+            "(heat-equation precedent); rel budget is the NEW "
+            "[defaults.signal-workbench] 2e-6 (MEASURED faithful poly-trig "
+            "Stockham f32 proxy worst 2.32e-7 of peak; spec-ref section 9 "
+            "MEASURED block)",
+        },
+    )
+
+
 def _gate_heat_equation(bundles: list[dict]) -> VerifyResult:
     """new_canonical gate for heat-equation: LIVE f64 reference re-run over
     BOTH gated solver paths (spec-ref § 13.1).
@@ -2263,6 +2393,7 @@ _GATES = {
     "schrodinger-smoke": _gate_schrodinger_smoke,
     "curl-noise": _gate_curl_noise,
     "heat-equation": _gate_heat_equation,
+    "signal-workbench": _gate_signal_workbench,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

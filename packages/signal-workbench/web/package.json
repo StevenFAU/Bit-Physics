@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-signal-workbench",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU + WebAudio web build — verified DSP instrument. CPU-f64-synthesized signals through the shared poly-trig Stockham WGSL FFT; measured spectra gated live against the exact closed-form transform of their own generator (FM Bessel stems, shifted-Dirichlet window skirts); DPX persistence engine, spectrogram waterfall, woscope XY erf-beam, AudioWorklet playback (Phase-6 verification-demo track, first audible sim).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

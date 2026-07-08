@@ -616,7 +616,10 @@ category = "heat-equation"
 # (composite across both gated paths, time + frequency domains). Family
 # spread (RADV->lavapipe, the 4.05x boids/neural-ca round-2 observation)
 # -> 2.32e-7 * 4.05 = 9.4e-7. Margin (~2x, GPU FMA contraction not
-# modeled by the proxy) -> 1.88e-6 ~= 2e-6 declared.
+# modeled by the proxy) -> 1.88e-6 ~= 2e-6 declared. CONFIRMED on real
+# GPU 2026-07-08 (RADV, headless-chromium web-deploy validate): worst
+# 0.103 of budget (2.06e-7 of peak) — the faithful proxy tracked the
+# hardware within 12%.
 [defaults.signal-workbench]
 relative = 2.0e-6
 absolute = 0.0

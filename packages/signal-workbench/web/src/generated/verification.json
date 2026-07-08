@@ -1,0 +1,60 @@
+{
+  "generated_by": "gen-verification.mjs (fail-hard data spine; spec-ref § 5.6)",
+  "gate": {
+    "kind": "new_canonical",
+    "descriptor": "fm-bessel-plus-hann-leak-N4096-webgate",
+    "n": 4096,
+    "fm_kc": 512,
+    "fm_km": 37,
+    "fm_index": 3.2,
+    "fm_amplitude": 1,
+    "leak_f0_bins": 100.37,
+    "leak_amplitude": 0.8,
+    "leak_phase": 0.3,
+    "leak_window": "hann",
+    "line_rel_threshold": 0.000002,
+    "parseval_threshold": 0.000005
+  },
+  "tolerance": {
+    "category": "signal-workbench",
+    "relative": 0.000002,
+    "measured_basis": "2026-07-08 faithful NumPy-f32 proxy of the shared poly-trig Stockham WGSL path, worst 2.32e-7 of spectrum peak x 4.05 family spread x ~2 margin (tolerance.toml [defaults.signal-workbench])"
+  },
+  "reference_bin": {
+    "file": "sw-gate-reference-f64.bin",
+    "sha256": "59abecc9a1aea4b7bd79072dc38e71232638470d8f0a5ceb446292a271c25e72",
+    "layout": "f64 x6 arrays of N: x_fm, X_fm_re, X_fm_im, x_leak, X_leak_re, X_leak_im",
+    "witness_sha256": "169a6b06ead55ccce44e4c511e40ce0a485a0958b47e73c63a93130a461204cd"
+  },
+  "goldens": {
+    "fm_index": 3.2,
+    "sideband_j_n": {
+      "0": -0.32018816965712293,
+      "1": 0.2613432487805048,
+      "2": 0.48352770014493845,
+      "3": 0.3430663764006681,
+      "4": 0.15972175560631444,
+      "5": 0.05623801261511795,
+      "6": 0.016022033815929027,
+      "7": 0.0038446141946159706,
+      "8": 0.0007981532855158391,
+      "-8": 0.0007981532855158391,
+      "-7": -0.0038446141946159706,
+      "-6": 0.016022033815929027,
+      "-5": -0.05623801261511795,
+      "-4": 0.15972175560631444,
+      "-3": -0.3430663764006681,
+      "-2": 0.48352770014493845,
+      "-1": -0.2613432487805048
+    },
+    "energy_identity_residual": 1.1102230246251565e-16,
+    "js_f64_recompute": "Bessel sidebands (Miller recurrence), window-coefficient CG/ENBW identities, committed-reference signal + closed-form skirt parity, and the FM line-power fold identity verified at build (this script)."
+  },
+  "wgsl_anchors": {
+    "coord_of_line": 58,
+    "common_fft_marker_line": 55,
+    "fft_pass_line": 76,
+    "poly_trig_line": 38,
+    "poly_trig_file": "common/common-web/src/fft-wgsl.ts"
+  }
+}
