@@ -86,6 +86,17 @@ const SIMS = {
   // Phase-6 curl-noise: trails developed by ~frame 120; the loop rides the
   // auto-orbit through the wisp field around the sphere.
   "curl-noise": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
+  // Phase-6 boids-2d: the v4 lab in its seed-42 'flock' regime — the flow never
+  // settles, so the loop is perpetual (flock precedent). crf 58 (vs the family's
+  // 46): the full-detail comet-flock is high-entropy, so 46 blew 3× past the
+  // 1.5 MB budget; 58 lands 1.27 MB at card-legible quality. cfg.hide strips the
+  // embedded lab chrome so only the #view comet-flock films.
+  "boids-2d": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 58, hide: ["#topbar", "#hint", "#playstats", "#modeflag", "#panel", "#overlay"] },
+  // Phase-6 heat-equation: the 'circuit board' scene — a steady chip source
+  // conducting through copper traces; gap 4 timelapses the front spreading
+  // pad-to-pad (rd2d timelapse precedent). start 150 so shot 0 is already
+  // glowing (a cold start flashes black on wrap); loop wraps with a cut.
+  "heat-equation": { start: 150, shots: 300, gap: 4, fps: 30, px: 512, crf: 46, hide: [".he-explain", ".he-verify"] },
 };
 
 const MIME = {
@@ -146,6 +157,11 @@ async function loop(browser, sim, cfg) {
       if (panel) panel.style.display = "none";
       const boot = document.getElementById("boot");
       if (boot) boot.style.display = "none";
+      // cfg.hide: sim-specific chrome selectors (in-page control panels/HUD an
+      // embedded lab draws outside the common-web [data-bp-panel] shell). Purely
+      // presentational — the sim, its params, and its canvas render are untouched.
+      if (cfg.hide) for (const sel of cfg.hide)
+        document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
       const canvas = document.querySelector("canvas");
       canvas.style.width = `${cfg.px}px`;
       canvas.style.height = "auto";

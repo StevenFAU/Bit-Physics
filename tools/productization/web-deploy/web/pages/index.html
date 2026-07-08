@@ -176,8 +176,11 @@
 <p class="sub">Run in the browser via WebGPU. Each card names the gate its bundle was re-verified through.</p>
 <div class="grid">
   <a class="card" href="./sims/boids-2d/">
-    <img class="poster" src="./assets/boids-2d.png"
-      alt="A dense flocking field with bright motion trails against darkness" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/boids-2d.png"
+      aria-label="A dense 2-D flocking field of direction-hued agents with bright motion trails against darkness">
+      <source data-src="./assets/boids-2d.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Boids 2D Lab</div>
       <div class="phys">The full v4 flocking lab: million-agent counting sort,
@@ -338,6 +341,25 @@
       <div class="badges">
         <span class="chip">volumetric-grid</span>
         <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
+      </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/heat-equation/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/heat-equation.png"
+      aria-label="Chip hotspots conducting heat through copper traces on a dark circuit board, glowing under a blackbody palette">
+      <source data-src="./assets/heat-equation.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Heat Equation &mdash; Spectral + FTCS</div>
+      <div class="phys">Fourier&rsquo;s heat law on a grid: an FTCS stencil and a
+        machine-exact spectral solver evolve one field &mdash; the spectral path
+        solves every Fourier mode exactly, with no CFL limit. Both re-run against
+        a live f64 reference on your GPU, the 2-D spectrum drawn live.</div>
+      <div class="badges">
+        <span class="chip">diffusion PDE</span>
+        <span class="chip">WGSL stencil + spectral</span>
         <span class="chip gate">gate: new_canonical vs live f64 reference</span>
       </div>
     </div>

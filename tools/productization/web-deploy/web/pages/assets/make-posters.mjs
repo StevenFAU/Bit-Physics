@@ -96,6 +96,18 @@ const SIMS = {
   // fills the trail buffer to its steady-state wisps around the obstacle
   // wireframe. The trail composite carries its own exposure normalization.
   "curl-noise": { frames: 420, px: 512 },
+  // Phase-6 boids-2d: the v4 lab boots into the seed-42 'flock' regime at 4000
+  // agents — a dense direction-hued comet-flock with GPU motion trails. The
+  // embedded lab draws its own topbar/HUD/hint/controls, so cfg.hide strips
+  // everything but the #view render (the previous poster was a wrong still).
+  "boids-2d": { frames: 320, px: 512, hide: ["#topbar", "#hint", "#playstats", "#modeflag", "#panel", "#overlay"] },
+  // Phase-6 heat-equation: boots into the 'circuit board' scene — chip hotspots
+  // conducting through copper traces over FR4, inferno palette + blackbody glow
+  // + isolines. The EXPLAIN/PROVE <details> bars sit above the canvas; hide them
+  // (the common-web instrument panel is already the [data-bp-panel] shell).
+  // frames 900 sits mid-loop (loop covers 150..1350) — heat has climbed the
+  // vertical traces, so the poster reads as a lit board, not three cold pads.
+  "heat-equation": { frames: 900, px: 512, hide: [".he-explain", ".he-verify"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;
@@ -165,6 +177,11 @@ async function poster(browser, sim, cfg) {
       if (panel) panel.style.display = "none";
       const boot = document.getElementById("boot");
       if (boot) boot.style.display = "none";
+      // cfg.hide: sim-specific chrome selectors (in-page control panels/HUD an
+      // embedded lab draws outside the common-web [data-bp-panel] shell). Purely
+      // presentational — the sim, its params, and its canvas render are untouched.
+      if (cfg.hide) for (const sel of cfg.hide)
+        document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
       const canvas = document.querySelector("canvas");
       canvas.style.width = `${cfg.px}px`;
       canvas.style.height = "auto";
