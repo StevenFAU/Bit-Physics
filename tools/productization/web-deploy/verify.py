@@ -177,6 +177,25 @@ T_ISF_NORM_FLAT_REL = 1e-4  # browser norm_l2 diagnostic flat across checkpoints
 # backend's — the browser witnesses flatness at its own precision)
 T_ISF_HEADROOM_MAX = 1.0  # no principal-branch re-wrap during the gate window
 
+# --- heat-equation (Phase-6 verification-demo; NEW sim — declared fresh,
+# measured-then-declared per docs/sim-specs/volumetric-grid/heat-equation/
+# spec-ref.md § 9). The web-gate canonical is the NON-CHAOTIC fourier-multi
+# scene at the 128^2 tier (schrodinger-smoke reduced-tier precedent): pure
+# diffusion is contracting, so pointwise per-checkpoint comparison against a
+# LIVE f64 reference re-run is real — over BOTH gated solver paths (t_ftcs
+# stencil field AND t_spec spectral field, whose per-mode multipliers are the
+# COMMITTED f64 decay table). TRAJ_REL is the NEW [defaults.heat-equation]
+# category tolerance verbatim (tolerance.toml, resolved via
+# [overrides.heat-equation]; capped by [budgets.heat-equation]) — MEASURED
+# basis: f32/complex64 proxy worst 1.19e-5 of field peak x 4.05 family
+# spread x ~2 margin. MODE_REL gates the browser's f32 spectral pinned-mode
+# amplitudes against the continuous f64 golden (measured proxy worst 4.98e-5
+# — f32 decay-table application accumulating over 512 steps — same chain).
+T_HEAT_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * max|field|
+T_HEAT_MODE_REL = 5e-4  # f32 spectral pinned-mode amplitude vs continuous f64
+T_HEAT_MASS_FLAT_REL = 1e-5  # browser total_heat diagnostic flat across checkpoints
+T_HEAT_PARSEVAL = 1e-12  # JS-f64 Parseval diagnostic on the browser field
+
 # curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
 # [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
 # resolved via [overrides.curl-noise]; capped by [budgets.curl-noise]) —
@@ -1958,6 +1977,156 @@ def _gate_schrodinger_smoke(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_heat_equation(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for heat-equation: LIVE f64 reference re-run over
+    BOTH gated solver paths (spec-ref § 13.1).
+
+    The browser's canonical is fourier-multi-128sq-alpha0.02-step512-webgate
+    — the demo's OWN web-gate tier (schrodinger-smoke reduced-tier
+    precedent: the visible demo runs 256^2). The scene is NON-CHAOTIC (pure
+    diffusion contracts), the IC is built in pure-JS f64 with the backend's
+    own pinned three-mode formula, and the spectral path's per-mode
+    multipliers are the COMMITTED f64 decay table — so pointwise
+    per-checkpoint comparison against the LIVE f64 reference is real for
+    both fields.
+
+    Gate = run-twice byte-identity over t_ftcs/t_spec at every checkpoint
+         + per-checkpoint per-field max_abs(browser - reference_f64)
+           <= T_HEAT_TRAJ_REL * max|browser field|  (the NEW
+           [defaults.heat-equation] 1e-4; MEASURED f32/complex64-proxy worst
+           1.19e-5 of peak — no tolerance widened)
+         + finite fields
+         + browser total_heat diagnostic flat across checkpoints (the mass-
+           conservation gate's browser shadow, f64-summed from f32 fields)
+         + f32 spectral pinned-mode amplitudes within T_HEAT_MODE_REL of the
+           continuous f64 golden (the machine-exact moat's browser shadow)
+         + the browser's JS-f64 Parseval diagnostic <= T_HEAT_PARSEVAL.
+    """
+    sys.path.insert(0, str(REPO / "packages/heat-equation"))
+    from heat_equation.reference import continuous_decay  # type: ignore
+    from heat_equation.sim import (  # type: ignore
+        CANONICAL_AMPLITUDES,
+        CANONICAL_MODES,
+        DIAG_MODES,
+        gate_config,
+        run_canonical,
+    )
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k))
+                for k in ("t_ftcs", "t_spec")
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [0, 128, 256, 384, 512]
+    if expected_steps != want:
+        return VerifyResult(
+            sim="heat-equation",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    # live f64 reference re-run (2-run bit-identity witnessed inside
+    # run_canonical; both solver paths evolved side by side)
+    cfg = gate_config()
+    res = run_canonical(cfg)
+    ref_f = dict(zip(res.capture_steps, res.captures_ftcs, strict=True))
+    ref_s = dict(zip(res.capture_steps, res.captures_spec, strict=True))
+
+    amp0 = {
+        tuple(m): a for m, a in zip(CANONICAL_MODES, CANONICAL_AMPLITUDES, strict=True)
+    }
+    worst = {"t_ftcs": 0.0, "t_spec": 0.0}
+    worst_ratio = 0.0
+    finite = True
+    heats = []
+    # NaN discipline (review 3544911172): a missing or NaN diagnostic must
+    # FAIL the gate, never be silently swallowed by a max(0.0, nan) -> 0.0
+    # accumulator. Collect into lists and reduce with np.max (NaN-
+    # propagating); the isfinite checks below then reject missing/NaN.
+    parsevals: list[float] = []
+    mode_errs: list[float] = []
+    for st in steps0:
+        heats.append(float(st["diagnostics"].get("total_heat_ftcs", np.nan)))
+        parsevals.append(float(st["diagnostics"].get("parseval_rel_err", np.nan)))
+        for key, ref in (("t_ftcs", ref_f), ("t_spec", ref_s)):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            max_abs = float(np.abs(bf - ref[st["step"]]).max())
+            worst[key] = max(worst[key], max_abs)
+            budget = T_HEAT_TRAJ_REL * float(np.abs(bf).max())
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+        if st["step"] > 0:
+            t_now = st["step"] * cfg.dt
+            for m, k in DIAG_MODES:
+                measured = float(st["diagnostics"].get(f"amp_spec_{m}_{k}", np.nan))
+                expected = amp0[(m, k)] * continuous_decay(cfg.alpha, m, k, t_now)
+                mode_errs.append(abs(measured - expected) / abs(expected))
+    worst_parseval = float(np.max(np.asarray(parsevals)))
+    expected_mode_count = (len(want) - 1) * len(DIAG_MODES)
+    worst_mode = (
+        float(np.max(np.asarray(mode_errs)))
+        if len(mode_errs) == expected_mode_count
+        else float("nan")
+    )
+    within = worst_ratio <= 1.0
+    heat_arr = np.asarray(heats)
+    heat_flat = bool(
+        np.isfinite(heat_arr).all()
+        and float(np.abs(heat_arr - heat_arr[0]).max())
+        <= T_HEAT_MASS_FLAT_REL * abs(heat_arr[0])
+    )
+    mode_ok = bool(np.isfinite(worst_mode) and worst_mode <= T_HEAT_MODE_REL)
+    parseval_ok = bool(
+        np.isfinite(worst_parseval) and worst_parseval <= T_HEAT_PARSEVAL
+    )
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and heat_flat
+        and mode_ok
+        and parseval_ok
+    )
+    return VerifyResult(
+        sim="heat-equation",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst,
+            "traj_rel": T_HEAT_TRAJ_REL,
+            "finite": finite,
+            "total_heat_flat_f32_scope": heat_flat,
+            "worst_spectral_mode_rel": worst_mode,
+            "mode_rel_budget": T_HEAT_MODE_REL,
+            "worst_parseval_rel": worst_parseval,
+            "reference_witness_sha256": res.determinism_witness_sha256,
+            "note": "live f64 reference re-run over BOTH solver paths "
+            "(schrodinger-smoke precedent); rel budget is the NEW "
+            "[defaults.heat-equation] 1e-4 (MEASURED f32/complex64 proxy "
+            "worst 1.19e-5 of peak; spec-ref § 9 MEASURED block)",
+        },
+    )
+
+
 def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
     """curl-noise new_canonical gate (spec-ref § 13.2, chaos-immune).
 
@@ -2093,6 +2262,7 @@ _GATES = {
     "pic-flip": _gate_pic_flip,
     "schrodinger-smoke": _gate_schrodinger_smoke,
     "curl-noise": _gate_curl_noise,
+    "heat-equation": _gate_heat_equation,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

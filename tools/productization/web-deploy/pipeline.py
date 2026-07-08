@@ -90,6 +90,14 @@ GATE_KIND = {
     # vs its f32 iso anchors, [defaults.curl-noise] budget) + committed-IC
     # match + live machine-exact goldens + run-twice byte-identity.
     "curl-noise": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = LIVE f64 reference re-run of
+    # the NON-CHAOTIC fourier-multi web-gate canonical at the 128^2 tier
+    # (pointwise per-checkpoint over BOTH solver fields t_ftcs AND t_spec,
+    # [defaults.heat-equation] rel budget) + machine-exact spectral pinned-mode
+    # + Parseval diagnostics + run-twice byte-identity
+    # (verify.py _gate_heat_equation). The schrodinger-smoke live-reference
+    # precedent with a dual-path (stencil + spectral) gated surface.
+    "heat-equation": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

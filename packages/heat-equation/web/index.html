@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Heat Equation — verified diffusion instrument — Bit-Physics</title>
+    <meta name="description" content="A 2D heat-equation lab that shows its own error: FTCS stencil vs a machine-exact spectral solver, live von Neumann stability, a committed Planck-locus blackbody glow, and an f64-anchored verification gate re-run on your GPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Heat Equation — verified diffusion instrument — Bit-Physics" />
+    <meta property="og:description" content="Paint heat, engrave with a laser, watch Fourier modes die at machine-exact rates — verification-visible, with the deploy gate re-run live in your browser." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/heat-equation/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/heat-equation.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Heat Equation — verified diffusion instrument — Bit-Physics" />
+    <meta name="twitter:description" content="No surveyed heat demo displays its own error against exact solutions. This one gates on it in CI and re-runs the gate on your GPU." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/heat-equation.png" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(92vmin, 780px); height: min(92vmin, 780px); touch-action: none; }
+      .he-explain, .he-verify {
+        position: relative; margin: 10px auto; width: min(92vmin, 780px);
+        font: 13px/1.55 system-ui, sans-serif; color: #b7c7d6;
+        background: #0a1017; border: 1px solid #17222e; border-radius: 8px;
+        padding: 8px 14px;
+      }
+      .he-explain summary, .he-verify summary {
+        cursor: pointer; font-weight: 600; color: #d7e4f0; padding: 4px 0;
+      }
+      .he-honesty { border-left: 3px solid #b08c2e; padding-left: 10px; }
+      .he-vcard { font: 12px/1.6 ui-monospace, monospace; color: #8fa8bd;
+        background: #0d141c; border-radius: 6px; padding: 8px 10px; margin: 6px 0; }
+      .he-vrow { display: flex; gap: 8px; align-items: baseline; padding: 4px 0;
+        border-bottom: 1px dotted #14202c; flex-wrap: wrap; }
+      .he-vrow button { flex: none; }
+      .he-vrow span { font: 12px/1.5 ui-monospace, monospace; color: #8fa8bd; }
+      .he-pass { color: #7fdc9a !important; }
+      .he-fail { color: #f5a09f !important; }
+      .he-ctl { display: flex; gap: 6px; align-items: center;
+        font: 12px/1.6 system-ui, sans-serif; padding: 2px 0; }
+      .he-ctl input[type="range"] { flex: 1; min-width: 90px; }
+      .he-readout { font: 11px/1.4 ui-monospace, monospace; color: #8fa8bd; }
+      .he-nan {
+        position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+        z-index: 60; max-width: min(88vw, 560px);
+        font: 13px/1.55 system-ui, sans-serif; color: #f3d9a0;
+        background: #221607; border: 1px solid #b08c2e; border-radius: 8px;
+        padding: 10px 14px;
+      }
+      .he-nan button { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="900" height="900" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

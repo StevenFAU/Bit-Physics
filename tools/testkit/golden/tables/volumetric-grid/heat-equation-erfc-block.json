@@ -1,0 +1,184 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "heat-equation-erfc-product-block",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/heat-equation-erfc-block.md",
+    "upstream": "Crank-1975-p25-product-form-plus-Zhou-2017-WRR",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1002/2017WR021040"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "kind": "erfc_semi_infinite",
+        "x_dimless": 0.5,
+        "t_fourier": 0.02
+      },
+      "expected": {
+        "value": 0.012419330651552266
+      },
+      "independent_reference": {
+        "derived_by": "dual-library",
+        "source": "math.erfc (CPython libm) vs scipy.special.erfc agreement asserted in-generator; similarity solution of the suddenly-heated half-space (Carslaw & Jaeger \u00a7 2.4; Zhou et al. 2017).",
+        "doi": "10.1002/2017WR021040"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "erfc_semi_infinite",
+        "x_dimless": 1.0,
+        "t_fourier": 0.1
+      },
+      "expected": {
+        "value": 0.025347318677468277
+      },
+      "independent_reference": {
+        "derived_by": "dual-library",
+        "source": "math.erfc (CPython libm) vs scipy.special.erfc agreement asserted in-generator; similarity solution of the suddenly-heated half-space (Carslaw & Jaeger \u00a7 2.4; Zhou et al. 2017).",
+        "doi": "10.1002/2017WR021040"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "erfc_semi_infinite",
+        "x_dimless": 0.25,
+        "t_fourier": 0.05
+      },
+      "expected": {
+        "value": 0.4291953004403492
+      },
+      "independent_reference": {
+        "derived_by": "dual-library",
+        "source": "math.erfc (CPython libm) vs scipy.special.erfc agreement asserted in-generator; similarity solution of the suddenly-heated half-space (Carslaw & Jaeger \u00a7 2.4; Zhou et al. 2017).",
+        "doi": "10.1002/2017WR021040"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "slab_unaccomplished",
+        "x_d": 0.0,
+        "t_d": 0.2,
+        "terms": 64
+      },
+      "expected": {
+        "value": 0.7723116068585908,
+        "series_tail_bound": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "eigenfunction-series",
+        "source": "Separation-of-variables slab series (Carslaw & Jaeger; Incropera one-term lineage), truncation tail bound recorded; wall identity theta(1, t_d) = 0 asserted in-generator.",
+        "doi": "n/a-classical-series"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "slab_unaccomplished",
+        "x_d": 0.5,
+        "t_d": 0.2,
+        "terms": 64
+      },
+      "expected": {
+        "value": 0.5531758918500856,
+        "series_tail_bound": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "eigenfunction-series",
+        "source": "Separation-of-variables slab series (Carslaw & Jaeger; Incropera one-term lineage), truncation tail bound recorded; wall identity theta(1, t_d) = 0 asserted in-generator.",
+        "doi": "n/a-classical-series"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "slab_unaccomplished",
+        "x_d": 0.5,
+        "t_d": 0.05,
+        "terms": 64
+      },
+      "expected": {
+        "value": 0.8861516005573885,
+        "series_tail_bound": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "eigenfunction-series",
+        "source": "Separation-of-variables slab series (Carslaw & Jaeger; Incropera one-term lineage), truncation tail bound recorded; wall identity theta(1, t_d) = 0 asserted in-generator.",
+        "doi": "n/a-classical-series"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "slab_unaccomplished",
+        "x_d": 1.0,
+        "t_d": 0.1,
+        "terms": 64
+      },
+      "expected": {
+        "value": 6.954190878412784e-17,
+        "series_tail_bound": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "eigenfunction-series",
+        "source": "Separation-of-variables slab series (Carslaw & Jaeger; Incropera one-term lineage), truncation tail bound recorded; wall identity theta(1, t_d) = 0 asserted in-generator.",
+        "doi": "n/a-classical-series"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "product_block",
+        "x_d": 0.0,
+        "y_d": 0.0,
+        "t_dx": 0.2,
+        "t_dy": 0.2
+      },
+      "expected": {
+        "value": 0.4035347819115015,
+        "sign_convention": "UNACCOMPLISHED ratio factorizes: theta_2D = theta_x*theta_y; accomplished T_d = 1 - theta_x*theta_y. NOT prod(T_d,i) (spec-ref.md \u00a7 4.5, v0.3 pin)."
+      },
+      "independent_reference": {
+        "derived_by": "product-form",
+        "source": "Crank, The Mathematics of Diffusion, 2nd ed. (1975), p. 25 (product of 1D solutions); Zhou, Oldenburg, Rutqvist & Birkholzer, Water Resour. Res. 53:9960-9979 (2017) combined-series solutions to <1e-7 relative on 1D-3D blocks.",
+        "doi": "10.1002/2017WR021040"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "product_block",
+        "x_d": 0.5,
+        "y_d": 0.25,
+        "t_dx": 0.2,
+        "t_dy": 0.2
+      },
+      "expected": {
+        "value": 0.6038003436196906,
+        "sign_convention": "UNACCOMPLISHED ratio factorizes: theta_2D = theta_x*theta_y; accomplished T_d = 1 - theta_x*theta_y. NOT prod(T_d,i) (spec-ref.md \u00a7 4.5, v0.3 pin)."
+      },
+      "independent_reference": {
+        "derived_by": "product-form",
+        "source": "Crank, The Mathematics of Diffusion, 2nd ed. (1975), p. 25 (product of 1D solutions); Zhou, Oldenburg, Rutqvist & Birkholzer, Water Resour. Res. 53:9960-9979 (2017) combined-series solutions to <1e-7 relative on 1D-3D blocks.",
+        "doi": "10.1002/2017WR021040"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "product_block",
+        "x_d": 0.3,
+        "y_d": 0.3,
+        "t_dx": 0.1,
+        "t_dy": 0.15
+      },
+      "expected": {
+        "value": 0.31351828954226857,
+        "sign_convention": "UNACCOMPLISHED ratio factorizes: theta_2D = theta_x*theta_y; accomplished T_d = 1 - theta_x*theta_y. NOT prod(T_d,i) (spec-ref.md \u00a7 4.5, v0.3 pin)."
+      },
+      "independent_reference": {
+        "derived_by": "product-form",
+        "source": "Crank, The Mathematics of Diffusion, 2nd ed. (1975), p. 25 (product of 1D solutions); Zhou, Oldenburg, Rutqvist & Birkholzer, Water Resour. Res. 53:9960-9979 (2017) combined-series solutions to <1e-7 relative on 1D-3D blocks.",
+        "doi": "10.1002/2017WR021040"
+      }
+    }
+  ]
+}

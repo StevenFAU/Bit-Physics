@@ -91,3 +91,20 @@ absolute = 0.0
 [budgets.curl-noise.cross_stack]
 relative = 2.0e-4
 absolute = 0.0
+
+# [budgets.heat-equation.cross_stack] — Phase-6 heat-equation web gate
+#   (spec-ref § 9 / § 13.1): per-checkpoint per-field max_abs/max|field|
+#   of the WGSL f32 browser stack (FTCS stencil field t_ftcs AND the
+#   f32-FFT spectral field t_spec with f64-precomputed committed decay
+#   tables) vs the live f64 reference re-run on the canonical
+#   fourier-multi 128^2 x 512-step gate scene (plus run-twice
+#   byte-identity, total-heat flatness, and the per-mode/Parseval
+#   machine-exact recomputes). NEW category (the isf / curl-noise
+#   pattern). MEASURED 2026-07-08 (NumPy-f32/complex64 proxy of the WGSL
+#   pipeline): worst 1.19e-5 relative x 4.05 (worst RADV->lavapipe family
+#   spread, charter round 2) x ~2 margin (GPU FMA contraction unmodeled
+#   by the proxy). At-declared cap (no headroom beyond the documented
+#   measurement margin).
+[budgets.heat-equation.cross_stack]
+relative = 1.0e-4
+absolute = 0.0

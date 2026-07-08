@@ -55,45 +55,14 @@ fn idx3(p: vec3<u32>) -> u32 {
   return (p.x * U.n + p.y) * U.n + p.z;
 }
 
-fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
-  return vec2<f32>(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
-}
-
 // ---------------------------------------------------------------------------
-// Precision trig (load-bearing, CI-measured): the Vulkan spec only guarantees
-// builtin sin/cos to 2^-11 (~4.9e-4) absolute error, and llvmpipe/lavapipe
-// implements exactly that floor — in-shader builtin trig accumulated to a
-// 1.26e-2 field error over the 24-step gate (63x the [defaults.isf] budget,
-// run-twice still byte-identical) while RADV's hardware trig masked it.
-// Every trig call in the GATED path below uses these range-reduced polynomial
-// forms (~1e-7 abs — Taylor to r^7/r^8 after quadrant reduction), which are
-// deterministic per device AND uniformly accurate across drivers.
+// Precision trig (Vulkan builtin sin/cos 2^-11 floor — measured 63x budget on
+// lavapipe here first) + cmul + Stockham butterfly core: SHARED, promoted to
+// common/common-web/src/fft-wgsl.ts (heat-equation spec § 13.2 operator
+// decision 5; two consumers, one kernel). Spliced by solver.ts at pipeline
+// creation. The hazard note travels with the shared code.
 // ---------------------------------------------------------------------------
-
-fn sin_poly4(r: f32) -> f32 {
-  // |r| <= pi/4
-  let r2 = r * r;
-  return r * (1.0 + r2 * (-0.16666667 + r2 * (0.0083333310 - r2 * 0.00019840874)));
-}
-
-fn cos_poly4(r: f32) -> f32 {
-  // |r| <= pi/4
-  let r2 = r * r;
-  return 1.0 + r2 * (-0.5 + r2 * (0.041666668 + r2 * (-0.0013888889 + r2 * 0.000024801587)));
-}
-
-// returns vec2(cos x, sin x) with quadrant reduction (accurate for |x| <~ 64)
-fn cs_p(x: f32) -> vec2<f32> {
-  let k = round(x * 0.6366197723675814); // x / (pi/2)
-  let r = x - k * 1.5707963267948966;
-  let q = i32(k) & 3;
-  let s = sin_poly4(r);
-  let c = cos_poly4(r);
-  if (q == 0) { return vec2<f32>(c, s); }
-  if (q == 1) { return vec2<f32>(-s, c); }
-  if (q == 2) { return vec2<f32>(-c, -s); }
-  return vec2<f32>(s, -c);
-}
+//__COMMON_FFT__
 
 fn atan_poly(z_in: f32) -> f32 {
   // 0 <= z_in <= 1 — Cephes atanf reduction: fold at tan(pi/8) so the
@@ -151,17 +120,13 @@ fn butterfly_indices(gid: u32) -> Butterfly {
   let half_line = U.n / 2u;
   let line_id = gid / half_line;
   let t = gid % half_line;
-  let ls = 1u << P.stage;       // half butterfly span
-  let l = ls << 1u;
-  let j = t % ls;
-  let i = t / ls;
-  let ang = P.dir * 6.283185307179586 * f32(j) / f32(l);
+  let fb = fft_butterfly(t, P.stage, half_line, P.dir); // shared core (fft-wgsl.ts)
   var out: Butterfly;
-  out.ia = coord_of(line_id, i * ls + j);
-  out.ib = coord_of(line_id, i * ls + j + half_line);
-  out.ic = coord_of(line_id, i * l + j);
-  out.id = coord_of(line_id, i * l + j + ls);
-  out.w = cs_p(ang);
+  out.ia = coord_of(line_id, fb.ea);
+  out.ib = coord_of(line_id, fb.eb);
+  out.ic = coord_of(line_id, fb.ec);
+  out.id = coord_of(line_id, fb.ed);
+  out.w = fb.w;
   return out;
 }
 

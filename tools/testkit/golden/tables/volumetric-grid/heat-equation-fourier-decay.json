@@ -1,0 +1,142 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "heat-equation-fourier-decay-two-amplitudes",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/heat-equation-fourier-decay.md",
+    "upstream": "von-Neumann-analysis-plus-Fourier-symbol",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/volumetric-grid/heat-equation/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "steps": 512,
+        "box": 1.0
+      },
+      "expected": {
+        "amplification_g": 0.999036364964138,
+        "continuous_amplitude": 0.6104980252657971,
+        "discrete_amplitude": 0.6104132996303706,
+        "truncation_separation_rel": 0.00013878117851341007,
+        "assignment": "FTCS run -> discrete_amplitude (its own exact method); spectral run -> continuous_amplitude (machine-exact). Comparing FTCS to the continuous curve leaks the truncation error recorded in truncation_separation_rel (spec-ref.md \u00a7 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "von-neumann-analysis",
+        "source": "g_h = 1 + alpha*dt*lambda_h with the 5-point stencil symbol; the sin*sin eigenmode is an eigenvector of the separable stencil, so g_h^N is exact-to-FP for the discrete method (LeVeque, Finite Difference Methods for Ordinary and Partial Differential Equations, SIAM 2007, ch. 9).",
+        "doi": "10.1137/1.9780898717839"
+      }
+    },
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          5,
+          3
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "steps": 512,
+        "box": 1.0
+      },
+      "expected": {
+        "amplification_g": 0.98368310526373,
+        "continuous_amplitude": 0.00022731729504662208,
+        "discrete_amplitude": 0.00021971958839747238,
+        "truncation_separation_rel": 0.03342335499633427,
+        "assignment": "FTCS run -> discrete_amplitude (its own exact method); spectral run -> continuous_amplitude (machine-exact). Comparing FTCS to the continuous curve leaks the truncation error recorded in truncation_separation_rel (spec-ref.md \u00a7 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "dual-computation",
+        "source": "pow vs exp(N*log g) agreement and the 0 < g_h < 1 stability assertion, both checked inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "steps": 1024,
+        "box": 1.0
+      },
+      "expected": {
+        "amplification_g": 0.9997590549569634,
+        "continuous_amplitude": 0.7813437305474442,
+        "discrete_amplitude": 0.7813301800325823,
+        "truncation_separation_rel": 1.7342578345724472e-05,
+        "assignment": "FTCS run -> discrete_amplitude (its own exact method); spectral run -> continuous_amplitude (machine-exact). Comparing FTCS to the continuous curve leaks the truncation error recorded in truncation_separation_rel (spec-ref.md \u00a7 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-symbol",
+        "source": "Continuous amplitude from the Fourier symbol of the continuum Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3); paired eigenvalues pinned independently by table C (heat-equation-laplacian-eigenvalues.json, FD trig identity).",
+        "doi": "n/a-table-c-cross-reference"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          5,
+          3
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "steps": 1024,
+        "box": 1.0
+      },
+      "expected": {
+        "amplification_g": 0.9959079965109601,
+        "continuous_amplitude": 0.015077045302267354,
+        "discrete_amplitude": 0.015013459013266263,
+        "truncation_separation_rel": 0.004217423754210576,
+        "assignment": "FTCS run -> discrete_amplitude (its own exact method); spectral run -> continuous_amplitude (machine-exact). Comparing FTCS to the continuous curve leaks the truncation error recorded in truncation_separation_rel (spec-ref.md \u00a7 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "von-neumann-analysis",
+        "source": "g_h = 1 + alpha*dt*lambda_h with the 5-point stencil symbol; the sin*sin eigenmode is an eigenvector of the separable stencil, so g_h^N is exact-to-FP for the discrete method (LeVeque, Finite Difference Methods for Ordinary and Partial Differential Equations, SIAM 2007, ch. 9).",
+        "doi": "10.1137/1.9780898717839"
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          3,
+          2
+        ],
+        "alpha": 0.02,
+        "dt": 0.00244140625,
+        "steps": 256,
+        "box": 1.0
+      },
+      "expected": {
+        "amplification_g": 0.9750902464541757,
+        "continuous_amplitude": 0.001636422437163051,
+        "discrete_amplitude": 0.0015684546224471365,
+        "truncation_separation_rel": 0.04153439428131126,
+        "assignment": "FTCS run -> discrete_amplitude (its own exact method); spectral run -> continuous_amplitude (machine-exact). Comparing FTCS to the continuous curve leaks the truncation error recorded in truncation_separation_rel (spec-ref.md \u00a7 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "dual-computation",
+        "source": "pow vs exp(N*log g) agreement and the 0 < g_h < 1 stability assertion, both checked inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
+      }
+    }
+  ]
+}

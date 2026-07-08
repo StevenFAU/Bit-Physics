@@ -1,0 +1,51 @@
+{
+  "file": "heat-gate-fourier128-step512.bin",
+  "sha256": "f1f4d58575a21a97d2e2bd1ea6eff942480fcd01f1eb8bc0275523d7fba4bfd0",
+  "dtype": "f64",
+  "layout": "checkpoints[0,128,256,384,512] x fields[t_ftcs,t_spec] x 128^2 row-major (x*n+y)",
+  "decay_file": "heat-gate-decay-f64.bin",
+  "decay_sha256": "46aafa809e47eb9d194e71fc97c4b94680b53032c15a4abf46e73f03314b1dc3",
+  "params": {
+    "n": 128,
+    "alpha": 0.02,
+    "dt": 0.0006103515625,
+    "steps": 512,
+    "capture_interval": 128,
+    "safety": 0.8,
+    "descriptor": "fourier-multi-128sq-alpha0.02-step512"
+  },
+  "diagnostics": [
+    {
+      "step": 0,
+      "total_heat_ftcs": 1.0,
+      "max_abs_ftcs": 1.776416067815991,
+      "ftcs_spec_max_abs": 5.551115123125783e-16
+    },
+    {
+      "step": 128,
+      "total_heat_ftcs": 1.0,
+      "max_abs_ftcs": 1.4235645911987083,
+      "ftcs_spec_max_abs": 0.00032550041530376994
+    },
+    {
+      "step": 256,
+      "total_heat_ftcs": 1.0,
+      "max_abs_ftcs": 1.3869390200604166,
+      "ftcs_spec_max_abs": 8.928621385584368e-05
+    },
+    {
+      "step": 384,
+      "total_heat_ftcs": 1.0,
+      "max_abs_ftcs": 1.3448420040854756,
+      "ftcs_spec_max_abs": 4.157528611981043e-05
+    },
+    {
+      "step": 512,
+      "total_heat_ftcs": 1.0,
+      "max_abs_ftcs": 1.305151719918081,
+      "ftcs_spec_max_abs": 4.050044461956226e-05
+    }
+  ],
+  "determinism_witness_sha256": "551736dc62122a4435f9dafe8c0d3b064d6e30f3b94b07a6403b8b4177e8e569",
+  "source": "packages/heat-equation/heat_equation/sim.py run_canonical(gate_config()) (2-run bit-identity witnessed); decay table from heat_equation.spectral.decay_factors (f64 numpy exp)"
+}

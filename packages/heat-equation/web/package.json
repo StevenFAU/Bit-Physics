@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-heat-equation",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — 2D heat equation as a verified diffusion instrument. FTCS stencil + machine-exact spectral/ETD solver (2D Stockham FFT with committed f64 decay tables), uber-composite render stack (committed Planck-locus blackbody glow, fwidth isolines, live 2D spectrum view), and a verification-visible PROVE layer with the f64-anchored deploy gate re-run live (Phase-6 verification-demo track).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

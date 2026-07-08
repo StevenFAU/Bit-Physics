@@ -1,0 +1,2181 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "blackbody-planck-locus-lut",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/blackbody-planck-locus.md",
+    "upstream": "CVRL-CIE-1931-2deg-5nm-ciexyz31-csv",
+    "upstream_sha": "853b6adbd58635db79e94887a3576b8637942718891f68a7bd8296dd8ad1c641",
+    "upstream_path": "http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31.csv"
+  },
+  "constants": {
+    "c2_m_K": 0.014387768775039337,
+    "si_2019_exact": {
+      "h": 6.62607015e-34,
+      "c": 299792458.0,
+      "k_B": 1.380649e-23
+    }
+  },
+  "cross_checks": {
+    "illuminant_a_max_abs_xy_err": 1.1493493557224177e-05,
+    "helland_worst_gamma_dev": 0.034487973078827894
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-12
+  },
+  "stops": {
+    "t_min_K": 800,
+    "t_max_K": 12000,
+    "t_step_K": 100
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "temperature_K": 800
+      },
+      "expected": {
+        "x": 0.6813347387776675,
+        "y": 0.31793099167500793,
+        "rgb_linear": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 900
+      },
+      "expected": {
+        "x": 0.6669817115655384,
+        "y": 0.3315170410831289,
+        "rgb_linear": [
+          1.0,
+          0.0,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1000
+      },
+      "expected": {
+        "x": 0.6527508085836404,
+        "y": 0.34446159008737887,
+        "rgb_linear": [
+          1.0,
+          0.00871396607756456,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1100
+      },
+      "expected": {
+        "x": 0.6387563534504376,
+        "y": 0.35649760352124177,
+        "rgb_linear": [
+          1.0,
+          0.03291972528502661,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1200
+      },
+      "expected": {
+        "x": 0.6250448054411494,
+        "y": 0.36745422269297384,
+        "rgb_linear": [
+          1.0,
+          0.05763903099620999,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1300
+      },
+      "expected": {
+        "x": 0.6116314573957755,
+        "y": 0.37723235908266006,
+        "rgb_linear": [
+          1.0,
+          0.08267459257897877,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1400
+      },
+      "expected": {
+        "x": 0.5985210380159529,
+        "y": 0.38578830031041406,
+        "rgb_linear": [
+          1.0,
+          0.10786937253629486,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1500
+      },
+      "expected": {
+        "x": 0.5857178311635332,
+        "y": 0.39312145356327155,
+        "rgb_linear": [
+          1.0,
+          0.13309749122421408,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1600
+      },
+      "expected": {
+        "x": 0.5732294645737466,
+        "y": 0.39926435139552074,
+        "rgb_linear": [
+          1.0,
+          0.1582575721156375,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1700
+      },
+      "expected": {
+        "x": 0.5610672545992946,
+        "y": 0.40427410869393227,
+        "rgb_linear": [
+          1.0,
+          0.18326775453373448,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1800
+      },
+      "expected": {
+        "x": 0.5492449685825311,
+        "y": 0.408225046281384,
+        "rgb_linear": [
+          1.0,
+          0.2080618849454888,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 1900
+      },
+      "expected": {
+        "x": 0.5377771092147675,
+        "y": 0.4112024139036805,
+        "rgb_linear": [
+          1.0,
+          0.23258656174805165,
+          0.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2000
+      },
+      "expected": {
+        "x": 0.526677308244141,
+        "y": 0.4132971991073611,
+        "rgb_linear": [
+          1.0,
+          0.2567988104656451,
+          0.008132724383692008
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2100
+      },
+      "expected": {
+        "x": 0.5159570886671505,
+        "y": 0.4146019894856572,
+        "rgb_linear": [
+          1.0,
+          0.28066423282053143,
+          0.017557985238003077
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2200
+      },
+      "expected": {
+        "x": 0.5056250621530597,
+        "y": 0.4152078156252187,
+        "rgb_linear": [
+          1.0,
+          0.30415551784220474,
+          0.028247934115330057
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2300
+      },
+      "expected": {
+        "x": 0.4956865272771494,
+        "y": 0.4152018664107609,
+        "rgb_linear": [
+          1.0,
+          0.3272512337848421,
+          0.04016654770187884
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2400
+      },
+      "expected": {
+        "x": 0.4861433902908364,
+        "y": 0.4146659467451414,
+        "rgb_linear": [
+          1.0,
+          0.34993484088060295,
+          0.053269610304273136
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2500
+      },
+      "expected": {
+        "x": 0.4769943196870438,
+        "y": 0.4136755411297003,
+        "rgb_linear": [
+          1.0,
+          0.3721938799089053,
+          0.06750666718669028
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2600
+      },
+      "expected": {
+        "x": 0.4682350528130547,
+        "y": 0.4122993519097065,
+        "rgb_linear": [
+          1.0,
+          0.39401930221640874,
+          0.0828226908859876
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2700
+      },
+      "expected": {
+        "x": 0.4598587873062073,
+        "y": 0.4105991941920346,
+        "rgb_linear": [
+          1.0,
+          0.4154049145239892,
+          0.09915948354963708
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2800
+      },
+      "expected": {
+        "x": 0.45185660642585834,
+        "y": 0.40863014667635283,
+        "rgb_linear": [
+          1.0,
+          0.43634691751497306,
+          0.11645684341619775
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 2900
+      },
+      "expected": {
+        "x": 0.4442179024292342,
+        "y": 0.406440875987058,
+        "rgb_linear": [
+          1.0,
+          0.4568435214307528,
+          0.13465352492674715
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3000
+      },
+      "expected": {
+        "x": 0.43693077469790065,
+        "y": 0.40407406960854314,
+        "rgb_linear": [
+          1.0,
+          0.47689462512590763,
+          0.15368802108183946
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3100
+      },
+      "expected": {
+        "x": 0.42998238905702896,
+        "y": 0.40156692810636097,
+        "rgb_linear": [
+          1.0,
+          0.49650154754140724,
+          0.17349919453034296
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3200
+      },
+      "expected": {
+        "x": 0.42335929184202215,
+        "y": 0.3989516804801733,
+        "rgb_linear": [
+          1.0,
+          0.51566680253727,
+          0.19402678114296923
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3300
+      },
+      "expected": {
+        "x": 0.4170476771757377,
+        "y": 0.396256097174356,
+        "rgb_linear": [
+          1.0,
+          0.5343939096192568,
+          0.21521178689702605
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3400
+      },
+      "expected": {
+        "x": 0.41103360909677644,
+        "y": 0.3935039836470241,
+        "rgb_linear": [
+          1.0,
+          0.552687234391592,
+          0.23699679603070192
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3500
+      },
+      "expected": {
+        "x": 0.4053032020654217,
+        "y": 0.39071564376768064,
+        "rgb_linear": [
+          1.0,
+          0.570551853634148,
+          0.2593262057570346
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3600
+      },
+      "expected": {
+        "x": 0.39984276434050764,
+        "y": 0.38790830701755846,
+        "rgb_linear": [
+          1.0,
+          0.5879934407857107,
+          0.28214640043036854
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3700
+      },
+      "expected": {
+        "x": 0.3946389090623126,
+        "y": 0.38509651683596446,
+        "rgb_linear": [
+          1.0,
+          0.6050181683489738,
+          0.30540587595652763
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3800
+      },
+      "expected": {
+        "x": 0.3896786378158265,
+        "y": 0.38229247978708175,
+        "rgb_linear": [
+          1.0,
+          0.6216326243442484,
+          0.32905532342921673
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 3900
+      },
+      "expected": {
+        "x": 0.3849494011466469,
+        "y": 0.37950637676615295,
+        "rgb_linear": [
+          1.0,
+          0.6378437404480598,
+          0.3530476794403141
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4000
+      },
+      "expected": {
+        "x": 0.3804391400709681,
+        "y": 0.376746638426686,
+        "rgb_linear": [
+          1.0,
+          0.6536587298759643,
+          0.3773381492233635
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4100
+      },
+      "expected": {
+        "x": 0.37613631213719845,
+        "y": 0.3740201875532943,
+        "rgb_linear": [
+          1.0,
+          0.66908503342002,
+          0.40188420771739014
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4200
+      },
+      "expected": {
+        "x": 0.37202990510819983,
+        "y": 0.3713326513528276,
+        "rgb_linear": [
+          1.0,
+          0.6841302723412929,
+          0.42664558275156983
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4300
+      },
+      "expected": {
+        "x": 0.36810944086915165,
+        "y": 0.3686885466836946,
+        "rgb_linear": [
+          1.0,
+          0.6988022070566058,
+          0.4515842238216654
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4400
+      },
+      "expected": {
+        "x": 0.36436497174260446,
+        "y": 0.3660914411591888,
+        "rgb_linear": [
+          1.0,
+          0.7131087007541753,
+          0.4766642593305407
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4500
+      },
+      "expected": {
+        "x": 0.36078707101649016,
+        "y": 0.36354409289555745,
+        "rgb_linear": [
+          1.0,
+          0.727057687232407,
+          0.5018519446747794
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4600
+      },
+      "expected": {
+        "x": 0.3573668191642449,
+        "y": 0.3610485714650948,
+        "rgb_linear": [
+          1.0,
+          0.7406571423855228,
+          0.5271156031579188
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4700
+      },
+      "expected": {
+        "x": 0.3540957869568668,
+        "y": 0.35860636238338783,
+        "rgb_linear": [
+          1.0,
+          0.753915058864338,
+          0.5524255613816194
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4800
+      },
+      "expected": {
+        "x": 0.35096601643092606,
+        "y": 0.35621845722451984,
+        "rgb_linear": [
+          1.0,
+          0.7668394235244378,
+          0.5777540804954029
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 4900
+      },
+      "expected": {
+        "x": 0.3479700004795578,
+        "y": 0.3538854312292803,
+        "rgb_linear": [
+          1.0,
+          0.7794381973416299,
+          0.603075284462436
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5000
+      },
+      "expected": {
+        "x": 0.345100661670466,
+        "y": 0.35160751005568214,
+        "rgb_linear": [
+          1.0,
+          0.7917192975278905,
+          0.6283650863135671
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5100
+      },
+      "expected": {
+        "x": 0.3423513307611042,
+        "y": 0.3493846271220285,
+        "rgb_linear": [
+          1.0,
+          0.803690581623959,
+          0.6536011132075606
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5200
+      },
+      "expected": {
+        "x": 0.3397157252720788,
+        "y": 0.347216472811928,
+        "rgb_linear": [
+          1.0,
+          0.8153598333785511,
+          0.678762630985956
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5300
+      },
+      "expected": {
+        "x": 0.33718792839149964,
+        "y": 0.34510253664835383,
+        "rgb_linear": [
+          1.0,
+          0.82673475025088,
+          0.7038304688015158
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5400
+      },
+      "expected": {
+        "x": 0.3347623684119395,
+        "y": 0.34304214339950273,
+        "rgb_linear": [
+          1.0,
+          0.8378229323945617,
+          0.7287869443062489
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5500
+      },
+      "expected": {
+        "x": 0.33243379884491076,
+        "y": 0.34103448395176594,
+        "rgb_linear": [
+          1.0,
+          0.8486318729978278,
+          0.7536157898053578
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5600
+      },
+      "expected": {
+        "x": 0.3301972793127321,
+        "y": 0.33907864167322943,
+        "rgb_linear": [
+          1.0,
+          0.8591689498685494,
+          0.7783020797149773
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5700
+      },
+      "expected": {
+        "x": 0.32804815728222303,
+        "y": 0.3371736148933268,
+        "rgb_linear": [
+          1.0,
+          0.8694414181633524,
+          0.8028321596021796
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5800
+      },
+      "expected": {
+        "x": 0.3259820506769869,
+        "y": 0.33531833603909633,
+        "rgb_linear": [
+          1.0,
+          0.8794564041691794,
+          0.8271935770343563
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 5900
+      },
+      "expected": {
+        "x": 0.32399483138368596,
+        "y": 0.33351168789451663,
+        "rgb_linear": [
+          1.0,
+          0.8892209000528282,
+          0.8513750144200799
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6000
+      },
+      "expected": {
+        "x": 0.3220826096514044,
+        "y": 0.33175251738530603,
+        "rgb_linear": [
+          1.0,
+          0.8987417595003846,
+          0.8753662239844502
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6100
+      },
+      "expected": {
+        "x": 0.32024171937095025,
+        "y": 0.3300396472361144,
+        "rgb_linear": [
+          1.0,
+          0.9080256941737168,
+          0.8991579649876527
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6200
+      },
+      "expected": {
+        "x": 0.3184687042119382,
+        "y": 0.3283718857991398,
+        "rgb_linear": [
+          1.0,
+          0.9170792709159645,
+          0.9227419432655594
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6300
+      },
+      "expected": {
+        "x": 0.3167603045890446,
+        "y": 0.3267480353118621,
+        "rgb_linear": [
+          1.0,
+          0.9259089096421891,
+          0.9461107531451577
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6400
+      },
+      "expected": {
+        "x": 0.31511344542440156,
+        "y": 0.32516689880593885,
+        "rgb_linear": [
+          1.0,
+          0.9345208818552422,
+          0.9692578217648595
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6500
+      },
+      "expected": {
+        "x": 0.3135252246702511,
+        "y": 0.3236272858585782,
+        "rgb_linear": [
+          1.0,
+          0.942921309730488,
+          0.9921773558101452
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6600
+      },
+      "expected": {
+        "x": 0.31199290255436,
+        "y": 0.32212801735123436,
+        "rgb_linear": [
+          0.9853534203588804,
+          0.9371855670473909,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6700
+      },
+      "expected": {
+        "x": 0.31051389151002956,
+        "y": 0.32066792937765765,
+        "rgb_linear": [
+          0.9640280250652243,
+          0.9246101459443665,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6800
+      },
+      "expected": {
+        "x": 0.309085746752568,
+        "y": 0.3192458764236909,
+        "rgb_linear": [
+          0.9438205367188601,
+          0.9125916897239662,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 6900
+      },
+      "expected": {
+        "x": 0.30770615746468866,
+        "y": 0.3178607339242722,
+        "rgb_linear": [
+          0.9246512917425568,
+          0.9010956014923824,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7000
+      },
+      "expected": {
+        "x": 0.30637293855425834,
+        "y": 0.316511400288528,
+        "rgb_linear": [
+          0.9064477065917707,
+          0.8900900369002118,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7100
+      },
+      "expected": {
+        "x": 0.3050840229490794,
+        "y": 0.3151967984712728,
+        "rgb_linear": [
+          0.88914352952647,
+          0.8795456379394004,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7200
+      },
+      "expected": {
+        "x": 0.30383745439483956,
+        "y": 0.3139158771584,
+        "rgb_linear": [
+          0.8726781835436898,
+          0.8694352969406295,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7300
+      },
+      "expected": {
+        "x": 0.3026313807239207,
+        "y": 0.3126676116243166,
+        "rgb_linear": [
+          0.8569961879454387,
+          0.8597339468555256,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7400
+      },
+      "expected": {
+        "x": 0.30146404756440437,
+        "y": 0.31145100431150835,
+        "rgb_linear": [
+          0.842046647925671,
+          0.8504183744768531,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7500
+      },
+      "expected": {
+        "x": 0.3003337924602633,
+        "y": 0.31026508517539636,
+        "rgb_linear": [
+          0.8277828031502115,
+          0.841467053727661,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7600
+      },
+      "expected": {
+        "x": 0.2992390393753955,
+        "y": 0.3091089118316322,
+        "rgb_linear": [
+          0.8141616276330265,
+          0.8328599965526268,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7700
+      },
+      "expected": {
+        "x": 0.29817829355577924,
+        "y": 0.3079815695378115,
+        "rgb_linear": [
+          0.801143474327021,
+          0.824578619284954,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7800
+      },
+      "expected": {
+        "x": 0.2971501367256253,
+        "y": 0.30688217103712156,
+        "rgb_linear": [
+          0.7886917587855052,
+          0.8166056226504829,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 7900
+      },
+      "expected": {
+        "x": 0.2961532225949153,
+        "y": 0.3058098562875755,
+        "rgb_linear": [
+          0.7767726770416878,
+          0.808924883815739,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8000
+      },
+      "expected": {
+        "x": 0.2951862726571973,
+        "y": 0.3047637920971535,
+        "rgb_linear": [
+          0.7653549535233994,
+          0.8015213590956299,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8100
+      },
+      "expected": {
+        "x": 0.2942480722578929,
+        "y": 0.3037431716822903,
+        "rgb_linear": [
+          0.7544096153884645,
+          0.7943809961151755,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8200
+      },
+      "expected": {
+        "x": 0.29333746691469775,
+        "y": 0.3027472141646615,
+        "rgb_linear": [
+          0.7439097901497544,
+          0.7874906543728,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8300
+      },
+      "expected": {
+        "x": 0.2924533588729066,
+        "y": 0.30177516401907,
+        "rgb_linear": [
+          0.7338305238715821,
+          0.7808380332844163,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8400
+      },
+      "expected": {
+        "x": 0.2915947038796668,
+        "y": 0.3008262904833722,
+        "rgb_linear": [
+          0.7241486175719504,
+          0.7744116069008667,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8500
+      },
+      "expected": {
+        "x": 0.2907605081622743,
+        "y": 0.29989988693977804,
+        "rgb_linear": [
+          0.7148424797678634,
+          0.768200564589302,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8600
+      },
+      "expected": {
+        "x": 0.28994982559665056,
+        "y": 0.2989952702754729,
+        "rgb_linear": [
+          0.7058919933608837,
+          0.7621947570538725,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8700
+      },
+      "expected": {
+        "x": 0.2891617550531199,
+        "y": 0.2981117802293035,
+        "rgb_linear": [
+          0.6972783952843365,
+          0.7563846471446433,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8800
+      },
+      "expected": {
+        "x": 0.2883954379074954,
+        "y": 0.2972487787302424,
+        "rgb_linear": [
+          0.6889841675268924,
+          0.7507612649676867,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 8900
+      },
+      "expected": {
+        "x": 0.28765005570633456,
+        "y": 0.29640564923243795,
+        "rgb_linear": [
+          0.6809929383148059,
+          0.7453161668649652,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9000
+      },
+      "expected": {
+        "x": 0.28692482797600405,
+        "y": 0.2955817960508979,
+        "rgb_linear": [
+          0.6732893923801655,
+          0.740041397881386,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9100
+      },
+      "expected": {
+        "x": 0.2862190101659259,
+        "y": 0.294776643701176,
+        "rgb_linear": [
+          0.665859189368742,
+          0.7349294573789129,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9200
+      },
+      "expected": {
+        "x": 0.2855318917170525,
+        "y": 0.2939896362458664,
+        "rgb_linear": [
+          0.658688889550799,
+          0.7299732674950316,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9300
+      },
+      "expected": {
+        "x": 0.28486279424725225,
+        "y": 0.29322023665020763,
+        "rgb_linear": [
+          0.6517658860940876,
+          0.7251661441755883,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9400
+      },
+      "expected": {
+        "x": 0.28421106984587063,
+        "y": 0.29246792614867684,
+        "rgb_linear": [
+          0.6450783432419958,
+          0.7205017705408961,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9500
+      },
+      "expected": {
+        "x": 0.283576099470274,
+        "y": 0.29173220362408975,
+        "rgb_linear": [
+          0.638615139813114,
+          0.7159741723694678,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9600
+      },
+      "expected": {
+        "x": 0.28295729143769177,
+        "y": 0.29101258500040283,
+        "rgb_linear": [
+          0.6323658175028662,
+          0.7115776955061184,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9700
+      },
+      "expected": {
+        "x": 0.282354080006137,
+        "y": 0.29030860265015085,
+        "rgb_linear": [
+          0.6263205335243461,
+          0.7073069850211012,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9800
+      },
+      "expected": {
+        "x": 0.2817659240386208,
+        "y": 0.28961980481721955,
+        "rgb_linear": [
+          0.6204700171752476,
+          0.703156965964503,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 9900
+      },
+      "expected": {
+        "x": 0.2811923057452782,
+        "y": 0.2889457550554583,
+        "rgb_linear": [
+          0.6148055299616604,
+          0.6991228255757489,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10000
+      },
+      "expected": {
+        "x": 0.2806327294983986,
+        "y": 0.28828603168347267,
+        "rgb_linear": [
+          0.6093188289482453,
+          0.69519999682195,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10100
+      },
+      "expected": {
+        "x": 0.2800867207156983,
+        "y": 0.2876402272557886,
+        "rgb_linear": [
+          0.6040021330385634,
+          0.69138414315113,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10200
+      },
+      "expected": {
+        "x": 0.279553824807491,
+        "y": 0.2870079480504717,
+        "rgb_linear": [
+          0.5988480919196413,
+          0.6876711443574639,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10300
+      },
+      "expected": {
+        "x": 0.2790336061837198,
+        "y": 0.2863888135731751,
+        "rgb_linear": [
+          0.593849757431869,
+          0.6840570834653956,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10400
+      },
+      "expected": {
+        "x": 0.2785256473170781,
+        "y": 0.2857824560775082,
+        "rgb_linear": [
+          0.5890005571491586,
+          0.6805382345483392,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10500
+      },
+      "expected": {
+        "x": 0.27802954785871337,
+        "y": 0.28518852010155266,
+        "rgb_linear": [
+          0.5842942699756413,
+          0.677111051405529,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10600
+      },
+      "expected": {
+        "x": 0.2775449238032416,
+        "y": 0.2846066620202894,
+        "rgb_linear": [
+          0.5797250035840986,
+          0.6737721570276087,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10700
+      },
+      "expected": {
+        "x": 0.2770714067000188,
+        "y": 0.2840365496136562,
+        "rgb_linear": [
+          0.5752871735382694,
+          0.6705183337879036,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10800
+      },
+      "expected": {
+        "x": 0.2766086429078262,
+        "y": 0.28347786164991867,
+        "rgb_linear": [
+          0.5709754839562574,
+          0.6673465143019877,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 10900
+      },
+      "expected": {
+        "x": 0.27615629289031307,
+        "y": 0.282930287484005,
+        "rgb_linear": [
+          0.5667849095858314,
+          0.6642537729032816,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11000
+      },
+      "expected": {
+        "x": 0.27571403054971777,
+        "y": 0.2823935266704324,
+        "rgb_linear": [
+          0.5627106791744619,
+          0.6612373176870132,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11100
+      },
+      "expected": {
+        "x": 0.27528154259655235,
+        "y": 0.28186728859043914,
+        "rgb_linear": [
+          0.5587482600278123,
+          0.6582944830790662,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11200
+      },
+      "expected": {
+        "x": 0.27485852795308785,
+        "y": 0.2813512920929178,
+        "rgb_linear": [
+          0.5548933436601672,
+          0.6554227228899379,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11300
+      },
+      "expected": {
+        "x": 0.27444469718862535,
+        "y": 0.28084526514874225,
+        "rgb_linear": [
+          0.5511418324490573,
+          0.6526196038174814,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11400
+      },
+      "expected": {
+        "x": 0.27403977198465496,
+        "y": 0.28034894451807224,
+        "rgb_linear": [
+          0.5474898272141162,
+          0.6498827993651306,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11500
+      },
+      "expected": {
+        "x": 0.27364348462814597,
+        "y": 0.27986207543022296,
+        "rgb_linear": [
+          0.5439336156474722,
+          0.6472100841451383,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11600
+      },
+      "expected": {
+        "x": 0.27325557753131263,
+        "y": 0.2793844112756791,
+        "rgb_linear": [
+          0.5404696615292585,
+          0.6445993285388126,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11700
+      },
+      "expected": {
+        "x": 0.2728758027763103,
+        "y": 0.2789157133098459,
+        "rgb_linear": [
+          0.537094594667656,
+          0.642048493688113,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11800
+      },
+      "expected": {
+        "x": 0.2725039216834152,
+        "y": 0.27845575036812803,
+        "rgb_linear": [
+          0.533805201508095,
+          0.6395556267949865,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "helland-2012-cross-check",
+        "source": "Tanner Helland (2012) empirical blackbody fit (demoted cross-check anchor): worst per-channel gamma-space deviation over 1500-12000 K recorded in cross_checks and asserted <= 0.2.",
+        "doi": "n/a-helland-2012-fit"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 11900
+      },
+      "expected": {
+        "x": 0.2721397044013336,
+        "y": 0.2780042985919331,
+        "rgb_linear": [
+          0.530598416361006,
+          0.6371188567067378,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "primary-standards",
+        "source": "Planck's law with the exact 2019 SI c2 = h*c/k_B; CIE 1931 2-degree CMFs (CVRL committed csv, sha pinned in derivation); IEC 61966-2-1 sRGB matrix.",
+        "doi": "n/a-standards-chain"
+      }
+    },
+    {
+      "inputs": {
+        "temperature_K": 12000
+      },
+      "expected": {
+        "x": 0.2717829295183731,
+        "y": 0.27756114116520914,
+        "rgb_linear": [
+          0.5274713132017563,
+          0.6347363897674747,
+          1.0
+        ]
+      },
+      "independent_reference": {
+        "derived_by": "illuminant-a-anchor",
+        "source": "CIE Illuminant A: the Planckian radiator at T = 2855.542 K must land at chromaticity (0.44758, 0.40745) within 2e-3 \u2014 asserted in-generator (cross_checks), plus locus x-monotonicity and the red/blue endpoint physics.",
+        "doi": "n/a-cie-illuminant-a"
+      }
+    }
+  ]
+}

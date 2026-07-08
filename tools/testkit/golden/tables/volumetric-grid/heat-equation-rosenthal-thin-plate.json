@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "heat-equation-rosenthal-thin-plate-k0",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/heat-equation-rosenthal-thin-plate.md",
+    "upstream": "Rosenthal-1946-Trans-ASME-68-thin-plate-case",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/volumetric-grid/heat-equation/spec-ref.md"
+  },
+  "labeled": "non-validation-golden-of-the-idealized-equation",
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "w": -0.03,
+        "y": 0.01,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 18.423121699087986,
+        "pde_residual_normalized": 2.3830245695280944e-07,
+        "wrong_dimension_3d_value": 855.8030599001111
+      },
+      "independent_reference": {
+        "derived_by": "abramowitz-stegun-k0",
+        "source": "A&S 9.8.5/9.8.6 rational K0 approximations \u2014 a scipy-independent recomputation of the full formula, asserted to <= 3e-6 relative at every probe (branch point z=2 covered on both sides).",
+        "doi": "n/a-abramowitz-stegun-1964"
+      }
+    },
+    {
+      "inputs": {
+        "w": 0.005,
+        "y": 0.02,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 2.0392046821880103,
+        "pde_residual_normalized": 1.4212588682276339e-06,
+        "wrong_dimension_3d_value": 119.17561741854121
+      },
+      "independent_reference": {
+        "derived_by": "pde-residual-check",
+        "source": "The thin-plate form satisfies the 2D moving-frame steady equation kappa*(T_ww+T_yy) + U*T_w = 0 to FD-truncation accuracy at every probe, while the 3D thick-plate form's residual is >= 100x larger (the wrong-dimension counterexample) \u2014 both asserted in-generator. Rosenthal 1946, Trans. ASME 68:849-866 (thin-plate case).",
+        "doi": "n/a-rosenthal-1946-pre-doi"
+      }
+    },
+    {
+      "inputs": {
+        "w": -0.06,
+        "y": 0.03,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 7.45541228441278,
+        "pde_residual_normalized": 3.3907564040483204e-07,
+        "wrong_dimension_3d_value": 233.7086627645931
+      },
+      "independent_reference": {
+        "derived_by": "far-field-asymptotic",
+        "source": "K0(z) ~ sqrt(pi/(2z))*e^-z (A&S 9.7.2), checked at z=8 in-generator; assumption/limit framing per the AM-regime literature.",
+        "doi": "10.1016/j.addma.2018.05.032"
+      }
+    },
+    {
+      "inputs": {
+        "w": 0.0,
+        "y": 0.025,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 1.9845842563046396,
+        "pde_residual_normalized": 7.630475380348567e-06,
+        "wrong_dimension_3d_value": 104.51386627747935
+      },
+      "independent_reference": {
+        "derived_by": "abramowitz-stegun-k0",
+        "source": "A&S 9.8.5/9.8.6 rational K0 approximations \u2014 a scipy-independent recomputation of the full formula, asserted to <= 3e-6 relative at every probe (branch point z=2 covered on both sides).",
+        "doi": "n/a-abramowitz-stegun-1964"
+      }
+    },
+    {
+      "inputs": {
+        "w": -0.1,
+        "y": 0.05,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 3.6258615315621543,
+        "pde_residual_normalized": 1.1555551889279122e-07,
+        "wrong_dimension_3d_value": 87.4540690130425
+      },
+      "independent_reference": {
+        "derived_by": "pde-residual-check",
+        "source": "The thin-plate form satisfies the 2D moving-frame steady equation kappa*(T_ww+T_yy) + U*T_w = 0 to FD-truncation accuracy at every probe, while the 3D thick-plate form's residual is >= 100x larger (the wrong-dimension counterexample) \u2014 both asserted in-generator. Rosenthal 1946, Trans. ASME 68:849-866 (thin-plate case).",
+        "doi": "n/a-rosenthal-1946-pre-doi"
+      }
+    },
+    {
+      "inputs": {
+        "w": 0.015,
+        "y": 0.0,
+        "q": 1.0,
+        "conductivity": 0.005,
+        "thickness": 1.0,
+        "speed": 1.0,
+        "kappa": 0.005,
+        "t0": 0.0
+      },
+      "expected": {
+        "temperature": 1.5185440855820358,
+        "pde_residual_normalized": 3.0332101071308512e-05,
+        "wrong_dimension_3d_value": 105.65144043732917
+      },
+      "independent_reference": {
+        "derived_by": "far-field-asymptotic",
+        "source": "K0(z) ~ sqrt(pi/(2z))*e^-z (A&S 9.7.2), checked at z=8 in-generator; assumption/limit framing per the AM-regime literature.",
+        "doi": "10.1016/j.addma.2018.05.032"
+      }
+    }
+  ]
+}

@@ -350,6 +350,15 @@ VALIDATION_ROUTING: dict[str, dict[str, Any]] = {
         "import": "gs_mpm_sh_update",
         "surrogate": "SH-rotation Wigner-D golden (3dgs-mpm-sh-rotation.json).",
     },
+    "heat-equation": {
+        "method": "golden_table_surrogate",
+        "import": "heat_equation",
+        "surrogate": "machine-exact spectral/two-spectra + erfc/product-form + "
+        "Rosenthal thin-plate K0 golden anchors (tests/test_*_golden.py vs the "
+        "committed heat-equation golden tables A-E) + mass-conservation PBT "
+        "(no committed .h5 — the web gate's live-f64 re-run is the capture "
+        "surface; spec-ref § 13).",
+    },
 }
 
 

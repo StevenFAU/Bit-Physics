@@ -1,0 +1,149 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "heat-equation-spectral-per-mode-decay",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/heat-equation-spectral-decay.md",
+    "upstream": "Cox-Matthews-2002-ETD-J-Comput-Phys-176",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1006/jcph.2002.6995"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-13
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 78.95683520871486,
+        "decay_factor": 0.9990366357787563,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "integrating-factor-ode",
+        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0): Cox & Matthews 2002, J. Comput. Phys. 176:430-455.",
+        "doi": "10.1006/jcph.2002.6995"
+      }
+    },
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          5,
+          3
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 1342.2661985481527,
+        "decay_factor": 0.9837484199207378,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "dual-library-plus-factorization",
+        "source": "Per-axis factorization exp(a+b) = exp(a)*exp(b) and numpy.exp vs math.exp agreement, both asserted inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 78.95683520871486,
+        "decay_factor": 0.9997590718891414,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-symbol-precedent",
+        "source": "Fourier symbol of the continuum Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3) + the landed schrodinger-smoke free-step per-mode phase golden (tools/testkit/golden/tables/volumetric-grid/isf-free-step-phase.json) \u2014 the same exact-propagator construction.",
+        "doi": "n/a-repo-precedent"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          2,
+          7
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 2092.356133030944,
+        "decay_factor": 0.993634978939887,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "integrating-factor-ode",
+        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0): Cox & Matthews 2002, J. Comput. Phys. 176:430-455.",
+        "doi": "10.1006/jcph.2002.6995"
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          3,
+          2
+        ],
+        "alpha": 1.0,
+        "dt": 0.001,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 513.2194288566466,
+        "decay_factor": 0.5985654346655478,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "dual-library-plus-factorization",
+        "source": "Per-axis factorization exp(a+b) = exp(a)*exp(b) and numpy.exp vs math.exp agreement, both asserted inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          31,
+          17
+        ],
+        "alpha": 1.0,
+        "dt": 0.001,
+        "box": 1.0
+      },
+      "expected": {
+        "k_squared": 49348.022005446786,
+        "decay_factor": 3.701914211848939e-22,
+        "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-symbol-precedent",
+        "source": "Fourier symbol of the continuum Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3) + the landed schrodinger-smoke free-step per-mode phase golden (tools/testkit/golden/tables/volumetric-grid/isf-free-step-phase.json) \u2014 the same exact-propagator construction.",
+        "doi": "n/a-repo-precedent"
+      }
+    }
+  ]
+}

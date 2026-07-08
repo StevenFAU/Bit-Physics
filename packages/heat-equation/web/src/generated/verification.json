@@ -1,0 +1,157 @@
+{
+  "generated_by": "gen-verification.mjs (fail-hard data spine; spec-ref § 5.6)",
+  "gate": {
+    "kind": "new_canonical",
+    "n": 128,
+    "alpha": 0.02,
+    "dt": 0.0006103515625,
+    "steps": 512,
+    "capture_interval": 128,
+    "descriptor": "fourier-multi-128sq-alpha0.02-step512",
+    "mode_rel_threshold": 0.0005
+  },
+  "tolerance": {
+    "category": "heat-equation",
+    "relative": 0.0001,
+    "measured_basis": "2026-07-08 f32/complex64 proxy worst 1.19e-5 of field peak x 4.05 family spread x ~2 margin (tolerance.toml [defaults.heat-equation])"
+  },
+  "reference_bin": {
+    "file": "heat-gate-fourier128-step512.bin",
+    "sha256": "f1f4d58575a21a97d2e2bd1ea6eff942480fcd01f1eb8bc0275523d7fba4bfd0",
+    "layout": "checkpoints[0,128,256,384,512] x fields[t_ftcs,t_spec] x 128^2 row-major (x*n+y)",
+    "decay_file": "heat-gate-decay-f64.bin",
+    "decay_sha256": "46aafa809e47eb9d194e71fc97c4b94680b53032c15a4abf46e73f03314b1dc3",
+    "witness_sha256": "551736dc62122a4435f9dafe8c0d3b064d6e30f3b94b07a6403b8b4177e8e569"
+  },
+  "goldens": {
+    "laplacian_table": "tools/testkit/golden/tables/volumetric-grid/heat-equation-laplacian-eigenvalues.json",
+    "blackbody_table": "tools/testkit/golden/tables/volumetric-grid/blackbody-planck-locus.json",
+    "laplacian_points": [
+      {
+        "n": 128,
+        "mode": [
+          1,
+          1
+        ],
+        "lambda_continuous": -78.95683520871486,
+        "lambda_discrete": -78.94098213782208
+      },
+      {
+        "n": 128,
+        "mode": [
+          5,
+          3
+        ],
+        "lambda_continuous": -1342.2661985481527,
+        "lambda_discrete": -1336.6800167952395
+      },
+      {
+        "n": 128,
+        "mode": [
+          64,
+          0
+        ],
+        "lambda_continuous": -161703.59850744804,
+        "lambda_discrete": -65536
+      },
+      {
+        "n": 256,
+        "mode": [
+          2,
+          7
+        ],
+        "lambda_continuous": -2092.356133030944,
+        "lambda_discrete": -2087.5708210723374
+      },
+      {
+        "n": 256,
+        "mode": [
+          128,
+          128
+        ],
+        "lambda_continuous": -1293628.7880595843,
+        "lambda_discrete": -524288
+      },
+      {
+        "n": 64,
+        "mode": [
+          3,
+          2
+        ],
+        "lambda_continuous": -513.2194288566466,
+        "lambda_discrete": -510.15175261848117
+      }
+    ],
+    "spectral_decay_points": [
+      {
+        "n": 128,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "decay_factor": 0.9990366357787563
+      },
+      {
+        "n": 128,
+        "mode": [
+          5,
+          3
+        ],
+        "alpha": 0.02,
+        "dt": 0.0006103515625,
+        "decay_factor": 0.9837484199207378
+      },
+      {
+        "n": 256,
+        "mode": [
+          1,
+          1
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "decay_factor": 0.9997590718891414
+      },
+      {
+        "n": 256,
+        "mode": [
+          2,
+          7
+        ],
+        "alpha": 0.02,
+        "dt": 0.000152587890625,
+        "decay_factor": 0.993634978939887
+      },
+      {
+        "n": 64,
+        "mode": [
+          3,
+          2
+        ],
+        "alpha": 1,
+        "dt": 0.001,
+        "decay_factor": 0.5985654346655478
+      },
+      {
+        "n": 64,
+        "mode": [
+          31,
+          17
+        ],
+        "alpha": 1,
+        "dt": 0.001,
+        "decay_factor": 3.701914211848939e-22
+      }
+    ],
+    "js_f64_recompute": "Parseval + per-mode spectral decay verified at build with the in-repo pure-JS radix-2 f64 FFT (N=64); goldens A/B/C recomputed; blackbody LUT byte-matched to golden F; HARD-FAIL on drift"
+  },
+  "wgsl_anchors": {
+    "ftcs_step_line": 76,
+    "spectral_mul_line": 200,
+    "fft_pass_line": 161,
+    "common_fft_marker_line": 68,
+    "poly_trig_line": 38,
+    "poly_trig_file": "common/common-web/src/fft-wgsl.ts"
+  }
+}

@@ -1,0 +1,143 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "heat-equation-laplacian-eigenvalues-two-spectra",
+  "category": "volumetric-grid",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/heat-equation-laplacian-eigenvalues.md",
+    "upstream": "von-Neumann-analysis-5-point-stencil-plus-Fourier-symbol",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/volumetric-grid/heat-equation/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          1,
+          1
+        ],
+        "dx": 0.0078125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -78.95683520871486,
+        "lambda_discrete": -78.94098213782208,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "trig-identity",
+        "source": "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) sin^2(k dx/2), asserted inside the generator at every case (closed_form).",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          5,
+          3
+        ],
+        "dx": 0.0078125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -1342.2661985481527,
+        "lambda_discrete": -1336.6800167952395,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-symbol",
+        "source": "Fourier symbol of the continuum Laplacian, -(2*pi)^2*(m^2+n^2) on the unit box (Trefethen, Spectral Methods in MATLAB, ch. 3).",
+        "doi": "n/a-spectral-methods-standard"
+      }
+    },
+    {
+      "inputs": {
+        "n": 128,
+        "mode": [
+          64,
+          0
+        ],
+        "dx": 0.0078125,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -161703.59850744804,
+        "lambda_discrete": -65536.0,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "repo-precedent",
+        "source": "The landed schrodinger-smoke two-spectra convention (tools/testkit/golden/tables/volumetric-grid/isf-laplacian-eigenvalues.json, Chern et al. 2016 Eqs. 17-18) \u2014 the same continuous-vs-discrete assignment in 3D, independently derived and CI-gated.",
+        "doi": "10.1145/2897824.2925868"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          2,
+          7
+        ],
+        "dx": 0.00390625,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -2092.356133030944,
+        "lambda_discrete": -2087.5708210723374,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "trig-identity",
+        "source": "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) sin^2(k dx/2), asserted inside the generator at every case (closed_form).",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "n": 256,
+        "mode": [
+          128,
+          128
+        ],
+        "dx": 0.00390625,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -1293628.7880595843,
+        "lambda_discrete": -524288.0,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-symbol",
+        "source": "Fourier symbol of the continuum Laplacian, -(2*pi)^2*(m^2+n^2) on the unit box (Trefethen, Spectral Methods in MATLAB, ch. 3).",
+        "doi": "n/a-spectral-methods-standard"
+      }
+    },
+    {
+      "inputs": {
+        "n": 64,
+        "mode": [
+          3,
+          2
+        ],
+        "dx": 0.015625,
+        "box": 1.0
+      },
+      "expected": {
+        "lambda_continuous": -513.2194288566466,
+        "lambda_discrete": -510.15175261848117,
+        "assignment": "continuous -> spectral decay exp(alpha*lambda_c*t); discrete -> FTCS amplification g_h = 1 + alpha*dt*lambda_h. NEVER MIX (spec-ref.md \u00a7 3.2 two-spectra rule)."
+      },
+      "independent_reference": {
+        "derived_by": "repo-precedent",
+        "source": "The landed schrodinger-smoke two-spectra convention (tools/testkit/golden/tables/volumetric-grid/isf-laplacian-eigenvalues.json, Chern et al. 2016 Eqs. 17-18) \u2014 the same continuous-vs-discrete assignment in 3D, independently derived and CI-gated.",
+        "doi": "10.1145/2897824.2925868"
+      }
+    }
+  ]
+}
