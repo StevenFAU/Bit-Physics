@@ -1,0 +1,537 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-rbj-biquad-response",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-biquad.md",
+    "upstream": "w3c-audio-eq-cookbook",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-09
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "kind": "lpf",
+        "f0": 1200.0,
+        "fs": 48000.0,
+        "q": 4.0,
+        "gain_db": 0.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          0.006155829702431115,
+          0.01231165940486223,
+          0.006155829702431115
+        ],
+        "a": [
+          1.019554308130029,
+          -1.9753766811902755,
+          0.9804456918699711
+        ],
+        "mag": [
+          1.0400916905627238,
+          2.423753676136616,
+          0.32349548737055034,
+          0.06219816718071795,
+          0.01186887004905826,
+          0.0016105607120726932,
+          0.00015540275260130025
+        ],
+        "phase": [
+          -0.05192520976699844,
+          -0.5056671410640533,
+          -2.978109551480911,
+          -3.0773522538980234,
+          -3.114197067324989,
+          -3.1315517135155804,
+          -3.138475897953991
+        ],
+        "group_delay": [
+          1.7870787889738313,
+          15.353625409955926,
+          0.8604293287086442,
+          0.12257806867373222,
+          0.029474703711365402,
+          0.012450427881400161,
+          0.010089102578110576
+        ],
+        "max_pole_radius": 0.9806331926261919,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "rbj-audio-eq-cookbook",
+        "source": "Bristow-Johnson, 'Audio EQ Cookbook' (W3C Technical Report, https://www.w3.org/TR/audio-eq-cookbook/) \u2014 the exact coefficient formulas for every committed variant.",
+        "doi": "n/a-w3c-technical-report"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "hpf",
+        "f0": 300.0,
+        "fs": 48000.0,
+        "q": 0.7071067811865476,
+        "gain_db": 0.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          0.9996145181203615,
+          -1.999229036240723,
+          0.9996145181203615
+        ],
+        "a": [
+          1.027760881951372,
+          -1.9984580724814458,
+          0.9722391180486281
+        ],
+        "mag": [
+          0.5390183073935199,
+          0.9952877643509924,
+          0.9998818630353019,
+          0.9999933287943285,
+          0.9999997331492098,
+          0.9999999949884006,
+          0.999999999953209
+        ],
+        "phase": [
+          1.878924753573258,
+          0.45486014312981826,
+          0.17623301497323202,
+          0.08557599797763725,
+          0.03823361495476927,
+          0.01415080274677275,
+          0.00439860151007467
+        ],
+        "group_delay": [
+          41.90463736817058,
+          3.8287277494467995,
+          0.5760081559420358,
+          0.14594313213471233,
+          0.04022075918043955,
+          0.017492521394072647,
+          0.014234265290064774
+        ],
+        "max_pole_radius": 0.9726139708189889,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "scipy-signal-freqz",
+        "source": "scipy.signal.freqz + scipy.signal.group_delay \u2014 independent response evaluation checked against the analytic H(e^{jw}) and the -d arg H/dw closed form inside --verify (bound 1e-9).",
+        "doi": "10.1038/s41592-019-0686-2"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "bpf",
+        "f0": 2000.0,
+        "fs": 48000.0,
+        "q": 8.0,
+        "gain_db": 0.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          0.016176190318907546,
+          0.0,
+          -0.016176190318907546
+        ],
+        "a": [
+          1.0161761903189075,
+          -1.9318516525781366,
+          0.9838238096810925
+        ],
+        "mag": [
+          0.015129158934230119,
+          0.07718415410975878,
+          0.3186524873630023,
+          0.06048555269541223,
+          0.023413072284274077,
+          0.008422639736258586,
+          0.002607588295041953
+        ],
+        "phase": [
+          1.5556665906453577,
+          1.4935353304407237,
+          -1.2464887992122045,
+          -1.5102738321618665,
+          -1.5473811149178618,
+          -1.5623735874705744,
+          -1.568188735544789
+        ],
+        "group_delay": [
+          0.49551244232327885,
+          0.9774344866395311,
+          5.347501718490042,
+          0.1430670713004556,
+          0.026282297658673515,
+          0.010504699876529466,
+          0.00844564532651948
+        ],
+        "max_pole_radius": 0.9839525531095463,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "jury-stability-criterion",
+        "source": "Jury criterion on the RBJ denominator (a0 > 0, D(+-1) > 0, |a2| < a0 on the open f0 in (0, Fs/2), Q > 0): committed max_pole_radius strictly < 1 for every case (Oppenheim & Schafer 3e, ch. 6 stability; spec-ref.md section 4.5 pins).",
+        "doi": "n/a-isbn-978-0131988422"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "notch",
+        "f0": 1000.0,
+        "fs": 48000.0,
+        "q": 10.0,
+        "gain_db": 0.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          1.0,
+          -1.9828897227476208,
+          1.0
+        ],
+        "a": [
+          1.0065263096110026,
+          -1.9828897227476208,
+          0.9934736903889975
+        ],
+        "mag": [
+          0.9996768542065807,
+          0.633576028149955,
+          0.9987556379895549,
+          0.9997789877401002,
+          0.9999586402836634,
+          0.9999944111022366,
+          0.9999994610517616
+        ],
+        "phase": [
+          -0.025422950213639422,
+          -0.8846297137428623,
+          0.049892287358245885,
+          0.021024766417231625,
+          0.009095053759487064,
+          0.003343322589659073,
+          0.001038217979623788
+        ],
+        "group_delay": [
+          0.9076355078775097,
+          95.59842391536833,
+          0.22780186684823744,
+          0.03879256184879554,
+          0.009719502527325452,
+          0.004141771514404979,
+          0.0033604657564665352
+        ],
+        "max_pole_radius": 0.9934948484368237,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "measured-impulse-dft",
+        "source": "DFT of the Direct-Form-I impulse response over 65536 samples vs H(e^{jw_k}) \u2014 the measurement leg the web gate re-runs; bound 1e-9 of response peak (response decays below the f64 tail within the frame for every committed (f0, Q)).",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "apf",
+        "f0": 1500.0,
+        "fs": 48000.0,
+        "q": 2.0,
+        "gain_db": 0.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          0.9512274194959679,
+          -1.9615705608064609,
+          1.048772580504032
+        ],
+        "a": [
+          1.048772580504032,
+          -1.9615705608064609,
+          0.9512274194959679
+        ],
+        "mag": [
+          1.000000000000003,
+          0.9999999999999974,
+          1.0000000000000002,
+          1.0000000000000002,
+          0.9999999999999998,
+          0.9999999999999997,
+          1.0000000000000002
+        ],
+        "phase": [
+          -0.16329843825934517,
+          -0.989574531294089,
+          0.9384142085703273,
+          0.33074772818723003,
+          0.13788078878710552,
+          0.05029997185109766,
+          0.01560298621925796
+        ],
+        "group_delay": [
+          5.445944933243853,
+          15.862044258064408,
+          5.901940487180922,
+          0.664304118288751,
+          0.14992855157981488,
+          0.06246179000123342,
+          0.05051485438062975
+        ],
+        "max_pole_radius": 0.9523608150184613,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "rbj-audio-eq-cookbook",
+        "source": "Bristow-Johnson, 'Audio EQ Cookbook' (W3C Technical Report, https://www.w3.org/TR/audio-eq-cookbook/) \u2014 the exact coefficient formulas for every committed variant.",
+        "doi": "n/a-w3c-technical-report"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "peaking",
+        "f0": 3000.0,
+        "fs": 48000.0,
+        "q": 2.0,
+        "gain_db": 6.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          1.135138678980198,
+          -1.8477590650225735,
+          0.8648613210198021
+        ],
+        "a": [
+          1.0677297806741295,
+          -1.8477590650225735,
+          0.9322702193258706
+        ],
+        "mag": [
+          1.0011778915994698,
+          1.0224645066159153,
+          1.4525226175487027,
+          1.148782761902028,
+          1.0160526206174383,
+          1.0019539422769348,
+          1.0001856945424747
+        ],
+        "phase": [
+          0.027946046043704285,
+          0.11953408683813234,
+          0.33761098971688186,
+          -0.2713918364700405,
+          -0.10168043477092664,
+          -0.03596623756475762,
+          -0.011106758039588447
+        ],
+        "group_delay": [
+          -0.8975568494963861,
+          -1.0855175758948252,
+          0.3792454763142956,
+          -0.592541196886327,
+          -0.11809653693958788,
+          -0.04510328306692457,
+          -0.03599277938503287
+        ],
+        "max_pole_radius": 0.9344159168086017,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "scipy-signal-freqz",
+        "source": "scipy.signal.freqz + scipy.signal.group_delay \u2014 independent response evaluation checked against the analytic H(e^{jw}) and the -d arg H/dw closed form inside --verify (bound 1e-9).",
+        "doi": "10.1038/s41592-019-0686-2"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "lowshelf",
+        "f0": 250.0,
+        "fs": 48000.0,
+        "q": 0.9,
+        "gain_db": 4.5,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          2.645196274081345,
+          -5.179561630906902,
+          2.5379607676096785
+        ],
+        "a": [
+          2.6325968077052626,
+          -5.180288511251694,
+          2.549833353640969
+        ],
+        "mag": [
+          1.3387975664622112,
+          0.9884185690234445,
+          0.9979061887135542,
+          0.9994940382893068,
+          0.9998983913944062,
+          0.9999860630753125,
+          0.999998653162957
+        ],
+        "phase": [
+          -0.4573970269754094,
+          -0.08432555022634823,
+          -0.03039627374169229,
+          -0.01460278204490352,
+          -0.006506736116015745,
+          -0.0024068391128714214,
+          -0.0007480738300908428
+        ],
+        "group_delay": [
+          2.9993936734575115,
+          -0.8211409024567717,
+          -0.10209866890823593,
+          -0.025070433741714693,
+          -0.006854108389547697,
+          -0.0029757633669610373,
+          -0.002420876474611422
+        ],
+        "max_pole_radius": 0.9841554995247128,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "jury-stability-criterion",
+        "source": "Jury criterion on the RBJ denominator (a0 > 0, D(+-1) > 0, |a2| < a0 on the open f0 in (0, Fs/2), Q > 0): committed max_pole_radius strictly < 1 for every case (Oppenheim & Schafer 3e, ch. 6 stability; spec-ref.md section 4.5 pins).",
+        "doi": "n/a-isbn-978-0131988422"
+      }
+    },
+    {
+      "inputs": {
+        "kind": "highshelf",
+        "f0": 8000.0,
+        "fs": 48000.0,
+        "q": 0.9,
+        "gain_db": -3.0,
+        "omega_fracs_of_fs": [
+          0.005,
+          0.02,
+          0.05,
+          0.1,
+          0.2,
+          0.35,
+          0.45
+        ]
+      },
+      "expected": {
+        "b": [
+          2.2252729795342647,
+          -1.2824422115072192,
+          0.7399595152633441
+        ],
+        "a": [
+          2.803346751186689,
+          -2.1586048583548054,
+          1.0380483904585058
+        ],
+        "mag": [
+          1.0000982177598767,
+          1.0015429909787676,
+          1.0084811220624623,
+          1.0078594886836911,
+          0.7523131794815622,
+          0.7013108214976732,
+          0.7071722747421695
+        ],
+        "phase": [
+          -0.005234355323668593,
+          -0.021379935786658807,
+          -0.05984622047961344,
+          -0.16625239040296477,
+          -0.27098867699416246,
+          -0.06532760045371358,
+          -0.017830502585105226
+        ],
+        "group_delay": [
+          0.16708161782266462,
+          0.17768959598390274,
+          0.2400745140950314,
+          0.44479930911327503,
+          -0.3024759723496527,
+          -0.10258448304030976,
+          -0.05940140703105323
+        ],
+        "max_pole_radius": 0.6085137413043792,
+        "impulse_dft_ceiling_rel": 1e-09,
+        "assignment": "Coefficients are f64 CPU-computed (the f32 low-f0 trap rule, spec-ref.md section 4.5); |H|/phase/group-delay sampled at omega_fracs_of_fs; the measured impulse-response DFT must match H(e^{jw}) to impulse_dft_ceiling_rel of peak."
+      },
+      "independent_reference": {
+        "derived_by": "measured-impulse-dft",
+        "source": "DFT of the Direct-Form-I impulse response over 65536 samples vs H(e^{jw_k}) \u2014 the measurement leg the web gate re-runs; bound 1e-9 of response peak (response decays below the f64 tail within the frame for every committed (f0, Q)).",
+        "doi": "n/a-in-generator-identity"
+      }
+    }
+  ]
+}

@@ -1,0 +1,169 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-fm-bessel-sidebands",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-fm-bessel.md",
+    "upstream": "chowning-1973-plus-dlmf-10-23",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 4096,
+        "kc": 512,
+        "km": 37,
+        "index": 3.2
+      },
+      "expected": {
+        "sideband_j_n": {
+          "-8": 0.0007981532855158391,
+          "-7": -0.0038446141946159706,
+          "-6": 0.016022033815929027,
+          "-5": -0.05623801261511795,
+          "-4": 0.15972175560631444,
+          "-3": -0.3430663764006681,
+          "-2": 0.48352770014493845,
+          "-1": -0.2613432487805048,
+          "0": -0.32018816965712293,
+          "1": 0.2613432487805048,
+          "2": 0.48352770014493845,
+          "3": 0.3430663764006681,
+          "4": 0.15972175560631444,
+          "5": 0.05623801261511795,
+          "6": 0.016022033815929027,
+          "7": 0.0038446141946159706,
+          "8": 0.0007981532855158391
+        },
+        "carrier_j0": -0.32018816965712293,
+        "energy_identity_residual": 1.1102230246251565e-16,
+        "measured_dft_ceiling_rel": 1e-12,
+        "assignment": "Measured rectangular-window DFT of the generated frame must match the exact folded J_n(I) line spectrum to measured_dft_ceiling_rel of peak (discrete-spectrum discipline, spec-ref.md section 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "chowning-1973",
+        "source": "Chowning, 'The synthesis of complex audio spectra by means of frequency modulation', JAES 21(7):526-534 \u2014 sidebands exactly J_n(I) at alpha +/- n beta with odd lower sidebands negative.",
+        "doi": "n/a-jaes-1973-paper"
+      }
+    },
+    {
+      "inputs": {
+        "n": 1024,
+        "kc": 128,
+        "km": 9,
+        "index": 1.0
+      },
+      "expected": {
+        "sideband_j_n": {
+          "-8": 9.422344172604505e-08,
+          "-7": -1.5023258174368098e-06,
+          "-6": 2.093833800238929e-05,
+          "-5": -0.00024975773021123466,
+          "-4": 0.002476638964109955,
+          "-3": -0.019563353982668414,
+          "-2": 0.1149034849319005,
+          "-1": -0.44005058574493355,
+          "0": 0.7651976865579666,
+          "1": 0.44005058574493355,
+          "2": 0.1149034849319005,
+          "3": 0.019563353982668414,
+          "4": 0.002476638964109955,
+          "5": 0.00024975773021123466,
+          "6": 2.093833800238929e-05,
+          "7": 1.5023258174368098e-06,
+          "8": 9.422344172604505e-08
+        },
+        "carrier_j0": 0.7651976865579666,
+        "energy_identity_residual": 2.220446049250313e-16,
+        "measured_dft_ceiling_rel": 1e-12,
+        "assignment": "Measured rectangular-window DFT of the generated frame must match the exact folded J_n(I) line spectrum to measured_dft_ceiling_rel of peak (discrete-spectrum discipline, spec-ref.md section 3.2)."
+      },
+      "independent_reference": {
+        "derived_by": "scipy-special-jv",
+        "source": "scipy.special.jv (AMOS/cephes Bessel implementation) \u2014 the f64 numeric anchor for every committed J_n(I) value.",
+        "doi": "10.1038/s41592-019-0686-2"
+      }
+    },
+    {
+      "inputs": {
+        "n": 4096,
+        "kc": 512,
+        "km": 37,
+        "index": 2.404825557695773
+      },
+      "expected": {
+        "sideband_j_n": {
+          "-8": 9.216578670534479e-05,
+          "-7": -0.0006006883657329536,
+          "-6": 0.003404818472027835,
+          "-5": -0.016389243204805858,
+          "-4": 0.06474666616417797,
+          "-3": -0.19899990535769085,
+          "-2": 0.43175480701968055,
+          "-1": -0.5191474972894667,
+          "0": 0.0,
+          "1": 0.5191474972894667,
+          "2": 0.43175480701968055,
+          "3": 0.19899990535769085,
+          "4": 0.06474666616417797,
+          "5": 0.016389243204805858,
+          "6": 0.003404818472027835,
+          "7": 0.0006006883657329536,
+          "8": 9.216578670534479e-05
+        },
+        "carrier_j0": 0.0,
+        "energy_identity_residual": 2.220446049250313e-16,
+        "measured_dft_ceiling_rel": 1e-12,
+        "assignment": "Measured rectangular-window DFT of the generated frame must match the exact folded J_n(I) line spectrum to measured_dft_ceiling_rel of peak (discrete-spectrum discipline, spec-ref.md section 3.2). Carrier null: I is the first J_0 zero, so carrier_j0 ~ 0."
+      },
+      "independent_reference": {
+        "derived_by": "dlmf-10-23-3",
+        "source": "NIST DLMF 10.23.3 (Neumann addition theorem special case): J_0^2 + 2 sum_{n>=1} J_n^2 = 1 \u2014 the energy identity checked to machine precision at every committed index; J_0 zeros 2.40483 / 5.52008 from the DLMF Bessel-zero tables; https://dlmf.nist.gov/10.23",
+        "doi": "n/a-dlmf-handbook"
+      }
+    },
+    {
+      "inputs": {
+        "n": 4096,
+        "kc": 512,
+        "km": 37,
+        "index": 5.520078110286311
+      },
+      "expected": {
+        "sideband_j_n": {
+          "-8": 0.034418815504683696,
+          "-7": -0.0881464684159766,
+          "-6": 0.1891379047388397,
+          "-5": -0.3230170715775463,
+          "-4": 0.3960296692047694,
+          "-3": -0.25093084914740665,
+          "-2": -0.12328260570237459,
+          "-1": 0.34026480655836816,
+          "0": -1.4117244793622973e-17,
+          "1": -0.34026480655836816,
+          "2": -0.12328260570237459,
+          "3": 0.25093084914740665,
+          "4": 0.3960296692047694,
+          "5": 0.3230170715775463,
+          "6": 0.1891379047388397,
+          "7": 0.0881464684159766,
+          "8": 0.034418815504683696
+        },
+        "carrier_j0": -1.4117244793622973e-17,
+        "energy_identity_residual": 2.220446049250313e-16,
+        "measured_dft_ceiling_rel": 1e-12,
+        "assignment": "Measured rectangular-window DFT of the generated frame must match the exact folded J_n(I) line spectrum to measured_dft_ceiling_rel of peak (discrete-spectrum discipline, spec-ref.md section 3.2). Carrier null: I is the second J_0 zero."
+      },
+      "independent_reference": {
+        "derived_by": "measured-dft-identity",
+        "source": "The generated frame's own FFT vs the exact folded line spectrum at <= 1e-12 of peak, checked inside --verify \u2014 the same identity the web gate re-runs live (spec-ref.md section 13.1).",
+        "doi": "n/a-in-generator-identity"
+      }
+    }
+  ]
+}

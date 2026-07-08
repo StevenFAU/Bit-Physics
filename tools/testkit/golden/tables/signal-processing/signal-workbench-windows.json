@@ -1,0 +1,278 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-window-figures-of-merit",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-windows.md",
+    "upstream": "nuttall-1981-plus-heinzel-gh-fft",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 0.0001
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "window": "rectangular",
+        "n": 4096,
+        "coefficients": [
+          1.0
+        ]
+      },
+      "expected": {
+        "coherent_gain": 1.0,
+        "enbw_bins": 1.0,
+        "scallop_db": 3.9223973276994966,
+        "wcpl_db": 3.9223973276994966,
+        "psl_db": -13.261482327543552,
+        "falloff_db_per_oct": -6.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "nuttall-1981-table-ii",
+        "source": "Nuttall, 'Some windows with very good sidelobe behavior', IEEE Trans. ASSP 29(1):84-91, Table II \u2014 the corrected side-lobe values (Hann -31.47, min-3-term BH -70.83, Nuttall4b -93.32 with -18 dB/oct) that supersede Harris 1978 Table I's printed errata.",
+        "doi": "10.1109/TASSP.1981.1163506"
+      }
+    },
+    {
+      "inputs": {
+        "window": "triangle",
+        "n": 4096,
+        "coefficients": []
+      },
+      "expected": {
+        "coherent_gain": 0.5,
+        "enbw_bins": 1.3333334922790527,
+        "scallop_db": 1.8241947421193696,
+        "wcpl_db": 3.0735826259217047,
+        "psl_db": -26.522902325028436,
+        "falloff_db_per_oct": -12.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "heinzel-gh-fft",
+        "source": "Heinzel, Ruediger & Schilling, 'Spectrum and spectral density estimation by the DFT' (MPI fuer Gravitationsphysik, 2002) \u2014 ENBW definition/values and the Nuttall4b/4c naming this table uses; https://holometer.fnal.gov/GH_FFT.pdf",
+        "doi": "n/a-technical-report"
+      }
+    },
+    {
+      "inputs": {
+        "window": "hann",
+        "n": 4096,
+        "coefficients": [
+          0.5,
+          0.5
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.5,
+        "enbw_bins": 1.5,
+        "scallop_db": 1.4236228084370162,
+        "wcpl_db": 3.1845353989938285,
+        "psl_db": -31.46727668215401,
+        "falloff_db_per_oct": -18.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "coefficient-identity",
+        "source": "Closed-form periodic sum-of-cosine identities CG = a_0 and ENBW = (a_0^2 + 0.5 sum a_k^2)/a_0^2 (JOS SASP, 'Spectral Audio Signal Processing', window figures-of-merit chapter), checked inside the generator against the dense-FFT numeric values.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "window": "hamming",
+        "n": 4096,
+        "coefficients": [
+          0.54,
+          0.46
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.54,
+        "enbw_bins": 1.3628257887517148,
+        "scallop_db": 1.7514311728284537,
+        "wcpl_db": 3.0958346041070475,
+        "psl_db": -42.674975271639575,
+        "falloff_db_per_oct": -6.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "nuttall-1981-table-ii",
+        "source": "Nuttall, 'Some windows with very good sidelobe behavior', IEEE Trans. ASSP 29(1):84-91, Table II \u2014 the corrected side-lobe values (Hann -31.47, min-3-term BH -70.83, Nuttall4b -93.32 with -18 dB/oct) that supersede Harris 1978 Table I's printed errata.",
+        "doi": "10.1109/TASSP.1981.1163506"
+      }
+    },
+    {
+      "inputs": {
+        "window": "blackman",
+        "n": 4096,
+        "coefficients": [
+          0.42,
+          0.5,
+          0.08
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.41999999999999993,
+        "enbw_bins": 1.7267573696145129,
+        "scallop_db": 1.0988788310233266,
+        "wcpl_db": 3.471192013065556,
+        "psl_db": -58.10884200268867,
+        "falloff_db_per_oct": -18.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "heinzel-gh-fft",
+        "source": "Heinzel, Ruediger & Schilling, 'Spectrum and spectral density estimation by the DFT' (MPI fuer Gravitationsphysik, 2002) \u2014 ENBW definition/values and the Nuttall4b/4c naming this table uses; https://holometer.fnal.gov/GH_FFT.pdf",
+        "doi": "n/a-technical-report"
+      }
+    },
+    {
+      "inputs": {
+        "window": "blackmanharris3",
+        "n": 4096,
+        "coefficients": [
+          0.42323,
+          0.49755,
+          0.07922
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.42323,
+        "enbw_bins": 1.7085380270332828,
+        "scallop_db": 1.1286644568429165,
+        "wcpl_db": 3.4549109504496123,
+        "psl_db": -70.82630156097444,
+        "falloff_db_per_oct": -6.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "coefficient-identity",
+        "source": "Closed-form periodic sum-of-cosine identities CG = a_0 and ENBW = (a_0^2 + 0.5 sum a_k^2)/a_0^2 (JOS SASP, 'Spectral Audio Signal Processing', window figures-of-merit chapter), checked inside the generator against the dense-FFT numeric values.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "window": "blackmanharris4",
+        "n": 4096,
+        "coefficients": [
+          0.35875,
+          0.48829,
+          0.14128,
+          0.01168
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.35875,
+        "enbw_bins": 2.0043529382170475,
+        "scallop_db": 0.8255722309154755,
+        "wcpl_db": 3.845314201391415,
+        "psl_db": -92.00974457805194,
+        "falloff_db_per_oct": -6.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "nuttall-1981-table-ii",
+        "source": "Nuttall, 'Some windows with very good sidelobe behavior', IEEE Trans. ASSP 29(1):84-91, Table II \u2014 the corrected side-lobe values (Hann -31.47, min-3-term BH -70.83, Nuttall4b -93.32 with -18 dB/oct) that supersede Harris 1978 Table I's printed errata.",
+        "doi": "10.1109/TASSP.1981.1163506"
+      }
+    },
+    {
+      "inputs": {
+        "window": "nuttall4b",
+        "n": 4096,
+        "coefficients": [
+          0.355768,
+          0.487396,
+          0.144232,
+          0.012604
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.355768,
+        "enbw_bins": 2.0212325782997067,
+        "scallop_db": 0.8117552954210204,
+        "wcpl_db": 3.8679181913885503,
+        "psl_db": -93.32548863945304,
+        "falloff_db_per_oct": -18.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "heinzel-gh-fft",
+        "source": "Heinzel, Ruediger & Schilling, 'Spectrum and spectral density estimation by the DFT' (MPI fuer Gravitationsphysik, 2002) \u2014 ENBW definition/values and the Nuttall4b/4c naming this table uses; https://holometer.fnal.gov/GH_FFT.pdf",
+        "doi": "n/a-technical-report"
+      }
+    },
+    {
+      "inputs": {
+        "window": "nuttall4c",
+        "n": 4096,
+        "coefficients": [
+          0.3635819,
+          0.4891775,
+          0.1365995,
+          0.0106411
+        ]
+      },
+      "expected": {
+        "coherent_gain": 0.3635819,
+        "enbw_bins": 1.9761092851647788,
+        "scallop_db": 0.8505565086037992,
+        "wcpl_db": 3.8086660965024555,
+        "psl_db": -98.16454912140918,
+        "falloff_db_per_oct": -6.0,
+        "assignment": "Figures re-derived from the committed coefficients at the pinned N; Harris 1978 anchors definitions only (documented errata, spec-ref.md section 4.2). psl_db compares at 1e-4 relative (~3e-3 dB)."
+      },
+      "independent_reference": {
+        "derived_by": "coefficient-identity",
+        "source": "Closed-form periodic sum-of-cosine identities CG = a_0 and ENBW = (a_0^2 + 0.5 sum a_k^2)/a_0^2 (JOS SASP, 'Spectral Audio Signal Processing', window figures-of-merit chapter), checked inside the generator against the dense-FFT numeric values.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "window": "hann",
+        "check": "cola_trio",
+        "m": [
+          512,
+          513,
+          511
+        ]
+      },
+      "expected": {
+        "ripple_periodic_R_256": 6.661338147750939e-16,
+        "ripple_symmetric_zeros_R_256": 6.661338147750939e-16,
+        "ripple_ceiling": 1e-13,
+        "assignment": "COLA endpoint trio: periodic R=M/2; symmetric WITH zero endpoints R=(M-1)/2; endpoints-excluded (MATLAB hanning) R=(M+1)/2 \u2014 either bare claim is wrong half the time (spec-ref.md section 4.2)."
+      },
+      "independent_reference": {
+        "derived_by": "coefficient-identity",
+        "source": "Closed-form periodic sum-of-cosine identities CG = a_0 and ENBW = (a_0^2 + 0.5 sum a_k^2)/a_0^2 (JOS SASP, 'Spectral Audio Signal Processing', window figures-of-merit chapter), checked inside the generator against the dense-FFT numeric values.",
+        "doi": "n/a-in-generator-identity"
+      }
+    },
+    {
+      "inputs": {
+        "window": "hamming-25-46-trap",
+        "n": 4096,
+        "coefficients": [
+          0.5434782608695652,
+          0.45652173913043476
+        ]
+      },
+      "expected": {
+        "psl_db": -41.68989482425343,
+        "assignment": "The exact rational alpha=25/46 nulls the FIRST side lobe but a later lobe rises to about -41.69 dB \u2014 WORSE than plain 0.54 (-42.68 dB). The shipped Hamming pins 0.54 exactly (spec-ref.md section 2 anchor 3)."
+      },
+      "independent_reference": {
+        "derived_by": "nuttall-1981-table-ii",
+        "source": "Nuttall, 'Some windows with very good sidelobe behavior', IEEE Trans. ASSP 29(1):84-91, Table II \u2014 the corrected side-lobe values (Hann -31.47, min-3-term BH -70.83, Nuttall4b -93.32 with -18 dB/oct) that supersede Harris 1978 Table I's printed errata.",
+        "doi": "10.1109/TASSP.1981.1163506"
+      }
+    }
+  ]
+}
