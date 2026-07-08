@@ -148,7 +148,10 @@ async function start(): Promise<void> {
       golden = null;
       win = "hann";
     } else if (p.gen === "xy") {
-      const chX = sineSignal(N, st.xyP * 4, 1, st.xyPhase);
+      // slow phase drift tumbles the Lissajous figure (closure stays exact
+      // for rational p:q; the drift is the classic scope-demo rotation)
+      const phase = st.xyPhase + 0.35 * tSec;
+      const chX = sineSignal(N, st.xyP * 4, 1, phase);
       const chY = sineSignal(N, st.xyQ * 4, 1, 0);
       renderer.uploadXy(Float32Array.from(chX), Float32Array.from(chY));
       x64 = chX;
@@ -401,6 +404,17 @@ async function start(): Promise<void> {
   });
 
   // ------------------------------------------------------------- live loop --
+  // ?preset=<key> boots into a template (poster/loop generators + deep links)
+  const bootPreset = new URLSearchParams(location.search).get("preset");
+  if (bootPreset) {
+    try {
+      st.preset = presetByKey(bootPreset);
+      st.sweep = Boolean(st.preset.params.sweep);
+      if (st.preset.gen === "leak") st.window = String(st.preset.params.window);
+    } catch {
+      /* unknown key: keep the default template */
+    }
+  }
   regen(0);
   {
     const enc = device.createCommandEncoder();
@@ -413,7 +427,7 @@ async function start(): Promise<void> {
     requestAnimationFrame(frame);
     if (isCapturing()) return; // capture holds the GPU exclusively (§ 8)
     const t = tMs / 1000;
-    if (st.sweep || st.preset.gen === "chirp") regen(t);
+    if (st.sweep || st.preset.gen === "chirp" || st.preset.gen === "xy") regen(t);
     const enc = device.createCommandEncoder();
     gpu.encodeAnalyze(enc, st.window !== "rectangular" || st.preset.gen === "chirp");
     if (st.displayTransforms) {

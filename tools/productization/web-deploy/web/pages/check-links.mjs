@@ -29,6 +29,7 @@ const SIMS = [
   "ising-classical", "strange-attractors", "boids-2d", "boids-3d",
   "curl-noise", "eulerian-smoke", "mpm-multimaterial", "physarum",
   "pic-flip", "schrodinger-smoke", "sph-water", "heat-equation",
+  "signal-workbench",
 ];
 
 // The confirmed GitHub Pages base (P-8) — observed live (HTTP 200) in the

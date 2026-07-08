@@ -108,6 +108,11 @@ const SIMS = {
   // frames 900 sits mid-loop (loop covers 150..1350) — heat has climbed the
   // vertical traces, so the poster reads as a lit board, not three cold pads.
   "heat-equation": { frames: 900, px: 512, hide: [".he-explain", ".he-verify"] },
+  // Phase-6 signal-workbench: ?preset=xy boots the woscope XY erf-beam
+  // (spec-designated landing shot); the phase drift tumbles the 3:2
+  // Lissajous, so a mid-tumble frame reads as a lit CRT figure. Hide the
+  // EXPLAIN/PROVE bars (the panel is the [data-bp-panel] shell).
+  "signal-workbench": { frames: 260, px: 512, query: "?preset=xy", hide: [".sw-explain", ".sw-verify"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;
@@ -141,7 +146,7 @@ async function poster(browser, sim, cfg) {
   const dist = join(REPO, "packages", sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
-  const url = `http://localhost:${server.address().port}/`;
+  const url = `http://localhost:${server.address().port}/${cfg.query ?? ""}`;
   const context = await browser.newContext({ viewport: { width: 1400, height: 1400 } });
   const page = await context.newPage();
   page.on("console", (m) => { if (m.type() === "error") console.log(`  [${sim}] console: ${m.text().slice(0, 200)}`); });
