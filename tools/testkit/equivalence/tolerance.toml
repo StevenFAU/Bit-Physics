@@ -598,3 +598,38 @@ category = "heat-equation"
 # FFT) f32 browser stack against the f64 reference — the isf/pic-flip/
 # curl-noise new-category pattern. Gated by the web-deploy new_canonical
 # live-f64-reference re-run (_gate_heat_equation, spec-ref § 13.1).
+
+# [defaults.signal-workbench] — MEASURED on signal-workbench (Phase-6,
+# spec-ref § 9 / § 13.2 operator decision 2 — NEW category, recommended
+# and taken): the gated surface is the 1D f32 Stockham-FFT analysis path
+# (shared poly-trig WGSL FFT, new 1D coord_of) over CPU-f64-synthesized
+# signals — FFT-accumulation-specific (the [defaults.isf]/[defaults.
+# heat-equation] rationale); reusing either row would conflate a 3D/2D
+# evolution budget with a single-frame 1D spectrum budget. DECLARED 2e-6
+# from measurement (2026-07-08, faithful NumPy-f32 proxy of the WGSL
+# path: the EXACT shared Stockham radix-2 butterfly with sin_poly4/
+# cos_poly4/cs_p twiddles from common/common-web/src/fft-wgsl.ts, f32
+# rounding at every op, over the canonical fm-bessel + hann-leak N=4096
+# scenes vs the f64 reference spectra; signal generation is JS/CPU f64
+# cast to f32 — the committed-buffer plan of spec-ref § 5.2, so no f32
+# trig-argument-reduction term). MEASURED worst 2.32e-7 of spectrum peak
+# (composite across both gated paths, time + frequency domains). Family
+# spread (RADV->lavapipe, the 4.05x boids/neural-ca round-2 observation)
+# -> 2.32e-7 * 4.05 = 9.4e-7. Margin (~2x, GPU FMA contraction not
+# modeled by the proxy) -> 1.88e-6 ~= 2e-6 declared.
+[defaults.signal-workbench]
+relative = 2.0e-6
+absolute = 0.0
+
+[overrides.signal-workbench]
+category = "signal-workbench"
+# Resolves sim.category='signal-processing' (physics-family taxonomy) to
+# tolerance-category='signal-workbench' (numerical-method taxonomy — NEW
+# category, see [defaults.signal-workbench] for the MEASURED-then-
+# declared provenance). AT-BUDGET: relative=2e-6, absolute=0.0. NOT a
+# widening of [defaults.isf] or [defaults.heat-equation]: the gate
+# prices a single-frame 1D batched-FFT instrument path, not a stepped
+# field evolution. Gated by the web-deploy new_canonical live-f64-
+# reference re-run (_gate_signal_workbench, spec-ref § 13.1); the
+# Parseval residual and coherent-line checks are held at their own f64/
+# f32 floors independently of this row.

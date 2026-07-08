@@ -359,6 +359,17 @@ VALIDATION_ROUTING: dict[str, dict[str, Any]] = {
         "(no committed .h5 — the web gate's live-f64 re-run is the capture "
         "surface; spec-ref § 13).",
     },
+    "signal-workbench": {
+        "method": "golden_table_surrogate",
+        "import": "signal_workbench",
+        "surrogate": "machine-exact Parseval + coherent-single-bin gates, "
+        "window figures-of-merit (Nuttall/Heinzel anchors, Harris-errata-"
+        "corrected), FM Bessel folded-line spectrum, RBJ biquad H(e^jw), "
+        "comms constellation/RRC/EVM/seeded-BER, THD/SINAD/SFDR/ENOB closed "
+        "forms (tests/test_*_golden.py vs the committed signal-workbench "
+        "golden tables A-F) + PBT invariants (no committed .h5 — the web "
+        "gate's live-f64 re-run is the capture surface; spec-ref § 13).",
+    },
 }
 
 
