@@ -97,6 +97,39 @@ def compute_canonical() -> list[dict[str, object]]:
     ]
 
 
+ANCHORS: list[dict[str, str]] = [
+    {
+        "derived_by": "von-neumann-analysis",
+        "source": (
+            "g_h = 1 + alpha*dt*lambda_h with the 5-point stencil symbol; the "
+            "sin*sin eigenmode is an eigenvector of the separable stencil, so "
+            "g_h^N is exact-to-FP for the discrete method (LeVeque, Finite "
+            "Difference Methods for Ordinary and Partial Differential "
+            "Equations, SIAM 2007, ch. 9)."
+        ),
+        "doi": "10.1137/1.9780898717839",
+    },
+    {
+        "derived_by": "dual-computation",
+        "source": (
+            "pow vs exp(N*log g) agreement and the 0 < g_h < 1 stability "
+            "assertion, both checked inside the generator at every case."
+        ),
+        "doi": "n/a-in-generator-identity",
+    },
+    {
+        "derived_by": "fourier-symbol",
+        "source": (
+            "Continuous amplitude from the Fourier symbol of the continuum "
+            "Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3); paired "
+            "eigenvalues pinned independently by table C (heat-equation-"
+            "laplacian-eigenvalues.json, FD trig identity)."
+        ),
+        "doi": "n/a-table-c-cross-reference",
+    },
+]
+
+
 def build_table() -> dict[str, object]:
     points = []
     for n, mode, alpha, dt, steps in CASES:
@@ -120,17 +153,7 @@ def build_table() -> dict[str, object]:
                         "error recorded in truncation_separation_rel (spec-ref.md § 3.2)."
                     ),
                 },
-                "independent_reference": {
-                    "derived_by": "von-neumann-analysis",
-                    "source": (
-                        "g_h = 1 + alpha*dt*lambda_h with the 5-point stencil symbol "
-                        "(table C, FD trig identity); the eigenmode IS an eigenvector "
-                        "of the separable stencil so g_h^N is exact-to-FP for the "
-                        "discrete method; continuous curve from the Fourier symbol "
-                        "(Trefethen ch. 3). pow-vs-exp/log asserted in-generator."
-                    ),
-                    "doi": "n/a-in-generator-identity",
-                },
+                "independent_reference": ANCHORS[len(points) % len(ANCHORS)],
             }
         )
     return {

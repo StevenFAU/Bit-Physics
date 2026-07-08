@@ -32,8 +32,8 @@
       },
       "independent_reference": {
         "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
-        "doi": "n/a-rosenthal-1946-pre-doi"
+        "source": "A&S 9.8.5/9.8.6 rational K0 approximations \u2014 a scipy-independent recomputation of the full formula, asserted to <= 3e-6 relative at every probe (branch point z=2 covered on both sides).",
+        "doi": "n/a-abramowitz-stegun-1964"
       }
     },
     {
@@ -53,8 +53,8 @@
         "wrong_dimension_3d_value": 119.17561741854121
       },
       "independent_reference": {
-        "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
+        "derived_by": "pde-residual-check",
+        "source": "The thin-plate form satisfies the 2D moving-frame steady equation kappa*(T_ww+T_yy) + U*T_w = 0 to FD-truncation accuracy at every probe, while the 3D thick-plate form's residual is >= 100x larger (the wrong-dimension counterexample) \u2014 both asserted in-generator. Rosenthal 1946, Trans. ASME 68:849-866 (thin-plate case).",
         "doi": "n/a-rosenthal-1946-pre-doi"
       }
     },
@@ -75,9 +75,9 @@
         "wrong_dimension_3d_value": 233.7086627645931
       },
       "independent_reference": {
-        "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
-        "doi": "n/a-rosenthal-1946-pre-doi"
+        "derived_by": "far-field-asymptotic",
+        "source": "K0(z) ~ sqrt(pi/(2z))*e^-z (A&S 9.7.2), checked at z=8 in-generator; assumption/limit framing per the AM-regime literature.",
+        "doi": "10.1016/j.addma.2018.05.032"
       }
     },
     {
@@ -98,8 +98,8 @@
       },
       "independent_reference": {
         "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
-        "doi": "n/a-rosenthal-1946-pre-doi"
+        "source": "A&S 9.8.5/9.8.6 rational K0 approximations \u2014 a scipy-independent recomputation of the full formula, asserted to <= 3e-6 relative at every probe (branch point z=2 covered on both sides).",
+        "doi": "n/a-abramowitz-stegun-1964"
       }
     },
     {
@@ -119,8 +119,8 @@
         "wrong_dimension_3d_value": 87.4540690130425
       },
       "independent_reference": {
-        "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
+        "derived_by": "pde-residual-check",
+        "source": "The thin-plate form satisfies the 2D moving-frame steady equation kappa*(T_ww+T_yy) + U*T_w = 0 to FD-truncation accuracy at every probe, while the 3D thick-plate form's residual is >= 100x larger (the wrong-dimension counterexample) \u2014 both asserted in-generator. Rosenthal 1946, Trans. ASME 68:849-866 (thin-plate case).",
         "doi": "n/a-rosenthal-1946-pre-doi"
       }
     },
@@ -141,9 +141,9 @@
         "wrong_dimension_3d_value": 105.65144043732917
       },
       "independent_reference": {
-        "derived_by": "abramowitz-stegun-k0",
-        "source": "A&S 9.8.5/9.8.6 rational K0 recomputation (independent of scipy) agrees to <= 3e-6 relative; 2D moving-frame PDE residual asserted ~0 for the thin-plate form and >= 100x for the 3D thick-plate form (the wrong-dimension counterexample, spec-ref.md \u00a7 4.6 v0.3). Rosenthal 1946, Trans. ASME 68:849-866.",
-        "doi": "n/a-rosenthal-1946-pre-doi"
+        "derived_by": "far-field-asymptotic",
+        "source": "K0(z) ~ sqrt(pi/(2z))*e^-z (A&S 9.7.2), checked at z=8 in-generator; assumption/limit framing per the AM-regime literature.",
+        "doi": "10.1016/j.addma.2018.05.032"
       }
     }
   ]

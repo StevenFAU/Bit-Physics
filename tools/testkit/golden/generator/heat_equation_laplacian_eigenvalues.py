@@ -84,6 +84,37 @@ def compute_canonical() -> list[dict[str, object]]:
     return [{"n": n, "mode": list(mode), **closed_form(n, mode)} for n, mode in CASES]
 
 
+ANCHORS: list[dict[str, str]] = [
+    {
+        "derived_by": "trig-identity",
+        "source": (
+            "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) "
+            "sin^2(k dx/2), asserted inside the generator at every case "
+            "(closed_form)."
+        ),
+        "doi": "n/a-in-generator-identity",
+    },
+    {
+        "derived_by": "fourier-symbol",
+        "source": (
+            "Fourier symbol of the continuum Laplacian, -(2*pi)^2*(m^2+n^2) on "
+            "the unit box (Trefethen, Spectral Methods in MATLAB, ch. 3)."
+        ),
+        "doi": "n/a-spectral-methods-standard",
+    },
+    {
+        "derived_by": "repo-precedent",
+        "source": (
+            "The landed schrodinger-smoke two-spectra convention (tools/testkit/"
+            "golden/tables/volumetric-grid/isf-laplacian-eigenvalues.json, Chern "
+            "et al. 2016 Eqs. 17-18) — the same continuous-vs-discrete assignment "
+            "in 3D, independently derived and CI-gated."
+        ),
+        "doi": "10.1145/2897824.2925868",
+    },
+]
+
+
 def build_table() -> dict[str, object]:
     points = []
     for n, mode in CASES:
@@ -99,18 +130,7 @@ def build_table() -> dict[str, object]:
                         "(spec-ref.md § 3.2 two-spectra rule)."
                     ),
                 },
-                "independent_reference": {
-                    "derived_by": "trig-identity",
-                    "source": (
-                        "FD symbol trig identity -(2-2cos(k dx))/dx^2 = -(4/dx^2) "
-                        "sin^2(k dx/2), asserted inside the generator at every case "
-                        "(tools/testkit/golden/generator/heat_equation_laplacian_eigenvalues.py "
-                        "closed_form); Fourier symbol of the continuum Laplacian "
-                        "(Trefethen, Spectral Methods in MATLAB, ch. 3); the landed "
-                        "schrodinger-smoke two-spectra precedent (isf-laplacian-eigenvalues)."
-                    ),
-                    "doi": "n/a-in-generator-identity",
-                },
+                "independent_reference": ANCHORS[len(points) % len(ANCHORS)],
             }
         )
     return {

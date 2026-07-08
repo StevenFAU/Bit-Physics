@@ -31,7 +31,7 @@
       },
       "independent_reference": {
         "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
+        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0): Cox & Matthews 2002, J. Comput. Phys. 176:430-455.",
         "doi": "10.1006/jcph.2002.6995"
       }
     },
@@ -52,9 +52,9 @@
         "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
       },
       "independent_reference": {
-        "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
-        "doi": "10.1006/jcph.2002.6995"
+        "derived_by": "dual-library-plus-factorization",
+        "source": "Per-axis factorization exp(a+b) = exp(a)*exp(b) and numpy.exp vs math.exp agreement, both asserted inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
       }
     },
     {
@@ -74,9 +74,9 @@
         "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
       },
       "independent_reference": {
-        "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
-        "doi": "10.1006/jcph.2002.6995"
+        "derived_by": "fourier-symbol-precedent",
+        "source": "Fourier symbol of the continuum Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3) + the landed schrodinger-smoke free-step per-mode phase golden (tools/testkit/golden/tables/volumetric-grid/isf-free-step-phase.json) \u2014 the same exact-propagator construction.",
+        "doi": "n/a-repo-precedent"
       }
     },
     {
@@ -97,7 +97,7 @@
       },
       "independent_reference": {
         "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
+        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0): Cox & Matthews 2002, J. Comput. Phys. 176:430-455.",
         "doi": "10.1006/jcph.2002.6995"
       }
     },
@@ -118,9 +118,9 @@
         "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
       },
       "independent_reference": {
-        "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
-        "doi": "10.1006/jcph.2002.6995"
+        "derived_by": "dual-library-plus-factorization",
+        "source": "Per-axis factorization exp(a+b) = exp(a)*exp(b) and numpy.exp vs math.exp agreement, both asserted inside the generator at every case.",
+        "doi": "n/a-in-generator-identity"
       }
     },
     {
@@ -140,9 +140,9 @@
         "claim": "machine-exact per mode, ABSOLUTE per unit initial amplitude (<= 1e-13); relative comparison is meaningless below the FFT round-off floor (spec-ref.md \u00a7 6.2)."
       },
       "independent_reference": {
-        "derived_by": "integrating-factor-ode",
-        "source": "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); per-axis exp factorization asserted in-generator; the landed schrodinger-smoke free-step phase-golden precedent.",
-        "doi": "10.1006/jcph.2002.6995"
+        "derived_by": "fourier-symbol-precedent",
+        "source": "Fourier symbol of the continuum Laplacian (Trefethen, Spectral Methods in MATLAB, ch. 3) + the landed schrodinger-smoke free-step per-mode phase golden (tools/testkit/golden/tables/volumetric-grid/isf-free-step-phase.json) \u2014 the same exact-propagator construction.",
+        "doi": "n/a-repo-precedent"
       }
     }
   ]

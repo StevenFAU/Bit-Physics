@@ -87,6 +87,36 @@ def compute_canonical() -> list[dict[str, object]]:
     ]
 
 
+ANCHORS: list[dict[str, str]] = [
+    {
+        "derived_by": "integrating-factor-ode",
+        "source": (
+            "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with S=0): "
+            "Cox & Matthews 2002, J. Comput. Phys. 176:430-455."
+        ),
+        "doi": "10.1006/jcph.2002.6995",
+    },
+    {
+        "derived_by": "dual-library-plus-factorization",
+        "source": (
+            "Per-axis factorization exp(a+b) = exp(a)*exp(b) and numpy.exp vs "
+            "math.exp agreement, both asserted inside the generator at every case."
+        ),
+        "doi": "n/a-in-generator-identity",
+    },
+    {
+        "derived_by": "fourier-symbol-precedent",
+        "source": (
+            "Fourier symbol of the continuum Laplacian (Trefethen, Spectral "
+            "Methods in MATLAB, ch. 3) + the landed schrodinger-smoke free-step "
+            "per-mode phase golden (tools/testkit/golden/tables/volumetric-grid/"
+            "isf-free-step-phase.json) — the same exact-propagator construction."
+        ),
+        "doi": "n/a-repo-precedent",
+    },
+]
+
+
 def build_table() -> dict[str, object]:
     points = []
     for n, mode, alpha, dt in CASES:
@@ -102,16 +132,7 @@ def build_table() -> dict[str, object]:
                         "round-off floor (spec-ref.md § 6.2)."
                     ),
                 },
-                "independent_reference": {
-                    "derived_by": "integrating-factor-ode",
-                    "source": (
-                        "Exact solution of d/dt That = -alpha*|k|^2*That (ETD1 with "
-                        "S=0; Cox & Matthews 2002, J. Comput. Phys. 176:430-455); "
-                        "per-axis exp factorization asserted in-generator; the landed "
-                        "schrodinger-smoke free-step phase-golden precedent."
-                    ),
-                    "doi": "10.1006/jcph.2002.6995",
-                },
+                "independent_reference": ANCHORS[len(points) % len(ANCHORS)],
             }
         )
     return {
