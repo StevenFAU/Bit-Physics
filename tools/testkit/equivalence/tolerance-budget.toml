@@ -108,3 +108,13 @@ absolute = 0.0
 [budgets.heat-equation.cross_stack]
 relative = 1.0e-4
 absolute = 0.0
+
+# [budgets.signal-workbench.cross_stack] — Phase-6 signal-workbench web
+#   gate (spec-ref § 9 / § 13.1): per-path max_abs/max|spectrum| of the
+#   WGSL f32 1D Stockham analysis path (coherent FM rectangular scene +
+#   hann off-bin leakage scene, CPU-f64-synthesized signals) against the
+#   f64 NumPy reference. Cap equals the declared [defaults.signal-
+#   workbench] row; widening past this requires a Cat-X override review.
+[budgets.signal-workbench.cross_stack]
+relative = 2.0e-6
+absolute = 0.0

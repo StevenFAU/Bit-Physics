@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-oscillator-harmonics",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-oscillators.md",
+    "upstream": "fourier-series-plus-stilson-smith-blit",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n_harmonics": 16,
+        "frame_n": 4096,
+        "f0_bins": 31,
+        "kind": "saw"
+      },
+      "expected": {
+        "harmonics": [
+          0.6366197723675814,
+          -0.3183098861837907,
+          0.2122065907891938,
+          -0.15915494309189535,
+          0.12732395447351627,
+          -0.1061032953945969,
+          0.09094568176679733,
+          -0.07957747154594767,
+          0.0707355302630646,
+          -0.06366197723675814,
+          0.057874524760689224,
+          -0.05305164769729845,
+          0.048970751720583176,
+          -0.04547284088339867,
+          0.04244131815783876,
+          -0.039788735772973836
+        ],
+        "measured_rel_ceiling": 1e-12,
+        "assignment": "Coherent additive frame's own FFT must recover every committed harmonic amplitude to measured_rel_ceiling (all partials on-bin)."
+      },
+      "independent_reference": {
+        "derived_by": "fourier-series-closed-form",
+        "source": "Classic Fourier series of the ideal saw/square/triangle (Oppenheim & Schafer, Discrete-Time Signal Processing 3e, ch. 2; any standard table) \u2014 the amplitudes are exact rationals in pi.",
+        "doi": "n/a-isbn-978-0131988422"
+      }
+    },
+    {
+      "inputs": {
+        "n_harmonics": 16,
+        "frame_n": 4096,
+        "f0_bins": 31,
+        "kind": "square"
+      },
+      "expected": {
+        "harmonics": [
+          1.2732395447351628,
+          0.0,
+          0.4244131815783876,
+          0.0,
+          0.25464790894703254,
+          0.0,
+          0.18189136353359467,
+          0.0,
+          0.1414710605261292,
+          0.0,
+          0.11574904952137845,
+          0.0,
+          0.09794150344116635,
+          0.0,
+          0.08488263631567752,
+          0.0
+        ],
+        "measured_rel_ceiling": 1e-12,
+        "assignment": "Coherent additive frame's own FFT must recover every committed harmonic amplitude to measured_rel_ceiling (all partials on-bin)."
+      },
+      "independent_reference": {
+        "derived_by": "stilson-smith-blit-1996",
+        "source": "Stilson & Smith, 'Alias-free digital synthesis of classic analog waveforms' (ICMC 1996) \u2014 the bandlimited framing: a truncated series IS bandlimited by construction; the naive sampled saw aliases at ~6 dB/oct (the section 3.6 negative control).",
+        "doi": "n/a-icmc-1996-paper"
+      }
+    },
+    {
+      "inputs": {
+        "n_harmonics": 16,
+        "frame_n": 4096,
+        "f0_bins": 31,
+        "kind": "triangle"
+      },
+      "expected": {
+        "harmonics": [
+          0.8105694691387022,
+          0.0,
+          -0.09006327434874468,
+          0.0,
+          0.03242277876554809,
+          0.0,
+          -0.016542234064055146,
+          0.0,
+          0.010007030483193855,
+          0.0,
+          -0.006698921232551258,
+          0.0,
+          0.004796269048158002,
+          0.0,
+          -0.0036025309739497876,
+          0.0
+        ],
+        "measured_rel_ceiling": 1e-12,
+        "assignment": "Coherent additive frame's own FFT must recover every committed harmonic amplitude to measured_rel_ceiling (all partials on-bin)."
+      },
+      "independent_reference": {
+        "derived_by": "si-pi-constant",
+        "source": "Gibbs constant Si(pi)/pi - 1/2 via scipy.special.sici (DLMF 6.2 sine integral), cross-checked by the measured K=400 truncated-series overshoot inside --verify (O(1/K) agreement bound).",
+        "doi": "n/a-dlmf-6-2"
+      }
+    },
+    {
+      "inputs": {
+        "check": "gibbs",
+        "n_harmonics": 400
+      },
+      "expected": {
+        "gibbs_overshoot": 0.08948987223608351,
+        "measured_agreement_ceiling": 0.002,
+        "assignment": "Overshoot fraction of the FULL jump per side, Si(pi)/pi - 1/2; the K=400 truncated square wave must measure within measured_agreement_ceiling (O(1/K))."
+      },
+      "independent_reference": {
+        "derived_by": "si-pi-constant",
+        "source": "Gibbs constant Si(pi)/pi - 1/2 via scipy.special.sici (DLMF 6.2 sine integral), cross-checked by the measured K=400 truncated-series overshoot inside --verify (O(1/K) agreement bound).",
+        "doi": "n/a-dlmf-6-2"
+      }
+    }
+  ]
+}

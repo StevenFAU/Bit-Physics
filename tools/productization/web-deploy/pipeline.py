@@ -98,6 +98,15 @@ GATE_KIND = {
     # (verify.py _gate_heat_equation). The schrodinger-smoke live-reference
     # precedent with a dual-path (stencil + spectral) gated surface.
     "heat-equation": "new_canonical",
+    # Phase-6 verification-demo: new_canonical = LIVE f64 reference re-run of
+    # the single-frame fm-bessel + hann-leak N=4096 canonical (per-field
+    # max_abs over both gated analysis paths — the coherent-FM rectangular
+    # spectrum vs the exact folded J_n(I) line set AND the off-bin hann
+    # spectrum vs the exact window-DTFT skirt, [defaults.signal-workbench]
+    # rel budget) + browser JS-f64 Parseval/line-error diagnostics +
+    # run-twice byte-identity (verify.py _gate_signal_workbench). The
+    # heat-equation dual-path live-reference precedent on a 1D instrument.
+    "signal-workbench": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

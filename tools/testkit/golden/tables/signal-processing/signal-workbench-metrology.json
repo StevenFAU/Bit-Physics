@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-metrology-thd-sinad-sfdr-enob",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-metrology.md",
+    "upstream": "mt-003-plus-ieee-1241",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-09
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "n": 4096,
+        "k0": 331,
+        "amplitudes": [
+          1.0,
+          0.01,
+          0.003,
+          0.001
+        ]
+      },
+      "expected": {
+        "thd": 0.010488088481701515,
+        "thd_db": -39.58607314841775,
+        "sinad_db": 39.58607314841775,
+        "sfdr_db": 40.0,
+        "enob_from_sinad": 6.283400855218897,
+        "measured_ceiling_rel": 1e-10,
+        "assignment": "Prescribed coherent multi-harmonic tone: the measured FFT metrology pipeline must reproduce every closed form to measured_ceiling_rel."
+      },
+      "independent_reference": {
+        "derived_by": "mt-003-definitions",
+        "source": "Analog Devices MT-003, 'Understand SINAD, ENOB, SNR, THD, THD+N, and SFDR' \u2014 THD as the rms-amplitude ratio sqrt(sum V_h^2)/V_1, SINAD/ENOB relation ENOB = (SINAD - 1.76)/6.02, ideal SNR = 6.02N + 1.76 dB.",
+        "doi": "n/a-analog-devices-mt-003"
+      }
+    },
+    {
+      "inputs": {
+        "n": 4096,
+        "k0": 331,
+        "bits": 12,
+        "amplitude": 0.999
+      },
+      "expected": {
+        "measured_sinad_db": 73.89863544510163,
+        "measured_enob": 11.98316203407004,
+        "ideal_model_snr_db": 74.0,
+        "model_gap_db": -0.10136455489836749,
+        "assignment": "Deterministic ideal-quantizer bench: measured_sinad_db is the committed golden (exact re-run equality); ideal_model_snr_db = 6.02N + 1.76 is a MODEL and model_gap_db records its approximation error \u2014 the measurement is the truth, the formula is the lesson."
+      },
+      "independent_reference": {
+        "derived_by": "ieee-1241-coherent-sampling",
+        "source": "IEEE Std 1241-2010 \u2014 coherent sampling with k0 and N mutually prime (k0=331, N=4096: gcd checked = 1) and near-full-scale amplitude; leakage-free single-line harmonics make the spectrum metrology machine-exact.",
+        "doi": "10.1109/IEEESTD.2011.5692956"
+      }
+    },
+    {
+      "inputs": {
+        "check": "coherence",
+        "n": 4096,
+        "k0": 331
+      },
+      "expected": {
+        "gcd": 1,
+        "assignment": "IEEE 1241 mutual-primality (coprimality is the primitive; 'odd k0' is the power-of-two special case)."
+      },
+      "independent_reference": {
+        "derived_by": "spreadsheet-closed-form",
+        "source": "Hand-checkable calculation (spec-ref.md section 6.4): with V = [1, 0.01, 0.003, 0.001], THD = sqrt(0.0001 + 9e-6 + 1e-6) = 0.010488..., SFDR = 40 dB exactly (worst spur = V_2 = 0.01) \u2014 the measured FFT pipeline must reproduce these to ~1e-12.",
+        "doi": "n/a-in-generator-identity"
+      }
+    }
+  ]
+}

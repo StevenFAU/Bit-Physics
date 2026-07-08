@@ -43,6 +43,12 @@ members = [
   # reference — volumetric-grid family. Registered at backend execution
   # per docs/sim-specs/volumetric-grid/heat-equation/spec-ref.md § 11.
   "packages/heat-equation",
+  # Phase-6: signal-workbench (verified DSP instrument: windows/FM-Bessel/
+  # biquad/comms/metrology) f64 reference — NEW signal-processing family
+  # (spec section 13.2 operator decision 1). Registered at backend
+  # execution per docs/sim-specs/signal-processing/signal-workbench/
+  # spec-ref.md § 11.
+  "packages/signal-workbench",
   # Phase-6: curl-noise (Bridson 2007 + divergence-free-noise frontier)
   # f64 reference — closed-form category, structural sibling of
   # strange-attractors. Registered at backend execution per

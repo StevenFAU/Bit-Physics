@@ -1,0 +1,402 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "signal-workbench-comms-constellation-rrc-evm-ber",
+  "category": "signal-processing",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/signal-workbench-comms.md",
+    "upstream": "proakis-plus-rcosdesign-plus-80211a-evm",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/signal-processing/signal-workbench/spec-ref.md"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-09
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "constellation": "bpsk"
+      },
+      "expected": {
+        "points_re": [
+          1.0,
+          -1.0
+        ],
+        "points_im": [
+          0.0,
+          0.0
+        ],
+        "average_energy": 1.0,
+        "gray_violations": 0,
+        "average_energy_ceiling_err": 1e-12,
+        "assignment": "Unit-average-energy Gray-coded ideal coordinates; the web overlay and EVM reference use exactly these."
+      },
+      "independent_reference": {
+        "derived_by": "proakis-constellation-geometry",
+        "source": "Proakis & Salehi, Digital Communications 5e \u2014 square-QAM grid scaled by sqrt(3/(2(M-1))) for unit average energy; Gray coding = single-bit change between nearest neighbors (checked exhaustively inside the generator: zero violations).",
+        "doi": "n/a-isbn-978-0072957167"
+      }
+    },
+    {
+      "inputs": {
+        "constellation": "qpsk"
+      },
+      "expected": {
+        "points_re": [
+          0.7071067811865475,
+          -0.7071067811865475,
+          0.7071067811865475,
+          -0.7071067811865475
+        ],
+        "points_im": [
+          0.7071067811865475,
+          0.7071067811865475,
+          -0.7071067811865475,
+          -0.7071067811865475
+        ],
+        "average_energy": 1.0,
+        "gray_violations": 0,
+        "average_energy_ceiling_err": 1e-12,
+        "assignment": "Unit-average-energy Gray-coded ideal coordinates; the web overlay and EVM reference use exactly these."
+      },
+      "independent_reference": {
+        "derived_by": "proakis-constellation-geometry",
+        "source": "Proakis & Salehi, Digital Communications 5e \u2014 square-QAM grid scaled by sqrt(3/(2(M-1))) for unit average energy; Gray coding = single-bit change between nearest neighbors (checked exhaustively inside the generator: zero violations).",
+        "doi": "n/a-isbn-978-0072957167"
+      }
+    },
+    {
+      "inputs": {
+        "constellation": "16qam"
+      },
+      "expected": {
+        "points_re": [
+          -0.9486832980505138,
+          -0.9486832980505138,
+          -0.9486832980505138,
+          -0.9486832980505138,
+          -0.31622776601683794,
+          -0.31622776601683794,
+          -0.31622776601683794,
+          -0.31622776601683794,
+          0.9486832980505138,
+          0.9486832980505138,
+          0.9486832980505138,
+          0.9486832980505138,
+          0.31622776601683794,
+          0.31622776601683794,
+          0.31622776601683794,
+          0.31622776601683794
+        ],
+        "points_im": [
+          -0.9486832980505138,
+          -0.31622776601683794,
+          0.9486832980505138,
+          0.31622776601683794,
+          -0.9486832980505138,
+          -0.31622776601683794,
+          0.9486832980505138,
+          0.31622776601683794,
+          -0.9486832980505138,
+          -0.31622776601683794,
+          0.9486832980505138,
+          0.31622776601683794,
+          -0.9486832980505138,
+          -0.31622776601683794,
+          0.9486832980505138,
+          0.31622776601683794
+        ],
+        "average_energy": 1.0,
+        "gray_violations": 0,
+        "average_energy_ceiling_err": 1e-12,
+        "assignment": "Unit-average-energy Gray-coded ideal coordinates; the web overlay and EVM reference use exactly these."
+      },
+      "independent_reference": {
+        "derived_by": "proakis-constellation-geometry",
+        "source": "Proakis & Salehi, Digital Communications 5e \u2014 square-QAM grid scaled by sqrt(3/(2(M-1))) for unit average energy; Gray coding = single-bit change between nearest neighbors (checked exhaustively inside the generator: zero violations).",
+        "doi": "n/a-isbn-978-0072957167"
+      }
+    },
+    {
+      "inputs": {
+        "constellation": "64qam"
+      },
+      "expected": {
+        "points_re": [
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          -0.4629100498862757,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.1543033499620919,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757,
+          0.4629100498862757
+        ],
+        "points_im": [
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757,
+          -1.0801234497346435,
+          -0.7715167498104596,
+          -0.1543033499620919,
+          -0.4629100498862757,
+          1.0801234497346435,
+          0.7715167498104596,
+          0.1543033499620919,
+          0.4629100498862757
+        ],
+        "average_energy": 1.0000000000000002,
+        "gray_violations": 0,
+        "average_energy_ceiling_err": 1e-12,
+        "assignment": "Unit-average-energy Gray-coded ideal coordinates; the web overlay and EVM reference use exactly these."
+      },
+      "independent_reference": {
+        "derived_by": "proakis-constellation-geometry",
+        "source": "Proakis & Salehi, Digital Communications 5e \u2014 square-QAM grid scaled by sqrt(3/(2(M-1))) for unit average energy; Gray coding = single-bit change between nearest neighbors (checked exhaustively inside the generator: zero violations).",
+        "doi": "n/a-isbn-978-0072957167"
+      }
+    },
+    {
+      "inputs": {
+        "beta": 0.25,
+        "sps": 8,
+        "span": 6
+      },
+      "expected": {
+        "h0": 1.0683098861837907,
+        "h_singular": -0.06423715577699857,
+        "rrc_conv_rc_rel_err": 0.00025610486418675997,
+        "taps_head": [
+          1.0683098861837907,
+          1.0361174531046808,
+          0.9431653207443821,
+          0.7998271727620948,
+          0.6217974105091317
+        ],
+        "conv_identity_ceiling": 0.0005,
+        "assignment": "h0 must equal 1 + beta(4/pi - 1) exactly; h_singular is the committed removable-singularity value; RRC*RRC~RC to conv_identity_ceiling (span-truncation limited; checked at span 24, measured 2.6e-4..3.3e-4)."
+      },
+      "independent_reference": {
+        "derived_by": "rrc-closed-form",
+        "source": "Root-raised-cosine closed form with removable singularities at t=0 and t=1/(4 beta) (MATLAB rcosdesign documentation formula, T=1 unnormalized); matched-filter identity RRC*RRC=RC checked by direct convolution inside --verify.",
+        "doi": "n/a-mathworks-rcosdesign-doc"
+      }
+    },
+    {
+      "inputs": {
+        "beta": 0.35,
+        "sps": 8,
+        "span": 6
+      },
+      "expected": {
+        "h0": 1.095633840657307,
+        "h_singular": null,
+        "rrc_conv_rc_rel_err": 0.0003274239232133909,
+        "taps_head": [
+          1.095633840657307,
+          1.0598872046699086,
+          0.9571259801100196,
+          0.8000847455006304,
+          0.6077736180593346
+        ],
+        "conv_identity_ceiling": 0.0005,
+        "assignment": "h0 must equal 1 + beta(4/pi - 1) exactly; h_singular is the committed removable-singularity value; RRC*RRC~RC to conv_identity_ceiling (span-truncation limited; checked at span 24, measured 2.6e-4..3.3e-4)."
+      },
+      "independent_reference": {
+        "derived_by": "rrc-closed-form",
+        "source": "Root-raised-cosine closed form with removable singularities at t=0 and t=1/(4 beta) (MATLAB rcosdesign documentation formula, T=1 unnormalized); matched-filter identity RRC*RRC=RC checked by direct convolution inside --verify.",
+        "doi": "n/a-mathworks-rcosdesign-doc"
+      }
+    },
+    {
+      "inputs": {
+        "beta": 0.5,
+        "sps": 8,
+        "span": 6
+      },
+      "expected": {
+        "h0": 1.1366197723675815,
+        "h_singular": 0.5786324696325503,
+        "rrc_conv_rc_rel_err": 0.00010691300714509811,
+        "taps_head": [
+          1.1366197723675815,
+          1.0945316489458243,
+          0.9744953584044327,
+          0.7940212662380922,
+          0.5786324696325503
+        ],
+        "conv_identity_ceiling": 0.0005,
+        "assignment": "h0 must equal 1 + beta(4/pi - 1) exactly; h_singular is the committed removable-singularity value; RRC*RRC~RC to conv_identity_ceiling (span-truncation limited; checked at span 24, measured 2.6e-4..3.3e-4)."
+      },
+      "independent_reference": {
+        "derived_by": "rrc-closed-form",
+        "source": "Root-raised-cosine closed form with removable singularities at t=0 and t=1/(4 beta) (MATLAB rcosdesign documentation formula, T=1 unnormalized); matched-filter identity RRC*RRC=RC checked by direct convolution inside --verify.",
+        "doi": "n/a-mathworks-rcosdesign-doc"
+      }
+    },
+    {
+      "inputs": {
+        "check": "evm-injected-offset",
+        "offset": [
+          0.05,
+          0.03
+        ]
+      },
+      "expected": {
+        "evm": 0.058309518948453015,
+        "closed_form": 0.05830951894845301,
+        "assignment": "EVM_rms of a constant offset equals |offset| exactly."
+      },
+      "independent_reference": {
+        "derived_by": "evm-rms-definition",
+        "source": "802.11a relative constellation error / 3GPP EVM with RMS-average normalization (pinned; Keysight 89600's default is PEAK-referenced and differs by sqrt(9/5) for 16-QAM): constant offset e on a unit-energy constellation gives EVM_rms = |e| exactly.",
+        "doi": "n/a-ieee-802-11a-17-3-9-6-3"
+      }
+    },
+    {
+      "inputs": {
+        "check": "seeded-ber",
+        "seed": 12345,
+        "n_bits": 200000,
+        "ebn0_db": [
+          0.0,
+          2.0,
+          4.0,
+          6.0,
+          8.0
+        ]
+      },
+      "expected": {
+        "error_counts": [
+          15692,
+          7460,
+          2437,
+          492,
+          40
+        ],
+        "theory_pb": [
+          0.07864960352514258,
+          0.03750612835892598,
+          0.012500818040737566,
+          0.002388290780932807,
+          0.00019090777407599314
+        ],
+        "assignment": "Exact deterministic error counts under the pinned PCG64 seed; the closed-form Q-curve is the analytic overlay the accumulating measured points converge onto (spec-ref.md section 4.6)."
+      },
+      "independent_reference": {
+        "derived_by": "q-function-closed-form",
+        "source": "P_b = Q(sqrt(2 Eb/N0)) for BPSK/Gray-QPSK (Proakis 5e eq. 4.3-13); seeded error counts are deterministic integers under NumPy PCG64 stream-compatibility policy (same-version exact; cross-version honesty caveat recorded in the derivation doc).",
+        "doi": "n/a-isbn-978-0072957167"
+      }
+    }
+  ]
+}

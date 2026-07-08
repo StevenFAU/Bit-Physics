@@ -97,6 +97,12 @@ const SIMS = {
   // pad-to-pad (rd2d timelapse precedent). start 150 so shot 0 is already
   // glowing (a cold start flashes black on wrap); loop wraps with a cut.
   "heat-equation": { start: 150, shots: 300, gap: 4, fps: 30, px: 512, crf: 46, hide: [".he-explain", ".he-verify"] },
+  // Phase-6 signal-workbench: the XY erf-beam Lissajous tumbling under the
+  // 0.35 rad/s phase drift (one full figure period ~18 s at 60 fps -> gap 2
+  // covers a clean visual cycle). Smooth dark-field gradients compress well;
+  // start past the cold boot so shot 0 already glows (heat black-flash
+  // lesson).
+  "signal-workbench": { start: 90, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=xy", hide: [".sw-explain", ".sw-verify"] },
 };
 
 const MIME = {
@@ -127,7 +133,7 @@ async function loop(browser, sim, cfg) {
   const dist = join(REPO, "packages", sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
-  const url = `http://localhost:${server.address().port}/`;
+  const url = `http://localhost:${server.address().port}/${cfg.query ?? ""}`;
   const context = await browser.newContext({ viewport: { width: 1400, height: 1400 } });
   const page = await context.newPage();
   page.on("pageerror", (e) => console.log(`  [${sim}] pageerror: ${String(e).slice(0, 200)}`));
