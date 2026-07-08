@@ -116,6 +116,40 @@ def ftcs_step_dirichlet(
     return out
 
 
+def dff_step(
+    t_prev: np.ndarray,
+    t_curr: np.ndarray,
+    alpha: float,
+    dt: float,
+    dx: float,
+    dy: float,
+) -> np.ndarray:
+    """One DuFort-Frankel 3-level step (NEGATIVE-LESSON mode — never gated;
+    spec-ref.md § 3.6). Richardson stencil with the center replaced by the
+    time average (T^{n+1} + T^{n-1})/2:
+
+        (1 + 2r_x + 2r_y) T^{n+1} = (1 - 2r_x - 2r_y) T^{n-1}
+                                    + 2r_x (T_E + T_W) + 2r_y (T_N + T_S)
+
+    Often *marketed* as "unconditionally stable explicit". The demo must not
+    repeat that claim: Corem & Ditkowski 2012 refute the stability half
+    (von-Neumann-sense stable, yet powers of the NON-NORMAL amplification
+    matrix grow in norm), and the CLASSICAL consistency defect is what the
+    teaching mode shows — truncation error O(dt^2 + dx^2 + dt^2/dx^2), so at
+    dt = O(dx) the scheme converges to a telegraph-type equation, NOT the
+    heat equation (test_dff_negative_control pins this executably).
+    Bootstrap: the first step needs (T^0, T^1) from one FTCS step.
+    """
+    dtype = t_curr.dtype
+    rx = np.asarray(alpha * dt / (dx * dx), dtype=dtype)
+    ry = np.asarray(alpha * dt / (dy * dy), dtype=dtype)
+    neigh = 2.0 * rx * (
+        np.roll(t_curr, -1, axis=0) + np.roll(t_curr, 1, axis=0)
+    ) + 2.0 * ry * (np.roll(t_curr, -1, axis=1) + np.roll(t_curr, 1, axis=1))
+    denom = 1.0 + 2.0 * rx + 2.0 * ry
+    return ((1.0 - 2.0 * rx - 2.0 * ry) * t_prev + neigh) / denom
+
+
 def material_flux_step(
     t: np.ndarray,
     alpha_cell: np.ndarray,
@@ -333,6 +367,7 @@ def rosenthal_thin_plate(
 
 __all__ = [
     "continuous_decay",
+    "dff_step",
     "discrete_amplification",
     "erfc_semi_infinite",
     "fourier_mode",

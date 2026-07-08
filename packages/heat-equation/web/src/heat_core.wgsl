@@ -58,41 +58,14 @@ fn idx2(x: u32, y: u32) -> u32 {
   return x * U.n + y;
 }
 
-fn cmul(a: vec2<f32>, b: vec2<f32>) -> vec2<f32> {
-  return vec2<f32>(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x);
-}
-
 // ---------------------------------------------------------------------------
-// Precision trig (load-bearing, spec-ref § 5.2): Vulkan/WGSL guarantee builtin
-// sin/cos only 2^-11 ABSOLUTE on [-pi, pi] — lavapipe implements exactly that
-// floor (the schrodinger-smoke 63x measurement). All gated-path trig uses
-// these range-reduced polynomials (~1e-7 abs), ported from
-// packages/schrodinger-smoke/web/src/isf_core.wgsl (operator decision 5:
-// sim-local port; common/ promotion is a follow-up chip).
+// Precision trig + Stockham butterfly core: SHARED (spec-ref § 5.2 precision
+// rule; operator decision 5 executed — common/common-web/src/fft-wgsl.ts,
+// spliced by solver.ts at pipeline creation, never forked). The hazard note
+// (Vulkan builtin sin/cos 2^-11 floor, the schrodinger-smoke 63x lavapipe
+// measurement) lives with the shared code.
 // ---------------------------------------------------------------------------
-
-fn sin_poly4(r: f32) -> f32 {
-  let r2 = r * r;
-  return r * (1.0 + r2 * (-0.16666667 + r2 * (0.0083333310 - r2 * 0.00019840874)));
-}
-
-fn cos_poly4(r: f32) -> f32 {
-  let r2 = r * r;
-  return 1.0 + r2 * (-0.5 + r2 * (0.041666668 + r2 * (-0.0013888889 + r2 * 0.000024801587)));
-}
-
-// returns vec2(cos x, sin x) with quadrant reduction (accurate for |x| <~ 64)
-fn cs_p(x: f32) -> vec2<f32> {
-  let k = round(x * 0.6366197723675814); // x / (pi/2)
-  let r = x - k * 1.5707963267948966;
-  let q = i32(k) & 3;
-  let s = sin_poly4(r);
-  let c = cos_poly4(r);
-  if (q == 0) { return vec2<f32>(c, s); }
-  if (q == 1) { return vec2<f32>(-s, c); }
-  if (q == 2) { return vec2<f32>(-c, -s); }
-  return vec2<f32>(s, -c);
-}
+//__COMMON_FFT__
 
 // ---------------------------------------------------------------------------
 // FTCS steppers (tA -> tB). One dispatch per substep (WebGPU has no
@@ -148,6 +121,32 @@ fn ftcs_step(@builtin(global_invocation_id) g: vec3<u32>) {
 }
 
 // ---------------------------------------------------------------------------
+// DuFort-Frankel 3-level kernel — NEGATIVE-LESSON mode, ungated (spec § 3.6):
+// at dt = O(dx) the scheme converges to a telegraph-type equation, not the
+// heat equation. u^{n-1} lives in cA.x (the complex ping is idle in DFF
+// mode — DFF and the spectrum view are mutually exclusive), u^n in tA;
+// writes u^{n+1} to tB and parks u^n in cB.x — the host swaps BOTH pings.
+// Bootstrap: to_complex (copies u^0 into cA.x) + one FTCS step.
+// ---------------------------------------------------------------------------
+
+@compute @workgroup_size(16, 8)
+fn dff_step(@builtin(global_invocation_id) g: vec3<u32>) {
+  if (g.x >= U.n || g.y >= U.n) { return; }
+  let np = U.n;
+  let i = idx2(g.x, g.y);
+  let curr = tA[i];
+  let prev = cA[i].x;
+  let txp = tA[idx2((g.x + 1u) % np, g.y)];
+  let txm = tA[idx2((g.x + np - 1u) % np, g.y)];
+  let typ = tA[idx2(g.x, (g.y + 1u) % np)];
+  let tym = tA[idx2(g.x, (g.y + np - 1u) % np)];
+  let r = U.r_coef;
+  let next = ((1.0 - 4.0 * r) * prev + 2.0 * r * (txp + txm + typ + tym)) / (1.0 + 4.0 * r);
+  tB[i] = next;
+  cB[i] = vec2<f32>(curr, 0.0);
+}
+
+// ---------------------------------------------------------------------------
 // Stockham radix-2 FFT, 2D-batched (port of isf_core.wgsl fft_pass_sc from
 // 3D to 2D). Fixed pass order; twiddle |angle| < 2*pi so the poly trig is
 // well-conditioned; the LARGE-exponent tables (decayMul) are precomputed.
@@ -164,20 +163,11 @@ fn fft_pass(@builtin(global_invocation_id) g: vec3<u32>) {
   let half_line = U.n / 2u;
   let line_id = g.x / half_line;
   let t = g.x % half_line;
-  let ls = 1u << P.stage;
-  let l = ls << 1u;
-  let j = t % ls;
-  let i = t / ls;
-  let ang = P.dir * 6.283185307179586 * f32(j) / f32(l);
-  let w = cs_p(ang);
-  let ia = coord_of(line_id, i * ls + j);
-  let ib = coord_of(line_id, i * ls + j + half_line);
-  let ic = coord_of(line_id, i * l + j);
-  let id = coord_of(line_id, i * l + j + ls);
-  let va = cA[ia];
-  let vb = cmul(w, cA[ib]);
-  cB[ic] = va + vb;
-  cB[id] = va - vb;
+  let fb = fft_butterfly(t, P.stage, half_line, P.dir);
+  let va = cA[coord_of(line_id, fb.ea)];
+  let vb = cmul(fb.w, cA[coord_of(line_id, fb.eb)]);
+  cB[coord_of(line_id, fb.ec)] = va + vb;
+  cB[coord_of(line_id, fb.ed)] = va - vb;
 }
 
 @compute @workgroup_size(128)

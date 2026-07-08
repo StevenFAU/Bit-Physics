@@ -14,6 +14,7 @@ import {
   PACKED_FLOATS,
 } from "../../../../common/common-web/src/colormap.js";
 import type { Colormap } from "../../../../common/common-web/src/colormap.js";
+import { FFT_PRECISION_TRIG_WGSL } from "../../../../common/common-web/src/fft-wgsl.js";
 import bbLutJson from "./generated/blackbody-lut.json";
 import renderWgsl from "./render.wgsl?raw";
 
@@ -155,10 +156,12 @@ export class Renderer {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
-    const code = renderWgsl.replace(
-      "//__CMAP_FN__",
-      emitColormapWgsl({ stopsExpr: "R.cmap_stops", countExpr: "R.cmap_meta.x" }),
-    );
+    const code = renderWgsl
+      .replace(
+        "//__CMAP_FN__",
+        emitColormapWgsl({ stopsExpr: "R.cmap_stops", countExpr: "R.cmap_meta.x" }),
+      )
+      .replace("//__COMMON_FFT__", FFT_PRECISION_TRIG_WGSL);
     const module = device.createShaderModule({ code });
 
     this.layout = device.createBindGroupLayout({

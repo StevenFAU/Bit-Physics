@@ -6,6 +6,7 @@
 // device-scoped run-twice bit-identity), f64-precomputed spectral tables
 // (isf64.mjs), and readback helpers for the capture/verify paths.
 
+import { FFT_COMMON_WGSL } from "../../../../common/common-web/src/fft-wgsl.js";
 import coreWgsl from "./isf_core.wgsl?raw";
 import { buildTables } from "./isf64.mjs";
 
@@ -129,7 +130,10 @@ export class IsfGpu {
       device.queue.writeBuffer(this.passUni, 0, staging);
     }
 
-    const module = device.createShaderModule({ label: "isf_core", code: coreWgsl });
+    const module = device.createShaderModule({
+      label: "isf_core",
+      code: coreWgsl.replace("//__COMMON_FFT__", FFT_COMMON_WGSL),
+    });
 
     const mainLayout = device.createBindGroupLayout({
       label: "isf-main-layout",

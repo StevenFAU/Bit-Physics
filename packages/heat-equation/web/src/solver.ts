@@ -6,6 +6,7 @@
 // so no copy passes are needed and the Stockham pass order stays fixed
 // (device-scoped run-twice bit-identity, spec-ref § 8).
 
+import { FFT_COMMON_WGSL } from "../../../../common/common-web/src/fft-wgsl.js";
 import heatCoreWgsl from "./heat_core.wgsl?raw";
 
 export interface HeatParams {
@@ -160,12 +161,15 @@ export class HeatGpu {
       );
     });
 
-    const module = device.createShaderModule({ code: heatCoreWgsl });
+    const module = device.createShaderModule({
+      code: heatCoreWgsl.replace("//__COMMON_FFT__", FFT_COMMON_WGSL),
+    });
     const pipeLayout = device.createPipelineLayout({
       bindGroupLayouts: [this.layout0, this.layout1],
     });
     for (const entry of [
       "ftcs_step",
+      "dff_step",
       "fft_pass",
       "to_complex",
       "from_complex",
@@ -282,6 +286,26 @@ export class HeatGpu {
     this.dispatch2d(pass, "ftcs_step");
     pass.end();
     this.tPing = 1 - this.tPing;
+  }
+
+  /** DFF bootstrap: park u^0 in cA.x (to_complex), then one FTCS step so
+   * tA = u^1 while cA.x = u^0 (spec § 3.6 — the scheme needs two levels). */
+  encodeDffBootstrap(enc: GPUCommandEncoder): void {
+    const pass = enc.beginComputePass();
+    this.dispatch1d(pass, "to_complex", this.n * this.n);
+    pass.end();
+    this.encodeFtcsStep(enc);
+  }
+
+  /** One DuFort-Frankel substep (NEGATIVE-LESSON mode, ungated): u^{n-1}
+   * rides in the complex ping's .x — swap BOTH pings after the dispatch.
+   * Mutually exclusive with the spectrum view (which overwrites cA). */
+  encodeDffStep(enc: GPUCommandEncoder): void {
+    const pass = enc.beginComputePass();
+    this.dispatch2d(pass, "dff_step");
+    pass.end();
+    this.tPing = 1 - this.tPing;
+    this.cPing = 1 - this.cPing;
   }
 
   /** Full 2D FFT over the complex ping (dir -1 fwd / +1 inv). Fixed order. */

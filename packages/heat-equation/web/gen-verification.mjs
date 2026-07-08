@@ -225,18 +225,33 @@ if (
 
 // --- 7. WGSL anchors (EXPLAIN layer code links; exactly-once) -----------------
 const wgsl = read("packages/heat-equation/web/src/heat_core.wgsl");
-const wgslAnchor = (label, re) => {
-  const matches = [...wgsl.matchAll(re)];
+const fftCommon = read("common/common-web/src/fft-wgsl.ts");
+const anchorIn = (label, text, sourceName, re) => {
+  const matches = [...text.matchAll(re)];
   if (matches.length !== 1) {
-    fail(`heat_core.wgsl anchor "${label}" matched ${matches.length} times (want exactly 1)`);
+    fail(`${sourceName} anchor "${label}" matched ${matches.length} times (want exactly 1)`);
   }
-  return wgsl.slice(0, matches[0].index).split("\n").length;
+  return text.slice(0, matches[0].index).split("\n").length;
 };
 const anchors = {
-  ftcs_step_line: wgslAnchor("ftcs stencil kernel", /fn ftcs_step\(/g),
-  spectral_mul_line: wgslAnchor("committed-table spectral multiply", /fn spectral_mul\(/g),
-  fft_pass_line: wgslAnchor("Stockham fft pass", /fn fft_pass\(/g),
-  poly_trig_line: wgslAnchor("poly trig kernel", /fn cs_p\(/g),
+  ftcs_step_line: anchorIn("ftcs stencil kernel", wgsl, "heat_core.wgsl", /fn ftcs_step\(/g),
+  spectral_mul_line: anchorIn(
+    "committed-table spectral multiply",
+    wgsl,
+    "heat_core.wgsl",
+    /fn spectral_mul\(/g,
+  ),
+  fft_pass_line: anchorIn("Stockham fft pass", wgsl, "heat_core.wgsl", /fn fft_pass\(/g),
+  // poly trig is the SHARED kernel (operator decision 5 executed): the
+  // anchor now lives in common/common-web/src/fft-wgsl.ts
+  common_fft_marker_line: anchorIn(
+    "common FFT splice marker",
+    wgsl,
+    "heat_core.wgsl",
+    /\/\/__COMMON_FFT__/g,
+  ),
+  poly_trig_line: anchorIn("poly trig kernel (shared)", fftCommon, "fft-wgsl.ts", /fn cs_p\(/g),
+  poly_trig_file: "common/common-web/src/fft-wgsl.ts",
 };
 
 // --- 8. emit ------------------------------------------------------------------

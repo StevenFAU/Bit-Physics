@@ -41,6 +41,16 @@ exp to 3+2|x| ULP; a sibling sim measured a 63× budget overshoot on a
 software driver from exactly this. Here the per-mode decay factors are
 precomputed in f64 and committed (${V.reference_bin.decay_file}); FFT
 twiddles use range-reduced polynomial trig.</p>
+<p><b>The DuFort–Frankel toggle is a negative lesson, not a solver.</b> DFF
+is often marketed as the "unconditionally stable explicit" scheme. Watch it
+instead: at Δt = O(Δx) its truncation term (Δt/Δx)²·T<sub>tt</sub> survives
+refinement, so it converges to a <i>telegraph</i> equation — the committed
+backend control measures a mode error that stays ~constant under refinement
+while FTCS's shrinks at 2nd order. Attribution, honestly: that inconsistency
+is the classical result; Corem &amp; Ditkowski (2012) newly showed DFF is
+<i>not</i> unconditionally stable either (powers of its non-normal
+amplification matrix grow in norm even though the von Neumann check passes),
+while their consistency analysis actually softens the classical defect.</p>
 <p class="he-honesty"><b>Honesty panel (permanent):</b> v1 is a <b>verified
 conduction / scalar-diffusion instrument</b>, not a multiphysics thermal
 package (no convection, no radiation transport, no phase change — the

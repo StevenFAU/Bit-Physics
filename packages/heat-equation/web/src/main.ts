@@ -11,7 +11,7 @@ import {
 } from "../../../../common/common-web/src/capture-export.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import type { DiagnosticRow } from "../../../../common/common-web/src/panel-shell.js";
-import { GATE, fetchGateDecayF64, makeBundle, runGateScene } from "./capture.js";
+import { GATE, fetchGateDecayF64, makeBundle, runGateScene, sha256hex } from "./capture.js";
 import { installExplainPanel } from "./explain.js";
 import V from "./generated/verification.json";
 import {
@@ -41,8 +41,9 @@ interface AppState {
   n: number;
   alpha: number;
   dtFrac: number;
-  solver: "ftcs" | "spectral";
+  solver: "ftcs" | "spectral" | "dff";
   substeps: number;
+  dffBoot: boolean;
   simTime: number;
   running: boolean;
   fieldTouched: boolean;
@@ -52,6 +53,28 @@ interface AppState {
   lastField: Float64Array | null;
   lastFieldAt: number;
   probe: { x: number; y: number } | null;
+  /** total substeps executed since scene load (record/replay clock). */
+  substepBase: number;
+}
+
+interface BrushEvent {
+  s: number; // substep index the splat lands on (frame boundary)
+  kind: number;
+  x: number;
+  y: number;
+  sigma: number;
+  power: number;
+}
+
+interface Recording {
+  sceneKey: string;
+  solver: string;
+  dtFrac: number;
+  substeps: number;
+  alpha: number;
+  events: BrushEvent[];
+  totalSubsteps: number;
+  liveSha: string;
 }
 
 function stabilityBound(alpha: number, n: number): number {
@@ -112,6 +135,7 @@ async function start(): Promise<void> {
   state.lastField = null;
   state.lastFieldAt = 0;
   state.probe = null;
+  state.substepBase = 0;
 
   const liveDt = (): number => {
     const bound = stabilityBound(state.alpha, state.n);
@@ -140,8 +164,10 @@ async function start(): Promise<void> {
     state.alpha = spec.alpha;
     state.dtFrac = spec.dtFrac;
     state.solver = spec.solver;
+    state.dffBoot = false;
     state.substeps = spec.substeps;
     state.simTime = 0;
+    state.substepBase = 0;
     state.fieldTouched = false;
     state.nanPaused = false;
     state.lastField = null;
@@ -285,15 +311,21 @@ bound). `;
   };
 
   const solverSel = document.createElement("select");
-  for (const s of ["ftcs", "spectral"]) {
+  for (const [v, label] of [
+    ["ftcs", "FTCS (stencil, CFL-bound)"],
+    ["spectral", "spectral (machine-exact, no CFL)"],
+    ["dff", "DuFort-Frankel — NEGATIVE LESSON (wrong equation at large \u0394t)"],
+  ] as const) {
     const o = document.createElement("option");
-    o.value = s;
-    o.textContent = s === "ftcs" ? "FTCS (stencil, CFL-bound)" : "spectral (machine-exact, no CFL)";
+    o.value = v;
+    o.textContent = label;
     solverSel.appendChild(o);
   }
   solverSel.onchange = () => {
-    state.solver = solverSel.value as "ftcs" | "spectral";
+    state.solver = solverSel.value as "ftcs" | "spectral" | "dff";
+    if (state.solver === "dff") state.dffBoot = true;
     scheduleDecayRefresh();
+    syncControls();
   };
   controls.appendChild(solverSel);
 
@@ -378,15 +410,243 @@ bound). `;
   };
   layersGroup.appendChild(palSel);
 
+  // --- record / replay (spec-ref § 5.6 INTERACT + § 8) -----------------------
+  // The repo's FIRST interaction event-stream replay: brush events are
+  // quantized to substep boundaries at record time (splats land only at
+  // frame boundaries = multiples of substeps/frame), and replay re-runs the
+  // scene from its IC applying events at the exact recorded substeps while
+  // holding the GPU exclusively (the sph-water RAF/replay exclusivity
+  // lesson). Determinism scope is honest: SHA match is DEVICE-SCOPED
+  // (same adapter/browser — fixed dispatch order, no atomics).
+  let recArmed = false;
+  let recEvents: BrushEvent[] = [];
+  let recSnapshot: Omit<Recording, "events" | "totalSubsteps" | "liveSha"> | null = null;
+  let lastRec: Recording | null = null;
+
+  const recGroup = panel.addGroup("record / replay (deterministic sketch)");
+  const recRow = document.createElement("div");
+  recRow.className = "he-vrow";
+  const recBtn = document.createElement("button");
+  recBtn.textContent = "\u23fa record";
+  const stopBtn = document.createElement("button");
+  stopBtn.textContent = "\u23f9 stop";
+  const replayBtn = document.createElement("button");
+  replayBtn.textContent = "\u25b6 replay";
+  const exportBtn = document.createElement("button");
+  exportBtn.textContent = "\u21e9 export";
+  const recOut = document.createElement("span");
+  recOut.textContent = " \u2014";
+  recRow.append(recBtn, stopBtn, replayBtn, exportBtn, recOut);
+  recGroup.appendChild(recRow);
+  const recNote = document.createElement("div");
+  recNote.className = "he-readout";
+  recNote.textContent =
+    "record reloads the template, then captures brush strokes as substep-quantized events; replay re-runs them from the IC and shows the field SHA-256 (device-scoped determinism witness: same adapter/browser).";
+  recGroup.appendChild(recNote);
+
+  const recStatus = (m: string): void => {
+    recOut.textContent = ` ${m}`;
+  };
+
+  function applyMovingSplat(simTime: number): void {
+    const s = state;
+    if (!s.scene.movingSource) return;
+    const pos = s.scene.movingSource(simTime, s.n);
+    s.gpu.brush.kind = 2;
+    s.gpu.brush.x = pos.x;
+    s.gpu.brush.y = pos.y;
+    const keepSigma = s.gpu.brush.sigma;
+    const keepPower = s.gpu.brush.power;
+    s.gpu.brush.sigma = pos.sigma;
+    s.gpu.brush.power = pos.power;
+    s.gpu.writeUniforms();
+    const encS = device.createCommandEncoder();
+    s.gpu.encodeClearSource(encS);
+    s.gpu.encodeSplat(encS);
+    device.queue.submit([encS.finish()]);
+    s.gpu.brush.sigma = keepSigma;
+    s.gpu.brush.power = keepPower;
+    s.gpu.brush.kind = 0;
+  }
+
+  function applyEventSplat(ev: BrushEvent): void {
+    const s = state;
+    s.gpu.brush.kind = ev.kind as 1 | 2 | 3;
+    s.gpu.brush.x = ev.x;
+    s.gpu.brush.y = ev.y;
+    const keepSigma = s.gpu.brush.sigma;
+    const keepPower = s.gpu.brush.power;
+    s.gpu.brush.sigma = ev.sigma;
+    s.gpu.brush.power = ev.power;
+    s.gpu.writeUniforms();
+    const enc = device.createCommandEncoder();
+    s.gpu.encodeSplat(enc);
+    device.queue.submit([enc.finish()]);
+    s.gpu.brush.sigma = keepSigma;
+    s.gpu.brush.power = keepPower;
+    s.gpu.brush.kind = 0;
+  }
+
+  function paramsDrifted(): boolean {
+    const r = recSnapshot;
+    if (!r) return true;
+    return (
+      r.sceneKey !== state.scene.key ||
+      r.solver !== state.solver ||
+      r.dtFrac !== state.dtFrac ||
+      r.substeps !== state.substeps ||
+      r.alpha !== state.alpha
+    );
+  }
+
+  function cancelRecording(reason: string): void {
+    recArmed = false;
+    recSnapshot = null;
+    recEvents = [];
+    recStatus(`recording stopped (${reason}) \u2014 nothing saved`);
+  }
+
+  function restoreRunConfig(solver: AppState["solver"], dtFrac: number, substeps: number): void {
+    state.solver = solver;
+    state.dtFrac = dtFrac;
+    state.substeps = substeps;
+    state.gpu.params.dt = liveDt();
+    state.gpu.writeUniforms();
+    if (state.solver === "dff") state.dffBoot = true;
+    // synchronous decay refresh: the loadScene table was built from the
+    // template's DEFAULT dtFrac — a recorded non-default dt needs its own
+    // f64 table before any spectral substep runs (determinism contract)
+    state.gpu.uploadDecay(Float32Array.from(decayTable(state.n, state.alpha, liveDt())));
+    syncControls();
+  }
+
+  recBtn.onclick = () => {
+    // replay contract: recording starts from the template IC, but KEEPS the
+    // user's current solver/dt/substeps selection (snapshotted below)
+    const keep = { solver: state.solver, dtFrac: state.dtFrac, substeps: state.substeps };
+    loadScene(state.scene);
+    restoreRunConfig(keep.solver, keep.dtFrac, keep.substeps);
+    recEvents = [];
+    recSnapshot = {
+      sceneKey: state.scene.key,
+      solver: state.solver,
+      dtFrac: state.dtFrac,
+      substeps: state.substeps,
+      alpha: state.alpha,
+    };
+    recArmed = true;
+    recStatus("recording from the template IC \u2014 paint away");
+  };
+
+  stopBtn.onclick = () => {
+    if (!recArmed || !recSnapshot) {
+      recStatus("not recording");
+      return;
+    }
+    recArmed = false;
+    const snap = recSnapshot;
+    recSnapshot = null;
+    void runCaptureExclusive(async () => {
+      const f = await state.gpu.readField();
+      const sha = await sha256hex(f);
+      lastRec = {
+        ...snap,
+        events: recEvents.slice(),
+        totalSubsteps: state.substepBase,
+        liveSha: sha,
+      };
+      recStatus(
+        `saved: ${lastRec.events.length} event(s), ${lastRec.totalSubsteps} substeps, live sha ${sha.slice(0, 12)}\u2026`,
+      );
+    });
+  };
+
+  replayBtn.onclick = () => {
+    const rec = lastRec;
+    if (!rec) {
+      recStatus("nothing recorded yet");
+      return;
+    }
+    void runCaptureExclusive(async () => {
+      recStatus("replaying\u2026");
+      loadScene(sceneByKey(rec.sceneKey));
+      restoreRunConfig(rec.solver as AppState["solver"], rec.dtFrac, rec.substeps);
+      let evIdx = 0;
+      let step = 0;
+      while (step < rec.totalSubsteps) {
+        if (state.scene.movingSource && step % rec.substeps === 0) {
+          applyMovingSplat(step * state.gpu.params.dt);
+        }
+        while (evIdx < rec.events.length && rec.events[evIdx].s === step) {
+          applyEventSplat(rec.events[evIdx]);
+          evIdx++;
+        }
+        const chunk = Math.min(rec.substeps, rec.totalSubsteps - step);
+        state.gpu.writeUniforms();
+        const enc = device.createCommandEncoder();
+        for (let i = 0; i < chunk; i++) {
+          if (state.solver === "ftcs") {
+            state.gpu.encodeFtcsStep(enc);
+          } else if (state.solver === "spectral") {
+            state.gpu.encodeSpectralStep(enc);
+          } else if (state.dffBoot) {
+            state.gpu.encodeDffBootstrap(enc);
+            state.dffBoot = false;
+          } else {
+            state.gpu.encodeDffStep(enc);
+          }
+        }
+        device.queue.submit([enc.finish()]);
+        step += chunk;
+        if (step % 4096 === 0) {
+          await device.queue.onSubmittedWorkDone();
+          recStatus(`replaying\u2026 ${step}/${rec.totalSubsteps} substeps`);
+        }
+      }
+      state.substepBase = rec.totalSubsteps;
+      state.simTime = rec.totalSubsteps * state.gpu.params.dt;
+      renderer.bind(state.gpu.currentField, state.gpu.spectrumBuf, state.gpu.auxBuf);
+      const f = await state.gpu.readField();
+      const sha = await sha256hex(f);
+      const match = sha === rec.liveSha;
+      recStatus(
+        `${match ? "REPLAY BYTE-IDENTICAL" : "REPLAY SHA MISMATCH"} \u2014 replay ${sha.slice(0, 12)}\u2026 vs live ${rec.liveSha.slice(0, 12)}\u2026 (device-scoped witness)`,
+      );
+      recOut.className = match ? "he-pass" : "he-fail";
+    });
+  };
+
+  exportBtn.onclick = () => {
+    if (!lastRec) {
+      recStatus("nothing recorded yet");
+      return;
+    }
+    const blob = new Blob([JSON.stringify(lastRec, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `heat-equation-sketch-${lastRec.sceneKey}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    recStatus(`exported ${lastRec.events.length} event(s)`);
+  };
+
   function syncControls(): void {
     solverSel.value = state.solver;
+    // dt range per solver: FTCS is CFL-bound; spectral is exact at any dt;
+    // DFF deliberately reaches the inconsistent dt = O(dx) regime.
+    dtCtl.input.max =
+      state.solver === "ftcs" ? "1.25" : state.solver === "spectral" ? "50" : "16";
+    if (state.dtFrac > Number(dtCtl.input.max)) state.dtFrac = Number(dtCtl.input.max);
     dtCtl.input.value = String(state.dtFrac);
     const bound = stabilityBound(state.alpha, state.n);
     const margin = 0.5 - 2 * state.alpha * (state.dtFrac * bound) * state.n * state.n;
     dtCtl.readout.textContent =
       state.solver === "ftcs"
         ? ` dt=${(state.dtFrac * bound).toExponential(2)} · margin ${margin.toFixed(3)}${margin < 0 ? " ⚠ UNSTABLE" : ""}`
-        : ` dt=${(state.dtFrac * bound).toExponential(2)} (no CFL on the spectral path)`;
+        : state.solver === "spectral"
+          ? ` dt=${(state.dtFrac * bound).toExponential(2)} (no CFL on the spectral path)`
+          : ` dt=${(state.dtFrac * bound).toExponential(2)} · NEGATIVE LESSON: at large Δt/Δx DFF converges to a telegraph equation, not the heat equation`;
     subCtl.input.value = String(state.substeps);
     subCtl.readout.textContent = ` ${state.substeps}`;
     brushCtl.input.value = String(state.gpu?.brush.power ?? 0);
@@ -441,28 +701,15 @@ bound). `;
     if (isCapturing()) return; // capture holds the GPU-state lock (house rule)
     const t0 = performance.now();
     const s = state;
+    if (recArmed && paramsDrifted()) cancelRecording("parameters or template changed");
+    if (recArmed && s.nanPaused) cancelRecording("the scheme diverged");
 
     if (s.running && !s.nanPaused) {
       // Splats are submitted in their OWN command buffers: queue.writeBuffer
       // executes in queue order, so a later uniform write would clobber an
       // encoded-but-unsubmitted splat's brush params (the all-white-laser bug).
       if (s.scene.movingSource) {
-        const pos = s.scene.movingSource(s.simTime, s.n);
-        s.gpu.brush.kind = 2;
-        s.gpu.brush.x = pos.x;
-        s.gpu.brush.y = pos.y;
-        const keepSigma = s.gpu.brush.sigma;
-        const keepPower = s.gpu.brush.power;
-        s.gpu.brush.sigma = pos.sigma;
-        s.gpu.brush.power = pos.power;
-        s.gpu.writeUniforms();
-        const encS = device.createCommandEncoder();
-        s.gpu.encodeClearSource(encS);
-        s.gpu.encodeSplat(encS);
-        device.queue.submit([encS.finish()]);
-        s.gpu.brush.sigma = keepSigma;
-        s.gpu.brush.power = keepPower;
-        s.gpu.brush.kind = 0;
+        applyMovingSplat(s.simTime);
       }
       // user brush
       if (s.brushDown) {
@@ -471,14 +718,34 @@ bound). `;
         const encB = device.createCommandEncoder();
         s.gpu.encodeSplat(encB);
         device.queue.submit([encB.finish()]);
+        if (recArmed) {
+          recEvents.push({
+            s: s.substepBase,
+            kind: s.brushMode,
+            x: s.gpu.brush.x,
+            y: s.gpu.brush.y,
+            sigma: s.gpu.brush.sigma,
+            power: s.gpu.brush.power,
+          });
+          recStatus(`recording\u2026 ${recEvents.length} event(s), substep ${s.substepBase}`);
+        }
         s.gpu.brush.kind = 0;
       }
       s.gpu.writeUniforms();
       const enc = device.createCommandEncoder();
       for (let i = 0; i < s.substeps; i++) {
-        if (s.solver === "ftcs") s.gpu.encodeFtcsStep(enc);
-        else s.gpu.encodeSpectralStep(enc);
+        if (s.solver === "ftcs") {
+          s.gpu.encodeFtcsStep(enc);
+        } else if (s.solver === "spectral") {
+          s.gpu.encodeSpectralStep(enc);
+        } else if (s.dffBoot) {
+          s.gpu.encodeDffBootstrap(enc); // one FTCS step seeds the 3-level scheme
+          s.dffBoot = false;
+        } else {
+          s.gpu.encodeDffStep(enc);
+        }
         s.simTime += s.gpu.params.dt;
+        s.substepBase++;
       }
       // spectrum refresh for the FTCS path (spectral path captures in-step)
       if ((renderer.state.flags & LAYER.spectrum) !== 0 && s.solver === "ftcs" && frameCount % 6 === 0) {

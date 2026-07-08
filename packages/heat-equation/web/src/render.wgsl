@@ -46,25 +46,11 @@ struct RenderU {
 
 //__CMAP_FN__
 
-// --- poly trig (same kernels as heat_core.wgsl; see precision note above) ---
-fn sin_poly4(r: f32) -> f32 {
-  let r2 = r * r;
-  return r * (1.0 + r2 * (-0.16666667 + r2 * (0.0083333310 - r2 * 0.00019840874)));
-}
-fn cos_poly4(r: f32) -> f32 {
-  let r2 = r * r;
-  return 1.0 + r2 * (-0.5 + r2 * (0.041666668 + r2 * (-0.0013888889 + r2 * 0.000024801587)));
-}
+// --- poly trig: SHARED kernels (common/common-web/src/fft-wgsl.ts), spliced
+// by renderer.ts — see the precision note there ---
+//__COMMON_FFT__
 fn sin_p(x: f32) -> f32 {
-  let k = round(x * 0.6366197723675814);
-  let r = x - k * 1.5707963267948966;
-  let q = i32(k) & 3;
-  let s = sin_poly4(r);
-  let c = cos_poly4(r);
-  if (q == 0) { return s; }
-  if (q == 1) { return c; }
-  if (q == 2) { return -s; }
-  return -c;
+  return cs_p(x).y;
 }
 
 struct VOut {

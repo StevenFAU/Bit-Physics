@@ -147,9 +147,11 @@
     "js_f64_recompute": "Parseval + per-mode spectral decay verified at build with the in-repo pure-JS radix-2 f64 FFT (N=64); goldens A/B/C recomputed; blackbody LUT byte-matched to golden F; HARD-FAIL on drift"
   },
   "wgsl_anchors": {
-    "ftcs_step_line": 103,
-    "spectral_mul_line": 210,
-    "fft_pass_line": 162,
-    "poly_trig_line": 85
+    "ftcs_step_line": 76,
+    "spectral_mul_line": 200,
+    "fft_pass_line": 161,
+    "common_fft_marker_line": 68,
+    "poly_trig_line": 38,
+    "poly_trig_file": "common/common-web/src/fft-wgsl.ts"
   }
 }
