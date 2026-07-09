@@ -49,6 +49,12 @@ members = [
   # execution per docs/sim-specs/signal-processing/signal-workbench/
   # spec-ref.md § 11.
   "packages/signal-workbench",
+  # Phase-6: phase-field-fracture (AT2 variational brittle fracture,
+  # gradient-flow browser kernel + converged-elliptic f64 reference) —
+  # NEW fracture family (first sim where material breaks). Registered at
+  # backend execution per docs/sim-specs/fracture/phase-field-fracture/
+  # spec-ref.md § 12.
+  "packages/phase-field-fracture",
   # Phase-6: curl-noise (Bridson 2007 + divergence-free-noise frontier)
   # f64 reference — closed-form category, structural sibling of
   # strange-attractors. Registered at backend execution per

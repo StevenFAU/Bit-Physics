@@ -198,6 +198,18 @@ T_HEAT_PARSEVAL = 1e-12  # JS-f64 Parseval diagnostic on the browser field
 T_SW_REL = 2e-6  # signal-workbench per-field: max_abs <= rel * max|spectrum| ([defaults.signal-workbench])
 T_SW_LINE_REL = 2e-6  # browser measured-vs-analytic line/skirt diagnostic, rel of peak
 T_SW_PARSEVAL = 5e-6  # f32-pipeline Parseval (measured proxy 3.8e-7 x 4.05 family x ~2 margin, rounded)
+# phase-field-fracture ([defaults.phase-field-fracture], spec-ref § 6.1/§ 9):
+# pointwise gate applies at PRE-BURST checkpoints only (the post-peak SENT
+# snap-back is legitimately dynamic, § 3.6); the burst is gated by
+# observables at their own measured-then-declared bands.
+T_PFF_TRAJ_REL = 1e-3  # per-checkpoint per-field, pre-burst (measured proxy 5.4e-6)
+T_PFF_PRE_BURST_LAST_STEP = 12000  # U=0.314 < u_peak=0.3496 on sent-void-96sq-m1
+T_PFF_PEAK_REL = 0.02  # browser peak vs live-f64 peak (measured f32 proxy 5.7e-6)
+T_PFF_EFRAC_REL = 0.05  # final regularized crack energy band (measured 8e-4)
+T_PFF_IOU_MIN = 0.95  # final crack-path damage-mask IoU (measured 1.0)
+T_PFF_PUBLISHED_PEAK_KN = 0.7012  # PhaseFieldX example-1711 reproduction
+T_PFF_PUBLISHED_BAND = 0.10  # spec-ref § 6.1 G-SENT
+T_PFF_FORCE_UNIT_N = 2.7  # Gc * 1 mm thickness (non-dim force unit -> N)
 
 # curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
 # [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
@@ -2257,6 +2269,172 @@ def _gate_heat_equation(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_phase_field_fracture(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for phase-field-fracture: LIVE f64 reference re-run
+    on the shared canonical scene (spec-ref § 6.2).
+
+    The browser's canonical is sent-void-96sq-m1 — the SAME config as the
+    backend canonical (one scene, one provenance). The loading protocol is
+    computed in pure-JS f64 (bit-compatible with the Python loop) and cast
+    once to f32, so the pointwise pre-burst comparison against the live f64
+    reference is real.
+
+    Gate = run-twice byte-identity over {ux, uy, d, h_field} at every
+           checkpoint
+         + per-checkpoint per-field max_abs(browser - reference_f64)
+           <= T_PFF_TRAJ_REL * max|browser field| at PRE-BURST checkpoints
+           (steps <= 12000; the NEW [defaults.phase-field-fracture] 1e-3,
+           MEASURED f32-proxy pre-burst worst 5.4e-6 — no tolerance widened)
+         + finite fields
+         + browser peak reaction within T_PFF_PEAK_REL of the live-f64 peak
+           AND within the published +-10 % band of 0.7012 kN (G-SENT)
+         + final crack energy within T_PFF_EFRAC_REL of the f64 reference
+         + final crack-path damage-mask IoU >= T_PFF_IOU_MIN
+         + damage monotone across checkpoints (G-irrev's browser shadow).
+    """
+    sys.path.insert(0, str(REPO / "packages/phase-field-fracture"))
+    from phase_field_fracture.sim import (  # type: ignore
+        gate_config,
+        peak_reaction,
+        run_canonical,
+    )
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    keys = ("ux", "uy", "d", "h_field")
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k)) for k in keys
+            )
+            for st in steps0
+        )
+
+    cfg = gate_config()
+    want = [s for s in range(0, cfg.step_count + 1) if s % cfg.capture_every == 0]
+    if want[-1] != cfg.step_count:
+        want.append(cfg.step_count)
+    got_steps = [st["step"] for st in steps0]
+    if got_steps != want:
+        return VerifyResult(
+            sim="phase-field-fracture",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {got_steps} != canonical {want}"},
+        )
+
+    # live f64 reference re-run (2-run bit-identity witnessed inside)
+    res, witness = run_canonical(cfg)
+    ref_at = {
+        step: st for step, st in zip(res.capture_steps, res.captures, strict=True)
+    }
+    _ref_peak_fine, _ref_peak_u = peak_reaction(res)
+    # the browser samples its F-delta curve (and its reported peak) at the
+    # 500-step batch cadence — compare against the f64 peak at the SAME
+    # cadence so the band prices f32-vs-f64 physics, not estimator skew
+    ref_peak = max(
+        (d.reaction for d in res.diagnostics if d.step % 500 == 0),
+        default=_ref_peak_fine,
+    )
+    ref_efrac = res.diagnostics[-1].e_frac
+
+    worst_ratio = 0.0
+    worst_where = ""
+    finite = True
+    d_prev: np.ndarray | None = None
+    monotone = True
+    for st in steps0:
+        ref = ref_at[st["step"]]
+        ref_fields = {
+            "ux": ref.ux,
+            "uy": ref.uy,
+            "d": ref.d,
+            "h_field": ref.h_field,
+        }
+        d_now = _field(st, "d").astype(np.float64)
+        if d_prev is not None and float(np.min(d_now - d_prev)) < -1e-6:
+            monotone = False
+        d_prev = d_now
+        for k in keys:
+            bf = _field(st, k).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            if st["step"] > T_PFF_PRE_BURST_LAST_STEP:
+                continue
+            max_abs = float(np.abs(bf - ref_fields[k]).max())
+            scale = float(np.abs(bf).max())
+            budget = T_PFF_TRAJ_REL * (scale if scale > 0 else 1.0)
+            ratio = max_abs / budget
+            if ratio > worst_ratio:
+                worst_ratio = ratio
+                worst_where = f"{k}@{st['step']}"
+
+    last = steps0[-1]
+    peak_browser = float(last["diagnostics"].get("peak_reaction", np.nan))
+    peak_rel = abs(peak_browser - ref_peak) / ref_peak
+    peak_kn = peak_browser * T_PFF_FORCE_UNIT_N / 1000.0
+    published_rel = abs(peak_kn - T_PFF_PUBLISHED_PEAK_KN) / T_PFF_PUBLISHED_PEAK_KN
+    efrac_browser = float(last["diagnostics"].get("e_frac", np.nan))
+    efrac_rel = abs(efrac_browser - ref_efrac) / ref_efrac
+    d_final = _field(last, "d").astype(np.float64)
+    ref_d_final = ref_at[cfg.step_count].d
+    a = d_final >= 0.5
+    b = ref_d_final >= 0.5
+    union = int(np.sum(a | b))
+    path_iou = 1.0 if union == 0 else float(np.sum(a & b)) / union
+
+    within = worst_ratio <= 1.0
+    peak_ok = bool(np.isfinite(peak_browser) and peak_rel <= T_PFF_PEAK_REL)
+    published_ok = bool(np.isfinite(peak_kn) and published_rel <= T_PFF_PUBLISHED_BAND)
+    efrac_ok = bool(np.isfinite(efrac_browser) and efrac_rel <= T_PFF_EFRAC_REL)
+    iou_ok = path_iou >= T_PFF_IOU_MIN
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and monotone
+        and peak_ok
+        and published_ok
+        and efrac_ok
+        and iou_ok
+    )
+    return VerifyResult(
+        sim="phase-field-fracture",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_where": worst_where,
+            "traj_rel": T_PFF_TRAJ_REL,
+            "pre_burst_last_step": T_PFF_PRE_BURST_LAST_STEP,
+            "finite": finite,
+            "damage_monotone": monotone,
+            "peak_browser": peak_browser,
+            "peak_reference_f64": ref_peak,
+            "peak_rel_vs_reference": peak_rel,
+            "peak_kn": peak_kn,
+            "published_rel": published_rel,
+            "e_frac_rel": efrac_rel,
+            "crack_path_iou": path_iou,
+            "reference_witness_sha256": witness,
+            "note": "live f64 reference re-run on the shared canonical "
+            "sent-void-96sq-m1; pointwise budget is the NEW "
+            "[defaults.phase-field-fracture] 1e-3 (MEASURED f32 proxy "
+            "pre-burst worst 5.4e-6; spec-ref § 9 MEASURED block); "
+            "post-burst gated by peak/E_frac/IoU observables (§ 3.6 "
+            "snap-back honesty)",
+        },
+    )
+
+
 def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
     """curl-noise new_canonical gate (spec-ref § 13.2, chaos-immune).
 
@@ -2394,6 +2572,7 @@ _GATES = {
     "curl-noise": _gate_curl_noise,
     "heat-equation": _gate_heat_equation,
     "signal-workbench": _gate_signal_workbench,
+    "phase-field-fracture": _gate_phase_field_fracture,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

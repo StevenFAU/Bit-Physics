@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "phase-field-fracture-at-constants",
+  "category": "fracture",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/phase-field-fracture-at-constants.md",
+    "upstream": "Pham-Amor-Marigo-Maurini-2011 / Tanne-2018-JMPS-110",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/fracture/phase-field-fracture/spec-ref.md"
+  },
+  "labeled": "closed-form-constants",
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "miehe-sent-steel-si",
+        "e": 210000.0,
+        "gc": 2.7,
+        "ell": 0.015
+      },
+      "expected": {
+        "sigma_c_at1": 3764.97011940334,
+        "sigma_c_at2": 1996.6769267961206,
+        "h_crit_at1": 33.75000000000001,
+        "at2_homogeneous_eps_c": 0.016903085094570332
+      },
+      "independent_reference": {
+        "derived_by": "tanne-2018-table1-formula-recompute",
+        "source": "Tanne, Li, Bourdin, Marigo & Maurini 2018 (JMPS 110) Table 1 AT1 strength sigma_c = sqrt(3 Gc E/(8 ell)); recomputed as sqrt(3)*sqrt(Gc)*sqrt(E)/sqrt(8*ell) (reordered arithmetic)",
+        "sigma_c_at1_recomputed": 3764.97011940334,
+        "sigma_c_at2_recomputed": 1996.6769267961206
+      }
+    },
+    {
+      "inputs": {
+        "name": "borden-glass-si",
+        "e": 32000.0,
+        "gc": 0.003,
+        "ell": 0.25
+      },
+      "expected": {
+        "sigma_c_at1": 12.000000000000002,
+        "sigma_c_at2": 6.363961030678928,
+        "h_crit_at1": 0.0022500000000000003,
+        "at2_homogeneous_eps_c": 0.00035355339059327376
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-arithmetic",
+        "source": "Borden et al. 2012 (CMAME 217-220) glass parameters give 3*Gc*E/(8*ell) = 144 MPa^2 EXACTLY (fractions.Fraction), so sigma_c(AT1) = 12 MPa integer-exact; sigma_c(AT2)^2 = 40.5 MPa^2 exact; H_crit = 9/4000 exact",
+        "sigma_c_at1_recomputed": 12.0,
+        "sigma_c_at2_recomputed": 6.363961030678928
+      }
+    },
+    {
+      "inputs": {
+        "name": "miehe-nondim",
+        "e": 1166.6666666666665,
+        "gc": 1.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "sigma_c_at1": 20.916500663351886,
+        "sigma_c_at2": 11.09264959331178,
+        "h_crit_at1": 0.1875,
+        "at2_homogeneous_eps_c": 0.016903085094570332
+      },
+      "independent_reference": {
+        "derived_by": "numeric-argmax-of-homogeneous-response",
+        "source": "AT2 homogeneous response sigma(eps) = (1-d)^2 E eps with d = 2H/(1+2H), H = E eps^2/2 (Gc = ell = 1): numeric argmax on a 4e5-point grid reproduces sqrt(27E/256) \u2014 a calculus-free recomputation of the peak",
+        "sigma_c_at1_recomputed": 20.916500663351883,
+        "sigma_c_at2_recomputed": 11.09264959304951
+      }
+    }
+  ]
+}

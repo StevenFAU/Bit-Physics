@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-phase-field-fracture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — variational (phase-field) brittle fracture as a verified crack lab. AT2 damage + hybrid explicit elastodynamics on a non-dimensionalized grid (first validated f32 phase-field-fracture solver), draw-your-own obstacles, en-passant + perforation presets, displacement-warped uber-composite render with fragment tinting and crack-tip glow, live KE/IE gauge, and a verification-visible PROVE layer with the f64-anchored deploy gate re-run live (Phase-6 verification-demo track, NEW fracture family).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

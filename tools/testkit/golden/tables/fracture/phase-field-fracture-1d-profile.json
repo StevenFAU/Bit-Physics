@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "phase-field-fracture-1d-profile",
+  "category": "fracture",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/phase-field-fracture-1d-profile.md",
+    "upstream": "Ambrosio-Tortorelli-1990-gamma-convergence",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/fracture/phase-field-fracture/spec-ref.md"
+  },
+  "labeled": "analytic-profile-regression",
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.1,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0012493061909298
+      },
+      "independent_reference": {
+        "derived_by": "geometric-series-closed-form",
+        "source": "discrete AT2 energy summed in closed form: w-sum = h*coth(h), forward-diff gradient sum = 2(e^-h - 1)^2/(h(1 - e^-2h)) \u2014 an analytic recomputation of the exact discrete quadrature, agreeing to ~1e-12; continuum Gamma-limit = Gc = 1 [Ambrosio-Tortorelli 1990]",
+        "surface_energy_recomputed": 1.0012493061914998,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.05,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0003124566065975
+      },
+      "independent_reference": {
+        "derived_by": "geometric-series-closed-form",
+        "source": "discrete AT2 energy summed in closed form: w-sum = h*coth(h), forward-diff gradient sum = 2(e^-h - 1)^2/(h(1 - e^-2h)) \u2014 an analytic recomputation of the exact discrete quadrature, agreeing to ~1e-12; continuum Gamma-limit = Gc = 1 [Ambrosio-Tortorelli 1990]",
+        "surface_energy_recomputed": 1.000312456607166,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.02,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000499988880769
+      },
+      "independent_reference": {
+        "derived_by": "geometric-series-closed-form",
+        "source": "discrete AT2 energy summed in closed form: w-sum = h*coth(h), forward-diff gradient sum = 2(e^-h - 1)^2/(h(1 - e^-2h)) \u2014 an analytic recomputation of the exact discrete quadrature, agreeing to ~1e-12; continuum Gamma-limit = Gc = 1 [Ambrosio-Tortorelli 1990]",
+        "surface_energy_recomputed": 1.0000499988889318,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.01,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000124999243036
+      },
+      "independent_reference": {
+        "derived_by": "geometric-series-closed-form",
+        "source": "discrete AT2 energy summed in closed form: w-sum = h*coth(h), forward-diff gradient sum = 2(e^-h - 1)^2/(h(1 - e^-2h)) \u2014 an analytic recomputation of the exact discrete quadrature, agreeing to ~1e-12; continuum Gamma-limit = Gc = 1 [Ambrosio-Tortorelli 1990]",
+        "surface_energy_recomputed": 1.0000124999305497,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.005,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000031249877017
+      },
+      "independent_reference": {
+        "derived_by": "geometric-series-closed-form",
+        "source": "discrete AT2 energy summed in closed form: w-sum = h*coth(h), forward-diff gradient sum = 2(e^-h - 1)^2/(h(1 - e^-2h)) \u2014 an analytic recomputation of the exact discrete quadrature, agreeing to ~1e-12; continuum Gamma-limit = Gc = 1 [Ambrosio-Tortorelli 1990]",
+        "surface_energy_recomputed": 1.0000031249956611,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.1,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0003124999995738
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-finite-sum",
+        "source": "compact-support AT1 profile (1 - |x|/2ell)^2 summed in EXACT rational arithmetic (fractions.Fraction) \u2014 every term rational for rational h; continuum Gamma-limit = Gc = 1 [Pham-Amor-Marigo-Maurini 2011 optimal profile]",
+        "surface_energy_recomputed": 1.0003125,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.05,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000781249995738
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-finite-sum",
+        "source": "compact-support AT1 profile (1 - |x|/2ell)^2 summed in EXACT rational arithmetic (fractions.Fraction) \u2014 every term rational for rational h; continuum Gamma-limit = Gc = 1 [Pham-Amor-Marigo-Maurini 2011 optimal profile]",
+        "surface_energy_recomputed": 1.000078125,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.02,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000124999993605
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-finite-sum",
+        "source": "compact-support AT1 profile (1 - |x|/2ell)^2 summed in EXACT rational arithmetic (fractions.Fraction) \u2014 every term rational for rational h; continuum Gamma-limit = Gc = 1 [Pham-Amor-Marigo-Maurini 2011 optimal profile]",
+        "surface_energy_recomputed": 1.0000125,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.01,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000031249953105
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-finite-sum",
+        "source": "compact-support AT1 profile (1 - |x|/2ell)^2 summed in EXACT rational arithmetic (fractions.Fraction) \u2014 every term rational for rational h; continuum Gamma-limit = Gc = 1 [Pham-Amor-Marigo-Maurini 2011 optimal profile]",
+        "surface_energy_recomputed": 1.000003125,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.005,
+        "half_width": 20.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "surface_energy": 1.0000007812440317
+      },
+      "independent_reference": {
+        "derived_by": "exact-rational-finite-sum",
+        "source": "compact-support AT1 profile (1 - |x|/2ell)^2 summed in EXACT rational arithmetic (fractions.Fraction) \u2014 every term rational for rational h; continuum Gamma-limit = Gc = 1 [Pham-Amor-Marigo-Maurini 2011 optimal profile]",
+        "surface_energy_recomputed": 1.00000078125,
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at2",
+        "h": 0.0,
+        "half_width": 0.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "d_at_0": 1.0,
+        "d_at_ell": 0.36787944117144233,
+        "d_at_2ell": 0.1353352832366127
+      },
+      "independent_reference": {
+        "derived_by": "euler-lagrange-first-integral",
+        "source": "AT2 optimal profile solves ell^2 d'' = d with d(0)=1, d(inf)=0 => d(x) = e^(-|x|/ell) [Miehe 2010 SS 2.1 Eq. 5]; d(ell) = 1/e is a transcendental pointwise anchor independent of any quadrature",
+        "continuum_value": 1.0
+      }
+    },
+    {
+      "inputs": {
+        "model": "at1",
+        "h": 0.0,
+        "half_width": 0.0,
+        "ell": 1.0
+      },
+      "expected": {
+        "d_at_0": 1.0,
+        "d_at_ell": 0.25,
+        "d_at_2ell": 0.0
+      },
+      "independent_reference": {
+        "derived_by": "euler-lagrange-first-integral",
+        "source": "AT1 optimal profile (1 - |x|/(2 ell))^2 with compact support |x| <= 2 ell [Pham-Amor-Marigo-Maurini 2011]; d(ell) = 1/4 exact rational, support edge exact zero",
+        "continuum_value": 1.0
+      }
+    }
+  ]
+}

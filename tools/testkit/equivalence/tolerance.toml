@@ -636,3 +636,48 @@ category = "signal-workbench"
 # reference re-run (_gate_signal_workbench, spec-ref § 13.1); the
 # Parseval residual and coherent-line checks are held at their own f64/
 # f32 floors independently of this row.
+
+# [defaults.phase-field-fracture] — MEASURED on phase-field-fracture
+# (Phase-6, spec-ref § 9 / § 13 spike). NEW category (operator decision 3,
+# spec-ref § 13, the isf/picflip/heat-equation new-category route): the
+# gated surface is a NON-DIMENSIONALIZED f32 explicit-dynamic fracture
+# stack (Q1 velocity-Verlet momentum + Miehe strain-spectral history +
+# fused semi-implicit gradient-flow AT2 damage, m = chi*dt = 1) against
+# the f64 reference on the canonical sent-void-96sq-m1 gate scene —
+# per-checkpoint per-field max_abs/max|field| over {ux, uy, d, H} at the
+# PRE-BURST checkpoints (steps <= 12000 of 15834; the post-peak snap-back
+# is legitimately dynamic, spec-ref § 3.6, and is gated by observables:
+# peak-load band, final fracture-energy band, crack-path IoU — held in
+# verify.py at their own declared bands, not this row). No existing row
+# fits: fracture couples a stencil field evolution to a history-max and
+# a moving free discontinuity — reusing the heat-equation stencil row or
+# the sph/mpm particle rows would conflate taxonomies. DECLARED 1e-3
+# from measurement (2026-07-09, NumPy-f32 proxy of the WGSL path — the
+# dtype-preserving reference solver run in float32, identical update
+# structure — vs the f64 reference): worst pre-burst per-checkpoint
+# per-field 5.4e-6; worst INCLUDING the burst checkpoints 9.0e-5 (the
+# proxy keeps burst timing aligned; WGSL op-order need not, hence the
+# pointwise gate stops pre-burst). 9.0e-5 x 4.05 (worst observed
+# RADV->lavapipe family spread, charter round 2) = 3.7e-4, x ~2.7 margin
+# (GPU FMA contraction + op-order divergence near onset not modeled by
+# the proxy) ~= 1e-3 declared. First validated f32 phase-field-fracture
+# solver measurement anywhere (spec-ref § 9 moat corollary; PhAST § 2.4
+# f64-only statement is the published adversary). Capped by
+# [budgets.phase-field-fracture] (tolerance-budget.toml).
+[defaults.phase-field-fracture]
+relative = 1.0e-3
+absolute = 0.0
+
+[overrides.phase-field-fracture]
+category = "phase-field-fracture"
+# Resolves sim.category='fracture' (physics-family taxonomy) to
+# tolerance-category='phase-field-fracture' (numerical-method taxonomy —
+# NEW category, see [defaults.phase-field-fracture] for the MEASURED-
+# then-declared provenance). AT-BUDGET: relative=1e-3, absolute=0.0. NOT
+# a widening of [defaults.heat-equation] (pure stencil evolution) or the
+# particle rows: the gate prices an f32 fracture stack whose damage field
+# carries a moving free discontinuity driven by a history maximum. Gated
+# by the web-deploy new_canonical live-f64-reference re-run
+# (_gate_phase_field_fracture, spec-ref § 6.2); the post-burst regime is
+# gated by observables (peak band / E_frac band / crack-path IoU) at
+# their own declared bands inside verify.py, independent of this row.

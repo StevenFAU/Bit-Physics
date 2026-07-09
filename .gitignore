@@ -70,3 +70,7 @@ common/common-3dgs/examples/smoke_3dgs/out/
 # canonical there per web-deploy.yml `npm ci`).
 common/common-ts/package-lock.json
 common/common-ts/preflight/package-lock.json
+
+# symlinked per-sim web node_modules (gitignore "node_modules/" only
+# matches real directories, not symlinks)
+packages/*/web/node_modules

@@ -103,6 +103,12 @@ const SIMS = {
   // start past the cold boot so shot 0 already glows (heat black-flash
   // lesson).
   "signal-workbench": { start: 90, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=xy", hide: [".sw-explain", ".sw-verify"] },
+  // Phase-6 phase-field-fracture: the SENT benchmark end to end — elastic
+  // loading (stress fringes brighten), nucleation at the notch tip, the
+  // ~0.55 c_R burst with tip glow, arrest with the specimen visibly torn.
+  // Start past the cold boot (heat black-flash lesson); the run completes
+  // within the shot window so the loop ends on the opened crack and cuts.
+  "phase-field-fracture": { start: 30, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, hide: [".pf-explain", ".pf-verify", "#hud"] },
 };
 
 const MIME = {
