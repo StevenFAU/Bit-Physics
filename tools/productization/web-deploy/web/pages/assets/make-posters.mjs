@@ -118,6 +118,10 @@ const SIMS = {
   // the released lenticular fragment tinted (the Ghelichi-Kamrin
   // morphology as the poster). Hide the EXPLAIN/PROVE bars.
   "phase-field-fracture": { frames: 700, px: 512, query: "?preset=enpassant", hide: [".pf-explain", ".pf-verify", "#hud"] },
+  // Phase-6 fdtd-optics: ?preset=phased-array boots the 16-element steered
+  // beam (60 deg phase step) — wavefronts + sidelobes fill the frame once
+  // the CW ramp settles (~180 steps @ 12 substeps -> settle by frame ~60).
+  "fdtd-optics": { frames: 420, px: 512, query: "?preset=phased-array", hide: [".fo-explain", ".fo-verify"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

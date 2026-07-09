@@ -109,6 +109,10 @@ const SIMS = {
   // Start past the cold boot (heat black-flash lesson); the run completes
   // within the shot window so the loop ends on the opened crack and cuts.
   "phase-field-fracture": { start: 30, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, hide: [".pf-explain", ".pf-verify", "#hud"] },
+  // Phase-6 fdtd-optics: the phased-array beam under a settled CW drive —
+  // wavefronts stream continuously so any window loops acceptably; start
+  // past the ramp so the first frame is not black (cold-start lesson).
+  "fdtd-optics": { start: 120, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=phased-array", hide: [".fo-explain", ".fo-verify"] },
 };
 
 const MIME = {

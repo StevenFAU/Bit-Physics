@@ -1,0 +1,64 @@
+{
+  "generated_by": "packages/fdtd-optics/web/gen-verification.mjs",
+  "gate": {
+    "kind": "new_canonical",
+    "descriptor": "tfsf-cyl128-eps2.25-step512",
+    "n": 128,
+    "sc": 0.5,
+    "steps": 512,
+    "checkpoints": [
+      128,
+      256,
+      384,
+      512
+    ],
+    "determinism_witness": "11bb3b462d279b4f5ed6b5470dd0ba3bf7a9c44585c9a5e2c6c29ff561afbf72"
+  },
+  "reference_bin": {
+    "file": "fdtd-gate-tfsf-cyl128-step512.bin",
+    "sha256": "e79288dcc59a8de9afa16f64ef9b00a40ecdfca95505f5a48a3284a738a95dc6",
+    "js_f64_rerun": "bit-exact",
+    "ricker_trace": {
+      "file": "fdtd-gate-ricker-f64.bin",
+      "sha256": "a49bf7988af8abbdc64df059af6fb7af437bb7062cf20e8b48d33a5deeeb9c49"
+    }
+  },
+  "tolerance": {
+    "category": "fdtd-optics",
+    "relative": 0.0001,
+    "fresnel_relative": 0.02,
+    "mie_relative": 0.05,
+    "measured_basis": "MEASURED 2026-07-09 f32-proxy worst 6.6e-7 of global peak, all 4 checkpoints x 3 fields"
+  },
+  "goldens": {
+    "mie_cylinder_tm": [
+      {
+        "x": 1,
+        "q_sca": 0.94292069778214
+      },
+      {
+        "x": 3,
+        "q_sca": 3.85632936987944
+      },
+      {
+        "x": 5,
+        "q_sca": 2.833380791105704
+      },
+      {
+        "x": 10,
+        "q_sca": 3.3926216899144688
+      }
+    ],
+    "slab_te0": 2.8631679467544036,
+    "slab_tm0": 2.082642776299447,
+    "dispersion_worst_pct": 1.27
+  },
+  "wgsl_anchors": {
+    "h_update": 80,
+    "e_update": 154,
+    "tfsf_h": 108,
+    "tfsf_e": 210,
+    "aux_e": 140,
+    "phasor_accum": 237
+  }
+}

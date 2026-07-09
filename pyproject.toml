@@ -60,6 +60,10 @@ members = [
   # strange-attractors. Registered at backend execution per
   # docs/sim-specs/closed-form/curl-noise/spec-ref.md § 11.
   "packages/curl-noise",
+  # Phase-6: fdtd-optics (2D TMz Yee FDTD, TF/SF + analytic goldens) f64
+  # reference — NEW electromagnetics family. Registered at backend execution
+  # per docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md § 12.
+  "packages/fdtd-optics",
   # Common module — Stack D / Python (Taichi-backed sims). Registered
   # at sub-phase-taichi-integration per D2 row 2 ratification.
   "common/common-py",

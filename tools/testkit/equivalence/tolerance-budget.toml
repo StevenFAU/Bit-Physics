@@ -134,3 +134,19 @@ absolute = 0.0
 [budgets.phase-field-fracture.cross_stack]
 relative = 1.0e-3
 absolute = 0.0
+
+# [budgets.fdtd-optics.cross_stack] — Phase-6 fdtd-optics web gate
+#   (spec-ref § 6.1/§ 6.2, § 13.1 spike): per-checkpoint per-field
+#   max_abs/global field peak of the WGSL f32 Yee TMz leapfrog + TF/SF
+#   stack vs the committed Python-f64 reference on the canonical
+#   tfsf-cyl128-eps2.25-step512 scene. NEW category (the isf /
+#   heat-equation / phase-field-fracture pattern). MEASURED 2026-07-09
+#   (dtype-preserving NumPy-f32 proxy): worst 6.6e-7 of global peak
+#   x 4.05 (RADV->lavapipe family spread) x margin ~= 1e-5; declared
+#   1e-4 (one order of family-spread headroom on a 512-step
+#   non-dissipative accumulation). Cap equals the declared
+#   [defaults.fdtd-optics] row; widening past this requires a Cat-X
+#   override review.
+[budgets.fdtd-optics.cross_stack]
+relative = 1.0e-4
+absolute = 0.0

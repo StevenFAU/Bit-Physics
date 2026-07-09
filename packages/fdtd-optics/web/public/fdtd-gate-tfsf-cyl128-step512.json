@@ -1,0 +1,61 @@
+{
+  "file": "fdtd-gate-tfsf-cyl128-step512.bin",
+  "sha256": "e79288dcc59a8de9afa16f64ef9b00a40ecdfca95505f5a48a3284a738a95dc6",
+  "dtype": "f64",
+  "layout": "checkpoints[128,256,384,512] x fields[ez,hx,hy] x 128^2 row-major (i*n+j), little-endian",
+  "params": {
+    "n": 128,
+    "sc": 0.5,
+    "tfsf_box": {
+      "ia": 24,
+      "ib": 104,
+      "ja": 24,
+      "jb": 104
+    },
+    "na": 320,
+    "t0": 80.0,
+    "tau": 20.0,
+    "cylinder": {
+      "cx": 80,
+      "cy": 64,
+      "r": 18,
+      "eps": 2.25
+    },
+    "steps": 512,
+    "checkpoints": [
+      128,
+      256,
+      384,
+      512
+    ],
+    "descriptor": "tfsf-cyl128-eps2.25-step512"
+  },
+  "diagnostics": [
+    {
+      "step": 128.0,
+      "peak_abs_ez": 0.990004546495824,
+      "max_abs_hx": 2.170881178927846e-06,
+      "max_abs_hy": 0.9478914210647893
+    },
+    {
+      "step": 256.0,
+      "peak_abs_ez": 1.076841218891974,
+      "max_abs_hx": 0.5440059868314534,
+      "max_abs_hy": 1.4334738723272564
+    },
+    {
+      "step": 384.0,
+      "peak_abs_ez": 1.4506409024740792,
+      "max_abs_hx": 0.6203991463048023,
+      "max_abs_hy": 1.3680780380289432
+    },
+    {
+      "step": 512.0,
+      "peak_abs_ez": 1.266221195043814,
+      "max_abs_hx": 0.9832124644202961,
+      "max_abs_hy": 2.0802091295114242
+    }
+  ],
+  "determinism_witness_sha256": "11bb3b462d279b4f5ed6b5470dd0ba3bf7a9c44585c9a5e2c6c29ff561afbf72",
+  "source": "packages/fdtd-optics/fdtd_optics/sim.py run_canonical()"
+}
