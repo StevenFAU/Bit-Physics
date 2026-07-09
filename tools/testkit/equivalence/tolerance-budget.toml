@@ -118,3 +118,19 @@ absolute = 0.0
 [budgets.signal-workbench.cross_stack]
 relative = 2.0e-6
 absolute = 0.0
+
+# [budgets.phase-field-fracture.cross_stack] — Phase-6 phase-field-
+#   fracture web gate (spec-ref § 6.1/§ 6.2, § 13 spike): per-checkpoint
+#   per-field max_abs/max|field| of the non-dimensionalized WGSL f32
+#   explicit-dynamic fracture stack vs the live f64 reference re-run on
+#   the canonical sent-void-96sq-m1 scene, pointwise at PRE-BURST
+#   checkpoints only (post-peak snap-back gated by peak/E_frac/IoU
+#   observables in verify.py). NEW category (the isf / heat-equation /
+#   signal-workbench pattern). MEASURED 2026-07-09 (dtype-preserving
+#   NumPy-f32 proxy): pre-burst worst 5.4e-6, with-burst worst 9.0e-5
+#   x 4.05 family spread x ~2.7 margin ~= 1e-3. Cap equals the declared
+#   [defaults.phase-field-fracture] row; widening past this requires a
+#   Cat-X override review.
+[budgets.phase-field-fracture.cross_stack]
+relative = 1.0e-3
+absolute = 0.0
