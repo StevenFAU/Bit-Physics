@@ -113,6 +113,11 @@ const SIMS = {
   // Lissajous, so a mid-tumble frame reads as a lit CRT figure. Hide the
   // EXPLAIN/PROVE bars (the panel is the [data-bp-panel] shell).
   "signal-workbench": { frames: 260, px: 512, query: "?preset=xy", hide: [".sw-explain", ".sw-verify"] },
+  // Phase-6 phase-field-fracture: ?preset=enpassant boots the offset crack
+  // pair; by frame 700 the run is complete — two hooked crack paths with
+  // the released lenticular fragment tinted (the Ghelichi-Kamrin
+  // morphology as the poster). Hide the EXPLAIN/PROVE bars.
+  "phase-field-fracture": { frames: 700, px: 512, query: "?preset=enpassant", hide: [".pf-explain", ".pf-verify", "#hud"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;
