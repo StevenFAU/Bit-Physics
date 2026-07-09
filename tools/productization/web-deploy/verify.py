@@ -211,6 +211,17 @@ T_PFF_PUBLISHED_PEAK_KN = 0.7012  # PhaseFieldX example-1711 reproduction
 T_PFF_PUBLISHED_BAND = 0.10  # spec-ref § 6.1 G-SENT
 T_PFF_FORCE_UNIT_N = 2.7  # Gc * 1 mm thickness (non-dim force unit -> N)
 
+# fdtd-optics (spec-ref docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md
+# § 6.1; MEASURED provenance in tolerance.toml [defaults.fdtd-optics])
+T_FDTD_TRAJ_REL = 1e-4  # per-checkpoint per-field: max_abs <= rel * global field peak
+#   MEASURED browser WGSL on RADV 2026-07-09: worst 6.6e-7 of peak (0.7% of budget)
+T_FDTD_FRESNEL_REL = 0.02  # |R - 0.04|/0.04 (Meep Mie floor 2.2% @ res 20)
+#   MEASURED browser WGSL on RADV 2026-07-09: 0.42% (pure discretization; f32 invisible)
+T_FDTD_MIE_REL = 0.05  # Q_sca vs committed Bohren-Huffman cylinder table
+#   (staircased r=16, no subpixel smoothing). MEASURED browser WGSL on RADV
+#   2026-07-09: x=3 0.37%, x=5 1.9% — discretization-dominated (deterministic,
+#   backend-independent), so 5% holds ~2.6x headroom over the worst point.
+
 # curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
 # [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
 # resolved via [overrides.curl-noise]; capped by [budgets.curl-noise]) —
@@ -2555,6 +2566,133 @@ def _gate_curl_noise(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_fdtd_optics(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for fdtd-optics: committed-f64-reference comparison
+    PLUS the analytic instrument gates (spec-ref § 6).
+
+    The browser's canonical is tfsf-cyl128-eps2.25-step512 — the SAME scene
+    as the backend canonical (one scene, one provenance): 2D TMz Yee
+    leapfrog, TF/SF Ricker plane wave from a 1-D auxiliary incident grid
+    (JS-f64 source signature via the dynamic-offset uniform ring), a
+    dielectric cylinder, PEC box, S_c = 0.5. The reference is re-run LIVE in
+    f64 (run_canonical run-twice witnesses determinism) and its checkpoint
+    blob sha is asserted against the committed pin, so the committed web
+    asset, the backend package, and this gate cannot drift apart silently.
+
+    Gate = run-twice byte-identity over ez/hx/hy at every checkpoint
+         + per-checkpoint per-field max_abs(browser - reference_f64)
+           <= T_FDTD_TRAJ_REL * global field peak (the NEW
+           [defaults.fdtd-optics] 1e-4; MEASURED f32 proxy worst 6.6e-7)
+         + finite fields
+         + G-fresnel: broadband two-run-subtraction reflectance on the
+           1500-cell periodic-y strip within T_FDTD_FRESNEL_REL of the
+           exact 0.04 (grid-independent Fresnel golden A)
+         + G-mie2d: SF-zone box-flux Q_sca at x = 3 and x = 5 within
+           T_FDTD_MIE_REL of the committed Bohren-Huffman cylinder table
+           (golden E; the master-catalog Gap-1 claim, CI-held).
+    """
+    sys.path.insert(0, str(REPO / "packages/fdtd-optics"))
+    from fdtd_optics.sim import (  # type: ignore
+        GATE_CHECKPOINT_SHA256,
+        checkpoint_blob,
+        run_canonical,
+    )
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    fields = ("ez", "hx", "hy")
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k)) for k in fields
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = [128, 256, 384, 512]
+    if expected_steps != want:
+        return VerifyResult(
+            sim="fdtd-optics",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    res = run_canonical()
+    import hashlib as _hashlib
+
+    blob_sha = _hashlib.sha256(checkpoint_blob(res)).hexdigest()
+    sha_ok = blob_sha == GATE_CHECKPOINT_SHA256
+
+    worst_ratio = 0.0
+    worst_abs = {k: 0.0 for k in fields}
+    finite = True
+    for st in steps0:
+        ref = res.checkpoints[st["step"]]
+        peak = max(float(np.abs(r).max()) for r in ref)
+        for key, r in zip(fields, ref, strict=True):
+            bf = _field(st, key).astype(np.float64)
+            if not np.isfinite(bf).all():
+                finite = False
+                continue
+            max_abs = float(np.abs(bf - r.reshape(bf.shape)).max())
+            worst_abs[key] = max(worst_abs[key], max_abs)
+            budget = T_FDTD_TRAJ_REL * peak
+            if budget > 0:
+                worst_ratio = max(worst_ratio, max_abs / budget)
+    within = worst_ratio <= 1.0
+
+    # analytic instruments (measured in the browser capture, spec-ref § 6.1;
+    # NaN/missing must FAIL, never be swallowed — the heat-equation lesson)
+    d = steps0[-1]["diagnostics"]
+    fres = float(d.get("fresnel_rel_err", np.nan))
+    mie3 = float(d.get("mie_qsca_x3_rel_err", np.nan))
+    mie5 = float(d.get("mie_qsca_x5_rel_err", np.nan))
+    fres_ok = bool(np.isfinite(fres) and fres <= T_FDTD_FRESNEL_REL)
+    mie_ok = bool(
+        np.isfinite(mie3)
+        and np.isfinite(mie5)
+        and mie3 <= T_FDTD_MIE_REL
+        and mie5 <= T_FDTD_MIE_REL
+    )
+
+    passed = bool(
+        (twice is not False) and within and finite and sha_ok and fres_ok and mie_ok
+    )
+    return VerifyResult(
+        sim="fdtd-optics",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_max_abs": worst_abs,
+            "traj_rel": T_FDTD_TRAJ_REL,
+            "finite": finite,
+            "reference_sha_pinned": sha_ok,
+            "reference_witness_sha256": res.determinism_witness_sha256,
+            "fresnel_rel_err": fres,
+            "fresnel_measured_r": float(d.get("fresnel_r_measured", np.nan)),
+            "fresnel_budget": T_FDTD_FRESNEL_REL,
+            "mie_qsca_x3_rel_err": mie3,
+            "mie_qsca_x5_rel_err": mie5,
+            "mie_budget": T_FDTD_MIE_REL,
+            "note": "live f64 reference re-run sha-pinned to the committed "
+            "asset; analytic Fresnel/Mie instrument gates CI-held (the "
+            "spec-ref § 14 moat conjunction); rel budget is the NEW "
+            "[defaults.fdtd-optics] 1e-4 (MEASURED f32 proxy worst 6.6e-7 "
+            "of global peak)",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -2573,6 +2711,7 @@ _GATES = {
     "heat-equation": _gate_heat_equation,
     "signal-workbench": _gate_signal_workbench,
     "phase-field-fracture": _gate_phase_field_fracture,
+    "fdtd-optics": _gate_fdtd_optics,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

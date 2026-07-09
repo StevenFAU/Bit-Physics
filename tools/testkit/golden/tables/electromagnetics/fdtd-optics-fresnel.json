@@ -1,0 +1,323 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-fresnel-reflectance",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "fresnel-equations-hecht-bohren-huffman",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 goldens A-C"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "theta_deg": 0.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.04000000000000001,
+        "r_p": 0.04000000000000001
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 5.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.0404083121632205,
+        "r_p": 0.039593589275163
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 10.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.04165948666806429,
+        "r_p": 0.03837148336099077
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 15.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.0438350830799345,
+        "r_p": 0.036326451225800305
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 20.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.047080933358768326,
+        "r_p": 0.03345152397419265
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 25.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.05162350745701845,
+        "r_p": 0.029749330608178165
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 30.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.05779610540321305,
+        "r_p": 0.025249146548429992
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 35.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.06607875776437183,
+        "r_p": 0.02003713176216984
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 40.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.0771577390513906,
+        "r_p": 0.014309547585401398
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 45.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.0920133630455244,
+        "r_p": 0.008466458978947477
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 50.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.11204835725651394,
+        "r_p": 0.0032775321513246023
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 55.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.13927348533856634,
+        "r_p": 0.00017784737141206234
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 60.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.17657148808284046,
+        "r_p": 0.0018019375215850236
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 65.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.2280629597666151,
+        "r_p": 0.01296338014398875
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 70.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.29959467793332695,
+        "r_p": 0.0424903928016021
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 75.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.3993560270003951,
+        "r_p": 0.10676509898024436
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Fresnel amplitude coefficients squared (Hecht, Optics, 5th ed. section 4.6; Bohren & Huffman section 2.7) \u2014 exact closed forms recomputed at f64, not digitized.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 80.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.5385949057495805,
+        "r_p": 0.2368138036333647
+      },
+      "independent_reference": {
+        "derived_by": "energy-identity-in-tests",
+        "source": "Lossless energy identity R_s + T_s = R_p + T_p = 1 with T = (n2*cos_t)/(n1*cos_i)*t^2 (fdtd_optics.goldens.fresnel_ts_tp), asserted per angle in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "theta_deg": 85.0,
+        "n1": 1.0,
+        "n2": 1.5
+      },
+      "expected": {
+        "r_s": 0.7323454787108016,
+        "r_p": 0.4932538118188535
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    },
+    {
+      "inputs": {
+        "n1": 1.0,
+        "n2": 1.5,
+        "anchor_set": "spec-section-4-goldens-A-C"
+      },
+      "expected": {
+        "r_normal": 0.04,
+        "brewster_deg": 56.30993247,
+        "critical_deg_glass_to_air": 41.81031489,
+        "anchor_tolerance_absolute": 1e-08
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-anchors",
+        "source": "Exact rational/trigonometric anchors: R(0) = ((n1-n2)/(n1+n2))^2 = 1/25 = 0.04 exactly; R_p(arctan(n2/n1)) = 0 (Brewster 56.30993247 deg); R = 1 above arcsin(n2/n1) glass-to-air (critical 41.81031489 deg) \u2014 spec section 4 goldens A-C; anchors quoted to 10 significant figures, gated at 1e-8 absolute in the anchor test point.",
+        "doi": "n/a-exact-values"
+      }
+    }
+  ]
+}

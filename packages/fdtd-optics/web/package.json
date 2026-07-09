@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-fdtd-optics",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — 2D Yee FDTD optics: Maxwell's curl equations stepped live (TF/SF plane waves, CPML, dielectric/lossy/PEC/Drude/Kerr materials), an HDR uber-composite render stack (cool-warm field, domain coloring, isophase wavefronts, schlieren, photon tracers, bloom), and a verification-visible PROVE layer that re-runs the f64-anchored deploy gate PLUS analytic optics gates (Fresnel R=0.04, Bohren-Huffman cylinder Mie) on the visitor's GPU (Phase-6, first electromagnetics-family sim).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

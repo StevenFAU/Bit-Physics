@@ -1,0 +1,74 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-slab-waveguide-neff",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "byu-ece360-slab-waveguide-section-7-3",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://ece360web.groups.et.byu.net/notes/slabwaveguidesPart2.pdf"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "wavelength_um": 1.525,
+        "thickness_um": 0.22,
+        "n_core": 3.48,
+        "n_clad": 1.44,
+        "quantity": "v_number"
+      },
+      "expected": {
+        "v_number": 1.4358211454410013
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-recompute",
+        "source": "Normalized frequency V = k0*a*sqrt(n_core^2 - n_clad^2), half-thickness convention a = thickness/2 (Saleh & Teich, Fundamentals of Photonics, Ch. 8): V = 1.4358 < pi/2 => single-moded per polarization \u2014 the mode-count precondition of the n_eff roots below.",
+        "doi": "n/a-closed-form"
+      }
+    },
+    {
+      "inputs": {
+        "wavelength_um": 1.525,
+        "thickness_um": 0.22,
+        "n_core": 3.48,
+        "n_clad": 1.44,
+        "polarization": "TE",
+        "mode": 0
+      },
+      "expected": {
+        "n_eff": 2.8631679467544036,
+        "published_n_eff": 2.8632,
+        "published_tolerance_absolute": 0.0001
+      },
+      "independent_reference": {
+        "derived_by": "transcendental-root-brentq",
+        "source": "Symmetric-slab TE characteristic equation u*tan(u) = sqrt(V^2-u^2) (BYU ECE360 section 7.3, half-thickness convention), brentq root; published anchor n_eff(TE0) = 2.8632 for 220 nm Si (n=3.48) in SiO2 (n=1.44) at 1.525 um. 1-D slab, NOT the SOI strip (~2.4).",
+        "doi": "n/a-course-notes"
+      }
+    },
+    {
+      "inputs": {
+        "wavelength_um": 1.525,
+        "thickness_um": 0.22,
+        "n_core": 3.48,
+        "n_clad": 1.44,
+        "polarization": "TM",
+        "mode": 0
+      },
+      "expected": {
+        "n_eff": 2.082642776299447,
+        "published_n_eff": 2.083,
+        "published_tolerance_absolute": 0.001
+      },
+      "independent_reference": {
+        "derived_by": "transcendental-root-brentq",
+        "source": "Symmetric-slab TM characteristic equation u*tan(u) = (n_core/n_clad)^2*sqrt(V^2-u^2) (BYU ECE360 section 7.3 / Fosco waveguide notes): the SAME slab splits TE0 2.8632 vs TM0 2.083 \u2014 the golden pair that itself demos polarization (spec section 4 golden F).",
+        "doi": "n/a-course-notes"
+      }
+    }
+  ]
+}

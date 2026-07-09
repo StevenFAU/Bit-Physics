@@ -117,6 +117,17 @@ GATE_KIND = {
     # monotonicity + run-twice byte-identity
     # (verify.py _gate_phase_field_fracture).
     "phase-field-fracture": "new_canonical",
+    # Phase-6 verification-demo, NEW electromagnetics family: new_canonical =
+    # committed Python-f64 reference comparison of the SHARED canonical
+    # tfsf-cyl128-eps2.25-step512 (TMz Yee leapfrog + TF/SF 1-D aux incident
+    # grid + dielectric cylinder, PEC box) — pointwise per-checkpoint
+    # per-field max_abs over {ez, hx, hy} ([defaults.fdtd-optics] rel budget)
+    # + run-twice byte-identity + the ANALYTIC instrument gates measured in
+    # the same capture: Fresnel R=0.04 within T_FDTD_FRESNEL_REL and
+    # cylinder-Mie Q_sca vs the committed Bohren-Huffman table within
+    # T_FDTD_MIE_REL (verify.py _gate_fdtd_optics; spec-ref § 6 — the
+    # analytic-gates conjunction is the sim's moat claim, so it is CI-held).
+    "fdtd-optics": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

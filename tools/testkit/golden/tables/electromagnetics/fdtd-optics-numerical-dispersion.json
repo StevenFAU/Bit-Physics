@@ -1,0 +1,197 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-numerical-dispersion",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "schneider-ufdtd-dispersion-chapter",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://eecs.wsu.edu/~schneidj/ufdtd/"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 10,
+        "theta_deg": 0.0
+      },
+      "expected": {
+        "vp_ratio": 0.9872637013399771
+      },
+      "independent_reference": {
+        "derived_by": "master-relation-brentq",
+        "source": "Yee-grid numerical-dispersion master relation (Schneider, Understanding the FDTD Method, dispersion chapter; spec section 3.7): [sin(w*dt/2)/(c*dt)]^2 = sum_xi [sin(k_xi*D/2)/D]^2, solved for |k| along theta by brentq; on-axis the 2D relation reduces to the 1D relation.",
+        "doi": "n/a-textbook"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 10,
+        "theta_deg": 15.0
+      },
+      "expected": {
+        "vp_ratio": 0.989437061786752
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 10,
+        "theta_deg": 30.0
+      },
+      "expected": {
+        "vp_ratio": 0.9937129671797694
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 10,
+        "theta_deg": 45.0
+      },
+      "expected": {
+        "vp_ratio": 0.9958167796903401
+      },
+      "independent_reference": {
+        "derived_by": "published-derivation-cross-check",
+        "source": "Independent published derivation of the same relation: Taflove & Hagness, Computational Electrodynamics, 3rd ed., Ch. 4 (numerical dispersion and anisotropy) \u2014 error largest on-axis, smallest on the 45-deg diagonal, ordering asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-textbook"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 20,
+        "theta_deg": 0.0
+      },
+      "expected": {
+        "vp_ratio": 0.9968916863429811
+      },
+      "independent_reference": {
+        "derived_by": "master-relation-brentq",
+        "source": "Yee-grid numerical-dispersion master relation (Schneider, Understanding the FDTD Method, dispersion chapter; spec section 3.7): [sin(w*dt/2)/(c*dt)]^2 = sum_xi [sin(k_xi*D/2)/D]^2, solved for |k| along theta by brentq; on-axis the 2D relation reduces to the 1D relation.",
+        "doi": "n/a-textbook"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 20,
+        "theta_deg": 15.0
+      },
+      "expected": {
+        "vp_ratio": 0.997412685698377
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 20,
+        "theta_deg": 30.0
+      },
+      "expected": {
+        "vp_ratio": 0.9984506131380183
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 20,
+        "theta_deg": 45.0
+      },
+      "expected": {
+        "vp_ratio": 0.9989675589556749
+      },
+      "independent_reference": {
+        "derived_by": "published-derivation-cross-check",
+        "source": "Independent published derivation of the same relation: Taflove & Hagness, Computational Electrodynamics, 3rd ed., Ch. 4 (numerical dispersion and anisotropy) \u2014 error largest on-axis, smallest on the 45-deg diagonal, ordering asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-textbook"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 31,
+        "theta_deg": 0.0
+      },
+      "expected": {
+        "vp_ratio": 0.9987120922934759
+      },
+      "independent_reference": {
+        "derived_by": "master-relation-brentq",
+        "source": "Yee-grid numerical-dispersion master relation (Schneider, Understanding the FDTD Method, dispersion chapter; spec section 3.7): [sin(w*dt/2)/(c*dt)]^2 = sum_xi [sin(k_xi*D/2)/D]^2, solved for |k| along theta by brentq; on-axis the 2D relation reduces to the 1D relation.",
+        "doi": "n/a-textbook"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 31,
+        "theta_deg": 15.0
+      },
+      "expected": {
+        "vp_ratio": 0.9989272473387427
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 31,
+        "theta_deg": 30.0
+      },
+      "expected": {
+        "vp_ratio": 0.9993568630751068
+      },
+      "independent_reference": {
+        "derived_by": "convergence-order-identity",
+        "source": "Second-order accuracy identity: the phase-velocity deficit 1 - vp/c scales as N_lambda^-2 (Yee scheme is O(Delta^2)); the 10-vs-20 cells-per-wavelength deficit ratio ~ 4 is asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "sc": 0.5,
+        "n_lambda": 31,
+        "theta_deg": 45.0
+      },
+      "expected": {
+        "vp_ratio": 0.9995713250186631
+      },
+      "independent_reference": {
+        "derived_by": "published-derivation-cross-check",
+        "source": "Independent published derivation of the same relation: Taflove & Hagness, Computational Electrodynamics, 3rd ed., Ch. 4 (numerical dispersion and anisotropy) \u2014 error largest on-axis, smallest on the 45-deg diagonal, ordering asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-textbook"
+      }
+    }
+  ]
+}

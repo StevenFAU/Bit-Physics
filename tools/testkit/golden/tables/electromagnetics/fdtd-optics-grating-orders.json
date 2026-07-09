@@ -1,0 +1,98 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-grating-orders",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "grating-equation-normal-incidence",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 golden D"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "d_um": 1.0,
+        "wavelength_um": 0.5,
+        "m": -2
+      },
+      "expected": {
+        "theta_deg": -90.0,
+        "grazing_cutoff": true
+      },
+      "independent_reference": {
+        "derived_by": "order-existence-cutoff",
+        "source": "Order-existence criterion |m*lambda/d| <= 1 (Palmer & Loewen handbook, ch. 2): m = +-2 sits exactly at |sin| = 1 \u2014 the +-90 deg grazing cutoff, excluded from the propagating-order count.",
+        "doi": "n/a-handbook"
+      }
+    },
+    {
+      "inputs": {
+        "d_um": 1.0,
+        "wavelength_um": 0.5,
+        "m": -1
+      },
+      "expected": {
+        "theta_deg": -30.000000000000004,
+        "grazing_cutoff": false
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-value",
+        "source": "Grating equation sin(theta_m) = m*lambda/d at normal incidence (Palmer & Loewen, Diffraction Grating Handbook, Newport, ch. 2): 1000 lines/mm at 500 nm gives sin(theta_1) = 0.5 => theta_1 = 30.0 deg exactly (spec section 4 golden D).",
+        "doi": "n/a-handbook"
+      }
+    },
+    {
+      "inputs": {
+        "d_um": 1.0,
+        "wavelength_um": 0.5,
+        "m": 0
+      },
+      "expected": {
+        "theta_deg": 0.0,
+        "grazing_cutoff": false,
+        "propagating_order_count": 3
+      },
+      "independent_reference": {
+        "derived_by": "symmetry-identity",
+        "source": "Zeroth (specular) order theta_0 = 0 exactly at normal incidence; mirror symmetry theta_{-m} = -theta_m asserted across the table in packages/fdtd-optics/tests/test_golden_tables.py. Carries the propagating-order count 3 (m = 0, +-1).",
+        "doi": "n/a-symmetry-identity"
+      }
+    },
+    {
+      "inputs": {
+        "d_um": 1.0,
+        "wavelength_um": 0.5,
+        "m": 1
+      },
+      "expected": {
+        "theta_deg": 30.000000000000004,
+        "grazing_cutoff": false
+      },
+      "independent_reference": {
+        "derived_by": "published-exact-value",
+        "source": "Grating equation sin(theta_m) = m*lambda/d at normal incidence (Palmer & Loewen, Diffraction Grating Handbook, Newport, ch. 2): 1000 lines/mm at 500 nm gives sin(theta_1) = 0.5 => theta_1 = 30.0 deg exactly (spec section 4 golden D).",
+        "doi": "n/a-handbook"
+      }
+    },
+    {
+      "inputs": {
+        "d_um": 1.0,
+        "wavelength_um": 0.5,
+        "m": 2
+      },
+      "expected": {
+        "theta_deg": 90.0,
+        "grazing_cutoff": true
+      },
+      "independent_reference": {
+        "derived_by": "order-existence-cutoff",
+        "source": "Order-existence criterion |m*lambda/d| <= 1 (Palmer & Loewen handbook, ch. 2): m = +-2 sits exactly at |sin| = 1 \u2014 the +-90 deg grazing cutoff, excluded from the propagating-order count.",
+        "doi": "n/a-handbook"
+      }
+    }
+  ]
+}

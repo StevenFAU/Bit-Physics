@@ -1,0 +1,289 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-mie-cylinder-q",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "bohren-huffman-1983-ch8-cylinder",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1002/9783527618156"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "x": 1.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 0.9429206977821396,
+        "q_sca": 0.94292069778214
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    },
+    {
+      "inputs": {
+        "x": 1.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 0.2799230936643191,
+        "q_sca": 0.27992309366431933
+      },
+      "independent_reference": {
+        "derived_by": "cross-implementation-anchor",
+        "source": "Wiscombe MIEV0 sphere cross-anchor: the same scipy Bessel/Hankel machinery reproduces the published sphere table (fdtd-optics-mie-sphere-anchors.json, x=5.21282 m=1.55 -> 3.10543 +- 1e-5), proving the special-function core the cylinder series shares.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 1.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 0.43389014493136546,
+        "q_sca": 0.43389014493136563
+      },
+      "independent_reference": {
+        "derived_by": "optical-theorem-identity",
+        "source": "Lossless optical-theorem self-check Q_ext == Q_sca (< 1e-12 relative at every committed row), asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "x": 1.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 0.1361836593206728,
+        "q_sca": 0.13618365932067297
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    },
+    {
+      "inputs": {
+        "x": 3.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 3.856329369879442,
+        "q_sca": 3.85632936987944
+      },
+      "independent_reference": {
+        "derived_by": "cross-implementation-anchor",
+        "source": "Wiscombe MIEV0 sphere cross-anchor: the same scipy Bessel/Hankel machinery reproduces the published sphere table (fdtd-optics-mie-sphere-anchors.json, x=5.21282 m=1.55 -> 3.10543 +- 1e-5), proving the special-function core the cylinder series shares.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 3.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 3.385728707127374,
+        "q_sca": 3.385728707127371
+      },
+      "independent_reference": {
+        "derived_by": "optical-theorem-identity",
+        "source": "Lossless optical-theorem self-check Q_ext == Q_sca (< 1e-12 relative at every committed row), asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "x": 3.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 2.3804322357689625,
+        "q_sca": 2.3804322357689607
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    },
+    {
+      "inputs": {
+        "x": 3.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 2.0126240933795825,
+        "q_sca": 2.0126240933795803
+      },
+      "independent_reference": {
+        "derived_by": "cross-implementation-anchor",
+        "source": "Wiscombe MIEV0 sphere cross-anchor: the same scipy Bessel/Hankel machinery reproduces the published sphere table (fdtd-optics-mie-sphere-anchors.json, x=5.21282 m=1.55 -> 3.10543 +- 1e-5), proving the special-function core the cylinder series shares.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 5.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 2.8333807911057054,
+        "q_sca": 2.833380791105704
+      },
+      "independent_reference": {
+        "derived_by": "optical-theorem-identity",
+        "source": "Lossless optical-theorem self-check Q_ext == Q_sca (< 1e-12 relative at every committed row), asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "x": 5.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 2.90238428333654,
+        "q_sca": 2.9023842833365396
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    },
+    {
+      "inputs": {
+        "x": 5.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 3.850104290659994,
+        "q_sca": 3.850104290659992
+      },
+      "independent_reference": {
+        "derived_by": "cross-implementation-anchor",
+        "source": "Wiscombe MIEV0 sphere cross-anchor: the same scipy Bessel/Hankel machinery reproduces the published sphere table (fdtd-optics-mie-sphere-anchors.json, x=5.21282 m=1.55 -> 3.10543 +- 1e-5), proving the special-function core the cylinder series shares.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 5.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 3.666501656874301,
+        "q_sca": 3.6665016568743
+      },
+      "independent_reference": {
+        "derived_by": "optical-theorem-identity",
+        "source": "Lossless optical-theorem self-check Q_ext == Q_sca (< 1e-12 relative at every committed row), asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "x": 10.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 3.392621689914467,
+        "q_sca": 3.3926216899144688
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    },
+    {
+      "inputs": {
+        "x": 10.0,
+        "m_re": 1.5,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 2.980149911783176,
+        "q_sca": 2.9801499117831773
+      },
+      "independent_reference": {
+        "derived_by": "cross-implementation-anchor",
+        "source": "Wiscombe MIEV0 sphere cross-anchor: the same scipy Bessel/Hankel machinery reproduces the published sphere table (fdtd-optics-mie-sphere-anchors.json, x=5.21282 m=1.55 -> 3.10543 +- 1e-5), proving the special-function core the cylinder series shares.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 10.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TM"
+      },
+      "expected": {
+        "q_ext": 1.1645283414565413,
+        "q_sca": 1.164528341456542
+      },
+      "independent_reference": {
+        "derived_by": "optical-theorem-identity",
+        "source": "Lossless optical-theorem self-check Q_ext == Q_sca (< 1e-12 relative at every committed row), asserted in packages/fdtd-optics/tests/test_golden_tables.py.",
+        "doi": "n/a-in-test-identity"
+      }
+    },
+    {
+      "inputs": {
+        "x": 10.0,
+        "m_re": 1.33,
+        "m_im": 0.0,
+        "polarization": "TE"
+      },
+      "expected": {
+        "q_ext": 1.1765666586612595,
+        "q_sca": 1.17656665866126
+      },
+      "independent_reference": {
+        "derived_by": "self-authored-series",
+        "source": "Bohren & Huffman, Absorption and Scattering of Light by Small Particles, Ch. 8: normal-incidence infinite-cylinder coefficients b_n (TM, E parallel to axis = our TMz) and a_n (TE), e^{-iwt} convention; self-authored Bessel/Hankel generator (fdtd_optics.goldens.mie_cylinder).",
+        "doi": "10.1002/9783527618156"
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "fdtd-optics-mie-sphere-anchors",
+  "category": "electromagnetics",
+  "derivation": {
+    "doc": "docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md section 4 / section 7 (generated 2026-07-09 by packages/fdtd-optics/fdtd_optics/goldens.py)",
+    "upstream": "wiscombe-1980-miev0",
+    "upstream_sha": "n/a-no-vendored-code",
+    "upstream_path": "https://doi.org/10.1364/AO.19.001505"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "x": 5.21282,
+        "m_re": 1.55,
+        "m_im": 0.0
+      },
+      "expected": {
+        "q_ext": 3.1054247418196685,
+        "q_sca": 3.1054247418196685,
+        "published_q_ext": 3.10543,
+        "published_q_sca": 3.10543,
+        "published_tolerance_absolute": 1e-05
+      },
+      "independent_reference": {
+        "derived_by": "published-tabulated-value",
+        "source": "Wiscombe, Improved Mie scattering algorithms, Appl. Opt. 19:1505 (1980), MIEV0 lossless test case (r=0.525 um, lambda=632.8 nm => x=5.21282, m=1.55; quote all 6 figures of x, spec section 4 E'); miepython reproduces the same table; lossless => ext==sca self-check asserted in tests.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 100.0,
+        "m_re": 1.5,
+        "m_im": 1.0
+      },
+      "expected": {
+        "q_ext": 2.097501755606181,
+        "q_sca": 1.2836970493733284,
+        "published_q_ext": 2.097502,
+        "published_q_sca": 1.283697,
+        "published_tolerance_absolute": 1e-05
+      },
+      "independent_reference": {
+        "derived_by": "published-tabulated-value",
+        "source": "Wiscombe MIEV0 x=100 absorbing case. SIGN-CONVENTION TRAP (spec section 4 E', hit live at v0.2 verification): Wiscombe's m=1.5-1i is the e^{+iwt} convention; this table (Bohren & Huffman e^{-iwt}) uses m=1.5+1i or the absorber becomes gain and Q_sca blows up.",
+        "doi": "10.1364/AO.19.001505"
+      }
+    },
+    {
+      "inputs": {
+        "x": 0.01,
+        "m_re": 1.5,
+        "m_im": 0.0
+      },
+      "expected": {
+        "q_sca": 2.306821355908851e-09,
+        "rayleigh_q_sca": 2.3068050749711652e-09,
+        "rayleigh_tolerance_relative": 0.001
+      },
+      "independent_reference": {
+        "derived_by": "closed-form-limit",
+        "source": "Rayleigh small-particle limit Q_sca = (8/3)*x^4*|(m^2-1)/(m^2+2)|^2 (van de Hulst, Light Scattering by Small Particles, section 6.4; B&H section 5.1) \u2014 independent closed-form anchor for the series at x -> 0, agreement asserted in tests.",
+        "doi": "n/a-closed-form"
+      }
+    }
+  ]
+}

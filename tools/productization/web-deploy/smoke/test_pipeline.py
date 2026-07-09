@@ -43,6 +43,7 @@ EXPECTED_SIMS = {
     "heat-equation",
     "signal-workbench",
     "phase-field-fracture",
+    "fdtd-optics",
     "eulerian-smoke",
     "mpm-multimaterial",
     "physarum",

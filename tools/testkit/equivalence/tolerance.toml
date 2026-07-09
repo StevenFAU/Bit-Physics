@@ -681,3 +681,44 @@ category = "phase-field-fracture"
 # (_gate_phase_field_fracture, spec-ref § 6.2); the post-burst regime is
 # gated by observables (peak band / E_frac band / crack-path IoU) at
 # their own declared bands inside verify.py, independent of this row.
+
+# [defaults.fdtd-optics] — MEASURED on fdtd-optics (Phase-6, spec-ref § 6.1
+# / § 13.1 spike). NEW category (the isf/picflip/heat-equation/phase-field-
+# fracture new-category route, spec-ref § 6.1): the gated surface is an f32
+# explicit YEE LEAPFROG Maxwell stack (TMz E/H staggered curl updates + a
+# TF/SF 1-D auxiliary incident grid with JS-f64 source signatures) against
+# the committed Python-f64 reference on the canonical
+# tfsf-cyl128-eps2.25-step512 scene — per-checkpoint per-field
+# max_abs/global field peak over {ez, hx, hy}. No existing row fits: the
+# leapfrog is non-dissipative (round-off is carried, not damped like
+# [defaults.heat-equation] diffusion) and the TF/SF boundary makes the
+# error budget injection-coupled — reusing the stencil-diffusion row would
+# conflate taxonomies. MEASURED 2026-07-09 (NumPy-f32 dtype-preserving
+# proxy of the WGSL path vs f64, all 4 checkpoints x 3 fields): worst
+# 6.6e-7 of global peak; browser WGSL on RADV measured at build (see the
+# sidecar + verify.py note). 6.6e-7 x 4.05 (worst observed RADV->lavapipe
+# family spread, charter round 2) = 2.7e-6, x ~2.5 margin for GPU FMA
+# contraction / op-order divergence of the general-material kernel (the
+# (B*E+curl)/A algebraic form vs the proxy's FMA form) ~= 1e-5; declared
+# 1e-4 to hold one order of headroom for driver-family spread on the
+# 512-step non-dissipative accumulation (heat-equation precedent kept the
+# same headroom ratio at its 512-step tier). Capped by
+# [budgets.fdtd-optics] (tolerance-budget.toml). The analytic instrument
+# gates (Fresnel R=0.04 +/-2%, cylinder-Mie Q_sca band) are held in
+# verify.py at their own declared bands (spec-ref § 6.1), not this row.
+[defaults.fdtd-optics]
+relative = 1.0e-4
+absolute = 0.0
+
+[overrides.fdtd-optics]
+category = "fdtd-optics"
+# Resolves sim.category='electromagnetics' (physics-family taxonomy, NEW
+# family, spec-ref status block) to tolerance-category='fdtd-optics'
+# (numerical-method taxonomy — NEW category, see [defaults.fdtd-optics]
+# for the MEASURED-then-declared provenance). AT-BUDGET: relative=1e-4,
+# absolute=0.0. NOT a widening of [defaults.heat-equation] (dissipative
+# stencil diffusion) or [defaults.isf] (FFT accumulation): the gate prices
+# a non-dissipative f32 leapfrog wave stack with TF/SF injection. Gated by
+# the web-deploy new_canonical committed-f64-reference comparison
+# (_gate_fdtd_optics, spec-ref § 6.2) + the Fresnel/Mie analytic
+# instrument bands held in verify.py.

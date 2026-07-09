@@ -49,6 +49,7 @@ members = [
     "eulerian-smoke-neural",
     "eulerian-smoke-stack-d",
     "eulerian-smoke-stack-e",
+    "fdtd-optics",
     "flow-lenia",
     "heat-equation",
     "ising-classical",
@@ -1444,6 +1445,32 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
     { name = "warp-lang", specifier = ">=1.13,<2.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
+name = "fdtd-optics"
+version = "0.0.0"
+source = { editable = "packages/fdtd-optics" }
+dependencies = [
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "scipy", specifier = ">=1.13" },
 ]
 provides-extras = ["dev"]
 
