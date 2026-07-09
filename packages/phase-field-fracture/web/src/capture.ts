@@ -135,9 +135,11 @@ export async function runGateScene(
 
     await checkpoint(0);
     // batch boundaries MUST land exactly on checkpoint steps (readbacks see
-    // the state at batch end): 200 | 2000 and the final partial batch ends
-    // at stepCount.
-    const BATCH = 200;
+    // the state at batch end): 500 | 2000 and the final partial batch ends
+    // at stepCount. 500 halves the sync stalls vs 200 for CI's software
+    // rasterizer; the F-delta peak sampling at 500-step cadence stays well
+    // inside the 2 % peak band (the curve is parabolic-flat near the top).
+    const BATCH = 500;
     for (let start = 1; start <= cfg.stepCount; start += BATCH) {
       const end = Math.min(start + BATCH - 1, cfg.stepCount);
       gpu.fillRing(sched.uTop, sched.vTop, start, end - start + 1);
@@ -160,7 +162,7 @@ export async function runGateScene(
     }
 
     // the true peak lands BETWEEN checkpoints — report the batch-cadence
-    // (200-step) peak on the final checkpoint for the verify.py peak band
+    // (500-step) peak on the final checkpoint for the verify.py peak band
     const last = steps[steps.length - 1];
     last.diagnostics.peak_reaction = peak.reaction;
     last.diagnostics.peak_u_applied = peak.uApplied;

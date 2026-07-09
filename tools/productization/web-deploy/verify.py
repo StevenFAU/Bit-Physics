@@ -2332,7 +2332,14 @@ def _gate_phase_field_fracture(bundles: list[dict]) -> VerifyResult:
     ref_at = {
         step: st for step, st in zip(res.capture_steps, res.captures, strict=True)
     }
-    ref_peak, _ref_peak_u = peak_reaction(res)
+    _ref_peak_fine, _ref_peak_u = peak_reaction(res)
+    # the browser samples its F-delta curve (and its reported peak) at the
+    # 500-step batch cadence — compare against the f64 peak at the SAME
+    # cadence so the band prices f32-vs-f64 physics, not estimator skew
+    ref_peak = max(
+        (d.reaction for d in res.diagnostics if d.step % 500 == 0),
+        default=_ref_peak_fine,
+    )
     ref_efrac = res.diagnostics[-1].e_frac
 
     worst_ratio = 0.0

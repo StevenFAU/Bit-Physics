@@ -295,9 +295,13 @@ async function frameBody(state: AppState): Promise<void> {
       }
     }
   }
-  state.renderer.render(gpu, cfg.lam, cfg.mu, cfg.h);
-  drawHud(state);
-  refreshDiagnostics(state);
+  // during a gate capture the dedicated capture solver owns the GPU —
+  // skip the uber-render (it dominates wall time on software rasterizers)
+  if (!isCapturing()) {
+    state.renderer.render(gpu, cfg.lam, cfg.mu, cfg.h);
+    drawHud(state);
+    refreshDiagnostics(state);
+  }
   state.frameMs = performance.now() - t0;
 }
 

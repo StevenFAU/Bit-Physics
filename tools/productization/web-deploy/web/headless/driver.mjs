@@ -35,7 +35,7 @@ if (!distDir || !sim || !gateKind || !outDir) {
 
 const WEBGPU_UNAVAILABLE = 42;
 
-// App-readiness wait (NOT the capture wait below, which stays 300000). The 30000
+// App-readiness wait (NOT the capture wait below — CAPTURE_TIMEOUT_MS). The 30000
 // default was calibrated on local RADV; software rasterization (CI lavapipe)
 // compiles pipelines far slower, so CI widens it via BITPHYSICS_READY_TIMEOUT_MS.
 // This is a harness readiness wait, not a physics tolerance — the gate verify.py
@@ -49,6 +49,13 @@ const MIME = {
 
 // WebGPU-on-headless-Chromium flags. CI provides Mesa lavapipe (software Vulkan);
 // Dawn brings WebGPU up over it — the REAL browser WebGPU path, not WebGL.
+// Capture-completion ceiling. 300 s covered every sim through signal-
+// workbench; phase-field-fracture's gate is ~63k compute dispatches
+// (15834 CFL substeps x 4 passes, twice for run-twice) which a software
+// rasterizer (CI lavapipe) walks in minutes, not seconds. Overridable for
+// experiments; failures on hung sims now surface in <=20 min instead of 5.
+const CAPTURE_TIMEOUT_MS = Number(process.env.BITPHYSICS_CAPTURE_TIMEOUT_MS ?? 1200000);
+
 const ARGS = [
   "--headless=new",
   "--no-sandbox",
@@ -116,7 +123,7 @@ async function captureOnce(browser, baseUrl, runIdx) {
   // Drive the capture-export hook and wait for the browser to publish the capture.
   await page.evaluate(() => { window.__bitPhysicsCaptureReady = false; });
   await page.click('[data-bp="capture"]');
-  await page.waitForFunction(() => window.__bitPhysicsCaptureReady === true, undefined, { timeout: 300000 });
+  await page.waitForFunction(() => window.__bitPhysicsCaptureReady === true, undefined, { timeout: CAPTURE_TIMEOUT_MS });
   const bundle = await page.evaluate(() => window.__bitPhysicsCapture);
   if (!bundle || !bundle.steps || bundle.steps.length === 0) {
     await context.close();
