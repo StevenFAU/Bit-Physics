@@ -107,6 +107,16 @@ GATE_KIND = {
     # run-twice byte-identity (verify.py _gate_signal_workbench). The
     # heat-equation dual-path live-reference precedent on a 1D instrument.
     "signal-workbench": "new_canonical",
+    # Phase-6 verification-demo, NEW fracture family: new_canonical = LIVE
+    # f64 reference re-run of the SHARED canonical sent-void-96sq-m1 (the
+    # backend canonical IS the web gate scene) — pointwise per-checkpoint
+    # per-field max_abs over {ux, uy, d, h_field} at PRE-BURST checkpoints
+    # ([defaults.phase-field-fracture] rel budget; the post-peak SENT
+    # snap-back is legitimately dynamic per spec-ref § 3.6 and is gated by
+    # peak-load / crack-energy / crack-path-IoU observables) + damage
+    # monotonicity + run-twice byte-identity
+    # (verify.py _gate_phase_field_fracture).
+    "phase-field-fracture": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

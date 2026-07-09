@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Phase-Field Fracture — verified crack lab — Bit-Physics</title>
+    <meta name="description" content="Cracks that nucleate, curve, arrest, and branch as the emergent solution of an energy minimization — running live on your GPU, gated against an f64 reference and the published SENT benchmark. Paint holes and inclusions and watch a real fracture solver negotiate them." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Phase-Field Fracture — verified crack lab — Bit-Physics" />
+    <meta property="og:description" content="The first verified, interactive, in-browser energy-variational fracture sim: no scripted shatter patterns — the crack path is computed, and the CI deploy gate re-runs on your GPU." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/phase-field-fracture/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/phase-field-fracture.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Phase-Field Fracture — verified crack lab — Bit-Physics" />
+    <meta name="twitter:description" content="Browser fracture demos fake it with pre-baked patterns. This one computes the crack from energy minimization — and proves it against an f64 reference, live." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/phase-field-fracture.png" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(88vmin, 720px); height: min(88vmin, 720px); touch-action: none; }
+      #hud { display: block; width: min(88vmin, 720px); height: 96px; margin: 4px auto; }
+      .pf-explain, .pf-verify {
+        position: relative; margin: 10px auto; width: min(88vmin, 720px);
+        font: 13px/1.55 system-ui, sans-serif; color: #b7c7d6;
+        background: #0a1017; border: 1px solid #17222e; border-radius: 8px;
+        padding: 8px 14px;
+      }
+      .pf-explain summary, .pf-verify summary {
+        cursor: pointer; font-weight: 600; color: #d7e4f0; padding: 4px 0;
+      }
+      .pf-honesty { border-left: 3px solid #b08c2e; padding-left: 10px; }
+      .pf-vcard { font: 12px/1.6 ui-monospace, monospace; color: #8fa8bd;
+        background: #0d141c; border-radius: 6px; padding: 8px 10px; margin: 6px 0; }
+      .pf-vrow { display: flex; gap: 8px; align-items: baseline; padding: 4px 0;
+        border-bottom: 1px dotted #14202c; flex-wrap: wrap; }
+      .pf-vrow button { flex: none; }
+      .pf-vrow span { font: 12px/1.5 ui-monospace, monospace; color: #8fa8bd; }
+      .pf-pass { color: #7fdc9a !important; }
+      .pf-fail { color: #f5a09f !important; }
+      .pf-curve { display: block; width: 100%; margin: 6px 0; border-radius: 6px; }
+      .pf-ctl { display: flex; gap: 6px; align-items: center;
+        font: 12px/1.6 system-ui, sans-serif; padding: 2px 0; }
+      .pf-ctl input[type="range"] { flex: 1; min-width: 90px; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="900" height="900" class="bps-canvas"></canvas></div>
+    <canvas id="hud" width="720" height="96"></canvas>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
