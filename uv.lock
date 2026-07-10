@@ -669,12 +669,9 @@ dependencies = [
     { name = "h5py" },
     { name = "hypothesis" },
     { name = "jsonschema" },
-    { name = "lpips" },
     { name = "numba" },
     { name = "numpy" },
-    { name = "scikit-image" },
     { name = "sympy" },
-    { name = "torch" },
 ]
 
 [package.optional-dependencies]
@@ -686,13 +683,18 @@ dev = [
     { name = "pytest-timeout" },
     { name = "ruff" },
 ]
+render-similarity = [
+    { name = "lpips" },
+    { name = "scikit-image" },
+    { name = "torch" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "jsonschema", specifier = ">=4.20" },
-    { name = "lpips", specifier = "==0.1.4" },
+    { name = "lpips", marker = "extra == 'render-similarity'", specifier = "==0.1.4" },
     { name = "mutmut", marker = "extra == 'dev'", specifier = ">=2.5,<3.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "numba", specifier = ">=0.61,<0.66" },
@@ -701,11 +703,11 @@ requires-dist = [
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=5.0" },
     { name = "pytest-timeout", marker = "extra == 'dev'", specifier = ">=2.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5" },
-    { name = "scikit-image", specifier = ">=0.26" },
+    { name = "scikit-image", marker = "extra == 'render-similarity'", specifier = ">=0.26" },
     { name = "sympy", specifier = ">=1.13" },
-    { name = "torch", specifier = ">=2.0" },
+    { name = "torch", marker = "extra == 'render-similarity'", specifier = ">=2.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["render-similarity", "dev"]
 
 [[package]]
 name = "boids-2d"

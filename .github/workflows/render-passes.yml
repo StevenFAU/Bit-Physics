@@ -103,7 +103,7 @@ jobs:
 
       - name: Sync testkit workspace (h5py + render_similarity)
         working-directory: tools/testkit
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra render-similarity
 
       - name: Selective LFS fetch — committed canonical capture (R2 when wired)
         # Mirrors pypi-release/binary-release: source the lfs-s3 agent when the R2_*

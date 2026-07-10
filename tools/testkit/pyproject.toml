@@ -28,6 +28,10 @@ dependencies = [
   "numba>=0.61,<0.66",
   "numpy>=2.0",
   "sympy>=1.13",
+]
+
+[project.optional-dependencies]
+render-similarity = [
   # Phase-3 sub-phase-phase-3-render-similarity (task-2) Stage 1b
   # additions per charter § 1.1 item 4 / probe §3.2 (WEB-fetched
   # 2026-05-28; sub-phase-phase-3-render-similarity-stage-0-2026-05-
@@ -47,8 +51,6 @@ dependencies = [
   # and stays well inside lpips's broad >=0.4.0 floor.
   "torch>=2.0",
 ]
-
-[project.optional-dependencies]
 dev = [
   "mypy>=1.10",
   "pytest>=8.0",
