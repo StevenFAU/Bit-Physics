@@ -166,7 +166,7 @@ jobs:
 
       - name: Sync testkit workspace deps (with dev extras for pytest + ruff)
         working-directory: tools/testkit
-        run: uv sync --extra dev
+        run: uv sync --extra dev --extra render-similarity
 
       - name: ruff (render_similarity + equivalence/__main__.py)
         working-directory: tools/testkit

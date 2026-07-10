@@ -7,7 +7,7 @@ license = { file = "../../LICENSE" }
 authors = [{ name = "Steven Cohen" }]
 requires-python = ">=3.12"
 dependencies = [
-  "bit-physics-testkit",
+  "bit-physics-testkit[render-similarity]",
   "bit-physics-diagnostics",
   "bit-physics-common-warp",
   "bit-physics-common-3dgs",
