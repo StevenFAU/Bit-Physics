@@ -81,6 +81,32 @@ jobs:
         working-directory: tools/testkit
         run: uv run pytest -W error determinism/tests/
 
+  # Interfacial Fluid Lab: f64 number-density SPH oracle and analytic gates.
+  test-sph-multiphase:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.1.0
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Sync sph-multiphase workspace deps
+        working-directory: packages/sph-multiphase
+        run: uv sync --extra dev
+      - name: ruff (reference + tests)
+        working-directory: packages/sph-multiphase
+        run: |
+          uv run ruff check sph_multiphase/ tests/
+          uv run ruff format --check sph_multiphase/ tests/
+      - name: mypy --strict (reference)
+        working-directory: packages/sph-multiphase
+        run: uv run mypy --strict sph_multiphase/
+      - name: pytest (INDSPH, surface, viscosity, analytic, determinism gates)
+        working-directory: packages/sph-multiphase
+        run: uv run pytest -W error tests/
+
   # Phase-3 common-3dgs (task-1). Stack-E Warp-backed 3D-Gaussian-Splatting
   # module; lint + type-check + test in strict mode. No LFS needed — the tests
   # generate scenes in-memory (they do not read the legacy-captures corpus).

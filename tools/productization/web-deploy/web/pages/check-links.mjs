@@ -28,7 +28,7 @@ const SIMS = [
   "reaction-diffusion-2d", "mandelbulb-explorer", "neural-ca",
   "ising-classical", "strange-attractors", "boids-2d", "boids-3d",
   "curl-noise", "eulerian-smoke", "mpm-multimaterial", "physarum",
-  "pic-flip", "schrodinger-smoke", "sph-water", "heat-equation",
+  "pic-flip", "schrodinger-smoke", "sph-water", "sph-multiphase", "heat-equation",
   "signal-workbench", "phase-field-fracture", "fdtd-optics",
 ];
 

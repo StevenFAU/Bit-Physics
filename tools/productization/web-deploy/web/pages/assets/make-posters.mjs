@@ -43,6 +43,9 @@ const SIMS = {
   // ~150 RAF frames is the crown-splash moment (column collapsed, spray up
   // the far wall) under the SSFR render, which carries its own exposure.
   "sph-water": { frames: 150, px: 512 },
+  // Dense droplet-field signature scene; allow the stirrer and capillary
+  // relaxation to develop before capture.
+  "sph-multiphase": { frames: 90, px: 512, query: "?preset=emulsion-storm" },
   // Phase-6 verification-demo (mpm-multimaterial): boots into the showcase
   // preset (sand bed + water pour + jelly drop + snowball, one grid solve);
   // ~240 RAF frames = water flooding the sand shore, snowball packed in its

@@ -45,6 +45,7 @@ jobs:
               packages/reaction-diffusion-2d \
               packages/reaction-diffusion-3d \
               packages/sph-water \
+              packages/sph-multiphase \
               packages/eulerian-smoke \
               packages/lattice-boltzmann-d3q19 \
               packages/mpm-multimaterial \
