@@ -91,7 +91,7 @@ dependencies = [
     { name = "bit-physics-common-3dgs" },
     { name = "bit-physics-common-warp" },
     { name = "bit-physics-diagnostics" },
-    { name = "bit-physics-testkit" },
+    { name = "bit-physics-testkit", extra = ["render-similarity"] },
     { name = "h5py" },
     { name = "hypothesis" },
     { name = "mpm-multimaterial-stack-e" },
@@ -116,7 +116,7 @@ requires-dist = [
     { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
     { name = "bit-physics-common-warp", editable = "common/common-warp" },
     { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
-    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "bit-physics-testkit", extras = ["render-similarity"], editable = "tools/testkit" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "lpips", marker = "extra == 'dev'", specifier = "==0.1.4" },
@@ -142,7 +142,7 @@ dependencies = [
     { name = "bit-physics-common-3dgs" },
     { name = "bit-physics-common-warp" },
     { name = "bit-physics-diagnostics" },
-    { name = "bit-physics-testkit" },
+    { name = "bit-physics-testkit", extra = ["render-similarity"] },
     { name = "h5py" },
     { name = "hypothesis" },
     { name = "mpm-multimaterial-stack-e" },
@@ -168,7 +168,7 @@ requires-dist = [
     { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
     { name = "bit-physics-common-warp", editable = "common/common-warp" },
     { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
-    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "bit-physics-testkit", extras = ["render-similarity"], editable = "tools/testkit" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "lpips", marker = "extra == 'dev'", specifier = "==0.1.4" },
@@ -486,7 +486,7 @@ name = "bit-physics-common-3dgs"
 version = "0.1.0"
 source = { editable = "common/common-3dgs" }
 dependencies = [
-    { name = "bit-physics-testkit" },
+    { name = "bit-physics-testkit", extra = ["render-similarity"] },
     { name = "matplotlib" },
     { name = "numpy" },
     { name = "warp-lang" },
@@ -502,7 +502,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "bit-physics-testkit", extras = ["render-similarity"], editable = "tools/testkit" },
     { name = "matplotlib", specifier = ">=3.8" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
     { name = "numpy", specifier = ">=2.0" },
@@ -1333,7 +1333,7 @@ dependencies = [
     { name = "bit-physics-common-3dgs" },
     { name = "bit-physics-common-warp" },
     { name = "bit-physics-diagnostics" },
-    { name = "bit-physics-testkit" },
+    { name = "bit-physics-testkit", extra = ["render-similarity"] },
     { name = "eulerian-smoke-stack-e" },
     { name = "h5py" },
     { name = "hypothesis" },
@@ -1358,7 +1358,7 @@ requires-dist = [
     { name = "bit-physics-common-3dgs", editable = "common/common-3dgs" },
     { name = "bit-physics-common-warp", editable = "common/common-warp" },
     { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
-    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "bit-physics-testkit", extras = ["render-similarity"], editable = "tools/testkit" },
     { name = "eulerian-smoke-stack-e", editable = "packages/eulerian-smoke-stack-e" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
@@ -2968,7 +2968,7 @@ source = { editable = "packages/neural-ca/python" }
 dependencies = [
     { name = "bit-physics-common-py" },
     { name = "bit-physics-diagnostics" },
-    { name = "bit-physics-testkit" },
+    { name = "bit-physics-testkit", extra = ["render-similarity"] },
     { name = "h5py" },
     { name = "hypothesis" },
     { name = "numpy" },
@@ -2991,7 +2991,7 @@ local-gpu = [
 requires-dist = [
     { name = "bit-physics-common-py", editable = "common/common-py" },
     { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
-    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "bit-physics-testkit", extras = ["render-similarity"], editable = "tools/testkit" },
     { name = "h5py", specifier = ">=3.10" },
     { name = "hypothesis", specifier = ">=6.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
