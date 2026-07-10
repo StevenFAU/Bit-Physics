@@ -1,0 +1,55 @@
+#view {
+  width: min(96vw, 1280px);
+  height: min(82vh, 760px);
+  touch-action: none;
+  cursor: grab;
+  background: #060815;
+}
+
+#view[data-tool]:not([data-tool="orbit"]) { cursor: crosshair; }
+#view.is-dragging { cursor: grabbing; }
+
+.murmuration-row {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.murmuration-row > span:first-child { color: var(--faint); }
+.murmuration-row select, .murmuration-row input { min-width: 0; width: 100%; }
+.murmuration-row output { min-width: 2.7em; text-align: right; color: var(--accent); }
+
+.murmuration-hint {
+  display: block;
+  margin: 7px 0 0;
+  color: var(--faint);
+  font-size: 10.5px;
+  line-height: 1.35;
+}
+
+.murmuration-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.murmuration-actions button {
+  min-width: 0;
+  padding: 4px 2px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--txt);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.murmuration-actions button:hover { border-color: var(--accent); color: var(--accent); }
+
+@media (max-width: 720px) {
+  #view { width: 100vw; height: 70vh; border-radius: 0; }
+}

@@ -48,7 +48,7 @@ const REPO = join(HERE, "../../../../../..");
 // px: output CSS pixel width. boost: photographic exposure (CSS filter on the
 // canvas, same mechanism/values as the poster config — exposure, not physics).
 const SIMS = {
-  // murmuration under the P-6 auto-fit; loop wraps with a cut (declared).
+  // 32k-bird murmuration under the seeded Director camera; wraps with a cut.
   "boids-3d": { start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, boost: "brightness(1.35) saturate(1.5)" },
   // transport-network growth from the noise field.
   physarum: { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },

@@ -18,10 +18,18 @@ from __future__ import annotations
 from .invariants import particle_count_invariant, v_max_clamp_respected
 from .reference import canonical_params, evolve, step_one
 from .sim import sim_runner_seeded, sim_runner_seeded_3agent
+from .starling_reference import (
+    build_dense_grid,
+    brute_topological_neighbors,
+    grid_topological_neighbors,
+)
 
 __all__ = [
     "canonical_params",
+    "build_dense_grid",
+    "brute_topological_neighbors",
     "evolve",
+    "grid_topological_neighbors",
     "particle_count_invariant",
     "sim_runner_seeded",
     "sim_runner_seeded_3agent",
