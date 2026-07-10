@@ -31,13 +31,10 @@ const REPO = join(HERE, "../../../../../..");
 // zoom: crop to the bright-content bounding box (sparse point renders read
 //   as voids at card size otherwise). pixelated: crisp CA texels, no smoothing.
 const SIMS = {
-  // P-6: third regen — the P-6 display-only camera-fit (render.wgsl, ratified)
-  // removed the P-5 "flock drifts out of the fixed frame" ceiling, so frames
-  // can sit at 420 where the murmuration wisps are fully developed. Exposure
-  // softened 1.8→1.35 (fit-framed sprites are denser; 1.8 washed the speed
-  // palette to white). The auto-fit makes raw framing converge by readback
-  // timing, not frame count alone; the zoom-to-content crop normalizes it.
-  "boids-3d": { frames: 420, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
+  // Murmuration Lab: 32k procedural birds under the seeded Director camera.
+  // 240 frames fills the dusk silhouette while retaining individual wings;
+  // zoom-to-content normalizes the 16:9 simulation canvas for the square card.
+  "boids-3d": { frames: 240, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
   "neural-ca": { frames: 140, px: 512 },
   // Phase-6 verification-demo (sph-water): boots into the dam-break preset —
   // ~150 RAF frames is the crown-splash moment (column collapsed, spray up

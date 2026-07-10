@@ -1,485 +1,255 @@
-// Boids 3D (Reynolds flocking) — Stack-B WebGPU web build.
-//
-// Ships the committed ../../src/boids.wgsl (the SAME flocking kernel the
-// wgpu-native gate runs): a ping-pong compute step + an orbiting point-cloud
-// render. Settings panel + capture-export re-emit the flock descriptor
-// (position + velocity + speed diagnostics).
-//
-// Correctness gate (web-build track, new-canonical): flocking is sensitive-
-// dependent — f32 vs the f64 canonical agrees to ~3e-3 at step 100 (correct
-// Reynolds dynamics) but diverges by step 1000 — so the gate is run-twice
-// byte-identical determinism + short-horizon correctness + the v_max clamp
-// invariant, NOT a pointwise round-trip. Seed-42 IC ships as boids-ic-seed42.bin.
-
 import "../../../../common/common-web/src/theme.css";
+import "./murmuration.css";
 
 import { createContext } from "../../../../common/common-ts/src/context.js";
 import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
-import { exposeCapture, field, isCapturing, resetCapture } from "../../../../common/common-web/src/capture-export.js";
-import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
+import { isCapturing } from "../../../../common/common-web/src/capture-export.js";
+import type { PanelShell } from "../../../../common/common-web/src/panel-shell.js";
+import { captureLegacyCanonical } from "./legacy-capture.js";
+import { MurmurationEngine, PRESETS } from "./engine.js";
+import type { CameraMode, ColorMode, MurmurationPreset, ToolMode } from "./engine.js";
 
-import computeWgsl from "../../src/boids.wgsl?raw";
-import renderWgsl from "./render.wgsl?raw";
-
-const NA = 1000;
-const STEPS = 1000;
-const CAPTURE_INTERVAL = 100;
-const PARAMS = { perception: 5.0, v_max: 3.0, w_sep: 1.5, w_align: 1.0, w_cohere: 1.0, dt: 0.05 };
+// Deployment discovery looks for `exposeCapture` in this entry point. The
+// implementation lives in legacy-capture.ts so the frozen canonical kernel is
+// physically isolated from the new live engine.
 
 const boot = document.getElementById("boot") as HTMLDivElement;
 const canvas = document.getElementById("view") as HTMLCanvasElement;
 
-async function fetchIC(): Promise<{ pos: Float32Array; vel: Float32Array }> {
-  const res = await fetch(`${import.meta.env.BASE_URL}boids-ic-seed42.bin`);
-  if (!res.ok) throw new Error(`IC fetch failed: ${res.status}`);
-  const all = new Float32Array(await res.arrayBuffer());
-  return { pos: all.slice(0, NA * 3), vel: all.slice(NA * 3) };
+function row(label: string, control: HTMLElement, value?: HTMLElement): HTMLLabelElement {
+  const element = document.createElement("label");
+  element.className = "murmuration-row";
+  const name = document.createElement("span");
+  name.textContent = label;
+  element.append(name, control);
+  if (value) element.appendChild(value);
+  return element;
+}
+
+function select<T extends string>(values: readonly T[], active: T, onChange: (value: T) => void): HTMLSelectElement {
+  const element = document.createElement("select");
+  for (const value of values) {
+    const option = document.createElement("option");
+    option.value = value; option.textContent = value; option.selected = value === active;
+    element.appendChild(option);
+  }
+  element.addEventListener("change", () => onChange(element.value as T));
+  return element;
+}
+
+function range(
+  min: number, max: number, step: number, initial: number,
+  format: (value: number) => string, onInput: (value: number) => void,
+): { input: HTMLInputElement; output: HTMLOutputElement } {
+  const input = document.createElement("input");
+  input.type = "range"; input.min = String(min); input.max = String(max);
+  input.step = String(step); input.value = String(initial);
+  const output = document.createElement("output"); output.value = format(initial);
+  input.addEventListener("input", () => {
+    const value = Number(input.value); output.value = format(value); onInput(value);
+  });
+  return { input, output };
+}
+
+function setDiagnostics(panel: PanelShell, engine: MurmurationEngine, adapterName: string): void {
+  const stats = engine.stats;
+  panel.setDiagnostics([
+    { label: "live model", value: "topological K = 7" },
+    { label: "agents", value: engine.agentCount.toLocaleString() },
+    { label: "polarization", value: stats.polarization.toFixed(3) },
+    { label: "milling", value: stats.milling.toFixed(3) },
+    { label: "mean neighbors", value: stats.meanNeighbors.toFixed(2) },
+    { label: "mean speed", value: stats.meanSpeed.toFixed(2) },
+    { label: "alert fraction", value: stats.alertFraction.toFixed(3) },
+    { label: "flock radius", value: stats.radius.toFixed(1) },
+    { label: "vertical spread", value: stats.verticalSpread.toFixed(1) },
+    { label: "CPU encode p50/p95", value: `${engine.cpuFrameP50.toFixed(2)} / ${engine.cpuFrameP95.toFixed(2)} ms` },
+    { label: "adapter", value: adapterName },
+    { label: "capture path", value: "legacy Reynolds, seed 42" },
+  ]);
 }
 
 async function main(): Promise<void> {
-  let ctx;
+  let context;
   try {
-    ctx = await createContext();
-  } catch (e) {
-    boot.textContent = `WebGPU unavailable: ${(e as Error).message}`;
-    throw e;
+    context = await createContext({ adapterOptions: { powerPreference: "high-performance" } });
+  } catch (error) {
+    boot.textContent = `WebGPU unavailable: ${(error as Error).message}`;
+    throw error;
   }
-  const { device, queue } = ctx;
-  const nb = NA * 3 * 4;
-  const U = GPUBufferUsage;
-  const mk = (): GPUBuffer => device.createBuffer({ size: nb, usage: U.STORAGE | U.COPY_DST | U.COPY_SRC });
-  const posB = [mk(), mk()];
-  const velB = [mk(), mk()];
-  let s = 0;
+  const { device, adapter } = context;
+  const adapterInfo = adapter.info;
+  const adapterName = adapterInfo.description || adapterInfo.device || adapterInfo.vendor || "WebGPU adapter";
+  const software = /software|swiftshader|llvmpipe|lavapipe/i.test(adapterName);
+  const query = new URLSearchParams(location.search);
+  const querySeed = Number.parseInt(query.get("seed") ?? "42", 10);
+  const initialSeed = Number.isFinite(querySeed) ? querySeed : 42;
+  const initialPreset = PRESETS.find((preset) => preset.label === query.get("preset")) ?? PRESETS[0]!;
+  const allowedCounts = [4_096, 16_384, 32_768, 65_536] as const;
+  const queryCount = Number.parseInt(query.get("n") ?? "", 10);
+  const initialCount = allowedCounts.find((count) => count === queryCount) ?? (software ? 4_096 : 32_768);
+  const allowedColors = ["natural", "heading", "speed", "alert"] as const;
+  const initialColor: ColorMode = allowedColors.includes(query.get("color") as ColorMode) ? query.get("color") as ColorMode : "natural";
+  let engine: MurmurationEngine;
+  let suspended = false;
+  let selectedPreset: MurmurationPreset = initialPreset;
+  const syncUrl = (): void => {
+    const params = new URLSearchParams();
+    params.set("preset", selectedPreset.label); params.set("n", String(engine.agentCount));
+    params.set("seed", String(panel.getState().seed)); params.set("color", engine.colorMode);
+    history.replaceState(null, "", `${location.pathname}?${params.toString()}`);
+  };
 
-  const paramBuf = device.createBuffer({ size: 32, usage: U.UNIFORM | U.COPY_DST });
-  {
-    const buf = new ArrayBuffer(32);
-    const dv = new DataView(buf);
-    dv.setUint32(0, NA, true);
-    dv.setFloat32(4, PARAMS.perception, true);
-    dv.setFloat32(8, PARAMS.v_max, true);
-    dv.setFloat32(12, PARAMS.w_sep, true);
-    dv.setFloat32(16, PARAMS.w_align, true);
-    dv.setFloat32(20, PARAMS.w_cohere, true);
-    dv.setFloat32(24, PARAMS.dt, true);
-    dv.setFloat32(28, 0, true);
-    queue.writeBuffer(paramBuf, 0, buf);
-  }
-
-  // Named flock regimes (house § 5.3, ruling D-P1.2(a)): live-loop presets
-  // over the SAME committed kernel — weight/perception uniforms only (v_max
-  // and dt stay canonical). Names describe the measured behavior of THIS
-  // kernel (distinctness screenshots + order parameters in the P-4 audit).
-  // The capture path steps with the canonical paramBuf above, never with the
-  // live regime buffer below.
-  interface FlockRegime {
-    label: string;
-    title: string;
-    w_sep: number;
-    w_align: number;
-    w_cohere: number;
-    perception: number;
-  }
-  const REGIMES: readonly FlockRegime[] = [
-    {
-      label: "canonical",
-      title: "Reynolds 1987 canonical weights — w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5. The capture regime.",
-      w_sep: PARAMS.w_sep, w_align: PARAMS.w_align, w_cohere: PARAMS.w_cohere, perception: PARAMS.perception,
-    },
-    {
-      label: "tight swarm",
-      title: "cohesion-dominant — w_cohere 2.5, w_sep 0.5: the flock contracts into a dense ball",
-      w_sep: 0.5, w_align: 1.0, w_cohere: 2.5, perception: 5.0,
-    },
-    {
-      label: "midge cloud",
-      title: "cohesion without alignment — w_cohere 2.0, w_sep 2.0, w_align 0.2, perception 8: a fast, agitated swarm that holds together without a common heading",
-      w_sep: 2.0, w_align: 0.2, w_cohere: 2.0, perception: 8.0,
-    },
-    {
-      label: "flocklets",
-      title: "short sight — canonical weights at perception 2: the flock fragments into many small independent groups",
-      w_sep: 1.5, w_align: 1.0, w_cohere: 1.0, perception: 2.0,
-    },
-  ];
-  let activeRegime: FlockRegime = REGIMES[0]!;
-  const liveParamBuf = device.createBuffer({ size: 32, usage: U.UNIFORM | U.COPY_DST });
-  function writeLiveParams(r: FlockRegime): void {
-    const buf = new ArrayBuffer(32);
-    const dv = new DataView(buf);
-    dv.setUint32(0, NA, true);
-    dv.setFloat32(4, r.perception, true);
-    dv.setFloat32(8, PARAMS.v_max, true);
-    dv.setFloat32(12, r.w_sep, true);
-    dv.setFloat32(16, r.w_align, true);
-    dv.setFloat32(20, r.w_cohere, true);
-    dv.setFloat32(24, PARAMS.dt, true);
-    dv.setFloat32(28, 0, true);
-    queue.writeBuffer(liveParamBuf, 0, buf);
-  }
-  writeLiveParams(activeRegime);
-
-  const computeModule = device.createShaderModule({ code: computeWgsl, label: "boids" });
-  const computeBGL = device.createBindGroupLayout({
-    entries: [
-      { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform" } },
-      { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-      { binding: 2, visibility: GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } },
-      { binding: 3, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-      { binding: 4, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } },
-    ],
-  });
-  const computePipeline = await device.createComputePipelineAsync({
-    layout: device.createPipelineLayout({ bindGroupLayouts: [computeBGL] }),
-    compute: { module: computeModule, entryPoint: "main" },
-  });
-  const computeBG = (src: number, params: GPUBuffer): GPUBindGroup =>
-    device.createBindGroup({
-      layout: computeBGL,
-      entries: [
-        { binding: 0, resource: { buffer: params } },
-        { binding: 1, resource: { buffer: posB[src]! } },
-        { binding: 2, resource: { buffer: velB[src]! } },
-        { binding: 3, resource: { buffer: posB[1 - src]! } },
-        { binding: 4, resource: { buffer: velB[1 - src]! } },
-      ],
-    });
-
-  const wg = Math.ceil(NA / 64);
-  function stepWith(params: GPUBuffer): void {
-    const enc = device.createCommandEncoder();
-    const pass = enc.beginComputePass();
-    pass.setPipeline(computePipeline);
-    pass.setBindGroup(0, computeBG(s, params));
-    pass.dispatchWorkgroups(wg);
-    pass.end();
-    queue.submit([enc.finish()]);
-    s = 1 - s;
-  }
-  // The capture path steps ONLY with the canonical paramBuf; the RAF live
-  // loop steps with the live regime buffer (D-P1.2(a) pinning split).
-  const stepCanonical = (): void => stepWith(paramBuf);
-  const stepLive = (): void => stepWith(liveParamBuf);
-
-  async function readBuf(buf: GPUBuffer): Promise<Float32Array> {
-    const rb = device.createBuffer({ size: nb, usage: U.COPY_DST | U.MAP_READ });
-    const enc = device.createCommandEncoder();
-    enc.copyBufferToBuffer(buf, 0, rb, 0, nb);
-    queue.submit([enc.finish()]);
-    await rb.mapAsync(GPUMapMode.READ);
-    const out = new Float32Array(rb.getMappedRange().slice(0));
-    rb.unmap();
-    rb.destroy();
-    return out;
-  }
-
-  async function loadIC(): Promise<void> {
-    const { pos, vel } = await fetchIC();
-    queue.writeBuffer(posB[0]!, 0, pos);
-    queue.writeBuffer(velB[0]!, 0, vel);
-    s = 0;
-  }
-
-  function speeds(vel: Float32Array): { max: number; mean: number } {
-    let max = 0;
-    let sum = 0;
-    for (let a = 0; a < NA; a += 1) {
-      const m = Math.hypot(vel[a * 3]!, vel[a * 3 + 1]!, vel[a * 3 + 2]!);
-      if (m > max) max = m;
-      sum += m;
-    }
-    return { max, mean: sum / NA };
-  }
-
-  async function captureCanonical(): Promise<void> {
-    panel.setStatus("flocking… (1000 steps)");
-    panel.setCaptureEnabled(false);
-    resetCapture();
-    await loadIC();
-    const steps: CaptureStepDescriptor[] = [];
-    const record = async (idx: number): Promise<void> => {
-      const pos = await readBuf(posB[s]!);
-      const vel = await readBuf(velB[s]!);
-      const p64 = new Float64Array(pos);
-      const v64 = new Float64Array(vel);
-      const sp = speeds(vel);
-      steps.push({
-        step: idx,
-        state: { position: field(p64, [NA, 3], "f64"), velocity: field(v64, [NA, 3], "f64") },
-        diagnostics: { max_speed: sp.max, mean_speed: sp.mean },
-      });
-    };
-    await record(0);
-    for (let st = 1; st <= STEPS; st += 1) {
-      stepCanonical();
-      if (st % CAPTURE_INTERVAL === 0 || st === STEPS) await record(st);
-    }
-    exposeCapture(
-      {
-        manifest: {
-          schema_version: "1.0.0",
-          sim: { name: "boids-3d", category: "agent-based", variant: "reynolds-1987-canonical" },
-          stack: { name: "webgpu", version: "0.0.1", build_id: "web-build-5.x" },
-          config: { tier: "test", dims: [NA, 3], dtype: "f64", seed: 42, params: { ...PARAMS, n_agents: NA, perception_radius: PARAMS.perception, ic_jitter_scale: 1e-6 } },
-          run: { step_count: STEPS, capture_interval: CAPTURE_INTERVAL, wall_clock_seconds: 0, start_utc: "2026-05-20T00:00:00Z" },
-          payload: { format: "hdf5", path: "flock-1000agents-seed42-step1000.h5", checksum: "sha256:" + "0".repeat(64) },
-          determinism: { claimed: "epsilon", atomic_ops: false, subgroup_ops: false },
-        },
-        steps,
+  const panel = createSettingsPanel("Murmuration Lab", {
+    caption: "A GPU-scale starling flock: topological neighbors, bounded turning, banking, threat waves, and no leader.",
+    initial: { tier: "demo", seed: initialSeed },
+    onCapture: async () => captureLegacyCanonical(device, panel),
+    onChange: ({ seed }) => engine?.reset(seed),
+    presets: PRESETS.map((preset) => ({
+      label: preset.label,
+      title: preset.title,
+      apply: () => {
+        selectedPreset = preset;
+        engine.setPreset(preset, panel.getState().seed);
+        syncUrl();
+        panel.setStatus(`${preset.label} — ${preset.title}`);
       },
-      { download: false },
-    );
-    panel.setStatus(`capture ready — ${steps.length} frames (sensitive; new-canonical)`);
-    panel.setCaptureEnabled(true);
-    await loadIC();
-  }
-
-  // render
-  const gpuCanvas = canvas.getContext("webgpu") as GPUCanvasContext;
-  const format = navigator.gpu.getPreferredCanvasFormat();
-  gpuCanvas.configure({ device, format, alphaMode: "opaque" });
-  const renderModule = device.createShaderModule({ code: renderWgsl, label: "boids-render" });
-  const renderBGL = device.createBindGroupLayout({
-    entries: [
-      { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
-      { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
-      { binding: 2, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
-    ],
-  });
-  // 32 bytes: [aspect, angle, n, _pad, fit_center.xyz, fit_scale] — the P-6
-  // ratified display-only camera-fit slots (render.wgsl header). Identity
-  // (center 0, scale 1) reproduces the pre-fit framing bit-exactly.
-  const renderUniform = device.createBuffer({ size: 32, usage: U.UNIFORM | U.COPY_DST });
-  const renderPipeline = await device.createRenderPipelineAsync({
-    layout: device.createPipelineLayout({ bindGroupLayouts: [renderBGL] }),
-    vertex: { module: renderModule, entryPoint: "vs_main" },
-    fragment: { module: renderModule, entryPoint: "fs_main", targets: [{ format }] },
-    primitive: { topology: "triangle-list" },
-  });
-
-  // Study diagnostics (house § 5.4): flock statistics measured via the SAME
-  // readBuf readback the capture path uses, on the live state buffers. The
-  // sequence token drops superseded measurements (P-3 §9 lesson, binding rule
-  // P-4 §0.5.2 — pattern from packages/strange-attractors/web/src/main.ts).
-  let diagSeq = 0;
-  async function measureStudyDiagnostics(): Promise<void> {
-    const seq = ++diagSeq;
-    const pos = await readBuf(posB[s]!);
-    const vel = await readBuf(velB[s]!);
-    if (seq !== diagSeq) return;
-    const sp = speeds(vel);
-    // polarization |Σ v̂|/N (1 = all aligned) and rms distance to centroid
-    let ux = 0, uy = 0, uz = 0, cx = 0, cy = 0, cz = 0;
-    for (let a = 0; a < NA; a += 1) {
-      const m = Math.hypot(vel[a * 3]!, vel[a * 3 + 1]!, vel[a * 3 + 2]!);
-      if (m > 1e-12) {
-        ux += vel[a * 3]! / m; uy += vel[a * 3 + 1]! / m; uz += vel[a * 3 + 2]! / m;
-      }
-      cx += pos[a * 3]!; cy += pos[a * 3 + 1]!; cz += pos[a * 3 + 2]!;
-    }
-    cx /= NA; cy /= NA; cz /= NA;
-    let r2 = 0;
-    for (let a = 0; a < NA; a += 1) {
-      r2 += (pos[a * 3]! - cx) ** 2 + (pos[a * 3 + 1]! - cy) ** 2 + (pos[a * 3 + 2]! - cz) ** 2;
-    }
-    const reg = activeRegime;
-    panel.setDiagnostics([
-      { label: "live regime", value: reg.label },
-      { label: "agents", value: String(NA) },
-      { label: "live step", value: `${liveStep} (IC reset @ ${STEPS})` },
-      { label: "weights s/a/c", value: `${reg.w_sep} / ${reg.w_align} / ${reg.w_cohere}` },
-      { label: "perception", value: reg.perception.toFixed(1) },
-      { label: "mean speed", value: sp.mean.toFixed(3) },
-      { label: "max speed", value: `${sp.max.toFixed(3)} (clamp ${PARAMS.v_max})` },
-      { label: "polarization", value: (Math.hypot(ux, uy, uz) / NA).toFixed(3) },
-      { label: "rms spread", value: Math.sqrt(r2 / NA).toFixed(2) },
-      { label: "capture pinned to", value: "canonical, seed 42" },
-    ]);
-  }
-
-  function applyRegime(r: FlockRegime): void {
-    activeRegime = r;
-    writeLiveParams(r);
-    panel.setStatus(
-      r === REGIMES[0]
-        ? "live flock: canonical — the capture regime"
-        : `live flock: ${r.label} — capture stays pinned to canonical seed-42`,
-    );
-    if (suspended) void measureStudyDiagnostics();
-  }
-
-  const panel = createSettingsPanel("Boids 3D", {
-    caption: "A murmuration from three local rules — separation, alignment, cohesion. No leader, no plan; the flock is the physics.",
-    initial: { tier: "test", seed: 42 },
-    onCapture: captureCanonical,
-    presets: REGIMES.map((r) => ({
-      label: r.label,
-      title: r.title,
-      apply: () => applyRegime(r),
     })),
     modes: {
       initial: "play",
-      onMode: (m) => {
-        suspended = m === "study";
-        if (suspended) void measureStudyDiagnostics();
-      },
+      onMode: (mode) => { suspended = mode === "study"; engine.paused = suspended; },
     },
     study: {
-      diagnostics: [{ label: "diagnostics", value: "measuring…" }],
+      diagnostics: [{ label: "diagnostics", value: "warming up…" }],
       honesty: {
-        faithful:
-          "the committed boids.wgsl Reynolds kernel — the same flocking compute the wgpu-native gate runs (w_sep 1.5, w_align 1.0, w_cohere 1.0, perception 5, v_max 3, dt 0.05; seed-42 IC); every displayed frame is a real kernel step",
-        simplified:
-          "f32 + sensitive dependence: agreement with the f64 canonical holds at the step-100 short horizon but diverges by step 1000, so the gate is determinism + invariants, not pointwise; presets and cursor drive the live loop only — the capture re-runs from the seed-42 IC with the canonical params; the live flock restarts from the IC every 1000 steps; camera framing is presentation-side (a position readback drives display-only scale/center render uniforms) — simulation state unaffected",
-        measured:
-          "flock statistics read back from the live position/velocity buffers on entering Study and on preset change (stepping is paused in Study; the view keeps rendering)",
+        faithful: "The live engine uses a topological seven-neighbor rule, metric collision zone, rear blind cone, bounded turn rate, speed relaxation, banking, and compact GPU reductions. Every bird is an oriented procedural mesh driven directly by simulated state.",
+        simplified: "This is an explanatory starling-inspired model, not an animal-identification model. Aerodynamics, vision, decision latency, and predator strategy are reduced to interactive controls. The neighbor search is a GPU spatial-grid candidate search.",
+        measured: "Polarization, milling, neighbor count, speed, threat, radius, and vertical spread are reduced on the GPU and only 64 bytes are read back at low frequency. The canonical capture remains the frozen Reynolds-1987 verification case.",
       },
-      verdict: {
-        gate: "new_canonical + run-twice (byte-identical runs; step-100 match to the f64 reference; v_max clamp)",
-        verdict: "PASS",
-        pass: true,
-      },
+      verdict: { gate: "legacy canonical + deterministic live invariants", verdict: "PASS", pass: true },
       links: [
-        {
-          label: "sim spec",
-          href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/agent-based/boids-3d/spec-ref.md",
-        },
-        {
-          label: "audit ledger",
-          href: "https://github.com/StevenFAU/Bit-Physics/tree/main/docs/_audits",
-        },
+        { label: "research & shipping spec", href: "https://github.com/StevenFAU/Bit-Physics/blob/main/packages/boids-3d/web/feature-expansion-spec.md" },
+        { label: "canonical sim spec", href: "https://github.com/StevenFAU/Bit-Physics/blob/main/docs/sim-specs/agent-based/boids-3d/spec-ref.md" },
       ],
     },
   });
-  panel.setActivePreset("canonical");
-  await loadIC();
-  boot.textContent = "";
-  let angle = 0;
-  let liveStep = 0;
-  // Study = pause stepping, keep presenting (P-4 rule 0.5.3): measured at
-  // HEAD, the render path is read-only over pos/vel (render.wgsl declares
-  // var<storage, read>; the render encoder dispatches no compute), so
-  // render-without-step is a clean separation — the frozen flock stays
-  // orbitable while the physics is suspended (D-P1.2(b)).
-  let suspended = false;
 
-  // Auto-framing (P-6 Stage 1b, over the D-P1.2(c)-ratified fit slots — see
-  // render.wgsl header): a low-rate position READBACK through the SAME readBuf
-  // path the capture and Study diagnostics use measures the flock's bounding
-  // box; the RAF loop damps the displayed fit toward it (smooth follow, no
-  // snaps). Display-only: the values land in the render uniform alone, written
-  // ONLY inside frame() — which early-returns while isCapturing(), so the
-  // capture path never renders a fitted frame; nothing here is read by
-  // stepLive/stepCanonical/captureCanonical. The orbit spins around y, so the
-  // horizontal bound uses the worst-case xz radius (rotation-safe).
-  const FIT_MARGIN = 0.8; // flock half-extent targets ~80% of the frame
-  const FIT_DAMP = 0.04; // per-frame exponential approach (~0.4 s at 60 fps)
-  const FIT_READBACK_MS = 250;
-  const FIT_SCALE_MIN = 0.05; // zoom-out floor (flocklets dispersal)
-  const FIT_SCALE_MAX = 2.0; // zoom-in ceiling (tight swarm)
-  const fit = { scale: 1, cx: 0, cy: 0, cz: 0 };
-  const fitTarget = { scale: 1, cx: 0, cy: 0, cz: 0 };
-  async function measureFitTarget(): Promise<void> {
-    try {
-      if (!isCapturing()) {
-        const pos = await readBuf(posB[s]!);
-        let lx = Infinity, ly = Infinity, lz = Infinity, hx = -Infinity, hy = -Infinity, hz = -Infinity;
-        for (let a = 0; a < NA; a += 1) {
-          const x = pos[a * 3]!, y = pos[a * 3 + 1]!, z = pos[a * 3 + 2]!;
-          if (x < lx) lx = x; if (x > hx) hx = x;
-          if (y < ly) ly = y; if (y > hy) hy = y;
-          if (z < lz) lz = z; if (z > hz) hz = z;
-        }
-        const cx = (lx + hx) / 2, cy = (ly + hy) / 2, cz = (lz + hz) / 2;
-        let rxz2 = 0;
-        for (let a = 0; a < NA; a += 1) {
-          const dx = pos[a * 3]! - cx, dz = pos[a * 3 + 2]! - cz;
-          const r2 = dx * dx + dz * dz;
-          if (r2 > rxz2) rxz2 = r2;
-        }
-        const rxz = Math.max(Math.sqrt(rxz2), 1e-3);
-        const ry = Math.max((hy - ly) / 2, 1e-3);
-        const aspect = canvas.width / canvas.height;
-        const sH = (FIT_MARGIN * aspect) / (0.06 * rxz);
-        const sV = FIT_MARGIN / (0.06 * ry);
-        fitTarget.scale = Math.min(Math.max(Math.min(sH, sV), FIT_SCALE_MIN), FIT_SCALE_MAX);
-        fitTarget.cx = cx; fitTarget.cy = cy; fitTarget.cz = cz;
-      }
-    } finally {
-      setTimeout(() => void measureFitTarget(), FIT_READBACK_MS);
-    }
-  }
-  void measureFitTarget();
+  boot.textContent = "compiling spatial grid, flock, and bird pipelines…";
+  engine = await MurmurationEngine.create(device, canvas, initialCount);
+  engine.setPreset(initialPreset, initialSeed);
+  engine.colorMode = initialColor;
+  panel.setActivePreset(initialPreset.label);
+  engine.paused = suspended;
 
-  // Cursor-as-camera (house § 5.1, D-P1.2(a) class): drag orbits the flock by
-  // driving the SAME render-uniform angle slot the auto-orbit writes — live
-  // loop only; nothing here is read by captureCanonical/readBuf/step. The
-  // auto-orbit resumes after AUTO_ORBIT_IDLE_MS without pointer input. The
-  // render loop keeps presenting in Study, so dragging works there too.
-  const AUTO_ORBIT_IDLE_MS = 4000;
-  const DRAG_RAD_PER_PX = 0.008;
-  let lastPointerMs = -AUTO_ORBIT_IDLE_MS; // boot: auto-orbit live immediately
-  let dragPointer: number | null = null;
-  let dragX = 0;
-  canvas.style.cursor = "grab";
-  canvas.addEventListener("pointerdown", (e) => {
-    dragPointer = e.pointerId;
-    dragX = e.clientX;
-    lastPointerMs = performance.now();
-    canvas.setPointerCapture(e.pointerId);
-    canvas.style.cursor = "grabbing";
+  const population = panel.addGroup("flock scale");
+  const initialCountLabel = initialCount.toLocaleString("en-US") as "4,096" | "16,384" | "32,768" | "65,536";
+  const populationSelect = select(["4,096", "16,384", "32,768", "65,536"] as const,
+    initialCountLabel, (value) => {
+      engine.setAgentCount(Number(value.replace(",", "")), panel.getState().seed);
+      syncUrl();
+      panel.setStatus(`${value} birds — state rebuilt on the GPU`);
+    });
+  population.appendChild(row("birds", populationSelect));
+
+  const interaction = panel.addGroup("interact — drag the sky");
+  const toolSelect = select(["orbit", "attract", "repel", "falcon", "gust"] as const, "orbit", (value) => {
+    engine.setTool(value); canvas.dataset.tool = value;
+    panel.setStatus(value === "orbit" ? "drag to orbit; wheel to zoom" : `drag to apply ${value}`);
   });
-  canvas.addEventListener("pointermove", (e) => {
-    if (dragPointer !== e.pointerId) return;
-    angle += (e.clientX - dragX) * DRAG_RAD_PER_PX;
-    dragX = e.clientX;
-    lastPointerMs = performance.now();
-  });
-  const endDrag = (e: PointerEvent): void => {
-    if (dragPointer !== e.pointerId) return;
-    dragPointer = null;
-    lastPointerMs = performance.now();
-    canvas.style.cursor = "grab";
+  interaction.appendChild(row("tool", toolSelect));
+  const radiusControl = range(6, 32, 1, 18, (v) => v.toFixed(0), (v) => engine.setToolRadius(v));
+  interaction.appendChild(row("radius", radiusControl.input, radiusControl.output));
+  const strengthControl = range(0.5, 8, 0.1, 3.2, (v) => v.toFixed(1), (v) => engine.setToolStrength(v));
+  interaction.appendChild(row("strength", strengthControl.input, strengthControl.output));
+  const hint = document.createElement("p"); hint.className = "murmuration-hint";
+  hint.textContent = "Attract gathers. Repel opens a void. Falcon launches a propagating escape wave. Gust curls the flock.";
+  interaction.appendChild(hint);
+
+  const display = panel.addGroup("cinematography");
+  const colorSelect = select(allowedColors, initialColor, (value: ColorMode) => { engine.colorMode = value; syncUrl(); });
+  display.appendChild(row("color", colorSelect));
+  const cameraSelect = select(["orbit", "chase", "director"] as const, "director", (value: CameraMode) => { engine.cameraMode = value; });
+  display.appendChild(row("camera", cameraSelect));
+  const actions = document.createElement("div"); actions.className = "murmuration-actions";
+  const action = (label: string, run: () => void): HTMLButtonElement => {
+    const button = document.createElement("button"); button.type = "button"; button.textContent = label;
+    button.addEventListener("click", run); return button;
   };
-  canvas.addEventListener("pointerup", endDrag);
-  canvas.addEventListener("pointercancel", endDrag);
+  const pauseButton = action("pause", () => {
+    engine.paused = !engine.paused; suspended = engine.paused;
+    pauseButton.textContent = engine.paused ? "play" : "pause";
+    panel.setStatus(engine.paused ? "physics paused — orbit and step remain available" : "physics resumed");
+  });
+  actions.append(
+    pauseButton,
+    action("step", () => { engine.paused = true; suspended = true; pauseButton.textContent = "play"; engine.stepOnce(); }),
+    action("reset", () => engine.reset(panel.getState().seed)),
+    action("share", () => {
+      syncUrl();
+      void navigator.clipboard?.writeText(location.href).then(
+        () => panel.setStatus("share URL copied"),
+        () => panel.setStatus("share state is now in the address bar"),
+      );
+    }),
+  );
+  display.appendChild(actions);
+  const birdScale = document.createElement("span");
+  birdScale.className = "murmuration-hint";
+  birdScale.textContent = "Drag: orbit/tool · wheel: dolly · double-click: reset view";
+  display.appendChild(birdScale);
+  syncUrl();
 
-  function frame(): void {
-    if (isCapturing()) { requestAnimationFrame(frame); return; }
-    if (!suspended) {
-      stepLive();
-      liveStep += 1;
-      if (liveStep > STEPS) { void loadIC(); liveStep = 0; }
+  let pointer: number | null = null;
+  let activeTool: ToolMode = "orbit";
+  let previousX = 0; let previousY = 0;
+  toolSelect.addEventListener("change", () => { activeTool = toolSelect.value as ToolMode; });
+  canvas.addEventListener("pointerdown", (event) => {
+    pointer = event.pointerId; previousX = event.clientX; previousY = event.clientY;
+    canvas.setPointerCapture(event.pointerId); canvas.classList.add("is-dragging");
+    if (activeTool !== "orbit") engine.setToolPoint(engine.screenToFlockPlane(event.clientX, event.clientY), true);
+  });
+  canvas.addEventListener("pointermove", (event) => {
+    if (pointer !== event.pointerId) return;
+    const dx = event.clientX - previousX; const dy = event.clientY - previousY;
+    if (activeTool === "orbit") {
+      engine.camera.yaw -= dx * 0.006;
+      engine.camera.pitch = Math.max(-1.05, Math.min(1.05, engine.camera.pitch + dy * 0.005));
+    } else {
+      engine.setToolPoint(engine.screenToFlockPlane(event.clientX, event.clientY), true, [dx, -dy, 0]);
     }
-    if (performance.now() - lastPointerMs > AUTO_ORBIT_IDLE_MS) angle += 0.003;
-    fit.scale += (fitTarget.scale - fit.scale) * FIT_DAMP;
-    fit.cx += (fitTarget.cx - fit.cx) * FIT_DAMP;
-    fit.cy += (fitTarget.cy - fit.cy) * FIT_DAMP;
-    fit.cz += (fitTarget.cz - fit.cz) * FIT_DAMP;
-    queue.writeBuffer(renderUniform, 0, new Float32Array([canvas.width / canvas.height, angle, NA, 0, fit.cx, fit.cy, fit.cz, fit.scale]));
-    const renderBG = device.createBindGroup({
-      layout: renderBGL,
-      entries: [
-        { binding: 0, resource: { buffer: renderUniform } },
-        { binding: 1, resource: { buffer: posB[s]! } },
-        { binding: 2, resource: { buffer: velB[s]! } },
-      ],
-    });
-    const enc = device.createCommandEncoder();
-    const pass = enc.beginRenderPass({
-      colorAttachments: [
-        { view: gpuCanvas.getCurrentTexture().createView(), loadOp: "clear", storeOp: "store", clearValue: { r: 0.02, g: 0.02, b: 0.04, a: 1 } },
-      ],
-    });
-    pass.setPipeline(renderPipeline);
-    pass.setBindGroup(0, renderBG);
-    pass.draw(NA * 6); // 6 vertices per agent — quad sprites (render.wgsl)
-    pass.end();
-    queue.submit([enc.finish()]);
+    previousX = event.clientX; previousY = event.clientY;
+  });
+  const release = (event: PointerEvent): void => {
+    if (pointer !== event.pointerId) return;
+    pointer = null; canvas.classList.remove("is-dragging"); engine.setToolPoint([0, 0, 0], false);
+  };
+  canvas.addEventListener("pointerup", release); canvas.addEventListener("pointercancel", release);
+  canvas.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    engine.camera.distance = Math.max(38, Math.min(190, engine.camera.distance * Math.exp(event.deltaY * 0.001)));
+  }, { passive: false });
+  canvas.addEventListener("dblclick", () => {
+    engine.camera.yaw = -0.35; engine.camera.pitch = 0.14; engine.camera.distance = 104;
+  });
+
+  device.lost.then((info) => {
+    boot.textContent = `GPU device lost: ${info.message || info.reason}`;
+    panel.setStatus("GPU device lost — reload to restart");
+  }).catch(() => undefined);
+
+  let lastDiagnostics = 0;
+  const frame = (now: number): void => {
+    if (!isCapturing()) engine.frame(now);
+    if (now - lastDiagnostics > 300) {
+      setDiagnostics(panel, engine, adapterName); lastDiagnostics = now;
+    }
     requestAnimationFrame(frame);
-  }
+  };
   requestAnimationFrame(frame);
+  boot.textContent = "";
+  panel.setStatus(software && initialCount === 4_096
+    ? "software WebGPU detected — 4,096-bird safe mode"
+    : `${initialCount.toLocaleString()} birds — drag to orbit, choose a tool to perturb`);
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 

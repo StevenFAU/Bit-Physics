@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — Boids 3D (Reynolds flocking). Ships the committed boids.wgsl through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
+  "description": "WebGPU Murmuration Lab — topological starling flocking, banked procedural birds, GPU spatial grid, live instruments, and a frozen Reynolds capture gate.",
   "scripts": { "build": "vite build", "dev": "vite", "preview": "vite preview", "typecheck": "tsc --noEmit" },
   "devDependencies": { "@webgpu/types": "0.1.70", "typescript": "6.0.3", "vite": "6.4.3" }
 }

@@ -3,27 +3,27 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Boids 3D — Bit-Physics</title>
-    <meta name="description" content="A murmuration from three local rules — separation, alignment, cohesion. No leader, no plan; the flock is the physics." />
+    <title>Murmuration Lab — Bit-Physics</title>
+    <meta name="description" content="A GPU-scale starling flock with topological neighbors, banking, threat waves, and direct interaction." />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Boids 3D — Bit-Physics" />
-    <meta property="og:description" content="A murmuration from three local rules — separation, alignment, cohesion. No leader, no plan; the flock is the physics." />
+    <meta property="og:title" content="Murmuration Lab — Bit-Physics" />
+    <meta property="og:description" content="A GPU-scale starling flock with topological neighbors, banking, threat waves, and direct interaction." />
     <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/boids-3d/" />
     <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/boids-3d.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Boids 3D — Bit-Physics" />
-    <meta name="twitter:description" content="A murmuration from three local rules — separation, alignment, cohesion. No leader, no plan; the flock is the physics." />
+    <meta name="twitter:title" content="Murmuration Lab — Bit-Physics" />
+    <meta name="twitter:description" content="A GPU-scale starling flock with topological neighbors, banking, threat waves, and direct interaction." />
     <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/boids-3d.png" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <style>
       /* Pre-bundle paint only — the canon is common-web/src/theme.css,
          imported by src/main.ts and bundled by Vite. */
       html, body { margin: 0; height: 100%; background: #06090d; }
-      #view { width: min(96vmin, 860px); height: min(96vmin, 860px); }
+      #view { width: min(96vw, 1280px); height: min(82vh, 760px); }
     </style>
   </head>
   <body>
-    <div id="app" class="bps-stage"><canvas id="view" width="720" height="720" class="bps-canvas"></canvas></div>
+    <div id="app" class="bps-stage"><canvas id="view" width="1280" height="720" class="bps-canvas" aria-label="Interactive 3D starling murmuration"></canvas></div>
     <div id="boot" class="bps-boot">initializing WebGPU…</div>
     <script type="module" src="/src/main.ts"></script>
   </body>
