@@ -50,6 +50,7 @@ EXPECTED_SIMS = {
     "pic-flip",
     "schrodinger-smoke",
     "sph-water",
+    "sph-multiphase",
 }
 
 

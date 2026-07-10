@@ -303,6 +303,7 @@ GATE_KIND = {
     "physarum": "new_canonical",
     "eulerian-smoke": "new_canonical",
     "sph-water": "new_canonical",
+    "sph-multiphase": "new_canonical",
     "mpm-multimaterial": "new_canonical",
     "pic-flip": "new_canonical",
 }
@@ -1111,6 +1112,115 @@ def _gate_sph_water(bundles: list[dict]) -> VerifyResult:
             "::16 subsample at h=0.026 (CANONICAL_H, not the manifest's "
             "stale 0.05), plus the closed-form golden/fixture/hash==brute/"
             "mirror artifact suite",
+        },
+    )
+
+
+def _gate_sph_multiphase(bundles: list[dict]) -> VerifyResult:
+    """Two-fluid robust-observable gate plus same-adapter byte identity.
+
+    The capillary trajectory is deliberately not compared pointwise across GPU
+    vendors. The browser must, however, reproduce itself exactly, preserve two
+    phase labels and mass accounting, emit finite number-density/interface
+    state, keep the pressure residual bounded, and leave the deterministic cell
+    sort unsaturated. These thresholds were declared with the implementation,
+    before the final browser run.
+    """
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    twice = None
+    if len(bundles) > 1:
+        steps1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in steps1
+            and set(st["state"]) == set(steps1[st["step"]]["state"])
+            and all(
+                np.array_equal(_field(st, key), _field(steps1[st["step"]], key))
+                for key in st["state"]
+            )
+            for st in steps0
+        )
+    expected_steps = [1, 4, 8]
+    if [s["step"] for s in steps0] != expected_steps:
+        return VerifyResult(
+            sim="sph-multiphase",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": "checkpoint set differs", "expected": expected_steps},
+        )
+    finite = True
+    phases_ok = True
+    density_positive = True
+    interface_present = True
+    mass_ok = True
+    sort_ok = True
+    worst_compression = 0.0
+    max_speed = 0.0
+    for st in steps0:
+        for key in (
+            "position",
+            "velocity",
+            "phase",
+            "number_density",
+            "interface_weight",
+        ):
+            finite = finite and bool(np.isfinite(_field(st, key)).all())
+        phase = _field(st, "phase")
+        phases_ok = phases_ok and bool(np.all((phase == 0.0) | (phase == 1.0)))
+        phases_ok = phases_ok and bool(np.any(phase == 0.0) and np.any(phase == 1.0))
+        density_positive = density_positive and bool(
+            np.all(_field(st, "number_density") > 0.0)
+        )
+        interface_present = interface_present and bool(
+            np.any(_field(st, "interface_weight") > 0.0)
+        )
+        d = st.get("diagnostics", {})
+        worst_compression = max(
+            worst_compression, float(d.get("max_compression", math.inf))
+        )
+        max_speed = max(max_speed, float(d.get("max_speed", math.inf)))
+        mass_ok = (
+            mass_ok
+            and float(d.get("phase_a_mass", 0.0)) > 0.0
+            and float(d.get("phase_b_mass", 0.0)) > 0.0
+        )
+        sort_ok = sort_ok and float(d.get("sort_saturated", 1.0)) == 0.0
+    # The gate fixture begins from a close-packed lattice. Six correction
+    # sweeps are allowed a 50% worst local residual during the first 8 explicit
+    # capillary steps; NaN/velocity/sort checks catch explosive failure.
+    compression_ok = worst_compression <= 0.5
+    velocity_ok = max_speed <= 50.0
+    passed = bool(
+        twice is True
+        and finite
+        and phases_ok
+        and density_positive
+        and interface_present
+        and mass_ok
+        and sort_ok
+        and compression_ok
+        and velocity_ok
+    )
+    return VerifyResult(
+        sim="sph-multiphase",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "finite": finite,
+            "both_phases_preserved": phases_ok,
+            "number_density_positive": density_positive,
+            "interface_present": interface_present,
+            "phase_mass_positive": mass_ok,
+            "cell_sort_unsaturated": sort_ok,
+            "worst_compression": worst_compression,
+            "compression_budget": 0.5,
+            "max_speed": max_speed,
+            "velocity_budget": 50.0,
+            "note": "same live WGSL number-density/pressure/viscosity/surface "
+            "passes as the instrument; robust observables across devices",
         },
     )
 
@@ -2704,6 +2814,7 @@ _GATES = {
     "physarum": _gate_physarum,
     "eulerian-smoke": _gate_eulerian_smoke,
     "sph-water": _gate_sph_water,
+    "sph-multiphase": _gate_sph_multiphase,
     "mpm-multimaterial": _gate_mpm_multimaterial,
     "pic-flip": _gate_pic_flip,
     "schrodinger-smoke": _gate_schrodinger_smoke,

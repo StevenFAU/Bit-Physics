@@ -122,7 +122,21 @@ async function captureOnce(browser, baseUrl, runIdx) {
 
   // Drive the capture-export hook and wait for the browser to publish the capture.
   await page.evaluate(() => { window.__bitPhysicsCaptureReady = false; });
-  await page.click('[data-bp="capture"]');
+  // The panel mount/readiness assertions above already prove the control
+  // exists on the successful WebGPU path.  Do not route this harness action
+  // through Playwright's visual-actionability heuristics: after a long GPU
+  // capture, a fresh context can have a fully mounted button while Chromium's
+  // compositor never reports it "stable" within page.click's fixed 30 s
+  // action timeout (curl-noise run-twice on CI lavapipe, reproduced twice).
+  // Native click invokes the exact same listener and runCaptureExclusive lock
+  // as a user click; it only removes the unrelated layout/compositor wait.
+  await page.evaluate(() => {
+    const capture = document.querySelector('[data-bp="capture"]');
+    if (!(capture instanceof HTMLButtonElement)) {
+      throw new Error("capture button missing after panel mount assertion");
+    }
+    capture.click();
+  });
   await page.waitForFunction(() => window.__bitPhysicsCaptureReady === true, undefined, { timeout: CAPTURE_TIMEOUT_MS });
   const bundle = await page.evaluate(() => window.__bitPhysicsCapture);
   if (!bundle || !bundle.steps || bundle.steps.length === 0) {

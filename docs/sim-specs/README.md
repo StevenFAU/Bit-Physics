@@ -51,6 +51,9 @@ tests + goldens / MMS; sim implementation deferred to per-sim Phase
 - [sph-water](particle-fluids/sph-water/) — DFSPH (Bender-Koschier
   2015) with screen-space rendering. Stack C, references the Phase
   0-vendored SPlisHSPlasH (`references/SPlisHSPlasH/`). Charter § 7.7.
+- [sph-multiphase](particle-fluids/sph-multiphase/) — equal-volume,
+  number-density incompressible SPH for two immiscible liquids, with calibrated
+  surface tension, physical viscosity, wetting, and a phase-aware WebGPU lab.
 
 ### Volumetric grid
 

@@ -76,6 +76,7 @@ members = [
     "reaction-diffusion-3d",
     "schrodinger-smoke",
     "signal-workbench",
+    "sph-multiphase",
     "sph-water",
     "sph-water-diff",
     "sph-water-stack-d",
@@ -4584,6 +4585,36 @@ sdist = { url = "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f233
 wheels = [
     { url = "https://files.pythonhosted.org/packages/32/46/9cb0e58b2deb7f82b84065f37f3bffeb12413f947f9388e4cac22c4621ce/sortedcontainers-2.4.0-py2.py3-none-any.whl", hash = "sha256:a163dcaede0f1c021485e957a39245190e74249897e2ae4b2aa38595db237ee0", size = 29575, upload-time = "2021-05-16T22:03:41.177Z" },
 ]
+
+[[package]]
+name = "sph-multiphase"
+version = "0.1.0"
+source = { editable = "packages/sph-multiphase" }
+dependencies = [
+    { name = "bit-physics-testkit" },
+    { name = "h5py" },
+    { name = "hypothesis" },
+    { name = "numpy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "h5py", specifier = ">=3.10" },
+    { name = "hypothesis", specifier = ">=6.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.10" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.6" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "sph-water"

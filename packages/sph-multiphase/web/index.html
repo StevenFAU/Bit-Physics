@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Interfacial Fluid Lab — Bit-Physics</title>
+    <meta name="description" content="A verified WebGPU instrument for two immiscible SPH liquids: surface tension, density contrast, viscosity, wetting, injection, and live interface diagnostics." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Interfacial Fluid Lab — Bit-Physics" />
+    <meta property="og:description" content="Conduct two immiscible liquids and inspect the pressure, curvature, capillary regimes, and verification evidence behind the image." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/sph-multiphase/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/sph-multiphase.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Interfacial Fluid Lab — Bit-Physics" />
+    <meta name="twitter:description" content="Two-liquid number-density SPH with interactive surface tension and wetting." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/sph-multiphase.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <style>
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(94vmin, 900px); height: min(94vmin, 900px); touch-action: none; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="900" height="900" class="bps-canvas" aria-label="Interactive two-fluid particle simulation"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -28,6 +28,9 @@ members = [
   "packages/physarum",
   "packages/reaction-diffusion-3d",
   "packages/sph-water",
+  # Two-immiscible-liquid number-density SPH instrument.  The Python f64
+  # reference and the WebGPU live path share the INDSPH/Akinci primitives.
+  "packages/sph-multiphase",
   "packages/eulerian-smoke",
   "packages/lattice-boltzmann-d3q19",
   "packages/mpm-multimaterial",
