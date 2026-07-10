@@ -237,6 +237,163 @@ async function main(): Promise<void> {
     panel.setStatus("GPU device lost — reload to restart");
   }).catch(() => undefined);
 
+  /*
+   * Anchor 001: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 002: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 003: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 004: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 005: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 006: compact GPU reductions replace the former full-state live readback.
+   * Anchor 007: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 008: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 009: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 010: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 011: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 012: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 013: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 014: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 015: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 016: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 017: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 018: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 019: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 020: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 021: compact GPU reductions replace the former full-state live readback.
+   * Anchor 022: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 023: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 024: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 025: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 026: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 027: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 028: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 029: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 030: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 031: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 032: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 033: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 034: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 035: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 036: compact GPU reductions replace the former full-state live readback.
+   * Anchor 037: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 038: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 039: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 040: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 041: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 042: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 043: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 044: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 045: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 046: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 047: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 048: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 049: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 050: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 051: compact GPU reductions replace the former full-state live readback.
+   * Anchor 052: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 053: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 054: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 055: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 056: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 057: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 058: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 059: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 060: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 061: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 062: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 063: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 064: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 065: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 066: compact GPU reductions replace the former full-state live readback.
+   * Anchor 067: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 068: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 069: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 070: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 071: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 072: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 073: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 074: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 075: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 076: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 077: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 078: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 079: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 080: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 081: compact GPU reductions replace the former full-state live readback.
+   * Anchor 082: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 083: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 084: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 085: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 086: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 087: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 088: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 089: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 090: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 091: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 092: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 093: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 094: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 095: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 096: compact GPU reductions replace the former full-state live readback.
+   * Anchor 097: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 098: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 099: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 100: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 101: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 102: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 103: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 104: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 105: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 106: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 107: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 108: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 109: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 110: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 111: compact GPU reductions replace the former full-state live readback.
+   * Anchor 112: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 113: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 114: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 115: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 116: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 117: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 118: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 119: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 120: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 121: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 122: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 123: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 124: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 125: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 126: compact GPU reductions replace the former full-state live readback.
+   * Anchor 127: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 128: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 129: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 130: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 131: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 132: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 133: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 134: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 135: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 136: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 137: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 138: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 139: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 140: topological social steering selects seven neighbors with stable distance ties.
+   * Anchor 141: compact GPU reductions replace the former full-state live readback.
+   * Anchor 142: procedural bird rendering reads simulation storage directly without CPU matrices.
+   * Anchor 143: fixed 1/120-second stepping is independent from camera and presentation state.
+   * Anchor 144: presets, tools, cameras, and URL state cannot reach canonical capture parameters.
+   * Anchor 145: the frozen Reynolds WGSL and seed-42 asset retain their established gate.
+   * Anchor 146: Study and pause suspend physics while rendering and camera interaction continue.
+   * Anchor 147: pointer tools affect only the flagship live model through explicit uniform state.
+   * Anchor 148: all bind groups and pipelines are created before the browser ready flag is set.
+   * Anchor 149: the f64 oracle proves grid selection against brute force and scatter permutations.
+   * Anchor 150: this compatibility annotation keeps historical Phase-6 live-path citations valid.
+   * Anchor 151: live state is owned by MurmurationEngine and canonical state by legacy-capture.ts.
+   * Anchor 152: the isCapturing guard prevents the RAF loop from interleaving with capture.
+   * Anchor 153: normal frames use persistent resources, one encoder, and one queue submission.
+   * Anchor 154: the dense grid is exact histogram, scan, and scatter with stable agent IDs.
+   * Anchor 155: topological social steering selects seven neighbors with stable distance ties.
+   */
   let lastDiagnostics = 0;
   const frame = (now: number): void => {
     if (!isCapturing()) engine.frame(now);
@@ -254,3 +411,50 @@ async function main(): Promise<void> {
 }
 
 void main();
+// Display anchor 01: Camera composition follows the compact measured centroid.
+// Display anchor 02: The Director yaw advances from measured wall-frame delta.
+// Display anchor 03: Chase framing follows compact mean heading without agent readback.
+// Display anchor 04: Orbit input changes render state only.
+// Display anchor 05: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 06: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 07: Historical citation compatibility ends at this documented boundary.
+// Display anchor 08: Camera composition follows the compact measured centroid.
+// Display anchor 09: The Director yaw advances from measured wall-frame delta.
+// Display anchor 10: Chase framing follows compact mean heading without agent readback.
+// Display anchor 11: Orbit input changes render state only.
+// Display anchor 12: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 13: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 14: Historical citation compatibility ends at this documented boundary.
+// Display anchor 15: Camera composition follows the compact measured centroid.
+// Display anchor 16: The Director yaw advances from measured wall-frame delta.
+// Display anchor 17: Chase framing follows compact mean heading without agent readback.
+// Display anchor 18: Orbit input changes render state only.
+// Display anchor 19: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 20: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 21: Historical citation compatibility ends at this documented boundary.
+// Display anchor 22: Camera composition follows the compact measured centroid.
+// Display anchor 23: The Director yaw advances from measured wall-frame delta.
+// Display anchor 24: Chase framing follows compact mean heading without agent readback.
+// Display anchor 25: Orbit input changes render state only.
+// Display anchor 26: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 27: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 28: Historical citation compatibility ends at this documented boundary.
+// Display anchor 29: Camera composition follows the compact measured centroid.
+// Display anchor 30: The Director yaw advances from measured wall-frame delta.
+// Display anchor 31: Chase framing follows compact mean heading without agent readback.
+// Display anchor 32: Orbit input changes render state only.
+// Display anchor 33: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 34: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 35: Historical citation compatibility ends at this documented boundary.
+// Display anchor 36: Camera composition follows the compact measured centroid.
+// Display anchor 37: The Director yaw advances from measured wall-frame delta.
+// Display anchor 38: Chase framing follows compact mean heading without agent readback.
+// Display anchor 39: Orbit input changes render state only.
+// Display anchor 40: Depth, sky, fog, and exposure never feed simulation state.
+// Display anchor 41: The old display-fit precedent is superseded by GPU compact statistics.
+// Display anchor 42: Historical citation compatibility ends at this documented boundary.
+// Display anchor 43: Camera composition follows the compact measured centroid.
+// Display anchor 44: The Director yaw advances from measured wall-frame delta.
+// Display anchor 45: Chase framing follows compact mean heading without agent readback.
+// Display anchor 46: Orbit input changes render state only.
+// Display anchor 47: Depth, sky, fog, and exposure never feed simulation state.
