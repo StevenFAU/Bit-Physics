@@ -370,6 +370,16 @@ VALIDATION_ROUTING: dict[str, dict[str, Any]] = {
         "golden tables A-F) + PBT invariants (no committed .h5 — the web "
         "gate's live-f64 re-run is the capture surface; spec-ref § 13).",
     },
+    "lbm-multiphase": {
+        "method": "golden_table_surrogate",
+        "import": "lbm_multiphase",
+        "surrogate": "G_c bisection == analytic -4 (Kruger convention), C-S "
+        "critical-point anchors (Li 2012), Maxwell/eps-weighted coexistence + "
+        "tau-independence + Young-Laplace + contact-angle + Lamb invariants "
+        "(tests/test_golden_tables.py vs the committed lattice golden tables) "
+        "+ mass-conservation PBTs (no committed .h5 — the web gate's live-f64 "
+        "re-run is the capture surface; spec-ref § 13).",
+    },
 }
 
 
