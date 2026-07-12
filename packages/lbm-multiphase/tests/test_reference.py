@@ -15,6 +15,7 @@ from lbm_multiphase.reference import (
     MultiphaseScene,
     build_psi_lut,
     droplet_ic,
+    load_psi_lut,
     psi_from_lut,
     run_scene,
 )
@@ -128,8 +129,23 @@ def test_dtype_preserved_and_f32_close():
 
 
 def test_psi_lut_matches_exact_exp():
-    lut = build_psi_lut()
+    lut = load_psi_lut()
     rho = np.linspace(0.05, 5.5, 999)
     exact = np.exp(-1.0 / rho)
     got = psi_from_lut(rho, lut)
     assert float(np.abs(got - exact).max()) < 5e-7
+
+
+def test_psi_lut_committed_copies_and_generator():
+    # The runtime data spine and the browser copy must be byte-identical;
+    # both live in git, so this pins the pair on every host.
+    lut = load_psi_lut()
+    web = (
+        REPO / "packages" / "lbm-multiphase" / "web" / "public" / "lbm-psi-lut-f64.bin"
+    )
+    assert web.read_bytes() == lut.tobytes()
+    # The generator must agree with the committed bytes to fp tolerance only:
+    # np.exp is microarch-dependent (SIMD ULP drift), which is exactly why the
+    # sha-pinned paths load the committed bytes instead of rebuilding.
+    built = build_psi_lut()
+    assert float(np.abs(built - lut).max()) <= 1e-15

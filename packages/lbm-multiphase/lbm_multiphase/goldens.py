@@ -37,6 +37,7 @@ from .reference import (
     bulk_pressure_field,
     droplet_ic,
     flat_interface_ic,
+    load_psi_lut,
     psi_cs_field,
     psi_from_lut,
     run_scene,
@@ -493,7 +494,7 @@ def _laplace_run(
     r1 = res.checkpoints[12000][0]
     rho, vx, vy = res.checkpoints[14000]
     if tier == "A":
-        lut = build_psi_lut()
+        lut = load_psi_lut()
         psi = psi_from_lut(rho, lut)
         g = TIER_A_G
     else:
@@ -973,8 +974,13 @@ def gen_gate_assets(ctx: dict[str, Any], lap: dict[str, Any]) -> None:
     nosep_ic = (1.0 + 0.08 * np.sin(2.0 * np.pi * x / 128.0)) * np.ones((1, 8))
     sha_nosep = _write_bin(WEB_PUBLIC / "lbm-gate-ic-nosep.bin", nosep_ic)
 
+    # np.exp is microarch-dependent (SIMD ULP drift), so the LUT is generated
+    # HERE only; the runtime (load_psi_lut) and the browser both read the
+    # committed bytes — the two copies must stay byte-identical (pinned by
+    # gen-verification.mjs and tests/test_reference.py).
     lut = build_psi_lut()
     sha_lut = _write_bin(WEB_PUBLIC / "lbm-psi-lut-f64.bin", lut)
+    _write_bin(Path(__file__).resolve().parent / "data" / "psi-lut-f64.bin", lut)
 
     lap_ic_shas = {}
     for r, rho in lap["ics_a"].items():
@@ -1020,7 +1026,7 @@ def gen_gate_assets(ctx: dict[str, Any], lap: dict[str, Any]) -> None:
     # long-run tanh-IC protocol, so the two protocols' small offset never
     # eats gate budget.
     print("gate assets: browser-protocol Laplace (f64)…")
-    lut = build_psi_lut()
+    lut = load_psi_lut()
     cmA = ctx["cmA"]
     mid = 0.5 * (cmA.rho_l + cmA.rho_v)
     bp_rows = []
