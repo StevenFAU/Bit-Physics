@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lbm-multiphase-lamb-oscillation",
+  "category": "lattice",
+  "derivation": {
+    "doc": "docs/sim-specs/lattice/lbm-multiphase/spec-ref.md",
+    "upstream": "n/a-numerical-baseline (repo f64 measurement; disclosed condensable-vapor model mismatch vs the immiscible Lamb law \u2014 see test-point fields)",
+    "upstream_sha": "n/a-numerical-baseline",
+    "upstream_path": "n/a-numerical-baseline"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "lamb-tierB-TTc0.8",
+        "protocol": "192^2, Tier B (C-S T/Tc=0.8, li-sigma, tau=0.6), ellipse 36x30, period by damped-cosine fit of Ixx-Iyy over 20000 steps (hysteresis crossings as sanity); sigma from the Tier-B Laplace fit (two-golden consistency loop); prediction uses the equilibrated radius R_eq",
+        "law": "2D two-fluid mode n=2: omega^2 = (n^3-n) sigma / (R^3 (rho_in + rho_out)); liquid-only limit omega^2 = n(n^2-1) sigma/(rho_l R^3) \u2014 Lamb, Hydrodynamics (1932) section 275; protocol per Li, Luo & Li, Phys. Rev. E 87:053301 (2013)",
+        "sigma_from_laplace": 0.007437584289928558,
+        "R0": 32.863353450309965,
+        "R_eq": 32.43476797878209
+      },
+      "expected": {
+        "measured_period_steps": 2619.0317195325542,
+        "period_crossings_estimate": 2569.753051444387,
+        "predicted_period_two_density": 3151.1017191058177,
+        "predicted_period_liquid_only": 3045.1922048529004,
+        "rel_err_vs_two_density": 0.16885205461544034,
+        "zero_crossings": 6,
+        "declared_band": 0.2
+      },
+      "independent_reference": {
+        "source": "Lamb, Hydrodynamics (1932) section 275 \u2014 capillary oscillation frequency (trend anchor; condensable-vapor mismatch disclosed in derivation.upstream)",
+        "doi": "n/a-classical-text",
+        "derived_by": "damped-cosine fit of the n=2 moment signal"
+      }
+    }
+  ]
+}

@@ -1,0 +1,324 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lbm-multiphase-coexistence",
+  "category": "lattice",
+  "derivation": {
+    "doc": "docs/sim-specs/lattice/lbm-multiphase/spec-ref.md",
+    "upstream": "Shan-Chen-1994-pseudopotential-Kruger-convention",
+    "upstream_sha": "n/a-no-vendored-code-per-R8-amendment",
+    "upstream_path": "n/a-no-vendored-code-per-R8-amendment"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "gc-negative-control-sc94",
+        "psi": "sc94",
+        "rho0": 1.0
+      },
+      "expected": {
+        "rho_c_analytic": 0.6931471805599453,
+        "G_c_analytic": -4.0,
+        "G_c_bisection": -4.000000000607067
+      },
+      "independent_reference": {
+        "source": "Kruger et al., The Lattice Boltzmann Method (2017) ch. 9 \u2014 lattice-weight pseudopotential convention (G_c = -4/rho0; spec section 3.3 derivation)",
+        "doi": "10.1007/978-3-319-44649-3",
+        "derived_by": "dp/drho double-root bisection vs analytic -4/rho0"
+      }
+    },
+    {
+      "inputs": {
+        "name": "cs-critical-point",
+        "a": 1.0,
+        "b": 4.0,
+        "R": 1.0
+      },
+      "expected": {
+        "T_c": 0.09432870314880763,
+        "rho_c": 0.13044387410244387
+      },
+      "independent_reference": {
+        "source": "Li, Luo & Li, Phys. Rev. E 86:016709 (2012) \u2014 eps-weighted mechanical-stability integral, sigma scheme; C-S T_c = 0.0943, rho_c ~ 0.13044",
+        "doi": "10.1103/PhysRevE.86.016709",
+        "derived_by": "f64 eps-weighted binodal solver (thermo.py, eps = 16 sigma)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "maxwell-exp-psi-G-8.0",
+        "G": -8.0,
+        "psi": "exp(-1/rho)",
+        "canonical": false
+      },
+      "expected": {
+        "rho_v": 0.6137471295651019,
+        "rho_l": 1.6519914513450271,
+        "p0": 0.15332977866908834,
+        "ratio": 2.691648354454415
+      },
+      "independent_reference": {
+        "source": "Shan & Chen, Phys. Rev. E 49:2941 (1994) \u2014 coexistence from mechanical balance / equal-area (exp-psi is the Maxwell-exact family)",
+        "doi": "10.1103/PhysRevE.49.2941",
+        "derived_by": "f64 Maxwell equal-area binodal solver (thermo.py)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "maxwell-exp-psi-G-9.0",
+        "G": -9.0,
+        "psi": "exp(-1/rho)",
+        "canonical": true
+      },
+      "expected": {
+        "rho_v": 0.45580150249019463,
+        "rho_l": 2.2495719041342674,
+        "p0": 0.13329317025532775,
+        "ratio": 4.935420115651464
+      },
+      "independent_reference": {
+        "source": "Shan & Chen, Phys. Rev. E 49:2941 (1994) \u2014 coexistence from mechanical balance / equal-area (exp-psi is the Maxwell-exact family)",
+        "doi": "10.1103/PhysRevE.49.2941",
+        "derived_by": "f64 Maxwell equal-area binodal solver (thermo.py)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "maxwell-exp-psi-G-10.0",
+        "G": -10.0,
+        "psi": "exp(-1/rho)",
+        "canonical": false
+      },
+      "expected": {
+        "rho_v": 0.3675281838583078,
+        "rho_l": 2.7827857054412415,
+        "p0": 0.11528963712195688,
+        "ratio": 7.571625327417289
+      },
+      "independent_reference": {
+        "source": "Shan & Chen, Phys. Rev. E 49:2941 (1994) \u2014 coexistence from mechanical balance / equal-area (exp-psi is the Maxwell-exact family)",
+        "doi": "10.1103/PhysRevE.49.2941",
+        "derived_by": "f64 Maxwell equal-area binodal solver (thermo.py)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "maxwell-exp-psi-G-11.0",
+        "G": -11.0,
+        "psi": "exp(-1/rho)",
+        "canonical": false
+      },
+      "expected": {
+        "rho_v": 0.3053291738275373,
+        "rho_l": 3.2948517626917706,
+        "p0": 0.09915531897761248,
+        "ratio": 10.791146228800399
+      },
+      "independent_reference": {
+        "source": "Shan & Chen, Phys. Rev. E 49:2941 (1994) \u2014 coexistence from mechanical balance / equal-area (exp-psi is the Maxwell-exact family)",
+        "doi": "10.1103/PhysRevE.49.2941",
+        "derived_by": "f64 Maxwell equal-area binodal solver (thermo.py)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "cs-eps-targets-TTc0.9",
+        "T_over_Tc": 0.9,
+        "sigma": 0.105,
+        "epsilon": 1.68,
+        "G": -3.0
+      },
+      "expected": {
+        "maxwell": {
+          "rho_v": 0.045421198103988425,
+          "rho_l": 0.2480842411122387
+        },
+        "mech_eps_1p68": {
+          "rho_v": 0.045588884155402964,
+          "rho_l": 0.24814609358100312
+        },
+        "vapor_split_pct": -0.36782223237342704
+      },
+      "independent_reference": {
+        "source": "Li, Luo & Li, Phys. Rev. E 86:016709 (2012) \u2014 eps-weighted mechanical-stability integral, sigma scheme; C-S T_c = 0.0943, rho_c ~ 0.13044",
+        "doi": "10.1103/PhysRevE.86.016709",
+        "derived_by": "f64 eps-weighted binodal solver (thermo.py, eps = 16 sigma)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "cs-eps-targets-TTc0.8",
+        "T_over_Tc": 0.8,
+        "sigma": 0.105,
+        "epsilon": 1.68,
+        "G": -3.0
+      },
+      "expected": {
+        "maxwell": {
+          "rho_v": 0.021723243433000472,
+          "rho_l": 0.3071956822984707
+        },
+        "mech_eps_1p68": {
+          "rho_v": 0.02173992363853369,
+          "rho_l": 0.30719945890362116
+        },
+        "vapor_split_pct": -0.0767261459173274
+      },
+      "independent_reference": {
+        "source": "Li, Luo & Li, Phys. Rev. E 86:016709 (2012) \u2014 eps-weighted mechanical-stability integral, sigma scheme; C-S T_c = 0.0943, rho_c ~ 0.13044",
+        "doi": "10.1103/PhysRevE.86.016709",
+        "derived_by": "f64 eps-weighted binodal solver (thermo.py, eps = 16 sigma)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "cs-eps-targets-TTc0.7",
+        "T_over_Tc": 0.7,
+        "sigma": 0.105,
+        "epsilon": 1.68,
+        "G": -3.0
+      },
+      "expected": {
+        "maxwell": {
+          "rho_v": 0.009294146224825519,
+          "rho_l": 0.3581309411337235
+        },
+        "mech_eps_1p68": {
+          "rho_v": 0.00896768544288981,
+          "rho_l": 0.35808366600370733
+        },
+        "vapor_split_pct": 3.640412947295668
+      },
+      "independent_reference": {
+        "source": "Li, Luo & Li, Phys. Rev. E 86:016709 (2012) \u2014 eps-weighted mechanical-stability integral, sigma scheme; C-S T_c = 0.0943, rho_c ~ 0.13044",
+        "doi": "10.1103/PhysRevE.86.016709",
+        "derived_by": "f64 eps-weighted binodal solver (thermo.py, eps = 16 sigma)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "measured-flat-guo-tau0.8",
+        "G": -9.0,
+        "tau": 0.8,
+        "forcing": "guo",
+        "protocol": "128x8 flat, 60000 steps, slab/edge probes"
+      },
+      "expected": {
+        "rho_l": 2.249440501870254,
+        "rho_v": 0.4557250178226265,
+        "max_u": 4.533532902598651e-15
+      },
+      "independent_reference": {
+        "source": "Li et al., Prog. Energy Combust. Sci. 55:52 (2016) \u2014 Guo+exp-psi coexistence tau-independent and Maxwell-consistent",
+        "doi": "10.1016/j.pecs.2015.10.001",
+        "derived_by": "60000-step 128x8 flat-interface lattice measurement (Guo forcing)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "measured-flat-guo-tau1.0",
+        "G": -9.0,
+        "tau": 1.0,
+        "forcing": "guo",
+        "protocol": "128x8 flat, 60000 steps, slab/edge probes"
+      },
+      "expected": {
+        "rho_l": 2.2494405018702546,
+        "rho_v": 0.45572501782262886,
+        "max_u": 2.5597713994855076e-15
+      },
+      "independent_reference": {
+        "source": "Li et al., Prog. Energy Combust. Sci. 55:52 (2016) \u2014 Guo+exp-psi coexistence tau-independent and Maxwell-consistent",
+        "doi": "10.1016/j.pecs.2015.10.001",
+        "derived_by": "60000-step 128x8 flat-interface lattice measurement (Guo forcing)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "measured-flat-guo-tau1.2",
+        "G": -9.0,
+        "tau": 1.2,
+        "forcing": "guo",
+        "protocol": "128x8 flat, 60000 steps, slab/edge probes"
+      },
+      "expected": {
+        "rho_l": 2.2494405018702563,
+        "rho_v": 0.4557250178226298,
+        "max_u": 2.820953184409644e-15
+      },
+      "independent_reference": {
+        "source": "Li et al., Prog. Energy Combust. Sci. 55:52 (2016) \u2014 Guo+exp-psi coexistence tau-independent and Maxwell-consistent",
+        "doi": "10.1016/j.pecs.2015.10.001",
+        "derived_by": "60000-step 128x8 flat-interface lattice measurement (Guo forcing)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "measured-tau-independence",
+        "taus": [
+          0.8,
+          1.0,
+          1.2
+        ]
+      },
+      "expected": {
+        "tau_spread_rho_l": 2.220446049250313e-15,
+        "sc_shift_tau_drift_rho_l": 0.04785333913850165,
+        "sc_shift_measurements": [
+          {
+            "rho_l": 2.2632839472177597,
+            "rho_v": 0.4640724734831688,
+            "max_u": 1.0578795790847473e-08,
+            "tau": 0.8
+          },
+          {
+            "rho_l": 2.3111372863562614,
+            "rho_v": 0.49864416141934104,
+            "max_u": 1.5054379049109055e-15,
+            "tau": 1.2
+          }
+        ]
+      },
+      "independent_reference": {
+        "source": "Li et al., Prog. Energy Combust. Sci. 55:52 (2016) \u2014 Guo+exp-psi coexistence tau-independent and Maxwell-consistent",
+        "doi": "10.1016/j.pecs.2015.10.001",
+        "derived_by": "60000-step 128x8 flat-interface lattice measurement (Guo forcing)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "measured-flat-tierB-TTc0.8",
+        "forcing": "li-sigma",
+        "tau": 0.8,
+        "protocol": "128x8 flat, 60000 steps"
+      },
+      "expected": {
+        "rho_l": 0.3071596049408197,
+        "rho_v": 0.02156435912720597,
+        "max_u": 1.4371827289681928e-13
+      }
+    },
+    {
+      "inputs": {
+        "name": "eps-discrimination-TTc0.7",
+        "forcing": "li-sigma",
+        "tau": 0.8,
+        "protocol": "128x8 flat, 80000 steps; negative control iii"
+      },
+      "expected": {
+        "measured_rho_v": 0.00900355012390422,
+        "measured_rho_l": 0.3580888821926488,
+        "eps_target_rho_v": 0.00896768544288981,
+        "maxwell_target_rho_v": 0.009294146224825519
+      },
+      "independent_reference": {
+        "source": "Li, Luo & Li, Phys. Rev. E 86:016709 (2012) \u2014 eps-weighted mechanical-stability integral, sigma scheme; C-S T_c = 0.0943, rho_c ~ 0.13044",
+        "doi": "10.1103/PhysRevE.86.016709",
+        "derived_by": "f64 eps-weighted binodal solver (thermo.py, eps = 16 sigma)"
+      }
+    }
+  ]
+}

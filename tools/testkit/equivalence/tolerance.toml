@@ -722,3 +722,43 @@ category = "fdtd-optics"
 # the web-deploy new_canonical committed-f64-reference comparison
 # (_gate_fdtd_optics, spec-ref § 6.2) + the Fresnel/Mie analytic
 # instrument bands held in verify.py.
+
+# [defaults.lbm-multiphase] — MEASURED on lbm-multiphase (Phase-6, spec-ref
+# docs/sim-specs/lattice/lbm-multiphase/spec-ref.md § 6.1). NEW category
+# (the isf/picflip/heat-equation/fdtd-optics pattern): the f32<->f64
+# boundary prices a pseudopotential D2Q9 stream-collide-force loop whose
+# interface-adjacent pointwise fields are divergence-prone at late times —
+# NOT the native [defaults.lbm] 1e-5 cross-stack f64 budget (single-phase
+# D3Q19, different taxonomy; reusing it would conflate an f64 backend
+# equivalence with an f32 web gate). Metric per gated checkpoint:
+# max( max|d rho|/max|rho_ref| , sqrt(3)*max|d u| ) — velocities normalized
+# by the lattice sound speed c_s = 1/sqrt(3), never by the velocity peak
+# (the Tier-A flat scene is machine-static: peak|u| ~ 1e-15). DECLARED
+# 5e-3 from measurement (2026-07-11, dtype-preserving NumPy-f32 proxy of
+# the WGSL path vs the f64 reference on the canonical
+# flatA128x8+dropletB128-step2000 scenes, gated checkpoints flat
+# {200,800,2000} + droplet {200,800}): worst 6.8e-4 (droplet rho at step
+# 800) x 4.05 (worst observed RADV->lavapipe family spread, charter round
+# 2) = 2.8e-3, x ~1.8 margin = 5e-3. Droplet step 2000 is OBSERVABLE-gated
+# (spurious ceiling), not pointwise-gated: measured f32 divergence there is
+# 1.8e-3 and growing — the spec § 6.1 late-time-interface rule. Capped by
+# [budgets.lbm-multiphase] (tolerance-budget.toml). The analytic gates
+# (Maxwell coexistence, tau-independence, Young-Laplace slope, spurious
+# ceiling, G_c no-separation control) are held in verify.py at their own
+# measured-then-declared bands, not this row.
+[defaults.lbm-multiphase]
+relative = 5.0e-3
+absolute = 0.0
+
+[overrides.lbm-multiphase]
+category = "lbm-multiphase"
+# Resolves sim.category='lattice' (physics-family taxonomy) to
+# tolerance-category='lbm-multiphase' (numerical-method taxonomy — NEW
+# category, see [defaults.lbm-multiphase] for the MEASURED-then-declared
+# provenance). AT-BUDGET: relative=5e-3, absolute=0.0. NOT a widening of
+# [defaults.lbm] (native single-phase f64 cross-stack) or
+# [defaults.fdtd-optics] (non-dissipative leapfrog): the gate prices an
+# f32 multiphase pseudopotential loop with steady spurious-current vortex
+# structures at curved interfaces. Gated by the web-deploy new_canonical
+# live-f64-reference comparison (_gate_lbm_multiphase, spec-ref § 6.2) +
+# the analytic instrument bands held in verify.py.

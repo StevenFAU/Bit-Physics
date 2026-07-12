@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>LBM Multiphase — two phases from one equation — Bit-Physics</title>
+    <meta name="description" content="A real-time D2Q9 pseudopotential lattice-Boltzmann lab: droplets, coalescence and paintable wetting emerge from one nearest-neighbor force — gated live against Maxwell coexistence, Young–Laplace and a G_c negative control on your GPU." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="LBM Multiphase — two phases from one equation — Bit-Physics" />
+    <meta property="og:description" content="The first browser multiphase lattice-Boltzmann simulation with published analytic validation gates: liquid–vapor droplets, spinodal decomposition, contact-angle painting — client-side WebGPU." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/lbm-multiphase/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/lbm-multiphase.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="LBM Multiphase — two phases from one equation — Bit-Physics" />
+    <meta name="twitter:description" content="Droplet rain, spinodal quenches, capillary races and wettability painting — pseudopotential LBM on your GPU, gated against Maxwell and Young–Laplace." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/lbm-multiphase.png" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { width: min(92vmin, 780px); height: auto; touch-action: none; }
+      .lm-explain, .lm-verify {
+        position: relative; margin: 10px auto; width: min(92vmin, 780px);
+        font: 13px/1.55 system-ui, sans-serif; color: #b7c7d6;
+        background: #0a1017; border: 1px solid #17222e; border-radius: 8px;
+        padding: 8px 14px;
+      }
+      .lm-explain summary, .lm-verify summary {
+        cursor: pointer; font-weight: 600; color: #d7e4f0; padding: 4px 0;
+      }
+      .lm-honesty li { border-left: 3px solid #b08c2e; padding-left: 10px;
+        margin: 8px 0; }
+      .lm-fine { color: #7d94a8; font-size: 12px; }
+      .lm-vcard { font: 12px/1.6 ui-monospace, monospace; color: #8fa8bd;
+        background: #0d141c; border-radius: 6px; padding: 8px 10px; margin: 6px 0; }
+      .lm-vrow { display: flex; gap: 8px; align-items: baseline; padding: 4px 0;
+        border-bottom: 1px dotted #14202c; flex-wrap: wrap; }
+      .lm-vrow button { flex: none; }
+      .lm-vrow span { font: 12px/1.5 ui-monospace, monospace; color: #8fa8bd; }
+      .lm-vlabel { min-width: 46%; color: #9db2c4 !important; }
+      .lm-pass { color: #7fdc9a !important; }
+      .lm-fail { color: #f5a09f !important; }
+      .lm-ctl { display: flex; gap: 6px; align-items: center;
+        font: 12px/1.6 system-ui, sans-serif; padding: 2px 0; }
+      .lm-ctl input[type="range"] { flex: 1; min-width: 90px; }
+      .lm-lab { min-width: 118px; color: #9db2c4; }
+      .lm-readout { font: 11px/1.4 ui-monospace, monospace; color: #8fa8bd;
+        min-width: 34px; text-align: right; }
+      .lm-active { outline: 1px solid #4a7d9e; }
+      .lm-nan {
+        position: fixed; top: 14px; left: 50%; transform: translateX(-50%);
+        z-index: 60; max-width: min(88vw, 560px);
+        font: 13px/1.55 system-ui, sans-serif; color: #f3d9a0;
+        background: #221607; border: 1px solid #b08c2e; border-radius: 8px;
+        padding: 10px 14px;
+      }
+      .lm-nan button { margin-top: 6px; }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="900" height="900" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

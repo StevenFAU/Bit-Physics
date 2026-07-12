@@ -222,6 +222,28 @@ T_FDTD_MIE_REL = 0.05  # Q_sca vs committed Bohren-Huffman cylinder table
 #   2026-07-09: x=3 0.37%, x=5 1.9% — discretization-dominated (deterministic,
 #   backend-independent), so 5% holds ~2.6x headroom over the worst point.
 
+# lbm-multiphase (spec-ref docs/sim-specs/lattice/lbm-multiphase/spec-ref.md
+# § 6.1; MEASURED provenance in tolerance.toml [defaults.lbm-multiphase]).
+# Trajectory metric: per gated checkpoint
+# max( max|d rho|/max|rho_ref| , sqrt(3)*max|d u| ) — velocities normalized
+# by the lattice sound speed c_s = 1/sqrt(3), never by the velocity peak
+# (the Tier-A flat scene is machine-static: peak|u| ~ 1e-15).
+T_LBMM_TRAJ_REL = 5e-3  # MEASURED f32 proxy worst 6.8e-4 (droplet rho @ step 800)
+T_LBMM_COEX_REL_L = 1e-3  # |rho_l/Maxwell - 1| (MEASURED 12k-step protocol: 6e-5)
+T_LBMM_COEX_REL_V = 2e-3  # |rho_v/Maxwell - 1| (MEASURED: 1.7e-4)
+T_LBMM_TAU_SPREAD_ABS = (
+    5e-4  # coexistence move over tau {0.8,1.0,1.2} (MEASURED 4.8e-5)
+)
+T_LBMM_LAPLACE_REL = (
+    0.02  # browser sigma vs f64 browser-protocol sigma (MEASURED proxy 2e-4)
+)
+T_LBMM_LAPLACE_R2_MIN = 0.995  # dp-vs-1/R linearity (MEASURED f32 proxy 0.99886)
+T_LBMM_SPURIOUS_MAX = 6e-3  # max|u| ceiling, Tier-B droplet (MEASURED 1.9e-3; published
+#   anchors 0.028 BGK / 0.0053 MRT — Yu & Fan PRE 82, 046708; shown, not hidden)
+T_LBMM_NOSEP_SPREAD_MAX = (
+    3e-2  # G > G_c control must homogenize (MEASURED 1.45e-2 from 0.16)
+)
+
 # curl-noise live-f64 gate (spec-ref § 13.2). T_CURL_REL is the NEW
 # [defaults.curl-noise] category tolerance verbatim (tolerance.toml,
 # resolved via [overrides.curl-noise]; capped by [budgets.curl-noise]) —
@@ -2817,6 +2839,182 @@ def _gate_fdtd_optics(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_lbm_multiphase(bundles: list[dict]) -> VerifyResult:
+    """new_canonical gate for lbm-multiphase: live-f64-reference comparison
+    PLUS the analytic instrument gates (spec-ref § 6.2 — the moat
+    conjunction, CI-held like fdtd-optics).
+
+    The browser's canonical is flatA128x8+dropletB128-step2000 — the SAME
+    scenes as the backend canonical (one provenance): D2Q9 pseudopotential,
+    DDF-shifted pull streaming, committed pre-equilibrated ICs, committed
+    f64 psi-LUT, zero runtime transcendentals. The reference is re-run LIVE
+    in f64 (run_canonical run-twice witnesses determinism) and its
+    checkpoint-blob shas are asserted against the committed pins, so the
+    committed web assets, the backend package, and this gate cannot drift
+    apart silently.
+
+    Gate = run-twice byte-identity over all captured fields
+         + per-gated-checkpoint max(|d rho|/max|rho_ref|, sqrt(3)|d u|)
+           <= T_LBMM_TRAJ_REL (droplet step 2000 is observable-gated only —
+           late-time pointwise fields near interfaces are divergence-prone,
+           spec-ref § 6.1)
+         + finite fields
+         + G-coexist: 12k-step Tier-A coexistence vs the LIVE-recomputed
+           Maxwell equal-area targets (thermo solver, independent of any
+           committed number)
+         + G-tau: coexistence move across tau {0.8, 1.0, 1.2} bounded
+         + G-laplace: dp-vs-1/R slope vs the committed f64 browser-protocol
+           sigma + linearity floor
+         + G-spurious: parasitic-current ceiling at the Tier-B droplet
+         + G-nosep: the G > G_c control must have homogenized (negative
+           control ii, live in CI).
+    """
+    sys.path.insert(0, str(REPO / "packages/lbm-multiphase"))
+    import hashlib as _hashlib
+
+    from lbm_multiphase.sim import (  # type: ignore
+        GATE_DROP_B,
+        GATE_FLAT_A,
+        REFERENCE_SHA256,
+        checkpoint_blob,
+        gate_scene_defs,
+        run_canonical,
+    )
+    from lbm_multiphase.thermo import coexistence_maxwell, psi_exp  # type: ignore
+
+    b0 = bundles[0]
+    steps0 = _bundle_steps(b0)
+    fields = ("flat_rho", "flat_ux", "flat_uy", "drop_rho", "drop_ux", "drop_uy")
+    twice = None
+    if len(bundles) > 1:
+        s1 = {s["step"]: s for s in _bundle_steps(bundles[1])}
+        twice = all(
+            st["step"] in s1
+            and all(
+                np.array_equal(_field(st, k), _field(s1[st["step"]], k)) for k in fields
+            )
+            for st in steps0
+        )
+
+    expected_steps = [st["step"] for st in steps0]
+    want = list(GATE_FLAT_A.checkpoints)
+    if expected_steps != want:
+        return VerifyResult(
+            sim="lbm-multiphase",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=twice,
+            detail={"error": f"checkpoint set {expected_steps} != canonical {want}"},
+        )
+
+    res = run_canonical()  # live f64, run-twice witnessed internally
+    sha_ok = True
+    for key, scene in (("flat", GATE_FLAT_A), ("droplet", GATE_DROP_B)):
+        sha = _hashlib.sha256(checkpoint_blob(res[key], scene)).hexdigest()
+        if sha != REFERENCE_SHA256[key]:
+            sha_ok = False
+
+    gated = gate_scene_defs()["pointwise_checkpoints"]
+    sqrt3 = float(np.sqrt(3.0))
+    worst_ratio = 0.0
+    worst_by = {"flat": 0.0, "droplet": 0.0}
+    finite = True
+    for st in steps0:
+        step = st["step"]
+        for key, scene, prefix in (
+            ("flat", GATE_FLAT_A, "flat"),
+            ("droplet", GATE_DROP_B, "drop"),
+        ):
+            if step not in gated[key]:
+                continue
+            ref_rho, ref_ux, ref_uy = res[key].checkpoints[step]
+            rho_peak = float(np.abs(ref_rho).max())
+            for name, ref in (
+                (f"{prefix}_rho", ref_rho),
+                (f"{prefix}_ux", ref_ux),
+                (f"{prefix}_uy", ref_uy),
+            ):
+                bf = _field(st, name).astype(np.float64)
+                if not np.isfinite(bf).all():
+                    finite = False
+                    continue
+                max_abs = float(np.abs(bf - ref.reshape(bf.shape)).max())
+                rel = max_abs / rho_peak if name.endswith("rho") else max_abs * sqrt3
+                worst_by[key] = max(worst_by[key], rel)
+                worst_ratio = max(worst_ratio, rel / T_LBMM_TRAJ_REL)
+    within = worst_ratio <= 1.0
+
+    # analytic instruments (browser-measured diagnostics; NaN/missing must
+    # FAIL, never be swallowed — the heat-equation lesson)
+    d = steps0[-1]["diagnostics"]
+    g = lambda k: float(d.get(k, np.nan))  # noqa: E731
+    cm = coexistence_maxwell(GATE_FLAT_A.g, psi_exp())
+    coex_l_rel = abs(g("coex_rho_l") / cm.rho_l - 1.0)
+    coex_v_rel = abs(g("coex_rho_v") / cm.rho_v - 1.0)
+    coex_ok = bool(
+        np.isfinite(coex_l_rel)
+        and np.isfinite(coex_v_rel)
+        and coex_l_rel <= T_LBMM_COEX_REL_L
+        and coex_v_rel <= T_LBMM_COEX_REL_V
+    )
+    tau_spread = max(g("tau_spread_rho_l"), g("tau_spread_rho_v"))
+    tau_ok = bool(np.isfinite(tau_spread) and tau_spread <= T_LBMM_TAU_SPREAD_ABS)
+    lap_rel = abs(g("laplace_sigma") / g("laplace_sigma_ref") - 1.0)
+    lap_ok = bool(
+        np.isfinite(lap_rel)
+        and lap_rel <= T_LBMM_LAPLACE_REL
+        and g("laplace_r2") >= T_LBMM_LAPLACE_R2_MIN
+    )
+    spurious = g("spurious_max_u")
+    spur_ok = bool(np.isfinite(spurious) and spurious <= T_LBMM_SPURIOUS_MAX)
+    nosep = g("nosep_spread")
+    nosep_ok = bool(np.isfinite(nosep) and nosep <= T_LBMM_NOSEP_SPREAD_MAX)
+
+    passed = bool(
+        (twice is not False)
+        and within
+        and finite
+        and sha_ok
+        and coex_ok
+        and tau_ok
+        and lap_ok
+        and spur_ok
+        and nosep_ok
+    )
+    return VerifyResult(
+        sim="lbm-multiphase",
+        kind="new_canonical",
+        passed=passed,
+        run_twice_identical=twice,
+        detail={
+            "run_twice_identical": twice,
+            "within_rel_budget": within,
+            "worst_ratio_of_budget": worst_ratio,
+            "worst_rel_by_scene": worst_by,
+            "traj_rel": T_LBMM_TRAJ_REL,
+            "finite": finite,
+            "reference_sha_pinned": sha_ok,
+            "coex_rho_l_rel": coex_l_rel,
+            "coex_rho_v_rel": coex_v_rel,
+            "coex_budgets": [T_LBMM_COEX_REL_L, T_LBMM_COEX_REL_V],
+            "tau_spread_abs": tau_spread,
+            "tau_budget": T_LBMM_TAU_SPREAD_ABS,
+            "laplace_sigma_rel_err": lap_rel,
+            "laplace_r2": g("laplace_r2"),
+            "laplace_budgets": [T_LBMM_LAPLACE_REL, T_LBMM_LAPLACE_R2_MIN],
+            "spurious_max_u": spurious,
+            "spurious_ceiling": T_LBMM_SPURIOUS_MAX,
+            "nosep_spread": nosep,
+            "nosep_bound": T_LBMM_NOSEP_SPREAD_MAX,
+            "note": "live f64 reference re-run sha-pinned to the committed "
+            "assets; Maxwell targets recomputed LIVE from the thermo solver; "
+            "analytic coexistence/tau/Laplace/spurious/no-sep gates CI-held "
+            "(the spec-ref § 14 moat conjunction); rel budget is the NEW "
+            "[defaults.lbm-multiphase] 5e-3 (MEASURED f32 proxy worst 6.8e-4)",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -2837,6 +3035,7 @@ _GATES = {
     "signal-workbench": _gate_signal_workbench,
     "phase-field-fracture": _gate_phase_field_fracture,
     "fdtd-optics": _gate_fdtd_optics,
+    "lbm-multiphase": _gate_lbm_multiphase,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

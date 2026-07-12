@@ -150,3 +150,18 @@ absolute = 0.0
 [budgets.fdtd-optics.cross_stack]
 relative = 1.0e-4
 absolute = 0.0
+
+# [budgets.lbm-multiphase.cross_stack] — Phase-6 lbm-multiphase web gate
+#   (spec-ref docs/sim-specs/lattice/lbm-multiphase/spec-ref.md § 6.1):
+#   per-gated-checkpoint max( max|d rho|/max|rho_ref| , sqrt(3)*max|d u| )
+#   of the WGSL f32 D2Q9 pseudopotential stream-collide-force loop vs the
+#   committed/live Python-f64 reference on the canonical
+#   flatA128x8+dropletB128-step2000 scenes. NEW category (the isf /
+#   heat-equation / fdtd-optics pattern). MEASURED 2026-07-11
+#   (dtype-preserving NumPy-f32 proxy): worst 6.8e-4 x 4.05
+#   (RADV->lavapipe family spread) x ~1.8 margin = 5e-3. Cap equals the
+#   declared [defaults.lbm-multiphase] row; widening past this requires a
+#   Cat-X override review.
+[budgets.lbm-multiphase.cross_stack]
+relative = 5.0e-3
+absolute = 0.0

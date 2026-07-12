@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="bit-physics">
+  <!-- Bit-Physics favicon (Lane B P-8): a single particle on its orbit — the
+       house glyph for "physics", not a copy of any sim render. House style:
+       #36e0cf accent on a transparent (dark-friendly) field. Deterministic
+       static bytes; served verbatim by the web-deploy assemble step. -->
+  <ellipse cx="16" cy="16" rx="13" ry="6.5" fill="none" stroke="#36e0cf" stroke-width="2" transform="rotate(-32 16 16)"/>
+  <circle cx="16" cy="16" r="4" fill="#36e0cf"/>
+  <circle cx="27" cy="9.1" r="2.6" fill="#36e0cf"/>
+</svg>

@@ -56,6 +56,7 @@ members = [
     "lattice-boltzmann-d3q19",
     "lattice-boltzmann-d3q19-stack-d",
     "lattice-boltzmann-d3q19-stack-e",
+    "lbm-multiphase",
     "lenia",
     "lenia-diff",
     "mandelbulb-explorer",
@@ -2223,6 +2224,32 @@ sdist = { url = "https://files.pythonhosted.org/packages/49/ac/21a1f8aa3777f5658
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8a/a1/8d812e53a5da1687abb10445275d41a8b13adb781bbf7196ddbcf8d88505/lazy_loader-0.5-py3-none-any.whl", hash = "sha256:ab0ea149e9c554d4ffeeb21105ac60bed7f3b4fd69b1d2360a4add51b170b005", size = 8044, upload-time = "2026-03-06T15:45:07.668Z" },
 ]
+
+[[package]]
+name = "lbm-multiphase"
+version = "0.0.0"
+source = { editable = "packages/lbm-multiphase" }
+dependencies = [
+    { name = "bit-physics-diagnostics" },
+    { name = "bit-physics-testkit" },
+    { name = "numpy" },
+    { name = "scipy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "bit-physics-diagnostics", editable = "tools/diagnostics" },
+    { name = "bit-physics-testkit", editable = "tools/testkit" },
+    { name = "numpy", specifier = ">=2.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
+    { name = "scipy", specifier = ">=1.13" },
+]
+provides-extras = ["dev"]
 
 [[package]]
 name = "lenia"

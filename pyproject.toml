@@ -67,6 +67,11 @@ members = [
   # reference — NEW electromagnetics family. Registered at backend execution
   # per docs/sim-specs/electromagnetics/fdtd-optics/spec-ref.md § 12.
   "packages/fdtd-optics",
+  # Phase-6: lbm-multiphase (D2Q9 pseudopotential liquid-vapor, two-tier
+  # Shan-Chen lineage) f64 reference — lattice family's first Stack-B
+  # member. Registered at backend execution per
+  # docs/sim-specs/lattice/lbm-multiphase/spec-ref.md § 10.
+  "packages/lbm-multiphase",
   # Common module — Stack D / Python (Taichi-backed sims). Registered
   # at sub-phase-taichi-integration per D2 row 2 ratification.
   "common/common-py",
