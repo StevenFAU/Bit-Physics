@@ -12,6 +12,21 @@
 > NOT executed. Gate rows below are **declared targets** to be MEASURED at build per
 > `docs/architecture.md` § 2.6 / Appendix D (measured-then-declared).
 >
+> **EXECUTED 2026-07-11** (`packages/lbm-multiphase/`). Measured outcomes vs this
+> draft: canonical Tier-A point moved to **G = −9, τ = 1.0** (G = −12 exhibits a
+> genuine Guo-forcing deep-quench instability at τ = 1; disclosed in the coexistence
+> table); Tier-B canonical **T/T_c = 0.8, τ = 0.8, σ = 0.105** as drafted. Tier B v1
+> ships the **BGK σ-scheme** (Li et al., PRE 86 016709); weighted-MRT is the disclosed
+> v1.x upgrade. The Hysing rising-bubble curve gate is deferred to v1.x per § 8.2
+> (rising-bubble ships as an ungated preset). Measured gate numbers: coexistence
+> 0.006 % (liquid) / 0.017 % (vapor) of the ε-weighted targets at 12000 steps;
+> τ-independence spread 2e-15 (machine); browser f32 matched-trajectory worst
+> 6.8e-4 → `[defaults.lbm-multiphase] relative = 5e-3`; Laplace σ fits R² > 0.999
+> both tiers; Lamb-oscillation period measured **16.9 % off** the two-density Lamb
+> prediction (condensable-vapor mass exchange at density ratio ~21 — disclosed,
+> declared band 20 %). Full-battery browser gate GREEN on RADV, run-twice
+> byte-identical.
+>
 > **Category:** lattice (master catalog § 9.7.4 — "Composes with … multi-phase") —
 > the lattice family's **first web-deployable (Stack B) member** and the portfolio's
 > **first multiphase-with-surface-tension sim** (catalog § 9.7.14 puts
@@ -286,10 +301,13 @@ visited where live)
 GitHub `lattice-boltzmann` topic (151 repos): no browser implementation in the top ~20
 by stars; the only multiphase entries are **native research codes** (MPLBM-UT, Python,
 Shan–Chen; listLBM, Fortran). **No browser multiphase LBM of any kind was found** —
-not on GitHub Pages, the topic index, or the named candidates. *Disclosed sweep
-limits: Shadertoy and compute.toys were in the sweep brief but no per-entry
-enumeration survived the infra failure; a 15-minute execution-time re-sweep of those
-two indexes is required before the moat sentence ships (§ 13).*
+not on GitHub Pages, the topic index, or the named candidates. *Sweep closed at
+execution (2026-07-11): the § 13 re-sweep of Shadertoy and compute.toys ran. Shadertoy
+"lattice boltzmann" / "LBM" / "multiphase": the closest hits are wyatt's WdyGzy
+("Bit Flow", a nonstandard energy-model lattice fluid, single-phase) and WdlSWN
+(torch fire, single-phase advection) — both unvalidated, neither pseudopotential nor
+any other multiphase LBM. compute.toys: no LBM entries at all under "lattice
+boltzmann"/"LBM". The moat sentence stands as written.*
 
 **2.3.2 Adjacent visual-bar demos (not LBM):** PavelDoGreat/WebGL-Fluid-Simulation
 (16.5k stars) is GPU-Gems-38 incompressible Navier–Stokes — its virality is a
@@ -798,8 +816,8 @@ cumulant [fetch-verified], 5624 MLUPS/RTX4090 D3Q19 FP32 (FluidX3D README).
 2. **Tier-B default operating point** (T/T_c, τ, grid) — pick from the measured f32
   envelope scan (step 2), optimizing "liveliest stable scene", not max ratio.
 3. **εψ regularization constant** for σ-forcing (§ 9 guard 2) — measured sweep.
-4. **Shadertoy/compute.toys moat re-sweep** (15 min, § 2.3.1 gap) before any "first"
-  sentence ships.
+4. **Shadertoy/compute.toys moat re-sweep** — **CLOSED 2026-07-11** (§ 2.3.1): no
+  multiphase LBM on either index; moat sentence stands.
 5. **Hysing curve-gate metric** (L² on resampled series vs extrema tuple) and whether
   case 1 runs at ratio 10 with true Hysing parameters via Tier B or a rescaled
   matched-Re/Eo lattice scene (the standard LBM practice — declare the mapping).

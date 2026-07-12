@@ -1,0 +1,32 @@
+[project]
+name = "lbm-multiphase"
+version = "0.0.0"
+description = "Phase 6 — D2Q9 pseudopotential multiphase LBM (Shan-Chen lineage, two-tier) f64 reference"
+readme = "README.md"
+license = { file = "../../LICENSE" }
+authors = [{ name = "Steven Cohen" }]
+requires-python = ">=3.12"
+dependencies = [
+  "bit-physics-testkit",
+  "bit-physics-diagnostics",
+  "numpy>=2.0",
+  "scipy>=1.13",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[tool.uv.sources]
+bit-physics-testkit = { workspace = true }
+bit-physics-diagnostics = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["lbm_multiphase"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"

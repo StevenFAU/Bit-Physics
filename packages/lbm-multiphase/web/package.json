@@ -1,0 +1,21 @@
+{
+  "name": "@bit-physics/web-lbm-multiphase",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Stack-B WebGPU web build — D2Q9 pseudopotential multiphase LBM: liquid–vapor droplets, coalescence, spinodal decomposition and paintable wettability from one nearest-neighbor interaction force (two-tier: Maxwell-exact Guo/exp-ψ metrology + Carnahan-Starling σ-forcing showcase), an uber-composite render stack (dual-tone phase field, glass refraction, schlieren, curl, parasite view, dye tracers), and a verification-visible PROVE layer that re-runs the f64-anchored deploy gate PLUS analytic gates (Maxwell coexistence, τ-independence, Young–Laplace, spurious ceiling, G_c negative control) on the visitor's GPU (Phase-6, first Stack-B lattice-family sim).",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

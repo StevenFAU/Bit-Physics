@@ -1,0 +1,193 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lbm-multiphase-young-laplace",
+  "category": "lattice",
+  "derivation": {
+    "doc": "docs/sim-specs/lattice/lbm-multiphase/spec-ref.md",
+    "upstream": "n/a-numerical-baseline (repo f64 measurements; exact-law protocol per the fit points' references)",
+    "upstream_sha": "n/a-numerical-baseline",
+    "upstream_path": "n/a-numerical-baseline"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "laplace-A-r14",
+        "tier": "A",
+        "G": -9.0,
+        "tau": 1.0,
+        "R_init": 14.0
+      },
+      "expected": {
+        "R_measured": 13.363077719938119,
+        "dp": 0.002189885516427015,
+        "max_u": 0.0022014693234962213,
+        "settle_drift": 2.2522694820281686e-10
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-A-r18",
+        "tier": "A",
+        "G": -9.0,
+        "tau": 1.0,
+        "R_init": 18.0
+      },
+      "expected": {
+        "R_measured": 17.598736297155778,
+        "dp": 0.0016803707255620137,
+        "max_u": 0.0025996197574478285,
+        "settle_drift": 3.403333170837186e-10
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-A-r22",
+        "tier": "A",
+        "G": -9.0,
+        "tau": 1.0,
+        "R_init": 22.0
+      },
+      "expected": {
+        "R_measured": 21.712138113004762,
+        "dp": 0.0013708626189662676,
+        "max_u": 0.002696254227460677,
+        "settle_drift": 1.0185630117121036e-10
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-A-r26",
+        "tier": "A",
+        "G": -9.0,
+        "tau": 1.0,
+        "R_init": 26.0
+      },
+      "expected": {
+        "R_measured": 25.761912054294488,
+        "dp": 0.0011602573966395524,
+        "max_u": 0.0027903605052675227,
+        "settle_drift": 7.45389083789405e-10
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-B-r14",
+        "tier": "B",
+        "T_over_Tc": 0.8,
+        "tau": 0.8,
+        "sigma_forcing": 0.105,
+        "R_init": 14.0
+      },
+      "expected": {
+        "R_measured": 12.828336258339185,
+        "dp": 0.0006002362898654373,
+        "max_u": 0.0018748670574483136,
+        "settle_drift": 1.5477177525702324e-07
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-B-r18",
+        "tier": "B",
+        "T_over_Tc": 0.8,
+        "tau": 0.8,
+        "sigma_forcing": 0.105,
+        "R_init": 18.0
+      },
+      "expected": {
+        "R_measured": 17.38033607236688,
+        "dp": 0.0004520759047798807,
+        "max_u": 0.002035677054539262,
+        "settle_drift": 1.444357832225407e-07
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-B-r22",
+        "tier": "B",
+        "T_over_Tc": 0.8,
+        "tau": 0.8,
+        "sigma_forcing": 0.105,
+        "R_init": 22.0
+      },
+      "expected": {
+        "R_measured": 21.59453595841442,
+        "dp": 0.0003665934874408257,
+        "max_u": 0.002117940951240397,
+        "settle_drift": 6.935606203239963e-08
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-B-r26",
+        "tier": "B",
+        "T_over_Tc": 0.8,
+        "tau": 0.8,
+        "sigma_forcing": 0.105,
+        "R_init": 26.0
+      },
+      "expected": {
+        "R_measured": 25.71244122217362,
+        "dp": 0.0003093200902154398,
+        "max_u": 0.0021407823067725834,
+        "settle_drift": 1.5503051206677831e-07
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-A-fit",
+        "tier": "A",
+        "G": -9.0,
+        "tau": 1.0
+      },
+      "expected": {
+        "sigma": 0.028567922121406648,
+        "intercept": 5.389456768494825e-05,
+        "r_squared": 0.9999641881966674
+      },
+      "independent_reference": {
+        "source": "Young-Laplace 2D: dp = sigma/R (exact continuum statement); Li, Luo & Li, Phys. Rev. E 87:053301 (2013) \u2014 published SC Laplace-fit practice",
+        "doi": "10.1103/PhysRevE.87.053301",
+        "derived_by": "dp-vs-1/R least squares over four radii, dp through the bulk EOS on measured densities, R from mid-density area, 14000 steps from tanh ICs"
+      }
+    },
+    {
+      "inputs": {
+        "name": "laplace-B-fit",
+        "tier": "B",
+        "T_over_Tc": 0.8,
+        "tau": 0.8
+      },
+      "expected": {
+        "sigma": 0.007437584289928558,
+        "intercept": 2.1709285534337356e-05,
+        "r_squared": 0.9997828078367315
+      },
+      "independent_reference": {
+        "source": "Young-Laplace 2D: dp = sigma/R (exact continuum statement); Li, Luo & Li, Phys. Rev. E 87:053301 (2013) \u2014 published SC Laplace-fit practice",
+        "doi": "10.1103/PhysRevE.87.053301",
+        "derived_by": "dp-vs-1/R least squares over four radii, dp through the bulk EOS on measured densities, R from mid-density area, 14000 steps from tanh ICs"
+      }
+    },
+    {
+      "inputs": {
+        "name": "spurious-current-ceiling"
+      },
+      "expected": {
+        "tier_a_max_u": 0.0027903605052675227,
+        "tier_b_max_u": 0.0021407823067725834,
+        "published_bgk_yu_fan": 0.028,
+        "published_mrt_yu_fan": 0.0053
+      },
+      "independent_reference": {
+        "source": "Yu & Fan, Phys. Rev. E 82:046708 (2010) \u2014 spurious-current anchors 0.028 BGK / 0.0053 MRT",
+        "doi": "10.1103/PhysRevE.82.046708",
+        "derived_by": "max|u| over the settled droplet fields (ceiling sanity range)"
+      }
+    }
+  ]
+}

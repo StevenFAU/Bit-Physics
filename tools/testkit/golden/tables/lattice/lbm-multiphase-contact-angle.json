@@ -1,0 +1,150 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lbm-multiphase-contact-angle-map",
+  "category": "lattice",
+  "derivation": {
+    "doc": "docs/sim-specs/lattice/lbm-multiphase/spec-ref.md",
+    "upstream": "n/a-numerical-baseline (repo f64 calibration; spherical-cap protocol per test-point references)",
+    "upstream_sha": "n/a-numerical-baseline",
+    "upstream_path": "n/a-numerical-baseline"
+  },
+  "tolerance": {
+    "absolute": 0.0,
+    "relative": 1e-06
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "contact-angle-rhow0.8",
+        "rho_w": 0.8,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": null,
+        "L": null,
+        "theta_deg": null,
+        "settle_drift": 1.9131200419408856e-05,
+        "max_u": 0.002587781655524221
+      },
+      "independent_reference": {
+        "source": "Huang, Thorne, Schaap & Sukop, Phys. Rev. E 76:066701 (2007) \u2014 wall-affinity contact-angle control",
+        "doi": "10.1103/PhysRevE.76.066701",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow1.0",
+        "rho_w": 1.0,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": 21.561202358071345,
+        "L": 34.2357971182638,
+        "theta_deg": 103.10637866392476,
+        "settle_drift": 1.0346334233801713e-08,
+        "max_u": 0.0027350677477757045
+      },
+      "independent_reference": {
+        "source": "Young's equation \u2014 theta from interfacial-tension balance (continuum statement)",
+        "doi": "n/a-continuum-statement",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow1.2",
+        "rho_w": 1.2,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": 18.789919256909894,
+        "L": 44.21556311297283,
+        "theta_deg": 80.7239721934068,
+        "settle_drift": 7.93713529101403e-06,
+        "max_u": 0.0030506701781302203
+      },
+      "independent_reference": {
+        "source": "spherical-cap protocol R=(4H^2+L^2)/8H, tan(theta)=L/(2(R-H)) \u2014 spec section 4 D / Sukop & Thorne (2006)",
+        "doi": "n/a-continuum-statement",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow1.4",
+        "rho_w": 1.4,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": 16.256035906046044,
+        "L": 53.54208811781615,
+        "theta_deg": 62.53430535813625,
+        "settle_drift": 2.3683057350343262e-05,
+        "max_u": 0.0028305464485291194
+      },
+      "independent_reference": {
+        "source": "Huang, Thorne, Schaap & Sukop, Phys. Rev. E 76:066701 (2007) \u2014 wall-affinity contact-angle control",
+        "doi": "10.1103/PhysRevE.76.066701",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow1.6",
+        "rho_w": 1.6,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": 13.837269382815,
+        "L": 64.63200530821629,
+        "theta_deg": 46.359890816854836,
+        "settle_drift": 3.0466359551173383e-05,
+        "max_u": 0.0025394143691413944
+      },
+      "independent_reference": {
+        "source": "Young's equation \u2014 theta from interfacial-tension balance (continuum statement)",
+        "doi": "n/a-continuum-statement",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow1.8",
+        "rho_w": 1.8,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": 11.179666614560706,
+        "L": 89.76605215750594,
+        "theta_deg": 27.973729421303933,
+        "settle_drift": 2.9122236445466854e-05,
+        "max_u": 0.0023359251035369863
+      },
+      "independent_reference": {
+        "source": "spherical-cap protocol R=(4H^2+L^2)/8H, tan(theta)=L/(2(R-H)) \u2014 spec section 4 D / Sukop & Thorne (2006)",
+        "doi": "n/a-continuum-statement",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    },
+    {
+      "inputs": {
+        "name": "contact-angle-rhow2.0",
+        "rho_w": 2.0,
+        "protocol": "zero-g sessile half-droplet r=20 on a 2-row wall, 96x48, Tier A (G=-9, Guo, tau=1), 16000 steps; theta by the interpolated spherical-cap measurement; wall psi = psi(rho_w)"
+      },
+      "expected": {
+        "H": null,
+        "L": null,
+        "theta_deg": null,
+        "settle_drift": 0.02243008984831718,
+        "max_u": 0.001840952096878167
+      },
+      "independent_reference": {
+        "source": "Huang, Thorne, Schaap & Sukop, Phys. Rev. E 76:066701 (2007) \u2014 wall-affinity contact-angle control",
+        "doi": "10.1103/PhysRevE.76.066701",
+        "derived_by": "f64 spherical-cap measurement at 16000 steps"
+      }
+    }
+  ]
+}

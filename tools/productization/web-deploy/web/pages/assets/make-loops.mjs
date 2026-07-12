@@ -114,6 +114,11 @@ const SIMS = {
   // wavefronts stream continuously so any window loops acceptably; start
   // past the ramp so the first frame is not black (cold-start lesson).
   "fdtd-optics": { start: 120, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=phased-array", hide: [".fo-explain", ".fo-verify"] },
+  // Phase-6 lbm-multiphase: droplet rain — droplets fall, coalesce and wet
+  // the floor over the window; the cut back to fresh rain reads as new
+  // drops. Start past the boot so the first frame already has droplets
+  // (cold-start black-flash lesson).
+  "lbm-multiphase": { start: 40, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=droplet-rain", hide: [".lm-explain", ".lm-verify"] },
 };
 
 const MIME = {

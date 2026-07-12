@@ -122,6 +122,10 @@ const SIMS = {
   // beam (60 deg phase step) — wavefronts + sidelobes fill the frame once
   // the CW ramp settles (~180 steps @ 12 substeps -> settle by frame ~60).
   "fdtd-optics": { frames: 420, px: 512, query: "?preset=phased-array", hide: [".fo-explain", ".fo-verify"] },
+  // Phase-6 lbm-multiphase: ?preset=droplet-rain — glassy droplets mid-fall
+  // over the wetting floor; by frame ~340 several have coalesced and the
+  // film has formed on the floor (the multiphase money shot). Hide EXPLAIN/PROVE bars.
+  "lbm-multiphase": { frames: 340, px: 512, query: "?preset=droplet-rain", hide: [".lm-explain", ".lm-verify"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

@@ -131,6 +131,19 @@ GATE_KIND = {
     # T_FDTD_MIE_REL (verify.py _gate_fdtd_optics; spec-ref § 6 — the
     # analytic-gates conjunction is the sim's moat claim, so it is CI-held).
     "fdtd-optics": "new_canonical",
+    # Phase-6 verification-demo, first Stack-B lattice-family sim:
+    # new_canonical = LIVE Python-f64 reference comparison of the SHARED
+    # canonical flatA128x8+dropletB128-step2000 (D2Q9 pseudopotential,
+    # DDF-shifted pull streaming, committed pre-equilibrated ICs + psi-LUT)
+    # — pointwise per-gated-checkpoint max(|d rho|/max|rho|, sqrt(3)|d u|)
+    # ([defaults.lbm-multiphase] rel budget) + run-twice byte-identity + the
+    # ANALYTIC instrument gates measured in the same capture: Maxwell
+    # coexistence (LIVE-recomputed equal-area targets), tau-independence,
+    # Young-Laplace slope + linearity, spurious-current ceiling, and the
+    # G > G_c no-separation negative control (verify.py
+    # _gate_lbm_multiphase; spec-ref § 6.2 — the analytic-gates conjunction
+    # is the sim's moat claim, so it is CI-held).
+    "lbm-multiphase": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

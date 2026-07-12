@@ -1,0 +1,237 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "lattice-boltzmann-d2q9-equilibrium-qian-1992",
+  "category": "lattice",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/d2q9.md",
+    "upstream": "Qian-d-Humieres-Lallemand-1992",
+    "upstream_sha": "n/a-no-vendored-code-per-R8-amendment",
+    "upstream_path": "n/a-no-vendored-code-per-R8-amendment"
+  },
+  "tolerance": {
+    "absolute": 1e-15,
+    "relative": 0.0
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "name": "d2q9-eq-rest-rho1",
+        "rho": 1.0,
+        "u": [
+          0.0,
+          0.0
+        ],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..4=axis (+x,+y,-x,-y); 5..8=diagonals (+1,+1),(-1,+1),(-1,-1),(+1,-1) (see derivation doc section 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.4444444444444444,
+          0.1111111111111111,
+          0.1111111111111111,
+          0.1111111111111111,
+          0.1111111111111111,
+          0.027777777777777776,
+          0.027777777777777776,
+          0.027777777777777776,
+          0.027777777777777776
+        ],
+        "f_eq_shifted": [
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.0,
+        "momentum_y": 0.0
+      },
+      "independent_reference": {
+        "source": "Qian, d'Humieres & Lallemand, Europhys. Lett. 17:479 (1992) \u2014 D2Q9 weights and second-order equilibrium",
+        "doi": "10.1209/0295-5075/17/6/001",
+        "derived_by": "shifted-equilibrium evaluation (reference.py pinned order)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "d2q9-eq-rest-rho2p5",
+        "rho": 2.5,
+        "u": [
+          0.0,
+          0.0
+        ],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..4=axis (+x,+y,-x,-y); 5..8=diagonals (+1,+1),(-1,+1),(-1,-1),(+1,-1) (see derivation doc section 1)"
+      },
+      "expected": {
+        "f_eq": [
+          1.1111111111111112,
+          0.2777777777777778,
+          0.2777777777777778,
+          0.2777777777777778,
+          0.2777777777777778,
+          0.06944444444444445,
+          0.06944444444444445,
+          0.06944444444444445,
+          0.06944444444444445
+        ],
+        "f_eq_shifted": [
+          0.6666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.16666666666666666,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664,
+          0.041666666666666664
+        ],
+        "density_moment": 2.5,
+        "momentum_x": 0.0,
+        "momentum_y": 0.0
+      },
+      "independent_reference": {
+        "source": "Kruger et al., The Lattice Boltzmann Method (2017) ch. 3 \u2014 textbook cross-check, citation-only per the R8 amendment",
+        "doi": "10.1007/978-3-319-44649-3",
+        "derived_by": "shifted-equilibrium evaluation (reference.py pinned order)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "d2q9-eq-ux0p1",
+        "rho": 1.0,
+        "u": [
+          0.1,
+          0.0
+        ],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..4=axis (+x,+y,-x,-y); 5..8=diagonals (+1,+1),(-1,+1),(-1,-1),(+1,-1) (see derivation doc section 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.43777777777777777,
+          0.14777777777777779,
+          0.10944444444444444,
+          0.0811111111111111,
+          0.10944444444444444,
+          0.036944444444444446,
+          0.020277777777777777,
+          0.020277777777777777,
+          0.036944444444444446
+        ],
+        "f_eq_shifted": [
+          -0.006666666666666668,
+          0.036666666666666674,
+          -0.001666666666666667,
+          -0.03,
+          -0.001666666666666667,
+          0.009166666666666668,
+          -0.0075,
+          -0.0075,
+          0.009166666666666668
+        ],
+        "density_moment": 1.0,
+        "momentum_x": 0.10000000000000002,
+        "momentum_y": 0.0
+      },
+      "independent_reference": {
+        "source": "first-principles isotropy derivation, tools/testkit/golden/derivations/d2q9.md section 2 (re-executed by packages/lbm-multiphase/tests/test_reference.py)",
+        "doi": "n/a-in-repo-derivation",
+        "derived_by": "moment-isotropy constraint solve"
+      }
+    },
+    {
+      "inputs": {
+        "name": "d2q9-eq-uy-neg0p05",
+        "rho": 1.7,
+        "u": [
+          0.0,
+          -0.05
+        ],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..4=axis (+x,+y,-x,-y); 5..8=diagonals (+1,+1),(-1,+1),(-1,-1),(+1,-1) (see derivation doc section 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.7527222222222221,
+          0.18818055555555552,
+          0.1619722222222222,
+          0.18818055555555552,
+          0.21863888888888888,
+          0.04049305555555555,
+          0.04049305555555555,
+          0.05465972222222222,
+          0.05465972222222222
+        ],
+        "f_eq_shifted": [
+          0.3082777777777777,
+          0.07706944444444443,
+          0.0508611111111111,
+          0.07706944444444443,
+          0.10752777777777778,
+          0.012715277777777775,
+          0.012715277777777775,
+          0.026881944444444444,
+          0.026881944444444444
+        ],
+        "density_moment": 1.7,
+        "momentum_x": -6.938893903907228e-18,
+        "momentum_y": -0.085
+      },
+      "independent_reference": {
+        "source": "Qian, d'Humieres & Lallemand, Europhys. Lett. 17:479 (1992) \u2014 D2Q9 weights and second-order equilibrium",
+        "doi": "10.1209/0295-5075/17/6/001",
+        "derived_by": "shifted-equilibrium evaluation (reference.py pinned order)"
+      }
+    },
+    {
+      "inputs": {
+        "name": "d2q9-eq-diag0p08",
+        "rho": 0.4,
+        "u": [
+          0.08,
+          0.08
+        ],
+        "cs_squared": 0.3333333333333333,
+        "velocity_indexing": "0=rest; 1..4=axis (+x,+y,-x,-y); 5..8=diagonals (+1,+1),(-1,+1),(-1,-1),(+1,-1) (see derivation doc section 1)"
+      },
+      "expected": {
+        "f_eq": [
+          0.17436444444444443,
+          0.05553777777777778,
+          0.05553777777777778,
+          0.03420444444444444,
+          0.03420444444444444,
+          0.01751111111111111,
+          0.010897777777777777,
+          0.006844444444444441,
+          0.010897777777777777
+        ],
+        "f_eq_shifted": [
+          -0.27008,
+          -0.05557333333333332,
+          -0.05557333333333332,
+          -0.07690666666666666,
+          -0.07690666666666666,
+          -0.010266666666666665,
+          -0.01688,
+          -0.020933333333333335,
+          -0.01688
+        ],
+        "density_moment": 0.4,
+        "momentum_x": 0.032000000000000015,
+        "momentum_y": 0.03200000000000001
+      },
+      "independent_reference": {
+        "source": "Kruger et al., The Lattice Boltzmann Method (2017) ch. 3 \u2014 textbook cross-check, citation-only per the R8 amendment",
+        "doi": "10.1007/978-3-319-44649-3",
+        "derived_by": "shifted-equilibrium evaluation (reference.py pinned order)"
+      }
+    }
+  ]
+}

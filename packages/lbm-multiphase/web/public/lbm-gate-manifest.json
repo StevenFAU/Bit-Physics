@@ -1,0 +1,166 @@
+{
+  "generated_by": "packages/lbm-multiphase/lbm_multiphase/goldens.py",
+  "scenes": {
+    "descriptor": "flatA128x8+dropletB128-step2000",
+    "flat": {
+      "name": "gate-flatA",
+      "nx": 128,
+      "ny": 8,
+      "psi_kind": "exp-lut",
+      "G": -9.0,
+      "tau": 1.0,
+      "forcing": "guo",
+      "sigma": 0.0,
+      "cs_temp": 0.0,
+      "steps": 2000,
+      "checkpoints": [
+        200,
+        800,
+        2000
+      ]
+    },
+    "droplet": {
+      "name": "gate-dropletB",
+      "nx": 128,
+      "ny": 128,
+      "psi_kind": "cs",
+      "G": -3.0,
+      "tau": 0.8,
+      "forcing": "li-sigma",
+      "sigma": 0.105,
+      "cs_temp": 0.0754629625190461,
+      "steps": 2000,
+      "checkpoints": [
+        200,
+        800,
+        2000
+      ]
+    },
+    "nosep_steps": 3000,
+    "coex_steps": 12000,
+    "pointwise_checkpoints": {
+      "flat": [
+        200,
+        800,
+        2000
+      ],
+      "droplet": [
+        200,
+        800
+      ]
+    },
+    "field_order": [
+      "rho",
+      "ux",
+      "uy"
+    ],
+    "layout": "checkpoints x fields[rho,ux,uy] x grid f64 row-major (i*ny+j), little-endian"
+  },
+  "assets": {
+    "psi_lut": {
+      "file": "lbm-psi-lut-f64.bin",
+      "sha256": "f653c1a051346dbbfcc53f86af9f853b9381ef708c524f4caea224ebc8f21f48",
+      "n": 8192,
+      "rho_max": 6.0
+    },
+    "ic_flatA": {
+      "file": "lbm-gate-ic-flatA.bin",
+      "sha256": "21cb685fbe37ad21419608fe8de5a1e50006e8ca07d4194a167e35f64a700d3b"
+    },
+    "ic_dropletB": {
+      "file": "lbm-gate-ic-dropletB.bin",
+      "sha256": "d841ad61b68dfc1fc873faec9e35ad09e9fe5b8c29b5d2909ec610c4c1e7707f"
+    },
+    "ic_nosep": {
+      "file": "lbm-gate-ic-nosep.bin",
+      "sha256": "0d57ce0a96dd7031da90465f937803eb51522c40ecf65dff3047fce0b3ba3c75"
+    },
+    "ic_laplaceA": {
+      "14": "11c721119134050ca7be223931540d04ac1a8a526e8c8464defd6e9d8cad1a2b",
+      "18": "272702aa3d321d892bd1dc2b124cbb7eab415d1866882bbed6104f35c55c3cf2",
+      "22": "5db899154ee1ff6233bda768b24a16bda2676490dbd1cae6e498d95ea4042b99",
+      "26": "ba08074afb1ac082f0d08e4a2988ef4a76c63ab52fdc13de543e9fcfcee10a17"
+    },
+    "reference_bins": {
+      "flat": {
+        "file": "lbm-gate-flat-step2000.bin",
+        "sha256": "0a116e2dc9d7215cf09be9424ee209c2c2dfc6c757be44bef6636c361c19c149"
+      },
+      "droplet": {
+        "file": "lbm-gate-droplet-step2000.bin",
+        "sha256": "89337be5e0ac719e275d6f167681b1ce96640c029dc16cbebcf1e1c8d7a49acb"
+      }
+    }
+  },
+  "targets": {
+    "maxwell_tier_a": {
+      "rho_v": 0.45580150249019463,
+      "rho_l": 2.2495719041342674
+    },
+    "coexistence_measured_f64": {
+      "rho_l": 2.2593211427731537,
+      "rho_v": 0.4552964811745561
+    },
+    "tier_b_mech_targets": {
+      "rho_v": 0.02173992363853369,
+      "rho_l": 0.30719945890362116
+    },
+    "laplace_sigma_a": 0.028567922121406648,
+    "laplace_rows_f64": [
+      {
+        "R_init": 14.0,
+        "R_measured": 13.363077719938119,
+        "dp": 0.002189885516427015,
+        "max_u": 0.0022014693234962213,
+        "settle_drift": 2.2522694820281686e-10
+      },
+      {
+        "R_init": 18.0,
+        "R_measured": 17.598736297155778,
+        "dp": 0.0016803707255620137,
+        "max_u": 0.0025996197574478285,
+        "settle_drift": 3.403333170837186e-10
+      },
+      {
+        "R_init": 22.0,
+        "R_measured": 21.712138113004762,
+        "dp": 0.0013708626189662676,
+        "max_u": 0.002696254227460677,
+        "settle_drift": 1.0185630117121036e-10
+      },
+      {
+        "R_init": 26.0,
+        "R_measured": 25.761912054294488,
+        "dp": 0.0011602573966395524,
+        "max_u": 0.0027903605052675227,
+        "settle_drift": 7.45389083789405e-10
+      }
+    ],
+    "laplace_browser_protocol": {
+      "sigma": 0.02848125013317361,
+      "rows": [
+        {
+          "R": 13.363077719938119,
+          "dp": 0.0021887546137148994
+        },
+        {
+          "R": 17.598736297155778,
+          "dp": 0.0016973350394636766
+        },
+        {
+          "R": 21.712138113004762,
+          "dp": 0.0013555206792652263
+        },
+        {
+          "R": 25.761912054294488,
+          "dp": 0.0011739599577822168
+        }
+      ],
+      "steps": 3000
+    },
+    "spurious_max_u_f64": 0.0019319638718568457,
+    "nosep_spread_f64": 0.014518023092938037,
+    "nosep_G": -5.0,
+    "nosep_ic_spread": 0.16
+  }
+}

@@ -44,6 +44,7 @@ EXPECTED_SIMS = {
     "signal-workbench",
     "phase-field-fracture",
     "fdtd-optics",
+    "lbm-multiphase",
     "eulerian-smoke",
     "mpm-multimaterial",
     "physarum",

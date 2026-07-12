@@ -1,0 +1,55 @@
+{
+  "generated_by": "packages/lbm-multiphase/web/gen-verification.mjs",
+  "gate": {
+    "kind": "new_canonical",
+    "descriptor": "flatA128x8+dropletB128-step2000",
+    "checkpoints": [
+      200,
+      800,
+      2000
+    ],
+    "pointwise_checkpoints": {
+      "flat": [
+        200,
+        800,
+        2000
+      ],
+      "droplet": [
+        200,
+        800
+      ]
+    },
+    "coex_steps": 12000
+  },
+  "reference_bins": {
+    "flat": {
+      "file": "lbm-gate-flat-step2000.bin",
+      "sha256": "0a116e2dc9d7215cf09be9424ee209c2c2dfc6c757be44bef6636c361c19c149"
+    },
+    "droplet": {
+      "file": "lbm-gate-droplet-step2000.bin",
+      "sha256": "89337be5e0ac719e275d6f167681b1ce96640c029dc16cbebcf1e1c8d7a49acb"
+    }
+  },
+  "psi_lut_sha": "f653c1a051346dbbfcc53f86af9f853b9381ef708c524f4caea224ebc8f21f48",
+  "tolerance": {
+    "category": "lbm-multiphase",
+    "relative": 0.005,
+    "coex_rel_l": 0.001,
+    "coex_rel_v": 0.002,
+    "tau_spread_abs": 0.0005,
+    "laplace_rel": 0.02,
+    "laplace_r2_min": 0.995,
+    "spurious_max": 0.006,
+    "nosep_spread_max": 0.03,
+    "measured_basis": "MEASURED 2026-07-11 f32-proxy: traj worst 6.8e-4; coex 6e-5/1.7e-4; tau 4.8e-5; laplace sigma diff 2e-4, R2 0.99886; spurious 1.9e-3; nosep 1.45e-2"
+  },
+  "goldens": {
+    "coex_rho_l": 2.2495719041342674,
+    "coex_rho_v": 0.45580150249019463,
+    "sigma_a": 0.028567922121406648,
+    "sigma_a_browser_protocol": 0.02848125013317361,
+    "sigma_b": 0.007437584289928558,
+    "lamb_rel_err": 0.16885205461544034
+  }
+}
