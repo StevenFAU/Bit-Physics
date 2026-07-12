@@ -45,7 +45,8 @@ const verifyPy = readFileSync(
   "utf8",
 );
 const grab = (name) => {
-  const m = verifyPy.match(new RegExp(`${name} = ([0-9.e+-]+)`));
+  // tolerate ruff-format wrapping: `NAME = (\n    5e-4  # comment\n)`
+  const m = verifyPy.match(new RegExp(`${name} = \\(?\\s*([0-9.e+-]+)`));
   if (!m) {
     fail(`verify.py missing ${name}`);
     return NaN;
@@ -69,6 +70,15 @@ const man = readJson(join(here, "public", "lbm-gate-manifest.json"));
 const hashPublic = (file) => sha256(readFileSync(join(here, "public", file)));
 if (hashPublic(man.assets.psi_lut.file) !== man.assets.psi_lut.sha256)
   fail("psi LUT sha drift vs manifest");
+// the Python runtime loads the packaged copy (np.exp is microarch-dependent,
+// so sha-pinned paths read committed bytes) — the two copies must be identical
+const pkgLut = sha256(
+  readFileSync(
+    join(repo, "packages", "lbm-multiphase", "lbm_multiphase", "data", "psi-lut-f64.bin"),
+  ),
+);
+if (pkgLut !== man.assets.psi_lut.sha256)
+  fail("packaged psi LUT (lbm_multiphase/data) drift vs web/public copy");
 for (const key of ["ic_flatA", "ic_dropletB", "ic_nosep"]) {
   if (hashPublic(man.assets[key].file) !== man.assets[key].sha256)
     fail(`${key} sha drift vs manifest`);
