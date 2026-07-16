@@ -519,8 +519,10 @@ async function start(): Promise<void> {
     if (!gpu) return;
 
     if (st.running && !st.nanPaused) {
-      // rolling DFT window keeps the phasor layers responsive to edits
-      if (st.dftW > 6000) resetPhasors();
+      // The rolling DFT window converges then freezes. A periodic hard reset
+      // here blanked every phasor-derived layer (~1 s of black each ~6000
+      // substeps); edits, λ changes and preset loads still reset explicitly.
+      const phasorLive = st.dftW < 60000;
       const subs: SubstepU[] = [];
       const wDisp = st.scene.planeWave?.kind === "cw" || st.emitters.some((e) => e.kind === "cw")
         ? omegaOf(st.lambda)
@@ -555,7 +557,7 @@ async function start(): Promise<void> {
       pendingBrush = undefined;
       if (st.probeCell) gpu.cfg.probeIdx = st.probeCell.i * gpu.ny + st.probeCell.j;
       const enc = device.createCommandEncoder();
-      gpu.encodeSubsteps(enc, subs, { phasor: true, probe: st.probeCell !== null });
+      gpu.encodeSubsteps(enc, subs, { phasor: phasorLive, probe: st.probeCell !== null });
       const rs: RenderState = {
         layers: st.layers,
         exposure: st.exposure,
@@ -575,7 +577,7 @@ async function start(): Promise<void> {
       renderer.draw(enc, gpu, ctx.getCurrentTexture().createView(), canvas.width, canvas.height, rs);
       device.queue.submit([enc.finish()]);
       st.stepCount += st.substeps;
-      st.dftW += st.substeps;
+      if (phasorLive) st.dftW += st.substeps;
     } else {
       // paused: still present (frozen field)
       const enc = device.createCommandEncoder();
