@@ -27,6 +27,13 @@ import { HeatGpu } from "./solver.js";
 import { installVerifyPanel } from "./verify-panel.js";
 
 const canvas = document.getElementById("view") as HTMLCanvasElement;
+// Panel brush scale (0–300) → per-frame peak ΔT at the stroke center. The
+// splat kernel is area-normalized (amp = power/(2πσ²)) and the hand brush
+// integrates dt once per frame, so raw panel numbers deposited ~0.004 T per
+// frame — a moving stroke was invisible. brushRate() converts the panel
+// number into the kernel's power units so that panel 300 ≈ 0.5 T per frame.
+const BRUSH_PEAK_MAX = 0.5;
+
 const boot = document.getElementById("boot") as HTMLDivElement;
 const setBoot = (m: string): void => {
   boot.textContent = m;
@@ -50,6 +57,8 @@ interface AppState {
   nanPaused: boolean;
   brushDown: boolean;
   brushMode: 1 | 3;
+  /** panel brush number (0–300); converted to kernel units by brushRate(). */
+  brushPanel: number;
   lastField: Float64Array | null;
   lastFieldAt: number;
   probe: { x: number; y: number } | null;
@@ -132,6 +141,7 @@ async function start(): Promise<void> {
   state.nanPaused = false;
   state.brushDown = false;
   state.brushMode = 1;
+  state.brushPanel = 60;
   state.lastField = null;
   state.lastFieldAt = 0;
   state.probe = null;
@@ -140,6 +150,14 @@ async function start(): Promise<void> {
   const liveDt = (): number => {
     const bound = stabilityBound(state.alpha, state.n);
     return state.dtFrac * bound;
+  };
+
+  // Panel brush number → kernel power units (see the BRUSH_PEAK_MAX note):
+  // inverts the kernel's 1/(2πσ²) area normalization and the once-per-frame
+  // dt integration so the panel scale maps to a visible per-frame peak ΔT.
+  const brushRate = (): number => {
+    const sigma = state.gpu?.brush.sigma ?? 1;
+    return ((state.brushPanel / 300) * BRUSH_PEAK_MAX * (2 * Math.PI * sigma * sigma)) / liveDt();
   };
 
   let decayDirty = false;
@@ -187,8 +205,9 @@ async function start(): Promise<void> {
     state.gpu.uploadField(Float32Array.from(spec.ic(spec.n)));
     state.gpu.uploadSource(spec.source ? spec.source(spec.n) : new Float32Array(spec.n * spec.n));
     state.gpu.uploadAlpha(spec.material ? spec.material(spec.n) : new Float32Array(spec.n * spec.n).fill(spec.alpha));
-    state.gpu.brush.sigma = 0.012 * spec.n;
-    state.gpu.brush.power = spec.brushPower;
+    state.gpu.brush.sigma = 0.02 * spec.n;
+    state.brushPanel = spec.brushPower;
+    state.gpu.brush.power = brushRate();
 
     renderer.state.flags = spec.renderFlags | (spec.fourierOverlay ? 0 : 0);
     renderer.state.palette = spec.palette;
@@ -341,7 +360,8 @@ bound). `;
     syncControls();
   });
   const brushCtl = mkSlider("brush power", 0, 300, 5, 60, (v) => {
-    state.gpu.brush.power = v;
+    state.brushPanel = v;
+    state.gpu.brush.power = brushRate();
     syncControls();
   });
 
@@ -649,8 +669,8 @@ bound). `;
           : ` dt=${(state.dtFrac * bound).toExponential(2)} · NEGATIVE LESSON: at large Δt/Δx DFF converges to a telegraph equation, not the heat equation`;
     subCtl.input.value = String(state.substeps);
     subCtl.readout.textContent = ` ${state.substeps}`;
-    brushCtl.input.value = String(state.gpu?.brush.power ?? 0);
-    brushCtl.readout.textContent = ` ${state.gpu?.brush.power ?? 0}`;
+    brushCtl.input.value = String(state.brushPanel);
+    brushCtl.readout.textContent = ` ${state.brushPanel}`;
     palSel.value = renderer.state.palette;
     for (const [bit, box] of layerBoxes) box.checked = (renderer.state.flags & bit) !== 0;
     arrowsBox.checked = renderer.arrowsOn;
@@ -714,6 +734,7 @@ bound). `;
       // user brush
       if (s.brushDown) {
         s.gpu.brush.kind = s.brushMode;
+        s.gpu.brush.power = brushRate(); // dt slider may have moved since load
         s.gpu.writeUniforms();
         const encB = device.createCommandEncoder();
         s.gpu.encodeSplat(encB);
