@@ -30,8 +30,14 @@ export interface AxesSpec {
 export function installAxes(spec: AxesSpec): { sync: (mode: ViewMode) => void } {
   const cv = document.createElement("canvas");
   cv.className = "sw-axes";
-  cv.style.cssText = "position:fixed;pointer-events:none;z-index:5;";
-  document.body.appendChild(cv);
+  // No z-index: all the overlapping elements (stage, EXPLAIN/PROVE panels,
+  // settings panel) are positioned with z-index:auto, so DOM order decides
+  // the paint order. Inserting right after the stage keeps the labels above
+  // the WebGPU canvas but under everything installed later.
+  cv.style.cssText = "position:fixed;pointer-events:none;";
+  const stage = spec.view.closest(".bps-stage");
+  if (stage?.parentElement) stage.parentElement.insertBefore(cv, stage.nextSibling);
+  else document.body.appendChild(cv);
   const c = cv.getContext("2d");
 
   let lastMode: ViewMode | null = null;
