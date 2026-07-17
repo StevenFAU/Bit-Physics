@@ -502,6 +502,10 @@ async function start(): Promise<void> {
       mat: bm.mat,
       mat2: bm.mat2,
     };
+    // A material edit invalidates the accumulated phasors; without this the
+    // converged-and-frozen DFT window would keep rendering the pre-edit
+    // energy view and painting would look inert.
+    resetPhasors();
   }
 
   // -------------------------------------------------------------- the loop
