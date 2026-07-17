@@ -353,6 +353,11 @@ function installUi(state: AppState): void {
           panel.setStatus(s.blurb);
         },
       })),
+      modes: {
+        onMode: (m) => {
+          state.running = m === "play";
+        },
+      },
       study: {
         diagnostics: [],
         honesty: {
