@@ -421,6 +421,16 @@ async function start(): Promise<void> {
   window.addEventListener("resize", resize);
 
   let readbackBusy = false;
+  // settled-scene detector: mean per-cell |Δρ| across consecutive 1 Hz
+  // readbacks. Activity thresholds on |u| would false-positive forever on the
+  // pseudopotential's steady parasitic interface currents; the density field
+  // itself goes static when a scene (droplet-rain, capillary-race…) finishes.
+  // A scene switch needs no explicit reset: the first cross-scene Δρ is huge
+  // (or the grid length changes), which zeroes the calm counter.
+  let prevRho: Float32Array | null = null;
+  let lastSampleStep = -1;
+  let calmTicks = 0;
+  let settledShown = false;
   const frame = (): void => {
     requestAnimationFrame(frame);
     if (isCapturing()) return; // capture holds the GPU (common-web lock)
@@ -471,6 +481,18 @@ async function start(): Promise<void> {
           let peakU = 0;
           let meanRho = 0;
           let hasNan = false;
+          let dSum = 0;
+          // per-step normalization keeps the settle threshold invariant to
+          // the substeps slider; dStep <= 0 also catches scene reloads
+          // (stepCount resets) without an explicit hook
+          const dStep = st.stepCount - lastSampleStep;
+          const comparable =
+            prevRho !== null &&
+            prevRho.length === m.rho.length &&
+            lastSampleStep >= 0 &&
+            dStep > 0 &&
+            st.running &&
+            !st.nanPaused;
           for (let c = 0; c < m.rho.length; c++) {
             const r = m.rho[c];
             if (Number.isNaN(r)) {
@@ -478,6 +500,7 @@ async function start(): Promise<void> {
               break;
             }
             meanRho += r;
+            if (comparable) dSum += Math.abs(r - (prevRho as Float32Array)[c]);
             const s = Math.abs(m.ux[c]) + Math.abs(m.uy[c]);
             if (s > peakU) peakU = s;
           }
@@ -486,12 +509,42 @@ async function start(): Promise<void> {
             st.nanPaused = true;
             nanBox.style.display = "block";
           }
+          let meanD = -1;
+          if (comparable && !hasNan) {
+            // mean per-cell |Δρ| per kilostep. Measured on droplet-rain
+            // (RADV, 360 s run): active rain ~1e-3, last visible motion
+            // ~5.6e-5, settled-pool asymptote ~5.8e-6 (parasitic-current
+            // flutter never decays past that) — the 5e-5·(ρL−ρV) ≈ 1.4e-5
+            // threshold sits mid-gap, ≳2.5× clear of both neighbors.
+            meanD = (dSum / m.rho.length / dStep) * 1000;
+            if (meanD < 5e-5 * (st.scene.rhoL - st.scene.rhoV)) {
+              calmTicks++;
+            } else {
+              calmTicks = 0;
+              if (settledShown) {
+                settledShown = false;
+                panel.setNarration("");
+              }
+            }
+            if (calmTicks === 5 && !settledShown) {
+              settledShown = true;
+              panel.setNarration(
+                "the flow has settled — paint with the tools or pick a preset to stir it up again",
+                "nudge",
+              );
+            }
+          } else {
+            calmTicks = 0;
+          }
+          prevRho = hasNan ? null : Float32Array.from(m.rho);
+          lastSampleStep = st.stepCount;
           panel.setDiagnostics([
             { label: "step", value: String(st.stepCount) },
             { label: "grid", value: `${gpuNow.nx}×${gpuNow.ny}` },
             { label: "tier", value: gpuNow.params.psiKind === "cs" ? "B (C-S + σ)" : "A (exp-ψ + Guo)" },
             { label: "max |u| (lattice)", value: peakU.toExponential(2) },
             { label: "mean ρ", value: meanRho.toFixed(4) },
+            { label: "activity ⟨|Δρ|⟩/kstep", value: meanD >= 0 ? meanD.toExponential(2) : "—" },
             { label: "τ", value: String(gpuNow.params.tau) },
           ]);
         } catch {
