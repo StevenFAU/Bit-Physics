@@ -272,6 +272,11 @@ bound). `;
         panel.setActivePreset(s.label);
       },
     })),
+    modes: {
+      onMode: (m) => {
+        state.running = m === "play";
+      },
+    },
     study: {
       diagnostics: [],
       honesty: {

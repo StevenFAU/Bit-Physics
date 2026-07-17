@@ -201,11 +201,32 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
 }
 .bps-row select:focus, .bps-row input:focus { outline: none; border-color: var(--accent); }
 
+/* Collapsible control groups (disclosure layer 1). The header is a real
+ * <button> (keyboard + aria-expanded); the body hides via [hidden] so the
+ * DOM stays queryable while collapsed. */
 .bps-group { margin: 10px 0 4px; padding-top: 8px; border-top: 1px solid var(--line); }
-.bps-group-label {
+.bps-fold {
+  appearance: none; border: 0; background: transparent; cursor: pointer;
+  display: flex; align-items: baseline; gap: 6px; width: 100%;
+  padding: 0; margin: 0 0 4px; text-align: left;
   font: 500 10px/1.4 var(--mono); letter-spacing: .12em;
-  text-transform: uppercase; color: var(--faint); margin: 0 0 4px;
+  text-transform: uppercase; color: var(--faint);
 }
+.bps-fold::before { content: "▸"; flex: none; font-size: 9px; }
+.bps-fold[aria-expanded="true"]::before { content: "▾"; }
+.bps-fold:hover { color: var(--dim); }
+.bps-fold-hint { margin: 0 0 6px; font-size: 11px; line-height: 1.4; color: var(--faint); }
+
+/* Hover/focus-revealed control hint (disclosure layer 2). Inline-expands on
+ * its own wrapped line inside flex rows — floating tooltips would clip on
+ * the panel's overflow. */
+.bps-hint { display: none; flex-basis: 100%; font-size: 11px; line-height: 1.4; color: var(--faint); }
+.bps-hintable:hover .bps-hint, .bps-hintable:focus-within .bps-hint { display: block; }
+
+/* Live narration line: "what is happening right now", under the caption. */
+.bps-narrate { margin: -4px 0 10px; font-size: 11.5px; color: var(--dim); }
+.bps-narrate[data-tone="event"] { color: var(--accent); }
+.bps-narrate[data-tone="nudge"] { color: var(--warm); }
 
 /* Study section: measured diagnostics + honesty note + gate/verdict line.
  * Hidden in Play mode (clean canvas focus); the shell toggles [hidden]. */

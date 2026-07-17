@@ -169,6 +169,7 @@ function loadScene(state: AppState, scene: SceneSpec, rateMult?: number, mobilit
   state.peak = { f: -Infinity, u: 0 };
   state.curve = [];
   state.renderer.invalidate();
+  panelRef?.setNarration("");
 }
 
 function drawHud(state: AppState): void {
@@ -277,6 +278,10 @@ async function frameBody(state: AppState): Promise<void> {
         if (cells.nan || nodes.nan) {
           state.nanPaused = true;
           panelRef?.setStatus("NaN detected — solver paused; reset the scene");
+          panelRef?.setNarration(
+            "solver hit a numerical blow-up and paused — pick a preset to restart",
+            "nudge",
+          );
         }
       }
       // adapt substeps to frame budget
@@ -291,6 +296,13 @@ async function frameBody(state: AppState): Promise<void> {
         state.running = false;
         panelRef?.setStatus(
           `loading protocol complete — peak ${(state.peak.f * FORCE_UNIT_N).toFixed(0)} N; reset or pick a preset`,
+        );
+        // the status line sits at the panel bottom; the narration line is the
+        // visible top-of-panel nudge for a scene that just self-terminated
+        panelRef?.setNarration(
+          `fracture complete — peak force ${(state.peak.f * FORCE_UNIT_N).toFixed(0)} N. ` +
+            "Press space or pick a preset to run it again",
+          "nudge",
         );
       }
     }
@@ -353,6 +365,13 @@ function installUi(state: AppState): void {
           panel.setStatus(s.blurb);
         },
       })),
+      modes: {
+        onMode: (m) => {
+          // a finished loading protocol stays finished — returning to Play
+          // must not step the ramp past its end (space/preset restarts it)
+          state.running = m === "play" && !state.done;
+        },
+      },
       study: {
         diagnostics: [],
         honesty: {

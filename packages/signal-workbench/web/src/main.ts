@@ -209,6 +209,11 @@ async function start(): Promise<void> {
         syncAudio();
       },
     })),
+    // Play/Study house toggle (§ 5.2). No onMode suspension: the instrument
+    // IS the running signal — freezing generation would silence the audio and
+    // stall the measured rows Study exists to show. Study here only reveals
+    // the diagnostics/honesty block (the shell dims the canvas).
+    modes: {},
     study: {
       diagnostics: diagRows,
       honesty: {

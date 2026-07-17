@@ -36,6 +36,18 @@
 //   New elements carry data-bp2="…" hooks; the v1 data-bp namespace gains no
 //   new members so the v1 contract stays exact.
 //
+// V2.5 DISCLOSURE SURFACE (2026-07 UX audit — layered disclosure ratified:
+// layer 0 = curated controls + caption, layer 1 = click-expand groups,
+// layer 2 = hover hints; all additive):
+//   addGroup(label, {open, hint}) — groups are collapsible folds; default
+//               open (pre-disclosure behavior). Collapse is [hidden], so the
+//               DOM stays queryable by the headless drivers without a click.
+//   tier+seed — relocated into an auto-created collapsed "advanced" fold at
+//               the bottom of the controls (developer/reproducibility surface,
+//               not layer 0). data-bp="tier"/"seed" attributes verbatim.
+//   hint()    — hover/focus-revealed one-liner on any control row.
+//   setNarration() — live "what is happening" line under the caption.
+//
 // Lives in common/common-web/ (NOT common/common-ts/) so it never enters the
 // Node-targeted `ts-strict` CI surface; per-sim Vite apps import it as source
 // via a relative path and bundle it for the browser.
@@ -110,6 +122,20 @@ export interface PanelShellOptions {
   caption?: string;
 }
 
+export interface GroupOptions {
+  /**
+   * Start expanded (default true, the pre-disclosure behavior). A collapsed
+   * group renders only its header; clicking the header toggles the body.
+   * Collapse hides via [hidden] so the DOM stays queryable and headless
+   * drivers can still reach controls by attribute without a click.
+   */
+  open?: boolean;
+  /** One-line plain-language description shown at the top of the group body. */
+  hint?: string;
+}
+
+export type NarrationTone = "info" | "event" | "nudge";
+
 export interface PanelShell {
   readonly element: HTMLElement;
   getState(): SettingsState;
@@ -125,8 +151,24 @@ export interface PanelShell {
   setVerdict(verdict: VerdictSpec): void;
   /** Highlight one preset chip (null clears; chips also self-highlight). */
   setActivePreset(label: string | null): void;
-  /** Append a labeled control-group container and return it. */
-  addGroup(label: string): HTMLElement;
+  /**
+   * Append a labeled control-group container and return the element the sim
+   * appends its controls into (the fold BODY — append-only consumers from the
+   * pre-disclosure surface keep working verbatim).
+   */
+  addGroup(label: string, opts?: GroupOptions): HTMLElement;
+  // ---- v2.5 disclosure ----
+  /**
+   * Attach a hover/focus-revealed one-liner to a control row (disclosure
+   * layer 2). Inline-expands below the row — never clipped by the panel's
+   * overflow the way a floating tooltip would be.
+   */
+  hint(target: HTMLElement, text: string): void;
+  /**
+   * One-line live narration under the caption — the "what is happening right
+   * now" line (droplet count, crack done → reset nudge). Empty text hides it.
+   */
+  setNarration(text: string, tone?: NarrationTone): void;
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -208,6 +250,12 @@ export function createSettingsPanel(
     root.appendChild(cap);
   }
 
+  // live narration line (v2.5): present-but-hidden until the sim's first
+  // setNarration() call, so wiring it is purely additive per sim.
+  const narrate = el("p", "bps-narrate", "narrate");
+  narrate.hidden = true;
+  root.appendChild(narrate);
+
   // preset bar (house § 5.3 — live-loop only per D-P1.2(a))
   const presetButtons = new Map<string, HTMLButtonElement>();
   if (options.presets && options.presets.length > 0) {
@@ -227,8 +275,39 @@ export function createSettingsPanel(
     root.appendChild(bar);
   }
 
-  // controls: tier + seed (v1 contract) + extra + addGroup() containers
+  // controls: extra + addGroup() containers. tier + seed (v1 contract) moved
+  // into the collapsed "advanced" fold below — the data-bp attributes and
+  // change semantics are verbatim; only the visual slot moved. Collapse is
+  // [hidden] (display:none), so attribute selectors and programmatic .value
+  // writes keep working without expanding.
   const controls = el("section", "bps-controls");
+
+  // fold factory (disclosure layer 1): header <button> toggles the body.
+  const makeFold = (
+    label: string,
+    opts?: GroupOptions,
+  ): { container: HTMLElement; body: HTMLElement } => {
+    const container = el("div", "bps-group", `group:${label}`);
+    const head = el("button", "bps-fold");
+    head.type = "button";
+    head.textContent = label;
+    const body = el("div", "bps-fold-body");
+    const open = opts?.open ?? true;
+    head.setAttribute("aria-expanded", String(open));
+    body.hidden = !open;
+    head.addEventListener("click", () => {
+      const next = body.hidden;
+      body.hidden = !next;
+      head.setAttribute("aria-expanded", String(next));
+    });
+    if (opts?.hint) {
+      const hintLine = el("p", "bps-fold-hint");
+      hintLine.textContent = opts.hint;
+      body.appendChild(hintLine);
+    }
+    container.append(head, body);
+    return { container, body };
+  };
 
   const tierRow = el("div", "bps-row");
   const tierLabel = el("label");
@@ -247,7 +326,6 @@ export function createSettingsPanel(
     options.onChange?.({ ...state });
   });
   tierRow.append(tierLabel, tierSel);
-  controls.appendChild(tierRow);
 
   const seedRow = el("div", "bps-row");
   const seedLabel = el("label");
@@ -263,10 +341,20 @@ export function createSettingsPanel(
     options.onChange?.({ ...state });
   });
   seedRow.append(seedLabel, seedInput);
-  controls.appendChild(seedRow);
 
   if (options.extra) controls.appendChild(options.extra);
   root.appendChild(controls);
+
+  // advanced fold (v2.5): tier + seed, collapsed by default — the capture/
+  // reproducibility contract belongs one click behind the sim's own controls,
+  // not in the top slot of every panel. Appended to root AFTER the controls
+  // section so per-sim addGroup() groups always render above it.
+  const advanced = makeFold("advanced", {
+    open: false,
+    hint: "capture quality tier + deterministic RNG seed — the reproducibility contract",
+  });
+  advanced.body.append(tierRow, seedRow);
+  root.appendChild(advanced.container);
 
   // study block: diagnostics + honesty note + verdict + links (house § 5.2/5.4)
   let diagList: HTMLDListElement | null = null;
@@ -388,13 +476,21 @@ export function createSettingsPanel(
     setDiagnostics: renderDiagnostics,
     setVerdict: renderVerdict,
     setActivePreset,
-    addGroup: (label: string): HTMLElement => {
-      const g = el("div", "bps-group", `group:${label}`);
-      const gl = el("div", "bps-group-label");
-      gl.textContent = label;
-      g.appendChild(gl);
-      controls.appendChild(g);
-      return g;
+    addGroup: (label: string, opts?: GroupOptions): HTMLElement => {
+      const fold = makeFold(label, opts);
+      controls.appendChild(fold.container);
+      return fold.body;
+    },
+    hint: (target: HTMLElement, text: string): void => {
+      target.classList.add("bps-hintable");
+      const tip = el("div", "bps-hint");
+      tip.textContent = text;
+      target.appendChild(tip);
+    },
+    setNarration: (text: string, tone: NarrationTone = "info"): void => {
+      narrate.textContent = text;
+      narrate.setAttribute("data-tone", tone);
+      narrate.hidden = text.length === 0;
     },
   };
 }
