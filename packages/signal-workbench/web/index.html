@@ -40,6 +40,10 @@
       }
       .sw-explain,
       .sw-verify {
+        /* relative lifts these above the fixed .bps-stage canvas layer —
+           without it the canvas intercepts every click on the EXPLAIN/PROVE
+           content (the .he-explain / .lm-explain pattern). */
+        position: relative;
         max-width: 780px;
         margin: 12px auto;
         color: #b7c7da;
