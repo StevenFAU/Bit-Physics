@@ -165,9 +165,10 @@ async function start(): Promise<void> {
   // ---------------------------------------------------------------- panel
   const panel = createSettingsPanel("lbm-multiphase — two phases from one equation", {
     caption:
-      "D2Q9 pseudopotential lattice Boltzmann: droplets, coalescence and " +
-      "paintable wetting emerge from one nearest-neighbor force — gated " +
-      "against Maxwell coexistence and Young–Laplace on your GPU.",
+      "One nearest-neighbor attraction makes a single fluid split into " +
+      "liquid and vapor (pseudopotential lattice Boltzmann) — droplets, " +
+      "coalescence, paintable wetting, re-checked against two textbook " +
+      "laws on your GPU.",
     onCapture: async () => {
       panel.setStatus("capturing (gate + coexistence + Laplace + controls)…");
       try {

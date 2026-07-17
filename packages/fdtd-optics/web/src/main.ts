@@ -238,8 +238,9 @@ async function start(): Promise<void> {
   // ---------------------------------------------------------------- panel
   const panel = createSettingsPanel("fdtd-optics — Maxwell, verified live", {
     caption:
-      "Yee-grid FDTD: light as the solution of Maxwell's curl equations, " +
-      "with Fresnel / Mie analytic gates re-run on your GPU.",
+      "Real light from Maxwell's equations (Yee-grid FDTD) — bend beams " +
+      "through lenses, steer a phased array, paint glass and metal into " +
+      "the path; reflections re-check against exact results on your GPU.",
     // NOTE: the panel shell already wraps onCapture in runCaptureExclusive
     // (common-web panel-shell.ts:326) — wrapping again would release the
     // live-loop lock early, so the capture body runs bare here.

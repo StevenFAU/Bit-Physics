@@ -253,7 +253,7 @@ bound). `;
   let frameMs = 0;
   const panel = createSettingsPanel("Heat Equation — verified diffusion instrument", {
     caption:
-      "FTCS stencil + machine-exact spectral solver on one field; the gate re-runs against an f64 reference, live.",
+      "Watch heat spread and paint it in with a brush — one field, shown as a glowing plate and as its live Fourier spectrum, re-checked against a high-precision reference on your GPU.",
     onCapture: async () => {
       resetCapture();
       await runCaptureExclusive(async () => {

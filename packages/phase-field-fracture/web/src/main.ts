@@ -342,8 +342,9 @@ function installUi(state: AppState): void {
     "Phase-Field Fracture — verified crack lab",
     {
       caption:
-        "Cracks that nucleate, curve, and branch as the solution of an energy minimization — " +
-        "gated live against an f64 reference and the published SENT peak.",
+        "Cracks that nucleate, curve, and branch on their own — fracture as " +
+        "energy minimization, its breaking strength checked against a " +
+        "published lab benchmark on your GPU.",
       onCapture: async () => {
         resetCapture();
         await runCaptureExclusive(async () => {

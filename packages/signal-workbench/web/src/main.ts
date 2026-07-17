@@ -178,7 +178,7 @@ async function start(): Promise<void> {
   const diagRows: DiagnosticRow[] = [];
   const panel = createSettingsPanel("Signal Workbench — verified DSP instrument", {
     caption:
-      "A signal generator + analyzer where every display is gated against the closed-form transform of its own generator — FM sidebands are exactly J_n(I), leakage is exactly the window's DTFT. The repo's first audible sim.",
+      "An oscilloscope and spectrum analyzer you can hear. Every display is checked against the exact mathematics of the signal it shows — FM sidebands land on their Bessel-function stems.",
     onCapture: async () => {
       resetCapture();
       await runCaptureExclusive(async () => {
