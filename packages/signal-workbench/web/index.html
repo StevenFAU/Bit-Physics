@@ -27,9 +27,14 @@
         height: min(92vmin, 780px);
         touch-action: none;
       }
+      .sw-ctl[hidden] {
+        /* author display:flex would beat the UA [hidden] rule */
+        display: none;
+      }
       .sw-ctl {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 0.5em;
         font-size: 12px;
         color: #9fb2c8;
@@ -37,6 +42,21 @@
       }
       .sw-ctl input[type="range"] {
         flex: 1;
+        min-width: 90px;
+      }
+      .sw-readout {
+        font: 11px/1.4 ui-monospace, monospace;
+        color: #7f95ad;
+        flex: none;
+      }
+      .sw-gen-note {
+        font: 11px/1.5 system-ui, sans-serif;
+        color: #7f95ad;
+        margin: 2px 0;
+      }
+      /* axes overlay dims with the canvas in Study (matches .bps-canvas) */
+      body[data-bp2-mode="study"] .sw-axes {
+        opacity: 0.58;
       }
       .sw-explain,
       .sw-verify {

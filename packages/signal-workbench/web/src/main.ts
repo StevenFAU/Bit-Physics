@@ -13,6 +13,7 @@ import {
 import { createSettingsPanel } from "../../../../common/common-web/src/panel-shell.js";
 import type { DiagnosticRow } from "../../../../common/common-web/src/panel-shell.js";
 import { AudioBridge } from "./audio.js";
+import { FS, installAxes, pitchName } from "./axes.js";
 import { GATE, makeBundle, runGateScene } from "./capture.js";
 import {
   additiveExpectedMag,
@@ -88,6 +89,7 @@ async function start(): Promise<void> {
   const gpu = new WorkbenchGpu(device, N);
   const renderer = new Renderer(device, ctx, format, N);
   const audio = new AudioBridge();
+  const axes = installAxes({ view: canvas, n: N, dbFloor: gpu.dbFloor, dbCeil: gpu.dbCeil });
 
   const st: AppState = {
     preset: presetByKey("fm"),
@@ -206,6 +208,7 @@ async function start(): Promise<void> {
         }
         panel.setActivePreset(p.label);
         updateDiagRows(null);
+        syncRelevance();
         syncAudio();
       },
     })),
@@ -242,6 +245,15 @@ async function start(): Promise<void> {
   });
 
   // ------------------------------------------------------- custom controls --
+  // Sliders stay bin-indexed (the DSP/gate ground truth) but read out in Hz
+  // and pitch via the same 48 kHz frame mapping audio.ts plays them at.
+  const HZ_PER_BIN = FS / N;
+  const hzFmt = (bins: number): string => {
+    const hz = bins * HZ_PER_BIN;
+    const f = hz >= 1000 ? `${(hz / 1000).toFixed(2)} kHz` : `${hz.toFixed(0)} Hz`;
+    const p = pitchName(hz);
+    return p ? `${f} · ${p}` : f;
+  };
   const ctl = panel.addGroup("generator");
   const mkSlider = (
     label: string,
@@ -250,7 +262,8 @@ async function start(): Promise<void> {
     step: number,
     value: number,
     onInput: (v: number) => void,
-  ): HTMLInputElement => {
+    fmt?: (v: number) => string,
+  ): { row: HTMLLabelElement; input: HTMLInputElement } => {
     const row = document.createElement("label");
     row.className = "sw-ctl";
     const span = document.createElement("span");
@@ -261,28 +274,87 @@ async function start(): Promise<void> {
     input.max = String(max);
     input.step = String(step);
     input.value = String(value);
+    const readout = document.createElement("span");
+    readout.className = "sw-readout";
+    const updReadout = (): void => {
+      if (fmt) readout.textContent = fmt(Number(input.value));
+    };
     input.addEventListener("input", () => {
       onInput(Number(input.value));
+      updReadout();
       regen(performance.now() / 1000);
       syncAudio();
     });
+    updReadout();
     row.appendChild(span);
     row.appendChild(input);
+    row.appendChild(readout);
     ctl.appendChild(row);
-    return input;
+    return { row, input };
   };
-  mkSlider("FM index I", 0, 8, 0.01, st.fmIndex, (v) => {
-    st.fmIndex = v;
-  });
-  mkSlider("carrier bin", 64, 1500, 1, st.fmKc, (v) => {
-    st.fmKc = Math.round(v);
-  });
-  mkSlider("modulator bin", 5, 200, 1, st.fmKm, (v) => {
-    st.fmKm = Math.round(v);
-  });
-  mkSlider("off-bin tone f0", 20.05, 900.95, 0.01, st.leakF0, (v) => {
-    st.leakF0 = v;
-  });
+  const idxS = mkSlider(
+    "FM index I",
+    0,
+    8,
+    0.01,
+    st.fmIndex,
+    (v) => {
+      st.fmIndex = v;
+    },
+    (v) => v.toFixed(2),
+  );
+  const carS = mkSlider(
+    "carrier",
+    64,
+    1500,
+    1,
+    st.fmKc,
+    (v) => {
+      st.fmKc = Math.round(v);
+    },
+    hzFmt,
+  );
+  const modS = mkSlider(
+    "modulator",
+    5,
+    200,
+    1,
+    st.fmKm,
+    (v) => {
+      st.fmKm = Math.round(v);
+    },
+    (v) => `${(v * HZ_PER_BIN).toFixed(0)} Hz spacing`,
+  );
+  const toneS = mkSlider(
+    "tone",
+    20.05,
+    900.95,
+    0.01,
+    st.leakF0,
+    (v) => {
+      st.leakF0 = v;
+    },
+    hzFmt,
+  );
+  const harmS = mkSlider(
+    "harmonics",
+    1,
+    40,
+    1,
+    st.harmonics,
+    (v) => {
+      st.harmonics = Math.round(v);
+    },
+    (v) => String(v),
+  );
+  panel.hint(
+    idxS.row,
+    "the Bessel knob: sideband amplitudes are exactly Jₙ(I) — drag through I = 2.405 and the carrier itself nulls",
+  );
+  panel.hint(
+    toneS.row,
+    "deliberately between FFT bins — the spread you see is the window's own transform, not an artifact",
+  );
 
   const winRow = document.createElement("label");
   winRow.className = "sw-ctl";
@@ -310,6 +382,33 @@ async function start(): Promise<void> {
   });
   winRow.appendChild(winSel);
   ctl.appendChild(winRow);
+
+  // Only show the controls the active template actually listens to — the
+  // rest of the generator params are pinned by the preset (fixed lessons
+  // get a one-line note instead of dead sliders).
+  const genNote = document.createElement("div");
+  genNote.className = "sw-gen-note";
+  ctl.appendChild(genNote);
+  const GEN_NOTES: Partial<Record<PresetSpec["gen"], string>> = {
+    "naive-vs-bandlimited":
+      "fixed lesson: a naively sampled 3.88 kHz saw vs its bandlimited golden — the extra lines are aliases folding back off Nyquist",
+    chirp: "the tone sweeps 470 Hz → 18.8 kHz on its own — watch it climb the waterfall",
+    xy: "two locked tones at a 3:2 frequency ratio drive X and Y — rational ratios close the figure",
+  };
+  const RELEVANT: Array<{ el: HTMLElement; gens: Array<PresetSpec["gen"]> }> = [
+    { el: idxS.row, gens: ["fm"] },
+    { el: carS.row, gens: ["fm"] },
+    { el: modS.row, gens: ["fm"] },
+    { el: toneS.row, gens: ["leak"] },
+    { el: harmS.row, gens: ["additive"] },
+    { el: winRow, gens: ["leak"] },
+  ];
+  const syncRelevance = (): void => {
+    for (const r of RELEVANT) r.el.hidden = !r.gens.includes(st.preset.gen);
+    const note = GEN_NOTES[st.preset.gen];
+    genNote.textContent = note ?? "";
+    genNote.hidden = !note;
+  };
 
   const audioGroup = panel.addGroup("audio (rendering only — never gated)");
   const playBtn = document.createElement("button");
@@ -427,6 +526,7 @@ async function start(): Promise<void> {
     device.queue.submit([enc.finish()]);
   }
   panel.setActivePreset(st.preset.label);
+  syncRelevance();
   let lastDiag = 0;
   const frame = (tMs: number): void => {
     requestAnimationFrame(frame);
@@ -441,6 +541,7 @@ async function start(): Promise<void> {
     }
     device.queue.submit([enc.finish()]);
     renderer.frame(gpu, st.view, { beamGain: 0.012, beamSigma: 0.008 });
+    axes.sync(st.view);
 
     if (tMs - lastDiag > 600) {
       lastDiag = tMs;
