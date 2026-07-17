@@ -944,15 +944,12 @@ async function main(): Promise<void> {
   // numerics pedagogy (the EXPLAIN stability note is the theory side).
   // Live-loop only via the same `live` record; capture params are pinned.
   {
-    const advGroup = panel.addGroup("advanced — diffusion & timestep");
-    const det = document.createElement("details");
-    det.className = "rd-details";
-    const sum = document.createElement("summary");
-    sum.textContent = "Du / Dv / dt — including the honest failure mode";
-    det.appendChild(sum);
+    const advGroup = panel.addGroup("advanced — diffusion & timestep", {
+      open: false,
+      hint: "Du / Dv / dt — push dt past the stability bound and watch the scheme blow up, honestly",
+    });
     const body = document.createElement("div");
-    det.appendChild(body);
-    advGroup.appendChild(det);
+    advGroup.appendChild(body);
 
     const stabilityBound = (): number => (live.dx * live.dx) / (4 * Math.max(live.Du, live.Dv));
     const boundNote = document.createElement("div");

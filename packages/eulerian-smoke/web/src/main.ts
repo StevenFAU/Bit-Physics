@@ -1283,7 +1283,10 @@ async function main(): Promise<void> {
     splatRadius = v;
   });
 
-  const numericsGroup = panel.addGroup("numerics — exploratory toggles (gate-inert)");
+  const numericsGroup = panel.addGroup("numerics — exploratory toggles", {
+    open: false,
+    hint: "solver internals: advection scheme, overshoot limiter, pressure iterations — none of these touch the verified capture path",
+  });
   const mcCheck = addCheck(
     numericsGroup,
     "MacCormack advection (off = plain SL)",
@@ -1466,7 +1469,10 @@ async function main(): Promise<void> {
   }, 700);
 
   // ---- null-space probe --------------------------------------------------------
-  const probeGroup = panel.addGroup("null-space probe — why MAC grids exist");
+  const probeGroup = panel.addGroup("null-space probe — why MAC grids exist", {
+    open: false,
+    hint: "a deliberate corruption experiment: inject a pattern this grid's divergence check is blind to",
+  });
   const probeBtn = document.createElement("button");
   probeBtn.type = "button";
   probeBtn.className = "bps-btn";

@@ -370,6 +370,11 @@ bound). `;
     syncControls();
   });
 
+  panel.hint(
+    dtCtl.wrap,
+    "1.0 = the largest stable timestep for the stencil solver — push past it and watch the instability grow (the spectral solver has no such limit)",
+  );
+
   const brushSel = document.createElement("select");
   for (const [v, label] of [
     ["1", "brush: heat"],
@@ -448,7 +453,10 @@ bound). `;
   let recSnapshot: Omit<Recording, "events" | "totalSubsteps" | "liveSha"> | null = null;
   let lastRec: Recording | null = null;
 
-  const recGroup = panel.addGroup("record / replay (deterministic sketch)");
+  const recGroup = panel.addGroup("record / replay", {
+    open: false,
+    hint: "capture your brush strokes, then replay them — the field comes back bit-identical",
+  });
   const recRow = document.createElement("div");
   recRow.className = "he-vrow";
   const recBtn = document.createElement("button");
