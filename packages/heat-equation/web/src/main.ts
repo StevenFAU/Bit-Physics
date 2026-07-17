@@ -283,7 +283,7 @@ bound). `;
         faithful:
           "constant-α FTCS (discrete-amplification-gated) + spectral ETD (machine-exact per mode); conservative harmonic-mean material flux; committed Planck-locus glow LUT",
         simplified:
-          "no convection/radiation transport/phase change (v1 honesty boundary § 1.1); brush and templates are ungated interactive content; DuFort–Frankel teaching mode deferred",
+          "no convection/radiation transport/phase change (a declared v1 boundary); brush and templates are ungated interactive content; DuFort–Frankel teaching mode deferred",
         measured: `gate budget ${V.tolerance.relative} measured-then-declared (${V.tolerance.measured_basis})`,
       },
       verdict: {

@@ -380,7 +380,7 @@ function installUi(state: AppState): void {
             "Miehe strain-spectral driving force, KE/IE-disciplined quasi-static loading, " +
             "non-dimensionalized Miehe steel groups",
           simplified:
-            "three disclosures (EXPLAIN, § 1.1): no-criterion framing refuted; hybrid+history " +
+            "three disclosures (detailed in EXPLAIN): 'no failure criterion needed' is an overclaim; hybrid+history " +
             "variationally inconsistent (Gerasimov–De Lorenzis 2019); finite-mobility gradient-flow " +
             "damage ⇒ Γ(v) rate toughness — measured 0.35 % peak shift vs converged-elliptic f64",
           measured: `gate budget ${V.tolerance.relative} (${V.tolerance.measured_basis})`,

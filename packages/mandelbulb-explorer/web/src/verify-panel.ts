@@ -174,7 +174,7 @@ function installCard(d: VerifyPanelDeps): void {
   row(
     "pass criterion",
     "run-twice byte-identity",
-    "verify.py _gate_mandelbulb: passed=bool(twice) — the f32-vs-f64 distance is reported alongside, not gated on (spec § 2)",
+    "verify.py _gate_mandelbulb: passed=bool(twice) — the f32-vs-f64 distance is reported alongside, not gated on",
   );
   row(
     "strict f64 budget",
@@ -451,8 +451,8 @@ function installAnchors(d: VerifyPanelDeps, runner: ScratchRunner): void {
         });
         const cap = document.createElement("span");
         cap.textContent = tolTable
-          ? "bounds declared from the recorded dev-GPU measurement (measured-then-declared, architecture § 2.6); the analytic values are hand-derived surds committed in the golden table."
-          : "display bounds pending declaration from the recorded measurement (measured-then-declared, architecture § 2.6).";
+          ? "bounds declared from the recorded dev-GPU measurement (measured, then declared); the analytic values are hand-derived surds committed in the golden table."
+          : "display bounds pending declaration from the recorded measurement (measured, then declared).";
         out.appendChild(cap);
       } catch (e) {
         out.textContent = `anchor evaluation failed: ${(e as Error).message}`;

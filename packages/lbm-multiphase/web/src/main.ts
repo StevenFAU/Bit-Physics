@@ -152,7 +152,7 @@ async function start(): Promise<void> {
     "<b>The lattice blew up (NaN).</b> This is the honest failure mode of a " +
     "pseudopotential LBM pushed outside its stability envelope — τ too close " +
     "to ½, a too-deep quench, or interactive abuse near the spinodal " +
-    "(spec § 1 boundary 3), not a rendering glitch. ";
+    "— a declared limit of this scheme, not a rendering glitch. ";
   const nanBtn = document.createElement("button");
   nanBtn.textContent = "reset scene";
   nanBtn.addEventListener("click", () => loadScene(st.scene));

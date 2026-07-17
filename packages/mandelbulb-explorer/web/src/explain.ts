@@ -115,7 +115,7 @@ export function installExplainPanel(panel: PanelShell): void {
   body.appendChild(
     eqBlock(
       "escape test BEFORE the derivative update",
-      "load-bearing convention: |c| > 2 returns with dz = 1 — it makes the far-field anchor exact (§ anchors)",
+      "load-bearing convention: |c| > 2 returns with dz = 1 — it makes the far-field anchor exact",
       a.escape_check.lines.join("\n"),
       ecL,
       ecH,

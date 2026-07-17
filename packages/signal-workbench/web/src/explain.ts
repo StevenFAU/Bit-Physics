@@ -19,7 +19,7 @@ primitives, so the workbench knows the <i>exact closed-form transform</i> and
 overlays it on the measured display. FM: e(t) = A·sin(ω_c t + I·sin ω_m t)
 = A·Σ J_n(I)·sin((ω_c + nω_m)t) — the orange stems are J_n(I), not a fit
 (Chowning 1973; DLMF 10.23.3 energy identity, recomputed live in PROVE).</p>
-<p><b>The discrete-spectrum discipline (spec § 3.2):</b> the measured DFT of
+<p><b>The discrete-spectrum discipline:</b> the measured DFT of
 a windowed, sampled, finite signal is F*W — the analytic spectrum convolved
 with the window's own DTFT, sampled on the bin grid. The leakage template's
 overlay is that exact shifted-Dirichlet skirt: the "spread" is a predicted
@@ -39,10 +39,10 @@ and the butterfly injected at
 <p><b>Renderings vs gates:</b> the persistence phosphor, waterfall, and XY
 erf-beam are declared renderings of gated data — they never feed the gated
 arrays (PROVE has the toggle control). Audio playback is a rendering too:
-the worklet synthesizes the same generator definition, ungated (§ 8).</p>
+the worklet synthesizes the same generator definition, ungated.</p>
 <p><b>Negative lessons shipped, not hidden:</b> the naive-saw aliasing
 template and the off-bin metrology error are deliberately wrong displays,
-labeled as such (§ 3.6).</p>`;
+labeled as such.</p>`;
   root.appendChild(body);
   document.body.appendChild(root);
 }

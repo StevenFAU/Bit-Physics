@@ -24,7 +24,7 @@ plasmonic hot spots — is the <i>emergent solution of Maxwell's equations</i>, 
 an authored ray or shader effect.</p>
 
 <p><b>Units and stability.</b> Normalized units c = ε₀ = μ₀ = 1 with impedance-normalized
-E, so every quantity is O(0.1–10) and f32-friendly (spec § 9). The Courant number is
+E, so every quantity is O(0.1–10) and f32-friendly. The Courant number is
 S_c = ${V.gate.sc} — comfortably below the 2D stability cliff 1/√2 ≈ 0.707. Cross it and the
 field blows up to NaN in tens of steps; that is a real property of explicit FDTD,
 and this app pauses and says so rather than hiding it.</p>
@@ -44,7 +44,7 @@ a <b>Drude metal</b> stepped by the semi-implicit ADE (preserves the vacuum CFL
 limit), and an instantaneous <b>Kerr χ³</b> via Meep's branch-free Padé D→E factor
 (verified against <code>meep/src/step_generic.cpp</code>).</p>
 
-<h4>The five load-bearing honesty disclosures (spec § 1.1 — verbatim)</h4>
+<h4>The five load-bearing honesty disclosures</h4>
 <ol class="fo-honesty">
 <li><b>NOT "the first FDTD in a browser" — and NOT even "the first client-side
 WebGPU Maxwell FDTD."</b> Drysdale's WebGL-FDTD (2017), RobinKa/maxwell-simulation,
@@ -85,7 +85,7 @@ checkpoint over all three fields, run-twice byte-identity, PLUS the analytic
 instruments: Fresnel R = 0.04 within ±2% and cylinder-Mie Q_sca against the
 committed Bohren–Huffman table. Numerical-dispersion caveat: waves on this grid
 travel up to ~${V.goldens.dispersion_worst_pct}% slow at the default resolution
-(the § 3.7 master relation, tabulated in the committed dispersion golden) —
+(the master dispersion relation, tabulated in the committed dispersion golden) —
 that is a property of the discretization, quantified rather than hidden.</p>`;
   root.appendChild(body);
   document.body.appendChild(root);

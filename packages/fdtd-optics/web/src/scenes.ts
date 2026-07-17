@@ -432,7 +432,7 @@ export const SCENES: SceneSpec[] = [
     label: "Plasmonic metal (Drude)",
     blurb:
       "A real dispersive metal via the ADE Drude model: below ω_p it mirrors, near resonance nanoparticles concentrate light into hot spots.",
-    golden: "SPP asymptote ω_sp = ω_p/√2 (§ 8.4)",
+    golden: "SPP asymptote ω_sp = ω_p/√2",
     nx: 384,
     ny: 384,
     pml: PML12,

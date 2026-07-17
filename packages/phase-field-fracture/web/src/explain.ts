@@ -33,11 +33,11 @@ snap-back <i>is</i> a dynamic event, and the deploy gate only claims the
 pre-peak curve and the peak load.</p>
 
 <div class="pf-honesty">
-<p><b>Three disclosures (contractual, spec-ref § 1.1):</b></p>
+<p><b>Three disclosures (contractual):</b></p>
 <ol>
 <li><b>No "criterion-free" claim.</b> The often-repeated claim that
 phase-field fracture captures every crack topology "with no extra criterion"
-is an overclaim (it was refuted 0-3 in our source review). Honest framing:
+is an overclaim (it did not survive our source review). Honest framing:
 <i>cracks emerge from energy minimization plus one evolution PDE, without
 explicit crack tracking or remeshing</i> — the driving-force split,
 irreversibility device, and hybrid scheme are all modeling choices.</li>

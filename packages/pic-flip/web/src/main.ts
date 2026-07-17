@@ -427,7 +427,7 @@ async function main(): Promise<void> {
       diagnostics: [{ label: "solver", value: "warming up…" }],
       honesty: {
         faithful:
-          "the APIC/PIC/FLIP transfers, the masked free-surface Poisson with the ADJOINT COMPACT operator pair (backward div + forward grad — the central pair fails hydrostatics at O(1), algebraic.md § 4), solid restore + air extrapolation, RK2 advection, and both regularizers — ported pass-for-pass from the verified reference and gated on your GPU",
+          "the APIC/PIC/FLIP transfers, the masked free-surface Poisson with the ADJOINT COMPACT operator pair (backward div + forward grad — a central pair fails hydrostatics outright), solid restore + air extrapolation, RK2 advection, and both regularizers — ported pass-for-pass from the verified reference and gated on your GPU",
         simplified:
           "the LIVE path runs RBGS+SOR with warm start (history-dependent — never gated), a FLIP-ratio blend slider (pedagogy), obstacle/emitter/impulse interactions, and a Jacobi-style push-apart (the reference's serial Gauss-Seidel sweep is not GPU-parallelizable; DECLARED deviation, exactly inert at rest). Angular-momentum conservation is exact at the TRANSFER level (dt=0); end-to-end conservation needs a compatible integrator (Jiang 2017) — the readout is labeled accordingly. APIC dissipates even at dt=0 where FLIP does not (Ding 2020). Extreme regularizer-off pileups can wrap the fixed-point accumulator (deterministic but wrong — the sort-saturation flag reports it).",
         measured:
@@ -547,7 +547,7 @@ async function main(): Promise<void> {
       syncUrl();
     },
   );
-  mkCheck(simGroup, "drift compensation (Müller #2 — OFF ⇒ it sinks)", live.driftOn, (v) => {
+  mkCheck(simGroup, "drift compensation (OFF ⇒ the water slowly sinks)", live.driftOn, (v) => {
     live.driftOn = v;
     if (live.seeded && !diskMode) gpu.configure(liveConfig());
     syncUrl();
@@ -578,7 +578,7 @@ async function main(): Promise<void> {
   );
   mkSelect(
     simGroup,
-    "grid (the perf lever — austinEng's curve)",
+    "grid resolution (the performance lever)",
     [
       ["32", "32³ (floor)"],
       ["40", "40³ (default)"],
@@ -910,7 +910,7 @@ async function main(): Promise<void> {
       if (frameMsAvg > 34 && live.gridN > 32) {
         live.gridN = 32;
         panel.setStatus(
-          `adaptive grid: measured ${frameMsAvg.toFixed(0)} ms/frame — dropping to 32³ (declared, spec § 3.1)`,
+          `adaptive grid: measured ${frameMsAvg.toFixed(0)} ms/frame — dropping to 32³ (a declared behavior)`,
         );
         applyPreset(live.preset);
       }

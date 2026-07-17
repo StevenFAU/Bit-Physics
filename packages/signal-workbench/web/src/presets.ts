@@ -64,7 +64,7 @@ export const PRESETS: PresetSpec[] = [
     key: "persist",
     label: "Persistence phosphor",
     title:
-      "DPX-style decaying hit-count histogram of the live spectrum (display-only rendering of gated data — spec § 5.5).",
+      "DPX-style decaying hit-count histogram of the live spectrum (display-only rendering of gated data).",
     view: "persistence",
     gen: "fm",
     params: { kc: 512, km: 37, index: 3.2, amplitude: 1.0, window: "rectangular", sweep: 1 },

@@ -73,7 +73,7 @@ export function installExplainPanel(panel: PanelShell): void {
     el(
       "div",
       "bps-eq",
-      "∇·u at fluid nodes: divᵢ = (uᵢ−uᵢ₋₁)/dx (BACKWARD);  pressure gradient: (pᵢ₊₁−pᵢ)/dx (FORWARD) — the adjoint pair composes to the compact 7-point Laplacian. The smoke central/central pair fails free-surface hydrostatics at O(1): a settled column keeps g·dt/2 per step and sinks (algebraic.md § 4 — the load-bearing spec-ref v0.3 correction).",
+      "∇·u at fluid nodes: divᵢ = (uᵢ−uᵢ₋₁)/dx (BACKWARD);  pressure gradient: (pᵢ₊₁−pᵢ)/dx (FORWARD) — the adjoint pair composes to the compact 7-point Laplacian. The smoke central/central pair fails free-surface hydrostatics at O(1): a settled column keeps g·dt/2 per step and sinks (the load-bearing correction from our operator-algebra review).",
     ),
   );
   const links4 = el("div", "bps-note");

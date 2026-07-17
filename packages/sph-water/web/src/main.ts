@@ -633,7 +633,7 @@ async function main(): Promise<void> {
         measured:
           V.gate.measured.status === "recorded"
             ? `browser-measured worst error ${(100 * ((V.gate.measured as unknown as { worst_ratio_of_budget: number }).worst_ratio_of_budget ?? 0)).toFixed(1)}% of the declared rel=1e-4 budget`
-            : "browser measurement pending (spec § 8.3)",
+            : "browser measurement pending",
       },
       verdict: {
         gate: "new_canonical — pointwise vs committed 100K capture",
