@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<link rel="icon" type="image/svg+xml" href="./favicon.svg" />
 <title>Bit-Physics · Boids v4</title>
 <style>
   :root{
@@ -31,6 +32,9 @@
   .hud b{color:#eef2ff;font-weight:600}
 
   .seg{display:flex;border:1px solid var(--line2);border-radius:999px;overflow:hidden;pointer-events:auto;background:rgba(8,11,22,0.6);backdrop-filter:blur(8px)}
+  /* the shared panel-shell renders the canonical play/study toggle and
+     drives this embedded one via .click(); showing both was a duplicate. */
+  #modeToggle{display:none}
   .seg button{appearance:none;border:0;background:transparent;color:var(--txt-dim);
     font-family:var(--mono);font-size:10.5px;letter-spacing:0.14em;padding:7px 11px;cursor:pointer;text-transform:uppercase;transition:.15s}
   .seg button.on{background:var(--accent);color:#1a1206;font-weight:600}

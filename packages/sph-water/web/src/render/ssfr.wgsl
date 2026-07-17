@@ -282,10 +282,13 @@ fn fs_composite(in: FsVSOut) -> CompFSOut {
   let refl = env_color(pWorld, reflDir);
   let refrDir = normalize(dirWorld - nWorld * 0.28 * clamp(thick * 6.0, 0.0, 1.0));
   var refr = env_color(pWorld, refrDir);
-  // Beer-Lambert per-channel absorption (k ratio ~ 9 : 3.4 : 1.2)
-  let kabs = vec3<f32>(3.2, 1.2, 0.42);
+  // Beer-Lambert per-channel absorption (k ratio ~ 9 : 3.4 : 1.2).
+  // Softer k + a brighter deep color than the original (3.2,1.2,0.42)/
+  // (0.02,0.11,0.16): at rest the pool read black-on-black on the dark
+  // theme — the fluid body should stay visible with zero motion.
+  let kabs = vec3<f32>(2.0, 0.75, 0.26);
   let trans = exp(-kabs * thick);
-  refr = refr * trans + vec3<f32>(0.02, 0.11, 0.16) * (1.0 - trans);
+  refr = refr * trans + vec3<f32>(0.07, 0.27, 0.38) * (1.0 - trans);
 
   var col = mix(refr, refl, fres);
   // sun specular

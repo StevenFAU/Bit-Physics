@@ -141,7 +141,7 @@ export const SCENES: SceneSpec[] = [
       "Vapor seeded with droplets under gravity: coalescence cascades onto a wetting floor. The Young–Laplace gate lives on this physics.",
     nx: 256,
     ny: 256,
-    params: tierB(0.8, 0.8, [0, 2.5e-5], B08.rhoV),
+    params: tierB(0.8, 0.8, [0, 4e-5], B08.rhoV),
     rhoV: B08.rhoV,
     rhoL: B08.rhoL,
     substeps: 10,
@@ -167,7 +167,15 @@ export const SCENES: SceneSpec[] = [
         );
       }
       const solid = new Uint32Array(nx * ny);
-      wallRect(solid, nx, ny, 0, nx, ny - 3, ny, 1.4 * (B08.rhoL / 2.25));
+      // Wetting arg is an ABSOLUTE virtual wall density in EOS units, not a
+      // multiplier: the shipped 1.1 sat near the Carnahan-Starling pole and
+      // detonated the liquid-vapor-wall contact line within ~500 steps under
+      // gravity (the dam-break NaN-on-load bug). droplet-rain's floor value
+      // is the proven-stable wetting for gravity + contact-line scenes.
+      const wetRho = 1.4 * (B08.rhoL / 2.25);
+      wallRect(solid, nx, ny, 0, nx, ny - 3, ny, wetRho);
+      wallRect(solid, nx, ny, 0, 3, 0, ny, wetRho);
+      wallRect(solid, nx, ny, nx - 3, nx, 0, ny, wetRho);
       return { rho, solid };
     },
   },
@@ -259,7 +267,15 @@ export const SCENES: SceneSpec[] = [
         }
       }
       const solid = new Uint32Array(nx * ny);
-      wallRect(solid, nx, ny, 0, nx, ny - 2, ny, 1.0);
+      // Wetting arg is an ABSOLUTE virtual wall density in EOS units, not a
+      // multiplier: the shipped 1.1 sat near the Carnahan-Starling pole and
+      // detonated the liquid-vapor-wall contact line within ~500 steps under
+      // gravity (the dam-break NaN-on-load bug). droplet-rain's floor value
+      // is the proven-stable wetting for gravity + contact-line scenes.
+      const wetRho = 1.4 * (B08.rhoL / 2.25);
+      wallRect(solid, nx, ny, 0, nx, ny - 3, ny, wetRho);
+      wallRect(solid, nx, ny, 0, 3, 0, ny, wetRho);
+      wallRect(solid, nx, ny, nx - 3, nx, 0, ny, wetRho);
       return { rho, solid };
     },
   },
@@ -297,7 +313,7 @@ export const SCENES: SceneSpec[] = [
       "A liquid column collapses under gravity. Honest label: this is liquid–vapor multiphase (the vapor is simulated), NOT a free-surface VoF model like the famous GPU splash demos.",
     nx: 256,
     ny: 160,
-    params: tierB(0.8, 0.8, [0, 6e-5], 0.12),
+    params: tierB(0.8, 0.8, [0, 4e-5], B08.rhoV),
     rhoV: B08.rhoV,
     rhoL: B08.rhoL,
     substeps: 10,
@@ -310,16 +326,26 @@ export const SCENES: SceneSpec[] = [
       const rho = field(nx, ny, B08.rhoV);
       for (let i = 0; i < nx; i++) {
         for (let j = 0; j < ny; j++) {
-          const inX = 0.5 * (1 - Math.tanh((i - 78) / 2.5));
-          const inY = 0.5 * (1 + Math.tanh((j - 40) / 2.5));
+          // Wide tanh edges + a few cells of clearance off the side wall:
+          // gentler interfaces survive the collapse; the column still slumps
+          // against the wall within the first second of the run.
+          const inXL = 0.5 * (1 + Math.tanh((i - 7) / 4));
+          const inXR = 0.5 * (1 - Math.tanh((i - 78) / 4));
+          const inY = 0.5 * (1 + Math.tanh((j - 44) / 4));
           const idx = i * ny + j;
-          rho[idx] = rho[idx] + (B08.rhoL - rho[idx]) * inX * inY;
+          rho[idx] = rho[idx] + (B08.rhoL - rho[idx]) * inXL * inXR * inY;
         }
       }
       const solid = new Uint32Array(nx * ny);
-      wallRect(solid, nx, ny, 0, nx, ny - 3, ny, 1.1);
-      wallRect(solid, nx, ny, 0, 3, 0, ny, 1.1);
-      wallRect(solid, nx, ny, nx - 3, nx, 0, ny, 1.1);
+      // Wetting arg is an ABSOLUTE virtual wall density in EOS units, not a
+      // multiplier: the shipped 1.1 sat near the Carnahan-Starling pole and
+      // detonated the liquid-vapor-wall contact line within ~500 steps under
+      // gravity (the dam-break NaN-on-load bug). droplet-rain's floor value
+      // is the proven-stable wetting for gravity + contact-line scenes.
+      const wetRho = 1.4 * (B08.rhoL / 2.25);
+      wallRect(solid, nx, ny, 0, nx, ny - 3, ny, wetRho);
+      wallRect(solid, nx, ny, 0, 3, 0, ny, wetRho);
+      wallRect(solid, nx, ny, nx - 3, nx, 0, ny, wetRho);
       return { rho, solid };
     },
   },
