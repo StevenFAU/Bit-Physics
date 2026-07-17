@@ -144,7 +144,7 @@ export function installVerifyPanel(deps: VerifyDeps): void {
   const t2Note = el(
     "div",
     "bps-note",
-    "The masked projection uses the ADJOINT COMPACT pair (backward divergence + forward gradient): discrete hydrostatics are exact up to solver residual (the central pair fails at O(1) — a settled column keeps ~g·dt/2 per step; algebraic.md § 4). The falsifiability probe runs the backend's PINNED DOCUMENTED FAILURE: at 20 Jacobi sweeps information hasn't crossed the column (~1 cell/sweep, GPU Gems 3 ch. 30) and the probe MUST fail.",
+    "The masked projection uses the ADJOINT COMPACT pair (backward divergence + forward gradient): discrete hydrostatics are exact up to solver residual (the central pair fails at O(1) — a settled column keeps ~g·dt/2 per step). The falsifiability probe runs the backend's PINNED DOCUMENTED FAILURE: at 20 Jacobi sweeps information hasn't crossed the column (~1 cell/sweep, GPU Gems 3 ch. 30) and the probe MUST fail.",
   );
   t2.appendChild(t2Note);
   const t2Out = el("div", "bps-diag");
@@ -251,7 +251,7 @@ export function installVerifyPanel(deps: VerifyDeps): void {
     el(
       "div",
       "bps-note",
-      `Replays the committed 12³ web-gate dam break (${GATE.steps} steps, Jacobi ${GATE.nJacobi} — the measured-converged cap) from the committed f32 IC and compares TEN robust observables per checkpoint against the committed f64 references. Per-particle pointwise comparison is REJECTED for this scene (chaotic + fixed-point-atomic ≠ f64 lex order — spec § 9); the observable-level budget is rel ${V.gate.declared_rel}, declared in tolerance.toml.`,
+      `Replays the committed 12³ web-gate dam break (${GATE.steps} steps, Jacobi ${GATE.nJacobi} — the measured-converged cap) from the committed f32 IC and compares TEN robust observables per checkpoint against the committed f64 references. Per-particle pointwise comparison is REJECTED for this scene (chaotic + fixed-point-atomic ≠ f64 lex order); the observable-level budget is rel ${V.gate.declared_rel}, declared in tolerance.toml.`,
     ),
   );
   const gPlot = document.createElement("canvas");

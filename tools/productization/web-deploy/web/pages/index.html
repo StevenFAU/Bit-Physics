@@ -158,17 +158,12 @@
     evidence trail ships with the code.
   </p>
   <div class="posture">
-    Every claim in this project is backed by an <b>append-only audit
-    ledger</b>: each simulation ships with golden-value anchors, determinism
-    contracts, property-based invariants, and cross-stack equivalence gates
-    whose tolerances are <b>measured, then declared — never widened</b>. The
-    browser sims below are the exact bundles that passed each
-    sim&rsquo;s own established gate inside a real headless browser-WebGPU
-    session (Phase-5 close: CI Mesa lavapipe 7/7 green; canonical equivalence
-    proven on RADV/wgpu-native; the Phase-6 smoke port validated on local
-    browser-WebGPU, its lavapipe run rides the next deploy dispatch). This
-    page only publishes those validated bundles — it adds no new
-    verification claims.
+    Every simulation below passed its own <b>verification gate</b> — the
+    strongest check its physics admits, from byte-exact reproducibility to
+    agreement with a high-precision reference or exact textbook laws —
+    inside a real browser-WebGPU session, before it was published here.
+    Each card names its gate; how it all works lives on the
+    <a href="./about.html">methodology page</a>.
   </div>
 </header>
 
@@ -372,10 +367,11 @@
     </video>
     <div class="body">
       <div class="name">Heat Equation &mdash; Spectral + FTCS</div>
-      <div class="phys">Fourier&rsquo;s heat law on a grid: an FTCS stencil and a
-        machine-exact spectral solver evolve one field &mdash; the spectral path
-        solves every Fourier mode exactly, with no CFL limit. Both re-run against
-        a live f64 reference on your GPU, the 2-D spectrum drawn live.</div>
+      <div class="phys">Watch heat spread, paint it in with a brush, and see
+        the same field two ways &mdash; as a glowing plate and as its live
+        Fourier spectrum. Two solvers run the physics (a classic stencil and
+        an exact per-mode spectral method), and both re-check themselves
+        against a high-precision reference on your GPU.</div>
       <div class="badges">
         <span class="chip">diffusion PDE</span>
         <span class="chip">WGSL stencil + spectral</span>
@@ -391,11 +387,11 @@
     </video>
     <div class="body">
       <div class="name">Signal Workbench &mdash; Verified DSP Instrument</div>
-      <div class="phys">A signal generator + analyzer where every display is
-        gated against the closed-form transform of its own generator &mdash;
-        FM sidebands are exactly J<sub>n</sub>(I), leakage is exactly the
-        window&rsquo;s DTFT. Hear the signal the math is dissecting: the
-        portfolio&rsquo;s first audible sim.</div>
+      <div class="phys">An oscilloscope and spectrum analyzer you can hear
+        &mdash; the portfolio&rsquo;s first audible sim. Every display is
+        checked against the exact mathematics of the signal it shows: FM
+        sidebands land on their Bessel-function stems, spectral leakage on
+        the window&rsquo;s own transform.</div>
       <div class="badges">
         <span class="chip">signal-processing</span>
         <span class="chip">WGSL FFT + WebAudio</span>
@@ -414,8 +410,8 @@
       <div class="phys">Cracks that nucleate, curve, and branch as the
         emergent solution of an energy minimization &mdash; no scripted
         shatter patterns. Paint holes and inclusions, pull, and watch a real
-        fracture solver negotiate them; the SENT peak lands 0.1&thinsp;% off
-        the published 0.7012&thinsp;kN benchmark.</div>
+        fracture solver negotiate them &mdash; its breaking strength lands
+        within 0.1&thinsp;% of a published lab benchmark.</div>
       <div class="badges">
         <span class="chip">fracture</span>
         <span class="chip">first validated f32 phase-field fracture</span>
@@ -431,11 +427,11 @@
     </video>
     <div class="body">
       <div class="name">LBM Multiphase &mdash; Two Phases from One Equation</div>
-      <div class="phys">One nearest-neighbor force on a lattice-Boltzmann grid
-        and a single fluid decides to become two &mdash; droplets, coalescence,
-        spinodal decomposition, paintable wetting. The deploy gate checks
-        Maxwell coexistence (0.006&thinsp;%), Young&ndash;Laplace and a
-        G&thinsp;&gt;&thinsp;G<sub>c</sub> control on your GPU.</div>
+      <div class="phys">One nearest-neighbor attraction on a lattice-Boltzmann
+        grid and a single fluid decides to become two &mdash; raining
+        droplets, coalescence, walls that bead or spread where you paint
+        them. Its liquid&ndash;vapor balance re-checks against two textbook
+        laws (Maxwell coexistence, Young&ndash;Laplace) on your GPU.</div>
       <div class="badges">
         <span class="chip">lattice</span>
         <span class="chip">first browser multiphase LBM with analytic gates</span>
@@ -451,11 +447,11 @@
     </video>
     <div class="body">
       <div class="name">FDTD Optics &mdash; Maxwell, Verified Live</div>
-      <div class="phys">Light as the emergent solution of Maxwell's curl
-        equations on a Yee grid &mdash; diffraction, refraction, plasmonic
-        metals, Kerr self-focusing, a steerable phased array. The deploy gate
-        checks Fresnel R&thinsp;=&thinsp;0.04 and Bohren&ndash;Huffman Mie
-        scattering on your GPU.</div>
+      <div class="phys">Real light from Maxwell&rsquo;s equations &mdash;
+        watch beams bend through lenses, diffract through slits, and steer
+        from a phased array; paint glass and metal into their path. Its
+        reflections and scattering re-check against exact textbook results
+        (Fresnel, Mie) on your GPU.</div>
       <div class="badges">
         <span class="chip">electromagnetics</span>
         <span class="chip">first browser FDTD with analytic gates</span>

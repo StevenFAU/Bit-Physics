@@ -225,7 +225,7 @@ async function start(): Promise<void> {
   nanBox.innerHTML =
     "<b>The field blew up (NaN).</b> This is the honest failure mode of an " +
     "explicit FDTD pushed past stability — a CFL violation or a Kerr " +
-    "self-focusing collapse (spec § 3.3 / § 8.6), not a rendering glitch. ";
+    "self-focusing collapse — real physics hitting its limits, not a rendering glitch. ";
   const nanBtn = document.createElement("button");
   nanBtn.textContent = "reset scene";
   nanBtn.addEventListener("click", () => loadScene(st.scene));
@@ -238,8 +238,9 @@ async function start(): Promise<void> {
   // ---------------------------------------------------------------- panel
   const panel = createSettingsPanel("fdtd-optics — Maxwell, verified live", {
     caption:
-      "Yee-grid FDTD: light as the solution of Maxwell's curl equations, " +
-      "with Fresnel / Mie analytic gates re-run on your GPU.",
+      "Real light from Maxwell's equations (Yee-grid FDTD) — bend beams " +
+      "through lenses, steer a phased array, paint glass and metal into " +
+      "the path; reflections re-check against exact results on your GPU.",
     // NOTE: the panel shell already wraps onCapture in runCaptureExclusive
     // (common-web panel-shell.ts:326) — wrapping again would release the
     // live-loop lock early, so the capture body runs bare here.

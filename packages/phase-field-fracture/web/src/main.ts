@@ -342,8 +342,9 @@ function installUi(state: AppState): void {
     "Phase-Field Fracture — verified crack lab",
     {
       caption:
-        "Cracks that nucleate, curve, and branch as the solution of an energy minimization — " +
-        "gated live against an f64 reference and the published SENT peak.",
+        "Cracks that nucleate, curve, and branch on their own — fracture as " +
+        "energy minimization, its breaking strength checked against a " +
+        "published lab benchmark on your GPU.",
       onCapture: async () => {
         resetCapture();
         await runCaptureExclusive(async () => {
@@ -380,7 +381,7 @@ function installUi(state: AppState): void {
             "Miehe strain-spectral driving force, KE/IE-disciplined quasi-static loading, " +
             "non-dimensionalized Miehe steel groups",
           simplified:
-            "three disclosures (EXPLAIN, § 1.1): no-criterion framing refuted; hybrid+history " +
+            "three disclosures (detailed in EXPLAIN): 'no failure criterion needed' is an overclaim; hybrid+history " +
             "variationally inconsistent (Gerasimov–De Lorenzis 2019); finite-mobility gradient-flow " +
             "damage ⇒ Γ(v) rate toughness — measured 0.35 % peak shift vs converged-elliptic f64",
           measured: `gate budget ${V.tolerance.relative} (${V.tolerance.measured_basis})`,

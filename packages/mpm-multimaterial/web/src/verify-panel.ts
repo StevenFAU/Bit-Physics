@@ -183,7 +183,7 @@ export function installVerifyPanel(deps: VerifyDeps): { runAll: () => Promise<bo
       "i32 overflow headroom (M=1e7)",
       `max cell ${(100 * a.headroomRatio).toFixed(2)}% of i32 — ${headOk ? "PASS" : "FAIL"}`,
       headOk,
-      "Per-cell accumulation bound, the quantity that actually overflows (spec § 3.3) — measured, not assumed",
+      "Per-cell accumulation bound, the quantity that actually overflows — measured, not assumed",
     );
     row(
       artOut,

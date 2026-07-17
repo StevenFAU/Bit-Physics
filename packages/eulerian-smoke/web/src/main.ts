@@ -1377,7 +1377,7 @@ async function main(): Promise<void> {
   const dispNote = document.createElement("div");
   dispNote.className = "es-note-line";
   dispNote.textContent =
-    "divergence view = the § PROVE residual heatmap · schlieren/curl/speed are data-derived, never re-simulated";
+    "divergence view = the PROVE residual heatmap · schlieren/curl/speed are data-derived, never re-simulated";
   displayGroup.appendChild(dispNote);
 
   // ---- always-on diagnostics + TG decay plot --------------------------------------

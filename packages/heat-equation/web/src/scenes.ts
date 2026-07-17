@@ -147,7 +147,7 @@ export const SCENES: SceneSpec[] = [
     glow: { offsetK: 300, scaleK: 1400, gain: 0.8 },
     brushKind: 1,
     brushPower: 60,
-    note: "energy accounting + thermal-resistance hand-check template (§ 6.4)",
+    note: "energy accounting + thermal-resistance hand-check template",
   },
   {
     key: "fourier",
@@ -172,7 +172,7 @@ export const SCENES: SceneSpec[] = [
   {
     key: "gaussian",
     label: "Gaussian spot",
-    title: "Heat-kernel spreading: sigma^2(t) = sigma0^2 + 2*alpha*t (§ 4.3)",
+    title: "Heat-kernel spreading: sigma^2(t) = sigma0^2 + 2*alpha*t",
     n: 256,
     alpha: 0.02,
     dtFrac: 0.8,
@@ -192,7 +192,7 @@ export const SCENES: SceneSpec[] = [
   {
     key: "plate",
     label: "metal plate",
-    title: "Sudden hot walls drive a diffusive front — erfc/product-form golden (§ 4.5)",
+    title: "Sudden hot walls drive a diffusive front — erfc/product-form golden",
     n: 256,
     alpha: 1.0,
     dtFrac: 0.8,
@@ -212,7 +212,7 @@ export const SCENES: SceneSpec[] = [
   {
     key: "laser",
     label: "laser engraving",
-    title: "Moving hot spot writes glowing tracks — Rosenthal thin-plate K0 golden (§ 4.6)",
+    title: "Moving hot spot writes glowing tracks — Rosenthal thin-plate K0 golden",
     n: 256,
     alpha: 0.005,
     dtFrac: 0.8,

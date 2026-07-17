@@ -178,7 +178,7 @@ async function start(): Promise<void> {
   const diagRows: DiagnosticRow[] = [];
   const panel = createSettingsPanel("Signal Workbench — verified DSP instrument", {
     caption:
-      "A signal generator + analyzer where every display is gated against the closed-form transform of its own generator — FM sidebands are exactly J_n(I), leakage is exactly the window's DTFT. The repo's first audible sim.",
+      "An oscilloscope and spectrum analyzer you can hear. Every display is checked against the exact mathematics of the signal it shows — FM sidebands land on their Bessel-function stems.",
     onCapture: async () => {
       resetCapture();
       await runCaptureExclusive(async () => {
@@ -220,7 +220,7 @@ async function start(): Promise<void> {
         faithful:
           "own poly-trig Stockham WGSL FFT (shared source) over CPU-f64-synthesized signals; exact J_n(I) / shifted-Dirichlet / harmonic-line overlays; machine-exact Parseval + folded-line goldens in the f64 reference",
         simplified:
-          "single channel, audio-rate, fixed chain templates (no flowgraph authoring); filter/comms/metrology lenses land as v1.x increments (spec § 1.2); persistence/waterfall/XY beam and audio playback are declared renderings, never gated",
+          "single channel, audio-rate, fixed chain templates (no flowgraph authoring); filter/comms/metrology lenses land as future increments; persistence/waterfall/XY beam and audio playback are declared renderings, never gated",
         measured: `gate budget ${V.tolerance.relative} measured-then-declared (${V.tolerance.measured_basis})`,
       },
       verdict: {
@@ -311,7 +311,7 @@ async function start(): Promise<void> {
   winRow.appendChild(winSel);
   ctl.appendChild(winRow);
 
-  const audioGroup = panel.addGroup("audio (ungated rendering, § 8)");
+  const audioGroup = panel.addGroup("audio (rendering only — never gated)");
   const playBtn = document.createElement("button");
   playBtn.textContent = "▶ hear the signal";
   playBtn.addEventListener("click", () => {

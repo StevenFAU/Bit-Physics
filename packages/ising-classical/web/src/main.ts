@@ -862,7 +862,7 @@ async function main(): Promise<void> {
   const hystCap = document.createElement("div");
   hystCap.className = "ig-map-cap";
   hystCap.textContent = "M–H trace — hysteresis below T_c, single-valued above";
-  hystCap.title = "m vs h from the live readback samples. Kinetic hysteresis at fixed sweep rate — the loop area is rate-dependent (a first-anywhere browser-Ising figure, per the spec § 2.2 survey).";
+  hystCap.title = "m vs h from the live readback samples. Kinetic hysteresis at fixed sweep rate — the loop area is rate-dependent (a first-anywhere browser-Ising figure).";
   const hystCanvas = document.createElement("canvas");
   const HYST_W = 240;
   const HYST_H = 150;

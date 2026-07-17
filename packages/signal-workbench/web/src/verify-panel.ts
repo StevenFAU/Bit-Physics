@@ -58,8 +58,7 @@ export function installVerifyPanel(deps: Deps): void {
 N=${V.gate.n}; path A: coherent FM (kc=${V.gate.fm_kc}, km=${V.gate.fm_km},
 I=${V.gate.fm_index}, rectangular) vs the exact folded J_n(I) line spectrum;
 path B: off-bin tone (f0=${V.gate.leak_f0_bins} bins, hann) vs the exact
-shifted-Dirichlet window-DTFT skirt (the discrete-spectrum discipline,
-spec § 3.2).<br>
+shifted-Dirichlet window-DTFT skirt (the discrete-spectrum discipline).<br>
 <b>Budget:</b> per-field max|browser−f64| ≤ ${V.tolerance.relative} ×
 max|spectrum| ([defaults.${V.tolerance.category}], measured-then-declared:
 ${V.tolerance.measured_basis}).<br>

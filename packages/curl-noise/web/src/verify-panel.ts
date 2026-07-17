@@ -84,8 +84,9 @@ export class VerifyPanel {
         {f₁=c₁}∩{f₂=c₂}: it cannot be chaotic, and the distance-to-manifold residual
         is a legitimate gate even though pointwise positions drift along the curve.
         Second exact identity: ψ·v ≡ 0 for the Clebsch potential ψ = f₁∇f₂.
-        <b>Kinetic helicity v·(∇×v) is NOT zero</b> — shown honestly below (the
-        v0.2 claim was refuted at execution; counterexample f₁=xy, f₂=z+x²).
+        <b>Kinetic helicity v·(∇×v) is NOT zero</b> — shown honestly below (an
+        earlier draft claimed it was; verification produced the counterexample
+        f₁=xy, f₂=z+x²).
         ABC is the opposite pole (Beltrami ∇×v = v): no invariant, chaotic regions
         exist — which is why no template ever gates on trajectories.
         </div>

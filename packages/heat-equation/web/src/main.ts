@@ -253,7 +253,7 @@ bound). `;
   let frameMs = 0;
   const panel = createSettingsPanel("Heat Equation — verified diffusion instrument", {
     caption:
-      "FTCS stencil + machine-exact spectral solver on one field; the gate re-runs against an f64 reference, live.",
+      "Watch heat spread and paint it in with a brush — one field, shown as a glowing plate and as its live Fourier spectrum, re-checked against a high-precision reference on your GPU.",
     onCapture: async () => {
       resetCapture();
       await runCaptureExclusive(async () => {
@@ -283,7 +283,7 @@ bound). `;
         faithful:
           "constant-α FTCS (discrete-amplification-gated) + spectral ETD (machine-exact per mode); conservative harmonic-mean material flux; committed Planck-locus glow LUT",
         simplified:
-          "no convection/radiation transport/phase change (v1 honesty boundary § 1.1); brush and templates are ungated interactive content; DuFort–Frankel teaching mode deferred",
+          "no convection/radiation transport/phase change (a declared v1 boundary); brush and templates are ungated interactive content; DuFort–Frankel teaching mode deferred",
         measured: `gate budget ${V.tolerance.relative} measured-then-declared (${V.tolerance.measured_basis})`,
       },
       verdict: {
