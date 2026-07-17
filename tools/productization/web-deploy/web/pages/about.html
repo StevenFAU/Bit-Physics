@@ -111,8 +111,31 @@
 <header>
   <nav class="crumb"><a href="./">&larr; bit-physics.sim — the simulations</a></nav>
   <h1>about<span class="tld"> / methodology</span></h1>
-  <div class="tag">what it means when this project says &ldquo;verified&rdquo;</div>
+  <div class="tag">what this is — and what it means when it says &ldquo;verified&rdquo;</div>
 </header>
+
+<h2>What is this?</h2>
+<p>
+  Bit-Physics is a collection of interactive physics simulations that run
+  entirely in your browser: water that sloshes and splashes, smoke that
+  curls, light bending through lenses, cracks racing through steel, flocks,
+  slime molds, magnets at their critical point. Nothing is a video and
+  nothing runs on a server — your own graphics card computes the physics in
+  real time (via WebGPU), and every one of them is yours to poke: drag,
+  paint, switch presets, break things.
+</p>
+<p>
+  What makes this collection unusual is not the pixels — it is that every
+  simulation has to <b>prove it is telling the truth</b> before it is
+  published. Simulations are easy to fake and easy to get subtly wrong; a
+  convincing-looking fluid can be conserving nothing. So each sim here is
+  checked against exact textbook results and a high-precision reference
+  implementation, and many let you re-run that check live on your own GPU
+  (look for the PROVE panel or the Study toggle). It was built by one
+  developer working with AI agents, which is precisely why the checking is
+  this strict — the rest of this page explains how it works, with links to
+  the evidence.
+</p>
 
 <h2>The posture</h2>
 <p>
@@ -155,7 +178,7 @@
 </ul>
 
 <h2>The discipline, in action</h2>
-<p class="sub">Three exhibits from the current polish lane — the rule is &ldquo;measure before naming&rdquo;, and the interesting part is what it rejects.</p>
+<p class="sub">Three examples — the rule is &ldquo;measure before naming&rdquo;, and the interesting part is what it rejects.</p>
 
 <div class="exhibit">
   <h3>The flocking preset that measurement refuted <span class="verdict-chip">REFUTED</span></h3>
@@ -219,8 +242,8 @@
 <h2>Don&rsquo;t trust it — re-run it</h2>
 <p class="sub">Everything above is re-runnable from a clone. The browser gate needs a WebGPU-capable Chromium.</p>
 <pre>
-<span class="c"># build the seven web sims and re-apply each one's own gate
-# in a real headless browser-WebGPU session (7/7 must pass):</span>
+<span class="c"># build the web sims and re-apply each one's own gate
+# in a real headless browser-WebGPU session (all must pass):</span>
 python tools/productization/web-deploy/pipeline.py validate \
     --artifacts /tmp/out --json
 </pre>
@@ -249,7 +272,7 @@ python tools/productization/web-deploy/pipeline.py validate \
 </p>
 
 <footer>
-  bit-physics · about / methodology (Lane B P-6) ·
+  bit-physics · about / methodology ·
   house style: <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/design/house-style.md">docs/design/house-style.md</a> ·
   this page curates in-repo evidence and adds no new verification claims ·
   <a href="./">back to the simulations</a>

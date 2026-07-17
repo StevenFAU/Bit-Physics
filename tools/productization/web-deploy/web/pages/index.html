@@ -158,17 +158,12 @@
     evidence trail ships with the code.
   </p>
   <div class="posture">
-    Every claim in this project is backed by an <b>append-only audit
-    ledger</b>: each simulation ships with golden-value anchors, determinism
-    contracts, property-based invariants, and cross-stack equivalence gates
-    whose tolerances are <b>measured, then declared — never widened</b>. The
-    browser sims below are the exact bundles that passed each
-    sim&rsquo;s own established gate inside a real headless browser-WebGPU
-    session (Phase-5 close: CI Mesa lavapipe 7/7 green; canonical equivalence
-    proven on RADV/wgpu-native; the Phase-6 smoke port validated on local
-    browser-WebGPU, its lavapipe run rides the next deploy dispatch). This
-    page only publishes those validated bundles — it adds no new
-    verification claims.
+    Every simulation below passed its own <b>verification gate</b> — its
+    numbers checked against exact known results and a high-precision
+    reference, inside a real browser-WebGPU session — before it was
+    published here. How that works, and the full evidence trail behind
+    every claim, lives on the
+    <a href="./about.html">methodology page</a>.
   </div>
 </header>
 
