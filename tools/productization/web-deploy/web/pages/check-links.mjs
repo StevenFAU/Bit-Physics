@@ -55,6 +55,7 @@ async function assembleReplica(out) {
   await mkdir(join(out, "sims"), { recursive: true });
   await cp(join(HERE, "index.html"), join(out, "index.html"));
   await cp(join(HERE, "about.html"), join(out, "about.html"));
+  await cp(join(HERE, "splash.html"), join(out, "splash.html"));
   await cp(join(HERE, "assets"), join(out, "assets"), { recursive: true });
   for (const sim of SIMS) {
     const dist = join(REPO, "packages", sim, "web", "dist");
@@ -147,6 +148,20 @@ for await (const file of walk(tree)) {
       if (!(await resolves(tree, file, resolvable))) {
         missing.push(`${posix.normalize(relative(tree, file))} -> ${ref} (meta)`);
       }
+    }
+  }
+}
+
+// Splash-reel clip manifest: the srcs live in splash.html's inline JS (spliced
+// by assets/make-splash.mjs), so the HTML attribute walk can't see them. Every
+// manifest src and href must resolve in the assembled tree.
+{
+  const splash = await readFile(join(tree, "splash.html"), "utf8").catch(() => "");
+  const MANIFEST_REF_RE = /(?:src|href):\s*"(\.[^"]+)"/g;
+  for (const m of splash.matchAll(MANIFEST_REF_RE)) {
+    checked += 1;
+    if (!(await resolves(tree, join(tree, "splash.html"), m[1]))) {
+      missing.push(`splash.html -> ${m[1]} (manifest)`);
     }
   }
 }

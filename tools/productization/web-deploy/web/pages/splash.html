@@ -1,0 +1,254 @@
+<!doctype html>
+<!--
+  Bit-Physics — splash reel (full-screen ambient demo loop).
+  Served verbatim next to index.html by the web-deploy assemble step.
+  A rotating reel of feature clips (one sim scene each) filmed by
+  assets/make-splash.mjs under the same deterministic capture discipline as
+  the landing loops (assets/make-loops.mjs): default seed, declared RAF frame
+  ranges, fixed-CRF single-threaded VP9. This page publishes; it verifies
+  nothing and adds no verification claims.
+  House style: docs/design/house-style.md — IBM Plex Mono, dark instrument
+  palette, #36e0cf accent.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>bit_Physics.sim</title>
+<meta name="description" content="A full-screen reel of GPU physics and emergence simulations running in the browser. Click through to any sim, or browse the verified catalog." />
+<link rel="icon" type="image/svg+xml" href="./assets/favicon.svg" />
+<style>
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 400;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-400.woff2') format('woff2'); }
+  @font-face { font-family: 'IBM Plex Mono'; font-style: normal; font-weight: 500;
+    font-display: swap; src: url('./assets/fonts/ibm-plex-mono-latin-500.woff2') format('woff2'); }
+
+  :root {
+    --bg: #06090d;
+    --line: #1a232e;
+    --txt: #f2f6f9;
+    --dim: #74828f;
+    --accent: #36e0cf;
+    --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden;
+    font-family: var(--mono); }
+
+  /* ---- reel ---- */
+  .reel { position: fixed; inset: 0; background: var(--bg); }
+  .reel video { position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; opacity: 0; transition: opacity 2s ease; }
+  .reel video.on { opacity: 1; }
+
+  /* legibility floor for the typed line — exposure only, no content */
+  .shade { position: fixed; left: 0; right: 0; bottom: 0; height: 34vh;
+    background: linear-gradient(to top, rgba(4, 7, 10, .62), rgba(4, 7, 10, 0));
+    pointer-events: none; }
+
+  /* ---- typed address line ---- */
+  .addr { position: fixed; left: max(28px, 4vw); bottom: max(26px, 5vh);
+    z-index: 3; text-decoration: none; display: inline-flex; align-items: baseline;
+    font-size: clamp(17px, 2.6vw, 32px); font-weight: 400; letter-spacing: .02em;
+    color: var(--txt);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .75), 0 0 22px rgba(0, 0, 0, .45); }
+  .addr:hover #typed { color: var(--accent); }
+  #typed { white-space: pre; transition: color .2s ease; }
+  /* the caret: solid while typing/deleting, blinking once the line is at rest */
+  #caret { display: inline-block; width: 2px; height: 1.05em;
+    margin-left: 3px; transform: translateY(.12em); background: var(--txt);
+    box-shadow: 0 0 8px rgba(242, 246, 249, .5); }
+  #caret.idle { animation: blink 1.06s steps(1, end) infinite; }
+  @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+
+  /* ---- quiet exits ---- */
+  .enter { position: fixed; right: max(28px, 4vw); bottom: max(26px, 5vh);
+    z-index: 3; font-size: 12.5px; letter-spacing: .12em; text-transform: lowercase;
+    color: var(--dim); text-decoration: none; border: 1px solid var(--line);
+    border-radius: 3px; padding: 7px 14px; background: rgba(6, 9, 13, .45);
+    transition: color .15s ease, border-color .15s ease; }
+  .enter:hover { color: var(--accent); border-color: var(--accent);
+    text-decoration: none; }
+  @media (max-width: 620px) {
+    .enter { right: auto; left: max(28px, 4vw); bottom: 10px; border: 0;
+      padding: 4px 0; background: none; }
+    .addr { bottom: 56px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="reel" id="reel">
+  <video id="v0" muted playsinline preload="auto"></video>
+  <video id="v1" muted playsinline preload="auto"></video>
+</div>
+<div class="shade"></div>
+
+<a class="addr" id="addr" href="./index.html" aria-label="open the current simulation">
+  <span id="typed"></span><span id="caret"></span>
+</a>
+<a class="enter" href="./index.html">browse the catalog →</a>
+
+<script>
+// Clip manifest — one entry per reel scene. `name` is what gets typed after
+// the slash; `href` is where clicking the address line goes; `src` is the
+// filmed clip. Regenerated alongside assets/splash/ by make-splash.mjs
+// (which prints this block); order here is irrelevant — playback shuffles.
+const CLIPS = [
+  /* __SPLASH_MANIFEST_START__ (written by assets/make-splash.mjs — do not edit by hand) */
+  { sim: "boids-2d", name: "boids-2d", href: "./sims/boids-2d/", src: "./assets/splash/boids-2d--flock.webm" },
+  { sim: "boids-2d", name: "boids-2d", href: "./sims/boids-2d/", src: "./assets/splash/boids-2d--murmuration-order.webm" },
+  { sim: "boids-2d", name: "boids-2d", href: "./sims/boids-2d/", src: "./assets/splash/boids-2d--mill-speed.webm" },
+  { sim: "boids-2d", name: "boids-2d", href: "./sims/boids-2d/", src: "./assets/splash/boids-2d--fluiddrift-curl.webm" },
+  { sim: "boids-2d", name: "boids-2d", href: "./sims/boids-2d/", src: "./assets/splash/boids-2d--swarm-density.webm" },
+  { sim: "sph-water", name: "sph-water", href: "./sims/sph-water/", src: "./assets/splash/sph-water--whirlpool-turbo.webm" },
+  { sim: "sph-water", name: "sph-water", href: "./sims/sph-water/", src: "./assets/splash/sph-water--piston-inferno.webm" },
+  { sim: "sph-water", name: "sph-water", href: "./sims/sph-water/", src: "./assets/splash/sph-water--double-dam.webm" },
+  { sim: "boids-3d", name: "boids-3d", href: "./sims/boids-3d/?preset=starling&n=32768&color=speed", src: "./assets/splash/boids-3d--starling-speed.webm" },
+  { sim: "boids-3d", name: "boids-3d", href: "./sims/boids-3d/?preset=storm&n=65536&color=alert", src: "./assets/splash/boids-3d--storm-alert.webm" },
+  { sim: "boids-3d", name: "boids-3d", href: "./sims/boids-3d/?preset=landmark&n=32768&color=natural", src: "./assets/splash/boids-3d--landmark.webm" },
+  { sim: "pic-flip", name: "pic-flip", href: "./sims/pic-flip/?preset=waterfall", src: "./assets/splash/pic-flip--waterfall.webm" },
+  { sim: "pic-flip", name: "pic-flip", href: "./sims/pic-flip/?preset=double-dam&mode=flip", src: "./assets/splash/pic-flip--double-dam-flip.webm" },
+  { sim: "fdtd-optics", name: "fdtd-optics", href: "./sims/fdtd-optics/?preset=double-slit", src: "./assets/splash/fdtd-optics--double-slit.webm" },
+  { sim: "fdtd-optics", name: "fdtd-optics", href: "./sims/fdtd-optics/?preset=lens", src: "./assets/splash/fdtd-optics--lens.webm" },
+  { sim: "fdtd-optics", name: "fdtd-optics", href: "./sims/fdtd-optics/?preset=mie", src: "./assets/splash/fdtd-optics--mie.webm" },
+  { sim: "lbm-multiphase", name: "lbm-multiphase", href: "./sims/lbm-multiphase/?preset=spinodal", src: "./assets/splash/lbm-multiphase--spinodal.webm" },
+  { sim: "lbm-multiphase", name: "lbm-multiphase", href: "./sims/lbm-multiphase/?preset=rising-bubble", src: "./assets/splash/lbm-multiphase--rising-bubble.webm" },
+  { sim: "lbm-multiphase", name: "lbm-multiphase", href: "./sims/lbm-multiphase/?preset=capillary-race", src: "./assets/splash/lbm-multiphase--capillary-race.webm" },
+  { sim: "signal-workbench", name: "signal-workbench", href: "./sims/signal-workbench/?preset=chirp", src: "./assets/splash/signal-workbench--chirp.webm" },
+  { sim: "schrodinger-smoke", name: "schrodinger-smoke", href: "./sims/schrodinger-smoke/", src: "./assets/splash/schrodinger-smoke--leapfrog.webm" },
+  { sim: "schrodinger-smoke", name: "schrodinger-smoke", href: "./sims/schrodinger-smoke/", src: "./assets/splash/schrodinger-smoke--trefoil.webm" },
+  { sim: "eulerian-smoke", name: "eulerian-smoke", href: "./sims/eulerian-smoke/", src: "./assets/splash/eulerian-smoke--plume.webm" },
+  { sim: "curl-noise", name: "curl-noise", href: "./sims/curl-noise/", src: "./assets/splash/curl-noise--abc-flow.webm" },
+  { sim: "curl-noise", name: "curl-noise", href: "./sims/curl-noise/", src: "./assets/splash/curl-noise--smoke-ring.webm" },
+  { sim: "heat-equation", name: "heat-equation", href: "./sims/heat-equation/", src: "./assets/splash/heat-equation--thermal.webm" },
+  { sim: "mpm-multimaterial", name: "mpm-multimaterial", href: "./sims/mpm-multimaterial/?preset=snowball", src: "./assets/splash/mpm-multimaterial--snowball.webm" },
+  { sim: "mpm-multimaterial", name: "mpm-multimaterial", href: "./sims/mpm-multimaterial/?preset=snow-globe", src: "./assets/splash/mpm-multimaterial--snow-globe.webm" },
+  { sim: "sph-multiphase", name: "sph-multiphase", href: "./sims/sph-multiphase/?preset=rayleigh-taylor", src: "./assets/splash/sph-multiphase--rayleigh-taylor.webm" },
+  { sim: "sph-multiphase", name: "sph-multiphase", href: "./sims/sph-multiphase/?preset=coalescence", src: "./assets/splash/sph-multiphase--coalescence.webm" },
+  { sim: "reaction-diffusion-2d", name: "reaction-diffusion-2d", href: "./sims/reaction-diffusion-2d/", src: "./assets/splash/reaction-diffusion-2d--solitons.webm" },
+  { sim: "reaction-diffusion-2d", name: "reaction-diffusion-2d", href: "./sims/reaction-diffusion-2d/", src: "./assets/splash/reaction-diffusion-2d--coral.webm" },
+  { sim: "strange-attractors", name: "strange-attractors", href: "./sims/strange-attractors/", src: "./assets/splash/strange-attractors--aizawa.webm" },
+  { sim: "strange-attractors", name: "strange-attractors", href: "./sims/strange-attractors/", src: "./assets/splash/strange-attractors--halvorsen.webm" },
+  { sim: "phase-field-fracture", name: "phase-field-fracture", href: "./sims/phase-field-fracture/?preset=enpassant", src: "./assets/splash/phase-field-fracture--en-passant.webm" },
+  { sim: "physarum", name: "physarum", href: "./sims/physarum/", src: "./assets/splash/physarum--network.webm" },
+  /* __SPLASH_MANIFEST_END__ */
+];
+
+const PREFIX = "bit_Physics.sim/";
+const FADE_MS = 2000;          // must match .reel video transition duration
+const MIN_HOLD_S = 6;          // safety floor if a clip's metadata is short
+
+const vids = [document.getElementById("v0"), document.getElementById("v1")];
+const typed = document.getElementById("typed");
+const caret = document.getElementById("caret");
+const addr = document.getElementById("addr");
+
+// --- shuffle bag: every clip plays once before any repeats; no same-sim
+// back-to-back, including across bag boundaries.
+let bag = [];
+let lastSim = null;
+function nextClip() {
+  if (bag.length === 0) {
+    bag = CLIPS.slice();
+    for (let i = bag.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [bag[i], bag[j]] = [bag[j], bag[i]];
+    }
+    // untangle same-sim adjacency (incl. the seam with the previous bag)
+    for (let i = 0; i < bag.length; i += 1) {
+      const prev = i === 0 ? lastSim : bag[i - 1].sim;
+      if (bag[i].sim !== prev) continue;
+      const k = bag.findIndex((c, j) => j > i && c.sim !== prev);
+      if (k !== -1) [bag[i], bag[k]] = [bag[k], bag[i]];
+    }
+  }
+  const clip = bag.shift();
+  lastSim = clip.sim;
+  return clip;
+}
+
+// --- typewriter: solid caret while the machine is running, blink at rest.
+const typeDelay = () => 62 + Math.random() * 48;
+const rubDelay = () => 34 + Math.random() * 22;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let typeSeq = 0; // cancels a superseded animation rather than interleaving
+async function retype(name) {
+  const seq = ++typeSeq;
+  caret.classList.remove("idle");
+  // rub out only the sim name — never the prefix
+  while (typed.textContent.length > PREFIX.length && typed.textContent.length > 0) {
+    if (seq !== typeSeq) return;
+    typed.textContent = typed.textContent.slice(0, -1);
+    await sleep(rubDelay());
+  }
+  await sleep(160); // a beat between rubbing out and typing
+  const target = PREFIX + name;
+  while (typed.textContent.length < target.length) {
+    if (seq !== typeSeq) return;
+    typed.textContent = target.slice(0, typed.textContent.length + 1);
+    await sleep(typeDelay());
+  }
+  if (seq === typeSeq) caret.classList.add("idle");
+}
+
+// --- the reel: two stacked videos crossfaded; the hidden one preloads the
+// next clip while the visible one plays.
+let front = 0;
+let pending = null; // clip loaded into the back video
+function loadInto(v, clip) {
+  v.src = clip.src;
+  v.loop = true; // if a fade is ever late, the clip wraps instead of freezing
+  v.load();
+}
+function holdFor(v) {
+  const d = Number.isFinite(v.duration) ? v.duration : 0;
+  return Math.max(MIN_HOLD_S, d - FADE_MS / 1000) * 1000;
+}
+
+function advance(first) {
+  const cur = pending ?? nextClip();
+  const back = vids[1 - front];
+  if (cur !== pending) loadInto(back, cur);
+  pending = null;
+
+  const frontV = vids[front];
+  front = 1 - front;
+
+  // the clock only starts once frames are actually advancing — if autoplay is
+  // blocked, the reel simply waits for the first gesture (kick) to begin.
+  back.addEventListener("playing", () => {
+    setTimeout(() => advance(false), holdFor(back));
+  }, { once: true });
+
+  back.classList.add("on");
+  frontV.classList.remove("on");
+  addr.href = cur.href;
+  retype(cur.name);
+  back.play().catch(() => { /* muted autoplay blocked — see kick() */ });
+
+  // free + repoint the now-hidden video at the next clip so it buffers ahead
+  setTimeout(() => {
+    frontV.pause();
+    pending = nextClip();
+    loadInto(vids[1 - front], pending);
+  }, first ? 50 : FADE_MS + 100);
+}
+
+// muted autoplay is near-universally allowed, but if a policy blocks it,
+// any first gesture starts the reel.
+function kick() {
+  const v = vids[front];
+  if (v.paused && v.src) v.play().catch(() => {});
+}
+["pointerdown", "keydown", "touchstart", "click"].forEach((e) =>
+  document.addEventListener(e, kick, { once: true, passive: true }));
+
+if (CLIPS.length > 0) {
+  advance(true);
+} else {
+  retype("…");
+}
+</script>
+</body>
+</html>
