@@ -85,6 +85,13 @@
   h2::before { content: "// "; color: var(--accent-d); font-family: var(--mono); }
   .sub { color: var(--dim); font-size: 12.5px; margin: 0 0 18px; }
 
+  /* family sections within Simulations (UX audit P3) */
+  h3.fam { margin: 30px 0 2px; font-family: var(--cond); font-size: 15px;
+    font-weight: 600; letter-spacing: 1.6px; text-transform: uppercase;
+    color: var(--txt); }
+  h3.fam::before { content: "· "; color: var(--accent); }
+  .famsub { color: var(--dim); font-size: 12px; margin: 0 0 12px; }
+
   /* sim cards */
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
     gap: 14px; }
@@ -169,25 +176,9 @@
 
 <h2>Simulations</h2>
 <p class="sub">Run in the browser via WebGPU. Each card names the gate its bundle was re-verified through.</p>
+<h3 class="fam">Start here</h3>
+<p class="famsub">No manual needed &mdash; four doors in: birds, water, materials, chaos.</p>
 <div class="grid">
-  <a class="card" href="./sims/boids-2d/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/boids-2d.png"
-      aria-label="A dense 2-D flocking field of direction-hued agents with bright motion trails against darkness">
-      <source data-src="./assets/boids-2d.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">Boids 2D Lab</div>
-      <div class="phys">The full v4 flocking lab: million-agent counting sort,
-        Vicsek order-disorder observables, brute-sort proof rows, and opt-in
-        two-way stable-fluid coupling.</div>
-      <div class="badges">
-        <span class="chip">agent-based</span>
-        <span class="chip">WGSL compute</span>
-        <span class="chip gate">gate: new_canonical observable + in-page GPU proof</span>
-      </div>
-    </div>
-  </a>
   <a class="card" href="./sims/boids-3d/">
     <!-- Motion loops (P-7, ratified): progressive enhancement — the source
          attaches lazily in view, never under prefers-reduced-motion; the
@@ -205,24 +196,6 @@
         <span class="chip">agent-based</span>
         <span class="chip">WGSL compute</span>
         <span class="chip gate">gate: new_canonical + run-twice</span>
-      </div>
-    </div>
-  </a>
-  <a class="card" href="./sims/physarum/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/physarum.png"
-      aria-label="A glowing transport network grown by simulated slime-mold agents">
-      <source data-src="./assets/physarum.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">Physarum Transport Network</div>
-      <div class="phys">A million blind agents deposit and follow chemical
-        trails — an efficient transport network emerges, with
-        order-independent atomics conserving every unit of mass.</div>
-      <div class="badges">
-        <span class="chip">agent-based</span>
-        <span class="chip">WGSL compute</span>
-        <span class="chip gate">gate: new_canonical (mass conservation)</span>
       </div>
     </div>
   </a>
@@ -245,25 +218,6 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/sph-multiphase/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/sph-multiphase.png"
-      aria-label="Cyan and magenta immiscible droplets colliding inside a transparent bath">
-      <source data-src="./assets/sph-multiphase.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">Interfacial Fluid Lab</div>
-      <div class="phys">Conduct two immiscible liquids through density
-        contrast, physical viscosity, surface tension and wetting. The internal
-        interface stays visible, measured, and bound to a number-density SPH
-        verification spine.</div>
-      <div class="badges">
-        <span class="chip">particle-fluids</span>
-        <span class="chip">two-fluid WebGPU</span>
-        <span class="chip gate">gate: new_canonical (run-twice + interface invariants)</span>
-      </div>
-    </div>
-  </a>
   <a class="card" href="./sims/mpm-multimaterial/">
     <video class="poster" muted loop playsinline preload="none"
       poster="./assets/mpm-multimaterial.png"
@@ -283,7 +237,70 @@
       </div>
     </div>
   </a>
+  <a class="card" href="./sims/strange-attractors/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/strange-attractors.png"
+      aria-label="The Lorenz attractor's butterfly traced as a glowing point trajectory">
+      <source data-src="./assets/strange-attractors.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Lorenz Strange Attractor</div>
+      <div class="phys">Three coupled equations, RK4-integrated into the
+        butterfly that started chaos theory — deterministic, never repeating,
+        forever on the attractor.</div>
+      <div class="badges">
+        <span class="chip">closed-form</span>
+        <span class="chip">WGSL RK4</span>
+        <span class="chip gate">gate: new_canonical + run-twice</span>
+      </div>
+    </div>
+  </a>
+</div>
 
+<h3 class="fam">Flocks &amp; swarms</h3>
+<p class="famsub">Simple local rules, million-agent organization.</p>
+<div class="grid">
+  <a class="card" href="./sims/boids-2d/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/boids-2d.png"
+      aria-label="A dense 2-D flocking field of direction-hued agents with bright motion trails against darkness">
+      <source data-src="./assets/boids-2d.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Boids 2D Lab</div>
+      <div class="phys">The full v4 flocking lab: million-agent counting sort,
+        Vicsek order-disorder observables, brute-sort proof rows, and opt-in
+        two-way stable-fluid coupling.</div>
+      <div class="badges">
+        <span class="chip">agent-based</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical observable + in-page GPU proof</span>
+      </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/physarum/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/physarum.png"
+      aria-label="A glowing transport network grown by simulated slime-mold agents">
+      <source data-src="./assets/physarum.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Physarum Transport Network</div>
+      <div class="phys">A million blind agents deposit and follow chemical
+        trails — an efficient transport network emerges, with
+        order-independent atomics conserving every unit of mass.</div>
+      <div class="badges">
+        <span class="chip">agent-based</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical (mass conservation)</span>
+      </div>
+    </div>
+  </a>
+</div>
+
+<h3 class="fam">Water &amp; droplets</h3>
+<p class="famsub">Liquids that splash, wet, bead, and refuse to mix.</p>
+<div class="grid">
   <a class="card" href="./sims/pic-flip/">
     <video class="poster" muted loop playsinline preload="none"
       poster="./assets/pic-flip.png"
@@ -300,6 +317,68 @@
         <span class="chip">particle-fluids</span>
         <span class="chip">WGSL compute</span>
         <span class="chip gate">gate: new_canonical (robust observables + closed-form goldens)</span>
+      </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/sph-multiphase/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/sph-multiphase.png"
+      aria-label="Cyan and magenta immiscible droplets colliding inside a transparent bath">
+      <source data-src="./assets/sph-multiphase.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Interfacial Fluid Lab</div>
+      <div class="phys">Conduct two immiscible liquids through density
+        contrast, physical viscosity, surface tension and wetting. The internal
+        interface stays visible, measured, and bound to a number-density SPH
+        verification spine.</div>
+      <div class="badges">
+        <span class="chip">particle-fluids</span>
+        <span class="chip">two-fluid WebGPU</span>
+        <span class="chip gate">gate: new_canonical (run-twice + interface invariants)</span>
+      </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/lbm-multiphase/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/lbm-multiphase.png"
+      aria-label="Glassy liquid droplets raining through vapor, coalescing and splashing onto a wetting floor, rendered in teal and ice tones">
+      <source data-src="./assets/lbm-multiphase.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">LBM Multiphase &mdash; Two Phases from One Equation</div>
+      <div class="phys">One nearest-neighbor attraction on a lattice-Boltzmann
+        grid and a single fluid decides to become two &mdash; raining
+        droplets, coalescence, walls that bead or spread where you paint
+        them. Its liquid&ndash;vapor balance re-checks against two textbook
+        laws (Maxwell coexistence, Young&ndash;Laplace) on your GPU.</div>
+      <div class="badges">
+        <span class="chip">lattice</span>
+        <span class="chip">first browser multiphase LBM with analytic gates</span>
+        <span class="chip gate">gate: new_canonical + Maxwell/Laplace analytic</span>
+      </div>
+    </div>
+  </a>
+</div>
+
+<h3 class="fam">Smoke &amp; flow</h3>
+<p class="famsub">Three very different routes to swirling motion &mdash; classic, analytic, and quantum.</p>
+<div class="grid">
+  <a class="card" href="./sims/eulerian-smoke/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/eulerian-smoke.png"
+      aria-label="Colorful smoke swirling under Stam's stable-fluids solver">
+      <source data-src="./assets/eulerian-smoke.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Eulerian Smoke — Stable Fluids</div>
+      <div class="phys">Stam&rsquo;s advect-diffuse-project split solves
+        incompressible Navier&ndash;Stokes in real time — with the divergence
+        residual on screen and the gate re-runnable on your own GPU.</div>
+      <div class="badges">
+        <span class="chip">volumetric-grid</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
       </div>
     </div>
   </a>
@@ -341,24 +420,11 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/eulerian-smoke/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/eulerian-smoke.png"
-      aria-label="Colorful smoke swirling under Stam's stable-fluids solver">
-      <source data-src="./assets/eulerian-smoke.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">Eulerian Smoke — Stable Fluids</div>
-      <div class="phys">Stam&rsquo;s advect-diffuse-project split solves
-        incompressible Navier&ndash;Stokes in real time — with the divergence
-        residual on screen and the gate re-runnable on your own GPU.</div>
-      <div class="badges">
-        <span class="chip">volumetric-grid</span>
-        <span class="chip">WGSL compute</span>
-        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
-      </div>
-    </div>
-  </a>
+</div>
+
+<h3 class="fam">Heat, patterns &amp; fracture</h3>
+<p class="famsub">Continuum fields &mdash; diffusing, patterning, and breaking.</p>
+<div class="grid">
   <a class="card" href="./sims/heat-equation/">
     <video class="poster" muted loop playsinline preload="none"
       poster="./assets/heat-equation.png"
@@ -379,23 +445,20 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/signal-workbench/">
+  <a class="card" href="./sims/reaction-diffusion-2d/">
     <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/signal-workbench.png"
-      aria-label="A glowing green Lissajous figure tumbling on a dark CRT, drawn by a closed-form Gaussian beam">
-      <source data-src="./assets/signal-workbench.webm" type="video/webm" />
+      poster="./assets/reaction-diffusion-2d.png"
+      aria-label="Gray-Scott reaction-diffusion patterns: labyrinthine spots and stripes">
+      <source data-src="./assets/reaction-diffusion-2d.webm" type="video/webm" />
     </video>
     <div class="body">
-      <div class="name">Signal Workbench &mdash; Verified DSP Instrument</div>
-      <div class="phys">An oscilloscope and spectrum analyzer you can hear
-        &mdash; the portfolio&rsquo;s first audible sim. Every display is
-        checked against the exact mathematics of the signal it shows: FM
-        sidebands land on their Bessel-function stems, spectral leakage on
-        the window&rsquo;s own transform.</div>
+      <div class="name">Gray-Scott Reaction-Diffusion</div>
+      <div class="phys">Two chemicals feed, react, and diffuse — Turing&rsquo;s
+        recipe for pattern: spots, stripes, and living labyrinths from one PDE.</div>
       <div class="badges">
-        <span class="chip">signal-processing</span>
-        <span class="chip">WGSL FFT + WebAudio</span>
-        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
+        <span class="chip">continuous-CA</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: capture_roundtrip vs canonical</span>
       </div>
     </div>
   </a>
@@ -419,26 +482,11 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/lbm-multiphase/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/lbm-multiphase.png"
-      aria-label="Glassy liquid droplets raining through vapor, coalescing and splashing onto a wetting floor, rendered in teal and ice tones">
-      <source data-src="./assets/lbm-multiphase.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">LBM Multiphase &mdash; Two Phases from One Equation</div>
-      <div class="phys">One nearest-neighbor attraction on a lattice-Boltzmann
-        grid and a single fluid decides to become two &mdash; raining
-        droplets, coalescence, walls that bead or spread where you paint
-        them. Its liquid&ndash;vapor balance re-checks against two textbook
-        laws (Maxwell coexistence, Young&ndash;Laplace) on your GPU.</div>
-      <div class="badges">
-        <span class="chip">lattice</span>
-        <span class="chip">first browser multiphase LBM with analytic gates</span>
-        <span class="chip gate">gate: new_canonical + Maxwell/Laplace analytic</span>
-      </div>
-    </div>
-  </a>
+</div>
+
+<h3 class="fam">Light &amp; sound</h3>
+<p class="famsub">Waves you can see and hear, checked against exact textbook results.</p>
+<div class="grid">
   <a class="card" href="./sims/fdtd-optics/">
     <video class="poster" muted loop playsinline preload="none"
       poster="./assets/fdtd-optics.png"
@@ -459,41 +507,37 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/reaction-diffusion-2d/">
+  <a class="card" href="./sims/signal-workbench/">
     <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/reaction-diffusion-2d.png"
-      aria-label="Gray-Scott reaction-diffusion patterns: labyrinthine spots and stripes">
-      <source data-src="./assets/reaction-diffusion-2d.webm" type="video/webm" />
+      poster="./assets/signal-workbench.png"
+      aria-label="A glowing green Lissajous figure tumbling on a dark CRT, drawn by a closed-form Gaussian beam">
+      <source data-src="./assets/signal-workbench.webm" type="video/webm" />
     </video>
     <div class="body">
-      <div class="name">Gray-Scott Reaction-Diffusion</div>
-      <div class="phys">Two chemicals feed, react, and diffuse — Turing&rsquo;s
-        recipe for pattern: spots, stripes, and living labyrinths from one PDE.</div>
+      <div class="name">Signal Workbench &mdash; Verified DSP Instrument</div>
+      <div class="phys">An oscilloscope and spectrum analyzer you can hear
+        &mdash; the portfolio&rsquo;s first audible sim. Every display is
+        checked against the exact mathematics of the signal it shows: FM
+        sidebands land on their Bessel-function stems, spectral leakage on
+        the window&rsquo;s own transform.</div>
       <div class="badges">
-        <span class="chip">continuous-CA</span>
-        <span class="chip">WGSL compute</span>
-        <span class="chip gate">gate: capture_roundtrip vs canonical</span>
+        <span class="chip">signal-processing</span>
+        <span class="chip">WGSL FFT + WebAudio</span>
+        <span class="chip gate">gate: new_canonical vs live f64 reference</span>
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/neural-ca/">
-    <img class="poster" src="./assets/neural-ca.png" loading="lazy"
-      alt="A growing neural cellular automaton organism mid-growth" />
-    <div class="body">
-      <div class="name">Growing Neural CA</div>
-      <div class="phys">A cellular automaton whose update rule is a trained
-        neural network: one seed cell grows into a stable organism. One
-        checkpoint, bit-exact in the browser.</div>
-      <div class="badges">
-        <span class="chip">learned dynamics</span>
-        <span class="chip">WGSL compute</span>
-        <span class="chip gate">gate: capture_roundtrip (bit-exact)</span>
-      </div>
-    </div>
-  </a>
+</div>
+
+<h3 class="fam">Spins, learned life &amp; fractals</h3>
+<p class="famsub">Statistical mechanics, a neural-network organism, and infinite geometry.</p>
+<div class="grid">
   <a class="card" href="./sims/ising-classical/">
-    <img class="poster" src="./assets/ising-classical.png" loading="lazy"
-      alt="2D Ising model spin clusters at the critical temperature" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/ising-classical.png"
+      aria-label="2D Ising spin clusters flickering at the critical temperature, dark domains coarsening into the ordered phase">
+      <source data-src="./assets/ising-classical.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">2D Ising — Metropolis</div>
       <div class="phys">Lattice spins at T&nbsp;=&nbsp;2.27 — the critical
@@ -506,9 +550,30 @@
       </div>
     </div>
   </a>
+  <a class="card" href="./sims/neural-ca/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/neural-ca.png"
+      aria-label="A growing neural cellular automaton organism: one seed cell bursts and organizes into a stable emoji-like creature, on repeat">
+      <source data-src="./assets/neural-ca.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Growing Neural CA</div>
+      <div class="phys">A cellular automaton whose update rule is a trained
+        neural network: one seed cell grows into a stable organism. One
+        checkpoint, bit-exact in the browser.</div>
+      <div class="badges">
+        <span class="chip">learned dynamics</span>
+        <span class="chip">WGSL compute</span>
+        <span class="chip gate">gate: capture_roundtrip (bit-exact)</span>
+      </div>
+    </div>
+  </a>
   <a class="card" href="./sims/mandelbulb-explorer/">
-    <img class="poster" src="./assets/mandelbulb-explorer.png" loading="lazy"
-      alt="The Mandelbulb fractal, ray-marched with a distance estimator" />
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/mandelbulb-explorer.png"
+      aria-label="The Mandelbulb fractal rotating through one full seamless orbit, ray-marched with a distance estimator">
+      <source data-src="./assets/mandelbulb-explorer.webm" type="video/webm" />
+    </video>
     <div class="body">
       <div class="name">Mandelbulb Explorer</div>
       <div class="phys">The 3-D cousin of the Mandelbrot set, sphere-traced in
@@ -521,29 +586,11 @@
       </div>
     </div>
   </a>
-  <a class="card" href="./sims/strange-attractors/">
-    <video class="poster" muted loop playsinline preload="none"
-      poster="./assets/strange-attractors.png"
-      aria-label="The Lorenz attractor's butterfly traced as a glowing point trajectory">
-      <source data-src="./assets/strange-attractors.webm" type="video/webm" />
-    </video>
-    <div class="body">
-      <div class="name">Lorenz Strange Attractor</div>
-      <div class="phys">Three coupled equations, RK4-integrated into the
-        butterfly that started chaos theory — deterministic, never repeating,
-        forever on the attractor.</div>
-      <div class="badges">
-        <span class="chip">closed-form</span>
-        <span class="chip">WGSL RK4</span>
-        <span class="chip gate">gate: new_canonical + run-twice</span>
-      </div>
-    </div>
-  </a>
 </div>
 <div class="webgpu">Requires WebGPU: Chrome/Edge&nbsp;113+ (or equivalent) over a secure context. Firefox/Safari support varies.</div>
 
 <h2>How this is verified</h2>
-<p class="sub">The differentiator isn&rsquo;t the pixels — it&rsquo;s that every pixel is downstream of a gate. Three gate kinds cover the seven sims:</p>
+<p class="sub">The differentiator isn&rsquo;t the pixels — it&rsquo;s that every pixel is downstream of a gate. Three gate kinds cover every simulation above:</p>
 <div class="verif">
   <div class="vbox">
     <h3><code>capture_roundtrip</code></h3>
