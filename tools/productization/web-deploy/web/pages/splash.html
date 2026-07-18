@@ -138,6 +138,8 @@ const CLIPS = [
 const PREFIX = "bit_Physics.sim/";
 const FADE_MS = 2000;          // must match .reel video transition duration
 const MIN_HOLD_S = 6;          // safety floor if a clip's metadata is short
+const MAX_START_WAIT_MS = 10000; // watchdog: if a clip hasn't begun playing by
+                                 // now, skip it rather than wedge the reel
 
 const vids = [document.getElementById("v0"), document.getElementById("v1")];
 const typed = document.getElementById("typed");
@@ -196,6 +198,7 @@ async function retype(name) {
 // next clip while the visible one plays.
 let front = 0;
 let pending = null; // clip loaded into the back video
+let advanceToken = 0; // guards stale schedulers so exactly one advance fires
 function loadInto(v, clip) {
   v.src = clip.src;
   v.loop = true; // if a fade is ever late, the clip wraps instead of freezing
@@ -215,17 +218,36 @@ function advance(first) {
   const frontV = vids[front];
   front = 1 - front;
 
-  // the clock only starts once frames are actually advancing — if autoplay is
-  // blocked, the reel simply waits for the first gesture (kick) to begin.
-  back.addEventListener("playing", () => {
-    setTimeout(() => advance(false), holdFor(back));
-  }, { once: true });
+  // Forward progress must never hinge on a single event. `playing` gives the
+  // accurate hold once frames are actually advancing; a watchdog guarantees we
+  // still move on if that event never arrives — a swallowed play() rejection, a
+  // buffering stall (`waiting`, not `playing`), a decode hiccup, or background
+  // throttling — otherwise the reel wedges on one looping clip while the caret
+  // keeps blinking. Whichever fires first wins; `go` runs at most once per cycle.
+  const myToken = ++advanceToken;
+  let scheduled = false;
+  let watchdog;
+  const go = (delayMs) => {
+    if (scheduled) return;
+    scheduled = true;
+    clearTimeout(watchdog);
+    setTimeout(() => { if (myToken === advanceToken) advance(false); },
+      Math.max(0, delayMs));
+  };
+  back.addEventListener("playing", () => go(holdFor(back)), { once: true });
+  watchdog = setTimeout(() => go(0), MAX_START_WAIT_MS);
 
   back.classList.add("on");
   frontV.classList.remove("on");
   addr.href = cur.href;
   retype(cur.name);
-  back.play().catch(() => { /* muted autoplay blocked — see kick() */ });
+  back.play().catch((err) => {
+    // muted autoplay blocked: leave the `playing` listener armed and wait for a
+    // gesture (kick() resumes us) — don't let the watchdog silently skip clips.
+    // any other failure: the clip is dead, so keep the reel moving.
+    if (err && err.name === "NotAllowedError") clearTimeout(watchdog);
+    else go(MIN_HOLD_S * 1000);
+  });
 
   // free + repoint the now-hidden video at the next clip so it buffers ahead
   setTimeout(() => {
