@@ -51,8 +51,11 @@ const REPO = join(HERE, "../../../../../..");
 //   { pick: "<regex>" }       — find the <select> with an <option> whose text
 //                               or value matches, select it, fire change+input
 // Per-clip fields mirror make-loops.mjs: start/shots/gap/fps/px/crf/boost/hide,
-// plus query (boot search string), stage, and href (defaults to ./sims/<sim>/,
-// query clips deep-link their preset).
+// plus query (boot search string), stage, preset, and href. The click-through
+// URL (splash.html manifest) resolves in priority order href → query →
+// preset → default: a clip staged via chips sets `preset` (the sim's own
+// preset id) so the typed splash address opens the scene shown, not the sim's
+// default — set ONLY for sims whose boot honours ?preset= (verified per clip).
 const PX = 1024;
 const SHOTS = 400;
 const FPS = 30;
@@ -147,13 +150,13 @@ const CLIPS = [
     stage: [chip("thermal camera")] },
 
   // ---- mpm-multimaterial: preset chips
-  { sim: "mpm-multimaterial", id: "snowball", start: 10, gap: 1, crf: 52, stage: [chip("snowball")] },
-  { sim: "mpm-multimaterial", id: "snow-globe", start: 10, gap: 1, crf: 52, stage: [chip("snow globe")] },
+  { sim: "mpm-multimaterial", id: "snowball", start: 10, gap: 1, crf: 52, preset: "snowball", stage: [chip("snowball")] },
+  { sim: "mpm-multimaterial", id: "snow-globe", start: 10, gap: 1, crf: 52, preset: "snow-globe", stage: [chip("snow globe")] },
 
   // ---- sph-multiphase: preset chips
-  { sim: "sph-multiphase", id: "rayleigh-taylor", start: 60, gap: 1, crf: 52,
+  { sim: "sph-multiphase", id: "rayleigh-taylor", start: 60, gap: 1, crf: 52, preset: "rayleigh-taylor",
     stage: [chip("Rayleigh–Taylor")] },
-  { sim: "sph-multiphase", id: "coalescence", start: 60, gap: 1, crf: 52,
+  { sim: "sph-multiphase", id: "coalescence", start: 60, gap: 1, crf: 52, preset: "coalescence",
     stage: [chip("coalescence lab")] },
 
   // ---- reaction-diffusion-2d: regime chips (timelapse gap, card precedent)
@@ -169,7 +172,7 @@ const CLIPS = [
   // ---- phase-field-fracture: scene chips
   // 250 shots: the crack pair hooks and arrests early — 400 shots left 8 s of
   // arrested stillness on the tail.
-  { sim: "phase-field-fracture", id: "en-passant", start: 30, gap: 2, crf: 50, shots: 250, hide: HIDE_PFF,
+  { sim: "phase-field-fracture", id: "en-passant", start: 30, gap: 2, crf: 50, shots: 250, hide: HIDE_PFF, preset: "enpassant",
     stage: [chip("en-passant")] },
 
   // ---- physarum: later window than the card — the coarsened transport network
@@ -301,7 +304,7 @@ async function film(browser, clip) {
     return size;
   } catch (e) {
     console.log(`${outName(clip)}: FAIL ${String(e).split("\n")[0]}`);
-    return 0;
+    return null; // FAIL LOUD: caller records the failure and exits nonzero
   } finally {
     await rm(frames, { recursive: true, force: true });
     await context.close();
@@ -313,7 +316,13 @@ async function film(browser, clip) {
 async function spliceManifest() {
   const present = new Set(await readdir(OUT_DIR).catch(() => []));
   const rows = CLIPS.filter((c) => present.has(outName(c))).map((c) => {
-    const href = c.query ? `./sims/${c.sim}/${c.query}` : `./sims/${c.sim}/`;
+    const href = c.href
+      ? c.href
+      : c.query
+        ? `./sims/${c.sim}/${c.query}`
+        : c.preset
+          ? `./sims/${c.sim}/?preset=${encodeURIComponent(c.preset)}`
+          : `./sims/${c.sim}/`;
     return `  { sim: ${JSON.stringify(c.sim)}, name: ${JSON.stringify(c.sim)}, href: ${JSON.stringify(href)}, src: ${JSON.stringify(`./assets/splash/${outName(c)}`)} },`;
   });
   const html = await readFile(SPLASH_HTML, "utf8");
@@ -335,6 +344,7 @@ const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN, headless: false, args: ARGS, chromiumSandbox: false,
 });
 let total = 0;
+const failures = [];
 for (const clip of CLIPS) {
   const key = `${clip.sim}--${clip.id}`;
   if (wanted.length && !wanted.includes(clip.sim) && !wanted.includes(key)) continue;
@@ -343,8 +353,18 @@ for (const clip of CLIPS) {
     console.log(`${outName(clip)}: exists, skipped`);
     continue;
   }
-  total += await film(browser, clip);
+  const size = await film(browser, clip);
+  if (size === null) { failures.push(key); continue; }
+  total += size;
 }
 await browser.close();
-await spliceManifest();
-console.log(`total splash bytes: ${Math.round(total / 1024)} KB across present clips`);
+
+// FAIL LOUD: a failed clip must not silently ship a partial/stale manifest.
+if (failures.length) {
+  console.error(`\nFAIL: ${failures.length} clip(s) failed to film: ${failures.join(", ")}`);
+  console.error("splash.html manifest NOT updated. Fix the selector/ffmpeg failure and re-run.");
+  process.exitCode = 1;
+} else {
+  await spliceManifest();
+  console.log(`total splash bytes: ${Math.round(total / 1024)} KB across present clips`);
+}
