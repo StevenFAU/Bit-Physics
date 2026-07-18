@@ -209,6 +209,7 @@ jobs:
           # future page assets need no further workflow edits.
           cp tools/productization/web-deploy/web/pages/index.html site/index.html
           cp tools/productization/web-deploy/web/pages/about.html site/about.html
+          cp tools/productization/web-deploy/web/pages/splash.html site/splash.html
           cp -r tools/productization/web-deploy/web/pages/assets site/assets
           SIMS=$(python3 -c 'import json; print(" ".join(json.loads("""${{ needs.discover.outputs.sims }}""")))')
           for sim in $SIMS; do
