@@ -92,8 +92,14 @@ function pagesPath(ref) {
 
 function refsOf(text, ext) {
   const out = [];
-  if (ext === ".html") for (const m of text.matchAll(ATTR_RE)) out.push(m[1]);
-  for (const m of text.matchAll(URL_RE)) out.push(m[1]); // inline <style> + .css
+  // Strip <script> bodies before matching: minified inline JS carries
+  // href=/src= shaped literals (`a.href`, `blob`, `location.href` in
+  // boids-2d's bundle) that are code, not references. Runtime-injected
+  // refs are covered by the dedicated bundle scans below (nav hrefs,
+  // splash manifest), so the attribute walk can ignore script text.
+  const scanned = ext === ".html" ? text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "") : text;
+  if (ext === ".html") for (const m of scanned.matchAll(ATTR_RE)) out.push(m[1]);
+  for (const m of scanned.matchAll(URL_RE)) out.push(m[1]); // inline <style> + .css
   return out;
 }
 
@@ -188,27 +194,35 @@ for (const sim of SIMS) {
   }
 }
 
-// Favicon cross-copy byte-identity (P-8 amendment): the deployed favicon is one
-// canonical asset replicated per-sim (vite public/ → dist), not single-file
-// dedup — so all copies in the tree must be sha256-identical. Catches future
-// drift between the canonical pages/assets copy and any per-sim bundle.
-const faviconFiles = [
-  join(tree, "assets", "favicon.svg"),
-  ...SIMS.map((s) => join(tree, "sims", s, "favicon.svg")),
-];
-const faviconHashes = await Promise.all(
+// Favicon presence + well-formedness (P-8 rule as amended 2026-07: per-sim
+// custom favicons are RATIFIED — six sims ship deliberate designed icons,
+// committed 2026-07-03..05 — so byte-identity against the canonical no
+// longer holds by design). Every sim bundle and the landing assets dir must
+// still ship a non-empty SVG favicon; the canonical-vs-custom split is
+// reported informationally so genuine drift stays visible.
+const canonicalFavicon = join(tree, "assets", "favicon.svg");
+const faviconFiles = [canonicalFavicon, ...SIMS.map((s) => join(tree, "sims", s, "favicon.svg"))];
+const faviconStates = await Promise.all(
   faviconFiles.map(async (f) => {
-    try { return createHash("sha256").update(await readFile(f)).digest("hex"); }
-    catch { return `MISSING:${posix.normalize(relative(tree, f))}`; }
+    try {
+      const body = await readFile(f, "utf8");
+      if (!body.includes("<svg")) return { f, bad: "not an SVG" };
+      return { f, sha: createHash("sha256").update(body).digest("hex") };
+    } catch { return { f, bad: "missing" }; }
   }),
 );
-const faviconUniq = [...new Set(faviconHashes)];
-const faviconOk = faviconUniq.length === 1 && !faviconUniq[0].startsWith("MISSING");
+const faviconBad = faviconStates.filter((s) => s.bad);
+const faviconOk = faviconBad.length === 0;
 if (faviconOk) {
-  console.log(`favicon byte-identity: ${faviconFiles.length} copies all sha256 ${faviconUniq[0].slice(0, 12)}…`);
+  const canonSha = faviconStates[0].sha;
+  const custom = faviconStates.slice(1).filter((s) => s.sha !== canonSha);
+  console.log(
+    `favicon presence: ${faviconFiles.length} copies all present + well-formed ` +
+    `(${faviconFiles.length - 1 - custom.length} canonical, ${custom.length} per-sim custom)`,
+  );
 } else {
-  console.log(`favicon byte-identity FAIL — ${faviconUniq.length} distinct value(s):`);
-  faviconFiles.forEach((f, i) => console.log(`  ${posix.normalize(relative(tree, f))} ${faviconHashes[i].slice(0, 16)}`));
+  console.log(`favicon presence FAIL — ${faviconBad.length} bad copy(ies):`);
+  faviconBad.forEach((s) => console.log(`  ${posix.normalize(relative(tree, s.f))}: ${s.bad}`));
 }
 
 console.log(`checked ${checked} internal refs across the assembled tree (${tree})`);
