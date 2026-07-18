@@ -129,12 +129,16 @@ const SIMS = {
   // (vs the family's 46): critical flicker is high-entropy like the
   // boids-2d comet field — 46 measured 2.2 MB, past the 1.5 MB budget.
   "ising-classical": { start: 30, shots: 300, gap: 2, fps: 30, px: 512, crf: 52 },
-  // UX-P3: the live NCA restarts every 400 steps at 2 steps/frame → the
-  // growth cycle is EXACTLY 200 RAF frames with a fixed seed. gap 1 =
-  // effective stride 2, so 200 shots cover 400 frames = TWO identical
-  // cycles at true speed (stride 2 × 30 fps = the live 60 fps cadence);
-  // the wrap lands on the restart boundary, so the loop is seamless:
-  // seed → burst → organism → restart, byte-deterministic per device.
+  // UX-P3: the live NCA restarts on `liveStep > 400` at 2 steps/frame →
+  // the growth cycle is 201 RAF frames (strict inequality), and the
+  // boot-to-ready frame offset shifts the phase by a few frames — so the
+  // restart alignment CANNOT be tuned arithmetically; it is VERIFIED on
+  // the encoded output (ffmpeg frame extraction: frame 0 must be the
+  // seed, the last frame the mature organism). gap 1 = effective stride
+  // 2 at 30 fps = the live 60 fps cadence, true speed; 200 shots cover
+  // ~two cycles, and the ±few-frame drift only trims tail frames of the
+  // STATIC mature organism, so the wrap still reads as the sim's own
+  // restart cut: seed → burst → organism → restart.
   "neural-ca": { start: 200, shots: 200, gap: 1, fps: 30, px: 512, crf: 46 },
   // UX-P3: one full auto-orbit revolution (0.004 rad/RAF-frame → 2π in
   // ~1570.8 frames). gap 4 = effective stride 5, so 314 shots cover 1570
