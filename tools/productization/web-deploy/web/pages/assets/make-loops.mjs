@@ -10,12 +10,14 @@
 // the same built dist the validate gate drives. ffmpeg is required HERE
 // only; nothing in any sim or gate path knows it exists.
 //
-// Motion/static criterion (P-7 audit, standing): a sim earns a loop iff the
-// motion IS the physics (flock dynamics, network growth, front propagation,
-// trajectory trace-in) — camera-only motion (orbit/zoom) stays a still.
-// Motion: boids-3d, physarum, reaction-diffusion-2d, strange-attractors.
-// Static: ising-classical (flicker), neural-ca (growth ends), mandelbulb
-// (static geometry).
+// Motion/static criterion (P-7 audit; amended by the 2026-07 UX audit P3):
+// a sim earns a loop iff the motion IS the physics (flock dynamics, network
+// growth, front propagation, trajectory trace-in). P3 re-classified the
+// three remaining stills: ising (critical flicker + domain coarsening IS
+// the physics), neural-ca (the live view's 400-step restart cycle makes the
+// growth a perfect period — the loop wraps seamlessly), mandelbulb (the
+// trace-in precedent extends to the auto-orbit: one full revolution wraps
+// seamlessly, and card motion is what sells a 3-D surface).
 //
 // Usage:  node make-loops.mjs [sim ...]        (default: the four motion sims)
 // Env:    CHROME_BIN (required locally), PLAYWRIGHT_MODULE (same override
@@ -44,6 +46,12 @@ const REPO = join(HERE, "../../../../../..");
 
 // start: RAF frames pumped before the first shot (post-boot settle).
 // shots/gap: shots captured, one every gap frames → covers start..start+shots*gap.
+// NOTE (measured, UX-P3 mandelbulb wrap debugging): the release step runs the
+// PARKED callback via a real RAF, and that render is not counted by the
+// wrapper — so the EFFECTIVE stride between consecutive shots is gap+1
+// frames, not gap. Every loop below was tuned by eye with this baked in;
+// keep using gap as a tuning knob, but do exact-period math (seamless
+// wraps) in units of (gap+1).
 // fps: playback rate → loop duration = shots/fps. crf: fixed VP9 quality.
 // px: output CSS pixel width. boost: photographic exposure (CSS filter on the
 // canvas, same mechanism/values as the poster config — exposure, not physics).
@@ -114,6 +122,31 @@ const SIMS = {
   // wavefronts stream continuously so any window loops acceptably; start
   // past the ramp so the first frame is not black (cold-start lesson).
   "fdtd-optics": { start: 120, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=phased-array", hide: [".fo-explain", ".fo-verify"] },
+  // UX-P3: critical Ising at the default T=2.27 — seed-42 domains flicker
+  // and coarsen toward the ordered phase over the window (spontaneous
+  // magnetization on camera); loop wraps with a cut back to the mixed
+  // texture (reads as a fresh quench). Scouted frames 30..630. crf 52
+  // (vs the family's 46): critical flicker is high-entropy like the
+  // boids-2d comet field — 46 measured 2.2 MB, past the 1.5 MB budget.
+  "ising-classical": { start: 30, shots: 300, gap: 2, fps: 30, px: 512, crf: 52 },
+  // UX-P3: the live NCA restarts on `liveStep > 400` at 2 steps/frame →
+  // the growth cycle is 201 RAF frames (strict inequality), and the
+  // boot-to-ready frame offset shifts the phase by a few frames — so the
+  // restart alignment CANNOT be tuned arithmetically; it is VERIFIED on
+  // the encoded output (ffmpeg frame extraction: frame 0 must be the
+  // seed, the last frame the mature organism). gap 1 = effective stride
+  // 2 at 30 fps = the live 60 fps cadence, true speed; 200 shots cover
+  // ~two cycles, and the ±few-frame drift only trims tail frames of the
+  // STATIC mature organism, so the wrap still reads as the sim's own
+  // restart cut: seed → burst → organism → restart.
+  "neural-ca": { start: 200, shots: 200, gap: 1, fps: 30, px: 512, crf: 46 },
+  // UX-P3: one full auto-orbit revolution (0.004 rad/RAF-frame → 2π in
+  // ~1570.8 frames). gap 4 = effective stride 5, so 314 shots cover 1570
+  // frames — the 0.8-frame wrap error is 0.18° of azimuth, invisible
+  // (gap 5 measured: eff stride 6 wrapped a full revolution by shot ~260,
+  // leaving a 74° cut). Start 10 skips the cold boot. crf 50: the fractal
+  // surface detail measured 1.7 MB at 46, just past the 1.5 MB budget.
+  "mandelbulb-explorer": { start: 10, shots: 314, gap: 4, fps: 30, px: 512, crf: 50 },
   // Phase-6 lbm-multiphase: droplet rain — droplets fall, coalesce and wet
   // the floor over the window; the cut back to fresh rain reads as new
   // drops. Start past the boot so the first frame already has droplets
