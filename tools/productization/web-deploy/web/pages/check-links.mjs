@@ -92,12 +92,13 @@ function pagesPath(ref) {
 
 function refsOf(text, ext) {
   const out = [];
-  // Strip <script> bodies before matching: minified inline JS carries
-  // href=/src= shaped literals (`a.href`, `blob`, `location.href` in
-  // boids-2d's bundle) that are code, not references. Runtime-injected
-  // refs are covered by the dedicated bundle scans below (nav hrefs,
-  // splash manifest), so the attribute walk can ignore script text.
-  const scanned = ext === ".html" ? text.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, "") : text;
+  // Strip <script> BODIES (keeping the opening tag, whose src= is a real
+  // reference — every Vite entry bundle ships as <script src=...>): minified
+  // inline JS carries href=/src= shaped literals (`a.href`, `blob`,
+  // `location.href` in boids-2d's bundle) that are code, not references.
+  // Runtime-injected refs are covered by the dedicated bundle scans below
+  // (nav hrefs, splash manifest), so the walk can ignore script text.
+  const scanned = ext === ".html" ? text.replace(/(<script\b[^>]*>)[\s\S]*?(<\/script>)/gi, "$1$2") : text;
   if (ext === ".html") for (const m of scanned.matchAll(ATTR_RE)) out.push(m[1]);
   for (const m of scanned.matchAll(URL_RE)) out.push(m[1]); // inline <style> + .css
   return out;
