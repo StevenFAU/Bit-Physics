@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Flow Lenia — Organism, Ecosystem & Arena Laboratory — Bit-Physics</title>
+    <meta name="description" content="A verified WebGPU Flow Lenia laboratory: conservative matter transport, localized inheritance and mutation, editable soft-affinity environments, timed gates, region metrics, deterministic replay, and versioned experiment sharing." />
+    <meta property="og:title" content="Flow Lenia — Organism, Ecosystem & Arena Laboratory" />
+    <meta property="og:description" content="Sculpt conservative artificial-life ecosystems with soft affinity walls, moving fields, storms, lineage diagnostics, and verified same-adapter replay." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/flow-lenia/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/flow-lenia.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/flow-lenia.png" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  </head>
+  <body>
+    <main id="organism-lab" class="bps-stage" aria-label="Flow Lenia Visual Laboratory">
+      <canvas id="view" width="768" height="768" tabindex="0" role="application" aria-label="Interactive Flow Lenia scientific field. Press question mark for keyboard controls." aria-describedby="lab-help"></canvas>
+      <div class="fl-hud" aria-live="polite">
+        <p class="fl-kicker">M3 · visual laboratory</p>
+        <div id="legend">density ρ · fixed scale 0 → 2</div>
+        <div id="ledger">closed mass ledger · measuring…</div>
+        <div id="perf">GPU queue · measuring…</div>
+        <div id="compare-label" hidden></div>
+      </div>
+      <a id="lab-switch" class="fl-lab-switch" href="?ecosystem=1">Ecosystem Lab</a>
+      <div id="experiment-note" class="fl-experiment-note" aria-live="polite"></div>
+      <div id="inspector-host"></div>
+      <div id="touch-tools" class="fl-touch-tools" hidden aria-label="Touch tool selector"></div>
+      <p id="lab-help" class="fl-sr-only">Space pauses. Period advances one step. Keys 1 through 5 choose pipette, add, erase, stir, and inspect. Arrow keys move the inspection lens. Enter applies the selected tool. R resets, F fits occupied mass, plus and minus zoom.</p>
+      <section class="fl-probe" id="m0-probe" hidden>
+        <p class="fl-kicker">M0 · architecture probe</p>
+        <h1>Flow Lenia WebGPU</h1>
+        <p id="summary">Initializing the batched FFT and faithful transport prototypes…</p>
+        <div id="results" aria-live="polite"></div>
+      </section>
+    </main>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

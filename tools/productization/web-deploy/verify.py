@@ -312,6 +312,7 @@ SIM_CATEGORY = {
     "sph-water": "particle-fluids",
     "mpm-multimaterial": "hybrid-pg",
     "pic-flip": "particle-fluids",
+    "flow-lenia": "continuous-ca",
 }
 
 GATE_KIND = {
@@ -328,6 +329,7 @@ GATE_KIND = {
     "sph-multiphase": "new_canonical",
     "mpm-multimaterial": "new_canonical",
     "pic-flip": "new_canonical",
+    "flow-lenia": "new_canonical",
 }
 
 
@@ -3015,6 +3017,89 @@ def _gate_lbm_multiphase(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_flow_lenia(bundles: list[dict]) -> VerifyResult:
+    """Flow Lenia release gate for the public default Organism Lab.
+
+    The package's committed M2–M6 artifacts hold the f64/f32, localized
+    inheritance, environment, import/export and render-integrity claims.  The
+    deployment gate independently drives the shipped default twice and holds
+    the properties visible in its canonical browser capture: exact same-adapter
+    replay, closed finite non-negative matter, an explicit zero open-system
+    ledger, and bounded Reintegration displacement/clamping.
+    """
+    steps0 = _bundle_steps(bundles[0])
+    if len(steps0) != 1 or int(steps0[0].get("step", -1)) != 32:
+        return VerifyResult(
+            sim="flow-lenia",
+            kind="new_canonical",
+            passed=False,
+            run_twice_identical=False,
+            detail={"error": "default capture must contain exactly step 32"},
+        )
+    mass0 = _field(steps0[0], "mass")
+    twice = False
+    if len(bundles) > 1:
+        steps1 = _bundle_steps(bundles[1])
+        twice = bool(
+            len(steps1) == 1
+            and int(steps1[0].get("step", -1)) == 32
+            and np.array_equal(mass0, _field(steps1[0], "mass"))
+        )
+    manifest = bundles[0].get("manifest", {})
+    sim = manifest.get("sim", {})
+    params = manifest.get("config", {}).get("params", {})
+    diagnostics = steps0[0].get("diagnostics", {})
+    finite = bool(np.isfinite(mass0).all())
+    non_negative = bool((mass0 >= 0).all())
+    measured_sum = float(np.asarray(mass0, dtype=np.float64).sum())
+    declared_sum = float(diagnostics.get("total_mass", np.nan))
+    sum_residual = abs(measured_sum - declared_sum) / max(abs(declared_sum), 1e-30)
+    drift = float(diagnostics.get("mass_relative_drift", np.inf))
+    ledger = float(diagnostics.get("mass_ledger_error", np.inf))
+    ledger_relative = ledger / max(abs(declared_sum), 1e-30)
+    clamp = float(diagnostics.get("clamp_fraction", np.inf))
+    displacement = float(diagnostics.get("max_displacement", np.inf))
+    schema_ok = bool(
+        sim.get("name") == "flow-lenia"
+        and sim.get("variant") == "flow-lenia-ecosystem-v1"
+        and params.get("channels") == 3
+        and params.get("kernels") == 9
+        and list(mass0.shape)[0] == 3
+    )
+    invariants = bool(
+        finite
+        and non_negative
+        and int(diagnostics.get("non_finite", -1)) == 0
+        and int(diagnostics.get("negative", -1)) == 0
+        and drift <= 8e-5
+        and ledger_relative <= 8e-5
+        and sum_residual <= 2e-7
+        and clamp <= 0.12
+        and displacement <= 0.8
+        and float(diagnostics.get("open_added", np.inf)) == 0
+        and float(diagnostics.get("open_removed", np.inf)) == 0
+    )
+    return VerifyResult(
+        sim="flow-lenia",
+        kind="new_canonical",
+        passed=bool(schema_ok and twice and invariants),
+        run_twice_identical=twice,
+        detail={
+            "model_schema": schema_ok,
+            "run_twice_mass_byte_exact": twice,
+            "finite": finite,
+            "non_negative": non_negative,
+            "mass_relative_drift": drift,
+            "mass_ledger_error": ledger,
+            "mass_ledger_relative_error": ledger_relative,
+            "capture_sum_relative_residual": sum_residual,
+            "clamp_fraction": clamp,
+            "max_displacement": displacement,
+            "note": "Public default full model. M2–M6 package artifacts separately hold f64/f32, localized ecosystem, Arena, reload, performance, and integrity gates.",
+        },
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -3036,6 +3121,7 @@ _GATES = {
     "phase-field-fracture": _gate_phase_field_fracture,
     "fdtd-optics": _gate_fdtd_optics,
     "lbm-multiphase": _gate_lbm_multiphase,
+    "flow-lenia": _gate_flow_lenia,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

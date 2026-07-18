@@ -52,6 +52,7 @@ EXPECTED_SIMS = {
     "schrodinger-smoke",
     "sph-water",
     "sph-multiphase",
+    "flow-lenia",
 }
 
 

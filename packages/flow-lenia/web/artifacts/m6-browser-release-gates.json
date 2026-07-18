@@ -1,0 +1,328 @@
+{
+  "schemaVersion": "flow-lenia-m6-release-gates-v1",
+  "generatedUtc": "2026-07-18T20:06:36.432Z",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "amd",
+      "architecture": "rdna-2",
+      "device": "",
+      "description": ""
+    }
+  },
+  "environmentAnchors": {
+    "zeroFieldByteExact": true,
+    "affinityDeltaMaxAbs": 2.9802322387695312e-8,
+    "gateClosedAt47": true,
+    "gateOpenAt48": true,
+    "paintChangedEnvironment": true,
+    "paintConservedMass": true,
+    "pass": true
+  },
+  "arenas": [
+    {
+      "id": "corridor-divergence",
+      "steps": 96,
+      "hashA": "11d2f4f3f4479a3bc0de1453707caa9d8cc4ac37badf16822da5b88e1e888f0a",
+      "hashB": "11d2f4f3f4479a3bc0de1453707caa9d8cc4ac37badf16822da5b88e1e888f0a",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 96,
+        "totalMass": 1155.1107641173494,
+        "channelMass": [
+          416.89133346476206,
+          382.9433439159635,
+          355.2760867366237
+        ],
+        "relativeMassDrift": 0.000005097652937296187,
+        "minDensity": 1.6411362879423371e-15,
+        "maxDensity": 2.354529559612274,
+        "occupiedFraction": 0.48223876953125,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.9079796075820923,
+        "clampFraction": 0,
+        "activeLineages": 3,
+        "topLineage": 3,
+        "topLineageMass": 421.43699912096156,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 1.095635250259822,
+        "phenotypeClusters": 4,
+        "phenotypeShannon": 1.0956358028502846,
+        "mutationEvents": 0,
+        "extinctionEvents": 0,
+        "lineageMasses": [
+          {
+            "lineage": 3,
+            "mass": 421.43699912096156
+          },
+          {
+            "lineage": 2,
+            "mass": 384.9614235766099
+          },
+          {
+            "lineage": 1,
+            "mass": 348.7123021025456
+          }
+        ],
+        "regionMass": [
+          0,
+          734.2507030515363,
+          420.6408408944831,
+          0.21922017133113086
+        ],
+        "environmentMin": -1.3171343114227057,
+        "environmentMax": 0.15000242856265977,
+        "wallFraction": 0.125,
+        "gateOpen": true,
+        "stormAmplitude": 0
+      },
+      "regionMass": [
+        0,
+        734.2507030515363,
+        420.6408408944831,
+        0.21922017133113086
+      ],
+      "environmentRange": [
+        -1.3171343114227057,
+        0.15000242856265977
+      ],
+      "stormObserved": true,
+      "pass": true
+    },
+    {
+      "id": "maze-navigation",
+      "steps": 96,
+      "hashA": "6526904e2fc04f7ba297bc35061bb0b09c5b312fdbebb57d8125f8a55ba3f42a",
+      "hashB": "6526904e2fc04f7ba297bc35061bb0b09c5b312fdbebb57d8125f8a55ba3f42a",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 96,
+        "totalMass": 1155.3495304884473,
+        "channelMass": [
+          417.1416877729417,
+          382.7848128952337,
+          355.42302982027184
+        ],
+        "relativeMassDrift": 0.000005072075476008,
+        "minDensity": 3.079860365138178e-38,
+        "maxDensity": 3.3519516587257385,
+        "occupiedFraction": 0.5120849609375,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 1.5963716506958008,
+        "clampFraction": 0,
+        "activeLineages": 3,
+        "topLineage": 2,
+        "topLineageMass": 1011.6863709085384,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 0.3761684032957683,
+        "phenotypeClusters": 4,
+        "phenotypeShannon": 0.403066545708732,
+        "mutationEvents": 0,
+        "extinctionEvents": 0,
+        "lineageMasses": [
+          {
+            "lineage": 2,
+            "mass": 1011.6863709085384
+          },
+          {
+            "lineage": 3,
+            "mass": 136.4923112111856
+          },
+          {
+            "lineage": 1,
+            "mass": 1.284579879393858
+          }
+        ],
+        "regionMass": [
+          0,
+          328.40473116050657,
+          26.982694034343545,
+          799.9621052936001
+        ],
+        "environmentMin": -1.049998917319079,
+        "environmentMax": 0.8199055795026452,
+        "wallFraction": 0.22344970703125,
+        "gateOpen": false,
+        "stormAmplitude": 0
+      },
+      "regionMass": [
+        0,
+        328.40473116050657,
+        26.982694034343545,
+        799.9621052936001
+      ],
+      "environmentRange": [
+        -1.049998917319079,
+        0.8199055795026452
+      ],
+      "stormObserved": true,
+      "pass": true
+    },
+    {
+      "id": "storm-recovery",
+      "steps": 96,
+      "hashA": "c15fc5f189aa273bc364de79bea2a7b5fddbc9b71655223b0fd271d1531ca643",
+      "hashB": "c15fc5f189aa273bc364de79bea2a7b5fddbc9b71655223b0fd271d1531ca643",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 96,
+        "totalMass": 2166.0336904354363,
+        "channelMass": [
+          704.626173268484,
+          782.4684852065072,
+          678.9390319604452
+        ],
+        "relativeMassDrift": 0.000005088595011380846,
+        "minDensity": 0.00001291042576667678,
+        "maxDensity": 2.1976983696222305,
+        "occupiedFraction": 0.89617919921875,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.7046155333518982,
+        "clampFraction": 0,
+        "activeLineages": 5,
+        "topLineage": 4,
+        "topLineageMass": 1325.7766014241101,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 1.1550805526713914,
+        "phenotypeClusters": 5,
+        "phenotypeShannon": 1.1550805526713914,
+        "mutationEvents": 0,
+        "extinctionEvents": 0,
+        "lineageMasses": [
+          {
+            "lineage": 4,
+            "mass": 1325.7766014241101
+          },
+          {
+            "lineage": 1,
+            "mass": 276.6317192700142
+          },
+          {
+            "lineage": 3,
+            "mass": 274.3170544878167
+          },
+          {
+            "lineage": 5,
+            "mass": 239.70435870945585
+          },
+          {
+            "lineage": 2,
+            "mass": 49.60395654403942
+          }
+        ],
+        "regionMass": [
+          0,
+          557.2225628585609,
+          516.0716868460668,
+          1092.7394407308086
+        ],
+        "environmentMin": -0.05496687442064285,
+        "environmentMax": 0.05496687442064285,
+        "wallFraction": 0,
+        "gateOpen": false,
+        "stormAmplitude": 0
+      },
+      "regionMass": [
+        0,
+        557.2225628585609,
+        516.0716868460668,
+        1092.7394407308086
+      ],
+      "environmentRange": [
+        -0.05496687442064285,
+        0.05496687442064285
+      ],
+      "stormObserved": true,
+      "pass": true
+    }
+  ],
+  "roundTrip": {
+    "schemaVersion": "flow-lenia-arena-experiment-v1",
+    "scientificSha256": "5ec27f3c8826972fe91bd4fbe2dde3d236120dc013a81322a3c45a6cf57938cb",
+    "restoredByteExact": true,
+    "continuationByteExact": true,
+    "lineagePreserved": true,
+    "environmentPreserved": true,
+    "tamperRejected": true,
+    "pass": true
+  },
+  "architecture": {
+    "arenaStorageRenderBindings": 8,
+    "allocatedBytes256": 46411280,
+    "memoryMib256": 44.26124572753906,
+    "under128Mib": true,
+    "hotLoopReadbacks": 0,
+    "hotLoopGpuBufferAllocations": 0
+  },
+  "performance": {
+    "grid": 256,
+    "samples": 8,
+    "p50Ms": 3.2000000178813934,
+    "p95Ms": 18.899999976158142,
+    "pass": true
+  },
+  "renderIntegrity": {
+    "scientificStateByteExact": true,
+    "pass": true
+  },
+  "productSurface": {
+    "arenaExperiments": 3,
+    "arenaViews": 5,
+    "arenaTools": 6,
+    "ioActions": 2,
+    "regionMetrics": true,
+    "lineageGraph": true,
+    "keyboardFocus": true,
+    "responsive": true,
+    "pass": true
+  },
+  "pass": true,
+  "captureContract": {
+    "schemaVersion": "1.0.0",
+    "step": 72,
+    "fields": [
+      "mass",
+      "genome_h",
+      "genome_q",
+      "identity_u32_values",
+      "environment_affinity_values",
+      "environment_region_u32_values"
+    ],
+    "shaderHash": "f3f9abe23cdd4e1daefd929cbb0ca52b167cd551f2ad1bccf5bf685e29f30fff",
+    "environmentSchema": "flow-lenia-arena-environment-v1",
+    "pass": true
+  },
+  "adaptiveSmoke": {
+    "grid": 128,
+    "viewport": [
+      390,
+      844
+    ],
+    "ready": true,
+    "panelMounted": true,
+    "pass": true
+  },
+  "browserMatrix": [
+    {
+      "browser": "Chromium",
+      "surface": "desktop reference + 256² measured scratch",
+      "webgpu": true,
+      "result": "PASS"
+    },
+    {
+      "browser": "Chromium",
+      "surface": "390×844 touch + reduced motion + 128² adaptive",
+      "webgpu": true,
+      "result": "PASS"
+    },
+    {
+      "browser": "Firefox/Safari",
+      "surface": "compatibility",
+      "webgpu": false,
+      "result": "NOT CLAIMED — support varies"
+    }
+  ]
+}

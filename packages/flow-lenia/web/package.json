@@ -1,0 +1,27 @@
+{
+  "name": "@bit-physics/web-flow-lenia",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Verified Flow Lenia WebGPU organism, localized ecosystem, and editable soft-affinity Arena laboratory with deterministic replay and versioned experiment sharing.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "check:m0": "node scripts/check-m0.mjs",
+    "check:m2": "node scripts/check-m2.mjs",
+    "gate:m2": "node scripts/run-browser-gates.mjs",
+    "check:m3": "node scripts/check-m3.mjs",
+    "gate:m3": "node scripts/run-browser-m3-gates.mjs",
+    "check:m4": "node scripts/check-m4.mjs",
+    "gate:m4": "node scripts/run-browser-m4-gates.mjs",
+    "check:m6": "node scripts/check-m6.mjs",
+    "gate:m6": "node scripts/run-browser-m6-gates.mjs"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
+}

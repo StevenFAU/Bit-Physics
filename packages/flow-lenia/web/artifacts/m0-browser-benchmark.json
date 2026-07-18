@@ -1,0 +1,165 @@
+{
+  "schemaVersion": "flow-lenia-m0-v1",
+  "generatedUtc": "2026-07-18T17:10:49.826Z",
+  "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+  "adapter": {
+    "vendor": "amd",
+    "architecture": "rdna-2",
+    "device": "",
+    "description": ""
+  },
+  "timestampQuery": true,
+  "limits": {
+    "maxBufferSize": 268435456,
+    "maxStorageBufferBindingSize": 134217728,
+    "maxStorageBuffersPerShaderStage": 8,
+    "maxBindingsPerBindGroup": 1000,
+    "maxComputeInvocationsPerWorkgroup": 256,
+    "maxComputeWorkgroupStorageSize": 16384,
+    "maxComputeWorkgroupsPerDimension": 65535
+  },
+  "architectureFailures": [],
+  "verification128": {
+    "fftMaxAbs": 2.3520114933450742e-7,
+    "gatherMassRelativeResidual": 4.7225355131289265e-8,
+    "fullMassRelativeResidual": 4.7225355131289265e-8,
+    "uniformGenomeMaxAbs": 2.0265579214751028e-7,
+    "uniformIdentityExact": true
+  },
+  "benchmarks": [
+    {
+      "n": 128,
+      "mode": "fft",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 29,
+      "meanMs": 0.30115000000000003,
+      "p50Ms": 0.29816,
+      "p95Ms": 0.31616,
+      "minMs": 0.29136,
+      "maxMs": 0.31616
+    },
+    {
+      "n": 128,
+      "mode": "gather-mass",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 1,
+      "meanMs": 0.03956666666666667,
+      "p50Ms": 0.0394,
+      "p95Ms": 0.04084,
+      "minMs": 0.03928,
+      "maxMs": 0.04084
+    },
+    {
+      "n": 128,
+      "mode": "gather-full",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 1,
+      "meanMs": 0.06660333333333333,
+      "p50Ms": 0.06648,
+      "p95Ms": 0.06872,
+      "minMs": 0.06548,
+      "maxMs": 0.06872
+    },
+    {
+      "n": 128,
+      "mode": "step-mass",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 30,
+      "meanMs": 0.34109999999999996,
+      "p50Ms": 0.33772,
+      "p95Ms": 0.36868,
+      "minMs": 0.32792,
+      "maxMs": 0.36868
+    },
+    {
+      "n": 128,
+      "mode": "step-full",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 30,
+      "meanMs": 0.3659866666666667,
+      "p50Ms": 0.36232,
+      "p95Ms": 0.38072,
+      "minMs": 0.35604,
+      "maxMs": 0.38072
+    },
+    {
+      "n": 256,
+      "mode": "fft",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 33,
+      "meanMs": 1.1296,
+      "p50Ms": 1.17284,
+      "p95Ms": 1.19888,
+      "minMs": 1.02292,
+      "maxMs": 1.19888
+    },
+    {
+      "n": 256,
+      "mode": "gather-mass",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 1,
+      "meanMs": 0.18101333333333333,
+      "p50Ms": 0.17952,
+      "p95Ms": 0.2004,
+      "minMs": 0.17728,
+      "maxMs": 0.2004
+    },
+    {
+      "n": 256,
+      "mode": "gather-full",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 1,
+      "meanMs": 0.22594000000000003,
+      "p50Ms": 0.22592,
+      "p95Ms": 0.22956,
+      "minMs": 0.22144,
+      "maxMs": 0.22956
+    },
+    {
+      "n": 256,
+      "mode": "step-mass",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 34,
+      "meanMs": 1.3100933333333333,
+      "p50Ms": 1.30948,
+      "p95Ms": 1.36192,
+      "minMs": 1.24688,
+      "maxMs": 1.36192
+    },
+    {
+      "n": 256,
+      "mode": "step-full",
+      "timing": "timestamp-query",
+      "samples": 12,
+      "dispatchesPerStep": 34,
+      "meanMs": 1.18041,
+      "p50Ms": 1.18376,
+      "p95Ms": 1.252,
+      "minMs": 1.12824,
+      "maxMs": 1.252
+    }
+  ],
+  "projectedMemory": [
+    {
+      "n": 128,
+      "bytes": 9895936,
+      "mebibytes": 9.4375
+    },
+    {
+      "n": 256,
+      "bytes": 39583744,
+      "mebibytes": 37.75
+    }
+  ],
+  "measuredDefault": 256,
+  "decision": "The dominant-path full-state prototype is 1.25 ms p95 at 256² and the projected complete allocation is 37.75 MiB; 256² retains the desktop budget."
+}
