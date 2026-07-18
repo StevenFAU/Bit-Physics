@@ -152,6 +152,9 @@ const SIMS = {
   // drops. Start past the boot so the first frame already has droplets
   // (cold-start black-flash lesson).
   "lbm-multiphase": { start: 40, shots: 280, gap: 2, fps: 30, px: 512, crf: 46, query: "?preset=droplet-rain", hide: [".lm-explain", ".lm-verify"] },
+  // Flow Lenia maze: motion is the mass-conservative flow responding to a
+  // slowly orbiting affinity beacon. The loop wraps with a declared cut.
+  "flow-lenia": { start: 40, shots: 280, gap: 2, fps: 30, px: 512, crf: 48, query: "?arena=1&preset=maze-navigation&grid=256", hide: [".fl-hud", ".fl-experiment-note", ".fl-inspector", ".fl-arena-metrics", ".fl-lab-switch"] },
 };
 
 const MIME = {

@@ -1,0 +1,467 @@
+{
+  "schemaVersion": "flow-lenia-m4-gates-v1",
+  "generatedUtc": "2026-07-18T19:24:49.635Z",
+  "fixtureSchema": "flow-lenia-m4-conformance-v1",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "amd",
+      "architecture": "rdna-2",
+      "device": "",
+      "description": ""
+    }
+  },
+  "numericalRules": [
+    {
+      "rule": "average",
+      "massMaxAbs": 1.9371509552001953e-7,
+      "hMaxAbs": 1.7881393432617188e-7,
+      "qMaxAbs": 2.384185791015625e-7,
+      "lineageMismatches": 0,
+      "flagMismatches": 0,
+      "relativeMassResidual": 5.146527364864454e-8,
+      "pass": true
+    },
+    {
+      "rule": "whole",
+      "massMaxAbs": 1.9371509552001953e-7,
+      "hMaxAbs": 0,
+      "qMaxAbs": 0,
+      "lineageMismatches": 0,
+      "flagMismatches": 0,
+      "relativeMassResidual": 5.146527364864454e-8,
+      "pass": true
+    },
+    {
+      "rule": "gene-wise",
+      "massMaxAbs": 1.9371509552001953e-7,
+      "hMaxAbs": 0,
+      "qMaxAbs": 0,
+      "lineageMismatches": 0,
+      "flagMismatches": 0,
+      "relativeMassResidual": 5.146527364864454e-8,
+      "pass": true
+    },
+    {
+      "rule": "best",
+      "massMaxAbs": 1.9371509552001953e-7,
+      "hMaxAbs": 0,
+      "qMaxAbs": 0,
+      "lineageMismatches": 0,
+      "flagMismatches": 0,
+      "relativeMassResidual": 5.146527364864454e-8,
+      "pass": true
+    },
+    {
+      "rule": "negotiation",
+      "massMaxAbs": 1.9371509552001953e-7,
+      "hMaxAbs": 0,
+      "qMaxAbs": 0,
+      "lineageMismatches": 0,
+      "flagMismatches": 0,
+      "relativeMassResidual": 5.146527364864454e-8,
+      "pass": true
+    }
+  ],
+  "determinismRules": [
+    {
+      "rule": "average",
+      "steps": 32,
+      "hashA": "00861730600af9bc84cf694c5d43d3c616b4132b3b23900631aa305c0b6a6138",
+      "hashB": "00861730600af9bc84cf694c5d43d3c616b4132b3b23900631aa305c0b6a6138",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 32,
+        "totalMass": 1153.5578562625358,
+        "channelMass": [
+          416.1004699111862,
+          382.77673143261285,
+          354.6806549187367
+        ],
+        "relativeMassDrift": 0.0000016921899920505227,
+        "minDensity": 1.1109502532323512e-12,
+        "maxDensity": 1.8596857488155365,
+        "occupiedFraction": 0.51361083984375,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.3783726692199707,
+        "clampFraction": 0,
+        "activeLineages": 0,
+        "topLineage": 0,
+        "topLineageMass": 0,
+        "mixedIdentityMass": 1153.557855014887,
+        "shannonDiversity": 0,
+        "phenotypeClusters": 138,
+        "phenotypeShannon": 1.1390639944209,
+        "mutationEvents": 0,
+        "extinctionEvents": 0
+      },
+      "pass": true
+    },
+    {
+      "rule": "whole",
+      "steps": 32,
+      "hashA": "0b03175f813c0872907bde01dcee658694edbacda546fc7f9b7a4dbb95347348",
+      "hashB": "0b03175f813c0872907bde01dcee658694edbacda546fc7f9b7a4dbb95347348",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 32,
+        "totalMass": 1153.5578635419467,
+        "channelMass": [
+          416.1004707935123,
+          382.7767358701373,
+          354.6806568782972
+        ],
+        "relativeMassDrift": 0.0000016985004022689555,
+        "minDensity": 1.287260012125535e-12,
+        "maxDensity": 1.8598044216632843,
+        "occupiedFraction": 0.51385498046875,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.9053739905357361,
+        "clampFraction": 0,
+        "activeLineages": 3,
+        "topLineage": 3,
+        "topLineageMass": 418.31502511044744,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 1.095923373948133,
+        "phenotypeClusters": 4,
+        "phenotypeShannon": 1.0959238913979439,
+        "mutationEvents": 0,
+        "extinctionEvents": 0
+      },
+      "pass": true
+    },
+    {
+      "rule": "gene-wise",
+      "steps": 32,
+      "hashA": "9be5cca04082e9ab4d627c5e0a0c722e5180c62af7bcb3a1ac66cec6863115c6",
+      "hashB": "9be5cca04082e9ab4d627c5e0a0c722e5180c62af7bcb3a1ac66cec6863115c6",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 32,
+        "totalMass": 1153.5578557717886,
+        "channelMass": [
+          416.10047129176655,
+          382.7767329110343,
+          354.68065156898774
+        ],
+        "relativeMassDrift": 0.000001691764570798074,
+        "minDensity": 1.5282808926795483e-12,
+        "maxDensity": 1.8596410155296326,
+        "occupiedFraction": 0.51275634765625,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.9953532218933105,
+        "clampFraction": 0,
+        "activeLineages": 0,
+        "topLineage": 0,
+        "topLineageMass": 0,
+        "mixedIdentityMass": 1153.5578535533648,
+        "shannonDiversity": 0,
+        "phenotypeClusters": 374,
+        "phenotypeShannon": 1.133618629341893,
+        "mutationEvents": 0,
+        "extinctionEvents": 0
+      },
+      "pass": true
+    },
+    {
+      "rule": "best",
+      "steps": 32,
+      "hashA": "a02c2e0b5e6a7e327f5d8640eb53fe8ac9cf94a0130472640c3ec3ea336d28c1",
+      "hashB": "a02c2e0b5e6a7e327f5d8640eb53fe8ac9cf94a0130472640c3ec3ea336d28c1",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 32,
+        "totalMass": 1153.5578577440288,
+        "channelMass": [
+          416.10047212953134,
+          382.7767290367867,
+          354.6806565777108
+        ],
+        "relativeMassDrift": 0.000001693474275688026,
+        "minDensity": 1.3748180967214471e-14,
+        "maxDensity": 1.8609909415245056,
+        "occupiedFraction": 0.515380859375,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.9053739905357361,
+        "clampFraction": 0,
+        "activeLineages": 3,
+        "topLineage": 2,
+        "topLineageMass": 555.1556875787733,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 1.01639044297694,
+        "phenotypeClusters": 4,
+        "phenotypeShannon": 1.0173983660507655,
+        "mutationEvents": 0,
+        "extinctionEvents": 0
+      },
+      "pass": true
+    },
+    {
+      "rule": "negotiation",
+      "steps": 32,
+      "hashA": "aef7e5f83ddb5dc29051202f157cc8dccfb2aad95ae66046de3999e97444b827",
+      "hashB": "aef7e5f83ddb5dc29051202f157cc8dccfb2aad95ae66046de3999e97444b827",
+      "byteExactSameAdapter": true,
+      "metrics": {
+        "step": 32,
+        "totalMass": 1153.5578517619938,
+        "channelMass": [
+          416.1004670050038,
+          382.77673061050973,
+          354.6806541464803
+        ],
+        "relativeMassDrift": 0.000001688288540916558,
+        "minDensity": 1.6261505217472078e-13,
+        "maxDensity": 1.8600183129310608,
+        "occupiedFraction": 0.513671875,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxDisplacement": 0.9053739905357361,
+        "clampFraction": 0,
+        "activeLineages": 3,
+        "topLineage": 3,
+        "topLineageMass": 426.79008442006494,
+        "mixedIdentityMass": 0,
+        "shannonDiversity": 1.0945587654766067,
+        "phenotypeClusters": 4,
+        "phenotypeShannon": 1.0945591079222035,
+        "mutationEvents": 0,
+        "extinctionEvents": 0
+      },
+      "pass": true
+    }
+  ],
+  "mutation": {
+    "childIdentityExact": true,
+    "deltaMaxAbs": 0,
+    "childPresent": true,
+    "childFlagsExact": true,
+    "lineageRingComplete": true,
+    "affectedMass": 16.193740844726562,
+    "relativeMassDrift": 4.7439243800490935e-8,
+    "pass": true
+  },
+  "ecosystems": [
+    {
+      "id": "three-founders",
+      "rules": [
+        "whole"
+      ],
+      "metrics": [
+        {
+          "step": 48,
+          "totalMass": 1153.5588427519301,
+          "channelMass": [
+            416.1008242376256,
+            382.7770600410094,
+            354.68095847329516
+          ],
+          "relativeMassDrift": 0.000002547362585525404,
+          "minDensity": 1.4616891681404343e-11,
+          "maxDensity": 2.31387460231781,
+          "occupiedFraction": 0.52777099609375,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxDisplacement": 0.9053739905357361,
+          "clampFraction": 0,
+          "activeLineages": 3,
+          "topLineage": 3,
+          "topLineageMass": 418.23206418039456,
+          "mixedIdentityMass": 0,
+          "shannonDiversity": 1.0959159927108764,
+          "phenotypeClusters": 4,
+          "phenotypeShannon": 1.0959164308940719,
+          "mutationEvents": 0,
+          "extinctionEvents": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "negotiation-sea",
+      "rules": [
+        "negotiation"
+      ],
+      "metrics": [
+        {
+          "step": 96,
+          "totalMass": 2183.413937804802,
+          "channelMass": [
+            710.3754433982139,
+            788.621406283035,
+            684.4170881235533
+          ],
+          "relativeMassDrift": 0.000005084004354845918,
+          "minDensity": 0.000009431478019905626,
+          "maxDensity": 2.2918576076626778,
+          "occupiedFraction": 0.89697265625,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxDisplacement": 0.7323785424232483,
+          "clampFraction": 0,
+          "activeLineages": 7,
+          "topLineage": 4,
+          "topLineageMass": 1243.1877794058591,
+          "mixedIdentityMass": 0,
+          "shannonDiversity": 1.3381267590569665,
+          "phenotypeClusters": 7,
+          "phenotypeShannon": 1.3381267590569665,
+          "mutationEvents": 3,
+          "extinctionEvents": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "id": "identity-dilution",
+      "rules": [
+        "average",
+        "gene-wise",
+        "negotiation"
+      ],
+      "metrics": [
+        {
+          "step": 48,
+          "totalMass": 1112.2627128703245,
+          "channelMass": [
+            401.6718800627076,
+            368.9046717676066,
+            341.6861610400104
+          ],
+          "relativeMassDrift": 0.000002544366777625204,
+          "minDensity": 1.7698411312883078e-10,
+          "maxDensity": 2.3725897073745728,
+          "occupiedFraction": 0.5279541015625,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxDisplacement": 0.38747406005859375,
+          "clampFraction": 0,
+          "activeLineages": 0,
+          "topLineage": 0,
+          "topLineageMass": 0,
+          "mixedIdentityMass": 1112.262711809549,
+          "shannonDiversity": 0,
+          "phenotypeClusters": 139,
+          "phenotypeShannon": 1.1476851369071592,
+          "mutationEvents": 0,
+          "extinctionEvents": 0
+        },
+        {
+          "step": 48,
+          "totalMass": 1112.2627046057207,
+          "channelMass": [
+            401.6718733480451,
+            368.9046684141239,
+            341.68616284355176
+          ],
+          "relativeMassDrift": 0.0000025369363164999564,
+          "minDensity": 7.537218418840474e-11,
+          "maxDensity": 2.3725003004074097,
+          "occupiedFraction": 0.52789306640625,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxDisplacement": 0.9916041493415833,
+          "clampFraction": 0,
+          "activeLineages": 0,
+          "topLineage": 0,
+          "topLineageMass": 0,
+          "mixedIdentityMass": 1112.262702564119,
+          "shannonDiversity": 0,
+          "phenotypeClusters": 396,
+          "phenotypeShannon": 1.1483784475716055,
+          "mutationEvents": 0,
+          "extinctionEvents": 0
+        },
+        {
+          "step": 48,
+          "totalMass": 1112.2627057322047,
+          "channelMass": [
+            401.6718740472066,
+            368.9046634073486,
+            341.68616827764964
+          ],
+          "relativeMassDrift": 0.000002537949104978109,
+          "minDensity": 7.586967859518623e-11,
+          "maxDensity": 2.37292218208313,
+          "occupiedFraction": 0.52838134765625,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxDisplacement": 0.7958551645278931,
+          "clampFraction": 0,
+          "activeLineages": 3,
+          "topLineage": 3,
+          "topLineageMass": 438.5261055040858,
+          "mixedIdentityMass": 0,
+          "shannonDiversity": 1.088309417059643,
+          "phenotypeClusters": 4,
+          "phenotypeShannon": 1.0883097809643165,
+          "mutationEvents": 0,
+          "extinctionEvents": 0
+        }
+      ],
+      "pass": true
+    }
+  ],
+  "identityDilution": {
+    "rules": [
+      "average",
+      "gene-wise",
+      "negotiation"
+    ],
+    "mixedFractions": [
+      0.9999999990462906,
+      0.999999998164461,
+      0
+    ],
+    "phenotypeClusters": [
+      139,
+      396,
+      4
+    ],
+    "distinctOutcomes": true,
+    "pass": true
+  },
+  "architecture": {
+    "gatherStorageBindings": 8,
+    "specializedPipelines": 5,
+    "allocatedBytes256": 45099936,
+    "memoryMib256": 43.010650634765625,
+    "under128Mib": true
+  },
+  "performance": {
+    "grid": 256,
+    "samples": 8,
+    "p50Ms": 2.2000000178813934,
+    "p95Ms": 19.30000001192093,
+    "pass": true
+  },
+  "renderIntegrity": {
+    "scientificStateByteExact": true,
+    "pass": true
+  },
+  "productSurface": {
+    "experiments": 3,
+    "mixingRules": 5,
+    "views": 4,
+    "tools": 2,
+    "comparisonPanes": 3,
+    "keyboardFocus": true,
+    "pass": true
+  },
+  "pass": true,
+  "captureContract": {
+    "schemaVersion": "1.0.0",
+    "step": 32,
+    "fields": [
+      "mass",
+      "genome_h",
+      "genome_q",
+      "identity_u32_values"
+    ],
+    "pass": true
+  }
+}

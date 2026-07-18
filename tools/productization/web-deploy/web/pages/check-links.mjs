@@ -30,6 +30,7 @@ const SIMS = [
   "curl-noise", "eulerian-smoke", "mpm-multimaterial", "physarum",
   "pic-flip", "schrodinger-smoke", "sph-water", "sph-multiphase", "heat-equation",
   "signal-workbench", "phase-field-fracture", "fdtd-optics", "lbm-multiphase",
+  "flow-lenia",
 ];
 
 // The confirmed GitHub Pages base (P-8) — observed live (HTTP 200) in the

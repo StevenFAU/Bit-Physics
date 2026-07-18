@@ -126,6 +126,10 @@ const SIMS = {
   // over the wetting floor; by frame ~340 several have coalesced and the
   // film has formed on the floor (the multiphase money shot). Hide EXPLAIN/PROVE bars.
   "lbm-multiphase": { frames: 340, px: 512, query: "?preset=droplet-rain", hide: [".lm-explain", ".lm-verify"] },
+  // Flow Lenia release: the authored maze in Arena Lab, after the orbiting
+  // affinity beacon has pulled lineages into the corridor network. Hide lab
+  // chrome so the signed field, soft walls, and localized matter own the card.
+  "flow-lenia": { frames: 180, px: 512, query: "?arena=1&preset=maze-navigation&grid=256", hide: [".fl-hud", ".fl-experiment-note", ".fl-inspector", ".fl-arena-metrics", ".fl-lab-switch"] },
 };
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;

@@ -1,0 +1,159 @@
+{
+  "schemaVersion": "flow-lenia-m2-gates-v1",
+  "generatedUtc": "2026-07-18T18:06:47.892Z",
+  "fixtureSchema": "flow-lenia-m2-conformance-v1",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "amd",
+      "architecture": "rdna-2",
+      "device": "",
+      "description": ""
+    }
+  },
+  "numericalCases": [
+    {
+      "name": "smooth-periodic",
+      "fields": [
+        {
+          "field": "perception_step_1",
+          "maxAbs": 2.9802322387695312e-8,
+          "tolerance": 0.000001,
+          "pass": true
+        },
+        {
+          "field": "growth_step_1",
+          "maxAbs": 4.172325134277344e-7,
+          "tolerance": 0.00001,
+          "pass": true
+        },
+        {
+          "field": "affinity_step_1",
+          "maxAbs": 2.980232238769531e-7,
+          "tolerance": 0.00001,
+          "pass": true
+        },
+        {
+          "field": "alpha_step_1",
+          "maxAbs": 7.450580596923828e-9,
+          "tolerance": 2e-7,
+          "pass": true
+        },
+        {
+          "field": "flow_step_1",
+          "maxAbs": 8.195638656616211e-7,
+          "tolerance": 0.00002,
+          "pass": true
+        },
+        {
+          "field": "displacement_step_1",
+          "maxAbs": 1.6391277313232422e-7,
+          "tolerance": 0.000004,
+          "pass": true
+        },
+        {
+          "field": "mass_step_1",
+          "maxAbs": 2.8312206268310547e-7,
+          "tolerance": 0.00001,
+          "pass": true
+        },
+        {
+          "field": "mass_step_4",
+          "maxAbs": 3.129243850708008e-7,
+          "tolerance": 0.00002,
+          "pass": true
+        }
+      ],
+      "massRelativeResidual": 2.1820410425353305e-7,
+      "pass": true
+    },
+    {
+      "name": "seam-loaded",
+      "fields": [
+        {
+          "field": "displacement_step_1",
+          "maxAbs": 2.7194619178771973e-7,
+          "tolerance": 0.000004,
+          "pass": true
+        },
+        {
+          "field": "mass_step_1",
+          "maxAbs": 3.5762786865234375e-7,
+          "tolerance": 0.00001,
+          "pass": true
+        },
+        {
+          "field": "mass_step_4",
+          "maxAbs": 3.8743019104003906e-7,
+          "tolerance": 0.00002,
+          "pass": true
+        }
+      ],
+      "massRelativeResidual": 2.2551371380707505e-7,
+      "pass": true
+    },
+    {
+      "name": "crowded-pressure",
+      "fields": [
+        {
+          "field": "displacement_step_1",
+          "maxAbs": 7.748603820800781e-7,
+          "tolerance": 0.000004,
+          "pass": true
+        },
+        {
+          "field": "mass_step_1",
+          "maxAbs": 0.0000011920928955078125,
+          "tolerance": 0.00001,
+          "pass": true
+        },
+        {
+          "field": "mass_step_4",
+          "maxAbs": 8.940696716308594e-7,
+          "tolerance": 0.00002,
+          "pass": true
+        }
+      ],
+      "massRelativeResidual": 2.0938558535274417e-7,
+      "pass": true
+    }
+  ],
+  "structural": {
+    "grid": 128,
+    "steps": 256,
+    "elapsedMs": 229.19999998807907,
+    "firstHash": "1b3e80400f4c32128c5344144dbce5311304dd348e6be79ccb22163070d02522",
+    "secondHash": "1b3e80400f4c32128c5344144dbce5311304dd348e6be79ccb22163070d02522",
+    "byteExactSameAdapter": true,
+    "metrics": {
+      "step": 256,
+      "totalMass": 1979.0234330583999,
+      "channelMass": [
+        659.3029751258518,
+        660.0061884456692,
+        659.7142694868791
+      ],
+      "relativeMassDrift": 0.000013534007704367495,
+      "minDensity": 2.5354286137257986e-7,
+      "maxDensity": 2.124877852920349,
+      "occupiedFraction": 0.5618896484375,
+      "nonFinite": 0,
+      "negative": 0,
+      "maxFlow": 2.8743743896484375,
+      "maxDisplacement": 0.5748748779296875,
+      "clampFraction": 0
+    },
+    "pass": true
+  },
+  "performance": {
+    "grid": 256,
+    "samples": 16,
+    "timing": "queue-completion",
+    "p50Ms": 2.2999999821186066,
+    "p95Ms": 3.2999999821186066,
+    "allocatedBytes": 27271568,
+    "memoryMib": 26.008193969726562,
+    "pass": true
+  },
+  "pass": true
+}

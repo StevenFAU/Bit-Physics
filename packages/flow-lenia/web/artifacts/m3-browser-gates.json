@@ -1,0 +1,308 @@
+{
+  "schemaVersion": "flow-lenia-m3-gates-v1",
+  "environment": {
+    "userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/150.0.0.0 Safari/537.36",
+    "adapter": {
+      "vendor": "amd",
+      "architecture": "rdna-2",
+      "device": "",
+      "description": ""
+    }
+  },
+  "cards": [
+    {
+      "id": "affinity-swimmer",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 1979.0033607313248,
+        "channelMass": [
+          659.2962897756562,
+          659.9994680486403,
+          659.7076029070282
+        ],
+        "relativeMassDrift": 0.000003391329048449776,
+        "minDensity": 7.44194555979405e-9,
+        "maxDensity": 3.34562898427248,
+        "occupiedFraction": 0.52386474609375,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 12.712763786315918,
+        "maxDisplacement": 2.5425527095794678,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 1978.9966493025013,
+        "ledgerError": 0.006711428823564347
+      },
+      "pass": true
+    },
+    {
+      "id": "spinner-collision",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 1562.0489078837068,
+        "channelMass": [
+          532.5380251221457,
+          502.11328768176196,
+          527.3975950797993
+        ],
+        "relativeMassDrift": 0.0000033580402068554726,
+        "minDensity": 0.000006443437882808212,
+        "maxDensity": 2.4351633752132713,
+        "occupiedFraction": 0.62225341796875,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 7.066369533538818,
+        "maxDisplacement": 1.4132739305496216,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 1562.0436624782833,
+        "ledgerError": 0.005245405423465854
+      },
+      "pass": true
+    },
+    {
+      "id": "dividing-droplets",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 3058.660939570317,
+        "channelMass": [
+          1008.1739336289696,
+          1042.8598545225511,
+          1007.6271514187965
+        ],
+        "relativeMassDrift": 0.0000033691292458977462,
+        "minDensity": 0.000009228061315980085,
+        "maxDensity": 2.3200308680534363,
+        "occupiedFraction": 0.90606689453125,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 2.89229154586792,
+        "maxDisplacement": 0.578458309173584,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 3058.650634581011,
+        "ledgerError": 0.010304989305950585
+      },
+      "pass": true
+    },
+    {
+      "id": "pressure-ablation",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 1300.1518169334588,
+        "channelMass": [
+          435.6444923728719,
+          435.7902577711585,
+          428.7170667894283
+        ],
+        "relativeMassDrift": 0.0000033975378415764576,
+        "minDensity": 1.2909862889820545e-7,
+        "maxDensity": 2.4974355697631836,
+        "occupiedFraction": 0.43267822265625,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 3.3179423809051514,
+        "maxDisplacement": 0.6635884642601013,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 1300.147399633469,
+        "ledgerError": 0.00441729998988194
+      },
+      "pass": true,
+      "comparison": {
+        "label": "pressure off",
+        "metrics": {
+          "step": 64,
+          "totalMass": 1300.151830733471,
+          "channelMass": [
+            435.64450425774146,
+            435.7902686772988,
+            428.7170577984308
+          ],
+          "relativeMassDrift": 0.000003408152032004455,
+          "minDensity": 1.2909880098277426e-7,
+          "maxDensity": 11.52260971069336,
+          "occupiedFraction": 0.43133544921875,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxFlow": 4.378595352172852,
+          "maxDisplacement": 0.8757190704345703,
+          "clampFraction": 0,
+          "ledgerAdded": 0,
+          "ledgerRemoved": 0,
+          "expectedMass": 1300.147399633469,
+          "ledgerError": 0.004431100001966115
+        },
+        "stateDiverged": true,
+        "peakDensityDelta": 9.025174140930176,
+        "pass": true
+      }
+    },
+    {
+      "id": "sigma-phase",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 1978.9351317487362,
+        "channelMass": [
+          660.0194227517363,
+          659.2940329630094,
+          659.6216760339905
+        ],
+        "relativeMassDrift": 0.0000010972946031860312,
+        "minDensity": 4.0385180743568206e-11,
+        "maxDensity": 3.8272088766098022,
+        "occupiedFraction": 0.49090576171875,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 3.3235878944396973,
+        "maxDisplacement": 0.6647175550460815,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 1978.937303225959,
+        "ledgerError": -0.0021714772228733636
+      },
+      "pass": true,
+      "comparison": {
+        "label": "σ 1.05",
+        "metrics": {
+          "step": 64,
+          "totalMass": 1978.946749482832,
+          "channelMass": [
+            660.0232641166424,
+            659.2979583289847,
+            659.6255270372051
+          ],
+          "relativeMassDrift": 0.000004773398761817926,
+          "minDensity": 4.863671487775889e-8,
+          "maxDensity": 3.0710813403129578,
+          "occupiedFraction": 0.5660400390625,
+          "nonFinite": 0,
+          "negative": 0,
+          "maxFlow": 2.9537436962127686,
+          "maxDisplacement": 0.5907487273216248,
+          "clampFraction": 0,
+          "ledgerAdded": 0,
+          "ledgerRemoved": 0,
+          "expectedMass": 1978.937303225959,
+          "ledgerError": 0.0094462568729341
+        },
+        "stateDiverged": true,
+        "peakDensityDelta": 0.7561275362968445,
+        "pass": true
+      }
+    },
+    {
+      "id": "expansion-trap",
+      "steps": 64,
+      "metrics": {
+        "step": 64,
+        "totalMass": 2721.407800530891,
+        "channelMass": [
+          895.3550745654439,
+          954.2597701030489,
+          871.792955862398
+        ],
+        "relativeMassDrift": 0.0000033963129484593688,
+        "minDensity": 3.0342240872616166e-11,
+        "maxDensity": 1.352072812616825,
+        "occupiedFraction": 0.67669677734375,
+        "nonFinite": 0,
+        "negative": 0,
+        "maxFlow": 2.714146614074707,
+        "maxDisplacement": 0.5428293347358704,
+        "clampFraction": 0,
+        "ledgerAdded": 0,
+        "ledgerRemoved": 0,
+        "expectedMass": 2721.3985578097313,
+        "ledgerError": 0.009242721159807843
+      },
+      "pass": true
+    }
+  ],
+  "scheduledEvents": {
+    "steps": 32,
+    "hashA": "036e16fa6686c61cdcfc3425933b30e6c30cae011e3fc5ec7845c50c2a7d22b5",
+    "hashB": "036e16fa6686c61cdcfc3425933b30e6c30cae011e3fc5ec7845c50c2a7d22b5",
+    "byteExactSameAdapter": true,
+    "ledgerPass": true,
+    "metrics": {
+      "step": 32,
+      "totalMass": 1970.3730722183118,
+      "channelMass": [
+        657.5399664457245,
+        656.2190782307501,
+        656.614027541837
+      ],
+      "relativeMassDrift": 0.0000014010491940933032,
+      "minDensity": 2.127176678291126e-9,
+      "maxDensity": 3.1479188054800034,
+      "occupiedFraction": 0.50714111328125,
+      "nonFinite": 0,
+      "negative": 0,
+      "maxFlow": 3.4598751068115234,
+      "maxDisplacement": 0.6919749975204468,
+      "clampFraction": 0,
+      "ledgerAdded": 2.14483642578125,
+      "ledgerRemoved": 10.526992797851562,
+      "expectedMass": 1970.3703116325746,
+      "ledgerError": 0.0027605857371781894
+    }
+  },
+  "closedImpulses": {
+    "steps": 24,
+    "ledgerUntouched": true,
+    "metrics": {
+      "step": 24,
+      "totalMass": 1978.7549803868164,
+      "channelMass": [
+        660.0894309128788,
+        659.039550367442,
+        659.6259991064958
+      ],
+      "relativeMassDrift": 0.0000012696798675634296,
+      "minDensity": 1.4714658545453285e-9,
+      "maxDensity": 2.999167263507843,
+      "occupiedFraction": 0.50323486328125,
+      "nonFinite": 0,
+      "negative": 0,
+      "maxFlow": 3.5148324966430664,
+      "maxDisplacement": 0.7029665112495422,
+      "clampFraction": 0,
+      "ledgerAdded": 0,
+      "ledgerRemoved": 0,
+      "expectedMass": 1978.752468004645,
+      "ledgerError": 0.002512382171516947
+    },
+    "pass": true
+  },
+  "renderIntegrity": {
+    "scientificStateByteExact": true,
+    "pass": true
+  },
+  "productSurface": {
+    "experiments": 6,
+    "tools": 5,
+    "scientificViews": 6,
+    "inspectorPlots": 2,
+    "keyboardFocus": true,
+    "touchRadialTools": 5,
+    "pass": true
+  },
+  "memory": {
+    "solverBytes": 27273128,
+    "solverMib": 26.009681701660156,
+    "synchronizedPairMib": 52.01936340332031,
+    "under128Mib": true
+  },
+  "pass": true
+}

@@ -144,6 +144,12 @@ GATE_KIND = {
     # _gate_lbm_multiphase; spec-ref § 6.2 — the analytic-gates conjunction
     # is the sim's moat claim, so it is CI-held).
     "lbm-multiphase": "new_canonical",
+    # Flow Lenia release lab: the default full affinity/pressure/finite-square
+    # Organism capture is replayed twice byte-exactly and its closed mass,
+    # non-negativity, finite-state, and displacement-clamp invariants are held
+    # by verify.py. The deeper M2–M6 CPU/GPU, inheritance, environment, reload,
+    # and render-integrity artifacts remain package-local release gates.
+    "flow-lenia": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

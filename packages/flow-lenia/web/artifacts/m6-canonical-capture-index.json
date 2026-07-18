@@ -1,0 +1,37 @@
+{
+  "schemaVersion": "flow-lenia-m6-canonical-index-v1",
+  "generatedUtc": "2026-07-18T20:06:38.058Z",
+  "modelVariant": "flow-lenia-ecosystem-v1",
+  "captures": [
+    {
+      "mode": "organism",
+      "reference": "m2-browser-gates.json structural replay",
+      "grid": 128,
+      "step": 256,
+      "stateSha256": "1b3e80400f4c32128c5344144dbce5311304dd348e6be79ccb22163070d02522",
+      "byteExactSameAdapter": true,
+      "massRelativeDrift": 0.000013534007704367495
+    },
+    {
+      "mode": "ecosystem",
+      "reference": "m4-browser-gates.json whole-rule replay",
+      "grid": 128,
+      "step": 32,
+      "stateSha256": "0b03175f813c0872907bde01dcee658694edbacda546fc7f9b7a4dbb95347348",
+      "byteExactSameAdapter": true,
+      "massRelativeDrift": 0.0000016985004022689555
+    },
+    {
+      "mode": "arena",
+      "reference": "standard browser capture",
+      "grid": 128,
+      "step": 72,
+      "stateSha256": "f41d30d72f30658eda45973a7f337e97bc0eb154e243a785e78b8725bbce8c5f",
+      "shaderSha256": "f3f9abe23cdd4e1daefd929cbb0ca52b167cd551f2ad1bccf5bf685e29f30fff",
+      "environmentSchema": "flow-lenia-arena-environment-v1",
+      "byteExactSameAdapter": true,
+      "massRelativeDrift": 0.0000038031936772616477
+    }
+  ],
+  "pass": true
+}
