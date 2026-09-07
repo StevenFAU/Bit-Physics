@@ -17,6 +17,10 @@ plans live in `docs/phases/`; conventions in `docs/conventions/`; audits in `doc
   CI-strategy sections (`docs/planning/bit-physics-master-catalog.md:3639` § 45) can be cited as
   in-repo references rather than as off-repo `[CATALOG — not in repo]` tags.
 
+## Candidate simulation specifications
+
+- [Canyon Lab — terrain erosion WebGPU specification](terrain-erosion-canyon-lab-spec.md) — research-backed proposal for interactive canyon incision, sediment transport, layered terrain, verification instruments and a polished browser deployment. Includes numerical and product acceptance gates plus separate undercut/arch and long-term transport research tracks; implementation has not started.
+
 ## Citing the catalog
 
 It is a planning artifact, **not** a normative spec. Cite it for design context and tier
