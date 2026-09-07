@@ -128,6 +128,12 @@ jobs:
         # Workspace member names match the matrix sim names 1:1. No new deps are
         # declared here and none are installed ad hoc.
         run: uv sync --package "${{ matrix.sim }}"
+      - name: Canyon Lab reference and type checks
+        if: matrix.sim == 'terrain-erosion'
+        run: |
+          uv sync --package terrain-erosion --extra dev
+          uv run --no-sync python -m pytest packages/terrain-erosion/tests -q
+          npm run typecheck --prefix packages/terrain-erosion/web
       - name: Validate (headless browser-WebGPU → sim's established gate)
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js

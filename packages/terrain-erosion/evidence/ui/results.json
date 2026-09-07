@@ -1,0 +1,9 @@
+{
+  "buildChangesTerrain": true,
+  "replayExact": true,
+  "undoExact": true,
+  "importExact": true,
+  "mobileOverflow": false,
+  "zoomOverflow": false,
+  "errors": []
+}

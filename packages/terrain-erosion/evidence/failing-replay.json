@@ -1,0 +1,7 @@
+{
+  "commit": "c5aef3b",
+  "recorded_output_sha256": "23ca3ce254eb2b5c125d2b6bed798e879622ebd06f8fff8167574c522b5b84ec",
+  "footer_matches": true,
+  "isolated_preimplementation_tests_fail": true,
+  "note": "Verbatim original output hash verified. Replayed traceback/time differ with cwd and pytest environment; failure class is reproduced."
+}

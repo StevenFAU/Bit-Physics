@@ -12,6 +12,7 @@ package = false
 
 [tool.uv.workspace]
 members = [
+  "packages/terrain-erosion",
   "tools/testkit",
   "tools/integrity",
   "tools/diagnostics",

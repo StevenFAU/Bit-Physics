@@ -1,0 +1,38 @@
+{
+  "viewport": [
+    1440,
+    900
+  ],
+  "adapter": "AMD rdna-2",
+  "browser": "148.0.7778.96",
+  "concurrentSoak": true,
+  "results": [
+    {
+      "n": 128,
+      "steps": 2524,
+      "time": 30.898876190185547,
+      "fps": "60 fps",
+      "bytes": 3166368,
+      "stepsPerSecond": 240.5,
+      "simSecondsPerSecond": 2.75687575340271
+    },
+    {
+      "n": 256,
+      "steps": 2524,
+      "time": 14.952888488769531,
+      "fps": "60 fps",
+      "bytes": 12648608,
+      "stepsPerSecond": 240,
+      "simSecondsPerSecond": 1.2991142868995667
+    },
+    {
+      "n": 512,
+      "steps": 2520,
+      "time": 8.15999984741211,
+      "fps": "60 fps",
+      "bytes": 50561184,
+      "stepsPerSecond": 240,
+      "simSecondsPerSecond": 0.7538691163063049
+    }
+  ]
+}

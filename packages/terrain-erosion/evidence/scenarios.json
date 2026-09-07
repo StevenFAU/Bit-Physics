@@ -1,0 +1,58 @@
+[
+  {
+    "scene": "plateau",
+    "finite": true,
+    "initialWater": 11.132246017456055,
+    "initialGrain": 9.461647033691406,
+    "cut": 1.675209879875183,
+    "deposition": 1.8501368761062622,
+    "simTime": 31.87140655517578,
+    "waterResponseL1": 28.43353810916751,
+    "waterError": 7.194707343047819e-8,
+    "grainError": 4.7119291901490484e-7,
+    "alteredWaterError": 1.7845482109261748e-8,
+    "alteredGrainError": 5.962934859043636e-8
+  },
+  {
+    "scene": "heist",
+    "finite": true,
+    "initialWater": 11.132246017456055,
+    "initialGrain": 9.461647033691406,
+    "cut": 2.5986740589141846,
+    "deposition": 3.2392075061798096,
+    "simTime": 36.38111877441406,
+    "waterResponseL1": 56.79733842586095,
+    "waterError": 2.2920597549146347e-8,
+    "grainError": 0,
+    "alteredWaterError": 6.566076993556183e-8,
+    "alteredGrainError": 0.0000017530377109426907
+  },
+  {
+    "scene": "breach",
+    "finite": true,
+    "initialWater": 20.497081756591797,
+    "initialGrain": 14.999678611755371,
+    "cut": 4.393173694610596,
+    "deposition": 6.466156959533691,
+    "simTime": 42.26191711425781,
+    "waterResponseL1": 27.58112579023634,
+    "waterError": 0,
+    "grainError": 0.0000010247795696583716,
+    "alteredWaterError": 0,
+    "alteredGrainError": 6.876280094748951e-7
+  },
+  {
+    "scene": "shield",
+    "finite": true,
+    "initialWater": 11.132246017456055,
+    "initialGrain": 70.90164184570312,
+    "cut": 1.4234397411346436,
+    "deposition": 2.464893341064453,
+    "simTime": 32.208641052246094,
+    "waterResponseL1": 26.58392338388037,
+    "waterError": 0,
+    "grainError": 0.0000020876787215728786,
+    "alteredWaterError": 1.232710356739333e-7,
+    "alteredGrainError": 6.095267192882671e-7
+  }
+]

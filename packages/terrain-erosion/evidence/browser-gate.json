@@ -1,0 +1,21 @@
+{
+  "sub_phase": "web-deploy",
+  "commit_sha": "c5aef3b8cc218fdf87660ccab8398838950f6625",
+  "qualifying_sims": [
+    "terrain-erosion"
+  ],
+  "non_qualifying": [],
+  "sim_results": {
+    "terrain-erosion": {
+      "status": "pass",
+      "duration_seconds": 2.39,
+      "artifact_path": "/home/clipbird/Projects/Bit-Physics/packages/terrain-erosion/web/dist",
+      "capture_validated": true,
+      "notes": "new_canonical: passed=True run_twice=True time_to_ready_ms=[35, 34] {\"lake\": {\"max_abs_f64_error\": 1.697990493927689e-07, \"budget_error\": 2.8205461633019384e-08}, \"dam\": {\"max_abs_f64_error\": 3.62614286097962e-07, \"budget_error\": 9.313225954321608e-08}, \"settling\": {\"max_abs_f64_error\": 1.357821083868005e-08, \"budget_error\": 4.656612977160803e-07}, \"channel\": {\"max_abs_f64_error\": 3.9509395183268126e-07, \"budget_error\": 1.290440559387207e-05}}"
+    }
+  },
+  "overall_status": "pass",
+  "deferred_count": 0,
+  "fail_count": 0,
+  "pass_count": 1
+}

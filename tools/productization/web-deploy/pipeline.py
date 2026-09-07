@@ -150,6 +150,7 @@ GATE_KIND = {
     # by verify.py. The deeper M2–M6 CPU/GPU, inheritance, environment, reload,
     # and render-integrity artifacts remain package-local release gates.
     "flow-lenia": "new_canonical",
+    "terrain-erosion": "new_canonical",
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 

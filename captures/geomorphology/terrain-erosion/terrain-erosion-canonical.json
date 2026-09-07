@@ -1,0 +1,48 @@
+{
+  "config": {
+    "dims": [
+      32,
+      32
+    ],
+    "dtype": "f32",
+    "params": {
+      "dt": 0.01,
+      "dx": 1,
+      "fixtures": [
+        "lake",
+        "dam",
+        "settling",
+        "channel"
+      ]
+    },
+    "seed": 4102,
+    "tier": "test"
+  },
+  "determinism": {
+    "atomic_ops": true,
+    "claimed": "bit-exact-same-hw",
+    "subgroup_ops": false
+  },
+  "payload": {
+    "checksum": "sha256:5eea5753687a3f57dfa0089a403190f85d351e8f9146fc5adefec076cbbeddd7",
+    "format": "hdf5",
+    "path": "terrain-erosion-canonical.h5"
+  },
+  "run": {
+    "capture_interval": 20,
+    "start_utc": "2026-09-07T19:04:33.771Z",
+    "step_count": 100,
+    "wall_clock_seconds": 0.19869999999925494
+  },
+  "schema_version": "1.0.0",
+  "sim": {
+    "category": "geomorphology",
+    "name": "terrain-erosion",
+    "variant": "hydrostatic-hll-sediment"
+  },
+  "stack": {
+    "build_id": "canyon-lab-v1",
+    "name": "webgpu-f32",
+    "version": "0.0.1"
+  }
+}

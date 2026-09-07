@@ -762,3 +762,12 @@ category = "lbm-multiphase"
 # structures at curved interfaces. Gated by the web-deploy new_canonical
 # live-f64-reference comparison (_gate_lbm_multiphase, spec-ref § 6.2) +
 # the analytic instrument bands held in verify.py.
+
+# Fresh family, declared before implementation in Canyon Lab spec §9.
+[defaults.geomorphology]
+relative = 0.0
+absolute = 2e-4
+[overrides.terrain-erosion]
+category = "geomorphology"
+relative = 0.0
+absolute = 2e-4
