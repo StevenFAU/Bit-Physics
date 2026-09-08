@@ -1,0 +1,32 @@
+{
+  "sub_phase": "web-deploy",
+  "commit_sha": "3ce7eea5cc0b95ad7c4fad80c8d0db70fa50147e",
+  "qualifying_sims": [
+    "terrain-erosion"
+  ],
+  "non_qualifying": [],
+  "sim_results": {
+    "terrain-erosion": {
+      "status": "pass",
+      "duration_seconds": 2.15,
+      "artifact_path": "/home/clipbird/Projects/Bit-Physics/packages/terrain-erosion/web/dist",
+      "capture_validated": true,
+      "notes": "new_canonical: passed=True run_twice=True time_to_ready_ms=[35, 10] {\"lake\": {\"max_abs_f64_error\": 1.697990493927689e-07, \"budget_error\": 2.8205461633019384e-08}, \"dam\": {\"max_abs_f64_error\": 3.62614286097962e-07, \"budget_error\": 9.313225954321608e-08}, \"settling\": {\"max_abs_f64_error\": 1.357821083868005e-08, \"budget_error\": 4.656612977160803e-07}, \"channel\": {\"max_abs_f64_error\": 3.9509395183268126e-07, \"budget_error\": 1.290440559387207e-05}}"
+    }
+  },
+  "overall_status": "pass",
+  "deferred_count": 0,
+  "fail_count": 0,
+  "pass_count": 1,
+  "working_tree_sources": {
+    "packages/terrain-erosion/web/src/capture.ts": "0ef71b59c55d44feee5e712afcc082c994c4fe24f6e3e9c02845f48204b1448a",
+    "packages/terrain-erosion/web/src/core.wgsl": "c042647f452d64eab881db30cc1ad25da97c98d196ea4b28bf606fd90dbd0bd4",
+    "packages/terrain-erosion/web/src/main.ts": "3e247f776eb6ccba10c88a9b0a9f9f4333b6a878e50080e3c1033b8128a66eca",
+    "packages/terrain-erosion/web/src/project.ts": "ed8ddc68998ad07e5344a752837b2c0549569af84496df57a61703e1e1529592",
+    "packages/terrain-erosion/web/src/render.wgsl": "9f04b71c02fedac0f01bc75f2d0432aeda27102039bc49bbe430887b8ed7d59c",
+    "packages/terrain-erosion/web/src/renderer.ts": "643894db9509b3a32427e9ce7181773de21f6cc46519253b34fbf75a34300f58",
+    "packages/terrain-erosion/web/src/scenes.ts": "c9130e9ca1f6af590d664680d8cccccd54553cdd9eccf54ea7e1baa5972b0f80",
+    "packages/terrain-erosion/web/src/solver.ts": "25e7aea91cbb095100b9db2deb1331640b6a176eab293131d1f4a23e9310c67d",
+    "packages/terrain-erosion/web/src/style.css": "9cd6fc351e6cad978e27bbed55cf5f1a1e7a297925864950cb5f71e2a9b6add4"
+  }
+}

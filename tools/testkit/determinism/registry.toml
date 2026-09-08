@@ -535,3 +535,12 @@ scope = "same-stack-same-hw"
 atomic_ops = "none"
 subgroup_ops = "none"
 seed_pinned = true
+
+# Canyon Lab: integer atomic max/OR only; conserved fields use fixed gather.
+[geomorphology.terrain-erosion]
+stack = "B"
+class = "bit-exact"
+scope = "same-stack-same-hw"
+atomic_ops = "full"
+subgroup_ops = "none"
+seed_pinned = true

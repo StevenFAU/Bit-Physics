@@ -53,6 +53,7 @@ EXPECTED_SIMS = {
     "sph-water",
     "sph-multiphase",
     "flow-lenia",
+    "terrain-erosion",
 }
 
 

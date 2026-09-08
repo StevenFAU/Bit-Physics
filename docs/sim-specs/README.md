@@ -90,3 +90,8 @@ See also: [`docs/phases/phase-1-plan.md`](../phases/phase-1-plan.md)
 for the full charter; the Phase 1 landing audit at
 `docs/_audits/phase-1/landing-<UTC>.md` for the closing-summary
 reference.
+
+### Geomorphology
+
+- [terrain-erosion — Canyon Lab](geomorphology/terrain-erosion/spec-ref.md) —
+  WebGPU shallow water, layered incision, cover shielding and sediment budgets.

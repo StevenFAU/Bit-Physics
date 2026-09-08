@@ -165,3 +165,9 @@ absolute = 0.0
 [budgets.lbm-multiphase.cross_stack]
 relative = 5.0e-3
 absolute = 0.0
+
+# New family admitted by the 2026-09-07 Canyon Lab implementation request.
+# Initial cap from pre-implementation spec §9; no existing budget is widened.
+[budgets.geomorphology.cross_stack]
+relative = 0.0
+absolute = 2e-4

@@ -3100,6 +3100,82 @@ def _gate_flow_lenia(bundles: list[dict]) -> VerifyResult:
     )
 
 
+def _gate_terrain_erosion(bundles: list[dict]) -> VerifyResult:
+    """Recompute f64 references from fixed fixtures; never trust claimed diagnostics."""
+    sys.path.insert(0, str(REPO / "packages/terrain-erosion"))
+    from terrain_erosion.reference import budgets, initial, step
+
+    detail = {}
+    passed = len(bundles) == 2
+    twice = len(bundles) == 2
+    names = ("lake", "dam", "settling", "channel")
+    try:
+        for bundle in bundles:
+            if [item["step"] for item in bundle["steps"]] != [0, 20, 100]:
+                raise ValueError("canonical checkpoints must be 0,20,100")
+        for name in names:
+            reference = initial(32, name)
+            if name == "channel":
+                reference[..., 2] = reference[..., 0] * 2
+            reference = reference.astype(np.float32).astype(np.float64)
+            baseline = budgets(reference)
+            max_error = 0.0
+            budget_error = 0.0
+            for at in range(101):
+                if at in (0, 20, 100):
+                    j = (0, 20, 100).index(at)
+                    for bundle in bundles:
+                        actual = _field(bundle["steps"][j], name)
+                        if (
+                            actual.shape != (32, 32, 16)
+                            or not np.isfinite(actual).all()
+                        ):
+                            raise ValueError("non-finite or malformed canonical field")
+                        if actual[..., [0, 3, 5, 6]].min() < -1e-7:
+                            raise ValueError("negative conserved reservoir")
+                        max_error = max(
+                            max_error, float(np.max(np.abs(actual - reference)))
+                        )
+                        budget_error = max(
+                            budget_error,
+                            float(
+                                np.max(
+                                    np.abs(budgets(actual) - baseline)
+                                    / np.maximum(np.abs(baseline), 1)
+                                )
+                            ),
+                        )
+                    if len(bundles) == 2:
+                        twice = twice and np.array_equal(
+                            _field(bundles[0]["steps"][j], name),
+                            _field(bundles[1]["steps"][j], name),
+                        )
+                if at < 100:
+                    reference = step(
+                        reference,
+                        0.01,
+                        dx=1,
+                        erosion=1 if name == "channel" else 0,
+                        settling=0.1 if name == "settling" else 0,
+                        friction=0.01,
+                    )
+            detail[name] = {
+                "max_abs_f64_error": max_error,
+                "budget_error": budget_error,
+            }
+            passed = passed and max_error <= 2e-4 and budget_error <= 2e-4
+    except (KeyError, ValueError, IndexError) as exc:
+        passed = False
+        detail["error"] = str(exc)
+    return VerifyResult(
+        sim="terrain-erosion",
+        kind="new_canonical",
+        passed=bool(passed and twice),
+        run_twice_identical=bool(twice),
+        detail=detail,
+    )
+
+
 _GATES = {
     "reaction-diffusion-2d": _gate_rd2d,
     "neural-ca": _gate_neural_ca,
@@ -3122,6 +3198,7 @@ _GATES = {
     "fdtd-optics": _gate_fdtd_optics,
     "lbm-multiphase": _gate_lbm_multiphase,
     "flow-lenia": _gate_flow_lenia,
+    "terrain-erosion": _gate_terrain_erosion,
 }
 
 # Opt-in observable/structural BROWSER gates, activated per-sim ONLY via

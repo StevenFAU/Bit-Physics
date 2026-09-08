@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0.0",
+  "algorithm": "terrain-erosion-hll-consistency",
+  "category": "geomorphology",
+  "derivation": {
+    "doc": "tools/testkit/golden/derivations/geomorphology/terrain-erosion.md",
+    "upstream": "n/a-original",
+    "upstream_path": "n/a",
+    "upstream_sha": "n/a"
+  },
+  "tolerance": {
+    "absolute": 1e-12,
+    "relative": 1e-12
+  },
+  "test_points": [
+    {
+      "inputs": {
+        "state": [
+          2,
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": {
+        "water": 0,
+        "normal": 19.62,
+        "tangent": 0,
+        "sediment": 0
+      },
+      "independent_reference": {
+        "derived_by": "independent hand derivation",
+        "source": "Hydrostatic pressure integral: g h\u00b2/2 = 9.81*4/2",
+        "doi": "n/a-analytic"
+      }
+    },
+    {
+      "inputs": {
+        "state": [
+          1,
+          2,
+          3,
+          0.01
+        ]
+      },
+      "expected": {
+        "water": 2,
+        "normal": 8.905,
+        "tangent": 6,
+        "sediment": 0.02
+      },
+      "independent_reference": {
+        "derived_by": "independent hand derivation",
+        "source": "Constant advective state: hu,hu\u00b2+gh\u00b2/2,huv,uS",
+        "doi": "n/a-analytic"
+      }
+    },
+    {
+      "inputs": {
+        "state": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "expected": {
+        "water": 0,
+        "normal": 0,
+        "tangent": 0,
+        "sediment": 0
+      },
+      "independent_reference": {
+        "derived_by": "independent hand derivation",
+        "source": "Vacuum carries no conserved flux",
+        "doi": "n/a-analytic"
+      }
+    }
+  ]
+}

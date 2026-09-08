@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#10191d" />
+    <title>Canyon Lab · Bit Physics</title>
+  </head>
+  <body>
+    <canvas
+      id="view"
+      aria-label="Interactive three-dimensional canyon. Choose a tool to sculpt or add water; drag in Orbit mode to move the camera."
+    ></canvas>
+    <div id="boot" role="status">Preparing the landscape…</div>
+    <header>
+      <a href="../../">BIT PHYSICS <span>/ FIELD STUDIES</span></a>
+      <div class="header-right">
+        <span class="live-dot"></span> CANYON LAB
+        <button id="inspect" aria-expanded="false">Instruments ↗</button>
+      </div>
+    </header>
+    <section class="scene-heading">
+      <div class="eyebrow">01 / GEOMORPHOLOGY</div>
+      <h1 id="title">Cut the Plateau</h1>
+      <p id="subtitle">Follow water into the rock.</p>
+      <select id="scene" aria-label="Experiment"></select
+      ><button id="river-toggle">● River on</button>
+    </section>
+    <nav id="tools" aria-label="Landscape tools"></nav>
+    <div class="tool-options">
+      <label
+        >Brush
+        <input
+          id="radius"
+          type="range"
+          min=".3"
+          max="3"
+          step=".1"
+          value="1"
+        /><output id="radius-label">1.0 m</output></label
+      ><span id="tool-hint"
+        >Drag to orbit · scroll to zoom · right-drag to navigate</span
+      >
+    </div>
+    <div class="viewport-actions">
+      <button id="home">Home</button><button id="plan">Overhead</button
+      ><button id="section-toggle">Section</button
+      ><select id="overlay" aria-label="Field overlay">
+        <option value="0">Natural color</option>
+        <option value="1">Incision · 0–0.5 m</option>
+        <option value="2">Loose cover · 0–0.3 m</option>
+        <option value="3">Resistance · 0–4×</option>
+        <option value="4">Flow · 0–6 m/s</option>
+      </select>
+    </div>
+    <div id="hint" class="scenario-hint"></div>
+    <section id="section" hidden>
+      <div class="section-title">
+        CHANNEL SECTION <span>rock · cover · water · dashed initial bed</span
+        ><button id="section-close" aria-label="Close cross section">×</button>
+      </div>
+      <canvas id="section-plot"></canvas
+      ><input
+        id="section-position"
+        aria-label="Cross section position"
+        type="range"
+        min="0"
+        max="32"
+        step=".1"
+        value="16"
+      />
+    </section>
+    <footer>
+      <div class="transport">
+        <button id="play" class="primary">Ⅱ Pause</button
+        ><button id="step" title="One numerical substep">Step</button
+        ><button id="reset">Restart</button><span class="divider"></span
+        ><label
+          >Playback
+          <select id="speed">
+            <option value="2">½×</option>
+            <option value="4" selected>1×</option>
+            <option value="8">2×</option>
+            <option value="16">4×</option>
+          </select></label
+        ><span id="clock">0.0 s</span>
+      </div>
+      <div class="history">
+        <button id="checkpoint">Save point</button
+        ><button id="rewind" disabled>Restore</button
+        ><button id="compare" disabled>Compare A/B</button
+        ><button id="undo" disabled>Undo stroke</button>
+      </div>
+      <div class="metrics">
+        <button id="budget-status">
+          Water / Sediment <span>measuring</span></button
+        ><span id="fps">— fps</span>
+      </div>
+    </footer>
+    <div id="toast" role="status"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

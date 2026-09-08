@@ -1,0 +1,53 @@
+{
+  "health": {
+    "ok": true,
+    "nan_count": 0,
+    "inf_count": 0,
+    "first_offending_step": null,
+    "first_offending_field": null
+  },
+  "water": {
+    "ok": true,
+    "field": "dam_water",
+    "initial_total": 512.0,
+    "max_abs_drift": 1.9396119284920132e-05,
+    "max_rel_drift": 3.7883045478359634e-08,
+    "per_step_total": [
+      [
+        0,
+        512.0
+      ],
+      [
+        20,
+        511.99999522247225
+      ],
+      [
+        100,
+        511.9999806038807
+      ]
+    ],
+    "first_offending_step": null
+  },
+  "grain": {
+    "ok": true,
+    "field": "dam_grain",
+    "initial_total": 5.119999885559082,
+    "max_abs_drift": 1.1174489600307425e-07,
+    "max_rel_drift": 2.1825175488431125e-08,
+    "per_step_total": [
+      [
+        0,
+        5.119999885559082
+      ],
+      [
+        20,
+        5.1199999140258985
+      ],
+      [
+        100,
+        5.119999997303978
+      ]
+    ],
+    "first_offending_step": null
+  }
+}
