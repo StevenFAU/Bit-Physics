@@ -70,12 +70,16 @@ fn shade(color:vec3f,normal:vec3f,pos:vec3f)->vec3f{
  color=mix(color,vec3f(.83,.85,.73),foam*.2);
  if(u32(v.info.z)==4u){
   color=mix(vec3f(.04,.1,.19),vec3f(.3,.88,.75),clamp(speed/6.0,0.0,1.0));
+  let tile=floor((in.world.xz+16.0)/.8);
+  let anchor=vec2i((tile+.5)*.8/v.info.y);
+  let flow=cell(anchor.x,anchor.y).water;
+  let arrowDirection=flow.yz/max(length(flow.yz),.000001);
   let local=fract((in.world.xz+16.0)/.8)-.5;
-  let along=dot(local,direction);let across=dot(local,vec2f(-direction.y,direction.x));
+  let along=dot(local,arrowDirection);let across=dot(local,vec2f(-arrowDirection.y,arrowDirection.x));
   let shaft=max(abs(across)-.018,abs(along)-.24);
   let head=max(abs(abs(across)-(0.24-along))-.022,max(.07-along,along-.24));
   let arrow=1.0-smoothstep(0.0,max(fwidth(along),.006),min(shaft,head));
-  color=mix(color,vec3f(.8,.97,.91),arrow*.8);return vec4f(color,.95);
+  color=mix(color,vec3f(.8,.97,.91),arrow*.8*smoothstep(.02,.12,length(flow.yz)/max(flow.x,.000001)));return vec4f(color,.95);
  }
  return vec4f(color,mix(.30,.94,1.0-exp(-in.data.x*8.0)));
 }

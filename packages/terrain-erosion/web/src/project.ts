@@ -6,6 +6,13 @@ export interface Project {
   snapshot: Snapshot;
   events: unknown[];
   initialParams: Parameters;
+  camera?: {
+    yaw: number;
+    pitch: number;
+    distance: number;
+    target: [number, number, number];
+    orthographic: boolean;
+  };
 }
 const finite = (v: unknown): v is number =>
   typeof v === "number" && Number.isFinite(v);
@@ -22,6 +29,20 @@ export function parseProject(text: string): Project {
     ![128, 256, 512].includes(p.n)
   )
     throw Error("Unsupported project version, scene or grid");
+  if (p.camera !== undefined) {
+    const c = p.camera;
+    if (
+      !c ||
+      !inRange(c.yaw, -1e7, 1e7) ||
+      !inRange(c.pitch, 0.12, Math.PI / 2) ||
+      !inRange(c.distance, 12, 95) ||
+      !Array.isArray(c.target) ||
+      c.target.length !== 3 ||
+      !c.target.every((v: unknown) => inRange(v, -1e7, 1e7)) ||
+      (c.orthographic !== undefined && typeof c.orthographic !== "boolean")
+    )
+      throw Error("Invalid camera");
+  }
   const s = p.snapshot;
   if (
     !s ||
@@ -107,5 +128,8 @@ export function parseProject(text: string): Project {
     },
     events,
     initialParams: p.initialParams ?? a,
+    camera: p.camera
+      ? { ...p.camera, orthographic: p.camera.orthographic ?? false }
+      : undefined,
   };
 }

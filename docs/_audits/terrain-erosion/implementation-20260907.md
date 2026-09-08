@@ -17,8 +17,8 @@ evidence_paths:
 ---
 # Canyon Lab implementation — 2026-09-07
 
-Status: local implementation and canonical gates passed; final soak and remote
-release workflow are being completed. This is a first-order release baseline,
+Status: local implementation, canonical gates and the 30-minute soak passed; remote
+release workflow is being completed. This is a first-order release baseline,
 not a claim that every item in the original research roadmap is implemented.
 
 ## Delivered
@@ -80,6 +80,12 @@ otherwise stated.
   normalized budgets <=2e-4. No canyon-shape validation claim.
 - `accelerated.json`: 512,000 steps / roughly 40 hydraulic minutes, including
   f64 re-summation of the raw GPU reservoirs. Finite and budget-bounded.
+- `soak-checkpoint.json`: completed 1802.45 wall seconds, 432,608 steps and
+  2059.05 hydraulic seconds at 256². No guard failures or browser errors; maximum
+  normalized water error 9.59e-6 and grain error 1.18e-4 (cap 2e-4). A dig edit
+  at minute five remained effective. Coarse browser heap counters do not establish
+  total-memory stability. This tests the final numerical kernels; subsequent
+  camera, overlay and presentation-queue refinements have separate UI checks.
 - `performance.json`: 128²,256²,512² at 1440×900 on AMD RDNA2, Chrome 148.0.7778.96;
   60 rendered fps, about 240 substeps/s. Achieved simulated seconds per wall
   second decrease with resolution (approximately 2.76,1.30,.75). Measurements

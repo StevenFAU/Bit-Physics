@@ -21,7 +21,7 @@ export const scenes = [
     id: "shield",
     title: "Sediment Shield",
     subtitle: "The same rock, a different cover.",
-    hint: "Loose cover protects the right branch. Compare incision with the bare left branch.",
+    hint: "Loose cover protects the right half. Compare incision with the bare left half.",
   },
 ];
 export function initial(n: number, scene: string): Float32Array {

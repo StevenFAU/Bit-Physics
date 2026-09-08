@@ -61,6 +61,10 @@ await page.locator("#section-toggle").click();
 await page.locator("#inspect").click();
 await page.waitForTimeout(1000);
 await page.screenshot({ path: new URL("instruments.png", out).pathname });
+await page.locator("#plan").click();
+await page.locator("#overlay").selectOption("4");
+await page.waitForTimeout(200);
+await page.screenshot({ path: new URL("plan-flow.png", out).pathname });
 const downloadPromise = page.waitForEvent("download");
 await page.getByRole("button", { name: "Project & quality" }).click();
 await page.getByRole("button", { name: "Export project", exact: true }).click();
@@ -75,6 +79,9 @@ const imported = await page.evaluate(async () =>
   Array.from((await window.__canyon.gpu.snapshot()).data),
 );
 results.importExact = before.every((x, i) => x === imported[i]);
+results.cameraRestored = await page.evaluate(
+  () => window.__canyon.renderer.orthographic === true,
+);
 await page.locator("#inspect").click();
 await page.setViewportSize({ width: 390, height: 844 });
 await page.waitForTimeout(300);
@@ -99,6 +106,7 @@ if (
   !results.buildChangesTerrain ||
   !results.undoExact ||
   !results.importExact ||
+  !results.cameraRestored ||
   !results.replayExact ||
   results.mobileOverflow ||
   results.zoomOverflow ||

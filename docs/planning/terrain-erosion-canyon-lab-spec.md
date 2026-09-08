@@ -1,5 +1,7 @@
 # Canyon Lab — terrain erosion WebGPU specification
 
+> **Implementation update:** Canyon Lab now has a verified first-order WebGPU baseline. The historical targets below remain the research roadmap; see [implementation audit](../_audits/terrain-erosion/implementation-20260907.md) for delivered scope and evidence.
+
 > **Status:** research-backed candidate specification, v0.1. Researched 2026-09-06; finalized 2026-09-07. Implementation has not started. Numerical tolerances, device coverage, preset outcomes and performance figures stated as targets below are unmeasured.
 >
 > **Audience:** Bit-Physics owner and implementation/review contributors.

@@ -51,7 +51,9 @@ See packages/terrain-erosion/README.md. npm ci/build in web; pytest in package.
 - Delestre et al., SWASHES: https://arxiv.org/abs/1110.0288
 - Delestre et al., steep-bed limits: https://arxiv.org/abs/1206.4986
 ## 13. Productization status
-Implementation in progress. Release evidence is required before promotion.
+First-order WebGPU baseline implemented and locally verified, including a
+30-minute soak. See docs/_audits/terrain-erosion/implementation-20260907.md for
+measurements, scope differences and remote release status.
 ```yaml
 productization:
   web: true

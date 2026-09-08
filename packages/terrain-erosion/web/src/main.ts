@@ -300,9 +300,10 @@ async function boot() {
               data: Array.from(s.data),
               clock: Array.from(s.clock),
             },
-            events:comparing?events.slice(0,savedCursor):events,
+            events: comparing ? events.slice(0, savedCursor) : events,
             initialParams,
             camera: {
+              orthographic: renderer.orthographic,
               yaw: renderer.yaw,
               pitch: renderer.pitch,
               distance: renderer.distance,
@@ -386,13 +387,14 @@ async function boot() {
       gpu = new CanyonGpu(device, n);
       renderer = new CanyonRenderer($<HTMLCanvasElement>("view"), gpu);
       reset(data.scene);
-      quality.value=String(n);
+      quality.value = String(n);
       const s = {
         ...data.snapshot,
         data: new Float32Array(data.snapshot.data),
         clock: new Float32Array(data.snapshot.clock),
       };
       gpu.restore(s);
+      if (data.camera) Object.assign(renderer, data.camera);
       syncControls();
       field = s.data;
       events = data.events as EditEvent[];
