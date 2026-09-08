@@ -148,3 +148,24 @@ benchmarks; (2) a bounded multilayer undercut/arch mode with support/collapse
 accounting; (3) bedload and grain sorting; (4) richer checkpoint comparisons and
 calibrated scene authoring. Integrated-GPU measurements should precede raising
 quality defaults.
+
+## Release completion — 2026-09-07 EDT
+
+PR #36 merged as f77ca4adbbeac3431491902cc223fb1c087f16e4 after 84
+successful checks (four non-applicable jobs skipped). The test-first commits are
+preserved. Pages workflow 34173069144 passed all 22 simulation browser gates and
+published the catalog. The live Canyon Lab was checked at 2026-09-08 00:30:42 UTC:
+HTTP 200, all four production proof fixtures passed, both intentional defects
+were detected, and 2400 additional steps advanced finite state with no guard or
+browser errors. The live JavaScript bytes match the locally verified production
+bundle. See `packages/terrain-erosion/evidence/live-release.json` and
+`ui/live-release.png`. This release is complete; the earlier status above records
+the pre-publication checkpoint.
+
+Live: https://stevenfau.github.io/Bit-Physics/sims/terrain-erosion/
+Deployment: https://github.com/StevenFAU/Bit-Physics/actions/runs/34173069144
+
+One unrelated Flow Lenia exact-fixture comparison transiently failed at about
+9e-17 on a CI runner. Its isolated rerun and the merged-main strict workflow
+passed without source or tolerance changes. The deployed numerical model retains
+the scope limits and subjective ratings documented above.

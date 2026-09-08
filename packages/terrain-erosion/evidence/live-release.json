@@ -1,0 +1,27 @@
+{
+  "url": "https://stevenfau.github.io/Bit-Physics/sims/terrain-erosion/",
+  "checkedAt": "2026-09-08T00:30:42.954Z",
+  "status": 200,
+  "script": "./assets/index-3kQFwpVH.js",
+  "proof": "PASS lake\n  budget 0.00e+0 \u00b7 analytic 1.63e-7\n\nPASS dam\n  budget 3.79e-8\n\nPASS settling\n  budget 4.48e-7 \u00b7 analytic 1.38e-8\n\nPASS channel\n  budget 1.28e-5\n\nDETECTED missing bed force\n  defect 3.27e+1\n\nDETECTED missing sediment credit\n  defect 6.09e+0",
+  "before": {
+    "time": 0.04150121659040451,
+    "steps": 4
+  },
+  "after": {
+    "time": 14.36673355102539,
+    "steps": 2404,
+    "finite": true,
+    "guard": 0
+  },
+  "catalogContainsCanyon": true,
+  "errors": [],
+  "bundleSha256": "c9490e1a90d53be64eac5541c91af21028a22eb028c972937d95ee211d425aab",
+  "matchesLocalProductionBundle": true,
+  "deployedCommit": "f77ca4adbbeac3431491902cc223fb1c087f16e4",
+  "deployment": {
+    "conclusion": "success",
+    "status": "completed",
+    "url": "https://github.com/StevenFAU/Bit-Physics/actions/runs/34173069144"
+  }
+}
