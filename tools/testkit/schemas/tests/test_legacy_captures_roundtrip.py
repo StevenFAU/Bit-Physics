@@ -71,7 +71,12 @@ _HDF5_MAGIC = b"\x89HDF\r\n\x1a\n"
 # Stack-C capture (no gradient_fields; the second C++-emitted corpus entry) → 39 (30 real + 9 ph).
 # phase-6 C-1 U-5 (eulerian-smoke-frontier-vpfm) adds a real schema-1.0.0 short-horizon
 # Stack-C capture (8-step n=16 tg2d vorticity-lift) → 40 (31 real + 9 ph).
-_EXPECTED_TOTAL = 40
+# phase-6 C-1 U-6 (phase-6-c1-edge) adds a real short-horizon Stack-C capture → 41
+# (32 real + 9 ph). phase-6 pic-flip (dam-break-3d-apic-24cube-seed42-step120) adds a
+# real schema-1.0.0 capture → 42 (33 real + 9 ph). Both landed without bumping this
+# lock, which went unnoticed because no CI job ran this directory (python-strict now
+# does — see .github/workflows/python-strict.yml).
+_EXPECTED_TOTAL = 42
 _EXPECTED_PLACEHOLDERS = 9
 
 

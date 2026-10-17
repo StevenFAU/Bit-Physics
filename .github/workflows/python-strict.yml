@@ -81,6 +81,15 @@ jobs:
         working-directory: tools/testkit
         run: uv run pytest -W error determinism/tests/
 
+      # Schema + legacy-corpus drift guards (test_corpus_partition_is_stable et al.).
+      # No CI job ran this directory before 2026-10, so the corpus lock silently went
+      # stale (40 asserted vs 42 on disk). The round-trip test also reads Stack-E
+      # captures through common_warp, which is not a testkit dependency — overlay it
+      # for this step only. Reads only the legacy-captures LFS set pulled above.
+      - name: Schema + legacy-corpus guards
+        working-directory: tools/testkit
+        run: uv run --with-editable ../../common/common-warp pytest -W error schemas/tests/
+
   # Interfacial Fluid Lab: f64 number-density SPH oracle and analytic gates.
   test-sph-multiphase:
     runs-on: ubuntu-latest
