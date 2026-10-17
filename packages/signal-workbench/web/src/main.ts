@@ -410,8 +410,18 @@ async function start(): Promise<void> {
     genNote.hidden = !note;
   };
 
-  const audioGroup = panel.addGroup("audio (rendering only — never gated)");
+  // Sound is this sim's differentiator (the only audible one), so it leads the
+  // controls with a primary button instead of a bare native one under a
+  // jargon fold (2026-10 review finding 8). Still rendering-only, never gated.
+  const audioGroup = panel.addGroup("sound", {
+    hint: "Hear the generated signal through your speakers. Playback is presentation only — it is never part of the verification gate.",
+  });
+  const audioFold = audioGroup.parentElement;
+  audioFold?.parentElement?.prepend(audioFold);
   const playBtn = document.createElement("button");
+  playBtn.type = "button";
+  playBtn.className = "bps-btn";
+  playBtn.setAttribute("aria-pressed", "false");
   playBtn.textContent = "▶ hear the signal";
   playBtn.addEventListener("click", () => {
     void (async () => {
@@ -419,10 +429,12 @@ async function start(): Promise<void> {
         st.audioGain = 0;
         await audio.stop();
         playBtn.textContent = "▶ hear the signal";
+        playBtn.setAttribute("aria-pressed", "false");
       } else {
         await audio.start(); // ctx.resume() inside the gesture (§ 5.2)
         st.audioGain = 0.25;
         playBtn.textContent = "⏸ mute";
+        playBtn.setAttribute("aria-pressed", "true");
       }
       syncAudio();
     })();

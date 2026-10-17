@@ -77,8 +77,8 @@ export class EcosystemRenderer {
 
   render(time: number): void {
     if (this.solvers.length === 0) return;
-    const width = Math.max(1, Math.floor(this.canvas.clientWidth * devicePixelRatio));
-    const height = Math.max(1, Math.floor(this.canvas.clientHeight * devicePixelRatio));
+    const width = Math.max(1, Math.floor(this.canvas.clientWidth * Math.min(devicePixelRatio || 1, 2)));
+    const height = Math.max(1, Math.floor(this.canvas.clientHeight * Math.min(devicePixelRatio || 1, 2)));
     if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
     const paneWidth = width / this.solvers.length;
     const raw = new ArrayBuffer(256 * this.solvers.length);

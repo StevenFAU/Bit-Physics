@@ -841,6 +841,7 @@ async function main(): Promise<void> {
 
   // ---- INTERACT: swarm scaling ----------------------------------------------
   const swarmGroup = panel.addGroup("swarm — scale the agent count");
+  const swarmChips: HTMLButtonElement[] = [];
   {
     const row = document.createElement("div");
     row.className = "ig-chiprow";
@@ -860,6 +861,7 @@ async function main(): Promise<void> {
         setSwarm(i);
       });
       row.appendChild(c);
+      swarmChips.push(c);
     });
     swarmGroup.appendChild(row);
     const note = document.createElement("div");
@@ -1048,6 +1050,15 @@ async function main(): Promise<void> {
 
   let suspended = false;
   let stepsPerFrame = 2;
+
+  // Boot into the 200k swarm (2026-10 review): at the canonical 500 agents a
+  // visitor sees a few lonely wisps, not the transport network the card
+  // promises; 200k on 768² holds 60 fps on a discrete GPU. Live-only — the
+  // capture still resets to the canonical 500-agent / 256² seed-42 run, and the
+  // science scenarios still drop back to the canonical grid.
+  const BOOT_SWARM = 2;
+  swarmChips.forEach((b, i) => b.setAttribute("aria-pressed", String(i === BOOT_SWARM)));
+  setSwarm(BOOT_SWARM);
 
   // low-rate live readback: mass gate + Study diagnostics (sequence-guarded)
   window.setInterval(() => {

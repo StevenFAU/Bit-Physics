@@ -108,3 +108,8 @@ html, body { margin: 0; min-height: 100%; background: #05080c; }
 
 @media (pointer: fine) { .fl-touch-tools { display: none; } }
 @media (prefers-reduced-motion: reduce) { #view { scroll-behavior: auto; } }
+
+/* Play mode is the clean canvas (2026-10 review): the read-only inspector stays
+   hidden until the visitor actually samples the field (first press on the
+   canvas — see main.ts). Study mode always shows it. */
+body[data-bp2-mode="play"] #inspector-host:not([data-sampled]) { display: none; }
