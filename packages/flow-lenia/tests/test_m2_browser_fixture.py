@@ -41,6 +41,24 @@ def _decode(record: dict[str, Any]) -> np.ndarray[Any, np.dtype[np.float32]]:
     return values.reshape(record["shape"])
 
 
+# Entries that are analytically zero leave the f64 oracle as cancellation residue
+# (~1e-16) whose exact bits depend on the CPU's FFT/SIMD summation order. CI runners
+# differ: this test passed and then failed on the same code with 16/1536 entries off
+# by at most 8.9e-17. Every meaningful entry stays pinned bit-exactly; entries below
+# the roundoff floor only have to stay below it (meaningful values here are >= 1e-6).
+_ROUNDOFF_FLOOR = 1e-13
+
+
+def _assert_pinned(
+    actual: np.ndarray[Any, np.dtype[np.float32]],
+    oracle: np.ndarray[Any, np.dtype[np.float64]],
+) -> None:
+    desired = oracle.astype(np.float32)
+    residue = np.abs(oracle) < _ROUNDOFF_FLOOR
+    np.testing.assert_array_equal(actual[~residue], desired[~residue])
+    assert np.all(np.abs(actual[residue]) < _ROUNDOFF_FLOOR), np.abs(actual[residue]).max()
+
+
 def test_m2_fixture_is_generated_from_the_f64_oracle() -> None:
     fixture = json.loads(FIXTURE.read_text(encoding="utf-8"))
     config = default_ecosystem_config(grid=16, seed=91)
@@ -56,16 +74,9 @@ def test_m2_fixture_is_generated_from_the_f64_oracle() -> None:
             expected_four, _ = step_reference(expected_four, config, kernels=kernels)
         fields = case["fields"]
         np.testing.assert_array_equal(_decode(fields["initial_mass"]), initial.astype(np.float32))
-        np.testing.assert_array_equal(
-            _decode(fields["displacement_step_1"]),
-            diagnostics.displacement.astype(np.float32),
-        )
-        np.testing.assert_array_equal(
-            _decode(fields["mass_step_1"]), expected_one.astype(np.float32)
-        )
-        np.testing.assert_array_equal(
-            _decode(fields["mass_step_4"]), expected_four.astype(np.float32)
-        )
+        _assert_pinned(_decode(fields["displacement_step_1"]), diagnostics.displacement)
+        _assert_pinned(_decode(fields["mass_step_1"]), expected_one)
+        _assert_pinned(_decode(fields["mass_step_4"]), expected_four)
         if case["name"] == "smooth-periodic":
             for field_name, expected in (
                 ("perception_step_1", diagnostics.perception),
@@ -74,6 +85,4 @@ def test_m2_fixture_is_generated_from_the_f64_oracle() -> None:
                 ("alpha_step_1", diagnostics.alpha),
                 ("flow_step_1", diagnostics.flow),
             ):
-                np.testing.assert_array_equal(
-                    _decode(fields[field_name]), expected.astype(np.float32)
-                )
+                _assert_pinned(_decode(fields[field_name]), expected)
