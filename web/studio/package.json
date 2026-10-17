@@ -1,0 +1,14 @@
+{
+  "name": "@bp/studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Field Studies — the shell: top bar, scene heading, tool rail, transport, drawer, controls, callouts, proof cards.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./studio.css": "./src/studio.css"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

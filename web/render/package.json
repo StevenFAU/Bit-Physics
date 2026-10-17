@@ -1,0 +1,16 @@
+{
+  "name": "@bp/render",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Field Studies — HDR rgba16float target, measured exposure, tone map, blue-noise dither, Camera2D, colormap LUTs, FieldView2D.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@bp/gpu": "*"
+  }
+}

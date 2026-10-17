@@ -1,0 +1,13 @@
+{
+  "name": "@bp/runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Field Studies — fixed-step clock, edit events, history (save/restore/A-B/undo), URL state, quality governor.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

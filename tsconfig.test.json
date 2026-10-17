@@ -1,0 +1,4 @@
+{
+  "extends": "./web/tsconfig.base.json",
+  "include": ["web/*/src/**/*.test.ts", "packages/*/web/test/**/*.ts"]
+}

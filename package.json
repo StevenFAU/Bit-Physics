@@ -1,0 +1,23 @@
+{
+  "name": "bit-physics-web",
+  "private": true,
+  "description": "npm workspace for the WebGPU browser frontends (packages/<sim>/web, one package per sim) and the shared Field Studies packages (web/*). One lockfile; each sim keeps its own build and dist/.",
+  "type": "module",
+  "workspaces": [
+    "web/*",
+    "packages/*/web"
+  ],
+  "scripts": {
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "test": "vitest run",
+    "typecheck:tests": "tsc --noEmit -p tsconfig.test.json"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "axe-core": "4.13.0",
+    "typescript": "6.0.3",
+    "vite": "6.4.3",
+    "vitest": "3.2.4"
+  }
+}

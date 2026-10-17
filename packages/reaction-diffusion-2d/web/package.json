@@ -13,6 +13,13 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
+  },
   "devDependencies": {
     "@webgpu/types": "0.1.70",
     "typescript": "6.0.3",
