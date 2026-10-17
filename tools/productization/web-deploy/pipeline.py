@@ -192,6 +192,15 @@ def _qualifies(web: Path) -> tuple[bool, str]:
 
 
 def discover_qualifying_sims() -> list[SimSpec]:
+    # sims.json is the single registry of published sims (check_registry.py holds
+    # every other list to it); GATE_KIND must cover exactly the same set.
+    registry = {s["name"] for s in json.loads((TOOL / "sims.json").read_text())["sims"]}
+    if registry != set(GATE_KIND):
+        raise SystemExit(
+            "pipeline.py GATE_KIND disagrees with sims.json: "
+            f"missing {sorted(registry - set(GATE_KIND))}, "
+            f"unregistered {sorted(set(GATE_KIND) - registry)}"
+        )
     sims: list[SimSpec] = []
     for name, rel in sorted(WEB_DIR.items()):
         web = REPO / rel

@@ -1,0 +1,35 @@
+{
+  "$comment": [
+    "Single registry of the published browser sims, in landing-page order.",
+    "Add a new sim HERE first. Everything else that lists sims reads this file or",
+    "is checked against it by check_registry.py (run in the web-deploy discover job):",
+    "pipeline.py GATE_KIND, check-links.mjs, assets/make-posters.mjs, assets/make-loops.mjs,",
+    "assets/make-splash.mjs, the landing cards in pages/index.html, and the committed",
+    "pages/assets/<sim>.png + <sim>.webm. A sim with 'splash': false is deliberately",
+    "absent from the splash reel; splash_note says why."
+  ],
+  "sims": [
+    { "name": "boids-3d" },
+    { "name": "sph-water" },
+    { "name": "mpm-multimaterial" },
+    { "name": "strange-attractors" },
+    { "name": "boids-2d" },
+    { "name": "physarum" },
+    { "name": "pic-flip" },
+    { "name": "sph-multiphase" },
+    { "name": "lbm-multiphase" },
+    { "name": "terrain-erosion", "splash": false, "splash_note": "not yet filmed for the reel" },
+    { "name": "eulerian-smoke" },
+    { "name": "curl-noise" },
+    { "name": "schrodinger-smoke" },
+    { "name": "flow-lenia", "splash": false, "splash_note": "not yet filmed for the reel" },
+    { "name": "heat-equation" },
+    { "name": "reaction-diffusion-2d" },
+    { "name": "phase-field-fracture" },
+    { "name": "fdtd-optics" },
+    { "name": "signal-workbench" },
+    { "name": "ising-classical", "splash": false, "splash_note": "not yet filmed for the reel" },
+    { "name": "neural-ca", "splash": false, "splash_note": "cut: the organism renders on a white field that strobes the dark reel" },
+    { "name": "mandelbulb-explorer", "splash": false, "splash_note": "not yet filmed for the reel" }
+  ]
+}

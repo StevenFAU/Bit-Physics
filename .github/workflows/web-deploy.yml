@@ -51,6 +51,10 @@ jobs:
         uses: astral-sh/setup-uv@v8.1.0
       - name: Set up Python
         run: uv python install 3.12
+      - name: Sim registry drift check (sims.json vs every sim list)
+        # One registry (tools/productization/web-deploy/sims.json) instead of six
+        # hand-kept lists that drifted (2026-10 review). Stdlib only.
+        run: uv run python tools/productization/web-deploy/check_registry.py
       - name: Discover (§6.1 qualifying Stack-B web sims)
         id: disc
         run: |

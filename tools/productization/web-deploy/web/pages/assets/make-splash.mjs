@@ -182,6 +182,23 @@ const CLIPS = [
   // dark ambient reel and washes out the typed line (dark-render follow-up).
 ];
 
+// Registry guard (2026-10 review): the reel films every registered sim except
+// those marked "splash": false in tools/productization/web-deploy/sims.json
+// (with a splash_note saying why), and nothing unregistered. Fail loud — the
+// reel silently lacked flow-lenia + Canyon Lab. check_registry.py holds CI to
+// the same rule.
+{
+  const registry = JSON.parse(await readFile(join(HERE, "../../../sims.json"), "utf8")).sims;
+  const filmed = new Set(CLIPS.map((c) => c.sim));
+  const unfilmed = registry.filter((s) => s.splash !== false && !filmed.has(s.name)).map((s) => s.name);
+  const unregistered = [...filmed].filter((n) => !registry.some((s) => s.name === n));
+  const stale = registry.filter((s) => s.splash === false && filmed.has(s.name)).map((s) => s.name);
+  if (unfilmed.length || unregistered.length || stale.length) {
+    console.error(`make-splash: reel drift vs sims.json — unfilmed [${unfilmed.join(", ")}], unregistered [${unregistered.join(", ")}], filmed but marked splash:false [${stale.join(", ")}]`);
+    process.exit(1);
+  }
+}
+
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
   ".css": "text/css", ".json": "application/json", ".bin": "application/octet-stream",
@@ -221,10 +238,13 @@ async function film(browser, clip) {
     await page.addInitScript(() => {
       window.__posterFrames = 0;
       window.__posterTarget = Infinity;
+      // Parked callbacks queue (2026-10): a sim with a second, one-shot RAF
+      // request (Canyon Lab) used to overwrite the main loop's single parked
+      // slot, dropping the loop and stalling the pump. Release runs them all.
       window.__origRAF = window.requestAnimationFrame.bind(window);
       window.requestAnimationFrame = (cb) => {
         if (window.__posterFrames >= window.__posterTarget) {
-          window.__pendingCb = cb;
+          (window.__parked ??= []).push(cb); window.__pendingCb = cb;
           return 0;
         }
         window.__posterFrames += 1;
@@ -285,9 +305,10 @@ async function film(browser, clip) {
       await canvas.screenshot({ path: join(frames, `${String(i).padStart(5, "0")}.png`) });
       await page.evaluate((gap) => {
         window.__posterTarget += gap;
-        const cb = window.__pendingCb;
+        const cbs = window.__parked ?? [];
+        window.__parked = [];
         window.__pendingCb = null;
-        if (cb) window.__origRAF(cb);
+        for (const cb of cbs) window.__origRAF(cb);
       }, clip.gap);
       await page.waitForFunction(() => window.__pendingCb !== null && window.__pendingCb !== undefined,
         undefined, { timeout: 30000, polling: 50 });
