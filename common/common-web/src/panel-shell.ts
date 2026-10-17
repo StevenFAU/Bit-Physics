@@ -249,9 +249,16 @@ export function createSettingsPanel(
   // header: title + (optional) Play/Study toggle
   const head = el("header", "bps-head");
   // The panel title is the page's <h1> (it was an <h3> with no h1/h2 above it)
-  // unless the page already has its own (terrain-erosion's scene heading);
-  // .bps-title's font shorthand keeps the visual size unchanged either way.
-  const h = el(document.querySelector("h1") ? "h2" : "h1", "bps-title");
+  // unless the page already exposes its own (terrain-erosion's scene heading).
+  // Hidden, inert or aria-hidden h1s don't count (flow-lenia keeps one in a
+  // hidden probe section). .bps-title's font shorthand keeps the visual size
+  // unchanged either way.
+  const pageHasH1 = Array.from(document.querySelectorAll("h1")).some(
+    (h1) =>
+      h1.getClientRects().length > 0 &&
+      !h1.closest('[hidden], [inert], [aria-hidden="true"]'),
+  );
+  const h = el(pageHasH1 ? "h2" : "h1", "bps-title");
   h.textContent = title;
   head.appendChild(h);
 
