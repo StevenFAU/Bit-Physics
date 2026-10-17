@@ -179,3 +179,60 @@ def test_smoke_results_json_has_required_keys(pipeline: ModuleType) -> None:
     ):
         assert k in doc
     assert doc["sub_phase"] == "web-deploy"
+
+
+# --------------------------------------------------------------------------- #
+# Extra gated pages (rebuild v2): same dist, same gate, every page driven
+# --------------------------------------------------------------------------- #
+def test_rd2d_v2_page_is_discovered_and_gated(pipeline: ModuleType) -> None:
+    sims = {s.name: s for s in pipeline.discover_qualifying_sims()}
+    rd = sims["reaction-diffusion-2d"]
+    assert rd.metadata["pages"] == ["", "v2/"]
+    # every other sim keeps exactly its root page
+    for name, s in sims.items():
+        if name not in pipeline.PAGES:
+            assert s.metadata["pages"] == [""]
+
+
+def _fake_web(root: Path, main_src: str, pages: dict[str, str] | None = None) -> Path:
+    web = root / "web"
+    (web / "src").mkdir(parents=True)
+    (web / "package.json").write_text("{}")
+    (web / "src" / "main.ts").write_text(main_src)
+    for page, src in (pages or {}).items():
+        (web / page).mkdir(parents=True, exist_ok=True)
+        (web / page / "index.html").write_text("<!doctype html>")
+        entry = web / "src" / page / "main.ts"
+        entry.parent.mkdir(parents=True, exist_ok=True)
+        entry.write_text(src)
+    return web
+
+
+def test_discovery_accepts_either_shell_marker(pipeline: ModuleType, tmp_path) -> None:
+    v1 = _fake_web(tmp_path / "a", "createSettingsPanel(); exposeCapture();")
+    v2 = _fake_web(tmp_path / "b", "createStudio(); exposeCapture();")
+    neither = _fake_web(tmp_path / "c", "exposeCapture();")
+    no_hook = _fake_web(tmp_path / "d", "createStudio();")
+    assert pipeline._qualifies(v1)[0]
+    assert pipeline._qualifies(v2)[0]
+    assert not pipeline._qualifies(neither)[0]
+    assert not pipeline._qualifies(no_hook)[0]
+
+
+def test_an_extra_page_must_carry_the_capture_contract(
+    pipeline: ModuleType, tmp_path, monkeypatch
+) -> None:
+    good = _fake_web(
+        tmp_path / "a",
+        "createSettingsPanel(); exposeCapture();",
+        {"v2/": "createStudio(); exposeCapture();"},
+    )
+    bad = _fake_web(
+        tmp_path / "b",
+        "createSettingsPanel(); exposeCapture();",
+        {"v2/": "createStudio();"},
+    )
+    monkeypatch.setitem(pipeline.PAGES, "fake", (("v2/", "src/v2/main.ts"),))
+    assert pipeline._qualifies(good, "fake")[0]
+    ok, why = pipeline._qualifies(bad, "fake")
+    assert not ok and "capture-export" in why
