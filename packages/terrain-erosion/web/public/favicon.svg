@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Canyon Lab">
+  <!-- Canyon Lab favicon: layered strata cut by a river, in Canyon Lab's own
+       palette (deep slate field, sandstone bands, mint water). Static bytes. -->
+  <rect width="64" height="64" rx="13" fill="#10191d"/>
+  <path d="M6 22h52v8H6z" fill="#c98a5a"/>
+  <path d="M6 32h52v6H6z" fill="#8f4f33"/>
+  <path d="M6 40h52v7H6z" fill="#d9a774"/>
+  <path d="M6 49h52v7H6z" fill="#a8643d"/>
+  <path d="M27 18c4 9 1 15 5 22s9 10 6 18h-9c2-7-3-10-6-17s1-14 0-23z" fill="#10191d"/>
+  <path d="M28.5 20c3.5 9 .5 15 4.5 22s7.5 9.5 5 16h-4c1.5-6-3-9.5-5.5-16S29.5 28 28.5 20z" fill="#8bd7bd"/>
+</svg>

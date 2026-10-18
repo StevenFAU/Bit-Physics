@@ -96,9 +96,17 @@ def main() -> int:
         ux_profile = u[0].mean(axis=(0, 2))  # average over x, z -> (ny,)
         ny = ux_profile.shape[0]
         mid = ny // 2
-        # max near the centre, monotone decrease towards both walls (sampled), near-zero
+        # max at the centre, monotone decrease towards both walls (sampled), near-zero
         # at the wall layers (half-way BB: wall sits between node 0 and the ghost).
-        assert ux_profile[mid] == ux_profile.max()
+        # With half-way bounce-back the analytic peak lies on the channel mid-plane; for
+        # even ny that plane falls BETWEEN nodes mid-1 and mid, which are analytically
+        # tied, so which one wins argmax is a last-bit rounding tie-break (this exact
+        # `ux[mid] == max` form flaked red on CI). Accept either centre node.
+        centre = {(ny - 1) // 2, mid}
+        assert int(np.argmax(ux_profile)) in centre, (
+            int(np.argmax(ux_profile)),
+            centre,
+        )
         assert ux_profile[0] < 0.5 * ux_profile[mid]
         assert ux_profile[-1] < 0.5 * ux_profile[mid]
         sym_err = float(np.max(np.abs(ux_profile - ux_profile[::-1])))

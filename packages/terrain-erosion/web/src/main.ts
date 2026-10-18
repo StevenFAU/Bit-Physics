@@ -117,6 +117,8 @@ async function boot() {
   reset();
   const panel = createSettingsPanel("Canyon Lab", {
     caption: "An evolving landscape, with inspectable water and grain budgets.",
+    // The panel lives inside the Instruments drawer, which has its own toggle.
+    collapsible: false,
     onCapture: async () => {
       panel.setStatus("Running canonical GPU capture…");
       exposeCapture(await canonical(device), { download: true });

@@ -28,14 +28,16 @@ export async function createContext(
 ): Promise<DeviceContext> {
   const gpu = (globalThis as { navigator?: { gpu?: GPU } }).navigator?.gpu;
   if (gpu === undefined) {
+    // No "WebGPU unavailable:" prefix here — the sim pages add it themselves
+    // (`WebGPU unavailable: ${e.message}`), which printed it twice.
     throw new Error(
-      "WebGPU unavailable: navigator.gpu is undefined (browser without WebGPU support, " +
+      "navigator.gpu is undefined (browser without WebGPU support, " +
         "or Node without a WebGPU runtime shim).",
     );
   }
   const adapter = await gpu.requestAdapter(options.adapterOptions);
   if (adapter === null) {
-    throw new Error("WebGPU unavailable: requestAdapter returned null.");
+    throw new Error("requestAdapter returned null (no compatible GPU adapter).");
   }
   const device = await adapter.requestDevice(options.deviceDescriptor);
   return {

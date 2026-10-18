@@ -155,7 +155,26 @@ const SIMS = {
   // Flow Lenia maze: motion is the mass-conservative flow responding to a
   // slowly orbiting affinity beacon. The loop wraps with a declared cut.
   "flow-lenia": { start: 40, shots: 280, gap: 2, fps: 30, px: 512, crf: 48, query: "?arena=1&preset=maze-navigation&grid=256", hide: [".fl-hud", ".fl-experiment-note", ".fl-inspector", ".fl-arena-metrics", ".fl-lab-switch"] },
+  // Canyon Lab (terrain-erosion): the river working the default plateau scene,
+  // app-shell chrome hidden (same list as the poster). Added 2026-10 — the card
+  // was the only static <img> on the landing page (registry drift).
+  "terrain-erosion": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 48, hide: ["body > header", ".scene-heading", "#tools", ".tool-options", ".viewport-actions", "#hint", "footer", "#toast", "#section"] },
 };
+
+// Registry guard (2026-10 review): every sim in the single registry
+// (tools/productization/web-deploy/sims.json) needs a config above, and every
+// config must be a registered sim — fail loud instead of silently skipping a
+// new sim (how Canyon Lab's card shipped a still). check_registry.py holds CI
+// to the same rule.
+const REGISTRY = JSON.parse(await readFile(join(HERE, "../../../sims.json"), "utf8")).sims.map((s) => s.name);
+{
+  const unconfigured = REGISTRY.filter((n) => !(n in SIMS));
+  const unregistered = Object.keys(SIMS).filter((n) => !REGISTRY.includes(n));
+  if (unconfigured.length || unregistered.length) {
+    console.error(`make-loops: config drift vs sims.json — unconfigured [${unconfigured.join(", ")}], unregistered [${unregistered.join(", ")}]`);
+    process.exit(1);
+  }
+}
 
 const MIME = {
   ".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript",
@@ -195,10 +214,13 @@ async function loop(browser, sim, cfg) {
     await page.addInitScript(() => {
       window.__posterFrames = 0;
       window.__posterTarget = Infinity;
+      // Parked callbacks queue (2026-10): a sim with a second, one-shot RAF
+      // request (Canyon Lab) used to overwrite the main loop's single parked
+      // slot, dropping the loop and stalling the pump. Release runs them all.
       window.__origRAF = window.requestAnimationFrame.bind(window);
       window.requestAnimationFrame = (cb) => {
         if (window.__posterFrames >= window.__posterTarget) {
-          window.__pendingCb = cb;
+          (window.__parked ??= []).push(cb); window.__pendingCb = cb;
           return 0;
         }
         window.__posterFrames += 1;
@@ -237,9 +259,10 @@ async function loop(browser, sim, cfg) {
       // make-posters.mjs trail-stack mechanism, verbatim).
       await page.evaluate((gap) => {
         window.__posterTarget += gap;
-        const cb = window.__pendingCb;
+        const cbs = window.__parked ?? [];
+        window.__parked = [];
         window.__pendingCb = null;
-        if (cb) window.__origRAF(cb);
+        for (const cb of cbs) window.__origRAF(cb);
       }, cfg.gap);
       await page.waitForFunction(() => window.__pendingCb !== null && window.__pendingCb !== undefined,
         undefined, { timeout: 30000, polling: 50 });

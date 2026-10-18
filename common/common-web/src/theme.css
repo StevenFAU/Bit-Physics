@@ -66,6 +66,11 @@
   --bad: #ff5d6c;
   --mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
   --cond: 'IBM Plex Sans Condensed', var(--mono);
+  /* Native controls (select popups, range tracks, checkboxes, scrollbars)
+   * render in the dark UA skin and pick up the house accent instead of
+   * Chrome's light-mode blue (2026-10 review finding 1). */
+  color-scheme: dark;
+  accent-color: var(--accent);
 }
 
 /* ------------------------------------------------ tokens (phosphor) ------ */
@@ -112,6 +117,11 @@ html, body {
 }
 
 .bps-stage { position: fixed; inset: 0; display: grid; place-items: center; }
+/* --bps-reserve is set by panel-shell.ts when the canvas fits left of the
+ * expanded panel: the stage and in-flow page content re-centre into the free
+ * area (0 = unchanged, the pre-v2.6 layout). */
+.bps-stage { right: var(--bps-reserve, 0px); }
+body { box-sizing: border-box; padding-right: var(--bps-reserve, 0px); }
 
 .bps-canvas {
   border-radius: 6px;
@@ -129,7 +139,11 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
 
 .bps {
   position: fixed; top: 12px; right: 12px; z-index: 10;
-  width: 264px; max-height: calc(100vh - 24px); overflow-y: auto;
+  /* border-box: max-height used to bound only the content box, so a tall
+   * panel overran the viewport bottom by its padding + border. */
+  box-sizing: border-box;
+  width: 320px; max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px); overflow-y: auto;
   overflow-x: hidden;
   background: var(--panel);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
@@ -148,6 +162,24 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
   margin: 0;
   font: 600 13px/1.3 var(--cond);
   letter-spacing: .08em; text-transform: uppercase; color: var(--txt);
+}
+
+/* Hide/show toggle (v2.6). Collapsed = header only. */
+.bps-collapse {
+  appearance: none; cursor: pointer; margin-left: auto;
+  border: 1px solid var(--line); border-radius: 5px;
+  background: transparent; color: var(--dim);
+  padding: 2px 8px; font: 500 10.5px/1.6 var(--mono); letter-spacing: .05em;
+}
+.bps-collapse:hover { color: var(--txt); border-color: var(--faint); }
+.bps[data-bp2-collapsed] > :not(.bps-head) { display: none; }
+.bps[data-bp2-collapsed] .bps-head { margin: 0; }
+.bps[data-bp2-collapsed] { width: auto; }
+
+/* Keyboard focus is visible everywhere in the chrome. */
+.bps button:focus-visible, .bps a:focus-visible,
+.bps select:focus-visible, .bps input:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
 }
 
 /* Top nav (P-8): portfolio + about, same chip idiom as the landing nav. */
@@ -194,10 +226,26 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
   gap: 10px; margin: 6px 0;
 }
 .bps-row label { color: var(--dim); }
+/* Controls grow into the row instead of a fixed 104 px box — selects do not
+ * ellipsize, so the fixed width clipped "30K (iGPU…" (review finding 6). */
 .bps-row select, .bps-row input {
   background: rgba(0, 0, 0, .35); color: var(--txt);
   border: 1px solid var(--line); border-radius: 4px;
-  padding: 3px 6px; font: inherit; width: 104px; box-sizing: border-box;
+  padding: 3px 6px; font: inherit; box-sizing: border-box;
+  width: auto; flex: 1 1 104px; min-width: 0; max-width: 100%;
+}
+.bps-row input[type="checkbox"], .bps-row input[type="radio"] {
+  flex: none; width: auto; padding: 0;
+}
+.bps-row input[type="range"] { padding: 0; border: 0; background: transparent; }
+/* Selects a sim builds outside .bps-row get the same house skin and never run
+ * past the panel edge. :where() keeps this at element specificity, so any
+ * class a sim styles its own selects with still wins. */
+:where(.bps) select {
+  max-width: 100%; box-sizing: border-box;
+  background: rgba(0, 0, 0, .35); color: var(--txt);
+  border: 1px solid var(--line); border-radius: 4px;
+  padding: 3px 6px; font: inherit;
 }
 .bps-row select:focus, .bps-row input:focus { outline: none; border-color: var(--accent); }
 
@@ -265,7 +313,67 @@ body[data-bp2-mode="study"] .bps-canvas { opacity: .58; }
 .bps-btn:hover:not(:disabled) { border-color: var(--accent); }
 .bps-btn:disabled { background: transparent; border-color: var(--line); color: var(--faint); cursor: default; }
 
+/* Capture is a developer/reproducibility action, not the page's primary call to
+ * action (review finding 8): keep it visible + clickable in the boot state (the
+ * driver contract) but drop it to a quiet outline button. */
+.bps-btn[data-bp="capture"] {
+  background: transparent; color: var(--dim); border-color: var(--line);
+  padding: 4px 7px; font-size: 11px;
+}
+.bps-btn[data-bp="capture"]:hover:not(:disabled) { color: var(--txt); border-color: var(--faint); }
+
 .bps-status {
   margin-top: 6px; min-height: 14px;
   font-size: 11px; color: var(--dim); word-break: break-word;
 }
+
+/* ------------------------------------------------- phones (v2.6) -------- */
+/* At phone width the 300 px floating panel covered ~95 % of the screen (review
+ * finding 2). It becomes a bottom sheet that boots collapsed to its header bar,
+ * so the simulation is what a visitor sees first. */
+@media (max-width: 640px) {
+  .bps {
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: auto; max-width: none; max-height: 55vh;
+    border-radius: 12px 12px 0 0; border-bottom: 0;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  }
+  .bps[data-bp2-collapsed] { width: auto; }
+  .bps-nav { margin-bottom: 8px; }
+  .bps-boot { bottom: 64px; }
+}
+
+/* ---------------------------------------------- reduced motion (v2.6) ---- */
+/* Chrome transitions only; pausing the simulation itself is per-sim. */
+@media (prefers-reduced-motion: reduce) {
+  .bps *, .bps-canvas, .bps-nogpu * { transition: none !important; animation: none !important; }
+}
+
+/* ---------------------------------------- no-WebGPU fallback (v2.6) ----- */
+/* Rendered by ./webgpu-fallback.ts when the browser has no adapter. */
+body[data-bp2-nogpu] .bps-boot { display: none; }
+.bps-nogpu {
+  position: fixed; inset: 0; z-index: 100;
+  display: grid; place-items: center; padding: 16px;
+  background: rgba(6, 9, 13, .94); overflow-y: auto;
+}
+.bps-nogpu-card {
+  width: min(520px, 100%);
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); padding: 18px 20px 16px;
+  font: 13px/1.55 var(--mono); color: var(--txt);
+}
+.bps-nogpu-media {
+  display: block; width: 100%; height: min(40vh, 480px); object-fit: cover;
+  border-radius: 6px; margin: 0 0 14px; background: #000;
+}
+.bps-nogpu-eyebrow {
+  margin: 0 0 4px; color: var(--faint);
+  font: 500 10px/1.4 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+}
+.bps-nogpu-title { margin: 0 0 8px; font: 600 22px/1.2 var(--cond); color: var(--txt); }
+.bps-nogpu-reason { margin: 0 0 8px; color: var(--warm); }
+.bps-nogpu-help { margin: 0 0 12px; color: var(--dim); }
+.bps-nogpu-links { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0; }
+.bps-nogpu-links a { color: var(--accent); text-decoration: none; border-bottom: 1px dotted var(--accent-d); }
+.bps-nogpu-links a:hover { border-bottom-color: var(--accent); }

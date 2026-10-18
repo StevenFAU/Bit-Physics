@@ -58,7 +58,7 @@ export class ArenaRenderer {
 
   render(time: number): void {
     if (!this.solver || !this.groups) return;
-    const width = Math.max(1, Math.floor(this.canvas.clientWidth * devicePixelRatio)); const height = Math.max(1, Math.floor(this.canvas.clientHeight * devicePixelRatio));
+    const width = Math.max(1, Math.floor(this.canvas.clientWidth * Math.min(devicePixelRatio || 1, 2))); const height = Math.max(1, Math.floor(this.canvas.clientHeight * Math.min(devicePixelRatio || 1, 2)));
     if (this.canvas.width !== width || this.canvas.height !== height) { this.canvas.width = width; this.canvas.height = height; }
     const raw = new ArrayBuffer(144); const u32 = new Uint32Array(raw); const f32 = new Float32Array(raw); const dynamics = this.solver.getArenaDynamics();
     u32.set([this.solver.n, VIEW_INDEX[this.view], 1, 0]);

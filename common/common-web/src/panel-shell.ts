@@ -48,11 +48,28 @@
 //   hint()    — hover/focus-revealed one-liner on any control row.
 //   setNarration() — live "what is happening" line under the caption.
 //
+// V2.6 SURFACE (2026-10 portfolio review — all additive, no per-sim wiring):
+//   collapse  — a hide/show toggle in the header (option `collapsible`, default
+//               true). Phones (≤640 px wide) boot collapsed so the simulation is
+//               visible first; theme.css turns the panel into a bottom sheet
+//               there. Wide viewports (incl. the 1280×720 headless driver) boot
+//               expanded, so the capture button stays visible in the boot state.
+//   a11y      — the title is the page <h1>; the panel is a labelled landmark;
+//               unnamed form controls get an aria-label from their row text and
+//               unnamed canvases get an image role + label (review finding 11).
+//   no-WebGPU — importing this module installs ./webgpu-fallback.ts, a full-page
+//               "needs WebGPU" card for browsers without an adapter (finding 12).
+//   layout    — when a .bps-stage canvas fits entirely left of the expanded
+//               panel, the stage (and in-flow page content) re-centres into that
+//               free area instead of sitting under the panel with dead space on
+//               the left (finding 15). Full-bleed canvases are left alone.
+//
 // Lives in common/common-web/ (NOT common/common-ts/) so it never enters the
 // Node-targeted `ts-strict` CI surface; per-sim Vite apps import it as source
 // via a relative path and bundle it for the browser.
 
 import { runCaptureExclusive } from "./capture-export.js";
+import "./webgpu-fallback.js";
 
 export type Tier = "test" | "demo" | "reference";
 export type Mode = "play" | "study";
@@ -120,6 +137,12 @@ export interface PanelShellOptions {
    * ⇒ absent DOM. The top portfolio/about nav is universal and needs no option.
    */
   caption?: string;
+  /**
+   * Render the header hide/show toggle (default true). A sim that hosts the
+   * panel inside its own chrome (terrain-erosion's Instruments drawer) passes
+   * false. Collapsing hides everything but the header via a root attribute.
+   */
+  collapsible?: boolean;
 }
 
 export interface GroupOptions {
@@ -202,6 +225,8 @@ export function createSettingsPanel(
   const root = el("div", "bps");
   root.setAttribute("data-bp-panel", "true");
   root.setAttribute("data-bp2-shell", "2");
+  root.setAttribute("role", "complementary");
+  root.setAttribute("aria-label", `${title} controls`);
 
   // top nav (P-8): back-to-portfolio + about — universal across all 7 sims
   // (one edit here, all inherit), same chip idiom as the P-6 landing nav.
@@ -223,7 +248,17 @@ export function createSettingsPanel(
 
   // header: title + (optional) Play/Study toggle
   const head = el("header", "bps-head");
-  const h = el("h3", "bps-title");
+  // The panel title is the page's <h1> (it was an <h3> with no h1/h2 above it)
+  // unless the page already exposes its own (terrain-erosion's scene heading).
+  // Hidden, inert or aria-hidden h1s don't count (flow-lenia keeps one in a
+  // hidden probe section). .bps-title's font shorthand keeps the visual size
+  // unchanged either way.
+  const pageHasH1 = Array.from(document.querySelectorAll("h1")).some(
+    (h1) =>
+      h1.getClientRects().length > 0 &&
+      !h1.closest('[hidden], [inert], [aria-hidden="true"]'),
+  );
+  const h = el(pageHasH1 ? "h2" : "h1", "bps-title");
   h.textContent = title;
   head.appendChild(h);
 
@@ -239,6 +274,26 @@ export function createSettingsPanel(
       modeButtons.set(m, b);
     }
     head.appendChild(seg);
+  }
+
+  // hide/show toggle (v2.6). Phones boot collapsed: the sim first, the panel a
+  // tap away. Everything but the header hides via [data-bp2-collapsed].
+  let setCollapsed: (collapsed: boolean) => void = () => {};
+  if (options.collapsible !== false) {
+    const toggle = el("button", "bps-collapse", "collapse");
+    toggle.type = "button";
+    setCollapsed = (collapsed: boolean): void => {
+      root.toggleAttribute("data-bp2-collapsed", collapsed);
+      requestAnimationFrame(updateStageReserve);
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+      toggle.textContent = collapsed ? "controls ▴" : "hide";
+      toggle.title = collapsed ? "Show the controls" : "Hide the controls";
+    };
+    toggle.addEventListener("click", () =>
+      setCollapsed(!root.hasAttribute("data-bp2-collapsed")),
+    );
+    head.appendChild(toggle);
+    setCollapsed(matchMedia("(max-width: 640px)").matches);
   }
   root.appendChild(head);
 
@@ -314,6 +369,8 @@ export function createSettingsPanel(
   tierLabel.textContent = "tier";
   const tierSel = el("select");
   tierSel.setAttribute("data-bp", "tier");
+  tierSel.id = "bps-tier";
+  tierLabel.htmlFor = tierSel.id;
   for (const t of tiers) {
     const o = el("option");
     o.value = t;
@@ -333,6 +390,8 @@ export function createSettingsPanel(
   const seedInput = el("input");
   seedInput.type = "number";
   seedInput.setAttribute("data-bp", "seed");
+  seedInput.id = "bps-seed";
+  seedLabel.htmlFor = seedInput.id;
   seedInput.value = String(state.seed);
   seedInput.addEventListener("change", () => {
     const v = Number.parseInt(seedInput.value, 10);
@@ -461,6 +520,45 @@ export function createSettingsPanel(
   else if (studySection) studySection.hidden = false;
 
   document.body.appendChild(root);
+  installAccessibleNames(root, title);
+
+  // Stage re-centring (v2.6, finding 15). --bps-reserve is the width the panel
+  // occupies on the right; theme.css pulls .bps-stage and the body's in-flow
+  // content (EXPLAIN/PROVE bars) in by it. Only when the canvas fits whole in
+  // the free area — a full-bleed canvas would otherwise be clipped — and only
+  // for a right-docked floating panel on a wide viewport.
+  let reserve = 0;
+  function updateStageReserve(): void {
+    const stage = document.querySelector<HTMLElement>(".bps-stage");
+    const canvas = stage?.querySelector("canvas");
+    let next = 0;
+    if (canvas && !root.hasAttribute("data-bp2-collapsed") && innerWidth > 640) {
+      const r = root.getBoundingClientRect();
+      const docked = getComputedStyle(root).position === "fixed" && r.left > innerWidth / 2;
+      if (docked && canvas.clientWidth > 0 && canvas.clientWidth <= r.left - 24) {
+        next = Math.ceil(innerWidth - r.left);
+      }
+    }
+    if (next === reserve) return;
+    reserve = next;
+    document.documentElement.style.setProperty("--bps-reserve", `${reserve}px`);
+    // Overlays a sim aligns to the canvas rect on resize (MST lines, axes)
+    // must re-measure after the canvas moved without a window resize.
+    window.dispatchEvent(new Event("resize"));
+  }
+  let reserveQueued = false;
+  const queueReserve = (): void => {
+    if (reserveQueued) return;
+    reserveQueued = true;
+    requestAnimationFrame(() => {
+      reserveQueued = false;
+      updateStageReserve();
+    });
+  };
+  window.addEventListener("resize", queueReserve);
+  const stageCanvas = document.querySelector(".bps-stage canvas");
+  if (stageCanvas) new ResizeObserver(queueReserve).observe(stageCanvas);
+  queueReserve();
 
   return {
     element: root,
@@ -493,4 +591,93 @@ export function createSettingsPanel(
       narrate.hidden = text.length === 0;
     },
   };
+}
+
+// --------------------------------------------------------------------------- //
+// Accessible names (v2.6, review finding 11)
+// --------------------------------------------------------------------------- //
+// Per-sim rows are built by hand (`<div class="bps-row"><span>ν</span><input>`),
+// so most controls had no accessible name (sph-water: 10 of 11). Rather than
+// touch every sim, the shell names what is still unnamed: a control takes the
+// text of the nearest preceding non-control sibling (its row label), and a
+// canvas becomes a labelled image. Never overrides a name a sim already set.
+
+const CONTROL_SELECTOR = "input:not([type=hidden]), select, textarea";
+
+function hasAccessibleName(c: HTMLElement): boolean {
+  if (c.getAttribute("aria-label") || c.getAttribute("aria-labelledby")) return true;
+  if (c.title) return true;
+  const labels = (c as HTMLInputElement).labels;
+  return labels !== null && labels !== undefined && labels.length > 0;
+}
+
+function rowLabelFor(c: HTMLElement, root: HTMLElement): string | null {
+  const isControl = (e: Element): boolean =>
+    e.matches("input, select, textarea, button, output, canvas");
+  const holdsControl = (e: Element): boolean =>
+    isControl(e) || e.querySelector("input, select, textarea, button") !== null;
+  // Climb at most three levels (a control is often wrapped in a styling box
+  // whose sibling is the label). At each level the nearest preceding sibling
+  // with text is the label; a preceding sibling that holds its own control is
+  // a different row, so stop looking sideways there.
+  let node: Element = c;
+  for (let depth = 0; depth < 3 && node !== root && node.parentElement; depth += 1) {
+    for (let sib = node.previousElementSibling; sib; sib = sib.previousElementSibling) {
+      if (holdsControl(sib)) break;
+      const t = sib.textContent?.trim();
+      if (t) return t;
+    }
+    // Control first in its row (checkbox then text): the row's own text.
+    const row = node.parentElement;
+    if (row === root) break;
+    const own = Array.from(row.childNodes)
+      .filter((n) => !(n instanceof Element && holdsControl(n)))
+      .map((n) => n.textContent?.trim() ?? "")
+      .filter((t) => t.length > 0)
+      .join(" ");
+    if (own) return own;
+    node = row;
+  }
+  return null;
+}
+
+function nameUnnamed(root: HTMLElement, title: string): void {
+  // The whole page, not just the panel: several sims build control strips of
+  // their own (boids-2d's lab UI, heat-equation's solver row).
+  for (const c of Array.from(document.body.querySelectorAll<HTMLElement>(CONTROL_SELECTOR))) {
+    if (hasAccessibleName(c) || c.closest('[data-bp2="webgpu-fallback"]')) continue;
+    const fold = c.closest(".bps-group")?.querySelector(".bps-fold")?.textContent?.trim();
+    const label = rowLabelFor(c, document.body) ?? (fold ? `${fold} setting` : null);
+    if (label) c.setAttribute("aria-label", label.slice(0, 120));
+  }
+  for (const cv of Array.from(document.querySelectorAll<HTMLCanvasElement>("canvas"))) {
+    if (cv.hasAttribute("aria-label") || cv.hasAttribute("aria-hidden")) continue;
+    cv.setAttribute("role", "img");
+    if (root.contains(cv)) {
+      const fold = cv.closest(".bps-group")?.querySelector(".bps-fold")?.textContent;
+      cv.setAttribute("aria-label", fold ? `${fold.trim()} plot` : `${title} plot`);
+    } else {
+      cv.setAttribute("aria-label", `${title} — live simulation view`);
+    }
+  }
+}
+
+function installAccessibleNames(root: HTMLElement, title: string): void {
+  let queued = false;
+  const run = (): void => {
+    queued = false;
+    nameUnnamed(root, title);
+  };
+  const schedule = (): void => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(run);
+  };
+  run();
+  // Sims append controls after createSettingsPanel returns (addGroup bodies),
+  // and some build controls or canvases late; re-run once per frame while the
+  // panel's structure changes, plus a couple of late sweeps for the rest.
+  new MutationObserver(schedule).observe(root, { childList: true, subtree: true });
+  setTimeout(schedule, 1500);
+  setTimeout(schedule, 6000);
 }

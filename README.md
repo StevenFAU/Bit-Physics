@@ -38,7 +38,7 @@ Shared per-stack infrastructure under `common/`:
 - `common-cpp` (Stack C / Vulkan + C++) — [`docs/common/cpp.md`](docs/common/cpp.md)
 - `common-ts` (Stack B / WebGPU + TypeScript) — [`docs/common/ts.md`](docs/common/ts.md)
 - `common-3dgs` (Stack E / 3D Gaussian Splatting) — [`docs/common/3dgs.md`](docs/common/3dgs.md)
-- `common-web` (Stack B / shared web-frontend TS: capture-export + settings panel, consumed by all 7 sim web builds)
+- `common-web` (Stack B / shared web-frontend TS: capture-export + panel shell + house theme, consumed by every browser sim — 22 at the 2026-09-08 deploy; the list is `tools/productization/web-deploy/sims.json`)
 
 ## License
 
@@ -52,7 +52,10 @@ foundation, 9 reference sims, cross-stack replication (Stacks B/C/D/E),
 Phase-3's seven sims + 3DGS/render-similarity infrastructure, Phase-4's nine
 frontier variants, and Phase-5 productization (web-deploy / binary-release /
 pypi-release / render-passes / preprint-extraction; 7 browser-WebGPU frontends
-7/7 green on CI lavapipe). Phase 6 (continuous operation) is chartered at
+7/7 green on CI lavapipe at the phase close). Phase 6 has since grown the live
+site to 22 browser-WebGPU sims; a deploy publishes only after every sim's own
+gate passes in headless Chromium on CI lavapipe (22/22 at the 2026-09-08
+deploy). Phase 6 (continuous operation) is chartered at
 [`docs/phases/phase-6-charter.md`](docs/phases/phase-6-charter.md). The
 authoritative record is the append-only audit ledger under
 [`docs/_audits/`](docs/_audits/) — see the

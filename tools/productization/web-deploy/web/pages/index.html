@@ -298,8 +298,8 @@
   </a>
 </div>
 
-<h3 class="fam">Water &amp; droplets</h3>
-<p class="famsub">Liquids that splash, wet, bead, and refuse to mix.</p>
+<h3 class="fam">Water, droplets &amp; landscapes</h3>
+<p class="famsub">Liquids that splash, wet, bead, and refuse to mix &mdash; and the rivers that carve rock.</p>
 <div class="grid">
   <a class="card" href="./sims/pic-flip/">
     <video class="poster" muted loop playsinline preload="none"
@@ -357,6 +357,22 @@
         <span class="chip">first browser multiphase LBM with analytic gates</span>
         <span class="chip gate">gate: new_canonical + Maxwell/Laplace analytic</span>
       </div>
+    </div>
+  </a>
+  <a class="card" href="./sims/terrain-erosion/">
+    <video class="poster" muted loop playsinline preload="none"
+      poster="./assets/terrain-erosion.png"
+      aria-label="Canyon Lab: a river carving a layered sandstone plateau">
+      <source data-src="./assets/terrain-erosion.webm" type="video/webm" />
+    </video>
+    <div class="body">
+      <div class="name">Canyon Lab &mdash; Terrain Erosion</div>
+      <div class="phys">Carve a layered plateau, divert a river, and breach a sediment dam.
+        Shallow-water flow carries the excavated grains downstream. Sculpt, rewind,
+        compare, and inspect water and sediment budgets on your GPU.</div>
+      <div class="badges"><span class="chip">geomorphology</span>
+        <span class="chip">WebGPU finite volumes</span>
+        <span class="chip gate">gate: f64 reference + run-twice + analytic checks</span></div>
     </div>
   </a>
 </div>
@@ -418,23 +434,6 @@
         <span class="chip">WGSL 3D FFT</span>
         <span class="chip gate">gate: new_canonical (live f64 reference re-run)</span>
       </div>
-    </div>
-  </a>
-</div>
-
-<h3 class="fam">Landscapes &amp; water</h3>
-<p class="famsub">Sculpt the landscape. Follow the water. Account for what moves.</p>
-<div class="grid">
-  <a class="card" href="./sims/terrain-erosion/">
-    <img class="poster" src="./assets/terrain-erosion.png" loading="lazy" alt="Canyon Lab: a river carving a layered sandstone plateau" />
-    <div class="body">
-      <div class="name">Canyon Lab &mdash; Terrain Erosion</div>
-      <div class="phys">Carve a layered plateau, divert a river, and breach a sediment dam.
-        Shallow-water flow carries the excavated grains downstream. Sculpt, rewind,
-        compare, and inspect water and sediment budgets on your GPU.</div>
-      <div class="badges"><span class="chip">geomorphology</span>
-        <span class="chip">WebGPU finite volumes</span>
-        <span class="chip gate">gate: f64 reference + run-twice + analytic checks</span></div>
     </div>
   </a>
 </div>
@@ -666,7 +665,7 @@
   </li>
   <li>
     <a href="https://github.com/StevenFAU/Bit-Physics/blob/main/docs/_audits/phase-5/phase-5-close-2026-06-10T12-38-41Z.md">Phase-5 close audit</a>
-    <div class="note">7/7 browser-WebGPU green on CI lavapipe; tolerance ledger byte-unchanged through the phase.</div>
+    <div class="note">The phase-5 close: all 7 browser sims of the time green on CI lavapipe, tolerance ledger byte-unchanged through the phase. The site has since grown to 22, and a deploy publishes only after every sim&rsquo;s own gate passes in headless Chromium on CI lavapipe (22/22 at the 2026-09-08 deploy).</div>
   </li>
 </ul>
 
@@ -676,7 +675,7 @@
     <a href="https://github.com/StevenFAU/Bit-Physics/releases/tag/v0.5.0-phase-5">Native binaries — release v0.5.0-phase-5</a>
     <div class="note">Two Stack-C (C++/Vulkan) headless capture binaries,
     Linux x86_64, CPU-tier — each § 3.8 bootstrap-validated in the publishing
-    run itself (the full 7-sim set is the web versions above):
+    run itself (every sim runs as a web version above):
     <a href="https://github.com/StevenFAU/Bit-Physics/releases/download/v0.5.0-phase-5/bit_physics_mass_spring_cloth_capture-linux-x86_64">mass-spring-cloth</a> ·
     <a href="https://github.com/StevenFAU/Bit-Physics/releases/download/v0.5.0-phase-5/bit_physics_rd2d_stack_c_capture-linux-x86_64">reaction-diffusion-2d (Stack C)</a> ·
     <a href="https://github.com/StevenFAU/Bit-Physics/releases/download/v0.5.0-phase-5/SHA256SUMS">SHA256SUMS</a>.

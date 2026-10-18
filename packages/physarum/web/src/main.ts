@@ -841,6 +841,7 @@ async function main(): Promise<void> {
 
   // ---- INTERACT: swarm scaling ----------------------------------------------
   const swarmGroup = panel.addGroup("swarm — scale the agent count");
+  const swarmChips: HTMLButtonElement[] = [];
   {
     const row = document.createElement("div");
     row.className = "ig-chiprow";
@@ -860,6 +861,7 @@ async function main(): Promise<void> {
         setSwarm(i);
       });
       row.appendChild(c);
+      swarmChips.push(c);
     });
     swarmGroup.appendChild(row);
     const note = document.createElement("div");
@@ -1048,6 +1050,34 @@ async function main(): Promise<void> {
 
   let suspended = false;
   let stepsPerFrame = 2;
+
+  // Boot swarm from MEASURED step cost (2026-10 review): at the canonical 500
+  // agents a visitor sees a few lonely wisps, not the transport network the
+  // card promises — but 200k on 768² is too heavy for many integrated and
+  // mobile GPUs. Time a few live steps of each candidate, largest first, on
+  // this device and keep the first that fits the frame budget (2 steps/frame
+  // plus the render inside ~16 ms). Live-only — the capture still resets to
+  // the canonical 500-agent / 256² seed-42 run, and the science scenarios
+  // still drop back to the canonical grid.
+  const STEP_BUDGET_MS = 3.5;
+  const measureStepMs = async (): Promise<number> => {
+    for (let i = 0; i < 2; i += 1) stepLive(current); // warm-up
+    await device.queue.onSubmittedWorkDone();
+    const t0 = performance.now();
+    for (let i = 0; i < 8; i += 1) stepLive(current);
+    await device.queue.onSubmittedWorkDone();
+    return (performance.now() - t0) / 8;
+  };
+  let bootSwarm = 0;
+  for (const idx of [2, 1]) {
+    setSwarm(idx);
+    if ((await measureStepMs()) <= STEP_BUDGET_MS) {
+      bootSwarm = idx;
+      break;
+    }
+  }
+  if (bootSwarm === 0) setSwarm(0);
+  swarmChips.forEach((b, i) => b.setAttribute("aria-pressed", String(i === bootSwarm)));
 
   // low-rate live readback: mass gate + Study diagnostics (sequence-guarded)
   window.setInterval(() => {

@@ -130,7 +130,26 @@ const SIMS = {
   // affinity beacon has pulled lineages into the corridor network. Hide lab
   // chrome so the signed field, soft walls, and localized matter own the card.
   "flow-lenia": { frames: 180, px: 512, query: "?arena=1&preset=maze-navigation&grid=256", hide: [".fl-hud", ".fl-experiment-note", ".fl-inspector", ".fl-arena-metrics", ".fl-lab-switch"] },
+  // Canyon Lab (terrain-erosion): boots into "Cut the Plateau" with the river
+  // on; ~600 frames lets the channel incise and the pale caprock read. Its
+  // app-shell chrome (header, scene heading, tool rail, transport) is hidden.
+  "terrain-erosion": { frames: 600, px: 512, hide: ["body > header", ".scene-heading", "#tools", ".tool-options", ".viewport-actions", "#hint", "footer", "#toast", "#section"] },
 };
+
+// Registry guard (2026-10 review): every sim in the single registry
+// (tools/productization/web-deploy/sims.json) needs a config above, and every
+// config must be a registered sim — fail loud instead of silently skipping a
+// new sim (how Canyon Lab's card shipped a still). check_registry.py holds CI
+// to the same rule.
+const REGISTRY = JSON.parse(await readFile(join(HERE, "../../../sims.json"), "utf8")).sims.map((s) => s.name);
+{
+  const unconfigured = REGISTRY.filter((n) => !(n in SIMS));
+  const unregistered = Object.keys(SIMS).filter((n) => !REGISTRY.includes(n));
+  if (unconfigured.length || unregistered.length) {
+    console.error(`make-posters: config drift vs sims.json — unconfigured [${unconfigured.join(", ")}], unregistered [${unregistered.join(", ")}]`);
+    process.exit(1);
+  }
+}
 // Experiment overrides: POSTER_FRAMES=<n> POSTER_SUFFIX=-x node make-posters.mjs <sim>
 const FRAMES_OVERRIDE = process.env.POSTER_FRAMES ? Number(process.env.POSTER_FRAMES) : null;
 const SUFFIX = process.env.POSTER_SUFFIX ?? "";
@@ -174,10 +193,13 @@ async function poster(browser, sim, cfg) {
     await page.addInitScript(() => {
       window.__posterFrames = 0;
       window.__posterTarget = Infinity;
+      // Parked callbacks queue (2026-10): a sim with a second, one-shot RAF
+      // request (Canyon Lab) used to overwrite the main loop's single parked
+      // slot, dropping the loop and stalling the pump. Release runs them all.
       window.__origRAF = window.requestAnimationFrame.bind(window);
       window.requestAnimationFrame = (cb) => {
         if (window.__posterFrames >= window.__posterTarget) {
-          window.__pendingCb = cb; // park the loop so it can be resumed
+          (window.__parked ??= []).push(cb); window.__pendingCb = cb; // park the loop so it can be resumed
           return 0;
         }
         window.__posterFrames += 1;
@@ -222,9 +244,10 @@ async function poster(browser, sim, cfg) {
         shots.push((await page.locator("canvas").first().screenshot()).toString("base64"));
         await page.evaluate((gap) => {
           window.__posterTarget += gap;
-          const cb = window.__pendingCb;
+          const cbs = window.__parked ?? [];
+          window.__parked = [];
           window.__pendingCb = null;
-          if (cb) window.__origRAF(cb);
+          for (const cb of cbs) window.__origRAF(cb);
         }, cfg.trail.gap);
         await page.waitForFunction(() => window.__pendingCb !== null && window.__pendingCb !== undefined,
           undefined, { timeout: 30000, polling: 50 });

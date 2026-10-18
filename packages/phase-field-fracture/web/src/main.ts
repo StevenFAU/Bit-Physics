@@ -81,6 +81,20 @@ async function boot_(): Promise<void> {
     setBoot(`GPU device lost (${info.reason}): reload the page`);
   });
 
+  // HiDPI backing store (2026-10 review): the fixed 900² backing rendered soft
+  // on 2× displays. Size it to the CSS box × min(dpr, 2) — render.wgsl is
+  // uv-based, so the image is resolution-independent.
+  const fitCanvas = (): void => {
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+    const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+  };
+  fitCanvas();
+  window.addEventListener("resize", fitCanvas);
   const renderer = new Renderer(device, canvas);
   const state = makeState(device, renderer, SCENES[0]);
   installUi(state);

@@ -19,6 +19,7 @@ plans live in `docs/phases/`; conventions in `docs/conventions/`; audits in `doc
 
 ## Candidate simulation specifications
 
+- [Rebuild v2 — twelve sims rebuilt from the ground up](rebuild-v2/README.md) — 2026-10 plan to rebuild boids-2d, boids-3d, physarum, sph-water, mpm-multimaterial, pic-flip, eulerian-smoke, curl-noise, schrodinger-smoke, strange-attractors, reaction-diffusion-2d and neural-ca on a shared Field Studies platform (shell, HDR render core, runtime, proof layer). One foundation spec plus one spec per sim, each with experience, model, look, proof, targets and milestones. Nothing implemented yet.
 - [Canyon Lab — terrain erosion WebGPU specification](terrain-erosion-canyon-lab-spec.md) — research-backed proposal for interactive canyon incision, sediment transport, layered terrain, verification instruments and a polished browser deployment. Includes numerical and product acceptance gates plus separate undercut/arch and long-term transport research tracks; implementation has not started.
 
 ## Citing the catalog

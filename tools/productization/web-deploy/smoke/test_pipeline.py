@@ -31,29 +31,10 @@ TOOL = Path(__file__).resolve().parent.parent  # tools/productization/web-deploy
 REPO = TOOL.parents[2]
 WEB_BUILD = REPO / "tools/productization/web-build"
 
+# The single registry of published sims (2026-10: replaced a hand-kept copy of
+# the list here, one of six that drifted — see check_registry.py).
 EXPECTED_SIMS = {
-    "reaction-diffusion-2d",
-    "mandelbulb-explorer",
-    "neural-ca",
-    "ising-classical",
-    "strange-attractors",
-    "boids-2d",
-    "boids-3d",
-    "curl-noise",
-    "heat-equation",
-    "signal-workbench",
-    "phase-field-fracture",
-    "fdtd-optics",
-    "lbm-multiphase",
-    "eulerian-smoke",
-    "mpm-multimaterial",
-    "physarum",
-    "pic-flip",
-    "schrodinger-smoke",
-    "sph-water",
-    "sph-multiphase",
-    "flow-lenia",
-    "terrain-erosion",
+    s["name"] for s in json.loads((TOOL / "sims.json").read_text())["sims"]
 }
 
 

@@ -23,15 +23,9 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url)); // .../web/pages
 const REPO = join(HERE, "../../../../..");
 
-// Published sims — mirrors pipeline.py GATE_KIND / the discover job.
-const SIMS = [
-  "reaction-diffusion-2d", "mandelbulb-explorer", "neural-ca",
-  "ising-classical", "strange-attractors", "boids-2d", "boids-3d",
-  "curl-noise", "eulerian-smoke", "mpm-multimaterial", "physarum",
-  "pic-flip", "schrodinger-smoke", "sph-water", "sph-multiphase", "heat-equation",
-  "signal-workbench", "phase-field-fracture", "fdtd-optics", "lbm-multiphase",
-  "flow-lenia",
-];
+// Published sims — the single registry (tools/productization/web-deploy/sims.json);
+// check_registry.py holds pipeline.py GATE_KIND and the other lists to it.
+const SIMS = JSON.parse(await readFile(join(HERE, "../../sims.json"), "utf8")).sims.map((s) => s.name);
 
 // The confirmed GitHub Pages base (P-8) — observed live (HTTP 200) in the
 // phase-5 launch audit, and recorded in phase-5-productization.md. Per-sim
