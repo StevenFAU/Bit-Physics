@@ -107,6 +107,10 @@ export interface PlotSeries {
   x: ArrayLike<number>;
   y: ArrayLike<number>;
   color?: string;
+  /** "line" (default) or "dots" — e.g. measurements over a predicted curve. */
+  style?: "line" | "dots";
+  /** Legend label, drawn top-right when any series has one. */
+  label?: string;
 }
 
 export interface PlotOptions {
@@ -196,7 +200,18 @@ export function plotPanel(o: PlotOptions): PlotPanel {
     ctx.fillText(o.xLabel, W - pad.r - 2, H - pad.b - 4);
     // series
     for (const s of data) {
-      ctx.strokeStyle = s.color ?? css("--bp-accent", "#e8c88f");
+      const color = s.color ?? css("--bp-accent", "#e8c88f");
+      if (s.style === "dots") {
+        ctx.fillStyle = color;
+        for (let i = 0; i < s.x.length; i += 1) {
+          if (!Number.isFinite(ty(s.y[i]!))) continue;
+          ctx.beginPath();
+          ctx.arc(X(s.x[i]!), Y(s.y[i]!), 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        continue;
+      }
+      ctx.strokeStyle = color;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       for (let i = 0; i < s.x.length; i += 1) {
@@ -206,6 +221,15 @@ export function plotPanel(o: PlotOptions): PlotPanel {
         else ctx.lineTo(px, py);
       }
       ctx.stroke();
+    }
+    // legend
+    let ly = pad.t + 12;
+    ctx.textAlign = "right";
+    for (const s of data) {
+      if (!s.label) continue;
+      ctx.fillStyle = s.color ?? css("--bp-accent", "#e8c88f");
+      ctx.fillText(`${s.style === "dots" ? "●" : "—"} ${s.label}`, W - pad.r - 4, ly);
+      ly += 12;
     }
     ctx.textAlign = "left";
     for (const m of marks) {
@@ -251,6 +275,8 @@ export function plotPanel(o: PlotOptions): PlotPanel {
     readout.textContent = "";
     draw();
   });
+  // a plot filled while hidden (a closed drawer) has no size yet: redraw when it gets one
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(() => draw()).observe(canvas);
   return {
     el,
     set(series: PlotSeries[], markers?: { x: number; label: string }[]) {

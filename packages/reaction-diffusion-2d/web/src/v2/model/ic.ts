@@ -92,3 +92,53 @@ export function centre(w: number, h: number, seed: number, half: number): Field 
   }
   return f;
 }
+
+/** A model's resting state plus a little uniform noise (the Turing scenes start here). */
+export function restNoise(w: number, h: number, seed: number, rest: readonly [number, number], amp: number): Field {
+  const out = new Float32Array(w * h * 2);
+  const rnd = new HashStream(seed, 4);
+  for (let c = 0; c < w * h; c += 1) {
+    out[c * 2] = rest[0] + (rnd.next() - 0.5) * amp;
+    out[c * 2 + 1] = rest[1] + (rnd.next() - 0.5) * amp;
+  }
+  return out;
+}
+
+/**
+ * Excitable-medium start: the resting state with a few broken wave fronts —
+ * a short band excited to `fire`, with a refractory band (v raised) on one
+ * side so it can only travel the other way. Each free end curls into a
+ * spiral.
+ */
+export function brokenFronts(
+  w: number,
+  h: number,
+  seed: number,
+  rest: readonly [number, number],
+  fire: number,
+  refractory: number,
+): Field {
+  const out = new Float32Array(w * h * 2);
+  for (let c = 0; c < w * h; c += 1) {
+    out[c * 2] = rest[0];
+    out[c * 2 + 1] = rest[1];
+  }
+  const rnd = new HashStream(seed, 5);
+  const fronts = Math.max(1, Math.round((w * h) / 90000));
+  for (let f = 0; f < fronts; f += 1) {
+    const len = Math.round(Math.min(w, h) * rnd.range(0.18, 0.3));
+    const x0 = Math.floor(rnd.next() * w);
+    const y0 = Math.floor(rnd.next() * h);
+    const flip = rnd.next() < 0.5 ? 1 : -1;
+    for (let dx = 0; dx < len; dx += 1) {
+      const x = (x0 + dx) % w;
+      for (let dy = -3; dy < 14; dy += 1) {
+        const y = (((y0 + flip * dy) % h) + h) % h;
+        const i = (y * w + x) * 2;
+        if (dy < 3) out[i] = fire;
+        else out[i + 1] = rest[1] + refractory;
+      }
+    }
+  }
+  return out;
+}

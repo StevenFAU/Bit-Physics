@@ -10,6 +10,7 @@ import { FFT_COMMON_WGSL } from "../../../../../../common/common-web/src/fft-wgs
 import spectrumSrc from "../model/spectrum.wgsl?raw";
 import statsSrc from "../model/stats.wgsl?raw";
 import type { LiveSim } from "../model/sim.js";
+import { MODELS } from "../model/models.js";
 
 export interface PatternStats {
   /** Connected regions of V above the threshold (spots, or pieces of a maze). */
@@ -23,7 +24,7 @@ export interface PatternStats {
 
 export const V_THRESHOLD = 0.15;
 
-export function patternStats(v: Float32Array, w: number, h: number, periodic: boolean): PatternStats {
+export function patternStats(v: Float32Array, w: number, h: number, periodic: boolean, threshold = V_THRESHOLD): PatternStats {
   const n = w * h;
   const parent = new Int32Array(n).fill(-1);
   const find = (i: number): number => {
@@ -45,7 +46,7 @@ export function patternStats(v: Float32Array, w: number, h: number, periodic: bo
     const x = v[i]!;
     mass += x;
     if (x > peak) peak = x;
-    if (x > V_THRESHOLD) {
+    if (x > threshold) {
       covered += 1;
       parent[i] = i;
     }
@@ -135,6 +136,9 @@ export class Instruments {
   private n = 256;
   private sim: LiveSim | null = null;
   private statsPending = false;
+  /** The field the instruments read (models.ts `show`) and its statistics threshold. */
+  channel = 1;
+  threshold = V_THRESHOLD;
   private specPending = false;
 
   static async create(device: GPUDevice): Promise<Instruments> {
@@ -154,7 +158,7 @@ export class Instruments {
       layout: "auto",
       compute: { module: d.createShaderModule({ code: statsSrc, label: "rd-stats" }), entryPoint: "main" },
     });
-    this.statsUniform = d.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "rd-stats" });
+    this.statsUniform = d.createBuffer({ size: 32, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "rd-stats" });
     this.specLayout = d.createBindGroupLayout({
       label: "rd-spectrum",
       entries: [
@@ -188,7 +192,9 @@ export class Instruments {
     const oh = Math.ceil(sim.h / 2);
     this.statsDims = { ow, oh };
     this.statsOut = d.createBuffer({ size: ow * oh * 4, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, label: "rd-stats-out" });
-    d.queue.writeBuffer(this.statsUniform, 0, new Uint32Array([sim.w, sim.h, ow, oh]));
+    this.channel = MODELS[sim.chem.model].show;
+    this.threshold = MODELS[sim.chem.model].threshold;
+    d.queue.writeBuffer(this.statsUniform, 0, new Uint32Array([sim.w, sim.h, ow, oh, this.channel, 0, 0, 0]));
     this.statsBG = d.createBindGroup({
       layout: this.statsPipeline.getBindGroupLayout(0),
       entries: [
@@ -232,6 +238,19 @@ export class Instruments {
     return this.n;
   }
 
+  /** Free every buffer (a check's private instruments, once it is done). */
+  destroy(): void {
+    this.statsOut?.destroy();
+    this.statsSlot?.destroy();
+    this.specA?.destroy();
+    this.specB?.destroy();
+    this.radial?.destroy();
+    this.specSlot?.destroy();
+    this.statsUniform.destroy();
+    this.specUniform.destroy();
+    this.sim = null;
+  }
+
   /** Record a stats sample; returns false when one is already in flight. */
   recordStats(enc: GPUCommandEncoder): boolean {
     if (!this.sim || !this.statsBG || !this.statsOut || !this.statsSlot || this.statsPending) return false;
@@ -258,11 +277,14 @@ export class Instruments {
     const sim = this.sim;
     const v = await this.collectStatsRaw();
     if (!v || !sim) return null;
-    return patternStats(v, this.statsDims.ow, this.statsDims.oh, sim.periodic);
+    return patternStats(v, this.statsDims.ow, this.statsDims.oh, sim.periodic, this.threshold);
   }
 
-  /** Record a spectrum of the N×N window centred at (cx, cy) cells. */
-  recordSpectrum(enc: GPUCommandEncoder, cx: number, cy: number): boolean {
+  /**
+   * Record a spectrum of the N×N window centred at (cx, cy) cells, of the
+   * field minus `offset` (a reference level kept out of the f32 FFT).
+   */
+  recordSpectrum(enc: GPUCommandEncoder, cx: number, cy: number, offset = 0): boolean {
     if (!this.sim || !this.specAB || !this.specBA || !this.radial || !this.specSlot || this.specPending) return false;
     const n = this.n;
     const log2n = Math.round(Math.log2(n));
@@ -282,6 +304,8 @@ export class Instruments {
       u[6] = sim.w;
       u[7] = sim.h;
       u[8] = sim.periodic ? 1 : 0;
+      u[9] = this.channel;
+      f[10] = offset;
     };
     write(0, 0, 0);
     for (let i = 0; i < stages; i += 1) write(i + 1, i % log2n, i < log2n ? 0 : 1);

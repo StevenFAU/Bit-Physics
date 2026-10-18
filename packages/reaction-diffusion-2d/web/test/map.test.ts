@@ -47,6 +47,7 @@ describe("dive continuity", () => {
   const w = 1296;
   const h = 808;
   const base: Chemistry = {
+    model: "gray-scott", c: 0,
     Du: 0.16, Dv: 0.08, dt: 1, dx: 1,
     F0: mapChem(0.5, 0.5)[0], k0: mapChem(0.5, 0.5)[1],
     sweep: { anchorU: 0.5, anchorV: 0.5 }, reveal: null,

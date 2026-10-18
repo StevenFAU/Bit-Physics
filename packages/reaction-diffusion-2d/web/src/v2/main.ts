@@ -24,10 +24,14 @@ import { Instruments } from "./learn/instruments.js";
 import { buildLearn } from "./learn/learn.js";
 import { buildProve } from "./proof/prove.js";
 import { createGateRunner } from "./proof/gate.js";
+import { runModelGolden, runTuringCheck } from "./proof/model-checks.js";
+import V from "../generated/verification.json";
 import type { PaletteId } from "./render/look.js";
 import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes/scenes.js";
-import { SCENES, sceneById } from "./scenes/scenes.js";
+import type { PatternId } from "./scenes/scenes.js";
+import { PATTERN_IDS, SCENES, SHAPE_PATTERNS, sceneById } from "./scenes/scenes.js";
+import type { ShapeId } from "./model/surface-mesh.js";
 import { buildTune } from "./ui/tune.js";
 
 const SIM_NAME = "Turing Patterns";
@@ -37,14 +41,17 @@ const url = new UrlState(
   {
     s: { kind: "enum", def: "map", values: SCENE_IDS },
     seed: { kind: "int", def: 1, min: 0, max: 2 ** 31 - 1 },
-    F: { kind: "num", def: -1, min: -1, max: 0.2, digits: 5 },
-    k: { kind: "num", def: -1, min: -1, max: 0.2, digits: 5 },
+    F: { kind: "num", def: -1, min: -1, max: 20, digits: 5 },
+    k: { kind: "num", def: -1, min: -1, max: 20, digits: 5 },
     r: { kind: "num", def: 2, min: 1, max: 6, digits: 3 },
     sp: { kind: "num", def: 1, min: 0.25, max: 8 },
     pal: { kind: "enum", def: "auto", values: ["auto", ...Object.keys(PALETTES)] },
     t: { kind: "str", def: "", pattern: /^[a-z]{0,12}$/ },
     g: { kind: "nums", def: [0, 0], n: 2 },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+    // On a Shape: the object and the pattern (cam then holds the orbit: yaw, pitch, distance)
+    sh: { kind: "enum", def: "sphere", values: ["sphere", "torus"] },
+    pat: { kind: "enum", def: "coral", values: PATTERN_IDS },
   },
   2,
 );
@@ -101,6 +108,7 @@ async function boot(): Promise<void> {
     effectLevels: 1,
   });
   const app = new App(gpu, studio, hdr, tier);
+  if (query.get("chrome") === "off") app.framing = "full";
   if (gpu.timestamps) {
     profiler.onFrame = () => {
       const at1x = app.adaptToTimings(profiler.timings(), governor.budgetMs);
@@ -122,7 +130,9 @@ async function boot(): Promise<void> {
     const dived = s.id === "map" && c.reveal !== null;
     const sceneId = dived ? "dish" : s.id;
     const def = sceneById(sceneId);
-    const chemDefault = s.sweep && !dived ? true : c.F0 === def.F && c.k0 === def.k;
+    const shapeDef = s.surface ? SHAPE_PATTERNS[app.pattern] : null;
+    const chemDefault = s.sweep && !dived ? true : shapeDef ? c.F0 === shapeDef.F && c.k0 === shapeDef.k : c.F0 === def.F && c.k0 === def.k;
+    const orbit = app.orbit.state();
     return {
       s: sceneId,
       seed: app.ctx.seed,
@@ -130,14 +140,15 @@ async function boot(): Promise<void> {
       k: chemDefault ? -1 : c.k0,
       r: app.ratio,
       sp: app.clock.speed,
-      pal: app.palette === def.palette ? "auto" : app.palette,
+      pal: app.palette === (shapeDef?.palette ?? def.palette) ? "auto" : app.palette,
       t: app.studio.rail.active === def.tool ? "" : app.studio.rail.active,
-      g: def.grid ? [0, 0] : [app.ctx.w, app.ctx.h],
-      cam: [
-        (app.camera.cx / app.ctx.w),
-        (app.camera.cy / app.ctx.h),
-        app.camera.pxPerUnit / app.camera.coverZoom(),
-      ].map((v) => Number(v.toFixed(4))),
+      g: def.grid || s.surface ? [0, 0] : [app.ctx.w, app.ctx.h],
+      cam: (s.surface
+        ? [((orbit.yaw % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI), orbit.pitch, orbit.distance]
+        : [app.camera.cx / app.ctx.w, app.camera.cy / app.ctx.h, app.camera.pxPerUnit / app.camera.coverZoom()]
+      ).map((v) => Number(v.toFixed(4))),
+      sh: s.surface ? app.shape : "sphere",
+      pat: s.surface ? app.pattern : "coral",
     };
   };
   app.writeUrl = () => url.write(current());
@@ -151,6 +162,7 @@ async function boot(): Promise<void> {
   });
   const syncTune = (): void =>
     tune.sync({
+      model: app.sim.chem.model,
       F: app.sim.chem.F0,
       k: app.sim.chem.k0,
       ratio: app.ratio,
@@ -168,24 +180,28 @@ async function boot(): Promise<void> {
     dataView: (on) => {
       app.view.view.mode = on ? "colormap" : "material";
       app.view.view.colormap = "viridis";
-      app.view.view.range = [0, 0.5];
+      app.view.view.range = app.model.range;
       app.view.view.isolines = on ? 5 : 0;
       app.hdr.exposure = { ...app.hdr.exposure, mode: on ? "pinned" : "auto", value: 1 };
     },
     raw: (on) => {
       app.view.view.mode = on ? "raw" : "material";
       app.view.view.colormap = "viridis";
-      app.view.view.range = [0, 0.5];
+      app.view.view.range = app.model.range;
       app.hdr.exposure = { ...app.hdr.exposure, mode: on ? "pinned" : "auto", value: 1 };
     },
     labels: (on) => {
       app.showLabels = on;
+    },
+    scene: (id) => {
+      void app.loadScene(id).then(() => app.writeUrl());
     },
   });
 
   // ------------------------------------------------------------- Prove --
   const prove = buildProve(studio.drawer.prove, {
     adapter: gpu.adapterId,
+    device,
     gate,
     showGated: () => {
       void app.loadScene("gated").then(() => app.writeUrl());
@@ -306,7 +322,7 @@ async function boot(): Promise<void> {
 
   app.hooks = {
     onSceneChange: (scene) => {
-      learn.setScene(scene, app.onGatedRun);
+      learn.setScene(scene, app.onGatedRun, app.model);
       syncTune();
       syncProve();
     },
@@ -366,7 +382,10 @@ async function boot(): Promise<void> {
     ratio: parsed.r !== 2 ? parsed.r : undefined,
     palette: parsed.pal !== "auto" ? (parsed.pal as PaletteId) : undefined,
     grid: parsed.g[0]! > 0 && parsed.g[1]! > 0 ? [parsed.g[0]!, parsed.g[1]!] : undefined,
-    camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
+    camera: parsed.cam[2]! > 0 && sceneId !== "shape" ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
+    orbit: parsed.cam[2]! > 0 && sceneId === "shape" ? { yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]! } : undefined,
+    shape: parsed.sh as ShapeId,
+    pattern: parsed.pat as PatternId,
     tool: parsed.t || undefined,
     prewarmMs: sceneId === "map" && !reduced ? 350 : 0,
   };
@@ -390,6 +409,16 @@ async function boot(): Promise<void> {
     adapter: gpu.adapterId,
   });
   (globalThis as { __turing?: App }).__turing = app;
+  (globalThis as { __turingProve?: typeof prove }).__turingProve = prove;
+  // measurement hooks: the model checks at other seeds (v2-acceptance.mjs)
+  (globalThis as { __turingChecks?: unknown }).__turingChecks = {
+    golden: (descriptor: string) => {
+      const g = V.models.goldens.find((x) => x.descriptor === descriptor);
+      if (!g) throw new Error(`no golden ${descriptor}`);
+      return runModelGolden(device, g);
+    },
+    turing: (seed?: number) => runTuringCheck(device, seed),
+  };
   markReady();
 
   if (query.get("bench") === "1") void bench(app, profiler, rafTimes);

@@ -11,8 +11,16 @@
 //     plus whatever the chemistry brush painted.
 //   * The grid is W × H and its edges are either periodic (dishes) or
 //     zero-flux (The Map), chosen per scene.
+//   * MODEL (a pipeline-overridable constant, so each model compiles to its
+//     own straight-line kernel) picks the reaction terms: 0 Gray–Scott (the
+//     gated rule, above), 1 Brusselator, 2 Gierer–Meinhardt, 3 FitzHugh–
+//     Nagumo (model/models.ts). Their two headline parameters ride in the F
+//     and k slots and one extra constant in c.x; each has an f64 CPU mirror
+//     and a committed golden (reaction_diffusion_2d/reference/models.py).
 //
 // The browser gate never runs this file; it runs gray_scott.wgsl unchanged.
+
+override MODEL: u32 = 0u;
 
 struct Live {
   w: u32,
@@ -39,6 +47,7 @@ struct Live {
   off_b: f32,       //   off_a + off_b · (F − map_f_lo)
   paint_on: u32,    // 0 until the chemistry brush first paints (skips the read)
   _pad1: u32,
+  c: vec4<f32>,     // model constants (x: Gierer–Meinhardt σ, FitzHugh–Nagumo a₀)
 };
 
 @group(0) @binding(0) var<uniform> L: Live;
@@ -120,9 +129,28 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
              + state_in[cu + 1] + state_in[cd + 1]
              - 4.0 * v) / (L.dx * L.dx);
 
-  let uvv = u * v * v;
-  let du  = L.Du * lap_u - uvv + F * (1.0 - u);
-  let dv  = L.Dv * lap_v + uvv - (F + k) * v;
+  var du: f32;
+  var dv: f32;
+  if (MODEL == 0u) {
+    // Gray–Scott: the gated kernel's expressions, unchanged
+    let uvv = u * v * v;
+    du = L.Du * lap_u - uvv + F * (1.0 - u);
+    dv = L.Dv * lap_v + uvv - (F + k) * v;
+  } else if (MODEL == 1u) {
+    // Brusselator: A = F slot, B = k slot
+    let uuv = u * u * v;
+    du = L.Du * lap_u + (F - (k + 1.0) * u + uuv);
+    dv = L.Dv * lap_v + (k * u - uuv);
+  } else if (MODEL == 2u) {
+    // Gierer–Meinhardt: μ = F slot, ν = k slot, σ = c.x
+    let uu = u * u;
+    du = L.Du * lap_u + (uu / v - F * u + L.c.x);
+    dv = L.Dv * lap_v + (uu - k * v);
+  } else {
+    // FitzHugh–Nagumo: ε = F slot, a₁ = k slot, a₀ = c.x
+    du = L.Du * lap_u + (u - u * u * u - v);
+    dv = L.Dv * lap_v + F * (u - k * v - L.c.x);
+  }
 
   let idx = (gid.y * L.w + gid.x) * 2u;
   state_out[idx + 0u] = u + L.dt * du;

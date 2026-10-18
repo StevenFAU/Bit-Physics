@@ -7,8 +7,40 @@
 > `packages/reaction-diffusion-2d/web` (served at `/sims/reaction-diffusion-2d/v2/`, v1 unchanged).
 > The `capture_roundtrip` gate passes from the v2 page with the v1 page's exact bytes. Scenes
 > shipped: The Map (a band-following sweep, below), Mitosis, Coral, Solitons, Spirals, Gradient
-> Garden, and the gated dish itself. Not yet: On a Shape, the extra models, the analytic
-> Turing-instability check, IMEX live solver, posters/loops (M3).
+> Garden, and the gated dish itself.
+>
+> **M3 (2026-10-17):**
+> - **Extra models.** Turing Stripes (Brusselator), Spacing Spots (Gierer–Meinhardt) and Excitable
+>   Waves (FitzHugh–Nagumo) run behind the live kernel, selected by an override constant.
+>   - Each has an f64 CPU mirror that reproduces its committed golden bit for bit, and a GPU
+>     check against that golden in the Prove drawer.
+>   - The goldens are in `packages/reaction-diffusion-2d/web/public/goldens/`; the tolerances are
+>     measured and declared in `tolerance.toml`, `[golden_tolerance.continuous-ca.reaction-diffusion-2d]`.
+> - **Analytic Turing check.** The live FFT measures each ring's growth rate from two snapshots,
+>   and its peak must match the dispersion relation's fastest-growing ring within ±1%.
+>   - Measured worst: 0.25% over 24 seeds on RADV.
+>   - Derivation: `tools/testkit/golden/derivations/brusselator-turing.md`, with a Cat-3 golden table.
+> - **On a Shape.** The sphere and torus use `OrbitCamera` (in `@bp/render`), a slow turntable
+>   that is off under reduced motion, and seed/erase painting on the surface. Undo and share
+>   links work there too.
+> - **Card.** The v2 page's poster and loop are on the landing card, which now links to `v2/`.
+>
+> Not yet: the IMEX live solver, and arbitrary meshes.
+>
+> **Corrections from M3:**
+> - **Sphere grid.** The sphere is a geodesic icosahedral grid with the cotangent (Voronoi)
+>   Laplacian, not the cube-sphere.
+>   - With two-point fluxes the equiangular cube-sphere is inconsistent: its grid lines aren't
+>     orthogonal.
+>   - Measured: 25–37% error on spherical harmonics, not shrinking with refinement.
+>   - The torus keeps its orthogonal θ × φ grid.
+>   - Surface sims take stability-limited Euler substeps.
+> - **Brusselator parameters.** The Brusselator runs at A = 4.5, B = 6.75.
+>   - B = 9 gave mostly spots.
+>   - With B = 6.75 the uniform state is exact in f32 (v* = 1.5).
+> - **Turing check protocol.** The check needs 2⁻⁷ noise.
+>   - At 2⁻¹³ each step's change is about one f32 ulp of u*, and the measured peak scattered by
+>     up to 9%.
 >
 > **Corrections from building it:** the committed gated kernel uses a **5-point** Laplacian, not a
 > 9-point one; the live solver mirrors it term for term (and reproduces the gated bytes on the

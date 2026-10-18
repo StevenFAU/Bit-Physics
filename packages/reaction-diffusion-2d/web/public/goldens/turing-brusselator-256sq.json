@@ -1,0 +1,80 @@
+{
+  "_generated_by": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/goldens.py",
+  "reference": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/models.py",
+  "model": "brusselator",
+  "grid": [
+    256,
+    256
+  ],
+  "periodic": true,
+  "params": {
+    "F": 4.5,
+    "k": 6.75,
+    "c": 0.0,
+    "Du": 1.0,
+    "Dv": 10.0,
+    "dx": 0.5,
+    "dt": 0.00390625
+  },
+  "ic": {
+    "seed": 1,
+    "amp": 0.0078125,
+    "bump": 0,
+    "bits": 12,
+    "rest": [
+      4.5,
+      1.5
+    ]
+  },
+  "protocol": {
+    "channel": 0,
+    "t1": 160,
+    "t2": 800,
+    "window": 256,
+    "fit_half": 3,
+    "r_min": 4,
+    "observable": "sigma(r) = ln(P(r, t2) / P(r, t1)) / (2 (t2 - t1) dt) from the Hann-windowed ring-averaged power spectrum; quadratic fit over +/- fit_half rings around its maximum"
+  },
+  "prediction": {
+    "r_star": 26.349629819580183,
+    "sigma_star": 0.4226707815629408,
+    "r_star_continuum": 26.0075954944597,
+    "q_star_continuum": 1.276644858483275,
+    "sigma_star_continuum": 0.42305052631139617,
+    "r_c_onset": 24.301683375277456,
+    "B_c": 5.8710498941515405,
+    "B_H": 21.25,
+    "q_c": 1.192906093150576
+  },
+  "reference_runs": {
+    "seeds": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12
+    ],
+    "rel_err": [
+      0.0004750709617181193,
+      -0.002308907358730831,
+      -0.0006372382190873025,
+      -0.0009203983532244229,
+      0.00010805519500105847,
+      0.0016394826491303036,
+      -0.0003548988831546829,
+      -0.0011269373262990585,
+      0.0006408906810660078,
+      0.0006486362269764804,
+      0.0006323492271773814,
+      0.00016164188021237054
+    ],
+    "worst_abs_rel_err": 0.002308907358730831
+  }
+}

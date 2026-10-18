@@ -8,8 +8,10 @@ import { colorScale, h, plotPanel, readout, sparkline, toggle } from "@bp/studio
 import type { PassTiming } from "@bp/gpu";
 import { colormapCss, getColormapDef } from "@bp/render";
 import V from "../../generated/verification.json";
-import type { SceneDef } from "../scenes/scenes.js";
-import { nearestRegime } from "../scenes/scenes.js";
+import type { SceneDef, SceneId } from "../scenes/scenes.js";
+import { SCENES, nearestRegime } from "../scenes/scenes.js";
+import type { ModelDef } from "../model/models.js";
+import { MODELS, MODEL_IDS } from "../model/models.js";
 import type { PatternStats, SpectrumReading } from "./instruments.js";
 
 const blob = (path: string, anchor?: string): string => `${V.repo_blob_base}${path}${anchor ? `#${anchor}` : ""}`;
@@ -22,10 +24,12 @@ export interface LearnHandlers {
   dataView: (on: boolean) => void;
   raw: (on: boolean) => void;
   labels: (on: boolean) => void;
+  /** Open a scene (the model list's buttons). */
+  scene: (id: SceneId) => void;
 }
 
 export interface LearnPane {
-  setScene(scene: SceneDef, gated: boolean): void;
+  setScene(scene: SceneDef, gated: boolean, model: ModelDef): void;
   setChemistry(F: number, k: number, ratio: number): void;
   setStats(s: PatternStats, tick: number): void;
   setSpectrum(s: SpectrumReading): void;
@@ -76,6 +80,34 @@ export function buildLearn(pane: HTMLElement, on: LearnHandlers): LearnPane {
   const sceneStory = h("p", {});
   const chemLine = h("p", { class: "bp-dim bp-mono" });
   pane.append(h("h2", {}, "What you're seeing"), sceneTitle, sceneStory, chemLine);
+
+  // --- the model ------------------------------------------------------------
+  // Gray–Scott is the default (its full explanation follows); the other three
+  // run behind the same kernel, each with its own scene.
+  const modelName = h("h3", {});
+  const modelBlurb = h("p", {});
+  const modelEq = h("div", { class: "bp-eq rd-model-eq bp-mono" });
+  const modelConsts = h("p", { class: "bp-dim bp-mono" });
+  const modelCite = h("p", { class: "bp-dim" });
+  const sceneFor = (m: ModelDef): SceneDef | undefined => SCENES.find((s) => s.listed && (s.model ?? "gray-scott") === m.id && !s.surface && s.kernel === "live");
+  const others = h(
+    "div",
+    { class: "rd-model-list" },
+    ...MODEL_IDS.map((id) => {
+      const s = sceneFor(MODELS[id]);
+      const b = h("button", { type: "button", class: "bp-btn bp-btn-quiet" }, MODELS[id].name);
+      b.addEventListener("click", () => s && on.scene(s.id));
+      return b;
+    }),
+  );
+  const proofNote = h(
+    "p",
+    { class: "bp-dim" },
+    "Each of these runs on the same 5-point Laplacian and Euler step as the gated kernel. Gray–Scott is gated by the " +
+      "release capture; the other three each have a float64 golden that the Prove drawer re-runs on your GPU, and the " +
+      "Brusselator's stripe spacing is checked against its dispersion relation there.",
+  );
+  pane.append(h("h2", {}, "The model"), modelName, modelBlurb, modelEq, modelConsts, modelCite, h("p", {}, "Other models:"), others, proofNote);
 
   // --- how it works ----------------------------------------------------------
   pane.append(
@@ -218,14 +250,33 @@ export function buildLearn(pane: HTMLElement, on: LearnHandlers): LearnPane {
 
   let massHistory = 0;
   return {
-    setScene(scene, gated) {
+    setScene(scene, gated, model) {
+      modelName.textContent = model.name;
+      modelBlurb.textContent = model.blurb;
+      modelEq.innerHTML = "";
+      modelEq.append(
+        h("div", {}, `∂u/∂t = D_u ∇²u + ${model.equations.f}`),
+        h("div", {}, `∂v/∂t = D_v ∇²v + ${model.equations.g}`),
+      );
+      const [p0, p1] = model.params;
+      modelConsts.textContent =
+        `${p0.symbol} = ${model.p[0]} · ${p1.symbol} = ${model.p[1]}` +
+        (model.id === "gray-scott" ? "" : ` · D_u = ${model.Du} · D_v = ${model.Dv} · Δx = ${model.dx} · Δt = ${model.dt}`) +
+        (model.id === "fitzhugh-nagumo" ? ` · a₀ = ${model.c}` : "");
+      modelCite.innerHTML = "";
+      modelCite.append(h("a", { href: model.cite.href, target: "_blank", rel: "noopener" }, model.cite.label));
+      for (const b of others.querySelectorAll("button")) {
+        (b as HTMLButtonElement).disabled = b.textContent === model.name && !scene.surface;
+      }
       sceneTitle.textContent = scene.title;
       sceneStory.textContent = scene.story + (gated ? " Right now it is exactly the gated run." : "");
       pieces.clear();
       coverage.clear();
       mass.clear();
       massHistory = 0;
-      lambda.textContent = "Dominant wavelength: measuring…";
+      lambda.textContent = scene.surface
+        ? "The instruments read flat dishes. On a shape, the pattern itself is the readout."
+        : "Dominant wavelength: measuring…";
     },
     setChemistry(F, k, ratio) {
       const { regime, distance } = nearestRegime(F, k);

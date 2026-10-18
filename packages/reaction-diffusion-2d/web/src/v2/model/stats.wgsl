@@ -1,4 +1,5 @@
-// Turing Patterns — a half-resolution copy of V for the pattern statistics
+// Turing Patterns — a half-resolution copy of the pattern field (V for
+// Gray–Scott, the model's shown field otherwise) for the pattern statistics
 // (spot count, coverage, mass), read back a couple of times a second.
 
 struct Stats {
@@ -6,6 +7,10 @@ struct Stats {
   h: u32,
   ow: u32,
   oh: u32,
+  channel: u32,
+  _p0: u32,
+  _p1: u32,
+  _p2: u32,
 };
 
 @group(0) @binding(0) var<uniform> S: Stats;
@@ -20,7 +25,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     for (var dx = 0u; dx < 2u; dx = dx + 1u) {
       let x = min(gid.x * 2u + dx, S.w - 1u);
       let y = min(gid.y * 2u + dy, S.h - 1u);
-      acc = acc + state[(y * S.w + x) * 2u + 1u];
+      acc = acc + state[(y * S.w + x) * 2u + S.channel];
     }
   }
   out_v[gid.y * S.ow + gid.x] = acc * 0.25;

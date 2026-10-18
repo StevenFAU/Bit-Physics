@@ -1,6 +1,7 @@
 // Turing Patterns — brush stamps, applied at a tick boundary.
-// mode 0 seed: U → 0.5, V → 0.25 (the initial condition's own seed values)
-// mode 1 erase: U → 1, V → 0 (the background state)
+// mode 0 seed: (U, V) → the model's seed state (Gray–Scott: 0.5, 0.25, the
+//   initial condition's own seed values)
+// mode 1 erase: (U, V) → the model's resting state (Gray–Scott: 1, 0)
 // mode 2 chemistry: paint (F, k) into the per-cell chemistry field
 // mode 3 chemistry clear: fade the painted chemistry back to the base
 
@@ -20,6 +21,8 @@ struct Brush {
   h: u32,
   periodic: u32,
   count: u32,
+  seed: vec2<f32>,
+  rest: vec2<f32>,
 };
 
 @group(0) @binding(0) var<uniform> B: Brush;
@@ -53,11 +56,11 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (a <= 0.0) { continue; }
     touched = true;
     if (st.mode == 0u) {
-      u = mix(u, 0.5, a);
-      v = mix(v, 0.25, a);
+      u = mix(u, B.seed.x, a);
+      v = mix(v, B.seed.y, a);
     } else if (st.mode == 1u) {
-      u = mix(u, 1.0, a);
-      v = mix(v, 0.0, a);
+      u = mix(u, B.rest.x, a);
+      v = mix(v, B.rest.y, a);
     } else if (st.mode == 2u) {
       chem = select(vec2<f32>(st.F, st.k), mix(chem, vec2<f32>(st.F, st.k), a), wgt > 0.0);
       wgt = max(wgt, a);

@@ -10,6 +10,10 @@
 // replay is byte-identical to never having made the edit; a share link
 // reproduces the scene's starting state across page loads; probe; Learn
 // instruments; keyboard; every listed scene boots without errors.
+// M3: the extra models against their f64 goldens and the analytic Turing
+// check (both run on this GPU from the Prove drawer's own code); On a Shape —
+// sphere and torus, orbit, painting on the surface, undo by replay and share
+// links there too; the Learn model panel.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -282,8 +286,109 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
   await ctx.close();
 }
 
+// --- M3: the extra models and the analytic Turing check, on this GPU ---------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=gated");
+  const models = await T(page, async () => (await __turingProve.runModels()).map((r) => ({ m: r.model, worst: r.worst, budget: r.budget, pass: r.pass })));
+  for (const r of models) check(`model golden: ${r.m} agrees with its f64 golden`, r.pass, `${r.worst.toExponential(2)} of max|field| · budget ${r.budget.toExponential(0)}`);
+  const again = await T(page, async () => (await __turingProve.runModels()).map((r) => r.worst));
+  check("model goldens: a second run on this GPU gives the same numbers", JSON.stringify(again) === JSON.stringify(models.map((r) => r.worst)));
+  const t = await T(page, async () => {
+    const r = await __turingProve.runTuring();
+    return r && { measured: r.measured, predicted: r.predicted, rel: r.rel, budget: r.budget, pass: r.pass, status: document.querySelectorAll(".bp-proof")[3]?.textContent ?? "" };
+  });
+  check(
+    "Turing check: the measured fastest-growing ring matches the dispersion relation",
+    t && t.pass && /analytic check passed/.test(t.status),
+    t ? `measured ${t.measured.toFixed(3)} vs r* ${t.predicted.toFixed(3)} (${(t.rel * 100).toFixed(2)}%, band ±${(t.budget * 100).toFixed(1)}%)` : "no result",
+  );
+  await T(page, () => __turing.studio.drawer.open("prove"));
+  await page.waitForTimeout(300);
+  await shot(page, "06-prove-m3");
+  check("no console errors in the model and Turing checks", errors.length === 0, errors.slice(0, 2).join(" | "));
+  await ctx.close();
+}
+
+// --- M3: On a Shape ---------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=shape");
+  const boot = await T(page, () => ({ scene: __turing.scene.id, kernel: __turing.sim.kernel, cells: __turing.sim.cells, controls: !!document.querySelector(".rd-shape-controls") }));
+  check("On a Shape boots on a sphere with the object and pattern pickers", boot.scene === "shape" && boot.kernel === "surface" && boot.cells > 10000 && boot.controls, JSON.stringify(boot));
+  await page.waitForTimeout(3000);
+  await shot(page, "07-shape-sphere");
+  // a drag with the Look tool orbits
+  const yaw0 = await T(page, () => __turing.orbit.state().yaw);
+  await page.mouse.move(720, 450);
+  await page.mouse.down();
+  await page.mouse.move(560, 430, { steps: 8 });
+  await page.mouse.up();
+  const yaw1 = await T(page, () => __turing.orbit.state().yaw);
+  check("On a Shape: a drag turns the object", Math.abs(yaw1 - yaw0) > 0.3, `yaw ${yaw0.toFixed(2)} → ${yaw1.toFixed(2)}`);
+  // painting on the surface is an undoable edit, and undo-by-replay is byte-identical
+  const r = await T(page, async () => {
+    const a = __turing;
+    a.orbit.autoRotate = 0;
+    a.clock.paused = true;
+    await a.loadScene("shape", { shape: "sphere", pattern: "spots", seed: 3 });
+    a.clock.paused = true;
+    a.orbit.autoRotate = 0;
+    await a.advanceTicks(150);
+    const clean = await a.stateHash();
+    await a.loadScene("shape", { shape: "sphere", pattern: "spots", seed: 3 });
+    a.clock.paused = true;
+    a.orbit.autoRotate = 0;
+    await a.advanceTicks(75);
+    a.studio.rail.select("seed");
+    return { clean };
+  });
+  await page.mouse.move(700, 430);
+  await page.mouse.down();
+  await page.mouse.move(780, 480, { steps: 10 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const r2 = await T(page, async () => {
+    const a = __turing;
+    const events = a.log.length;
+    await a.advanceTicks(75);
+    const edited = await a.stateHash();
+    await a.undo();
+    return { events, edited, undone: await a.stateHash(), tick: a.sim.tick };
+  });
+  check("On a Shape: a seed stroke on the sphere is logged and changes the field", r2.events > 0 && r2.edited !== r.clean, `${r2.events} event(s)`);
+  check("On a Shape: undo by replay is byte-identical to never painting", r2.undone === r.clean && r2.tick === 150, `${r.clean.slice(0, 12)} vs ${r2.undone.slice(0, 12)}`);
+  // the torus, and a pattern from another model
+  await T(page, () => __turing.setShape("torus", "waves"));
+  await page.waitForTimeout(3000);
+  const tor = await T(page, () => ({ kernel: __turing.sim.kernel, model: __turing.sim.chem.model, url: location.search, learn: document.querySelector(".rd-model-eq")?.textContent ?? "" }));
+  check("On a Shape: the torus runs FitzHugh–Nagumo spirals, and the URL says so", tor.kernel === "surface" && tor.model === "fitzhugh-nagumo" && /sh=torus/.test(tor.url) && /pat=waves/.test(tor.url), tor.url);
+  check("Learn shows the model on screen", /u − u³ − v/.test(tor.learn), tor.learn.slice(0, 60));
+  await shot(page, "08-shape-torus");
+  check("no console errors On a Shape", errors.length === 0, errors.slice(0, 2).join(" | "));
+  const href = await T(page, () => location.pathname + location.search);
+  await ctx.close();
+  // a share link reproduces the shape's starting state across page loads
+  const hashes = [];
+  for (let i = 0; i < 2; i += 1) {
+    const p2 = await open(href);
+    hashes.push(
+      await T(p2.page, async () => {
+        __turing.clock.paused = true;
+        await __turing.restart();
+        __turing.clock.paused = true;
+        return { hash: await __turing.stateHash(), shape: __turing.shape, pattern: __turing.pattern };
+      }),
+    );
+    await p2.ctx.close();
+  }
+  check(
+    "On a Shape: a share link reproduces the object, pattern and starting state",
+    hashes[0].hash === hashes[1].hash && hashes[0].shape === "torus" && hashes[0].pattern === "waves",
+    `${hashes[0].hash.slice(0, 12)} vs ${hashes[1].hash.slice(0, 12)}`,
+  );
+}
+
 // --- every listed scene boots and grows ------------------------------------------
-for (const id of ["mitosis", "coral", "solitons", "spirals", "garden", "gated"]) {
+for (const id of ["mitosis", "coral", "solitons", "spirals", "garden", "stripes", "spacing", "excitable", "shape", "gated"]) {
   const { ctx, page, errors } = await open(`/v2/?s=${id}`);
   await page.waitForTimeout(4500);
   const s = await T(page, () => ({ scene: __turing.scene.id, tick: __turing.sim.tick, tone: document.querySelector(".bp-studio")?.dataset.tone }));

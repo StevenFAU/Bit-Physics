@@ -7,11 +7,26 @@
 import { HashStream, hash3, unit } from "@bp/runtime";
 import type { PaletteId } from "../render/look.js";
 import type { Field } from "../model/ic.js";
-import { centre, scatter, sprinkle } from "../model/ic.js";
+import { brokenFronts, centre, restNoise, scatter, sprinkle } from "../model/ic.js";
+import type { ModelId } from "../model/models.js";
+import type { SurfaceStart } from "../model/surface-ic.js";
+import { MODELS } from "../model/models.js";
 import type { Kernel, Stamp } from "../model/sim.js";
 import { PARAMS } from "../proof/gate.js";
 
-export type SceneId = "map" | "mitosis" | "coral" | "solitons" | "spirals" | "garden" | "dish" | "gated";
+export type SceneId =
+  | "map"
+  | "mitosis"
+  | "coral"
+  | "solitons"
+  | "spirals"
+  | "garden"
+  | "stripes"
+  | "spacing"
+  | "excitable"
+  | "shape"
+  | "dish"
+  | "gated";
 
 import { MAP_F, PLANE_K, mapChem } from "./map.js";
 export { MAP_F, PLANE_K } from "./map.js";
@@ -57,6 +72,44 @@ export function nearestRegime(F: number, k: number): { regime: Regime; distance:
   return { regime: best, distance: bd };
 }
 
+export type PatternId = "coral" | "spots" | "maze" | "stripes" | "waves";
+
+export interface ShapePattern {
+  id: PatternId;
+  label: string;
+  model: ModelId;
+  F: number;
+  k: number;
+  palette: PaletteId;
+  start: SurfaceStart;
+}
+
+/** What "On a Shape" can coat an object with: one chemistry per model, Gray–Scott three ways. */
+export const SHAPE_PATTERNS: Record<PatternId, ShapePattern> = {
+  coral: { id: "coral", label: "Coral", model: "gray-scott", F: 0.0545, k: 0.062, palette: "coral", start: "seeds" },
+  spots: { id: "spots", label: "Mitosis", model: "gray-scott", F: PARAMS.F, k: PARAMS.k, palette: "enamel", start: "seeds" },
+  maze: { id: "maze", label: "Maze", model: "gray-scott", F: 0.029, k: 0.057, palette: "ink", start: "seeds" },
+  stripes: {
+    id: "stripes",
+    label: "Stripes",
+    model: "brusselator",
+    F: MODELS.brusselator.p[0],
+    k: MODELS.brusselator.p[1],
+    palette: "enamel",
+    start: "noise",
+  },
+  waves: {
+    id: "waves",
+    label: "Spirals",
+    model: "fitzhugh-nagumo",
+    F: MODELS["fitzhugh-nagumo"].p[0],
+    k: MODELS["fitzhugh-nagumo"].p[1],
+    palette: "nocturne",
+    start: "fronts",
+  },
+};
+export const PATTERN_IDS = Object.keys(SHAPE_PATTERNS) as PatternId[];
+
 export interface SceneContext {
   w: number;
   h: number;
@@ -70,6 +123,8 @@ export interface SceneDef {
   /** Learn → what you're seeing. */
   story: string;
   kernel: Kernel;
+  /** Reaction terms (model/models.ts); default Gray–Scott. */
+  model?: ModelId;
   periodic: boolean;
   F: number;
   k: number;
@@ -82,6 +137,8 @@ export interface SceneDef {
   zoom: number;
   tools: readonly string[];
   tool: string;
+  /** Runs on a closed surface ("On a Shape"): shape and pattern come from SHAPE_PATTERNS. */
+  surface?: boolean;
   /** Fixed grid (the gated dish is always 128²). */
   grid?: readonly [number, number];
   /** Deterministic re-triggers: stamps to apply at the start of tick t, or null. */
@@ -236,6 +293,93 @@ export const SCENES: readonly SceneDef[] = [
     zoom: 1.4,
     tools: ["chemistry", "seed", "erase", "probe", "pan"],
     tool: "chemistry",
+    listed: true,
+  },
+  {
+    id: "stripes",
+    title: "Turing Stripes",
+    model: "brusselator",
+    prompt: "A uniform mixture that cannot stay uniform. Its stripe spacing was predicted on paper.",
+    story:
+      "The Brusselator, from a nearly uniform start. One band of wavelengths grows faster than the rest and locks " +
+      "into stripes and labyrinths; the Prove drawer measures which band grew and checks it against the " +
+      "dispersion relation solved on paper. Erase a patch and the uniform mixture there breaks up again.",
+    kernel: "live",
+    periodic: true,
+    F: MODELS.brusselator.p[0],
+    k: MODELS.brusselator.p[1],
+    palette: "enamel",
+    ic: ({ w, h, seed }) => restNoise(w, h, seed, MODELS.brusselator.rest, 0.05),
+    zoom: 2.2,
+    tools: ["erase", "seed", "probe", "pan"],
+    tool: "erase",
+    listed: true,
+  },
+  {
+    id: "spacing",
+    title: "Spacing Spots",
+    model: "gierer-meinhardt",
+    prompt: "Each spot keeps its neighbours at arm's length. Erase some and watch the gap refill.",
+    story:
+      "Gierer–Meinhardt activator–inhibitor: every peak of the activator makes inhibitor that spreads thirty " +
+      "times further than the activator does, so peaks suppress each other at a set distance and settle into an " +
+      "evenly spaced field of spots. Clear a patch and new spots appear where the inhibition has faded.",
+    kernel: "live",
+    periodic: true,
+    F: MODELS["gierer-meinhardt"].p[0],
+    k: MODELS["gierer-meinhardt"].p[1],
+    palette: "coral",
+    ic: ({ w, h, seed }) => restNoise(w, h, seed, MODELS["gierer-meinhardt"].rest, 0.05),
+    zoom: 3,
+    tools: ["erase", "seed", "probe", "pan"],
+    tool: "erase",
+    director: (t, { w, h, seed }) => {
+      if (!every(6000, t)) return null;
+      const x = unit(hash3(seed, t, 7)) * w;
+      const y = unit(hash3(seed, t, 8)) * h;
+      return [eraseStamp(x, y, Math.min(w, h) / 6)];
+    },
+    listed: true,
+  },
+  {
+    id: "excitable",
+    title: "Excitable Waves",
+    model: "fitzhugh-nagumo",
+    prompt: "Break a wave and its free ends curl into spirals.",
+    story:
+      "FitzHugh–Nagumo, a caricature of nerve and heart tissue. A kicked region fires a pulse; behind it the " +
+      "recovery variable keeps the tissue refractory, so pulses only move forward and annihilate when they meet. " +
+      "The broken fronts you start with wind up into rotating spirals.",
+    kernel: "live",
+    periodic: true,
+    F: MODELS["fitzhugh-nagumo"].p[0],
+    k: MODELS["fitzhugh-nagumo"].p[1],
+    palette: "nocturne",
+    ic: ({ w, h, seed }) => brokenFronts(w, h, seed, MODELS["fitzhugh-nagumo"].rest, 1, 0.75),
+    zoom: 1.2,
+    tools: ["erase", "seed", "probe", "pan"],
+    tool: "erase",
+    listed: true,
+  },
+  {
+    id: "shape",
+    title: "On a Shape",
+    prompt: "Pick an object to coat. Drag to turn it; paint with Seed.",
+    story:
+      "The same chemistry, grown on a closed surface instead of a flat dish. The 5-point Laplacian becomes the " +
+      "surface's own Laplace–Beltrami operator — a geodesic sphere's Voronoi cells or a torus's θ × φ grid — so the " +
+      "pattern has nowhere to end: spots crowd the inner ring of the torus differently from its outside, and " +
+      "fronts wrap all the way round.",
+    kernel: "surface",
+    surface: true,
+    periodic: true,
+    F: SHAPE_PATTERNS.coral.F,
+    k: SHAPE_PATTERNS.coral.k,
+    palette: "coral",
+    ic: null,
+    zoom: 1,
+    tools: ["pan", "seed", "erase", "probe"],
+    tool: "pan",
     listed: true,
   },
   {

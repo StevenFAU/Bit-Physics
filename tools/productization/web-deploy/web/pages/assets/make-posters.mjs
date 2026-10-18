@@ -63,10 +63,11 @@ const SIMS = {
   // 500-agent network reads best mid-growth (a branching junction, before it
   // contracts to a couple of trunks); the shader carries its own exposure.
   physarum: { frames: 650, px: 512 },
-  // verification-demo rework (rd2d): render.wgsl v2 (bilinear + relief +
-  // in-shader tonemap) regenerated at the same frame count — no boost needed,
-  // the shader carries its own exposure; hiDPI boot sizing is dpr=1 headless.
-  "reaction-diffusion-2d": { frames: 2200, px: 512 },
+  // Turing Patterns v2 (rebuild-v2 M3): the card shows the v2 page's "On a
+  // Shape" scene with its chrome off — coral grown on a torus, the spec's
+  // "coral-coated object" poster. ~900 frames lets the coral cover the ring
+  // while the turntable turns it a little; the HDR pipeline sets exposure.
+  "reaction-diffusion-2d": { page: "v2/", query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", frames: 900, px: 512 },
   // verification-demo rework (ising): render.wgsl v2 (AA-nearest two-tone +
   // domain-wall emphasis + flip-activity layer, in-shader tonemap). Frames
   // drop 600→150: at the critical default T the seed-42 trajectory has gone
@@ -170,7 +171,7 @@ function serve(dir) {
     try {
       let p = decodeURIComponent((req.url ?? "/").split("?")[0]);
       if (p === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      if (p === "/") p = "/index.html";
+      if (p.endsWith("/")) p += "index.html"; // a sim's extra pages (cfg.page) too
       const body = await readFile(join(dir, normalize(p).replace(/^(\.\.[/\\])+/, "")));
       res.writeHead(200, { "content-type": MIME[extname(p)] ?? "application/octet-stream" });
       res.end(body);
@@ -182,7 +183,8 @@ async function poster(browser, sim, cfg) {
   const dist = join(REPO, "packages", sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
-  const url = `http://localhost:${server.address().port}/${cfg.query ?? ""}`;
+  // cfg.page: a sim's extra page inside its dist (e.g. "v2/", the rebuild-v2 page)
+  const url = `http://localhost:${server.address().port}/${cfg.page ?? ""}${cfg.query ?? ""}`;
   const context = await browser.newContext({ viewport: { width: 1400, height: 1400 } });
   const page = await context.newPage();
   page.on("console", (m) => { if (m.type() === "error") console.log(`  [${sim}] console: ${m.text().slice(0, 200)}`); });
@@ -226,7 +228,7 @@ async function poster(browser, sim, cfg) {
       // presentational — the sim, its params, and its canvas render are untouched.
       if (cfg.hide) for (const sel of cfg.hide)
         document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
-      const canvas = document.querySelector("canvas");
+      const canvas = document.querySelector(cfg.canvas ?? "canvas");
       canvas.style.width = `${cfg.px}px`;
       canvas.style.height = "auto";
       if (cfg.pixelated) canvas.style.imageRendering = "pixelated";
@@ -241,7 +243,7 @@ async function poster(browser, sim, cfg) {
       // apart with additive blending — purely photographic motion trails.
       const shots = [];
       for (let i = 0; i < cfg.trail.shots; i += 1) {
-        shots.push((await page.locator("canvas").first().screenshot()).toString("base64"));
+        shots.push((await page.locator(cfg.canvas ?? "canvas").first().screenshot()).toString("base64"));
         await page.evaluate((gap) => {
           window.__posterTarget += gap;
           const cbs = window.__parked ?? [];
@@ -292,8 +294,8 @@ async function poster(browser, sim, cfg) {
       // The WebGPU canvas bitmap isn't 2D-drawable post-present, so find the
       // bright-content bbox by decoding a first screenshot of the element
       // (CSS-pixel coords), then re-shoot a scaled clip around it.
-      const probe = await page.locator("canvas").first().screenshot();
-      const bbox = await page.evaluate(async ({ dataUrl, px, tight }) => {
+      const probe = await page.locator(cfg.canvas ?? "canvas").first().screenshot();
+      const bbox = await page.evaluate(async ({ dataUrl, px, tight, sel }) => {
         const img = new Image();
         await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = dataUrl; });
         const t = document.createElement("canvas");
@@ -324,7 +326,7 @@ async function poster(browser, sim, cfg) {
         // and translate it so the bbox sits at the viewport origin — fixed
         // elements can't be screenshot beyond the viewport
         const f = Math.min(px / side, 4);
-        const c = document.querySelector("canvas");
+        const c = document.querySelector(sel);
         const cssW = c.getBoundingClientRect().width;
         c.style.position = "fixed";
         c.style.left = `${-bx * f}px`;
@@ -332,7 +334,7 @@ async function poster(browser, sim, cfg) {
         c.style.width = `${cssW * f}px`;
         c.style.height = "auto";
         return { x: 0, y: 0, side: side * f };
-      }, { dataUrl: `data:image/png;base64,${probe.toString("base64")}`, px: cfg.px, tight: cfg.zoomTight });
+      }, { dataUrl: `data:image/png;base64,${probe.toString("base64")}`, px: cfg.px, tight: cfg.zoomTight, sel: cfg.canvas ?? "canvas" });
       if (bbox) {
         console.log(`  [${sim}] zoom clip ${JSON.stringify(bbox)}`);
         try {
@@ -342,14 +344,14 @@ async function poster(browser, sim, cfg) {
           });
         } catch (e) {
           console.log(`  [${sim}] clip failed (${String(e).split("\n")[0]}) — element fallback`);
-          await page.locator("canvas").first().screenshot({ path: out });
+          await page.locator(cfg.canvas ?? "canvas").first().screenshot({ path: out });
         }
       } else {
         console.log(`  [${sim}] zoom bbox unavailable — falling back to full canvas`);
-        await page.locator("canvas").first().screenshot({ path: out });
+        await page.locator(cfg.canvas ?? "canvas").first().screenshot({ path: out });
       }
     } else {
-      await page.locator("canvas").first().screenshot({ path: out });
+      await page.locator(cfg.canvas ?? "canvas").first().screenshot({ path: out });
     }
     const { size } = await import("node:fs").then((fs) =>
       fs.promises.stat(out));

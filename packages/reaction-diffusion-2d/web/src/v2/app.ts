@@ -7,10 +7,11 @@
 import type { GpuContext, GpuProfiler, Tier } from "@bp/gpu";
 import { lowerTier, readBuffer, rememberTier } from "@bp/gpu";
 import type { HdrPipeline } from "@bp/render";
-import { Camera2D, FieldView2D } from "@bp/render";
+import { Camera2D, FieldView2D, OrbitCamera } from "@bp/render";
+import type { OrbitState } from "@bp/render";
 import type { Checkpointer, QualityGovernor, SimEvent } from "@bp/runtime";
 import { EventLog, History, SimClock } from "@bp/runtime";
-import type { CalloutSpec, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
+import type { CalloutSpec, CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, segmented, slider } from "@bp/studio";
 import { isCapturing, sha256hex } from "@bp/verify";
 import { blank } from "./model/ic.js";
@@ -19,10 +20,16 @@ import type { Checkpoint, Chemistry, Stamp } from "./model/sim.js";
 import { LiveSim, STEPS_PER_TICK, chemistryAt, sweepActive } from "./model/sim.js";
 import type { ChemPayload, DivePayload, RatioPayload, StampsPayload } from "./model/runner.js";
 import { DU, applyEvent, runTicks, toRow } from "./model/runner.js";
+import type { ModelDef } from "./model/models.js";
+import type { ShapeId, SurfaceMesh } from "./model/surface-mesh.js";
+import { surfaceFor } from "./model/surface-mesh.js";
+import { surfaceField } from "./model/surface-ic.js";
+import { SurfaceView } from "./render/surface-view.js";
+import { MODELS } from "./model/models.js";
 import type { PaletteId } from "./render/look.js";
 import { PALETTES } from "./render/look.js";
-import type { SceneContext, SceneDef, SceneId } from "./scenes/scenes.js";
-import { MAP_F, PLANE_K, REGIMES, SCENES, nearestRegime, sceneById } from "./scenes/scenes.js";
+import type { PatternId, SceneContext, SceneDef, SceneId } from "./scenes/scenes.js";
+import { MAP_F, PATTERN_IDS, PLANE_K, REGIMES, SCENES, SHAPE_PATTERNS, nearestRegime, sceneById } from "./scenes/scenes.js";
 import { mapUv } from "./scenes/map.js";
 import { PARAMS, fetchCanonicalIC } from "./proof/gate.js";
 import { Breadcrumb } from "./ui/breadcrumb.js";
@@ -44,7 +51,17 @@ export interface SceneOptions {
   tool?: string;
   /** Pre-run this many ms of simulation before the first frame (boot). */
   prewarmMs?: number;
+  /** On a Shape: which object, which pattern, and the orbit view. */
+  shape?: ShapeId;
+  pattern?: PatternId;
+  orbit?: Pick<OrbitState, "yaw" | "pitch" | "distance">;
 }
+
+/** The orbit view "On a Shape" opens on, per object. */
+const SHAPE_HOME: Record<ShapeId, OrbitState> = {
+  sphere: { yaw: 0.55, pitch: 0.3, distance: 4.3, target: [-0.18, -0.02, 0] },
+  torus: { yaw: 0.4, pitch: 0.62, distance: 5.0, target: [-0.18, -0.06, 0] },
+};
 
 interface Snapshot {
   cp: Checkpoint;
@@ -67,6 +84,14 @@ export class App {
   readonly hdr: HdrPipeline;
   readonly view: FieldView2D;
   readonly camera = new Camera2D();
+  /** "On a Shape": the orbit camera, the surface renderer, the object and its pattern. */
+  readonly orbit = new OrbitCamera();
+  surfaceView: SurfaceView | null = null;
+  shape: ShapeId = "sphere";
+  /** "studio" leaves room for the heading on the left; "full" (chrome off) centres the object. */
+  framing: "studio" | "full" = "studio";
+  pattern: PatternId = "coral";
+  private readonly meshes = new Map<string, SurfaceMesh>();
   readonly clock: SimClock;
   readonly log = new EventLog();
   readonly breadcrumb = new Breadcrumb();
@@ -129,6 +154,10 @@ export class App {
     this.view = new FieldView2D(gpu.device, PALETTES.nocturne.look);
     this.clock = new SimClock(TICK_RATE[tier], 32);
     this.camera.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    this.orbit.reducedMotion = this.camera.reducedMotion;
+    this.orbit.autoRotate = 0.12;
+    this.orbit.minDistance = 1.8;
+    this.orbit.maxDistance = 9;
     this.probeBuf = this.device.createBuffer({
       size: 8,
       usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
@@ -148,7 +177,15 @@ export class App {
     };
     this.history = new History(cp, tier === "T3" ? 5 : 8);
     this.history.onChange = () => this.syncTransport();
-    this.input = new CanvasInput(studio.canvas, this.camera, this.toolHandlers(), () => this.studio.rail.active === "pan");
+    // the canvas gestures drive whichever camera the scene uses
+    const cam: CameraLike = {
+      panBy: (dx, dy) => (this.surfaceActive ? this.orbit.panBy(dx, dy) : this.camera.panBy(dx, dy)),
+      zoomAt: (f, x, y) => (this.surfaceActive ? this.orbit.zoomAt(f, x, y) : this.camera.zoomAt(f, x, y)),
+      fling: (vx, vy) => (this.surfaceActive ? this.orbit.fling(vx, vy) : this.camera.fling(vx, vy)),
+      stop: () => (this.surfaceActive ? this.orbit.stop() : this.camera.stop()),
+      fit: (zoom, animate) => (this.surfaceActive ? this.orbit.fit(zoom, animate) : this.camera.fit(zoom, animate)),
+    };
+    this.input = new CanvasInput(studio.canvas, cam, this.toolHandlers(), () => this.studio.rail.active === "pan");
     this.breadcrumb.onMove = (F, k, phase) => this.setChemistry(F, k, phase);
     this.breadcrumb.back.addEventListener("click", () => void this.backToMap());
   }
@@ -167,26 +204,56 @@ export class App {
       const seed = o.seed ?? 1;
       this.ctx = { w, h, seed };
       this.ratio = o.ratio ?? 2;
+      if (scene.surface) {
+        this.shape = o.shape ?? this.shape;
+        this.pattern = o.pattern ?? this.pattern;
+      }
+      const pattern = scene.surface ? SHAPE_PATTERNS[this.pattern] : null;
+      const model = MODELS[pattern?.model ?? scene.model ?? "gray-scott"];
+      const gs = model.id === "gray-scott";
       const chem: Chemistry = {
-        Du: DU,
-        Dv: scene.kernel === "reference" && o.ratio === undefined ? PARAMS.Dv : DU / this.ratio,
-        dt: 1,
-        dx: 1,
-        F0: o.F ?? scene.F,
-        k0: o.k ?? scene.k,
+        model: model.id,
+        c: model.c,
+        Du: gs ? DU : model.Du,
+        Dv: gs ? (scene.kernel === "reference" && o.ratio === undefined ? PARAMS.Dv : DU / this.ratio) : model.Dv,
+        dt: gs ? 1 : model.dt,
+        dx: gs ? 1 : model.dx,
+        F0: o.F ?? pattern?.F ?? scene.F,
+        k0: o.k ?? pattern?.k ?? scene.k,
         sweep: scene.sweep ? { anchorU: 0.5, anchorV: 0.5 } : null,
         reveal: null,
       };
-      const field = scene.ic ? scene.ic(this.ctx) : await fetchCanonicalIC();
-      const sim = await LiveSim.create(this.device, {
-        w,
-        h,
-        periodic: scene.periodic,
-        kernel: scene.kernel,
-        chem,
-        seed,
-        field: field.length === w * h * 2 ? field : blank(w, h, seed),
-      });
+      let sim: LiveSim;
+      if (scene.surface && pattern) {
+        const key = `${this.shape}:${this.tier}:${model.dx}`;
+        let mesh = this.meshes.get(key);
+        if (!mesh) {
+          mesh = surfaceFor(this.shape, this.tier, model.dx);
+          this.meshes.set(key, mesh);
+        }
+        this.ctx = { w: mesh.cells, h: 1, seed };
+        sim = await LiveSim.create(this.device, {
+          w: mesh.cells,
+          h: 1,
+          periodic: true,
+          kernel: "surface",
+          chem,
+          seed,
+          field: surfaceField(mesh, model, pattern.start, seed),
+          surface: mesh,
+        });
+      } else {
+        const field = scene.ic ? scene.ic(this.ctx) : await fetchCanonicalIC();
+        sim = await LiveSim.create(this.device, {
+          w,
+          h,
+          periodic: scene.periodic,
+          kernel: scene.kernel,
+          chem,
+          seed,
+          field: field.length === w * h * 2 ? field : blank(w, h, seed),
+        });
+      }
       this.sim = sim;
       old?.destroy();
       this.scene = scene;
@@ -195,17 +262,30 @@ export class App {
       this.edits = 0;
       this.clock.reset();
       this.sceneT0 = performance.now();
-      this.instruments?.attach(sim);
-      this.camera.setViewport(rect.width, rect.height);
-      this.camera.setDomain(w, h, scene.periodic);
-      if (o.camera) {
-        this.camera.set({ cx: o.camera.cx * w, cy: o.camera.cy * h, pxPerUnit: this.camera.coverZoom() * o.camera.zoom });
+      if (sim.surface) {
+        // the instruments read flat grids; on a shape the pattern itself is the readout
+        this.surfaceView ??= new SurfaceView(this.device, PALETTES[this.palette].look);
+        this.surfaceView.setMesh(sim.surface, sim.state);
+        this.surfaceView.channel = model.show;
+        this.surfaceView.coverage = model.coverage;
+        this.orbit.setViewport(rect.width, rect.height);
+        const home = SHAPE_HOME[this.shape];
+        const framed: OrbitState = this.framing === "full" ? { ...home, target: [0, home.target[1], 0] } : home;
+        this.orbit.setHome(framed);
+        if (o.orbit) this.orbit.set({ ...framed, ...o.orbit });
       } else {
-        this.camera.fit(scene.zoom);
+        this.instruments?.attach(sim);
+        this.camera.setViewport(rect.width, rect.height);
+        this.camera.setDomain(w, h, scene.periodic);
+        if (o.camera) {
+          this.camera.set({ cx: o.camera.cx * w, cy: o.camera.cy * h, pxPerUnit: this.camera.coverZoom() * o.camera.zoom });
+        } else {
+          this.camera.fit(scene.zoom);
+        }
+        this.view.setSource({ buffer: sim.state, width: w, height: h, stride: 2, primary: model.show, secondary: 1 - model.show, periodic: scene.periodic });
+        this.view.setOverlay(sim.overlay ? sim.overlay.createView() : null);
       }
-      this.view.setSource({ buffer: sim.state, width: w, height: h, stride: 2, primary: 1, secondary: 0, periodic: scene.periodic });
-      this.view.setOverlay(sim.overlay ? sim.overlay.createView() : null);
-      this.setPalette(o.palette ?? scene.palette, false);
+      this.setPalette(o.palette ?? pattern?.palette ?? scene.palette, false);
       this.hdr.resetExposure();
       const tools = scene.tools.slice();
       this.studio.rail.setTools(
@@ -270,6 +350,31 @@ export class App {
     return this.scene.id === "gated" && this.edits === 0 && c.F0 === PARAMS.F && c.k0 === PARAMS.k && c.Dv === PARAMS.Dv;
   }
 
+  /** The reaction model on screen. */
+  get model(): ModelDef {
+    return MODELS[this.sim.chem.model];
+  }
+
+  /** On a Shape is on screen (the orbit camera and surface renderer are live). */
+  get surfaceActive(): boolean {
+    return this.sim?.kernel === "surface";
+  }
+
+  /** The surface cell under a canvas point, or −1. */
+  pickCell(x: number, y: number): number {
+    const m = this.sim?.surface;
+    if (!m) return -1;
+    const r = this.orbit.ray(x, y);
+    return m.pick(r.origin, r.dir);
+  }
+
+  /** Switch the object or the pattern On a Shape (a fresh start, like a scene). */
+  async setShape(shape: ShapeId | null, pattern: PatternId | null): Promise<void> {
+    if (this.busy || isCapturing()) return;
+    await this.loadScene("shape", { shape: shape ?? this.shape, pattern: pattern ?? this.pattern, seed: this.ctx.seed });
+    this.writeUrl();
+  }
+
   get inMapSweep(): boolean {
     return this.scene.id === "map" && sweepActive(this.sim.chem, this.sim.tick) && !this.sim.chem.reveal;
   }
@@ -293,7 +398,27 @@ export class App {
       extra.append(this.breadcrumb.el);
     } else {
       this.studio.heading.set(s.title, s.prompt);
+      if (s.surface) extra.append(this.shapeControls());
     }
+  }
+
+  private shapeControls(): HTMLElement {
+    const shape = segmented(
+      "Object",
+      [
+        { value: "sphere", label: "Sphere" },
+        { value: "torus", label: "Torus" },
+      ],
+      this.shape,
+      (v) => void this.setShape(v as ShapeId, null),
+    );
+    const pattern = segmented(
+      "Pattern",
+      PATTERN_IDS.map((id) => ({ value: id, label: SHAPE_PATTERNS[id].label, title: MODELS[SHAPE_PATTERNS[id].model].name })),
+      this.pattern,
+      (v) => void this.setShape(null, v as PatternId),
+    );
+    return h("div", { class: "rd-shape-controls" }, shape.el, pattern.el);
   }
 
   // ------------------------------------------------------------- look --
@@ -301,7 +426,12 @@ export class App {
   setPalette(id: PaletteId, announce = true): void {
     const p = PALETTES[id];
     this.palette = id;
-    this.view.look = p.look;
+    // the palette's look, with the coverage ramp of the field this model draws
+    this.view.look = { ...p.look, coverage: this.sim ? this.model.coverage : p.look.coverage };
+    if (this.surfaceView) {
+      this.surfaceView.look = this.view.look;
+      this.surfaceView.tone = p.tone;
+    }
     this.studio.setTone(p.tone);
     document.documentElement.style.setProperty("--sim-accent", p.accent);
     document.documentElement.style.setProperty("--sim-key", p.key);
@@ -344,6 +474,7 @@ export class App {
 
   setRatio(r: number, phase: "start" | "move" | "end" = "end"): void {
     if (this.blocked("change diffusion")) return;
+    if (this.sim.chem.model !== "gray-scott") return;
     if (phase === "start" || this.activeGroup === 0) this.beginEdit();
     this.ratio = r;
     this.paramEvent("ratio", { g: this.activeGroup, r } satisfies RatioPayload);
@@ -454,6 +585,10 @@ export class App {
 
   toggleCompare(): void {
     if (!this.history.hasSave || this.busy) return;
+    if (this.surfaceActive) {
+      this.studio.toast.show("Compare wipes work on flat dishes — use Restore to go back to the save point");
+      return;
+    }
     const on = !this.history.comparing;
     this.history.comparing = on;
     if (on) {
@@ -465,8 +600,8 @@ export class App {
         width: this.sim.w,
         height: this.sim.h,
         stride: 2,
-        primary: 1,
-        secondary: 0,
+        primary: this.model.show,
+        secondary: 1 - this.model.show,
         periodic: this.sim.periodic,
       });
       this.split = 0.5;
@@ -606,7 +741,14 @@ export class App {
       case "probe":
         return { id, label: "Probe", icon: "probe", hint: "Point anywhere to read the two chemicals and the local chemistry" };
       default:
-        return { id: "pan", label: "Look", icon: "hand", hint: "Drag to pan · scroll or pinch to zoom · double-click to fit" };
+        return {
+          id: "pan",
+          label: "Look",
+          icon: "hand",
+          hint: this.scene.surface
+            ? "Drag to turn the object · scroll or pinch to move closer · double-click to reset"
+            : "Drag to pan · scroll or pinch to zoom · double-click to fit",
+        };
     }
   }
 
@@ -635,6 +777,14 @@ export class App {
           return;
         }
         if (this.blocked("paint")) return;
+        if (this.surfaceActive) {
+          const c = this.pickCell(x, y);
+          if (c < 0) return;
+          this.beginEdit();
+          this.strokeCell = -1;
+          this.addSurfaceStamp(c);
+          return;
+        }
         this.beginEdit();
         const p = this.camera.screenToDomain(x, y);
         this.strokeLast = null;
@@ -642,6 +792,11 @@ export class App {
       },
       move: (x, y) => {
         if (this.activeGroup === 0) return;
+        if (this.surfaceActive) {
+          const c = this.pickCell(x, y);
+          if (c >= 0) this.addSurfaceStamp(c);
+          return;
+        }
         this.addStamp(this.camera.screenToDomain(x, y));
       },
       up: () => {
@@ -666,6 +821,25 @@ export class App {
         }
       },
     };
+  }
+
+  private strokeCell = -1;
+
+  /** A stamp on the surface, centred on a cell; spaced like the flat brush. */
+  private addSurfaceStamp(cell: number): void {
+    const m = this.sim.surface!;
+    const tool = this.studio.rail.active;
+    const r = this.brush[tool] ?? 6;
+    if (this.strokeCell >= 0) {
+      const d = Math.hypot(
+        (m.pos[cell * 4]! - m.pos[this.strokeCell * 4]!) * m.scale,
+        (m.pos[cell * 4 + 1]! - m.pos[this.strokeCell * 4 + 1]!) * m.scale,
+        (m.pos[cell * 4 + 2]! - m.pos[this.strokeCell * 4 + 2]!) * m.scale,
+      );
+      if (d < Math.max(1, r * 0.35)) return;
+    }
+    this.strokeCell = cell;
+    this.stroke.push({ x: cell, y: 0, r, strength: 1, mode: tool === "erase" ? 1 : 0, F: 0, k: 0 });
   }
 
   private addStamp(p: [number, number]): void {
@@ -785,8 +959,14 @@ export class App {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const scale = this.governor?.renderScale ?? 1;
     this.hdr.resize(rect.width, rect.height, dpr, scale);
-    this.camera.setViewport(rect.width, rect.height);
-    this.camera.update(dt, now);
+    const surface = this.surfaceActive;
+    if (surface) {
+      this.orbit.setViewport(rect.width, rect.height);
+      this.orbit.update(dt, now);
+    } else {
+      this.camera.setViewport(rect.width, rect.height);
+      this.camera.update(dt, now);
+    }
     const effects = this.governor?.effects ?? 1;
     this.view.view.sampling = effects > 0 ? "bicubic" : "bilinear";
 
@@ -803,7 +983,7 @@ export class App {
     // instruments only while Learn is open, and never in the boot window
     let statsQueued = false;
     let specQueued = false;
-    if (this.instruments && this.learnOpen && this.frameNo > 30) {
+    if (this.instruments && this.learnOpen && this.frameNo > 30 && !surface) {
       if (this.frameNo % 30 === 0) statsQueued = this.instruments.recordStats(enc);
       if (this.frameNo % 60 === 15) {
         const [cx, cy] = [this.camera.cx, this.camera.cy];
@@ -812,7 +992,15 @@ export class App {
     }
     // probe
     let probeIdx = -1;
-    if (this.hover && (this.studio.rail.active === "probe" || this.studio.rail.active === "dive") && now > this.probeDue && !this.probeBusy) {
+    if (surface && this.hover && this.studio.rail.active === "probe" && now > this.probeDue && !this.probeBusy) {
+      const c = this.pickCell(this.hover[0], this.hover[1]);
+      if (c >= 0) {
+        probeIdx = c;
+        enc.copyBufferToBuffer(this.sim.state, c * 8, this.probeBuf, 0, 8);
+        this.probeBusy = true;
+        this.probeDue = now + 70;
+      }
+    } else if (!surface && this.hover && (this.studio.rail.active === "probe" || this.studio.rail.active === "dive") && now > this.probeDue && !this.probeBusy) {
       const [x, y] = this.camera.screenToDomain(this.hover[0], this.hover[1]);
       let ix = Math.floor(x);
       let iy = Math.floor(y);
@@ -828,7 +1016,11 @@ export class App {
       }
     }
 
-    this.view.encode(enc, this.hdr.sceneView, this.hdr.width, this.hdr.height, this.camera, dpr * scale, this.profiler ?? undefined);
+    if (surface && this.surfaceView) {
+      this.surfaceView.encode(enc, this.hdr.sceneView, this.hdr.width, this.hdr.height, this.orbit, dpr * scale, this.profiler ?? undefined);
+    } else {
+      this.view.encode(enc, this.hdr.sceneView, this.hdr.width, this.hdr.height, this.camera, dpr * scale, this.profiler ?? undefined);
+    }
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     this.profiler?.end(enc);
     this.device.queue.submit([enc.finish()]);
@@ -863,7 +1055,7 @@ export class App {
   private updateRing(): void {
     const t = this.studio.rail.activeTool;
     const ring = this.studio.ring;
-    if (!t?.paints || !this.hover || this.history.comparing) {
+    if (!t?.paints || !this.hover || this.history.comparing || this.surfaceActive) {
       ring.classList.remove("is-shown");
       return;
     }
@@ -883,22 +1075,24 @@ export class App {
       const x = idx % this.sim.w;
       const y = Math.floor(idx / this.sim.w);
       const [F, k] = chemistryAt(this.sim.chem, this.sim.w, this.sim.h, x, y, this.sim.tick);
+      const m = this.model;
+      const gs = m.id === "gray-scott";
       const { regime, distance } = nearestRegime(F, k);
       const p = this.studio.probe;
       p.hidden = false;
       p.innerHTML = "";
       p.append(
-        h("strong", {}, distance < 0.08 ? regime.name : "Between regimes"),
+        h("strong", {}, gs ? (distance < 0.08 ? regime.name : "Between regimes") : m.name),
         h(
           "dl",
           {},
-          h("dt", {}, "Feed rate F"),
-          h("dd", {}, F.toFixed(4)),
-          h("dt", {}, "Kill rate k"),
-          h("dd", {}, k.toFixed(4)),
-          h("dt", {}, "U (food)"),
+          h("dt", {}, `${m.params[0].label} ${m.params[0].symbol}`),
+          h("dd", {}, F.toFixed(m.params[0].digits)),
+          h("dt", {}, `${m.params[1].label} ${m.params[1].symbol}`),
+          h("dd", {}, k.toFixed(m.params[1].digits)),
+          h("dt", {}, gs ? "U (food)" : "u"),
           h("dd", {}, f[0]!.toFixed(3)),
-          h("dt", {}, "V (pattern)"),
+          h("dt", {}, gs ? "V (pattern)" : "v"),
           h("dd", {}, f[1]!.toFixed(3)),
         ),
       );

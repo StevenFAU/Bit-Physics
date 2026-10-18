@@ -1,5 +1,5 @@
 // Turing Patterns — the wavelength instrument: a Hann-windowed N×N window of
-// V around a point, a 2D FFT (the shared Stockham core from
+// the pattern field (V for Gray–Scott) around a point, a 2D FFT (the shared Stockham core from
 // common/common-web/src/fft-wgsl.ts, spliced at the marker below), and the
 // radially averaged power spectrum. Display-side: reads the state read-only.
 
@@ -15,8 +15,8 @@ struct Spec {
   w: u32,          // state grid
   h: u32,
   periodic: u32,
-  _p0: u32,
-  _p1: u32,
+  channel: u32,     // which field (0 u, 1 v)
+  offset: f32,      // reference level subtracted before the window (see load)
   _p2: u32,
 };
 
@@ -36,7 +36,7 @@ fn sample_v(x: i32, y: i32) -> f32 {
     xx = clamp(x, 0, i32(P.w) - 1);
     yy = clamp(y, 0, i32(P.h) - 1);
   }
-  return state[(u32(yy) * P.w + u32(xx)) * 2u + 1u];
+  return state[(u32(yy) * P.w + u32(xx)) * 2u + P.channel];
 }
 
 @compute @workgroup_size(64, 1, 1)
@@ -51,7 +51,10 @@ fn load(@builtin(global_invocation_id) gid: vec3<u32>) {
   let tau = 6.283185307179586;
   let wx = 0.5 - 0.5 * cos(tau * (f32(x) + 0.5) / f32(n));
   let wy = 0.5 - 0.5 * cos(tau * (f32(y) + 0.5) / f32(n));
-  dst[gid.x] = vec2<f32>(sample_v(ox + i32(x), oy + i32(y)) * wx * wy, 0.0);
+  // Subtracting a reference level first (the check passes the known uniform
+  // state; Learn passes 0) keeps a large mean out of the f32 FFT, whose
+  // round-off would otherwise spread ~1e-7 of the DC term into every ring.
+  dst[gid.x] = vec2<f32>((sample_v(ox + i32(x), oy + i32(y)) - P.offset) * wx * wy, 0.0);
 }
 
 @compute @workgroup_size(64, 1, 1)

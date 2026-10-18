@@ -62,6 +62,7 @@ export function applyEvent(sim: LiveSim, e: SimEvent): Stamp[] {
       return [];
     }
     case "ratio": {
+      if (sim.chem.model !== "gray-scott") return [];
       const c = cloneChem(sim.chem);
       c.Du = DU;
       c.Dv = DU / (p["r"] as number);
