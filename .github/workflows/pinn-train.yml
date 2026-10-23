@@ -21,6 +21,11 @@ on:
       - "packages/pinn-poisson/pinn_poisson/**"
       - "packages/pinn-poisson/pyproject.toml"
 
+# Runner image pinned, not ubuntu-latest, matching python-strict's
+# test-pinn-poisson: the fresh-train tests run uv's Python and torch on the
+# image's glibc. ubuntu-latest moved to 26.04 in 2026-10 and broke python-strict,
+# cpp-strict and the web-deploy browser gate. Move images deliberately,
+# re-measuring the gates.
 jobs:
   # The fresh-train tier: training-convergence, inference-vs-analytic (A1/A2/A3, the
   # cross-hardware convergence guarantee), inference-vs-FD, convergence-with-
@@ -28,7 +33,7 @@ jobs:
   # scratch (lfs:false — no committed-capture/checkpoint read). gate-12's
   # training_wall_clock is observable here.
   test-pinn-poisson-train:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
