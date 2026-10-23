@@ -30,7 +30,7 @@ import { DEFAULT_LOOK, GlowView } from "./render/glow-view.js";
 import type { PaletteId } from "./render/look.js";
 import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
-import { SCENES, sameParams, sceneById } from "./scenes.js";
+import { SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
 
 const SIM_NAME = "Slime Mould";
@@ -181,7 +181,7 @@ async function boot(): Promise<void> {
       scene: app.scene.title,
       agents: app.sim.n,
       grid: [app.sim.w, app.sim.h],
-      atGatedParams: sameParams(app.sim.params, PARAMS),
+      params: app.sim.params,
     });
 
   // The developer capture control — the headless gate's entry point.

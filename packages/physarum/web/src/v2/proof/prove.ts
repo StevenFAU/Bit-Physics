@@ -6,6 +6,7 @@
 import { h, proofCard } from "@bp/studio";
 import V from "../../generated/verification.json";
 import type { GateRunner } from "./gate.js";
+import type { JonesParams } from "./gate.js";
 import { H, NA, PARAMS, STEPS, W, fetchCanonicalIC } from "./gate.js";
 import { LiveKernels, LiveSim } from "../model/sim.js";
 
@@ -29,8 +30,8 @@ export interface OnScreen {
   scene: string;
   agents: number;
   grid: [number, number];
-  /** The parameters on screen are Jones 2010 Table 1 (the gated ones). */
-  atGatedParams: boolean;
+  /** The parameters on screen (compared with Jones 2010 Table 1, the gated ones). */
+  params: JonesParams;
 }
 
 export interface LiveVsGated {
@@ -47,6 +48,20 @@ export interface ProvePane {
   runLiveVsGated(): Promise<LiveVsGated>;
   /** The live mass check (also a test hook). */
   runLiveMass(): Promise<{ massRel: number; pass: boolean } | null>;
+}
+
+const PARAM_NAMES: [keyof JonesParams, string, string][] = [
+  ["delta_phi_deg", "turn angle", "°"],
+  ["L_sense", "sensor reach", ""],
+  ["L_move", "step", ""],
+  ["deposit", "deposit", ""],
+  ["decay_alpha", "fade", ""],
+];
+
+/** "at the gated parameters", or which values differ: "at sensor reach 18 (the gate uses 9)". */
+function paramsVsGated(p: JonesParams): string {
+  const diff = PARAM_NAMES.filter(([k]) => p[k] !== PARAMS[k]).map(([k, name, unit]) => `${name} ${p[k]}${unit} (the gate uses ${PARAMS[k]}${unit})`);
+  return diff.length === 0 ? "at the gated parameters" : `at ${diff.join(", ")}`;
 }
 
 /** Settling: the mass relaxes as (1−α)^k; after this many steps the residue is < 1e-13 of it. */
@@ -310,7 +325,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       const size = `${s.agents.toLocaleString()} agents on ${s.grid[0]} × ${s.grid[1]}`;
       onScreen.textContent = s.gated
         ? `On screen: the gated run itself (${size}, canonical parameters, no edits).`
-        : `On screen: ${s.scene} — ${size}. The gated kernel's arithmetic ${s.atGatedParams ? "at the gated parameters" : "at other parameters than the gated ones"}; ` +
+        : `On screen: ${s.scene} — ${size}. The gated kernel's arithmetic ${paramsVsGated(s.params)}; ` +
           "for hours-long runs positions wrap back into the dish and headings are renormalised after each turn, so it is not the gated run.";
       showGatedBtn.hidden = s.gated;
     },

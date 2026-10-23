@@ -2,6 +2,87 @@
 
 > Part of [Rebuild v2](README.md). Replaces `packages/physarum/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+>
+> **Implementation status (2026-10-23): M0 built** as the `v2/` page of `packages/physarum/web`
+> (served at `/sims/physarum/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
+>
+> - **Gate.** The v1 capture path is ported verbatim on its own buffers (`src/v2/proof/gate.ts`).
+>   `pipeline.py validate` passes on both pages, run twice: byte-identical, total mass 22499.9962
+>   against 22500 (relative 1.7e-7, budget 1e-3).
+> - **Live solver.** The gated kernel restructured for millions of agents (`src/v2/model/`):
+>   - agents packed as vec4;
+>   - a row-major trail;
+>   - apply + diffuse fused, with two alternating deposit buffers;
+>   - compare-based stencil wraps.
+>
+>   The arithmetic stays term for term. On the canonical run it reproduces the gated kernel's
+>   trail byte for byte over 5,000 steps, including 78 re-sorts (an in-page Prove card).
+>   Long-running scenes add two flags the gated scene leaves off:
+>   - positions wrap back into the dish (the gated kernel lets them grow, losing f32 precision
+>     over hours);
+>   - headings are renormalised after a turn. WGSL `sin`/`cos` are only 2⁻¹¹ accurate on some
+>     drivers, so |h| could drift ~1e-3 per turn there.
+> - **Density-coupled grid.** The tier sets the agent count (T3 2M, T2 500k, T1 150k). The grid
+>   is N / 0.4768 cells (the spec's 2M-on-2048² density) shaped to the viewport. At 1280×720 on
+>   the RX 6800 XT: 2,000,000 agents on 2728 × 1536.
+> - **Look.** The trail, normalised by its exact equilibrium mean d·ρ·(1−α)/α, becomes emissive
+>   HDR light on a near-black agar:
+>   - a log ramp in an *ember* or *deep sea* palette;
+>   - agent sparks as additive points;
+>   - a box-filtered mip for zoomed-out views.
+>
+>   It is tone-mapped with AgX under measured exposure (clamped to 0.25–1.5× so an empty dish
+>   stays black) and bloomed by the new shared bloom in `@bp/render`.
+> - **Sorting.** Agents are reordered by 8 × 8-cell tile every 32 steps with the new shared
+>   `CountingSort` in `@bp/gpu`. The step pass drops from 1.29 to 0.80 ms per frame (−38%) for a
+>   0.34 ms reorder. The gain is flat between every 8 and every 128 steps. A reorder is a pure
+>   permutation, so it never changes a byte of the trail.
+> - **Measured performance** (RX 6800 XT, Chromium + Dawn/Vulkan, `?bench=1`): 60 fps, frame
+>   p50/p90 16.7/16.7 ms and 120 steps/s at 1280×720, 1920×1080 and 2560×1440.
+>   - GPU per frame: 1.6 ms (p50, the GPU at full clock) to 3.9 ms (when the driver downclocks
+>     under this light load).
+>   - Passes at full clock, 1280×720: steps 0.81 ms (2 steps), prep 0.12, glow 0.35, bloom 0.07,
+>     exposure + composite 0.05.
+>   - At 8× speed: 778 steps/s at 51 fps.
+> - **Shell.** Look and Probe tools; Tune (the five Jones numbers in plain words, plus the
+>   palette); save / restore / A-B compare; share links; Learn (three depths with kernel links,
+>   a live mass instrument, performance, limits). Prove has four cards:
+>   - mass balance;
+>   - run twice;
+>   - live ≡ gated;
+>   - mass balance at full scale (relative 1.7e-7 at 2M agents).
+>
+>   `web/tools/check-studio.mjs` passes at 390 / 820 / 1440 px and 200% zoom with zero axe
+>   violations. `packages/physarum/web/v2-acceptance.mjs` passes 20/20.
+>
+> **M0 findings (corrections to this spec):**
+>
+> - **Jones's Table 1 values do not hold a network at this density.** They knit one for a few
+>   seconds, then break into separate straight rods within ~30 s: this model has no crowding rule
+>   and no random turns, so agents in a strand fall into step and march straight. A survey over
+>   turn angle, reach, step and fade (eight sets) found the sensor reach decides it:
+>   - reach 18 with Table 1's other values forms a true polygon network that coarsens slowly;
+>   - reach 9 always makes rods.
+>
+>   The default scene *The network* therefore uses reach 18. *Jones's Table 1* shows the gated
+>   values at full scale, labelled as such. Prove names any parameter that differs from the gated
+>   ones. The personality pad (M1) should be calibrated against this.
+> - **A colony released at the centre never spreads.** Agents are captured by the strongest
+>   trail, so a dense disc or ring collapses into a stable hot ring and only four lattice-aligned
+>   jets escape. First Light (M1) needs its food crumbs to pull a colony outward; M0 ships no
+>   colony scene.
+> - **Density sets the scale, not the morphology.** A survey from 0.06 to 0.95 agents per cell
+>   gave the same sequence (network, then rods) at a finer or coarser scale. The spec's 0.477
+>   puts about one cell per screen pixel at T3 and is kept.
+> - **The network prunes itself in about a minute** (polygons by ~2,000 steps, mostly rods by
+>   ~7,000). Per "nothing settles into nothing", the untouched network scene re-scatters from the
+>   next seed after 7,200 steps, with a short fade. Any edit, save point or pause holds the dish.
+> - **Headless frame rate.** Two early benchmarks read 16–18 fps with ~1 ms of GPU work; the
+>   same runs later held 60 fps, and the Turing Patterns v2 page read the same 18 fps at the same
+>   time. Treat a low fps with low GPU time as contention on a shared GPU, not as the page's cost.
+>
+> Not yet: the personality pad, the M1–M3 scenes and tools (food, light, walls), network
+> extraction and scoring, morphology regression tests, multi-species channels, posters and loops.
 
 ## Verdict on the prototype
 
