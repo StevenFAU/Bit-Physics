@@ -1,0 +1,81 @@
+{
+ "schema_version": "1.0.0",
+ "algorithm": "brusselator-turing-dispersion",
+ "category": "continuous-ca",
+ "derivation": {
+  "doc": "tools/testkit/golden/derivations/brusselator-turing.md",
+  "upstream": "n/a-original",
+  "upstream_sha": "n/a-no-vendored-code",
+  "upstream_path": "n/a-no-vendored-code"
+ },
+ "tolerance": {
+  "absolute": 1e-09,
+  "relative": 1e-06
+ },
+ "test_points": [
+  {
+   "inputs": {
+    "A": 4.5,
+    "B": 5.8710498941515405,
+    "Du": 1.0,
+    "Dv": 10.0,
+    "anchor": "turing-onset"
+   },
+   "expected": {
+    "sigma_max": 0.0,
+    "q_star2": 1.4230249470757705
+   },
+   "independent_reference": {
+    "derived_by": "closed-form",
+    "source": "Pena, B. & Perez-Garcia, C. (2001), Stability of Turing patterns in the Brusselator model, Phys. Rev. E 64, 056213, section II: the uniform state (A, B/A) is Turing-unstable for B > B_c = (1 + A eta)^2 with eta = sqrt(Du/Dv), first at the critical wavenumber k_c^2 = A / sqrt(Du Dv). Here A = 4.5, Du = 1, Dv = 10: B_c = (1 + 4.5 sqrt(0.1))^2, q_c^2 = 4.5 / sqrt(10).",
+    "doi": "10.1103/PhysRevE.64.056213",
+    "expected": {
+     "sigma_max": 0.0,
+     "q_star2": 1.4230249470757705
+    }
+   }
+  },
+  {
+   "inputs": {
+    "A": 2.0,
+    "B": 2.6649110640673523,
+    "Du": 1.0,
+    "Dv": 10.0,
+    "anchor": "murray-general-onset"
+   },
+   "expected": {
+    "sigma_max": 0.0,
+    "q_star2": 0.6324555320336759
+   },
+   "independent_reference": {
+    "derived_by": "textbook",
+    "source": "Murray, J. D. (2003), Mathematical Biology II: Spatial Models and Biomedical Applications, 3rd ed., Springer, section 2.3: for a two-species system with Jacobian (f_u, f_v; g_u, g_v) and diffusivities (Du, Dv), the Turing bifurcation occurs when (Dv f_u + Du g_v)^2 = 4 Du Dv det J, at the critical wavenumber k_c^2 = sqrt(det J / (Du Dv)). Applied to the Brusselator Jacobian (B - 1, A^2; -B, -A^2) with A = 2, Du = 1, Dv = 10 at its onset B. Hand-derivation: tools/testkit/golden/derivations/brusselator-turing.md section 3.",
+    "doi": "10.1007/b98869",
+    "expected": {
+     "sigma_max": 0.0,
+     "q_star2": 0.6324555320336759
+    }
+   }
+  },
+  {
+   "inputs": {
+    "A": 4.5,
+    "B": 21.25,
+    "Du": 1.0,
+    "Dv": 10.0,
+    "anchor": "hopf-line"
+   },
+   "expected": {
+    "sigma_q0": 0.0
+   },
+   "independent_reference": {
+    "derived_by": "closed-form",
+    "source": "Prigogine, I. & Lefever, R. (1968), Symmetry breaking instabilities in dissipative systems. II, J. Chem. Phys. 48, 1695: the trimolecular model's uniform state loses stability to homogeneous oscillations (a limit cycle) when B > 1 + A^2. At B = 1 + A^2 the q = 0 Jacobian has trace B - 1 - A^2 = 0 and positive determinant A^2, so Re sigma(0) = 0. Here A = 4.5: B_H = 21.25.",
+    "doi": "10.1063/1.1668896",
+    "expected": {
+     "sigma_q0": 0.0
+    }
+   }
+  }
+ ]
+}

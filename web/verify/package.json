@@ -1,0 +1,13 @@
+{
+  "name": "@bp/verify",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Field Studies — the capture contract (exposeCapture, [data-bp=capture], __bitPhysicsReady) and gate-criterion helpers.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

@@ -125,6 +125,210 @@
       ]
     }
   },
+  "models": {
+    "goldens": [
+      {
+        "descriptor": "brusselator-64sq-seed42-step512",
+        "model": "brusselator",
+        "grid": [
+          64,
+          64
+        ],
+        "steps": 512,
+        "params": {
+          "F": 4.5,
+          "k": 6.75,
+          "c": 0,
+          "Du": 1,
+          "Dv": 10,
+          "dx": 0.5,
+          "dt": 0.00390625
+        },
+        "ic": {
+          "seed": 42,
+          "amp": 0.015625,
+          "bump": 8,
+          "bits": 12,
+          "rest": [
+            4.5,
+            1.5
+          ],
+          "seed_state": [
+            6.5,
+            1.5
+          ]
+        },
+        "ic_sha256": "sha256:4c7958608b3ef855aa9a5dee7b5681a0a65242f9fabcf9f4976c0b639ce5415b",
+        "final_sha256": "sha256:0443561bd86a653eb6f4ac2b6ed3e39c5c234ed070d2ca93615be4448323eead",
+        "max_abs": {
+          "u": 5.529721435317852,
+          "v": 1.6202147488600487
+        }
+      },
+      {
+        "descriptor": "gierer-meinhardt-64sq-seed42-step1024",
+        "model": "gierer-meinhardt",
+        "grid": [
+          64,
+          64
+        ],
+        "steps": 1024,
+        "params": {
+          "F": 1,
+          "k": 2,
+          "c": 0,
+          "Du": 1,
+          "Dv": 30,
+          "dx": 1,
+          "dt": 0.0078125
+        },
+        "ic": {
+          "seed": 42,
+          "amp": 0.015625,
+          "bump": 8,
+          "bits": 12,
+          "rest": [
+            2,
+            2
+          ],
+          "seed_state": [
+            8,
+            2
+          ]
+        },
+        "ic_sha256": "sha256:1e018eb2eed8b1cf9fdd5ba6154c5266f98a1a7f20dfd1fd62cd9ff527e13cf0",
+        "final_sha256": "sha256:5831e60fec365c738aa2b007a2d44e21e0a25d2a3642bed8278c49dcebd02b9c",
+        "max_abs": {
+          "u": 6.544201760623876,
+          "v": 4.858475912339752
+        }
+      },
+      {
+        "descriptor": "fitzhugh-nagumo-64sq-seed42-step768",
+        "model": "fitzhugh-nagumo",
+        "grid": [
+          64,
+          64
+        ],
+        "steps": 768,
+        "params": {
+          "F": 0.05,
+          "k": 0.5,
+          "c": -0.45,
+          "Du": 1,
+          "Dv": 0,
+          "dx": 1,
+          "dt": 0.0625
+        },
+        "ic": {
+          "seed": 42,
+          "amp": 0.015625,
+          "bump": 8,
+          "bits": 12,
+          "rest": [
+            -0.625,
+            -0.375
+          ],
+          "seed_state": [
+            1,
+            -0.375
+          ]
+        },
+        "ic_sha256": "sha256:8fa1cdcde461f6f8815e365ae827c52946d07bdc0361804e6dd4ef1df7ff304e",
+        "final_sha256": "sha256:faedd94b6a9ef1bba32d84c2211aae4dc658bf6e67ac68735d7c108f3f637240",
+        "max_abs": {
+          "u": 1.1501338029337755,
+          "v": 0.4620419745664443
+        }
+      }
+    ],
+    "tolerance": {
+      "mirror_rel": 0,
+      "live_rel": {
+        "brusselator": 0.00006,
+        "gierer-meinhardt": 0.00002,
+        "fitzhugh-nagumo": 0.000009
+      },
+      "turing_wavenumber_rel": 0.01
+    },
+    "turing": {
+      "model": "brusselator",
+      "grid": [
+        256,
+        256
+      ],
+      "params": {
+        "F": 4.5,
+        "k": 6.75,
+        "c": 0,
+        "Du": 1,
+        "Dv": 10,
+        "dx": 0.5,
+        "dt": 0.00390625
+      },
+      "ic": {
+        "seed": 1,
+        "amp": 0.0078125,
+        "bump": 0,
+        "bits": 12,
+        "rest": [
+          4.5,
+          1.5
+        ]
+      },
+      "protocol": {
+        "channel": 0,
+        "t1": 160,
+        "t2": 800,
+        "window": 256,
+        "fit_half": 3,
+        "r_min": 4,
+        "observable": "sigma(r) = ln(P(r, t2) / P(r, t1)) / (2 (t2 - t1) dt) from the Hann-windowed ring-averaged power spectrum; quadratic fit over +/- fit_half rings around its maximum"
+      },
+      "prediction": {
+        "r_star": 26.349629819580183,
+        "sigma_star": 0.4226707815629408,
+        "r_star_continuum": 26.0075954944597,
+        "q_star_continuum": 1.276644858483275,
+        "sigma_star_continuum": 0.42305052631139617,
+        "r_c_onset": 24.301683375277456,
+        "B_c": 5.8710498941515405,
+        "B_H": 21.25,
+        "q_c": 1.192906093150576
+      },
+      "reference_runs": {
+        "seeds": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12
+        ],
+        "rel_err": [
+          0.0004750709617181193,
+          -0.002308907358730831,
+          -0.0006372382190873025,
+          -0.0009203983532244229,
+          0.00010805519500105847,
+          0.0016394826491303036,
+          -0.0003548988831546829,
+          -0.0011269373262990585,
+          0.0006408906810660078,
+          0.0006486362269764804,
+          0.0006323492271773814,
+          0.00016164188021237054
+        ],
+        "worst_abs_rel_err": 0.002308907358730831
+      }
+    }
+  },
   "links": {
     "kernel": "packages/reaction-diffusion-2d/src/gray_scott.wgsl",
     "spec": "docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref.md",
@@ -135,6 +339,13 @@
     "perf_ledger": "docs/perf-ledger.md",
     "gate_source": "tools/productization/web-deploy/verify.py",
     "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
-    "capture_manifest": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json"
+    "capture_manifest": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json",
+    "models_reference": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/models.py",
+    "models_goldens": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/goldens.py",
+    "models_kernel": "packages/reaction-diffusion-2d/web/src/v2/model/live.wgsl",
+    "models_tests": "packages/reaction-diffusion-2d/tests/test_model_goldens.py",
+    "turing_golden_table": "tools/testkit/golden/tables/continuous-ca/brusselator-turing-dispersion.json",
+    "turing_derivation": "tools/testkit/golden/derivations/brusselator-turing.md",
+    "rebuild_spec": "docs/planning/rebuild-v2/01-reaction-diffusion.md"
   }
 }

@@ -282,6 +282,43 @@ mass_conservation_rel = 1e-9
 mass_nonneg_abs = 0.0
 zeroflow_residual_abs = 0.0
 
+# Rebuild-v2 M3 (docs/planning/rebuild-v2/01-reaction-diffusion.md), Turing
+# Patterns v2: the extra models behind the live kernel and the analytic Turing
+# check. Golden-table tolerances (bespoke per-anchor keys; golden_tolerance
+# branch, uncapped by design like lenia/ising). The gated Gray-Scott kernel and
+# its [defaults.reaction-diffusion] capture_roundtrip budget are untouched.
+# Goldens: packages/reaction-diffusion-2d/web/public/goldens/ (written by
+# reaction_diffusion_2d/reference/goldens.py, f64 NumPy). MEASURED 2026-10-17:
+#   mirror_rel = 0.0 — the TypeScript f64 CPU mirror (web/src/v2/model/models.ts)
+#     reproduces all three goldens BIT-EXACT (sha256 of the f64 bytes; same
+#     IEEE +-*/ in the same order, no FMA). Exact, not a budget.
+#   <model>_live_rel — the live WGSL kernel in f32 on the canonical 64^2 dish vs
+#     the f64 golden, per field max|d| / max|golden|, worst field (browser,
+#     RADV RX 6800 XT, run-twice byte-identical): Brusselator (A 4.5, B 6.75)
+#     512 steps 5.24e-6, Gierer-Meinhardt 1024 steps 1.02e-6, FitzHugh-Nagumo
+#     768 steps 8.17e-7 (an f32 NumPy proxy predicted the same order).
+#     Declared = measured x 4.05 (worst observed RADV->lavapipe family spread,
+#     charter round 2) x ~2.5 margin, rounded up: 6e-5 / 2e-5 / 9e-6.
+#     Lavapipe itself not yet measured (snap Chromium exposes no lavapipe
+#     adapter locally).
+#   turing_wavenumber_rel = 1e-2 — the Prove drawer's Turing check (derivation:
+#     tools/testkit/golden/derivations/brusselator-turing.md): the peak of the
+#     growth rate measured by the live FFT instrument vs the dispersion
+#     relation's fastest-growing ring r* = 26.350 (discrete scheme, A 4.5,
+#     B 6.75). RADV, 24 noise seeds: worst |rel| 2.5e-3, mean -4.0e-4, sd
+#     1.0e-3 (canonical seed +1.5e-4); f64 reference, same protocol, 12 seeds:
+#     worst 2.3e-3 — the scatter is the estimator's (windowing, ring
+#     statistics), not f32 round-off. Declared 4x the worst measured, and held
+#     BELOW the 1.3% gap to the continuum relation's r = 26.008 so the check
+#     still tells the discrete-scheme prediction from the continuum one
+#     (asserted in packages/reaction-diffusion-2d/tests/test_model_goldens.py).
+[golden_tolerance.continuous-ca.reaction-diffusion-2d]
+mirror_rel = 0.0
+brusselator_live_rel = 6e-5
+gierer_meinhardt_live_rel = 2e-5
+fitzhugh_nagumo_live_rel = 9e-6
+turing_wavenumber_rel = 1e-2
+
 # Phase-3 ising-classical (task-3a, sub-phase-phase-3-ising-classical) —
 # golden-table / MC-observable tolerances. Single-stack sim (Stack B;
 # NumPy reference is the in-stack oracle, NO cross-stack equivalence pair),

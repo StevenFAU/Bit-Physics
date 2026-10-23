@@ -1,0 +1,42 @@
+{
+  "_generated_by": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/goldens.py",
+  "reference": "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/models.py",
+  "descriptor": "fitzhugh-nagumo-64sq-seed42-step768",
+  "model": "fitzhugh-nagumo",
+  "grid": [
+    64,
+    64
+  ],
+  "periodic": true,
+  "steps": 768,
+  "params": {
+    "F": 0.05,
+    "k": 0.5,
+    "c": -0.45,
+    "Du": 1.0,
+    "Dv": 0.0,
+    "dx": 1.0,
+    "dt": 0.0625
+  },
+  "ic": {
+    "seed": 42,
+    "amp": 0.015625,
+    "bump": 8,
+    "bits": 12,
+    "rest": [
+      -0.625,
+      -0.375
+    ],
+    "seed_state": [
+      1.0,
+      -0.375
+    ]
+  },
+  "layout": "f64 little-endian, (u, v) interleaved per cell, row-major",
+  "ic_sha256": "sha256:8fa1cdcde461f6f8815e365ae827c52946d07bdc0361804e6dd4ef1df7ff304e",
+  "final_sha256": "sha256:faedd94b6a9ef1bba32d84c2211aae4dc658bf6e67ac68735d7c108f3f637240",
+  "max_abs": {
+    "u": 1.1501338029337755,
+    "v": 0.4620419745664443
+  }
+}

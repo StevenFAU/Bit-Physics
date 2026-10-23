@@ -1,0 +1,146 @@
+/* Turing Patterns v2 — sim-specific chrome on top of @bp/studio. */
+
+.rd-crumb {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 8px;
+  text-shadow: none;
+  color: var(--bp-text);
+}
+.rd-crumb-canvas {
+  display: block;
+  border-radius: 5px;
+  cursor: crosshair;
+  touch-action: none;
+}
+.rd-crumb-caption {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--bp-text-dim);
+}
+.rd-crumb-back {
+  align-self: flex-start;
+  font-size: 12.5px;
+  min-height: 30px;
+  padding: 4px 10px 4px 8px;
+}
+
+.rd-chem-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rd-swatches {
+  max-width: 400px;
+}
+
+.rd-tune-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 12px 0;
+}
+.rd-tune-advanced {
+  margin: 8px 0;
+}
+.rd-tune-advanced summary {
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--bp-text-dim);
+}
+
+.rd-diagram {
+  width: 100%;
+  height: auto;
+  color: var(--bp-text);
+  margin: 4px 0 8px;
+}
+.rd-symbols {
+  font-size: 13px;
+}
+.rd-code-row p {
+  margin: 10px 0 4px;
+  font-size: 12px;
+}
+.rd-code {
+  margin: 0;
+  padding: 8px 10px;
+  overflow-x: auto;
+  font-family: var(--bp-mono);
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--bp-text);
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--bp-hairline);
+  border-radius: 6px;
+}
+.rd-lambda {
+  font-size: 12.5px;
+  margin: 0 0 10px;
+}
+.rd-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+}
+.rd-limits dt {
+  margin-top: 10px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.rd-limits dd {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--bp-text-dim);
+}
+.rd-capture-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.rd-capture-row a {
+  color: var(--bp-accent);
+  font-size: 12px;
+}
+
+@media (max-width: 639px) {
+  .rd-crumb {
+    display: none;
+  }
+  .bp-heading.is-expanded .rd-crumb {
+    display: inline-flex;
+  }
+}
+
+/* On a Shape: the object and pattern pickers under the scene heading */
+.rd-shape-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 6px;
+  width: fit-content;
+  max-width: 100%;
+  border-radius: 12px;
+  background: rgba(14, 18, 23, 0.84);
+  backdrop-filter: blur(8px);
+  color: #eef1f3;
+  pointer-events: auto;
+}
+
+/* Learn → The model */
+.rd-model-eq {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0;
+}
+.rd-model-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
