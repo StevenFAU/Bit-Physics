@@ -232,6 +232,9 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
           ratio: worst.ratio,
           adapter: d.adapter,
           notes: [
+            ...[r.U.invalid && `U not scored: ${r.U.invalid}`, r.V.invalid && `V not scored: ${r.V.invalid}`].filter(
+              (n): n is string => !!n,
+            ),
             `${(worst.ratio * 100).toFixed(1)}% of the budget · final frame (the CI gate scores all 11 captured frames)`,
             `CI measured ${V.gate.measured_max_abs.toExponential(2)} on RADV · ${r.seconds.toFixed(1)} s here`,
           ],

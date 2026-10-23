@@ -50,12 +50,16 @@ export interface FieldAgreement {
   pass: boolean;
   /** maxAbs / threshold — the bar on a proof card. */
   ratio: number;
+  /** Why the run could not be scored (short or non-finite); the agreement then fails. */
+  invalid?: string;
 }
 
 /**
  * The capture_roundtrip criterion, verbatim from
  * tools/testkit/equivalence harness.compare_captures: per field,
  * max_abs_err ≤ absolute + relative · max|right|, right = this device's run.
+ * A run shorter than the reference, or a non-finite value on either side,
+ * fails outright: NaN compares false, so it would otherwise score as zero error.
  */
 export function agreement(
   reference: ArrayLike<number>,
@@ -64,12 +68,24 @@ export function agreement(
   runStride = 1,
   runOffset = 0,
 ): FieldAgreement {
+  const invalid = (why: string): FieldAgreement => ({
+    maxAbs: Infinity,
+    maxRel: Infinity,
+    threshold: declared.absolute,
+    pass: false,
+    ratio: Infinity,
+    invalid: why,
+  });
+  const needed = reference.length === 0 ? 0 : (reference.length - 1) * runStride + runOffset + 1;
+  if (run.length < needed) return invalid(`run has ${run.length} values, the reference needs ${needed}`);
   let maxAbs = 0;
   let maxRel = 0;
   let scale = 0;
   for (let c = 0; c < reference.length; c += 1) {
     const a = reference[c]!;
     const b = run[c * runStride + runOffset]!;
+    if (!Number.isFinite(a)) return invalid(`reference value ${c} is ${a}`);
+    if (!Number.isFinite(b)) return invalid(`run value ${c} is ${b}`);
     const diff = Math.abs(a - b);
     if (diff > maxAbs) maxAbs = diff;
     const denom = Math.max(Math.abs(a), Math.abs(b));

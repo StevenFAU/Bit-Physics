@@ -126,6 +126,17 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
   const href = await T(page, () => location.href);
   const q = new URL(href).searchParams;
   check("share link: the URL carries the scene, chemistry, grid and camera", q.get("s") === "dish" && q.get("F") && q.get("k") && q.get("g") && q.get("cam"), new URL(href).search);
+
+  // history can cross the dive: undoing it brings back the Map sweep and its Dive tool
+  const undive = await T(page, async () => {
+    const a = __turing;
+    while (a.sim.chem.reveal !== null && a.history.canUndo) await a.undo();
+    return {
+      reveal: a.sim.chem.reveal !== null,
+      tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool")].map((b) => b.dataset.tool),
+    };
+  });
+  check("undoing the dive brings back the Map sweep and its Dive tool", !undive.reveal && undive.tools.includes("dive"), undive.tools.join(" "));
   check("no console errors on The Map", errors.length === 0, errors.slice(0, 3).join(" | "));
   await ctx.close();
 
@@ -208,6 +219,28 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
   });
   check("save point → restore returns the exact saved state", sr2.restored === sr.saved && sr.later !== sr.saved);
   check("A/B compare toggles a wipe against the save point", sr.comparing === true);
+
+  // the diffusion ratio is page state; restore and undo must leave it describing the running Dv
+  const rr = await T(page, async () => {
+    const a = __turing;
+    const r0 = a.ratio;
+    a.savePoint();
+    a.setRatio(r0 + 0.5);
+    const changed = a.ratio;
+    a.restoreSave();
+    const restored = a.ratio;
+    const restoredDv = a.sim.chem.Dv;
+    a.setRatio(r0 + 0.25);
+    await a.advanceTicks(10);
+    await a.undo();
+    return { r0, changed, restored, restoredDv, undone: a.ratio, undoneDv: a.sim.chem.Dv, Du: a.sim.chem.Du };
+  });
+  const inStep = (r, Dv) => Math.abs(rr.Du / Dv - r) < 1e-9;
+  check(
+    "restore and undo keep the diffusion ratio in step with the running Dv",
+    rr.changed !== rr.r0 && rr.restored === rr.r0 && inStep(rr.restored, rr.restoredDv) && rr.undone === rr.r0 && inStep(rr.undone, rr.undoneDv),
+    `ratio ${rr.r0} → ${rr.changed} → restore ${rr.restored} · undo ${rr.undone}`,
+  );
 
   // probe
   await T(page, () => __turing.studio.rail.select("probe"));

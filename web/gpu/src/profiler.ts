@@ -30,6 +30,8 @@ export class GpuProfiler {
   private readonly staging: { buf: GPUBuffer; state: "free" | "recorded" | "mapping"; names: string[] }[] = [];
   private names: string[] = [];
   private readonly passes = new Map<string, PassTiming>();
+  /** Pass names of the latest measured frame (what timings() reports). */
+  private latest: string[] = [];
   private submitT0 = 0;
   private latencyBusy = false;
   /** GPU time of the last measured frame, ms (sum of passes, or submit latency). */
@@ -135,6 +137,7 @@ export class GpuProfiler {
         this.passes.set(name, { name, ms, avg: ms });
       }
     }
+    this.latest = [...new Set(names)];
     this.record(total);
   }
 
@@ -144,9 +147,14 @@ export class GpuProfiler {
     this.onFrame?.(ms);
   }
 
-  /** Smoothed per-pass timings, in first-seen order. */
+  /**
+   * Per-pass timings of the latest measured frame, in that frame's order.
+   * A pass that stopped running (a scene change swapped renderers) drops out
+   * instead of keeping its last value in the totals; its average resumes if
+   * it runs again.
+   */
   timings(): PassTiming[] {
-    return Array.from(this.passes.values());
+    return this.latest.map((n) => this.passes.get(n)!);
   }
 
   destroy(): void {

@@ -66,6 +66,8 @@ const SHAPE_HOME: Record<ShapeId, OrbitState> = {
 interface Snapshot {
   cp: Checkpoint;
   logIndex: number;
+  /** Gray–Scott Dv = DU / ratio; the checkpoint restores Dv, this keeps the control in step. */
+  ratio: number;
 }
 
 export interface AppHooks {
@@ -166,12 +168,13 @@ export class App {
     const cp: Checkpointer<Snapshot> = {
       capture: () => {
         this.applyPending();
-        return { cp: this.sim.checkpoint(), logIndex: this.log.length };
+        return { cp: this.sim.checkpoint(), logIndex: this.log.length, ratio: this.ratio };
       },
       restore: (s) => {
         this.sim.restore(s.cp);
         this.log.truncate(s.logIndex);
         this.applied = s.logIndex;
+        this.ratio = s.ratio;
       },
       release: (s) => this.sim.release(s.cp),
     };
@@ -514,17 +517,29 @@ export class App {
     this.activeGroup = 0;
     // the camera dives in while the chemistry spreads out from the point
     this.camera.flyTo({ cx: x, cy: y, pxPerUnit: this.camera.coverZoom() * 3 }, 1300);
-    this.studio.rail.setTools(
-      this.scene.tools.filter((t) => t !== "dive").map((t) => this.toolSpec(t)),
-      "seed",
-    );
-    this.studio.root.dataset["tool"] = "seed";
+    this.syncSceneTools("seed");
     this.refreshHeading();
     this.setCallouts();
     const { regime, distance } = nearestRegime(F, k);
     this.studio.toast.show(`Diving into F ${F.toFixed(4)} · k ${k.toFixed(4)}${distance < 0.08 ? ` — ${regime.name}` : ""}`);
     this.hooks.onChemistry?.(F, k, this.ratio);
     this.writeUrl();
+  }
+
+  /**
+   * The tool rail for the current state: the Map drops Dive once dived in.
+   * History (restore, undo) can cross a dive, so it re-syncs from sim.chem.
+   */
+  private syncSceneTools(prefer?: string): void {
+    const dived = this.scene.id === "map" && this.sim.chem.reveal !== null;
+    const tools = dived ? this.scene.tools.filter((t) => t !== "dive") : this.scene.tools.slice();
+    const want = prefer ?? this.studio.rail.active;
+    const next = tools.includes(want) ? want : dived ? "seed" : this.scene.tool;
+    this.studio.rail.setTools(
+      tools.map((t) => this.toolSpec(t)),
+      next,
+    );
+    this.studio.root.dataset["tool"] = this.studio.rail.active;
   }
 
   private captureMapSnapshot(): void {
@@ -577,6 +592,7 @@ export class App {
     if (this.busy || isCapturing()) return;
     if (this.history.comparing) this.toggleCompare();
     if (this.history.restoreSave()) {
+      this.syncSceneTools();
       this.refreshHeading();
       this.hooks.onChemistry?.(this.sim.chem.F0, this.sim.chem.k0, this.ratio);
       this.studio.toast.show("Restored the save point");
@@ -630,6 +646,7 @@ export class App {
       this.sim.restore(snap.cp);
       this.log.load(kept);
       this.applied = snap.logIndex;
+      this.ratio = snap.ratio;
       const span = target - snap.cp.tick;
       if (span > REPLAY_CAP) {
         this.log.truncate(snap.logIndex);
@@ -648,6 +665,10 @@ export class App {
       }
       this.history.release(snap);
       this.edits = Math.max(0, this.edits - 1);
+      const replayed = this.log.all().slice(snap.logIndex).filter((e) => e.kind === "ratio");
+      const lastRatio = (replayed[replayed.length - 1]?.payload as { r?: number } | undefined)?.r;
+      if (lastRatio !== undefined) this.ratio = lastRatio;
+      this.syncSceneTools();
       this.refreshHeading();
       this.hooks.onChemistry?.(this.sim.chem.F0, this.sim.chem.k0, this.ratio);
       this.hooks.onEdited?.();
