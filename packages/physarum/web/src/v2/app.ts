@@ -29,6 +29,16 @@ const TICK_RATE: Record<Tier, number> = { T3: 120, T2: 120, T1: 60 };
 /** Reorder agents by tile every this many steps (measured: see sortEvery in the bench). */
 export const SORT_EVERY = 32;
 
+export interface LiveMass {
+  /** f64 sum of the live trail. */
+  mass: number;
+  /** The closed form's total after the same steps (through every parameter change). */
+  predicted: number;
+  /** Where the current parameters settle: d·N·(1−α)/α. */
+  equilibrium: number;
+  tick: number;
+}
+
 export interface SceneOptions {
   seed?: number;
   params?: JonesParams;
@@ -89,8 +99,8 @@ export class App {
   private comparingPlaying = true;
   private compareKey = 0;
   private sceneT0 = performance.now();
-  /** Step of the last parameter change (the mass relaxes to its new equilibrium from there). */
-  paramsTick = 0;
+  /** Bumped by every loadScene; a load that is no longer the latest gives up. */
+  private loadSeq = 0;
   /** Scene director: fading out (+1) towards a re-scatter, or back in (−1). */
   private directing = 0;
   private fade = 1;
@@ -111,7 +121,6 @@ export class App {
       capture: () => this.sim.checkpoint(),
       restore: (c) => {
         this.sim.restore(c);
-        this.paramsTick = c.tick;
         this.view.invalidate();
         this.hooks.onParams?.(this.sim.params);
       },
@@ -133,13 +142,30 @@ export class App {
 
   async loadScene(id: SceneId, o: SceneOptions = {}): Promise<void> {
     const scene = sceneById(id);
+    const gated = scene.kind === "gated";
+    // Loads can overlap: the gated scene awaits its IC asset while the scene
+    // picker stays live. Only the latest load may install a simulation, and
+    // a superseded one returns before it allocates anything.
+    const seq = ++this.loadSeq;
+    let packed: Float32Array<ArrayBuffer> | null = null;
+    if (gated) {
+      const ic = await fetchCanonicalIC();
+      if (seq !== this.loadSeq) return;
+      packed = new Float32Array(GATED_N * 4);
+      for (let i = 0; i < GATED_N; i += 1) {
+        packed[i * 4] = ic.pos[i * 2]!;
+        packed[i * 4 + 1] = ic.pos[i * 2 + 1]!;
+        packed[i * 4 + 2] = ic.head[i * 2]!;
+        packed[i * 4 + 3] = ic.head[i * 2 + 1]!;
+      }
+    }
+    // from here to the end the load is synchronous: nothing can interleave
     this.busy = true;
     try {
       this.history.clear();
       this.view.split = null;
       const old = this.sim as LiveSim | undefined;
       const rect = this.studio.canvas.getBoundingClientRect();
-      const gated = scene.kind === "gated";
       const grid = gated ? { w: GATED_W, h: GATED_H, n: GATED_N } : tierGrid(this.tier, rect.width, rect.height);
       this.seed = o.seed ?? 1;
       const sim = new LiveSim(this.device, this.kernels, {
@@ -149,25 +175,13 @@ export class App {
         longRun: !gated,
         sortEvery: gated ? 0 : SORT_EVERY,
       });
-      if (gated) {
-        const ic = await fetchCanonicalIC();
-        const packed = new Float32Array(GATED_N * 4);
-        for (let i = 0; i < GATED_N; i += 1) {
-          packed[i * 4] = ic.pos[i * 2]!;
-          packed[i * 4 + 1] = ic.pos[i * 2 + 1]!;
-          packed[i * 4 + 2] = ic.head[i * 2]!;
-          packed[i * 4 + 3] = ic.head[i * 2 + 1]!;
-        }
-        sim.load(packed);
-      } else {
-        sim.seed(scene.seed!(grid.w, grid.h, this.seed));
-      }
+      if (packed) sim.load(packed);
+      else sim.seed(scene.seed!(grid.w, grid.h, this.seed));
       this.sim = sim;
       old?.destroy();
       this.view.forgetBuffers();
       this.scene = scene;
       this.edits = 0;
-      this.paramsTick = 0;
       this.directing = 0;
       this.fade = 1;
       this.view.fade = 1;
@@ -229,7 +243,6 @@ export class App {
     if (this.blocked("change the parameters")) return;
     if (phase === "start") this.edits += 1;
     this.sim.setParams(p);
-    this.paramsTick = this.sim.tick;
     this.hooks.onParams?.(p);
     this.hooks.onEdited?.();
     if (phase === "end") this.writeUrl();
@@ -240,7 +253,6 @@ export class App {
     if (this.blocked("reset the parameters")) return;
     this.edits += 1;
     this.sim.setParams(this.scene.params);
-    this.paramsTick = this.sim.tick;
     this.hooks.onParams?.(this.scene.params);
     this.hooks.onEdited?.();
     this.writeUrl();
@@ -491,7 +503,6 @@ export class App {
         this.seed += 1;
         this.sim.seed(this.scene.seed!(this.sim.w, this.sim.h, this.seed));
         this.clock.reset();
-        this.paramsTick = 0;
         this.view.invalidate();
         this.hdr.resetExposure();
         this.directing = -1;
@@ -574,14 +585,20 @@ export class App {
   }
 
   /** Total mass of the live trail (f64 sum of the f32 field). */
-  async liveMass(): Promise<{ mass: number; equilibrium: number; tick: number; settledSteps: number }> {
-    const tick = this.sim.tick;
-    const eq = this.sim.equilibriumMass;
-    const settledSteps = tick - this.paramsTick;
-    const trail = await this.sim.readTrail();
+  /**
+   * Total mass of the live trail (f64 sum of the f32 field) with the closed
+   * form's prediction for the same step. The readback is queued now, after
+   * every step submitted so far, so it holds exactly `tick` steps.
+   */
+  async liveMass(): Promise<LiveMass> {
+    const sim = this.sim;
+    const tick = sim.tick;
+    const predicted = sim.predictedMass;
+    const equilibrium = sim.equilibriumMass;
+    const trail = await sim.readTrail();
     let mass = 0;
     for (let i = 0; i < trail.length; i += 1) mass += trail[i]!;
-    return { mass, equilibrium: eq, tick, settledSteps };
+    return { mass, predicted, equilibrium, tick };
   }
 
   requestSnapshot(): void {

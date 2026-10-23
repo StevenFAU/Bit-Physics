@@ -16,7 +16,7 @@ const TERO = "https://doi.org/10.1126/science.1177894";
 export interface LearnPane {
   setScene(scene: SceneDef, gated: boolean): void;
   setParams(p: JonesParams): void;
-  setStats(rows: [string, string][], mass: number | null, equilibrium: number): void;
+  setStats(rows: [string, string][], mass: { mass: number; predicted: number; equilibrium: number } | null): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
 }
 
@@ -140,12 +140,15 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       paramCells["dep"]!.textContent = `${p.deposit}`;
       paramCells["a"]!.textContent = `${p.decay_alpha}`;
     },
-    setStats(rows, mass, equilibrium) {
+    setStats(rows, m) {
       stats.set(rows);
-      if (mass !== null) {
-        massSpark.push(mass);
-        const rel = Math.abs(mass - equilibrium) / equilibrium;
-        massNote.textContent = `Predicted at balance: ${equilibrium.toExponential(4)} (now ${rel < 1e-4 ? "within 0.01%" : `${(rel * 100).toFixed(2)}% away`}).`;
+      if (m !== null) {
+        massSpark.push(m.mass);
+        const rel = m.predicted > 0 ? Math.abs(m.mass - m.predicted) / m.predicted : 0;
+        const toGo = Math.abs(m.predicted - m.equilibrium) / m.equilibrium;
+        massNote.textContent =
+          `The closed form predicts ${m.predicted.toExponential(4)} now (measured within ${(rel * 100).toPrecision(2)}%)` +
+          (toGo < 1e-6 ? `, settled at ${m.equilibrium.toExponential(4)}.` : `, settling towards ${m.equilibrium.toExponential(4)}.`);
       }
     },
     setPerf(rows, list, source) {

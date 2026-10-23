@@ -342,8 +342,8 @@ async function boot(): Promise<void> {
     massBusy = true;
     void app
       .liveMass()
-      .then((m) => learn.setStats(rows, m.mass, m.equilibrium))
-      .catch(() => learn.setStats(rows, null, sim.equilibriumMass))
+      .then((m) => learn.setStats(rows, m))
+      .catch(() => learn.setStats(rows, null))
       .finally(() => {
         massBusy = false;
       });

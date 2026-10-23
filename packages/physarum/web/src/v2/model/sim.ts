@@ -45,7 +45,14 @@ export interface Checkpoint {
   trail: GPUBuffer;
   tick: number;
   params: JonesParams;
+  predictedMass: number;
 }
+
+/** WGSL round(): to nearest, ties to even. */
+const roundEven = (x: number): number => {
+  const r = Math.round(x);
+  return Math.abs(x % 1) === 0.5 && r % 2 !== 0 ? r - 1 : r;
+};
 
 /** Pipelines shared by every LiveSim on a device (compiled once). */
 export class LiveKernels {
@@ -103,6 +110,15 @@ export class LiveSim {
   tick = 0;
   /** Reorders run (for the readout). */
   sorts = 0;
+  /**
+   * The total trail the closed form predicts after the steps run so far,
+   * through every parameter change: each step adds d·N (the deposit as the
+   * kernel rounds it, ×65536 to an integer) and keeps (1 − α) of the sum, so
+   * M ← (M + d·N)(1 − α), settling at d·N·(1 − α)/α. Kept in f64.
+   */
+  predictedMass = 0;
+  private depositPerStep = 0;
+  private keep = 1;
 
   private readonly device: GPUDevice;
   private readonly k: LiveKernels;
@@ -198,6 +214,13 @@ export class LiveSim {
     this.writeParams();
   }
 
+  /** The per-step terms of the mass recurrence, as the kernel computes them (f32 params, fixed-point deposit). */
+  private massTerms(): void {
+    const d = Math.fround(this.params.deposit);
+    this.depositPerStep = (roundEven(Math.fround(d * 65536)) / 65536) * this.n;
+    this.keep = Math.fround(1 - Math.fround(this.params.decay_alpha));
+  }
+
   private writeParams(): void {
     const ab = new ArrayBuffer(48);
     const dv = new DataView(ab);
@@ -215,11 +238,13 @@ export class LiveSim {
     dv.setUint32(36, this.tilesX, true);
     dv.setUint32(40, TILE_SHIFT, true);
     this.device.queue.writeBuffer(this.uniform, 0, ab);
+    this.massTerms();
   }
 
   private clearField(enc: GPUCommandEncoder): void {
     for (const b of [...this.trailBufs, ...this.depBufs]) enc.clearBuffer(b);
     this.t = 0;
+    this.predictedMass = 0;
   }
 
   /** Seed the colony on the GPU from (seed, index); clears the trail. */
@@ -280,6 +305,7 @@ export class LiveSim {
       pass.dispatchWorkgroups(wgX, wgY);
       this.t = 1 - this.t;
       this.tick += 1;
+      this.predictedMass = (this.predictedMass + this.depositPerStep) * this.keep;
       if (this.sortEvery > 0 && this.tick % this.sortEvery === 0 && !sortedThisFrame) {
         // one reorder per frame at most; it lands between steps (the trail is untouched by it)
         pass.end();
@@ -318,7 +344,7 @@ export class LiveSim {
     enc.copyBufferToBuffer(this.agents, 0, agents, 0, this.n * 16);
     enc.copyBufferToBuffer(this.trail, 0, trail, 0, this.cells * 4);
     this.device.queue.submit([enc.finish()]);
-    return { agents, trail, tick: this.tick, params: { ...this.params } };
+    return { agents, trail, tick: this.tick, params: { ...this.params }, predictedMass: this.predictedMass };
   }
 
   restore(c: Checkpoint): void {
@@ -331,6 +357,7 @@ export class LiveSim {
     this.t = 0;
     this.tick = c.tick;
     this.setParams(c.params);
+    this.predictedMass = c.predictedMass;
   }
 
   release(c: Checkpoint): void {

@@ -21,8 +21,8 @@ export interface ProveDeps {
   showGated: () => void;
   /** Suspend/resume the quality governor around in-page runs. */
   hold: (on: boolean) => void;
-  /** Mass of the live trail now, its closed-form equilibrium, and steps since the parameters last changed. */
-  liveMass: () => Promise<{ mass: number; equilibrium: number; tick: number; settledSteps: number }>;
+  /** Mass of the live trail now and the closed form's prediction for the same step. */
+  liveMass: () => Promise<{ mass: number; predicted: number; equilibrium: number; tick: number }>;
 }
 
 export interface OnScreen {
@@ -64,8 +64,6 @@ function paramsVsGated(p: JonesParams): string {
   return diff.length === 0 ? "at the gated parameters" : `at ${diff.join(", ")}`;
 }
 
-/** Settling: the mass relaxes as (1−α)^k; after this many steps the residue is < 1e-13 of it. */
-const SETTLED = 300;
 
 export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   pane.textContent = "";
@@ -150,8 +148,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     {
       title: "Mass balance at full scale",
       sentence:
-        "The same closed form holds for the dish on screen: its trail must hold d·N·(1−α)/α for its own N, " +
-        "once it has settled after the last parameter change.",
+        "The same closed form holds for the dish on screen, step by step: each step adds d·N and keeps (1−α), so the " +
+        "trail must hold exactly what M ← (M + d·N)(1−α) predicts after the steps run so far — through any parameter change — settling at d·N·(1−α)/α.",
       label: "analytic check passed",
       action: "Check the live dish",
     },
@@ -282,24 +280,23 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   async function runLiveMass(): Promise<{ massRel: number; pass: boolean } | null> {
     try {
       const r = await d.liveMass();
-      if (r.settledSteps < SETTLED) {
-        scaleCard.set({
-          status: "info",
-          measured: `settling — ${r.settledSteps} of ${SETTLED} steps since the last change`,
-          budget: `relative error < ${thr}`,
-          adapter: d.adapter,
-        });
+      if (r.tick < 1 || !(r.predicted > 0)) {
+        scaleCard.set({ status: "info", measured: "no steps run yet — press play", budget: `relative error < ${thr}`, adapter: d.adapter });
         return null;
       }
-      const massRel = Math.abs(r.mass - r.equilibrium) / r.equilibrium;
+      const massRel = Math.abs(r.mass - r.predicted) / r.predicted;
       const pass = Number.isFinite(r.mass) && massRel < thr;
+      const settled = Math.abs(r.predicted - r.equilibrium) / r.equilibrium;
       scaleCard.set({
         status: pass ? "pass" : "fail",
-        measured: `M = ${r.mass.toExponential(6)} vs ${r.equilibrium.toExponential(6)} (relative error ${massRel.toExponential(2)})`,
+        measured: `M = ${r.mass.toExponential(6)} vs ${r.predicted.toExponential(6)} predicted (relative error ${massRel.toExponential(2)})`,
         budget: `< ${thr}`,
         ratio: massRel / thr,
         adapter: d.adapter,
-        notes: [`at step ${r.tick.toLocaleString()}`],
+        notes: [
+          `at step ${r.tick.toLocaleString()}`,
+          settled < 1e-9 ? `settled at d·N·(1−α)/α = ${r.equilibrium.toExponential(6)}` : `still ${(settled * 100).toFixed(3)}% from where it settles (${r.equilibrium.toExponential(6)})`,
+        ],
       });
       return { massRel, pass };
     } catch (e) {

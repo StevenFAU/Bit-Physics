@@ -50,10 +50,14 @@
 >   - mass balance;
 >   - run twice;
 >   - live ≡ gated;
->   - mass balance at full scale (relative 1.7e-7 at 2M agents).
+>   - mass balance at full scale (relative ~1e-7 at 2M agents).
 >
 >   `web/tools/check-studio.mjs` passes at 390 / 820 / 1440 px and 200% zoom with zero axe
->   violations. `packages/physarum/web/v2-acceptance.mjs` passes 20/20.
+>   violations. `packages/physarum/web/v2-acceptance.mjs` passes 24/24.
+> - **Live mass check.** The full-scale card compares the trail with the closed form's
+>   finite-time prediction, M ← (M + d·N)(1 − α) per step in f64 through every parameter
+>   change, restore and re-scatter — not with the equilibrium after a fixed settling window,
+>   which a slow fade (α = 0.02 is still 0.19% short after 300 steps) would fail.
 >
 > **M0 findings (corrections to this spec):**
 >

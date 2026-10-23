@@ -9,9 +9,10 @@
 // Checks: boot at the tier's agent count on the density-coupled grid; the
 // shared counting sort against its CPU reference on the live agents; the live
 // solver against the gated kernel on the canonical run (byte for byte, with
-// re-sorts); the mass balance at full scale; the in-page gate (run twice +
-// mass); save / restore / compare; a seed reproduces the same bytes across
-// page loads; parameters ride the share link; probe; every scene boots.
+// re-sorts); the mass balance at full scale, and after a parameter change;
+// the in-page gate (run twice + mass); save / restore / compare; a seed
+// reproduces the same bytes across page loads; parameters ride the share
+// link; probe; every scene boots; overlapping scene loads keep the newest.
 // Prints a BP_BENCH line (agents, frame time) at the end.
 
 import { createServer } from "node:http";
@@ -106,7 +107,7 @@ const hashAfter = (page, n) =>
   // mass at full scale: let it settle, then read
   await page.waitForTimeout(3500);
   const mass = await T(page, () => globalThis.__physarumChecks.liveMass());
-  check("mass balance at full scale (d·N·(1−α)/α, rel < 1e-3)", mass && mass.pass, mass ? `rel ${mass.massRel.toExponential(2)}` : "not settled");
+  check("mass balance at full scale (closed form, rel < 1e-3)", mass && mass.pass, mass ? `rel ${mass.massRel.toExponential(2)}` : "not settled");
 
   const gate = await T(page, () => globalThis.__physarumChecks.gate());
   check("in-page gate: run twice identical, mass within 1e-3", gate.pass, `identical ${gate.identical}, M ${gate.mass.toFixed(4)} (rel ${gate.massRel.toExponential(2)}), ${gate.seconds.toFixed(1)} s`);
@@ -182,6 +183,48 @@ const hashAfter = (page, n) =>
   await T(page, () => globalThis.__physarum.loadScene("network"));
   await page.waitForTimeout(1500);
   check("no console errors (scene switches)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- the live mass check follows a parameter change (no settling window) ------
+{
+  const { ctx, page, errors } = await open();
+  await page.waitForTimeout(1500);
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    const p = { ...app.sim.params, decay_alpha: 0.02 };
+    app.setParams(p, "start");
+    app.setParams(p, "end");
+    await app.advance(300);
+    const m = await app.liveMass();
+    const check = await globalThis.__physarumChecks.liveMass();
+    return { stillSettling: Math.abs(m.predicted - m.equilibrium) / m.equilibrium, check };
+  });
+  check(
+    "mass check follows a fade change 0.1 → 0.02 after only 300 steps",
+    r.check && r.check.pass && r.stillSettling > 1e-3,
+    `dish still ${(r.stillSettling * 100).toFixed(2)}% from where it settles; measured vs predicted rel ${r.check ? r.check.massRel.toExponential(2) : "—"}`,
+  );
+  check("no console errors (fade change)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- overlapping scene loads: the latest choice wins --------------------------
+{
+  const { ctx, page, errors } = await open();
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    // the gated load awaits its IC asset; the live load started after it must still win
+    const a = app.loadScene("gated");
+    const b = app.loadScene("network");
+    await Promise.all([a, b]);
+    await new Promise((res) => setTimeout(res, 500));
+    return { scene: app.scene.id, n: app.sim.n, heading: document.querySelector(".bp-scene-title")?.textContent };
+  });
+  check("overlapping scene loads keep the newest choice", r.scene === "network" && r.n > 500 && r.heading === "The network", JSON.stringify(r));
+  check("no console errors (overlapping loads)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
 
