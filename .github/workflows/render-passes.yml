@@ -45,10 +45,14 @@ env:
   BLENDER_SERIES: '4.5'
   BLENDER_SHA256: '198a4248b38899af661aa9241cebd746394eaddbfafbeb53152440de80b118f7'
 
+# Runner image pinned, not ubuntu-latest: the pinned Blender tarball still loads
+# the image's system libraries, and the canonical capture arrives over the R2 LFS
+# fetch. ubuntu-latest moved to 26.04 in 2026-10, where the R2 LFS fetch failed on
+# the first run. Move images deliberately, re-measuring the gates.
 jobs:
   discover:
     name: Discover render canonical sim
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -71,7 +75,7 @@ jobs:
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -153,7 +157,7 @@ jobs:
     name: Deploy (GATED OFF — no publish in Phase 5)
     needs: build-and-validate
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write   # commit refreshed renders to docs/renders/ (§ 4.5 go-live)
     steps:

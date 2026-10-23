@@ -24,9 +24,12 @@ on:
 permissions:
   contents: read
 
+# Runner image pinned, not ubuntu-latest: this proof uses the image's git-lfs.
+# ubuntu-latest moved to 26.04 in 2026-10, where the R2 LFS fetch failed
+# mid-transfer on the first run. Move images deliberately, re-running this proof.
 jobs:
   r2-roundtrip:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

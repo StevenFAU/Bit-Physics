@@ -44,10 +44,14 @@ env:
   TINYTEX_VERSION: '2026.06'
   TINYTEX_SHA256: '73c8cc30550aa04fa0bfcc171ade1e8506721885f911ecf5eb9261d50413d63a'
 
+# Runner image pinned, not ubuntu-latest: the pinned TinyTeX tarball and uv's
+# Python still run on the image's system libraries. ubuntu-latest moved to 26.04
+# in 2026-10 and broke python-strict, cpp-strict and the web-deploy browser gate.
+# Move images deliberately, all workflows together.
 jobs:
   discover:
     name: Discover preprint canonical sim
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -70,7 +74,7 @@ jobs:
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -128,7 +132,7 @@ jobs:
     name: Deploy (GATED OFF — no arXiv submission in Phase 5)
     needs: build-and-validate
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
