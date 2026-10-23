@@ -341,8 +341,17 @@ export class NcaTrainer {
 
   // --------------------------------------------------------- iteration
 
-  /** Encode forward (T steps), loss, backward and (optionally) Adam. */
-  encode(enc: GPUCommandEncoder, T: number, opts: { pool: number[] | null; adam: boolean; timed: boolean }): void {
+  /**
+   * Encode forward (T steps), loss, backward and (optionally) Adam.
+   * Start states: a pool draw (worst sample reset to the seed), fresh seeds
+   * for every sample (`seedAll`, no-pool training), or whatever the caller
+   * wrote to states[0] (neither: `gradOnce`).
+   */
+  encode(
+    enc: GPUCommandEncoder,
+    T: number,
+    opts: { pool: number[] | null; seedAll: boolean; adam: boolean; timed: boolean },
+  ): void {
     const { B } = this.shape;
     const sampleBytes = this.stateBytes / B;
     const cells = this.cellsWg();
@@ -353,7 +362,8 @@ export class NcaTrainer {
       }
     }
     let p = this.beginPass(enc, opts.timed ? 0 : null);
-    if (opts.pool) this.dispatch(p, "seedFill", this.bg.seedFill, 0, cells);
+    // seedFill reads Iter.mode: pool mode resets only the worst sample, mode 0 seeds all.
+    if (opts.pool || opts.seedAll) this.dispatch(p, "seedFill", this.bg.seedFill, 0, cells);
     p.end();
     p = this.beginPass(enc, opts.timed ? 1 : null);
     for (let t = 0; t < T; t += 1) {
@@ -420,7 +430,7 @@ export class NcaTrainer {
     this.writeIter(seed, (pool ? 1 : 0) | (dense ? 2 : 0));
     this.writeAdam(lr, iter + 1);
     const enc = this.device.createCommandEncoder();
-    this.encode(enc, T, { pool, adam: true, timed: this.querySet !== null });
+    this.encode(enc, T, { pool, seedAll: pool === null, adam: true, timed: this.querySet !== null });
     enc.copyBufferToBuffer(this.lossOut, 0, slot.buf, 0, (this.shape.B + 1) * 4);
     if (this.querySet && this.resolveBuf) {
       enc.resolveQuerySet(this.querySet, 0, PASSES.length * 2, this.resolveBuf, 0);
@@ -497,7 +507,7 @@ export class NcaTrainer {
     this.writeStates0(x0);
     this.writeIter(seed, 0);
     const enc = this.device.createCommandEncoder();
-    this.encode(enc, T, { pool: null, adam: false, timed: false });
+    this.encode(enc, T, { pool: null, seedAll: false, adam: false, timed: false });
     this.device.queue.submit([enc.finish()]);
     const [g, l, xT, al] = await Promise.all([
       this.read(this.grad, NPARAM * 4),
