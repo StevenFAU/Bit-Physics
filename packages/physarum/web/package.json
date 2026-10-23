@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — Physarum transport network (Jones 2010). Ships the committed physarum.wgsl through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
+  "description": "Stack-B WebGPU web build — Physarum transport network (Jones 2010). Ships the committed physarum.wgsl through a Vite bundle: the v1 page (settings panel) and the v2 Slime Mould page (Field Studies shell), each with the capture-export hook.",
   "scripts": {
     "gen": "node gen-verification.mjs",
     "prebuild": "node gen-verification.mjs",
@@ -13,5 +13,16 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
-  "devDependencies": { "@webgpu/types": "0.1.70", "typescript": "6.0.3", "vite": "6.4.3" }
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
 }

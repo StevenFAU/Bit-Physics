@@ -162,6 +162,7 @@ WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 # Values: (page path under dist/, its entry module relative to the web dir).
 PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "reaction-diffusion-2d": (("v2/", "src/v2/main.ts"),),
+    "physarum": (("v2/", "src/v2/main.ts"),),
 }
 
 # Discovery greps each page's entry for the capture hook and a shell marker:

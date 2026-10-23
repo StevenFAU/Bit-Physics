@@ -11,3 +11,4 @@ export * from "./tier.js";
 export * from "./wgsl.js";
 export * from "./buffers.js";
 export * from "./profiler.js";
+export * from "./sort.js";
