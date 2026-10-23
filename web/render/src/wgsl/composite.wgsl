@@ -1,4 +1,4 @@
-// HDR composite: exposure → tone map → sRGB output → blue-noise dither.
+// HDR composite: bloom mix → exposure → tone map → sRGB output → blue-noise dither.
 #import bp/fullscreen
 #import bp/tonemap
 
@@ -7,6 +7,10 @@ struct CompositeParams {
   dither: f32,        // amplitude in output LSB (1.0 = ±0.5 LSB)
   frame: u32,
   output_srgb: u32,   // 1 when the swapchain format is not *-srgb
+  bloom: f32,         // mix weight of the bloom chain (0 = off)
+  bloom_norm: f32,    // 1 / levels: the chain's top holds the sum of every level
+  _p0: f32,
+  _p1: f32,
 };
 
 struct ExposureState {
@@ -21,6 +25,7 @@ struct ExposureState {
 @group(0) @binding(2) var scene_sampler: sampler;
 @group(0) @binding(3) var noise: texture_2d<f32>;
 @group(0) @binding(4) var<storage, read> X: ExposureState;
+@group(0) @binding(5) var bloom: texture_2d<f32>;
 
 @vertex
 fn vs(@builtin(vertex_index) vi: u32) -> FullscreenOut {
@@ -29,7 +34,12 @@ fn vs(@builtin(vertex_index) vi: u32) -> FullscreenOut {
 
 @fragment
 fn fs(in: FullscreenOut) -> @location(0) vec4<f32> {
-  let hdr = textureSampleLevel(scene, scene_sampler, in.uv, 0.0).rgb * X.exposure;
+  var lin = textureSampleLevel(scene, scene_sampler, in.uv, 0.0).rgb;
+  let glow = textureSampleLevel(bloom, scene_sampler, in.uv, 0.0).rgb * P.bloom_norm;
+  if (P.bloom > 0.0) {
+    lin = mix(lin, glow, P.bloom);
+  }
+  let hdr = lin * X.exposure;
   var c: vec3<f32>;
   if (P.tonemap == 0u) {
     c = tonemap_neutral(hdr);

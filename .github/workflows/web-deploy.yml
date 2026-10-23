@@ -202,12 +202,12 @@ jobs:
         # The rebuilt v2 pages (pipeline.py PAGES) only. Full-bleed (no
         # letterboxing), no chrome overflow/overlap, the capture control live at
         # boot, and zero axe violations in the boot, Learn and Prove states.
-        if: matrix.sim == 'reaction-diffusion-2d'
+        if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum'
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
         run: |
           npm ci --no-audit --no-fund
-          node web/tools/check-studio.mjs packages/reaction-diffusion-2d/web/dist v2/ "${{ runner.temp }}/studio-check"
+          node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" v2/ "${{ runner.temp }}/studio-check"
       - name: Surface results
         if: always()
         run: cat results.json || true

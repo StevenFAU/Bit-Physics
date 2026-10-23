@@ -1,0 +1,381 @@
+// Slime Mould renderer: trail → field texture (+ mips) → emissive glow into
+// the HDR scene target, then a sample of agents as additive sparks. The A/B
+// compare shows a checkpoint's trail left of a split and the live one right.
+
+import type { GpuProfiler } from "@bp/gpu";
+import { wgsl } from "@bp/gpu";
+import type { Camera2D } from "@bp/render";
+import { SCENE_FORMAT } from "@bp/render";
+import prepSrc from "./glow-prep.wgsl?raw";
+import mipSrc from "./glow-mip.wgsl?raw";
+import glowSrc from "./glow.wgsl?raw";
+import type { Palette } from "./look.js";
+
+const MIPS = 4;
+const SCALE = 65536;
+
+export interface GlowSource {
+  w: number;
+  h: number;
+  trail: GPUBuffer;
+  /** Deposits of the last step (u32 ×65536 per agent). */
+  deposit: GPUBuffer;
+  agents: GPUBuffer;
+  n: number;
+  meanTrail: number;
+  depositPerAgent: number;
+  /** Bumps whenever the trail changes (the sim's step count). */
+  version: number;
+}
+
+export interface LookOptions {
+  palette: Palette;
+  /** Trail (× its mean) at the top of the colour ramp. */
+  top: number;
+  /** HDR lift past the top of the ramp. */
+  hot: number;
+  /** Glow from agents crossing a cell. */
+  busy: number;
+  /** Overall emission gain. */
+  gain: number;
+  /** Spark gain (0 hides sparks). */
+  spark: number;
+  /** Draw every n-th agent as a spark. */
+  sparkStride: number;
+  /** Agar grain amount (0–1). */
+  grain: number;
+}
+
+export const DEFAULT_LOOK: Omit<LookOptions, "palette"> = {
+  top: 24,
+  hot: 6,
+  busy: 0.02,
+  gain: 1,
+  spark: 0.05,
+  sparkStride: 3,
+  grain: 0.35,
+};
+
+interface FieldTex {
+  tex: GPUTexture;
+  w: number;
+  h: number;
+  levels: GPUTextureView[];
+  view: GPUTextureView;
+  prepBG: GPUBindGroup | null;
+  prepFor: [GPUBuffer, GPUBuffer] | null;
+  mipBGs: GPUBindGroup[];
+}
+
+export class GlowView {
+  look: LookOptions;
+  private readonly device: GPUDevice;
+  private readonly prepPipe: GPUComputePipeline;
+  private readonly mipPipe: GPUComputePipeline;
+  private readonly glowPipe: GPURenderPipeline;
+  private readonly sparkPipe: GPURenderPipeline;
+  private readonly prepLayout: GPUBindGroupLayout;
+  private readonly mipLayout: GPUBindGroupLayout;
+  private readonly lookLayout: GPUBindGroupLayout;
+  private readonly sparkLayout: GPUBindGroupLayout;
+  private readonly sampler: GPUSampler;
+  private readonly lookBuf: GPUBuffer;
+  private readonly prepBufA: GPUBuffer;
+  private readonly prepBufB: GPUBuffer;
+  private readonly sparkBuf: GPUBuffer;
+  private a: FieldTex | null = null;
+  private b: FieldTex | null = null;
+  private lookBG: GPUBindGroup | null = null;
+  private sparkBGs = new Map<GPUBuffer, GPUBindGroup>();
+  private preparedVersion = -1;
+  private preparedB = "";
+  /** Compare split in CSS-px fraction of the width (null = off). */
+  split: number | null = null;
+  /** Emission fade (0–1) for the scene director's cross-over; the agar stays. */
+  fade = 1;
+
+  constructor(device: GPUDevice, look: LookOptions) {
+    this.device = device;
+    this.look = look;
+    const C = GPUShaderStage.COMPUTE;
+    const VF = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT;
+    this.prepLayout = device.createBindGroupLayout({
+      label: "glow-prep",
+      entries: [
+        { binding: 0, visibility: C, buffer: { type: "uniform" } },
+        { binding: 1, visibility: C, buffer: { type: "read-only-storage" } },
+        { binding: 2, visibility: C, buffer: { type: "read-only-storage" } },
+        { binding: 3, visibility: C, storageTexture: { access: "write-only", format: "rgba16float" } },
+      ],
+    });
+    this.mipLayout = device.createBindGroupLayout({
+      label: "glow-mip",
+      entries: [
+        { binding: 0, visibility: C, texture: { sampleType: "float" } },
+        { binding: 1, visibility: C, storageTexture: { access: "write-only", format: "rgba16float" } },
+      ],
+    });
+    this.lookLayout = device.createBindGroupLayout({
+      label: "glow-look",
+      entries: [
+        { binding: 0, visibility: VF, buffer: { type: "uniform" } },
+        { binding: 1, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+        { binding: 2, visibility: GPUShaderStage.FRAGMENT, texture: { sampleType: "float" } },
+        { binding: 3, visibility: GPUShaderStage.FRAGMENT, sampler: { type: "filtering" } },
+      ],
+    });
+    this.sparkLayout = device.createBindGroupLayout({
+      label: "glow-spark",
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
+        { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
+      ],
+    });
+    const prepModule = device.createShaderModule({ code: prepSrc, label: "glow-prep" });
+    const mipModule = device.createShaderModule({ code: mipSrc, label: "glow-mip" });
+    const glowModule = device.createShaderModule({ code: wgsl(glowSrc), label: "glow" });
+    this.prepPipe = device.createComputePipeline({
+      label: "glow-prep",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.prepLayout] }),
+      compute: { module: prepModule, entryPoint: "prep" },
+    });
+    this.mipPipe = device.createComputePipeline({
+      label: "glow-mip",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.mipLayout] }),
+      compute: { module: mipModule, entryPoint: "downsample" },
+    });
+    this.glowPipe = device.createRenderPipeline({
+      label: "glow",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.lookLayout] }),
+      vertex: { module: glowModule, entryPoint: "vs" },
+      fragment: { module: glowModule, entryPoint: "fs", targets: [{ format: SCENE_FORMAT }] },
+      primitive: { topology: "triangle-list" },
+    });
+    this.sparkPipe = device.createRenderPipeline({
+      label: "glow-sparks",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.lookLayout, this.sparkLayout] }),
+      vertex: { module: glowModule, entryPoint: "spark_vs" },
+      fragment: {
+        module: glowModule,
+        entryPoint: "spark_fs",
+        targets: [
+          {
+            format: SCENE_FORMAT,
+            blend: {
+              color: { srcFactor: "one", dstFactor: "one", operation: "add" },
+              alpha: { srcFactor: "zero", dstFactor: "one", operation: "add" },
+            },
+          },
+        ],
+      },
+      primitive: { topology: "point-list" },
+    });
+    this.sampler = device.createSampler({
+      label: "glow-field",
+      magFilter: "linear",
+      minFilter: "linear",
+      mipmapFilter: "linear",
+      addressModeU: "repeat",
+      addressModeV: "repeat",
+    });
+    const U = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
+    this.lookBuf = device.createBuffer({ size: 176, usage: U, label: "glow-look" });
+    this.prepBufA = device.createBuffer({ size: 32, usage: U, label: "glow-prep-a" });
+    this.prepBufB = device.createBuffer({ size: 32, usage: U, label: "glow-prep-b" });
+    this.sparkBuf = device.createBuffer({ size: 32, usage: U, label: "glow-sparks" });
+  }
+
+  private makeField(w: number, h: number, label: string): FieldTex {
+    const levels = Math.max(1, Math.min(MIPS, Math.floor(Math.log2(Math.min(w, h))) - 2));
+    const tex = this.device.createTexture({
+      label,
+      size: [w, h],
+      format: "rgba16float",
+      mipLevelCount: levels,
+      usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+    });
+    const views = Array.from({ length: levels }, (_, i) => tex.createView({ baseMipLevel: i, mipLevelCount: 1 }));
+    const mipBGs = views.slice(1).map((dst, i) =>
+      this.device.createBindGroup({
+        layout: this.mipLayout,
+        label: `${label}-mip-${i + 1}`,
+        entries: [
+          { binding: 0, resource: views[i]! },
+          { binding: 1, resource: dst },
+        ],
+      }),
+    );
+    return { tex, w, h, levels: views, view: tex.createView(), prepBG: null, prepFor: null, mipBGs };
+  }
+
+  /** Point the renderer at a (new) simulation; reallocates on a size change. */
+  private ensureFields(src: GlowSource): void {
+    if (!this.a || this.a.w !== src.w || this.a.h !== src.h) {
+      this.a?.tex.destroy();
+      this.b?.tex.destroy();
+      this.a = this.makeField(src.w, src.h, "glow-field-a");
+      this.b = this.makeField(src.w, src.h, "glow-field-b");
+      this.lookBG = this.device.createBindGroup({
+        layout: this.lookLayout,
+        label: "glow-look",
+        entries: [
+          { binding: 0, resource: { buffer: this.lookBuf } },
+          { binding: 1, resource: this.a.view },
+          { binding: 2, resource: this.b.view },
+          { binding: 3, resource: this.sampler },
+        ],
+      });
+      this.preparedVersion = -1;
+      this.preparedB = "";
+    }
+  }
+
+  private prepBG(f: FieldTex, buf: GPUBuffer, trail: GPUBuffer, dep: GPUBuffer): GPUBindGroup {
+    if (f.prepBG && f.prepFor?.[0] === trail && f.prepFor[1] === dep) return f.prepBG;
+    f.prepFor = [trail, dep];
+    f.prepBG = this.device.createBindGroup({
+      layout: this.prepLayout,
+      label: "glow-prep",
+      entries: [
+        { binding: 0, resource: { buffer: buf } },
+        { binding: 1, resource: { buffer: trail } },
+        { binding: 2, resource: { buffer: dep } },
+        { binding: 3, resource: f.levels[0]! },
+      ],
+    });
+    return f.prepBG;
+  }
+
+  private writePrep(buf: GPUBuffer, src: GlowSource, withAgents: boolean): void {
+    const ab = new ArrayBuffer(32);
+    const u = new Uint32Array(ab);
+    const f = new Float32Array(ab);
+    u[0] = src.w;
+    u[1] = src.h;
+    f[4] = 1 / Math.max(src.meanTrail, 1e-12);
+    f[5] = withAgents ? 1 / (src.depositPerAgent * SCALE) : 0;
+    this.device.queue.writeBuffer(buf, 0, ab);
+  }
+
+  private encodePrep(pass: GPUComputePassEncoder, f: FieldTex, bind: GPUBindGroup): void {
+    pass.setPipeline(this.prepPipe);
+    pass.setBindGroup(0, bind);
+    pass.dispatchWorkgroups(Math.ceil(f.w / 16), Math.ceil(f.h / 16));
+    pass.setPipeline(this.mipPipe);
+    f.mipBGs.forEach((bg, i) => {
+      const w = Math.max(1, f.w >> (i + 1));
+      const h = Math.max(1, f.h >> (i + 1));
+      pass.setBindGroup(0, bg);
+      pass.dispatchWorkgroups(Math.ceil(w / 16), Math.ceil(h / 16));
+    });
+  }
+
+  /** Forget the prepared field (a scene change reuses the version numbers). */
+  invalidate(): void {
+    this.preparedVersion = -1;
+    this.preparedB = "";
+  }
+
+  encode(
+    enc: GPUCommandEncoder,
+    target: GPUTextureView,
+    targetW: number,
+    targetH: number,
+    camera: Camera2D,
+    pixelScale: number,
+    src: GlowSource,
+    compare: { trail: GPUBuffer; key: string } | null,
+    profiler?: GpuProfiler,
+  ): void {
+    this.ensureFields(src);
+    const a = this.a!;
+    const b = this.b!;
+    const needA = src.version !== this.preparedVersion;
+    const needB = compare !== null && compare.key !== this.preparedB;
+    if (needA || needB) {
+      const pass = enc.beginComputePass({ label: "glow-prep", timestampWrites: profiler?.pass("prep") });
+      if (needA) {
+        this.writePrep(this.prepBufA, src, true);
+        this.encodePrep(pass, a, this.prepBG(a, this.prepBufA, src.trail, src.deposit));
+        this.preparedVersion = src.version;
+      }
+      if (needB && compare) {
+        // a checkpoint holds no deposits: the agent glow is zeroed (the binding still needs a buffer)
+        this.writePrep(this.prepBufB, src, false);
+        this.encodePrep(pass, b, this.prepBG(b, this.prepBufB, compare.trail, src.deposit));
+        this.preparedB = compare.key;
+      }
+      pass.end();
+    }
+    if (!compare) this.preparedB = "";
+
+    // look uniform
+    const L = this.look;
+    const cam = camera.uniform(pixelScale);
+    const f = new Float32Array(44);
+    f.set([cam.cx, cam.cy, cam.unitsPerPx, 0], 0);
+    f.set([targetW, targetH, src.w, src.h], 4);
+    L.palette.stops.forEach((s, i) => f.set([s[0], s[1], s[2], 0], 8 + i * 4));
+    f.set([...L.palette.bg, L.grain], 28);
+    f.set([L.top, L.hot, L.busy, L.gain * this.fade], 32);
+    f.set([...L.palette.spark, L.spark * this.fade], 36);
+    f.set([compare && this.split !== null ? this.split * targetW : -1, 0.7, 0, 0], 40);
+    this.device.queue.writeBuffer(this.lookBuf, 0, f);
+
+    // sparks: periodic images needed to cover the view
+    const stride = Math.max(1, Math.round(L.sparkStride));
+    const viewW = targetW * cam.unitsPerPx;
+    const viewH = targetH * cam.unitsPerPx;
+    // images at d + k·dom with d in [−dom/2, dom/2) cover [−view/2, view/2] for |k| ≤ K
+    const images = (view: number, dom: number): number => Math.min(5, 2 * Math.max(0, Math.ceil(view / (2 * dom) + 0.5) - 1) + 1);
+    const ix = images(viewW, src.w);
+    const iy = images(viewH, src.h);
+    this.device.queue.writeBuffer(this.sparkBuf, 0, new Uint32Array([stride, 0, src.n, ix, iy, 0, 0, 0]));
+    let sparkBG = this.sparkBGs.get(src.agents);
+    if (!sparkBG) {
+      sparkBG = this.device.createBindGroup({
+        layout: this.sparkLayout,
+        label: "glow-sparks",
+        entries: [
+          { binding: 0, resource: { buffer: this.sparkBuf } },
+          { binding: 1, resource: { buffer: src.agents } },
+        ],
+      });
+      if (this.sparkBGs.size > 8) this.sparkBGs.clear();
+      this.sparkBGs.set(src.agents, sparkBG);
+    }
+
+    const rp = enc.beginRenderPass({
+      label: "glow",
+      colorAttachments: [{ view: target, loadOp: "clear", storeOp: "store", clearValue: { r: 0, g: 0, b: 0, a: 1 } }],
+      timestampWrites: profiler?.pass("glow"),
+    });
+    rp.setPipeline(this.glowPipe);
+    rp.setBindGroup(0, this.lookBG!);
+    rp.draw(3);
+    if (L.spark > 0) {
+      rp.setPipeline(this.sparkPipe);
+      rp.setBindGroup(0, this.lookBG!);
+      rp.setBindGroup(1, sparkBG);
+      rp.draw(Math.ceil(src.n / stride), ix * iy);
+    }
+    rp.end();
+  }
+
+  /** Drop cached bind groups for buffers that are gone (scene change). */
+  forgetBuffers(): void {
+    this.sparkBGs.clear();
+    for (const f of [this.a, this.b]) {
+      if (!f) continue;
+      f.prepBG = null;
+      f.prepFor = null;
+    }
+    this.invalidate();
+  }
+
+  destroy(): void {
+    this.a?.tex.destroy();
+    this.b?.tex.destroy();
+    for (const b of [this.lookBuf, this.prepBufA, this.prepBufB, this.sparkBuf]) b.destroy();
+  }
+}
