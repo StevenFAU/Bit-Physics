@@ -21,6 +21,9 @@ on:
       - '.github/workflows/web-deploy.yml'
       - 'packages/**/web/**'
       - 'common/common-web/**'
+      - 'web/**'
+      - 'package.json'
+      - 'package-lock.json'
   workflow_dispatch:
     inputs:
       confirm_deploy:
@@ -37,10 +40,15 @@ concurrency:
 permissions:
   contents: read
 
+# Runner image pinned, not ubuntu-latest: the browser gates run on this image's
+# Mesa lavapipe and on Playwright's Chromium, and their tolerances were measured
+# there. ubuntu-latest moved to 26.04 in 2026-10, where Playwright 1.60 cannot
+# install Chromium, and the R2 LFS fetch failed on the first run there. Move images
+# deliberately, re-measuring the gates.
 jobs:
   discover:
     name: Discover qualifying sims
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -63,10 +71,38 @@ jobs:
           NAMES=$(uv run python -c "import json; print(json.dumps([s['name'] for s in json.load(open('sims.json'))]))")
           echo "sims=$NAMES" >> "$GITHUB_OUTPUT"
 
+  shared-web:
+    name: Field Studies packages (typecheck + unit tests)
+    # web/* — @bp/gpu, @bp/render, @bp/runtime, @bp/studio, @bp/verify — are
+    # source packages every rebuilt sim imports (docs/planning/rebuild-v2/
+    # 00-foundation.md § 7). One root install for the whole npm workspace.
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: false
+      - name: Set up Node (pinned)
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install the workspace (one lockfile)
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck the shared packages
+        run: |
+          for p in gpu render runtime studio verify; do
+            echo "::group::@bp/$p"; npx tsc --noEmit -p "web/$p"; echo "::endgroup::"
+          done
+      - name: Typecheck the unit tests
+        run: npx tsc --noEmit -p tsconfig.test.json
+      - name: Unit tests (Vitest)
+        run: npm test
+
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -84,7 +120,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: packages/${{ matrix.sim }}/web/package-lock.json
+          # one root lockfile for every sim (npm workspace); `npm ci` inside a
+          # sim's web dir installs just that sim's dependencies at the root
+          cache-dependency-path: package-lock.json
       - name: Install Mesa lavapipe (software Vulkan for headless browser WebGPU)
         # Chrome's Dawn/WebGPU comes up over Mesa lavapipe (llvmpipe Vulkan) on the
         # runner — the REAL browser WebGPU path (not WebGL). A SECOND independent
@@ -160,6 +198,16 @@ jobs:
             --artifacts "${{ runner.temp }}/artifacts" --sim "${{ matrix.sim }}" \
             --skip-build --json > results.json
           cat results.json
+      - name: Field Studies shell checks (layout at 390/820/1440 + 200% zoom, axe-core)
+        # The rebuilt v2 pages (pipeline.py PAGES) only. Full-bleed (no
+        # letterboxing), no chrome overflow/overlap, the capture control live at
+        # boot, and zero axe violations in the boot, Learn and Prove states.
+        if: matrix.sim == 'reaction-diffusion-2d'
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
+        run: |
+          npm ci --no-audit --no-fund
+          node web/tools/check-studio.mjs packages/reaction-diffusion-2d/web/dist v2/ "${{ runner.temp }}/studio-check"
       - name: Surface results
         if: always()
         run: cat results.json || true
@@ -185,9 +233,9 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages (operator-dispatched; confirm_deploy=true)
-    needs: [discover, build-and-validate]
+    needs: [discover, shared-web, build-and-validate]
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

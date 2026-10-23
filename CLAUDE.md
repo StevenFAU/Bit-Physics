@@ -10,7 +10,11 @@ under `docs/_audits/` is append-only.
 ## Where things live
 
 - `packages/<sim>/` — reference implementation, tests, goldens; `packages/<sim>/web/` is
-  the Vite + TypeScript + WGSL frontend (one npm package per sim, no root workspace yet).
+  the Vite + TypeScript + WGSL frontend (one npm package per sim, all in the root npm
+  workspace with one `package-lock.json`).
+- `web/` — the shared Field Studies packages for the rebuilt sims (`@bp/gpu`, `@bp/render`,
+  `@bp/runtime`, `@bp/studio`, `@bp/verify`); see `web/README.md`. A rebuilt sim ships as
+  a second page (`v2/`) in its own package until it replaces v1.
 - `common/common-web/src/` — shared browser chrome: `panel-shell.ts` (the control panel
   every sim mounts), `theme.css` (house tokens), `webgpu-fallback.ts`, capture export.
 - `common/common-ts/` — WebGPU device/pipeline helpers (Node-strict CI surface, no DOM).
@@ -25,7 +29,9 @@ under `docs/_audits/` is append-only.
 
 - Python: always `uv run --no-sync …`. A bare `uv sync` (or one scoped to a member)
   strips the shared venv; restore with `uv sync --all-packages --all-extras`.
-- A sim's frontend: in `packages/<sim>/web`, `npm ci`, `npx tsc --noEmit`, `npm run build`.
+- Web frontends: `npm ci` once at the repo root (the workspace); then in `packages/<sim>/web`,
+  `npx tsc --noEmit`, `npm run build`. Unit tests: `npm test` at the root. `npm ci` run inside
+  a sim's dir installs only that sim's dependencies (at the root) — what CI's matrix does.
 - `common/common-ts` uses pnpm 10, not npm (no package-lock):
   `npx -y pnpm@10 install --frozen-lockfile`, then `pnpm tsc --noEmit`, `pnpm vitest run`, `pnpm eslint .`.
 - Sim registry drift: `python3 tools/productization/web-deploy/check_registry.py`.
@@ -39,8 +45,10 @@ under `docs/_audits/` is append-only.
 ## Adding a published sim
 
 1. Add it to `tools/productization/web-deploy/sims.json` first.
-2. `pipeline.py` `GATE_KIND` entry + its gate in `verify.py`.
-3. `main.ts` must contain `createSettingsPanel` and `exposeCapture` (discovery greps them).
+2. `pipeline.py` `GATE_KIND` entry + its gate in `verify.py`. Extra gated pages of a sim
+   (a rebuilt `v2/`) go in `pipeline.py` `PAGES`; validate drives each through the same gate.
+3. Each page's entry must contain `exposeCapture` and a shell marker — `createSettingsPanel`
+   (v1 panel) or `createStudio` (v2 shell) — discovery greps them.
 4. Landing card in `web/pages/index.html` (a looping `<video>`), plus entries in
    `assets/make-posters.mjs` and `assets/make-loops.mjs`; commit `<sim>.png` + `<sim>.webm`
    plain, not LFS (≤1.5 MB per loop).

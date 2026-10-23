@@ -8,9 +8,10 @@ would flag a duplicate Python kernel implementation in the repo.
 
 from __future__ import annotations
 
-from . import cubic_spline, terrain_erosion
+from . import brusselator_dispersion, cubic_spline, terrain_erosion
 
 REGISTRY = {
+    brusselator_dispersion.ALGORITHM_NAME: brusselator_dispersion.evaluate,
     cubic_spline.ALGORITHM_NAME: cubic_spline.evaluate,
     terrain_erosion.ALGORITHM_NAME: terrain_erosion.evaluate,
 }

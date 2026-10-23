@@ -60,11 +60,9 @@ const SIMS = {
   "boids-3d": { start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, boost: "brightness(1.35) saturate(1.5)" },
   // transport-network growth from the noise field.
   physarum: { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
-  // Gray-Scott fronts: λ-class spot division filling the domain, timelapsed
-  // (gap 6). Regenerated for the render.wgsl v2 look (bilinear + relief +
-  // in-shader tonemap); same frame range, still no boost — the shader
-  // carries its own exposure.
-  "reaction-diffusion-2d": { start: 400, shots: 300, gap: 6, fps: 30, px: 512, crf: 46 },
+  // Turing Patterns v2 (rebuild-v2 M3): "On a Shape", chrome off — coral
+  // spreading over a slowly turning torus from its seed discs. Wraps with a cut.
+  "reaction-diffusion-2d": { page: "v2/", query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
   // Phase-6 sph-water: the dam-break collapse + crown splash — the loop
   // covers frames 30..330 (~the whole violent phase); frame-indexed live
   // loop, deterministic per device. Loop wraps with a cut (declared).
@@ -192,7 +190,7 @@ function serve(dir) {
     try {
       let p = decodeURIComponent((req.url ?? "/").split("?")[0]);
       if (p === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      if (p === "/") p = "/index.html";
+      if (p.endsWith("/")) p += "index.html"; // a sim's extra pages (cfg.page) too
       const body = await readFile(join(dir, normalize(p).replace(/^(\.\.[/\\])+/, "")));
       res.writeHead(200, { "content-type": MIME[extname(p)] ?? "application/octet-stream" });
       res.end(body);
@@ -204,7 +202,8 @@ async function loop(browser, sim, cfg) {
   const dist = join(REPO, "packages", sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
-  const url = `http://localhost:${server.address().port}/${cfg.query ?? ""}`;
+  // cfg.page: a sim's extra page inside its dist (e.g. "v2/", the rebuild-v2 page)
+  const url = `http://localhost:${server.address().port}/${cfg.page ?? ""}${cfg.query ?? ""}`;
   const context = await browser.newContext({ viewport: { width: 1400, height: 1400 } });
   const page = await context.newPage();
   page.on("pageerror", (e) => console.log(`  [${sim}] pageerror: ${String(e).slice(0, 200)}`));
@@ -242,7 +241,7 @@ async function loop(browser, sim, cfg) {
       // presentational — the sim, its params, and its canvas render are untouched.
       if (cfg.hide) for (const sel of cfg.hide)
         document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
-      const canvas = document.querySelector("canvas");
+      const canvas = document.querySelector(cfg.canvas ?? "canvas");
       canvas.style.width = `${cfg.px}px`;
       canvas.style.height = "auto";
       if (cfg.boost) canvas.style.filter = cfg.boost; // exposure, not physics
@@ -252,7 +251,7 @@ async function loop(browser, sim, cfg) {
     await page.waitForFunction((t) => window.__posterFrames >= t, cfg.start, { timeout: 240000, polling: 100 });
     await page.waitForTimeout(250);
 
-    const canvas = page.locator("canvas").first();
+    const canvas = page.locator(cfg.canvas ?? "canvas").first();
     for (let i = 0; i < cfg.shots; i += 1) {
       await canvas.screenshot({ path: join(frames, `${String(i).padStart(5, "0")}.png`) });
       // advance gap frames by releasing the parked RAF callback (the

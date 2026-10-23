@@ -1,0 +1,13 @@
+{
+  "name": "@bp/gpu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Field Studies — WebGPU device, capability tier, WGSL #import loader, buffers, timestamp profiler.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

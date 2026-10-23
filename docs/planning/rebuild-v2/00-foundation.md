@@ -1,6 +1,13 @@
 # 00 — Foundation: the Field Studies platform
 
 > Part of [Rebuild v2](README.md). Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+>
+> **Implementation status (2026-10-17, Wave 0):** F0–F2 built with the Turing Patterns pilot —
+> the root npm workspace, `web/{gpu,render,runtime,studio,verify}` (see `web/README.md`), and
+> `pipeline.py` `PAGES` for gated v2 pages. Not yet built: the rewind ring and `Timeline`,
+> HDR-display (`extended`) output, bloom, shader hot-reload, visual-regression baselines,
+> ESLint/Prettier workspace-wide, and the iGPU reference machine for budgets. IBM Plex Sans
+> is not vendored yet (UI text falls back to system-ui); Mono and Sans Condensed are.
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

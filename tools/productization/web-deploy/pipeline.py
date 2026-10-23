@@ -154,6 +154,20 @@ GATE_KIND = {
 }
 WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 
+# Extra gated pages inside a sim's dist (rebuild v2, docs/planning/rebuild-v2/
+# 00-foundation.md § 8): a v2 page is built into the SAME dist as the sim's v1
+# page and served at sims/<sim>/<page>, so the per-sim build and dist contract
+# is unchanged. Each page is driven separately and gated by the sim's SAME
+# established gate (GATE_KIND); the sim passes only if every page passes.
+# Values: (page path under dist/, its entry module relative to the web dir).
+PAGES: dict[str, tuple[tuple[str, str], ...]] = {
+    "reaction-diffusion-2d": (("v2/", "src/v2/main.ts"),),
+}
+
+# Discovery greps each page's entry for the capture hook and a shell marker:
+# the v1 settings panel, or the v2 Field Studies shell (@bp/studio).
+SHELL_MARKERS = ("createSettingsPanel", "createStudio")
+
 
 @dataclass(frozen=True)
 class SimSpec:
@@ -177,17 +191,29 @@ class PipelineResult:
 # --------------------------------------------------------------------------- #
 # Discovery (phase plan § 6.1 qualifying criteria)
 # --------------------------------------------------------------------------- #
-def _qualifies(web: Path) -> tuple[bool, str]:
+def _entry_qualifies(entry: Path, label: str) -> tuple[bool, str]:
+    if not entry.exists():
+        return False, f"no {label} entry"
+    txt = entry.read_text()
+    if "exposeCapture" not in txt:
+        return False, f"no capture-export hook in {label}"
+    if not any(m in txt for m in SHELL_MARKERS):
+        return False, f"no settings panel or studio shell in {label} (spec §10.1)"
+    return True, ""
+
+
+def _qualifies(web: Path, name: str | None = None) -> tuple[bool, str]:
     if not (web / "package.json").exists():
         return False, "no package.json (no Vite build)"
-    main = web / "src" / "main.ts"
-    if not main.exists():
-        return False, "no src/main.ts entry"
-    txt = main.read_text()
-    if "exposeCapture" not in txt:
-        return False, "no capture-export hook"
-    if "createSettingsPanel" not in txt:
-        return False, "no settings panel (spec §10.1)"
+    ok, why = _entry_qualifies(web / "src" / "main.ts", "src/main.ts")
+    if not ok:
+        return ok, why
+    for page, entry in PAGES.get(name or "", ()):
+        if not (web / page / "index.html").exists():
+            return False, f"page {page} has no {page}index.html"
+        ok, why = _entry_qualifies(web / entry, entry)
+        if not ok:
+            return ok, f"page {page}: {why}"
     return True, ""
 
 
@@ -204,7 +230,7 @@ def discover_qualifying_sims() -> list[SimSpec]:
     sims: list[SimSpec] = []
     for name, rel in sorted(WEB_DIR.items()):
         web = REPO / rel
-        ok, reason = _qualifies(web)
+        ok, reason = _qualifies(web, name)
         if not ok:
             print(f"non-qualifying: {name} — {reason}", file=sys.stderr)
             continue
@@ -217,6 +243,8 @@ def discover_qualifying_sims() -> list[SimSpec]:
                 metadata={
                     "gate_kind": GATE_KIND[name],
                     "web_dir": rel,
+                    # "" is the sim's root page; extra gated pages follow
+                    "pages": ["", *(p for p, _ in PAGES.get(name, ()))],
                     # new_canonical needs 2 runs for run-twice byte-identity;
                     # neural-ca joins per the ratified cross-backend charter —
                     # foreign-ALU determinism is part of its fallback verdict
@@ -238,9 +266,23 @@ def _run(cmd: list[str], cwd: Path | None = None) -> tuple[int, str]:
     return p.returncode, (p.stdout + p.stderr)
 
 
+def _deps_installed(web: Path) -> bool:
+    """Every dependency of the sim resolvable from its dir or the repo root.
+
+    The web frontends are an npm workspace (root package.json, one lockfile):
+    dependencies hoist to REPO/node_modules, and `npm ci` run inside a member
+    dir installs only that member's dependencies at the root — so a root
+    node_modules alone does not prove THIS sim's deps are present.
+    """
+    pkg = json.loads((web / "package.json").read_text())
+    deps = {**pkg.get("dependencies", {}), **pkg.get("devDependencies", {})}
+    roots = [web / "node_modules", REPO / "node_modules"]
+    return all(any((r / d).exists() for r in roots) for d in deps)
+
+
 def build_sim(sim: SimSpec) -> tuple[bool, str]:
     web = sim.path
-    if not (web / "node_modules").exists():
+    if not _deps_installed(web):
         rc, out = _run(["npm", "ci"], cwd=web)
         if rc != 0:
             rc, out = _run(["npm", "install"], cwd=web)
@@ -278,6 +320,39 @@ def run_pipeline_for_sim(
             sim, "fail", None, False, time.time() - t0, "no dist/ after build"
         )
 
+    pages = sim.metadata.get("pages", [""])
+    results = [
+        _drive_and_verify(
+            sim,
+            dist,
+            out if page == "" else out / page.strip("/"),
+            page,
+            require_webgpu=require_webgpu,
+        )
+        for page in pages
+    ]
+    notes = " | ".join(f"[{p or 'root'}] {n}" for p, (_, _, n) in zip(pages, results))
+    if any(st == "fail" for st, _, _ in results):
+        status: Literal["pass", "fail", "deferred"] = "fail"
+    elif any(st == "deferred" for st, _, _ in results):
+        status = "deferred"
+    else:
+        status = "pass"
+    return PipelineResult(
+        sim,
+        status,
+        str(dist),
+        all(v for _, v, _ in results),
+        time.time() - t0,
+        notes if len(pages) > 1 else results[0][2],
+    )
+
+
+def _drive_and_verify(
+    sim: SimSpec, dist: Path, out: Path, page: str, *, require_webgpu: bool = True
+) -> tuple[Literal["pass", "fail", "deferred"], bool, str]:
+    """Drive one page of a built bundle and apply the sim's established gate."""
+    out.mkdir(parents=True, exist_ok=True)
     runs = sim.metadata["runs"]
     cmd = [
         "node",
@@ -289,43 +364,39 @@ def run_pipeline_for_sim(
         "--runs",
         str(runs),
     ]
+    if page:
+        cmd += ["--entry", page]
     rc, log = _run(cmd, cwd=REPO)
     # Surface the driver log on success AND failure — stdout carries the results
     # JSON (`--json > results.json`), so the log goes to stderr. Without this the
     # driver's measured time-to-ready instrumentation is invisible on green runs
     # (run 27244441494: zero declarable readiness values).
     if log:
-        print(f"--- driver log ({sim.name}) ---\n{log.rstrip()}", file=sys.stderr)
+        print(
+            f"--- driver log ({sim.name}{' ' + page if page else ''}) ---\n{log.rstrip()}",
+            file=sys.stderr,
+        )
     time_to_ready_ms = [int(ms) for ms in re.findall(r"time-to-ready (\d+) ms", log)]
     bundles = sorted(out.glob("capture-*.json"))
 
     if rc == 42 or "WEBGPU_UNAVAILABLE" in log:
         if require_webgpu:
-            return PipelineResult(
-                sim,
+            return (
                 "fail",
-                str(dist),
                 False,
-                time.time() - t0,
                 "browser WebGPU adapter unavailable — CI must provide one "
                 "(lavapipe). Real browser-delivery gate did not run.",
             )
-        return PipelineResult(
-            sim,
+        return (
             "deferred",
-            str(dist),
             False,
-            time.time() - t0,
             "browser-WebGPU unavailable in this environment; gate deferred to "
             "cloud CI (web-deploy.yml). Vite build OK; bundle deployable.",
         )
     if rc != 0 or not bundles:
-        return PipelineResult(
-            sim,
+        return (
             "fail",
-            str(dist),
             False,
-            time.time() - t0,
             f"driver failed (rc={rc}): {log.splitlines()[-1] if log else ''}",
         )
 
@@ -334,13 +405,9 @@ def run_pipeline_for_sim(
     import verify  # type: ignore
 
     res = verify.verify_browser_capture(sim.name, bundles)
-    status: Literal["pass", "fail"] = "pass" if res.passed else "fail"
-    return PipelineResult(
-        sim,
-        status,
-        str(dist),
+    return (
+        "pass" if res.passed else "fail",
         bool(res.passed),
-        time.time() - t0,
         f"{res.kind}: passed={res.passed} run_twice={res.run_twice_identical} "
         f"time_to_ready_ms={time_to_ready_ms} {json.dumps(res.detail, default=str)}",
     )

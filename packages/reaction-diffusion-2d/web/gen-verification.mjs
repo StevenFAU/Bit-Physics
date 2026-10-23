@@ -16,7 +16,7 @@
 // Node builtins only (Lorenz template, packages/strange-attractors/web/).
 
 import { createHash } from "node:crypto";
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { readFileSync, readdirSync, mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -221,6 +221,84 @@ if (icBytes.length !== 128 * 128 * 2 * 4) {
   fail(`${IC_REL}: ${icBytes.length} bytes, want ${128 * 128 * 2 * 4}`);
 }
 
+// --- 6b. Extra models: goldens, the golden-tolerance row, the Turing check ---
+// (01-reaction-diffusion.md M3). The sidecars are written by
+// reaction_diffusion_2d/reference/goldens.py; each .bin must still hash to its
+// sidecar, and the declared tolerances come from the ledger row, verbatim.
+
+const GOLDEN_DIR = "packages/reaction-diffusion-2d/web/public/goldens";
+const GOLDEN_MODELS = ["brusselator", "gierer-meinhardt", "fitzhugh-nagumo"];
+const goldenFiles = readdirSync(join(repoRoot, GOLDEN_DIR)).filter((f) => f.endsWith(".json") && !f.startsWith("turing-"));
+const goldens = goldenFiles.map((f) => JSON.parse(read(`${GOLDEN_DIR}/${f}`)));
+for (const m of GOLDEN_MODELS) {
+  if (goldens.filter((g) => g.model === m).length !== 1) fail(`${GOLDEN_DIR}: want exactly one golden for ${m}`);
+}
+for (const g of goldens) {
+  for (const key of ["descriptor", "model", "grid", "steps", "params", "ic", "ic_sha256", "final_sha256", "max_abs"]) {
+    if (g[key] === undefined) fail(`${GOLDEN_DIR}/${g.descriptor ?? "?"}.json: missing ${key}`);
+  }
+  const bin = readBytes(`${GOLDEN_DIR}/${g.descriptor}.bin`);
+  const sha = `sha256:${createHash("sha256").update(bin).digest("hex")}`;
+  if (sha !== g.final_sha256) fail(`${GOLDEN_DIR}/${g.descriptor}.bin: ${sha} != sidecar ${g.final_sha256} — rerun goldens.py`);
+  if (bin.length !== g.grid[0] * g.grid[1] * 2 * 8) fail(`${GOLDEN_DIR}/${g.descriptor}.bin: wrong size ${bin.length}`);
+}
+goldens.sort((a, b) => GOLDEN_MODELS.indexOf(a.model) - GOLDEN_MODELS.indexOf(b.model));
+const TURING_REL = `${GOLDEN_DIR}/turing-brusselator-256sq.json`;
+const turing = JSON.parse(read(TURING_REL));
+for (const key of ["model", "grid", "params", "ic", "protocol", "prediction", "reference_runs"]) {
+  if (turing[key] === undefined) fail(`${TURING_REL}: missing ${key}`);
+}
+const rowBlock = matchOne(
+  "golden_tolerance.continuous-ca.reaction-diffusion-2d",
+  tolToml,
+  TOL_PATH,
+  /^\[golden_tolerance\.continuous-ca\.reaction-diffusion-2d\]\n((?:[a-z_]+ = [0-9.e+-]+\n)+)/m,
+)[1];
+const row = Object.fromEntries(
+  rowBlock
+    .trim()
+    .split("\n")
+    .map((l) => l.split(" = "))
+    .map(([k, v]) => [k, Number(v)]),
+);
+for (const k of ["mirror_rel", "brusselator_live_rel", "gierer_meinhardt_live_rel", "fitzhugh_nagumo_live_rel", "turing_wavenumber_rel"]) {
+  if (!Number.isFinite(row[k]) || row[k] < 0) fail(`${TOL_PATH}: golden_tolerance row key ${k} missing or unparsed`);
+}
+if (!(turing.reference_runs.worst_abs_rel_err <= row.turing_wavenumber_rel)) {
+  fail(`${TURING_REL}: the f64 reference's own worst ${turing.reference_runs.worst_abs_rel_err} exceeds the declared band`);
+}
+const models = {
+  goldens: goldens.map((g) => ({
+    descriptor: g.descriptor,
+    model: g.model,
+    grid: g.grid,
+    steps: g.steps,
+    params: g.params,
+    ic: g.ic,
+    ic_sha256: g.ic_sha256,
+    final_sha256: g.final_sha256,
+    max_abs: g.max_abs,
+  })),
+  tolerance: {
+    mirror_rel: row.mirror_rel,
+    live_rel: {
+      brusselator: row.brusselator_live_rel,
+      "gierer-meinhardt": row.gierer_meinhardt_live_rel,
+      "fitzhugh-nagumo": row.fitzhugh_nagumo_live_rel,
+    },
+    turing_wavenumber_rel: row.turing_wavenumber_rel,
+  },
+  turing: {
+    model: turing.model,
+    grid: turing.grid,
+    params: turing.params,
+    ic: turing.ic,
+    protocol: turing.protocol,
+    prediction: turing.prediction,
+    reference_runs: turing.reference_runs,
+  },
+};
+
 // --- 7. Emit -----------------------------------------------------------------
 
 const out = {
@@ -290,6 +368,7 @@ const out = {
     native_binary: "reaction-diffusion-2d-stack-c",
   },
   code_anchors: codeAnchors,
+  models,
   links: {
     kernel: WGSL_PATH,
     spec: "docs/sim-specs/continuous-ca/reaction-diffusion-2d/spec-ref.md",
@@ -301,6 +380,13 @@ const out = {
     gate_source: VERIFY_PATH,
     tolerance_table: TOL_PATH,
     capture_manifest: MANIFEST_PATH,
+    models_reference: "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/models.py",
+    models_goldens: "packages/reaction-diffusion-2d/reaction_diffusion_2d/reference/goldens.py",
+    models_kernel: "packages/reaction-diffusion-2d/web/src/v2/model/live.wgsl",
+    models_tests: "packages/reaction-diffusion-2d/tests/test_model_goldens.py",
+    turing_golden_table: "tools/testkit/golden/tables/continuous-ca/brusselator-turing-dispersion.json",
+    turing_derivation: "tools/testkit/golden/derivations/brusselator-turing.md",
+    rebuild_spec: "docs/planning/rebuild-v2/01-reaction-diffusion.md",
   },
 };
 

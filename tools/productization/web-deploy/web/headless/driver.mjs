@@ -14,8 +14,10 @@
 // It NEVER degrades to a DOM-load pass standing in for the browser-WebGPU gate.
 //
 // Usage:
-//   node driver.mjs <dist-dir> <sim> <gate_kind> <out-dir> [--runs N]
+//   node driver.mjs <dist-dir> <sim> <gate_kind> <out-dir> [--runs N] [--entry <page>/]
 // Writes <out-dir>/capture-<i>.json (one per run; new_canonical needs --runs 2).
+// --entry drives a page below the dist root (e.g. a sim's rebuilt "v2/" page,
+// pipeline.py PAGES) instead of the root index.html.
 // CHROME_BIN overrides the executable; PLAYWRIGHT_MODULE overrides the resolver.
 
 import { createServer } from "node:http";
@@ -28,8 +30,10 @@ const chromium = pw.chromium ?? pw.default.chromium;
 const [distDir, sim, gateKind, outDir] = process.argv.slice(2);
 const runsArg = process.argv.indexOf("--runs");
 const RUNS = runsArg > -1 ? Number(process.argv[runsArg + 1]) : 1;
+const entryArg = process.argv.indexOf("--entry");
+const ENTRY = entryArg > -1 ? String(process.argv[entryArg + 1] ?? "").replace(/^\/+/, "") : "";
 if (!distDir || !sim || !gateKind || !outDir) {
-  console.error("usage: node driver.mjs <dist-dir> <sim> <gate_kind> <out-dir> [--runs N]");
+  console.error("usage: node driver.mjs <dist-dir> <sim> <gate_kind> <out-dir> [--runs N] [--entry <page>/]");
   process.exit(2);
 }
 
@@ -71,7 +75,7 @@ function serve(dir) {
     try {
       let p = decodeURIComponent((req.url ?? "/").split("?")[0]);
       if (p === "/favicon.ico") { res.writeHead(204); res.end(); return; }
-      if (p === "/") p = "/index.html";
+      if (p.endsWith("/")) p += "index.html";
       const file = join(dir, normalize(p).replace(/^(\.\.[/\\])+/, ""));
       const body = await readFile(file);
       res.writeHead(200, { "content-type": MIME[extname(file)] ?? "application/octet-stream" });
@@ -159,7 +163,7 @@ async function captureOnce(browser, baseUrl, runIdx) {
 
 const server = serve(distDir);
 await new Promise((r) => server.listen(0, r));
-const baseUrl = `http://localhost:${server.address().port}/`;
+const baseUrl = `http://localhost:${server.address().port}/${ENTRY}`;
 
 let exitCode = 1;
 try {
