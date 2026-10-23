@@ -40,10 +40,15 @@ concurrency:
 permissions:
   contents: read
 
+# Runner image pinned, not ubuntu-latest: the browser gates run on this image's
+# Mesa lavapipe and on Playwright's Chromium, and their tolerances were measured
+# there. ubuntu-latest moved to 26.04 in 2026-10, where Playwright 1.60 cannot
+# install Chromium, and the R2 LFS fetch failed on the first run there. Move images
+# deliberately, re-measuring the gates.
 jobs:
   discover:
     name: Discover qualifying sims
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -71,7 +76,7 @@ jobs:
     # web/* — @bp/gpu, @bp/render, @bp/runtime, @bp/studio, @bp/verify — are
     # source packages every rebuilt sim imports (docs/planning/rebuild-v2/
     # 00-foundation.md § 7). One root install for the whole npm workspace.
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -97,7 +102,7 @@ jobs:
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -228,9 +233,9 @@ jobs:
 
   deploy:
     name: Deploy to GitHub Pages (operator-dispatched; confirm_deploy=true)
-    needs: [discover, build-and-validate]
+    needs: [discover, shared-web, build-and-validate]
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

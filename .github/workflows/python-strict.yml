@@ -7,9 +7,14 @@ on:
     branches: [main]
   pull_request:
 
+# Runner image pinned, not ubuntu-latest: the browser gates run on this image's
+# Mesa lavapipe and on Playwright's Chromium, and their tolerances were measured
+# there. ubuntu-latest moved to 26.04 in 2026-10, where Playwright 1.60 cannot
+# install Chromium, and the R2 LFS fetch failed on the first run there. Move images
+# deliberately, re-measuring the gates.
 jobs:
   python-strict:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -92,7 +97,7 @@ jobs:
 
   # Interfacial Fluid Lab: f64 number-density SPH oracle and analytic gates.
   test-sph-multiphase:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -121,7 +126,7 @@ jobs:
   # generate scenes in-memory (they do not read the legacy-captures corpus).
   # Per § 2.14, pytest runs directly (no `just` indirection).
   test-common-3dgs:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -161,7 +166,7 @@ jobs:
   # call and are cached via actions/cache keyed on Python + lpips version
   # (D-WEIGHTS lean: lazy runtime-fetch + CI cache, NOT vendored as LFS blobs).
   test-render-similarity:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -211,7 +216,7 @@ jobs:
   # similarity are infrastructure). Runs the Stack-D Taichi reference Lenia's
   # tests directly per § 2.14 + § 6.3 M.
   test-lenia:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -260,7 +265,7 @@ jobs:
   # so this job needs a selective LFS pull of exactly that capture (R2-
   # routed when the secrets are present; GitHub-LFS fallback on fork PRs).
   test-ising-classical:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -312,7 +317,7 @@ jobs:
         run: uv run pytest tests/
 
   test-rigid-body-pedagogical:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -372,7 +377,7 @@ jobs:
   # precedent). WGSL inference is NEVER run in CI (§7.8) — CI reads committed
   # captures.
   test-neural-ca-train:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -419,7 +424,7 @@ jobs:
         run: uv run pytest tests/test_train_convergence.py tests/test_checkpoint_serialization.py tests/test_golden_anchors.py tests/test_pbt_invariants.py
 
   test-neural-ca-infer:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -457,7 +462,7 @@ jobs:
         run: uv run pytest tests/test_wgsl_inference_reproduction.py
 
   test-neural-ca-equiv:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -510,7 +515,7 @@ jobs:
   # The iteration-heavy full re-train + EFECT + cross-hardware convergence is the
   # path-filtered `pinn-train.yml` job (fires only on PINN training-code changes).
   test-pinn-poisson:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -574,7 +579,7 @@ jobs:
   # Prong-2 targets), mirroring test-ising-classical / test-pinn-poisson's R2-or-
   # GitHub-LFS routing.
   test-3dgs-mpm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -634,7 +639,7 @@ jobs:
   # Reads committed golden render PNGs (Prong 2) -> needs the selective LFS pull. Imports
   # gs_mpm (the parent) + the MPM kernels; the full coupled sim runs from scratch.
   test-3dgs-mpm-sh-update:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -694,7 +699,7 @@ jobs:
   # render PNGs (Prong 2) -> needs the selective LFS pull. Reuses stable_fluids_step_3d; the full
   # coupled sim runs from scratch.
   test-eulerian-smoke-neural:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -756,7 +761,7 @@ jobs:
   # schema-corpus legacy-capture fixture this sim ships is consumed by the WU-A
   # corpus round-trip jobs, not here), so no selective LFS pull step.
   test-reaction-diffusion-2d-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -792,7 +797,7 @@ jobs:
   # fixture this sim ships is consumed by the WU-A corpus round-trip jobs, not here), so
   # no selective LFS pull step.
   test-lenia-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -832,7 +837,7 @@ jobs:
   # (Stack D / Taichi) on the WU-A autodiff substrate; exhaustive-512 GoL golden +
   # gradient anchors run in-process — no committed LFS capture is read, lfs: false.
   test-neural-ca-frontier-difflogic:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -867,7 +872,7 @@ jobs:
   # forward-equivalence test imports the sph-water-stack-d parent, pulled in via the dev
   # extra) — no committed LFS capture is read, so lfs: false stays correct.
   test-sph-water-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -898,7 +903,7 @@ jobs:
         run: uv run pytest tests/
 
   test-mpm-multimaterial-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -935,7 +940,7 @@ jobs:
   # is read (the schema-corpus legacy-capture fixture this sim ships is consumed by the WU-A
   # corpus round-trip jobs, not here), so no selective LFS pull step.
   test-eulerian-smoke-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -966,7 +971,7 @@ jobs:
         run: uv run pytest tests/
 
   test-articulated-pedagogical-diff:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -997,7 +1002,7 @@ jobs:
         run: uv run pytest tests/
 
   test-particle-lenia:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -1028,7 +1033,7 @@ jobs:
         run: uv run pytest tests/
 
   test-flow-lenia:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -1066,7 +1071,7 @@ jobs:
   # sweep and their numerics are gate-checked elsewhere; this closes the lint
   # blind spot without duplicating test infrastructure.
   lint-phase-2-ports:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
