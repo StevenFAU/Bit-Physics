@@ -1,7 +1,125 @@
 # 04 — Grow (neural cellular automata)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/neural-ca/web`. Wave A.
-> Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+> Status: planning, v0.1, 2026-10-17. Teach targets measured on T3 (below); the rest unmeasured.
+>
+> **Training spike (2026-10-23, M0): go, with limits.** On the RX 6800 XT a browser trains the
+> Growing NCA (forward pass, backprop through time and Adam, all in WGSL) to a recognisable
+> organism in **17–26 s**, well inside the ≤ 3 min T3 target. Its gradients match float64
+> autograd at the float32 floor on two backends. The limits:
+> - T2 is estimated, not measured. There is no integrated GPU here.
+> - One training iteration is longer than a 60 fps frame, so the Teach view has to schedule
+>   training around rendering.
+>
+> Code: `packages/neural-ca/train-spike/` (throwaway; outside the npm workspace; the gated kernel,
+> the capture path and the committed checkpoint, sha256 `c98a4678…`, are untouched). Raw numbers:
+> `packages/neural-ca/train-spike/results/summary.json`.
+>
+> - **Method.**
+>   - Hand-written WGSL forward and backward for the model below: 16 channels, perception
+>     48 → 128 → 16, fire rate 0.5 from `bp_hash3`, alive = 3×3 max-pool of alpha > 0.1.
+>   - Backward through time keeps every step's state, recomputes the hidden layer, and
+>     reduces the weight gradients split-K with no float atomics.
+>   - Optimiser: per-tensor gradient normalisation, then Adam (lr 2e-3).
+>   - Pool training with the worst sample reset to the seed: the Distill "persistent" setup,
+>     no damage.
+>   - Grid 72², with 40×40 procedural targets: a thin-limbed gecko standing in for the Distill
+>     lizard, a starfish, and the package's two-tone disk.
+>   - Headless snap Chromium 156 on RADV (NAVI21), default WebGPU limits, GPU time from
+>     timestamp queries.
+>   - "Recognisable" means the first evaluation (every 50 iterations; 8 organisms grown from a
+>     seed) with silhouette IoU ≥ 0.85 at both 96 and 300 steps. Checked by eye against the
+>     snapshots in `packages/neural-ca/train-spike/results/`.
+> - **Speed, T3 shape** (batch 8, rollouts 64–96, pool 1024).
+>   - 51 iterations/s; 19.3 ms GPU per iteration (p90 22.4): forward 6.3, backward 12.9,
+>     Adam 0.07. Wall time equals GPU time, so the CPU-side encoding is hidden.
+>   - If the whole dish is alive (the dense worst case, timing only), an iteration costs 29 ms,
+>     or 35 ms at a fixed 96 steps.
+> - **Time to a recognisable organism, T3 shape.**
+>   - Gecko, 3 seeds: 850 / 1000 / 1300 iterations = 16.7 / 19.5 / 25.7 s.
+>   - Starfish: 600 iterations (12.0 s). Disk: 500 (11.0 s).
+>   - Sharp, with eyes and spots (RGB error ≤ 0.06 inside the shape): 1750–2000 iterations
+>     (34–39 s) where reached within 2000. Seed 1 reaches RGB error 0.039 by 3000 (57 s).
+>   - Grown organisms hold their shape at 300 steps, past the 96-step training horizon.
+>   - Pool 256 instead of 1024: 900 iterations (18.0 s), so no loss in this run.
+> - **Memory, accounted** (RADV VRAM delta from sysfs in brackets).
+>   - Batch 8 / 96 steps: 656 MiB with pool 1024 (815 MiB); 413 MiB with pool 256 (560 MiB).
+>   - State checkpoints are 246 MiB (97 × 2.65 MB). The spec's "≈ 210 MB at 80 steps" holds.
+>   - The 1024-sample pool, at 324 MiB, is the largest optional cost.
+>   - No buffer binding exceeds the default 128 MiB. Workgroup storage peaks at 14.5 KiB of 16
+>     KiB, and the weights sit in a 32.5 KiB uniform buffer. `acquireGpu`'s default limits suffice.
+> - **Gradient check.**
+>   - 7 fixed cases: 1–96 steps, the committed checkpoint and random weights, from a seed and
+>     from grown states.
+>   - Raw parameter gradients compared with PyTorch float64 autograd drawing the same hashed
+>     fire masks.
+>   - Worst relative L2 error: 4.89e-5 on RADV and 4.89e-5 on SwiftShader (Chromium 148).
+>     PyTorch's own float32 run reaches the same 4.89e-5 on that case: one 64-step case where
+>     float32 and float64 part ways. The other cases are 8e-8 to 3.4e-6.
+>   - GPU against PyTorch float32: ≤ 5.6e-6 everywhere. Alive-mask flips against float64: 0.
+>   - Proposed M2 Prove budget: relative L2 ≤ 1e-4 against committed float64 gradients for
+>     these cases (2× the measured worst). Declare it after a CI-backend run.
+> - **Determinism.** "Same device ⇒ same weights" holds.
+>   - Four 400-iteration runs (two in each of two browser sessions) ended with bit-identical
+>     weights.
+>   - Two 2000-iteration runs in separate sessions gave bit-identical losses at every iteration.
+> - **T2 (integrated GPU), not measured.**
+>   - The spec's T2 shape (batch 4, 64-step rollouts, pool 256) needs about twice the
+>     iterations: 1750–2050 for the gecko, over 3 seeds.
+>   - It runs at 11.3 ms per iteration on the RX 6800 XT (20–24 s) and uses 204 MiB (255 MiB
+>     VRAM).
+>   - On the RX 6800 XT the forward pass is latency-bound: 0.078 ms per step with a real organism
+>     and 0.081 ms with the whole dish alive. An integrated GPU would be throughput-bound, so time scales with
+>     work.
+>   - Basis for the estimate: the dense run sustains 3.5 TFLOP/s of useful work, about 17% of
+>     this card's FP32 peak, counting 61 kFLOP per fired cell-step. Assume the same 17% on an
+>     integrated GPU.
+>   - Estimated time to recognisable at full GPU duty: about 1–1.2 min on a 4 TFLOPS iGPU
+>     (Radeon 780M class), 1.6–2.3 min at 2–2.6 TFLOPS (Iris Xe 96 EU, Apple M1), and 10–12 min
+>     at 0.4 TFLOPS (UHD 620 class), which misses the ≤ 8 min target.
+>   - SwiftShader takes 2.1 s per T2 iteration while the organism is still small, so T1 stays
+>     shared-models-only.
+>
+> **What this changes in the spec:**
+> - **T3 Teach.** Target "≤ 1 min to recognisable" in place of ≤ 3 min. The measured 17–26 s
+>   leaves room for the frame-budget split below. The ~1–3 min in *Signature moment 2* becomes
+>   ~20–60 s on a desktop GPU.
+> - **Pool.** Default to 256 on T3: it trained as well, in one run, and saves 243 MiB. Storing
+>   the pool as f16 with core `pack2x16float` would halve it again (unmeasured).
+> - **Frame budget (new).** A T3 iteration is one ~19 ms submission, longer than a 60 fps frame.
+>   - Slice training at step boundaries, about 6–8 ms of training per frame.
+>   - Render the Teach view (the 2×4 sample grid and loss curve) at 15–30 fps while training,
+>     then go back to 60 fps when it lives in the dish.
+>   - Not measured.
+> - **T2.** Keep "batch 4 / 64 steps, ≤ 8 min" until it is measured on an integrated GPU, before
+>   M2 copy promises a time.
+>   - Gate Teach on a measured rate: time the first ~20 iterations, show an ETA, and offer
+>     shared models if the ETA runs past 8 min.
+>   - Budget the frame split from that measured rate. At 40% GPU duty the Iris Xe estimate
+>     grows to about 5–6 min.
+> - **FLOP estimate.**
+>   - Forward plus backward with the recompute is 61 kFLOP per fired cell-step, not ~25k per
+>     cell.
+>   - Only fired cells near the organism do MLP work. The forward runs where alpha > 0.1 within
+>     5×5; the backward runs where the cell is alive and fired.
+>   - The per-iteration total in that bullet is therefore an upper bound.
+> - **Optimisation headroom if T2 needs it** (none of it is needed on T3):
+>   - About 2× on the MLP kernels from compacting fired cells. The fire mask idles half of
+>     every wave.
+>   - Skipping dead tiles in the gather and mask passes, which run over the whole dish. Gather
+>     costs 6.1 ms per 96 steps.
+>
+> **Corrections from building it:**
+> - **Skip radius.** Skipping dead cells exactly needs alpha > 0.1 within **5×5**, not 3×3. A
+>   cell that is not alive still updates, and its alpha feeds a neighbour's post-update alive
+>   mask.
+> - **Alive masks.** The masks must be stored per step (u32 per cell, 15 MiB at T3). They can't
+>   be recovered from the stored states.
+> - **Allocation.** VRAM is 1.24–1.42× the accounted bytes. The likely cause is the 97 small
+>   per-step buffers rounding up in the driver's allocator, so M2 should pack the checkpoints
+>   into a few ≤ 128 MiB buffers.
+> - **T2 rollouts.** With fixed 64-step rollouts the organism grows a noisy rim at 96 steps that
+>   settles by 300. A 48–64 range may fix it (unmeasured).
 
 ## Verdict on the prototype
 
