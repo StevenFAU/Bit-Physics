@@ -28,10 +28,14 @@ concurrency:
 permissions:
   contents: read
 
+# Runner image pinned, not ubuntu-latest: build-and-validate fetches committed
+# captures over the R2 LFS fetch and re-emits them on uv's Python, which runs on
+# the image's glibc. ubuntu-latest moved to 26.04 in 2026-10, where the R2 LFS
+# fetch failed on the first run. Move images deliberately, re-measuring the gates.
 jobs:
   discover:
     name: Discover qualifying sims
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -54,7 +58,7 @@ jobs:
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -126,7 +130,7 @@ jobs:
     name: Deploy (GATED OFF — no publish in Phase 5)
     needs: build-and-validate
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_deploy == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: pypi
     permissions:
       contents: read

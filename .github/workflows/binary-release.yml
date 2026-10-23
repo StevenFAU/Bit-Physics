@@ -14,7 +14,7 @@ name: binary-release
 # workflow never creates or pushes a tag. Publishing adds no new verification claims.
 #
 # §0.3 SHIFT — OS scope: the bootstrap gate is lavapipe-pinned (D14/D4, software
-# Vulkan determinism) and validated on ubuntu-latest, mirroring cpp-strict's
+# Vulkan determinism) and validated on ubuntu-24.04, mirroring cpp-strict's
 # ubuntu-only posture. Windows + macOS binary builds (per-OS software-Vulkan
 # device + the R-CPPB2 cross-build determinism story) are DEFERRED-to-Phase-6,
 # documented in docs/productization/binary-release.md § go-live. We do not add
@@ -45,10 +45,15 @@ concurrency:
 permissions:
   contents: read
 
+# Runner image pinned, not ubuntu-latest: like cpp-strict, build-and-validate gets
+# its lavapipe (llvmpipe) and cmake from the image's apt, and its captures arrive
+# over the R2 LFS fetch. ubuntu-latest moved to 26.04 in 2026-10, whose llvmpipe is
+# LLVM 21 and whose cmake is 4.x, and the R2 LFS fetch failed on the first run
+# there. Move images deliberately, re-measuring the gates.
 jobs:
   discover:
     name: Discover qualifying Stack-C CMake sims
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       sims: ${{ steps.disc.outputs.sims }}
     steps:
@@ -70,7 +75,7 @@ jobs:
   build-and-validate:
     name: Build and validate (${{ matrix.sim }})
     needs: discover
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -155,7 +160,7 @@ jobs:
     name: Publish GitHub Release (operator-dispatched; confirm_release=true)
     needs: build-and-validate
     if: github.event_name == 'workflow_dispatch' && inputs.confirm_release == 'true'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write   # publish a GitHub Release with binaries attached (§ 4.3)
     steps:
