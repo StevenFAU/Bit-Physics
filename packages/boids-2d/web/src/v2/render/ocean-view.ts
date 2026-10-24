@@ -34,16 +34,16 @@ export interface OceanLook {
 }
 
 export const DEFAULT_LOOK: OceanLook = {
-  fishLength: 0.016,
+  fishLength: 0.02,
   minPx: 1.6,
   gain: 1.6,
   colour: "silver",
-  silver: [0.62, 0.8, 0.95],
+  silver: [0.5, 0.76, 1.0],
   flick: 0.12,
   water: [0.0016, 0.0042, 0.0085],
-  caustic: 0.55,
-  causticCell: 0.9,
-  causticDrift: 0.06,
+  caustic: 0.4,
+  causticCell: 0.7,
+  causticDrift: 0.05,
   ring: 0.18,
 };
 

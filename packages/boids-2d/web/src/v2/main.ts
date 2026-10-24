@@ -103,7 +103,7 @@ async function boot(): Promise<void> {
   const hdr = new HdrPipeline(gpu, studio.canvas, {
     toneMap: "agx",
     // luminous fish over dark water: meter the bright end, keep the water dark
-    exposure: { percentile: 0.995, key: 0.85, min: 0.35, max: 2.5, tau: 1.0 },
+    exposure: { percentile: 0.99, key: 0.5, min: 0.25, max: 2.5, tau: 1.0 },
     bloom: { intensity: BLOOM, levels: 6 },
   });
   const profiler = new GpuProfiler(device, gpu.timestamps);

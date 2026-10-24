@@ -32,15 +32,43 @@ struct Boid { pos: vec2<f32>, vel: vec2<f32>, align: f32, dens: f32 };
 
 // ------------------------------------------------------------------ water --
 
-// value noise on a lattice that wraps every `period` cells: periodic in the domain
+// cellular (Worley) noise on a lattice that wraps every `period` cells, so it
+// is periodic in the domain: F2 − F1 is small along the cell edges, which is
+// where light gathers in a caustic network. Feature points circle slowly.
+fn cell_edges(x: vec2<f32>, period: vec2<f32>, seed: u32, t: f32) -> f32 {
+  let i = floor(x);
+  let f = x - i;
+  let p = vec2<i32>(period);
+  var d1 = 9.0;
+  var d2 = 9.0;
+  for (var oy = -1; oy <= 1; oy = oy + 1) {
+    for (var ox = -1; ox <= 1; ox = ox + 1) {
+      let c = vec2<i32>(i) + vec2<i32>(ox, oy);
+      let w = vec2<u32>(((c % p) + p) % p);
+      let h = bp_hash3(w.x, w.y, seed);
+      let ang = bp_unit(h) * 6.2831853 + t * (0.6 + 0.5 * bp_unit(h ^ 0x9e3779b9u));
+      let r = 0.18 + 0.12 * bp_unit(h ^ 0x85ebca6bu);
+      let fp = vec2<f32>(f32(ox), f32(oy)) + 0.5 + r * vec2<f32>(cos(ang), sin(ang)) - f;
+      let d = dot(fp, fp);
+      if (d < d1) {
+        d2 = d1;
+        d1 = d;
+      } else if (d < d2) {
+        d2 = d;
+      }
+    }
+  }
+  return sqrt(d2) - sqrt(d1);
+}
+
+// value noise on a lattice that wraps every `period` cells (periodic in the domain)
 fn pnoise(x: vec2<f32>, period: vec2<f32>, seed: u32) -> f32 {
   let i = floor(x);
   let f = x - i;
   let u = f * f * (3.0 - 2.0 * f);
   let p = vec2<i32>(period);
-  let i0 = vec2<i32>(i) % p;
-  let a0 = vec2<u32>((i0 + p) % p);
-  let a1 = vec2<u32>((i0 + vec2<i32>(1) + p) % p);
+  let a0 = vec2<u32>(((vec2<i32>(i) % p) + p) % p);
+  let a1 = vec2<u32>(((vec2<i32>(i) + vec2<i32>(1)) % p + p) % p);
   let h00 = bp_unit(bp_hash3(a0.x, a0.y, seed));
   let h10 = bp_unit(bp_hash3(a1.x, a0.y, seed));
   let h01 = bp_unit(bp_hash3(a0.x, a1.y, seed));
@@ -48,17 +76,24 @@ fn pnoise(x: vec2<f32>, period: vec2<f32>, seed: u32) -> f32 {
   return mix(mix(h00, h10, u.x), mix(h01, h11, u.x), u.y);
 }
 
-// caustic network: ridges of domain-warped periodic noise, drifting slowly
-fn caustic(u: vec2<f32>, t: f32) -> f32 {
+// caustic network: cell edges of a warped, drifting lattice in two layers,
+// soft lines that brighten where the layers cross
+fn caustic(u: vec2<f32>, t: f32, px: f32) -> f32 {
   let m = V.caustic.xy;
+  let s = t * V.caustic.z;
   let x = u * m;
-  let drift = vec2<f32>(t * V.caustic.z, -t * V.caustic.z * 0.7);
-  let w = vec2<f32>(pnoise(x + drift, m, 11u), pnoise(x - drift.yx, m, 23u)) - 0.5;
-  let m2 = m * 2.0;
-  let n1 = pnoise(u * m2 + w * 2.2 + drift * 1.3, m2, 37u);
-  let n2 = pnoise(u * m2 - w * 1.7 - drift * 0.9, m2, 53u);
-  let ridge = 1.0 - abs(n1 - n2) * 2.0;
-  return pow(clamp(ridge, 0.0, 1.0), 9.0);
+  // a smooth periodic warp bends the cells into an organic web
+  let wm = max(floor(m * 0.5), vec2<f32>(1.0));
+  let wu = u * wm + vec2<f32>(0.11 * s, -0.07 * s);
+  let warp = vec2<f32>(pnoise(wu, wm, 5u), pnoise(wu + 17.3, wm, 9u)) - 0.5;
+  let e1 = cell_edges(x + warp * 1.4 + vec2<f32>(s, 0.3 * s), m, 11u, t);
+  let e2 = cell_edges(x * 2.0 - warp * 2.2 - vec2<f32>(0.7 * s, s), m * 2.0, 23u, t * 1.3);
+  // soft line profile, never thinner than about a pixel (px = one target pixel in cell units)
+  let w1 = max(0.06, px * 1.2);
+  let w2 = max(0.05, px * 2.4);
+  let l1 = exp(-(e1 * e1) / (w1 * w1));
+  let l2 = exp(-(e2 * e2) / (w2 * w2));
+  return l1 * 0.6 + l2 * 0.25 + l1 * l2 * 1.4;
 }
 
 @vertex
@@ -73,12 +108,12 @@ fn water_fs(in: FullscreenOut) -> @location(0) vec4<f32> {
   let u = fract(q / V.dims.zw);                           // the torus
   // one target pixel is cam.z domain units: fade the caustics out where they would alias
   let cellPx = V.dims.z / max(V.caustic.x, 1.0) / max(V.cam.z, 1e-6);
-  let visible = smoothstep(6.0, 24.0, cellPx);
-  let c = caustic(u, V.cam.w) * visible;
+  let visible = smoothstep(5.0, 20.0, cellPx);
+  let c = caustic(u, V.cam.w, 1.0 / max(cellPx, 1e-3)) * visible;
   // a gentle falloff away from the screen centre (light from above)
   let r = length(in.uv - 0.5);
   let light = 1.0 - 0.45 * r * r;
-  let col = V.water.rgb * light + V.water.rgb * (V.water.a * c * 6.0);
+  let col = V.water.rgb * light * (1.0 + V.water.a * c * 5.0);
   return vec4<f32>(col, 1.0);
 }
 
@@ -270,13 +305,16 @@ fn overlay_fs(in: FullscreenOut) -> @location(0) vec4<f32> {
       let shadow = 1.0 - smoothstep(-blur, blur * 2.5, sd);
       // a wide, faint penumbra (the shark is deeper than the fish)
       let pen = 1.0 - smoothstep(0.0, 0.12 * L, sd);
-      alpha = presence * clamp(0.82 * shadow + 0.22 * pen, 0.0, 0.9);
+      alpha = presence * clamp(0.92 * shadow + 0.25 * pen, 0.0, 0.95);
       // the fear radius: a thin ring, brighter while lunging
       let ringW = max(1.2 * pxW, 0.006 * R);
       let ring = exp(-pow((r - R) / ringW, 2.0));
       let inside = (1.0 - smoothstep(R * 0.6, R, r)) * 0.035;
       let g = V.shark2.w * (1.0 + 2.0 * V.shark2.z);
-      rgb = vec3<f32>(0.35, 0.75, 0.9) * presence * g * (ring + inside);
+      // a faint cool rim so the silhouette reads over dark water
+      let rimW = max(0.012 * L, 1.2 * pxW);
+      let rim = exp(-pow((sd - 0.5 * rimW) / rimW, 2.0)) * 0.05;
+      rgb = vec3<f32>(0.35, 0.75, 0.9) * presence * (g * (ring + inside) + rim);
     }
   }
   if (V.split.x >= 0.0) {
