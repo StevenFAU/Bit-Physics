@@ -274,9 +274,11 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   async function bruteSort(): Promise<BruteSort> {
     const t0 = performance.now();
     if (PROOF.n > BRUTE_MAX) throw new Error("proof flock too large for brute force");
-    const b = await hashRun({ broadphase: "brute" });
-    const s1 = await hashRun({ broadphase: "sort" });
-    const s2 = await hashRun({ broadphase: "sort" });
+    // one rule for all three runs: a Tune edit mid-proof must not split the comparison
+    const rule = { ...d.rule() };
+    const b = await hashRun({ broadphase: "brute", rule });
+    const s1 = await hashRun({ broadphase: "sort", rule });
+    const s2 = await hashRun({ broadphase: "sort", rule });
     return {
       brute: b.hash,
       sort: s1.hash,
@@ -346,9 +348,11 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
 
   async function fullScale(steps = 60): Promise<FullScale> {
     const t0 = performance.now();
+    // one ocean and one rule for both runs: a Tune edit mid-proof must not split the comparison
     const L = d.live();
+    const rule = { ...d.rule() };
     const run = async (): Promise<{ hash: string; phi: number[] }> => {
-      const flock = new Flock(d.device, d.kernels, { n: L.n, halfW: L.halfW, halfH: L.halfH, seed: L.seed, rule: d.rule(), broadphase: "sort" });
+      const flock = new Flock(d.device, d.kernels, { n: L.n, halfW: L.halfW, halfH: L.halfH, seed: L.seed, rule, broadphase: "sort" });
       try {
         return await flock.hashOrderRun(steps);
       } finally {

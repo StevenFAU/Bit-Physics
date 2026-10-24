@@ -514,6 +514,11 @@ export class App {
   }
 
   private tick(now: number): void {
+    // the capture lock: the live loop yields entirely while a capture runs, and
+    // a callback the GPU is too busy for (frames in flight) is skipped
+    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight) return;
+    // time since the last frame actually submitted, so skipped callbacks count:
+    // the governor sees the real frame interval and the clock keeps its speed
     const dt = Math.min((now - this.last) / 1000, 0.1);
     this.last = now;
     this.frames += 1;
@@ -524,8 +529,6 @@ export class App {
       const st = this.governor?.status();
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
-    // the capture lock: the live loop yields entirely while a capture or proof runs
-    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight) return;
     // The governor watches the frame interval, what the visitor sees. (With two
     // frames in flight a pass's begin timestamp can land while the previous
     // frame still runs, so per-pass GPU times overlap and read high.) It waits
