@@ -199,3 +199,135 @@
   gap: 12px;
   flex-wrap: wrap;
 }
+
+/* ---- score overlay + score card (Connect the Cities, The Maze) ---- */
+
+.ph-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.bp-studio.is-chromeless .ph-overlay,
+.bp-studio.is-chromeless .ph-score {
+  display: none;
+}
+.ph-score {
+  position: absolute;
+  top: 60px;
+  right: var(--bp-gutter, 16px);
+  width: 340px;
+  max-height: calc(100% - 128px);
+  overflow: auto;
+  padding: 10px 14px 12px;
+  font-size: 13px;
+  z-index: 4;
+}
+.ph-score[hidden] {
+  display: none;
+}
+.ph-score-fold {
+  float: right;
+  margin: -2px -4px 0 8px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--bp-hairline);
+  background: transparent;
+  color: var(--bp-text);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.ph-score-fold::after {
+  content: " ▴";
+}
+.ph-score.is-folded .ph-score-fold::after {
+  content: " ▾";
+}
+.ph-score.is-folded {
+  width: auto;
+  padding: 6px;
+}
+.ph-score.is-folded .ph-score-fold {
+  float: none;
+  margin: 0;
+}
+.ph-score-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.ph-score-sub {
+  margin: 2px 0 8px;
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+.ph-score-line {
+  margin: 4px 0 8px;
+}
+.ph-score-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+.ph-score-table th,
+.ph-score-table td {
+  text-align: left;
+  padding: 4px 4px;
+  border-bottom: 1px solid var(--bp-hairline);
+  vertical-align: top;
+}
+.ph-score-table td {
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+}
+.ph-score-table thead th {
+  color: var(--bp-text-dim);
+  font-weight: 500;
+}
+.ph-score-table a {
+  color: inherit;
+}
+.ph-score-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 4px 0 8px;
+}
+.ph-score-dl dt {
+  color: var(--bp-text-dim);
+}
+.ph-score-dl dd {
+  margin: 0;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 12px;
+}
+.ph-score-verdict {
+  margin: 10px 0 8px;
+  line-height: 1.45;
+}
+.ph-score-legend {
+  margin: 6px 0;
+}
+.ph-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ph-swatch {
+  display: inline-flex;
+  flex: none;
+}
+.ph-score-row {
+  display: flex;
+  justify-content: flex-end;
+}
+@media (max-width: 639px) {
+  .ph-score {
+    top: 56px;
+    right: 8px;
+    width: min(340px, calc(100% - 16px));
+    max-height: calc(100% - 230px);
+  }
+}

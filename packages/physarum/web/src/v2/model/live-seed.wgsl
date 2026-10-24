@@ -15,6 +15,13 @@ struct Seed {
 @group(1) @binding(0) var<uniform> S: Seed;
 @group(1) @binding(1) var<storage, read_write> seeded: array<vec4<f32>>;
 @group(1) @binding(2) var<storage, read_write> awake: array<atomic<u32>>;
+@group(1) @binding(3) var<storage, read> env: array<f32>;   // a scene's walls (WALL), else anything
+
+fn in_wall(q: vec2<f32>) -> bool {
+  if ((P.flags & 8u) == 0u) { return false; }
+  let c = vec2<u32>(min(vec2<f32>(max(q, vec2<f32>(0.0))), vec2<f32>(f32(P.w) - 1.0, f32(P.h) - 1.0)));
+  return env[c.y * P.w + c.x] <= WALL;
+}
 
 const TAU: f32 = 6.283185307179586;
 
@@ -31,6 +38,10 @@ fn seed_agents(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (S.mode == 0u || S.mode == 3u) {
     p = vec2<f32>(u0 * f32(P.w), u1 * f32(P.h));
     th = u2 * TAU;
+    // never start inside a wall: draw again (a few tries) from the same agent's stream
+    for (var k = 3u; k < 35u && in_wall(p); k = k + 2u) {
+      p = vec2<f32>(bp_unit(bp_hash3(S.seed, i, k)) * f32(P.w), bp_unit(bp_hash3(S.seed, i, k + 1u)) * f32(P.h));
+    }
     if (S.mode == 3u) {
       let d = p - S.centre;
       dormant = dot(d, d) > S.radius * S.radius;

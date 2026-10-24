@@ -25,6 +25,9 @@ import { TILE_SHIFT } from "./grid.js";
 const LOCAL = { "physarum/live-common": commonSrc };
 const U = (): typeof GPUBufferUsage => GPUBufferUsage;
 
+/** Food crumbs and lights a dish can hold (the env sources buffer is sized once). */
+export const MAX_SOURCES = 256;
+
 /** Steps of awake counts the GPU ring holds (live-log.wgsl RING); fold at least this often. */
 export const AWAKE_RING = 16384;
 
@@ -119,6 +122,7 @@ export interface Checkpoint {
   params: JonesParams;
   mass: MassState;
   growing: boolean;
+  hungerMax: number | null;
   wakeMul: number;
   env: EnvSpec | null;
 }
@@ -158,11 +162,11 @@ export class LiveKernels {
       device.createBindGroupLayout({ label, entries: types.map((t, i) => ({ binding: i, visibility: C, buffer: buf(t) })) });
     const ro = "read-only-storage";
     const paramsLayout = layout("phys-params", ["uniform"]);
-    const agentsLayout = layout("phys-agents", [ro, "storage", "storage", ro, ro, "storage"]);
+    const agentsLayout = layout("phys-agents", [ro, "storage", "storage", ro, ro, "storage", ro]);
     const diffuseLayout = layout("phys-diffuse", [ro, ro, "storage", "storage"]);
     const keysLayout = layout("phys-keys", [ro, "storage"]);
     const gatherLayout = layout("phys-gather", [ro, ro, "storage"]);
-    const seedLayout = layout("phys-seed", ["uniform", "storage", "storage"]);
+    const seedLayout = layout("phys-seed", ["uniform", "storage", "storage", ro]);
     const foodLayout = layout("phys-food", [ro, "storage"]);
     const envLayout = layout("phys-env", ["uniform", ro, ro, "storage"]);
     const logLayout = layout("phys-log", ["storage"]);
@@ -228,6 +232,24 @@ export class LiveSim {
   private jitter = 0;
   private stochastic = false;
 
+  /** Hunger (null: off): an agent goes back to food after this many steps away from it. */
+  hungerMax: number | null = null;
+  private foodSources = 0;
+
+  /** Agents can wake, so the awake count is logged every step. */
+  get logged(): boolean {
+    return this.growing;
+  }
+
+  /**
+   * Agents that go `max` steps without food are taken back to a food source
+   * (null: never). The population and the mass balance stay as they were.
+   */
+  setHunger(max: number | null): void {
+    this.hungerMax = max;
+    this.setFlags();
+  }
+
   /** Use Jones's stochastic turning with this chance of a random turn per step (null: deterministic, as gated). */
   setTurning(jitter: number | null): void {
     this.stochastic = jitter !== null;
@@ -263,7 +285,7 @@ export class LiveSim {
   private readonly cellBits: GPUBuffer;
   private readonly bitsWords: number;
   private readonly envUniform: GPUBuffer;
-  private envSrcs: GPUBuffer;
+  private readonly envSrcs: GPUBuffer;
   /** Growing colonies: [awake count, step, ring of counts]. */
   private readonly awake: GPUBuffer;
   private foodBuf: GPUBuffer | null = null;
@@ -278,7 +300,7 @@ export class LiveSim {
   private readonly keysBG: GPUBindGroup[] = [];
   private readonly gatherBG: GPUBindGroup[] = [];
   private readonly seedBG: GPUBindGroup;
-  private envBG: GPUBindGroup;
+  private readonly envBG: GPUBindGroup;
   private readonly logBG: GPUBindGroup;
   /** Which trail buffer is current (the deposit parity equals it, see `encodeSteps`). */
   private t = 0;
@@ -306,13 +328,14 @@ export class LiveSim {
     this.tilesX = Math.ceil(cfg.w / (1 << TILE_SHIFT));
     const tilesY = Math.ceil(cfg.h / (1 << TILE_SHIFT));
     this.sort = new CountingSort(device, { maxItems: cfg.n, keyCount: this.tilesX * tilesY, label: "phys-sort" });
-    this.uniform = device.createBuffer({ size: 64, usage: U().UNIFORM | U().COPY_DST, label: "phys-params" });
+    this.uniform = device.createBuffer({ size: 80, usage: U().UNIFORM | U().COPY_DST, label: "phys-params" });
     this.seedUniform = device.createBuffer({ size: 32, usage: U().UNIFORM | U().COPY_DST, label: "phys-seed" });
     this.env = device.createBuffer({ size: cellBytes, usage: S, label: "phys-env" });
     this.bitsWords = Math.ceil(this.cells / 32);
     this.cellBits = device.createBuffer({ size: Math.max(16, this.bitsWords * 8), usage: S, label: "phys-cell-bits" });
     this.envUniform = device.createBuffer({ size: 16, usage: U().UNIFORM | U().COPY_DST, label: "phys-env-info" });
-    this.envSrcs = device.createBuffer({ size: 64, usage: S, label: "phys-env-srcs" });
+    // sized once for MAX_SOURCES so the bind groups that read it never go stale
+    this.envSrcs = device.createBuffer({ size: MAX_SOURCES * 32, usage: S, label: "phys-env-srcs" });
     this.awake = device.createBuffer({ size: (2 + AWAKE_RING) * 4, usage: S, label: "phys-awake" });
     this.flags = cfg.longRun ? 3 : 0;
     this.writeParams();
@@ -324,7 +347,7 @@ export class LiveSim {
       // trail parity t ⇒ deposit into dep[t]; the fused pass reads dep[t], clears dep[1 − t]
       this.agentsBG.push(
         [0, 1].map((a) =>
-          bg(kernels.agentsLayout, `phys-agents-${t}${a}`, this.trailBufs[t]!, this.agentBufs[a]!, this.depBufs[t]!, this.env, this.cellBits, this.awake),
+          bg(kernels.agentsLayout, `phys-agents-${t}${a}`, this.trailBufs[t]!, this.agentBufs[a]!, this.depBufs[t]!, this.env, this.cellBits, this.awake, this.envSrcs),
         ),
       );
       this.diffuseBG.push(bg(kernels.diffuseLayout, `phys-diffuse-${t}`, this.trailBufs[t]!, this.depBufs[t]!, this.trailBufs[1 - t]!, this.depBufs[1 - t]!));
@@ -333,7 +356,7 @@ export class LiveSim {
       this.keysBG.push(bg(kernels.keysLayout, `phys-keys-${a}`, this.agentBufs[a]!, this.keys));
       this.gatherBG.push(bg(kernels.gatherLayout, `phys-gather-${a}`, this.agentBufs[a]!, this.sort.order, this.agentBufs[1 - a]!));
     }
-    this.seedBG = bg(kernels.seedLayout, "phys-seed", this.seedUniform, this.agentBufs[0], this.awake);
+    this.seedBG = bg(kernels.seedLayout, "phys-seed", this.seedUniform, this.agentBufs[0], this.awake, this.env);
     this.envBG = bg(kernels.envLayout, "phys-env", this.envUniform, this.envSrcs, this.cellBits, this.env);
     this.logBG = bg(kernels.logLayout, "phys-log", this.awake);
   }
@@ -395,7 +418,7 @@ export class LiveSim {
   }
 
   private writeParams(): void {
-    const ab = new ArrayBuffer(64);
+    const ab = new ArrayBuffer(80);
     const dv = new DataView(ab);
     const p = this.params;
     dv.setUint32(0, this.n, true);
@@ -413,13 +436,15 @@ export class LiveSim {
     dv.setUint32(44, this.bitsWords, true);
     dv.setFloat32(48, this.wakeMul * Math.fround(p.deposit), true);
     dv.setFloat32(52, this.jitter, true);
+    dv.setFloat32(64, this.hungerMax ?? 0, true);
+    dv.setUint32(68, this.foodSources, true);
     this.device.queue.writeBuffer(this.uniform, 0, ab);
     this.massTerms();
   }
 
   private setFlags(): void {
     const sensing = !!this.envSpec && (this.envSpec.food.length + this.envSpec.lights.length > 0 || !!this.envSpec.walls);
-    this.flags = (this.longRun ? 3 : 0) | (sensing ? 4 : 0) | (this.envSpec?.walls ? 8 : 0) | (this.growing ? 16 : 0) | (this.stochastic ? 32 : 0);
+    this.flags = (this.longRun ? 3 : 0) | (sensing ? 4 : 0) | (this.envSpec?.walls ? 8 : 0) | (this.growing ? 16 : 0) | (this.stochastic ? 32 : 0) | (this.hungerMax !== null ? 64 : 0);
     this.writeParams();
   }
 
@@ -438,16 +463,8 @@ export class LiveSim {
       for (const f of spec.food) srcs.push(f.x, f.y, f.r, 0, spec.scent * mean, spec.scentRange, 0, 0);
       for (const l of spec.lights) srcs.push(l.x, l.y, l.r, 1, spec.light * mean, Math.max(1, l.r * 0.45), 0, 0);
     }
-    const count = srcs.length / 8;
-    if (this.envSrcs.size < count * 32) {
-      this.envSrcs.destroy();
-      this.envSrcs = dev.createBuffer({ size: count * 64, usage: S, label: "phys-env-srcs" });
-      this.envBG = dev.createBindGroup({
-        layout: this.k.envLayout,
-        label: "phys-env",
-        entries: [this.envUniform, this.envSrcs, this.cellBits, this.env].map((b, i) => ({ binding: i, resource: { buffer: b } })),
-      });
-    }
+    const count = Math.min(MAX_SOURCES, srcs.length / 8);
+    this.foodSources = Math.min(spec?.food.length ?? 0, MAX_SOURCES);
     if (count > 0) {
       const ab = new ArrayBuffer(count * 32);
       const fv = new Float32Array(ab);
@@ -576,6 +593,7 @@ export class LiveSim {
   load(agents: Float32Array<ArrayBuffer>): void {
     if (agents.length !== this.n * 4) throw new Error(`agents: ${agents.length / 4} given, sim holds ${this.n}`);
     this.growing = false;
+    this.hungerMax = null;
     this.setFlags();
     const enc = this.device.createCommandEncoder({ label: "phys-load" });
     this.clearField(enc);
@@ -602,7 +620,7 @@ export class LiveSim {
       pass.setPipeline(this.k.agents);
       pass.setBindGroup(1, this.agentsBG[this.t]![this.a]!);
       pass.dispatchWorkgroups(wgA);
-      if (this.growing) {
+      if (this.logged) {
         pass.setPipeline(this.k.log);
         pass.setBindGroup(1, this.logBG);
         pass.dispatchWorkgroups(1);
@@ -617,7 +635,7 @@ export class LiveSim {
       pass.dispatchWorkgroups(wgX, wgY);
       this.t = 1 - this.t;
       this.tick += 1;
-      if (this.growing) {
+      if (this.logged) {
         this.mass.pending.push({ perAgent: this.perAgent, keep: this.keep, food: this.foodPerStep });
       } else {
         this.mass.mass = (this.mass.mass + this.perAgent * this.n + this.foodPerStep) * this.keep;
@@ -641,7 +659,7 @@ export class LiveSim {
    * does about once a second); a fold that a seed or restore overtook is dropped.
    */
   async foldMass(): Promise<void> {
-    if (!this.growing || this.mass.foldedTick === this.tick) return;
+    if (!this.logged || this.mass.foldedTick === this.tick) return;
     const gen = this.foldGen;
     const upTo = this.tick;
     const data = new Uint32Array(await readBuffer(this.device, this.awake, (2 + AWAKE_RING) * 4));
@@ -662,9 +680,9 @@ export class LiveSim {
     m.foldedTick = to;
   }
 
-  /** Agents awake now (a growing colony's count read back; else every agent). */
+  /** Agents awake now (read back when the population can change; else every agent). */
   async awakeCount(): Promise<number> {
-    if (!this.growing) return this.n;
+    if (!this.logged) return this.n;
     return new Uint32Array(await readBuffer(this.device, this.awake, 8))[0]!;
   }
 
@@ -690,7 +708,7 @@ export class LiveSim {
     const S = U().STORAGE | U().COPY_DST | U().COPY_SRC;
     const agents = this.device.createBuffer({ size: this.n * 16, usage: S, label: "phys-cp-agents" });
     const trail = this.device.createBuffer({ size: this.cells * 4, usage: S, label: "phys-cp-trail" });
-    const awake = this.growing ? this.device.createBuffer({ size: this.awake.size, usage: S, label: "phys-cp-awake" }) : null;
+    const awake = this.logged ? this.device.createBuffer({ size: this.awake.size, usage: S, label: "phys-cp-awake" }) : null;
     const enc = this.device.createCommandEncoder({ label: "phys-checkpoint" });
     enc.copyBufferToBuffer(this.agents, 0, agents, 0, this.n * 16);
     enc.copyBufferToBuffer(this.trail, 0, trail, 0, this.cells * 4);
@@ -704,6 +722,7 @@ export class LiveSim {
       params: { ...this.params },
       mass: { mass: this.mass.mass, foldedTick: this.mass.foldedTick, pending: this.mass.pending.slice() },
       growing: this.growing,
+      hungerMax: this.hungerMax,
       wakeMul: this.wakeMul,
       env: this.envSpec,
     };
@@ -721,6 +740,7 @@ export class LiveSim {
     this.tick = c.tick;
     this.params = { ...c.params };
     this.growing = c.growing;
+    this.hungerMax = c.hungerMax;
     this.wakeMul = c.wakeMul;
     this.setEnv(c.env);
     this.mass = { mass: c.mass.mass, foldedTick: c.mass.foldedTick, pending: c.mass.pending.slice() };

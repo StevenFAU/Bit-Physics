@@ -1,4 +1,6 @@
 // Slime Mould live solver: sense → rotate → move → deposit (the gated `agents`).
+// With every scene flag off this is the gated arithmetic, term for term
+// (checked byte for byte by the live ≡ gated Prove card).
 #import physarum/live-common
 #import bp/hash
 
@@ -8,6 +10,18 @@
 @group(1) @binding(3) var<storage, read> env: array<f32>;
 @group(1) @binding(4) var<storage, read> cell_bits: array<u32>;    // walls, then food (+ halo)
 @group(1) @binding(5) var<storage, read_write> awake: array<atomic<u32>>;  // [0] agents awake
+struct Src {
+  pos: vec2<f32>,
+  radius: f32,
+  kind: u32,
+  strength: f32,
+  range: f32,
+  _p0: f32,
+  _p1: f32,
+};
+@group(1) @binding(6) var<storage, read> srcs: array<Src>;          // food first (bit 6)
+
+const TAU: f32 = 6.283185307179586;
 
 fn cell(px: f32, py: f32) -> u32 {
   let w = i32(P.w); let h = i32(P.h);
@@ -24,6 +38,10 @@ fn sample(px: f32, py: f32) -> f32 {
   return v;
 }
 
+fn near_food(c: u32) -> bool {
+  return (cell_bits[P.bits_words + (c >> 5u)] & (1u << (c & 31u))) != 0u;
+}
+
 @compute @workgroup_size(256)
 fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x;
@@ -35,10 +53,32 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
     // dormant until the colony's trail reaches it (never on or beside food):
     // no move, no deposit
     let c = cell(p.x, p.y);
-    let food = (cell_bits[P.bits_words + (c >> 5u)] & (1u << (c & 31u))) != 0u;
-    if (T_in[c] < P.wake || food) { return; }
+    if (T_in[c] < P.wake || near_food(c)) { return; }
     hh = vec2<f32>(hh.x - 3.0, hh.y);
     atomicAdd(&awake[0], 1u);
+  }
+
+  // hunger (bit 6): the heading's length carries the steps since food
+  var hunger = 0.0;
+  if ((P.flags & 64u) != 0u) {
+    let m = length(hh);
+    hunger = max(m - 1.0, 0.0) * HUNGER_SCALE;
+    hh = hh / m;
+    if (near_food(cell(p.x, p.y))) { hunger = 0.0; } else { hunger = hunger + 1.0; }
+    if (hunger > P.hunger_max && P.food_count > 0u) {
+      // back to food: a random crumb, a random point in it, a random heading; it deposits there
+      let h1 = bp_hash3(bitcast<u32>(p.x), bitcast<u32>(p.y), bitcast<u32>(hh.y) ^ 0x51ed270bu);
+      let s = srcs[h1 % P.food_count];
+      let ang = TAU * bp_unit(bp_hash3(h1, 1u, 0u));
+      let r = s.radius * sqrt(bp_unit(bp_hash3(h1, 2u, 0u)));
+      let th = TAU * bp_unit(bp_hash3(h1, 3u, 0u));
+      var q = s.pos + r * vec2<f32>(cos(ang), sin(ang));
+      let dims = vec2<f32>(f32(P.w), f32(P.h));
+      q = q - floor(q / dims) * dims;
+      agents[i] = vec4<f32>(q, cos(th), sin(th));
+      atomicAdd(&dep[cell(q.x, q.y)], u32(round(P.deposit * SCALE)));
+      return;
+    }
   }
 
   let cphi = cos(P.delta_phi); let sphi = sin(P.delta_phi);
@@ -74,9 +114,13 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
     if (np.y < 0.0) { np.y = np.y + fh; } else if (np.y >= fh) { np.y = np.y - fh; }
   }
   // solid walls: a step into a wall cell is refused and the agent turns back
-  if ((P.flags & 8u) != 0u && env[cell(np.x, np.y)] <= WALL) {
+  // (one already inside a wall — drawn over it — may walk out)
+  if ((P.flags & 8u) != 0u && env[cell(np.x, np.y)] <= WALL && env[cell(p.x, p.y)] > WALL) {
     np = p;
     nh = -nh;
+  }
+  if ((P.flags & 64u) != 0u) {
+    nh = nh * inverseSqrt(dot(nh, nh)) * (1.0 + hunger / HUNGER_SCALE);
   }
   agents[i] = vec4<f32>(np, nh);
 

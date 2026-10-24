@@ -35,6 +35,8 @@ import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
+import { buildScoreCard } from "./score.js";
+import { ScoreOverlay } from "./render/overlay.js";
 import type { PadPoint } from "./pad.js";
 import { PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
 
@@ -233,13 +235,27 @@ async function boot(): Promise<void> {
   });
   studio.drawer.footer.append(captureStatus, h("div", { class: "ph-capture-row" }, captureBtn, captureLink));
 
+  // ---------------------------------------------- score card + overlay --
+  const scoreOverlay = new ScoreOverlay();
+  studio.canvas.after(scoreOverlay.el);
+  const scoreCard = buildScoreCard();
+  studio.stage.append(scoreCard.el);
+  scoreCard.onLayers = (l) => {
+    scoreOverlay.layers = l;
+  };
+  scoreCard.onScore = () => app.scoreNow();
+
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
     SCENES.filter((s) => s.listed).map((s) => ({ id: s.id, title: s.title })),
     "first-light",
   );
   studio.heading.onPick = (id) => {
-    void app.loadScene(id as SceneId).then(() => app.writeUrl());
+    void app.loadScene(id as SceneId).then(() => {
+      // a scene may play faster than 1× (The Maze: its dead ends take a minute to empty)
+      app.setSpeed(sceneById(id).speed ?? 1);
+      app.writeUrl();
+    });
   };
   studio.rail.onSelect = (id) => app.selectTool(id);
   studio.transport.handlers = {
@@ -300,6 +316,9 @@ async function boot(): Promise<void> {
 
   app.hooks = {
     onSceneChange: (scene) => {
+      scoreOverlay.analysis = null;
+      scoreOverlay.draw(app.camera, 1);
+      scoreCard.setKind(scene.score ?? null);
       learn.setScene(scene, app.onGatedRun);
       syncTune();
       syncProve();
@@ -310,6 +329,10 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onEdited: () => syncProve(),
+    onAnalysis: (a) => {
+      scoreOverlay.analysis = a;
+      scoreCard.set(a, false);
+    },
   };
 
   // Learn: instruments + performance, about once a second while it is open
@@ -322,6 +345,7 @@ async function boot(): Promise<void> {
   const overlay = query.get("debug") === "perf" ? new PerfOverlay() : null;
   if (overlay) studio.root.append(overlay.el);
   app.hooks.onFrame = (now) => {
+    if (app.scene.score) scoreOverlay.draw(app.camera, Math.min(window.devicePixelRatio || 1, 2));
     overlay?.push({ frameMs: now - lastFrame, gpuMs: profiler.frameMs, passes: profiler.timings() });
     rafTimes.push(now - lastFrame);
     if (rafTimes.length > 600) rafTimes.shift();
@@ -391,7 +415,7 @@ async function boot(): Promise<void> {
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };
   await app.loadScene(scene.id, opts);
-  app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
+  app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp === 1 ? (scene.speed ?? 1) : parsed.sp);
   syncTune();
   studio.veil.done();
   app.start();
@@ -426,6 +450,14 @@ async function boot(): Promise<void> {
     liveVsGated: () => prove.runLiveVsGated(),
     liveMass: () => prove.runLiveMass(),
     gate: () => gate.runTwiceAndAgree(),
+    /** Score the dish now: the network and its measures (no drawing data). */
+    score: async () => {
+      const a = await app.analyse();
+      if (!a) return null;
+      const s = a.score;
+      const plain = s?.kind === "cities" ? { tl: s.tl, md: s.md, cut: s.cut, steinerRatio: s.steinerRatio, mstLength: s.mst.length } : s?.kind === "maze" ? { shortest: s.shortest, along: s.along, onShortest: s.onShortest, extra: s.extra, route: s.route.length } : null;
+      return { tick: a.tick, ms: a.ms, net: a.net, nodes: a.graph.nodes.length, ...plain };
+    },
     /**
      * Calibration survey (personality pad): a fresh dish at a tier's agent
      * count and density, seeded, run to each step in `at`, with the trail's
