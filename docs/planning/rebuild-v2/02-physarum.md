@@ -64,8 +64,12 @@
 >   - Mass exact with walls and growth: rel 1e-7.
 > - **Measured — The Maze.**
 >   - **T3, 6 seeds:** at 16,000, 20,000 and 24,000 steps the food is joined in 18/18 checks, 17 of
->     them on the shortest route. The route is 0.99–1.26× the geodesic shortest path; the tube left
->     elsewhere is 1.3–2.8× the route.
+>     them on the shortest route. The route is 0.99–1.26× the geodesic shortest path.
+>   - **The dead ends do not empty.** All the tube in the maze, dead ends included, is still
+>     1.9–4.0× the route's length at 16,000–24,000 steps (2.1–5.0× at 8,000). The dead ends thin
+>     slowly, and the mould does not withdraw to the single tube Nakagaki's plasmodium left. (A
+>     first version of this measure was taken after pruning dead ends, so it could not see them;
+>     Codex review on #45.)
 >   - **T2:** joined in 4–5 of 6 seeds, always along the shortest route when joined (13/13).
 >   - **T1:** joined in 2–3 of 6.
 >   - A wall across the route lengthens the shortest path (3,346 → 3,567 cells), and undo restores
@@ -90,7 +94,8 @@
 >     Adamatzky's "shrinking blob") thinned every tube alike;
 >   - retiring hungry agents starved the middle of the route itself.
 >
->   Returning hungry agents to food works. The limit matters: at 3× the route, the route broke in
+>   Returning hungry agents to food keeps the food joined along the shortest route, but it only
+>   thins the dead ends slowly (above). The limit matters: at 3× the route, the route broke in
 >   half the seeds by 16,000 steps; at 5× it held in all six.
 > - **Maze corridors must be narrow against the network's mesh.** In a 5-row maze with 30% walls,
 >   the cells acted as open rooms and the network meshed inside them. The maze is now 4 rows with

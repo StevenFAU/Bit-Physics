@@ -37,7 +37,7 @@ export interface MazeScore {
   /** The mould's route's maze cells, in order; and whether they are the shortest route's. */
   route: [number, number][];
   onShortest: boolean;
-  /** Total network length / its route between the crumbs: 1 when only the route is left. */
+  /** All the tube in the maze (before pruning, dead ends included) / the route between the crumbs: 1 when only the route is left. */
   extra: number;
 }
 
@@ -115,7 +115,7 @@ export function analyse(
     }
     const shortestCells = cellsOf(g.path, maze);
     const onShortest = route.length > 0 && route.length === shortestCells.length && route.every((c, k) => c[0] === shortestCells[k]![0] && c[1] === shortestCells[k]![1]);
-    score = { kind, shortest: g.length, shortestPath: g.path, along, route, onShortest, extra: Number.isFinite(along) && along > 0 ? net.length / along : Infinity };
+    score = { kind, shortest: g.length, shortestPath: g.path, along, route, onShortest, extra: Number.isFinite(along) && along > 0 ? (graph.rawLength ?? net.length) / along : Infinity };
   }
   return { tick, graph, net, score, ms: performance.now() - t0 };
 }

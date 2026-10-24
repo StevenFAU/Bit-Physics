@@ -185,7 +185,7 @@ export const SCENES: readonly SceneDef[] = [
     score: "maze",
     // measured at T3, 6 seeds: 3× broke the route in half the seeds by 16,000 steps; 5× held it in all
     hungerPerRoute: 5,
-    // dead ends empty in ~6,000–8,000 steps: about a minute at 1×
+    // the route settles in ~8,000–16,000 steps: one to two minutes at 1×
     speed: 4,
   },
   {

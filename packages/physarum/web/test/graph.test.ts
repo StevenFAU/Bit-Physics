@@ -105,3 +105,20 @@ describe("network extraction", () => {
     expect(s.cutLinks).toBe(0);
   });
 });
+
+describe("tube left in a maze", () => {
+  it("counts a dead-end branch that the scoring graph prunes", () => {
+    // a 140-cell route between two crumbs with an 80-cell dead end off its middle
+    const w = 200;
+    const h = 140;
+    const f = tubes(w, h, [
+      [30, 40, 170, 40],
+      [100, 40, 100, 120],
+    ]);
+    const g = extractNetwork(f, w, h, [spot(30, 40), spot(170, 40)]);
+    const s = scoreNetwork(g);
+    expect(s.links).toBe(1);
+    expect(Math.abs(s.length - 140) / 140).toBeLessThan(0.03);
+    expect(Math.abs(g.rawLength! - 220) / 220).toBeLessThan(0.05);
+  });
+});

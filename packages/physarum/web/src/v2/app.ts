@@ -255,10 +255,11 @@ export class App {
       this.scoredTick = -1;
       this.scoreDue = 0;
       this.baseWalls = sim.envSpec?.walls ?? null;
-      this.updateHunger();
       this.analysis = null;
       this.view.forgetBuffers();
       this.scene = scene;
+      // hunger is the new scene's (it reads this.scene)
+      this.updateHunger();
       this.edits = 0;
       this.directing = 0;
       this.directorCrumbs = 0;

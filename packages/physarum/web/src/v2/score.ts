@@ -103,7 +103,7 @@ export function buildScoreCard(): ScoreCard {
             h("dd", {}, joined ? `${x2(s.along / s.shortest)} the shortest path` : "—"),
             h("dt", {}, "On the shortest route"),
             h("dd", {}, joined ? (s.onShortest ? "yes" : "no") : "—"),
-            h("dt", {}, "Tube left elsewhere"),
+            h("dt", {}, "All the tube left"),
             h("dd", {}, joined ? `${x2(s.extra)} the route's length` : "—"),
           ),
         );

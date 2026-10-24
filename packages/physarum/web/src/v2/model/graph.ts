@@ -48,6 +48,8 @@ export interface NetGraph {
   links: NetLink[];
   /** Node index of each food crumb (−1: no tube reaches it). */
   foodNode: number[];
+  /** All the tube's length before pruning, dead ends included (cells): how much is left anywhere. */
+  rawLength?: number;
 }
 
 export interface NetScore {
@@ -302,7 +304,9 @@ export function extractNetwork(field: Float32Array, w: number, h: number, food: 
       l.path.push(B.x, B.y);
     }
   }
-  return prune({ nodes, links, foodNode }, o.minLink);
+  // before pruning: every traced line, dead ends included (spurs shorter than a link are thinning's noise)
+  const rawLength = links.reduce((s, l) => s + (l.len >= o.minLink ? l.len : 0), 0);
+  return { ...prune({ nodes, links, foodNode }, o.minLink), rawLength };
 }
 
 /** Contract short links, drop dead ends that are not food, merge two-link junctions, keep only what touches food. */

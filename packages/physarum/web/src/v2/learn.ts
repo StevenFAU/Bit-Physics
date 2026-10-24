@@ -183,7 +183,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
           "on the same cities (the shortest network that joins them all) and against what the real mould scored.",
         maze:
           "A maze with food at the entrance and the exit, after Nakagaki, Yamada & Tóth (2000). The mould fills the corridors; agents that go too long without finding food go back " +
-          "to food, so the dead ends empty and the tube that links the two food sources stays. The green line is the shortest path through the walls. Build a wall across the route (Wall) and watch it find another.",
+          "to food, so the tube that links the two food sources holds while the dead ends slowly thin (in this model they never quite empty, unlike the real plasmodium). The green line is the shortest path through the walls. Build a wall across the route (Wall) and watch it find another.",
         network:
           "Agents scattered at random over a periodic dish (it wraps at the edges). Within a few hundred steps the noise organises into a network of tubes, which then slowly prunes itself. Brightness is the trail's strength; the fine sparks are individual agents.",
         table1:

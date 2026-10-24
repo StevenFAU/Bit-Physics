@@ -514,21 +514,26 @@ const hashAfter = (page, n) =>
     const app = globalThis.__physarum;
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
     const speed = app.clock.speed;
+    // opened directly, the maze already runs with hunger
+    const direct = app.sim.hungerMax;
     app.clock.paused = true;
     await sleep(100);
+    await app.loadScene("cities", { seed: 1 });
+    const inCities = app.sim.hungerMax;
     await app.loadScene("maze", { seed: 1 });
     app.clock.paused = true;
-    const boot = { food: app.sim.envSpec.food.length, walls: !!app.sim.envSpec.walls, hunger: app.sim.hungerMax, speed };
+    const boot = { food: app.sim.envSpec.food.length, walls: !!app.sim.envSpec.walls, hunger: app.sim.hungerMax, speed, direct, inCities };
     await app.advance(16000);
     const s = await globalThis.__physarumChecks.score();
     const mass = await app.liveMass();
     return { boot, s, rel: Math.abs(mass.mass - mass.predicted) / mass.predicted };
   });
   check("The Maze: two food sources, walls, hunger set from the route, plays at 4×", m.boot.food === 2 && m.boot.walls && m.boot.hunger > 1000 && m.boot.speed === 4, JSON.stringify(m.boot));
+  check("hunger is the scene's own: on when the maze is opened directly, off in Connect the Cities", m.boot.direct > 1000 && m.boot.inCities === null, `direct ${m.boot.direct}, cities ${m.boot.inCities}`);
   check(
     "The Maze at step 16,000: the food joined along the shortest route (≤ 1.3× its length)",
     Number.isFinite(m.s.along) && m.s.onShortest && m.s.along / m.s.shortest < 1.3,
-    `route ${(m.s.along / m.s.shortest).toFixed(2)}× the shortest path, on it: ${m.s.onShortest}, tube elsewhere ${m.s.extra.toFixed(2)}× the route`,
+    `route ${(m.s.along / m.s.shortest).toFixed(2)}× the shortest path, on it: ${m.s.onShortest}, all tube left ${m.s.extra.toFixed(2)}× the route`,
   );
   check("mass balance exact with walls and hungry agents returning to food (rel < 1e-6)", m.rel < 1e-6, `rel ${m.rel.toExponential(2)}`);
   // block the route with the Wall tool, then undo it
