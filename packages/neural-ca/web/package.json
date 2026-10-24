@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — Growing Neural CA forward inference. Ships the committed nca_inference.wgsl + converted checkpoint through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
+  "description": "Stack-B WebGPU web build — Growing Neural CA forward inference. Ships the committed nca_inference.wgsl + converted checkpoint through a Vite bundle: the v1 page (settings panel) and the v2 Grow page (Field Studies shell), each with the capture-export hook.",
   "scripts": {
     "gen": "node gen-verification.mjs",
     "prebuild": "node gen-verification.mjs",
@@ -12,6 +12,13 @@
     "dev": "vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
   },
   "devDependencies": {
     "@webgpu/types": "0.1.70",

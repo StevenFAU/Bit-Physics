@@ -164,6 +164,7 @@ PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "reaction-diffusion-2d": (("v2/", "src/v2/main.ts"),),
     "physarum": (("v2/", "src/v2/main.ts"),),
     "boids-2d": (("v2/", "src/v2/main.ts"),),
+    "neural-ca": (("v2/", "src/v2/main.ts"),),
 }
 
 # Discovery greps each page's entry for the capture hook and a shell marker:
