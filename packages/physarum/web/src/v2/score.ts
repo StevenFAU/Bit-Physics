@@ -67,7 +67,7 @@ export function buildScoreCard(): ScoreCard {
         const table = h(
           "table",
           { class: "ph-score-table" },
-          h("thead", {}, h("tr", {}, h("th", { scope: "col" }, ""), h("th", { scope: "col" }, "Mould"), h("th", { scope: "col" }, "MST"), h("th", { scope: "col" }, h("a", { href: TERO, target: "_blank", rel: "noopener" }, "Tero 2010")))),
+          h("thead", {}, h("tr", {}, h("th", { scope: "col" }, "Measure"), h("th", { scope: "col" }, "Mould"), h("th", { scope: "col" }, "MST"), h("th", { scope: "col" }, h("a", { href: TERO, target: "_blank", rel: "noopener" }, "Tero 2010")))),
           h(
             "tbody",
             {},

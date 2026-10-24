@@ -328,6 +328,10 @@
     top: 56px;
     right: 8px;
     width: min(340px, calc(100% - 16px));
-    max-height: calc(100% - 230px);
+    max-height: calc(100% - 280px);
+  }
+  /* open, it sits below the scene title */
+  .ph-score:not(.is-folded) {
+    top: 104px;
   }
 }

@@ -201,6 +201,8 @@ async function boot(): Promise<void> {
       food: app.sim.envSpec?.food.length ?? 0,
       lights: app.sim.envSpec?.lights.length ?? 0,
       growing: app.sim.growing,
+      walls: !!app.sim.envSpec?.walls,
+      hunger: app.sim.hungerMax !== null,
     });
 
   // The developer capture control — the headless gate's entry point.

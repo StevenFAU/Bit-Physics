@@ -40,6 +40,9 @@ export interface OnScreen {
   lights?: number;
   /** A growing colony (dormant agents waking). */
   growing?: boolean;
+  walls?: boolean;
+  /** Hungry agents go back to food. */
+  hunger?: boolean;
 }
 
 export interface LiveVsGated {
@@ -337,6 +340,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       if (s.growing) extras.push("the colony is still growing (agents wake when its trail reaches them)");
       if (s.food) extras.push(`${s.food} food crumb${s.food === 1 ? "" : "s"} deposit into the trail and give off a scent the agents follow`);
       if (s.lights) extras.push("a light the agents turn away from (they sense it; it never touches the trail)");
+      if (s.walls) extras.push("walls the agents cannot enter");
+      if (s.hunger) extras.push("agents that go too long without food are taken back to a food source (each still deposits once a step)");
       onScreen.textContent = s.gated
         ? `On screen: the gated run itself (${size}, canonical parameters, no edits).`
         : `On screen: ${s.scene}${s.personality ? ` (personality: ${s.personality})` : ""} — ${size}. The gated kernel's arithmetic ${paramsVsGated(s.params)}` +
