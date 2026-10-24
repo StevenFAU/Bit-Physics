@@ -13,14 +13,16 @@ import { History, SimClock } from "@bp/runtime";
 import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
+import type { BrainParams } from "./model/brains.js";
 import type { Checkpoint, OrderParams } from "./model/flock.js";
 import { Flock, FlockKernels, MAX_STEPS_PER_PASS, orderParams, sumPartials } from "./model/flock.js";
 import type { RuleParams } from "./model/params.js";
 import { sameRule } from "./model/params.js";
-import { AGENTS, worldFor } from "./model/world.js";
+import { AGENTS } from "./model/world.js";
 import type { OceanView, SharkView } from "./render/ocean-view.js";
+import { DEFAULT_LOOK } from "./render/ocean-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
-import { PROOF, SCENES, sceneById } from "./scenes.js";
+import { PROOF, RHO_RANGE, SCENES, sceneById, sceneCount, sceneWorld, vicsekRadius } from "./scenes.js";
 
 /** Solver steps per second at 1× (spec: T3 one step per frame at 60 fps). */
 const TICK_RATE: Record<Tier, number> = { T3: 60, T2: 60, T1: 60 };
@@ -36,13 +38,19 @@ export const BLOOM = 0.06;
 export interface SceneOptions {
   seed?: number;
   rule?: RuleParams;
+  /** The scene's brain with changed parameters (M1 scenes). */
+  brain?: BrainParams;
   camera?: { cx: number; cy: number; zoom: number };
 }
 
 export interface AppHooks {
   onSceneChange?: (scene: SceneDef) => void;
   onRule?: (r: RuleParams) => void;
+  /** An M1 brain's parameters changed (or a scene with one loaded). */
+  onBrain?: (b: BrainParams | null) => void;
   onEdited?: () => void;
+  /** A save point was restored (the flock's state jumped). */
+  onRestore?: () => void;
   onOrder?: (o: OrderParams, tick: number) => void;
   onFrame?: (now: number) => void;
 }
@@ -71,6 +79,8 @@ export const FEAR = 0.004;
 export const LUNGE = 1.8;
 /** Default fear radius in units of the cohesion radius. */
 export const SHARK_RADIUS_R = 14;
+/** The Couzin brain's fear weight (inside the ring, fleeing outweighs the school), ×LUNGE while lunging. */
+export const COUZIN_FEAR = 1;
 
 export class App {
   readonly gpu: GpuContext;
@@ -153,6 +163,8 @@ export class App {
       restore: (c) => {
         this.flock.restore(c);
         this.hooks.onRule?.(this.flock.rule);
+        this.hooks.onBrain?.(this.flock.brain);
+        this.hooks.onRestore?.();
       },
       release: (c) => this.flock.release(c),
     };
@@ -182,18 +194,23 @@ export class App {
       const old = this.flock as Flock | undefined;
       const rect = this.studio.canvas.getBoundingClientRect();
       const proof = scene.kind === "proof";
-      const n = proof ? PROOF.n : AGENTS[this.tier];
-      const world = proof ? { halfW: PROOF.halfW, halfH: PROOF.halfH } : worldFor(n, rect.width, rect.height, scene.density);
+      const n = proof ? PROOF.n : sceneCount(scene, this.tier);
+      const world = proof ? { halfW: PROOF.halfW, halfH: PROOF.halfH } : sceneWorld(scene, n, rect.width, rect.height);
       this.seed = proof ? PROOF.seed : (o.seed ?? 1);
       const rule = proof ? scene.rule : (o.rule ?? scene.rule);
+      const brain = proof || !scene.brain ? null : o.brain && o.brain.kind === scene.brain(n).kind ? o.brain : scene.brain(n);
+      // the counting sort is sized for the smallest reach the scene offers
+      const minReach = !brain ? MIN_RCOH : brain.kind === "vicsek" ? vicsekRadius(RHO_RANGE[0]) : brain.p.ra;
       const flock = new Flock(this.device, this.kernels, {
         n,
         ...world,
         seed: this.seed,
         rule,
+        brain,
+        orderReduce: scene.torusOrder ? "torus" : "v4",
         init: scene.init,
         broadphase: "sort",
-        minRCoh: MIN_RCOH,
+        minRCoh: minReach,
         // the proof scene is the proofs' run exactly: no memory reorder
         sortEvery: proof ? 0 : this.sortEvery,
       });
@@ -209,13 +226,18 @@ export class App {
       this.sceneT0 = performance.now();
       this.camera.setViewport(rect.width, rect.height);
       this.camera.setDomain(world.halfW * 2, world.halfH * 2, true);
-      this.camera.maxPxPerUnit = Math.max(400, rect.height / (rule.rCoh * 3));
+      const near = !brain ? rule.rCoh : brain.kind === "vicsek" ? brain.p.r : brain.p.rr * 2;
+      this.camera.maxPxPerUnit = Math.max(400, rect.height / (near * 3));
+      const sc = scene.scale ?? { fishLength: DEFAULT_LOOK.fishLength, causticCell: DEFAULT_LOOK.causticCell };
+      this.view.look = { ...this.view.look, fishLength: sc.fishLength, causticCell: sc.causticCell };
       if (o.camera) {
         this.camera.set({ cx: o.camera.cx * world.halfW * 2, cy: o.camera.cy * world.halfH * 2, pxPerUnit: this.camera.coverZoom() * o.camera.zoom });
+      } else if (scene.zoom && scene.zoom !== 1) {
+        this.camera.set({ cx: world.halfW, cy: world.halfH, pxPerUnit: this.camera.coverZoom() * scene.zoom });
       } else {
         this.camera.fit(1);
       }
-      this.shark.radius = this.sharkSize * flock.rule.rCoh;
+      this.shark.radius = this.sharkSize * this.sharkUnit;
       this.shark.presence = 0;
       this.shark.target = null;
       this.hdr.resetExposure();
@@ -229,6 +251,7 @@ export class App {
       this.syncTransport();
       this.hooks.onSceneChange?.(scene);
       this.hooks.onRule?.(flock.rule);
+      this.hooks.onBrain?.(flock.brain);
     } finally {
       this.busy = false;
     }
@@ -242,7 +265,12 @@ export class App {
       this.clock.ticksPerSecond = TICK_RATE[this.tier];
       this.studio.toast.show(`Restarted with fewer fish (${AGENTS[this.tier].toLocaleString()}) to hold the frame rate`);
     }
-    await this.loadScene(this.scene.id, { seed: this.seed, rule: this.flock.rule });
+    await this.loadScene(this.scene.id, { seed: this.seed, rule: this.flock.rule, brain: this.flock.brain ?? undefined });
+  }
+
+  /** World units of the Shark tool's Size unit ("r"). */
+  get sharkUnit(): number {
+    return this.scene.sharkUnit ? this.scene.sharkUnit(this.flock.n) : this.flock.rule.rCoh;
   }
 
   /** Is the live view the proofs' own run (proof scene, no edits, no shark)? */
@@ -256,8 +284,18 @@ export class App {
     if (this.blocked("change the rule")) return;
     if (phase === "start") this.edits += 1;
     this.flock.setRule(r);
-    this.shark.radius = this.sharkSize * r.rCoh;
+    this.shark.radius = this.sharkSize * this.sharkUnit;
     this.hooks.onRule?.(r);
+    this.hooks.onEdited?.();
+    if (phase === "end") this.writeUrl();
+  }
+
+  /** Change the M1 brain's parameters (The Order Dial's η and ρ). */
+  setBrain(b: BrainParams, phase: "start" | "move" | "end" = "end"): void {
+    if (!this.flock.brain || this.blocked("change the rule")) return;
+    if (phase === "start") this.edits += 1;
+    this.flock.setBrain(b);
+    this.hooks.onBrain?.(this.flock.brain);
     this.hooks.onEdited?.();
     if (phase === "end") this.writeUrl();
   }
@@ -266,11 +304,12 @@ export class App {
     if (this.blocked("reset the rule")) return;
     this.edits += 1;
     this.setRule({ ...this.scene.rule });
+    if (this.flock.brain && this.scene.brain) this.setBrain(this.scene.brain(this.flock.n));
   }
 
   setSharkSize(k: number): void {
     this.sharkSize = k;
-    this.shark.radius = k * this.flock.rule.rCoh;
+    this.shark.radius = k * this.sharkUnit;
     this.writeUrl();
   }
 
@@ -452,7 +491,7 @@ export class App {
     if (s.lunging) s.lunged += dt;
     this.flock.fear =
       s.presence > 0 && this.scene.shark
-        ? { x: s.x, y: s.y, radius: s.radius, strength: FEAR * (s.lunging ? LUNGE : 1) * s.presence }
+        ? { x: s.x, y: s.y, radius: s.radius, strength: (this.flock.brain ? COUZIN_FEAR : FEAR) * (s.lunging ? LUNGE : 1) * s.presence }
         : null;
   }
 
@@ -464,6 +503,35 @@ export class App {
 
   private setCallouts(): void {
     const s = this.scene;
+    const t = (): number => performance.now() - this.sceneT0;
+    // clear of the dial's panel (bottom right on wide screens, a bottom sheet on phones)
+    const freeSpot = (): [number, number] => [this.camera.viewW >= 640 ? (this.camera.viewW - 340) / 2 : this.camera.viewW / 2, this.camera.viewH * 0.3];
+    if (s.id === "order-dial") {
+      let wasOrdered = false;
+      this.studio.callouts.set([
+        {
+          id: "dial-start",
+          text: `${this.flock.n.toLocaleString()} fish, all heading one way`,
+          detail: "Turn the dial towards panic and watch the order melt",
+          style: "label",
+          anchor: freeSpot,
+          when: () => t() > 600 && t() < 7000,
+        },
+        {
+          id: "order-breaks",
+          text: "Order breaks",
+          detail: "Polarization φ fell below 0.3 — the school has become a swarm",
+          style: "label",
+          anchor: freeSpot,
+          when: () => {
+            const o = this.order;
+            if (o && o.phi > 0.6) wasOrdered = true;
+            return wasOrdered && !!o && o.phi < 0.3;
+          },
+        },
+      ]);
+      return;
+    }
     const near = (): [number, number] | null => {
       const v = this.sharkView();
       if (!v) return null;
@@ -489,6 +557,19 @@ export class App {
               anchor: near,
               when: () => this.shark.lunged > 0.15 && this.shark.lunged < 3.5,
             },
+            ...(s.id === "mill"
+              ? [
+                  {
+                    id: "a-mill",
+                    text: "A mill",
+                    detail: "Every fish circles the empty centre — no fish leads it",
+                    style: "label" as const,
+                    // below the regime panel on phones (it sits under the title there)
+                    anchor: (): [number, number] => [this.camera.viewW / 2, this.camera.viewH * (this.camera.viewW < 640 ? 0.34 : 0.18)],
+                    when: () => t() > 1500 && t() < 9000 && this.shark.seen === 0 && !!this.order && this.order.mill > 0.65 && this.order.phi < 0.35,
+                  },
+                ]
+              : []),
           ]
         : [
             {

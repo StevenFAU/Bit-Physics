@@ -1,10 +1,101 @@
 # 03 — Swarm (2D collective motion)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-2d/web` (the embedded v4 lab).
-> Wave A. Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+> Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24 (below).
 >
-> **Implementation status (2026-10-24): M0 built** as the `v2/` page of `packages/boids-2d/web`
+> **Implementation status (2026-10-24): M0 and M1 built** as the `v2/` page of `packages/boids-2d/web`
 > (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
+>
+> **M1 — The Order Dial, The Mill, three levels of detail.** Measured on the RX 6800 XT (snap
+> Chromium, RADV, T3) unless a line says otherwise.
+>
+> - **Two new brains; the gated kernel untouched.** `src/v2/model/brains.ts` adds the Vicsek model
+>   and Couzin's zones beside the frozen v4 kernel, which still runs Open Water and the release
+>   gate (the v1 and v2 captures are still byte-identical). The brains keep its design: neighbour
+>   sums are i32 fixed point (Vicsek 2⁻²⁰, Couzin 2⁻¹⁶), so brute force ≡ counting sort and run
+>   twice hold — identical SHA-256 for 4,096 Vicsek and 2,048 Couzin fish over 60 steps with noise
+>   on. Their noise is a hash of (seed, step, fish id), and the id travels with the memory re-sort,
+>   so a re-sort changes no path even with noise on (65,536 fish, η 0.3, 15 re-sorts: 0 differ).
+>   The v4 kernel still keys its noise by memory slot, as before.
+> - **A bug the distribution check found.** The fish-id buffers flipped with the boid buffers on
+>   every solver step, so on odd steps every fish read a stale id and all drew the same noise —
+>   the effective noise was halved (GPU ⟨φ⟩ 0.50 against the CPU's 0.18 at η 0.4). Ids now track
+>   their own current buffer and flip only when the ocean is re-sorted. M0's re-sort proof held
+>   only because its cadences (8 and 16 steps) are even; its results are unchanged.
+> - **The Order Dial** (Vicsek et al. 1995). Each fish turns to the mean heading of every fish
+>   within r, itself included, then by a uniform angle in [−ηπ, ηπ], and swims v₀ = 0.2 r. η = 1
+>   is a fully random 2π turn, so Vicsek's own η is 2π times the dial's: his η_c ≈ 2.9 at ρ 0.4
+>   reads 0.46 here. The ocean holds the tier's fish (T3 1,000,000) at Open Water's density, so
+>   the crowding ρ (fish per r²) sets r, and v₀ scales with r. It starts as one aligned school
+>   (φ 0.874 after 3 s) and runs at 60 fps and 60 steps/s; at 8× it makes ≈ 480 steps/s.
+>   - The dial is a new shared control (`Dial` in `@bp/studio`, an ARIA slider). Beside it are the
+>     live φ trace, the susceptibility χ = N·Var(φ) (Baglietto, Albano & Candia 2012), and the phase
+>     map. Every (η, ρ) the visitor holds is measured from the live solver, never asserted: the
+>     meter waits 400 steps, then averages φ over at least 600 steps (a rolling 2,400). A point is
+>     settled when the window's two halves agree within 0.02 in φ; one still changing is drawn as
+>     a ring. Example: η 0.2, ρ 1 measured ⟨φ⟩ 0.754, χ 12.4, settled over 608 steps.
+>   - **The sweep** turns the dial by itself: η 0.05 → 0.80 in steps of 0.05, from an ordered start,
+>     each value held until settled (≥ 800 steps, at most 2,400). At 1,000,000 fish and ρ 1 it takes
+>     45 s and measures φ 0.980, 0.931, 0.858, 0.752, 0.598, 0.398 (η 0.30), 0.139 (η 0.35, not
+>     settled), 0.035 (η 0.40), then below 0.005. χ peaks at η 0.35 (≈ 1,560), so η_c ≈ 0.35 — 2.2 in
+>     Vicsek's units (three runs: 0.349, 0.350, 0.349). That is below Vicsek's 0.46 at ρ 0.4. His systems
+>     had at most 10⁴ particles and v₀ 0.03; with 10⁶ fish and v₀ 0.2 the transition is sharper,
+>     and angular noise in a large system makes it discontinuous. Learn says so.
+> - **φ(η) against an f64 CPU reference** (`model/vicsek-cpu.ts`: the same rule and the same noise
+>   hash in f64, run in Web Workers). The setup is 1,024 fish at ρ 1 and η 0.1, 0.25, 0.4 and 0.55;
+>   8 GPU seeds against 8 different CPU seeds; 1,500 steps with the first 500 dropped.
+>   Measured ⟨φ⟩ (GPU / CPU): 0.936 / 0.939, 0.649 / 0.681, 0.168 / 0.178, 0.060 / 0.059. The largest
+>   two-sample z of the seed means is 1.72, so the band is **declared z ≤ 4** at every η (about a
+>   0.5% chance of a false alarm across the four). A reference shifted by Δη 0.05 scores z 23.9 and
+>   fails, so the check has teeth. It is a Prove card and takes 5.8 s.
+> - **The Mill** (Couzin et al. 2002's torus, named with Tunstrøm et al. 2013's cutoffs).
+>   - **Model:** r_r = 1, Δr_o = 1, an attraction zone spanning the school (3.5 mean radii), a 270°
+>     field of view, a 4° turn and 0.3 r_r per step (Couzin's s = 3, θ = 40°/s, τ = 0.1 s), and
+>     σ 0.05.
+>   - **CPU prototype first:** with r_a = 14 r_r, schools of 300 or more fish disperse (Couzin used
+>     100). With the attraction zone spanning the school, 1,000 fish mill from a ring and from a
+>     random disc alike (O_r 0.79 and 0.77).
+>   - **Cost and counts:** every fish sees the whole school in front of it, so the cost grows as N²
+>     and the counts are T3 8,192, T2 4,096 and T1 2,048.
+>   - **Measured:** after 1,500 steps O_p is 0.013 and O_r 0.697 (mean radius 35 r_r), inside
+>     Tunstrøm's milling region, and the panel says "Milling". Lunging at the centre with the shark
+>     drives O_r down to 0.559 within 600 steps.
+>   - **Collective memory:** a ring widened to Δr_o 6 and α 300° was still milling after 1,500
+>     steps (O_r 0.744), as Couzin found. This is reported, not claimed in the page.
+>   - **The regime label** uses Tunstrøm's own cutoffs, replacing the v4 lab's hand-tuned
+>     `regimeName()`: polarized O_p > 0.65 and O_r < 0.35; milling O_p < 0.35 and O_r > 0.65;
+>     swarm both below 0.35; anything else transitional.
+>   - **O_r's centre** is the circular mean of the positions (a new torus-aware integer
+>     reduction), so a school that crosses the wrapped edge keeps its centre. The frozen v4
+>     reduction still serves Open Water and its proofs.
+>   - **Tune** shows Couzin's Δr_o, α, θ and σ, and they ride the share link.
+> - **Three levels of detail** (`render/ocean.wgsl`, `render/field.wgsl`):
+>   - **Glyph** (≥ 8 px), with the tail flick.
+>   - **Motion streak** at mid zoom.
+>   - **Density and heading field** below 0.9 px: a GPU splat of every fish's colour into a 2-px
+>     screen grid (fixed-point atomics), spread back with a bilinear tent.
+>
+>   They cross-fade by the fish's length on screen, with the same light per fish in every level,
+>   so zooming never pops. At 1,000,000 fish the page holds 60 fps at 1×, 6× and 20× (frame p50
+>   and p90 16.7 ms), and the splat costs 0.14 ms.
+> - **Benches** (`?bench=1`, 1280×720): Open Water 1,000,000 fish, Order Dial 1,000,000 and
+>   Mill 8,192 all run at 60.0 fps with frame p50 / p99 16.7 / 16.8 ms. GPU p50 reads 6.8, 6.2 and
+>   10.3 ms; with two frames queued those timestamps overlap and over-count.
+>   Forced lower tiers on the same GPU (`?tier=`): every one holds 60 fps. Order Dial T2 (250,000
+>   fish) and T1 (60,000) stay ordered at η 0.15 (φ 0.854 and 0.857). The Mill at T2 (4,096 fish)
+>   and T1 (2,048) mills after 1,500 steps (O_r 0.749 and 0.803). These are not measurements on
+>   T2 or T1 hardware.
+> - **Release gate:** `pipeline.py validate` passes for boids-2d on both pages: run twice
+>   byte-identical, φ calm 0.3553 and noisy 0.0609, the same as M0.
+> - **Checks:** `v2-acceptance.mjs` passes 63/63 (including Tune's reset moving the dial, and leaving the scene mid-sweep ending the sweep). `check-studio` passes on `v2/`, `v2/?s=order-dial`
+>   and `v2/?s=mill` at 390 / 820 / 1440 px and 200% zoom, with zero axe violations; floating
+>   panels opt in to its overlap check with `data-bp-chrome` (additive). The workspace has 127
+>   unit tests (32 for Swarm, in `test/m1.test.ts`).
+> - **Not in M1:** motion trails from a float accumulation buffer (the streak level carries motion
+>   at mid zoom); the alarm-propagation predator (M2+); a precomputed backdrop for the phase map
+>   (by design, it shows only measured points).
+>
+> **M0** (2026-10-24):
 >
 > - **How boids-2d is gated (found, then kept).** `verify.py` `_gate_boids_2d` (new_canonical)
 >   checks a small capture built on the CPU in f64: two 256-agent Reynolds runs (noise 0 and

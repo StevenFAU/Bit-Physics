@@ -1,0 +1,83 @@
+/* Dial — the rotary signature control (dial.ts). */
+
+.bp-dial {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  user-select: none;
+}
+.bp-dial.is-disabled {
+  opacity: 0.55;
+}
+.bp-dial-face {
+  position: relative;
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+.bp-dial-face:active {
+  cursor: grabbing;
+}
+.bp-dial-face:focus-visible {
+  box-shadow: 0 0 0 2px var(--bp-accent);
+}
+.bp-dial-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.bp-dial-track {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.bp-dial-fill {
+  fill: none;
+  stroke: var(--bp-accent);
+  stroke-width: 8;
+  stroke-linecap: round;
+}
+.bp-dial-knob {
+  fill: var(--bp-text);
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 1.5;
+}
+.bp-dial-ticks line {
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1;
+}
+.bp-dial-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+.bp-dial-label {
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--bp-text-dim);
+}
+.bp-dial-value {
+  font-family: var(--bp-mono);
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bp-text);
+}
+.bp-dial-ends {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: -14px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}

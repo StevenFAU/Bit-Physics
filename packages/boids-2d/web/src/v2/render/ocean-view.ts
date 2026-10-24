@@ -1,12 +1,17 @@
 // Swarm renderer: water (with caustics) → fish (additive, energy-normalised)
 // → shark shadow + fear ring + compare divider, all into the HDR scene target.
-// The A/B compare draws the save point's flock left of the split and the live
-// flock right of it (scissored).
+// The fish have three levels of detail chosen by their size on screen
+// (03-boids-2d.md § The look): glyphs with a tail flick, motion streaks, and
+// a density / heading field splatted on the GPU (./field.wgsl) when a fish is
+// smaller than a pixel. They cross-fade by that size with the same light per
+// fish, so zooming never pops. The A/B compare draws the save point's flock
+// left of the split and the live flock right of it (scissored; no field).
 
 import type { GpuProfiler } from "@bp/gpu";
 import { wgsl } from "@bp/gpu";
 import type { Camera2D } from "@bp/render";
 import { SCENE_FORMAT } from "@bp/render";
+import fieldSrc from "./field.wgsl?raw";
 import oceanSrc from "./ocean.wgsl?raw";
 
 export type FishColour = "silver" | "heading";
@@ -54,6 +59,32 @@ export interface FlockSource {
   halfH: number;
 }
 
+/** The three levels of detail, from a fish's length on screen (target px). */
+export interface Lod {
+  /** Glyph weight (1 at ≥ 8 px, 0 at ≤ 4.5 px). */
+  glyph: number;
+  /** Field weight (1 at ≤ 0.9 px, 0 at ≥ 1.8 px). */
+  field: number;
+  /** Which level dominates, for readouts. */
+  name: "glyph" | "streak" | "field";
+}
+
+const smooth = (a: number, b: number, x: number): number => {
+  const t = Math.min(Math.max((x - a) / (b - a), 0), 1);
+  return t * t * (3 - 2 * t);
+};
+
+/** LOD weights for a fish `lenPx` target pixels long (the shader uses the same edges). */
+export function lodFor(lenPx: number): Lod {
+  const glyph = smooth(4.5, 8, lenPx);
+  const field = 1 - smooth(0.9, 1.8, lenPx);
+  const name = field >= 0.5 ? "field" : glyph >= 0.5 ? "glyph" : "streak";
+  return { glyph, field, name };
+}
+
+/** Far-field light per fish, × gain × len² (a soft dot of the fish's true area). */
+export const FAR_LIGHT = 0.498;
+
 export interface SharkView {
   x: number;
   y: number;
@@ -78,26 +109,60 @@ export class OceanView {
   private readonly waterPipe: GPURenderPipeline;
   private readonly fishPipe: GPURenderPipeline;
   private readonly overlayPipe: GPURenderPipeline;
+  private readonly fieldPipe: GPURenderPipeline;
+  private readonly splatPipe: GPUComputePipeline;
+  private readonly gridReadLayout: GPUBindGroupLayout;
+  private readonly gridWriteLayout: GPUBindGroupLayout;
+  private grid: { buf: GPUBuffer; w: number; h: number; read: GPUBindGroup; write: GPUBindGroup } | null = null;
+  /** The level of detail drawn last frame. */
+  lod: Lod = { glyph: 0, field: 1, name: "field" };
   private boidBGs = new Map<GPUBuffer, GPUBindGroup>();
   private readonly t0 = performance.now();
 
   constructor(device: GPUDevice, look: OceanLook = DEFAULT_LOOK) {
     this.device = device;
     this.look = { ...look };
-    const VF = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT;
+    const VFC = GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT | GPUShaderStage.COMPUTE;
     this.viewLayout = device.createBindGroupLayout({
       label: "ocean-view",
-      entries: [{ binding: 0, visibility: VF, buffer: { type: "uniform" } }],
+      entries: [{ binding: 0, visibility: VFC, buffer: { type: "uniform" } }],
     });
     this.boidLayout = device.createBindGroupLayout({
       label: "ocean-boids",
-      entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } }],
+      entries: [{ binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.COMPUTE, buffer: { type: "read-only-storage" } }],
     });
-    this.viewBuf = device.createBuffer({ size: 160, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "ocean-view" });
+    this.gridReadLayout = device.createBindGroupLayout({
+      label: "ocean-field-read",
+      entries: [{ binding: 0, visibility: GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } }],
+    });
+    this.gridWriteLayout = device.createBindGroupLayout({
+      label: "ocean-field-write",
+      entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } }],
+    });
+    this.viewBuf = device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "ocean-view" });
     this.viewBG = device.createBindGroup({ layout: this.viewLayout, label: "ocean-view", entries: [{ binding: 0, resource: { buffer: this.viewBuf } }] });
     const module = device.createShaderModule({ code: wgsl(oceanSrc), label: "ocean" });
     const one = { layout: device.createPipelineLayout({ bindGroupLayouts: [this.viewLayout] }) };
     const two = { layout: device.createPipelineLayout({ bindGroupLayouts: [this.viewLayout, this.boidLayout] }) };
+    const three = (g: GPUBindGroupLayout): { layout: GPUPipelineLayout } => ({
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.viewLayout, this.boidLayout, g] }),
+    });
+    const fieldModule = device.createShaderModule({ code: fieldSrc, label: "ocean-field" });
+    this.splatPipe = device.createComputePipeline({ label: "ocean-field-splat", ...three(this.gridWriteLayout), compute: { module: fieldModule, entryPoint: "field_splat" } });
+    const additive: GPUColorTargetState = {
+      format: SCENE_FORMAT,
+      blend: {
+        color: { srcFactor: "one", dstFactor: "one", operation: "add" },
+        alpha: { srcFactor: "zero", dstFactor: "one", operation: "add" },
+      },
+    };
+    this.fieldPipe = device.createRenderPipeline({
+      label: "ocean-field",
+      ...three(this.gridReadLayout),
+      vertex: { module, entryPoint: "field_vs" },
+      fragment: { module, entryPoint: "field_fs", targets: [additive] },
+      primitive: { topology: "triangle-list" },
+    });
     this.waterPipe = device.createRenderPipeline({
       label: "ocean-water",
       ...one,
@@ -155,6 +220,23 @@ export class OceanView {
     return bg;
   }
 
+  /** The field grid for a target of w × h px at `cell` px per cell. */
+  private fieldGrid(w: number, h: number, cell: number): NonNullable<OceanView["grid"]> {
+    const gw = Math.max(1, Math.ceil(w / cell));
+    const gh = Math.max(1, Math.ceil(h / cell));
+    if (this.grid && this.grid.w === gw && this.grid.h === gh) return this.grid;
+    this.grid?.buf.destroy();
+    const buf = this.device.createBuffer({ size: gw * gh * 12, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, label: "ocean-field-grid" });
+    this.grid = {
+      buf,
+      w: gw,
+      h: gh,
+      read: this.device.createBindGroup({ layout: this.gridReadLayout, label: "ocean-field-read", entries: [{ binding: 0, resource: { buffer: buf } }] }),
+      write: this.device.createBindGroup({ layout: this.gridWriteLayout, label: "ocean-field-write", entries: [{ binding: 0, resource: { buffer: buf } }] }),
+    };
+    return this.grid;
+  }
+
   /** Drop cached bind groups (a scene change destroyed the buffers). */
   forgetBuffers(): void {
     this.boidBGs.clear();
@@ -182,7 +264,14 @@ export class OceanView {
     const ix = images(targetW * cam.unitsPerPx, W);
     const iy = images(targetH * cam.unitsPerPx, H);
     const split = saved && this.split !== null ? this.split * targetW : -1;
-    const f = new Float32Array(40);
+    // level of detail from the fish's length on screen; the compare view draws no field
+    const lenPx = L.fishLength / cam.unitsPerPx;
+    const lod = lodFor(lenPx);
+    if (split >= 0) lod.field = 0;
+    this.lod = lod;
+    const cell = Math.max(2, Math.round(2 * pixelScale));
+    const grid = lod.field > 0.001 ? this.fieldGrid(targetW, targetH, cell) : null;
+    const f = new Float32Array(48);
     f.set([cam.cx, cam.cy, cam.unitsPerPx, t], 0);
     f.set([targetW, targetH, W, H], 4);
     f.set([flock.halfW, flock.halfH, ix, iy], 8);
@@ -195,7 +284,20 @@ export class OceanView {
       f.set([shark.radius, shark.presence, shark.lunge, L.ring], 32);
     }
     f.set([split, 0.8, 0, 0], 36);
+    f.set([lod.glyph, lod.field, FAR_LIGHT, cell], 40);
+    f.set([grid ? grid.w : 1, grid ? grid.h : 1, 0, 0], 44);
     this.device.queue.writeBuffer(this.viewBuf, 0, f);
+
+    if (grid) {
+      enc.clearBuffer(grid.buf);
+      const cp = enc.beginComputePass({ label: "ocean-field-splat", timestampWrites: profiler?.pass("field") });
+      cp.setPipeline(this.splatPipe);
+      cp.setBindGroup(0, this.viewBG);
+      cp.setBindGroup(1, this.boidBG(flock.boids));
+      cp.setBindGroup(2, grid.write);
+      cp.dispatchWorkgroups(Math.ceil(flock.n / 256));
+      cp.end();
+    }
 
     const rp = enc.beginRenderPass({
       label: "ocean",
@@ -205,9 +307,17 @@ export class OceanView {
     rp.setBindGroup(0, this.viewBG);
     rp.setPipeline(this.waterPipe);
     rp.draw(3);
+    if (grid) {
+      rp.setPipeline(this.fieldPipe);
+      rp.setBindGroup(1, this.boidBG(flock.boids));
+      rp.setBindGroup(2, grid.read);
+      rp.draw(3);
+    }
     rp.setPipeline(this.fishPipe);
-    const instances = flock.n * ix * iy;
-    if (split >= 0 && saved) {
+    const instances = lod.field >= 0.999 ? 0 : flock.n * ix * iy;
+    if (instances === 0) {
+      // far away the field carries every fish
+    } else if (split >= 0 && saved) {
       const s = Math.min(Math.max(Math.round(split), 0), targetW);
       if (s > 0) {
         rp.setScissorRect(0, 0, s, targetH);
@@ -233,5 +343,6 @@ export class OceanView {
 
   destroy(): void {
     this.viewBuf.destroy();
+    this.grid?.buf.destroy();
   }
 }

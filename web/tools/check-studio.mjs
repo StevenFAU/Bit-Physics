@@ -6,6 +6,10 @@
 //   PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js \
 //   node web/tools/check-studio.mjs packages/reaction-diffusion-2d/web/dist v2/ [out-dir]
 //
+// The page may carry a query (e.g. `v2/?s=mill` for one scene). A sim's own
+// floating panels opt in to the overflow and overlap checks with the
+// attribute data-bp-chrome.
+//
 // Exit 0 when every check passes; 1 otherwise (a JSON report goes to stdout,
 // screenshots to out-dir when given). The page must expose globalThis.__bpDebug
 // (camera view rect, domain) and flip __bitPhysicsReady.
@@ -110,6 +114,8 @@ for (const vp of VIEWPORTS) {
         chrome: [
           ...pick(".bp-top .bp-back"), ...pick(".bp-top-actions"), ...pick(".bp-heading .bp-scene-title"),
           ...pick(".bp-rail"), ...pick(".bp-options"), ...pick(".bp-transport"),
+          // a sim's own floating panels opt in to the same checks
+          ...pick("[data-bp-chrome]"),
         ],
         capture: (() => {
           const b = document.querySelector('[data-bp="capture"]');
