@@ -10,4 +10,5 @@ export * from "./overlays.js";
 export * from "./input.js";
 export * from "./icons.js";
 export * from "./perf-overlay.js";
+export * from "./dial.js";
 export { h, fmtNum, prefersReducedMotion } from "./dom.js";

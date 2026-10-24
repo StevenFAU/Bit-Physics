@@ -10,8 +10,12 @@
 // pass. Nothing here depends on the order of agents inside a sort bucket.
 
 import { CountingSort, readBuffer } from "@bp/gpu";
+import type { BrainParams } from "./brains.js";
+import { BRAIN_BYTES, WGSL_BRAINS, WGSL_TORUS_REDUCE, reach, writeBrainParams } from "./brains.js";
 import type { InitMode } from "./init.js";
 import { BOID_BYTES, makeInitData } from "./init.js";
+import type { M1Init } from "./init-m1.js";
+import { isM1Init, makeInitM1 } from "./init-m1.js";
 import { WGSL_COMPUTE, WGSL_GATHER, WGSL_REDUCE, WGSL_SORT_V2 } from "./kernel.js";
 import type { FearTerm, Grid, RuleParams } from "./params.js";
 import { PARAM_BYTES, PARAM_FLOATS, gridFor, writeParams } from "./params.js";
@@ -42,13 +46,25 @@ export class FlockKernels {
     readonly reduceOrder: GPUComputePipeline,
     readonly finalizeCom: GPUComputePipeline,
     readonly gather: GPUComputePipeline,
+    readonly brainSimLayout: GPUBindGroupLayout,
+    readonly brainBruteLayout: GPUBindGroupLayout,
+    readonly brainKeysLayout: GPUBindGroupLayout,
+    readonly torusLayout: GPUBindGroupLayout,
+    readonly brainKeys: GPUComputePipeline,
+    readonly vicsekSort: GPUComputePipeline,
+    readonly vicsekBrute: GPUComputePipeline,
+    readonly couzinSort: GPUComputePipeline,
+    readonly couzinBrute: GPUComputePipeline,
+    readonly circleSums: GPUComputePipeline,
+    readonly circleCentre: GPUComputePipeline,
+    readonly aboutCentre: GPUComputePipeline,
   ) {}
 
   static async create(device: GPUDevice): Promise<FlockKernels> {
-    const buf = (binding: number, type: GPUBufferBindingType, dynamic = false): GPUBindGroupLayoutEntry => ({
+    const buf = (binding: number, type: GPUBufferBindingType, dynamic = false, min = binding === 0 ? PARAM_BYTES : 0): GPUBindGroupLayoutEntry => ({
       binding,
       visibility: C(),
-      buffer: { type, hasDynamicOffset: dynamic, minBindingSize: binding === 0 ? PARAM_BYTES : 0 },
+      buffer: { type, hasDynamicOffset: dynamic, minBindingSize: min },
     });
     // the kernel's bindings: 0 P, 1 inB, 2 outB, 3 obs, 4 vortOut, 5 specIn, 6 diagFlags (+ sort: 7 cellStart, 8 order, 9 keys)
     const core = [
@@ -85,6 +101,21 @@ export class FlockKernels {
         buf(6, "read-only-storage"),
       ],
     });
+    // the M1 brains (./brains.ts): 0 B, 1 inB, 2 outB, 3 ids, 4 diag, 5 cellStart, 6 order (+ keys: 7 keys)
+    const brainCore = [buf(0, "uniform", true, BRAIN_BYTES), buf(1, "read-only-storage"), buf(2, "storage"), buf(3, "read-only-storage"), buf(4, "storage")];
+    const brainBruteLayout = device.createBindGroupLayout({ label: "swarm-brain-brute", entries: brainCore });
+    const brainSimLayout = device.createBindGroupLayout({
+      label: "swarm-brain-sim",
+      entries: [...brainCore, buf(5, "read-only-storage"), buf(6, "read-only-storage")],
+    });
+    const brainKeysLayout = device.createBindGroupLayout({
+      label: "swarm-brain-keys",
+      entries: [buf(0, "uniform", true, BRAIN_BYTES), buf(1, "read-only-storage"), buf(7, "storage")],
+    });
+    const torusLayout = device.createBindGroupLayout({
+      label: "swarm-torus-reduce",
+      entries: [buf(0, "uniform", false, 16), buf(1, "read-only-storage"), buf(2, "storage"), buf(3, "storage"), buf(4, "storage")],
+    });
     const check = async (m: GPUShaderModule, label: string): Promise<void> => {
       const info = await m.getCompilationInfo();
       const errs = info.messages.filter((x) => x.type === "error");
@@ -94,7 +125,16 @@ export class FlockKernels {
     const sortMod = device.createShaderModule({ code: WGSL_SORT_V2, label: "swarm-sort" });
     const redMod = device.createShaderModule({ code: WGSL_REDUCE, label: "swarm-reduce" });
     const gatherMod = device.createShaderModule({ code: WGSL_GATHER, label: "swarm-gather" });
-    await Promise.all([check(bruteMod, "brute"), check(sortMod, "sort"), check(redMod, "reduce"), check(gatherMod, "gather")]);
+    const brainMod = device.createShaderModule({ code: WGSL_BRAINS, label: "swarm-brains" });
+    const torusMod = device.createShaderModule({ code: WGSL_TORUS_REDUCE, label: "swarm-torus-reduce" });
+    await Promise.all([
+      check(bruteMod, "brute"),
+      check(sortMod, "sort"),
+      check(redMod, "reduce"),
+      check(gatherMod, "gather"),
+      check(brainMod, "brains"),
+      check(torusMod, "torus reduce"),
+    ]);
     const pl = (l: GPUBindGroupLayout): GPUPipelineLayout => device.createPipelineLayout({ bindGroupLayouts: [l] });
     const mk = (label: string, module: GPUShaderModule, entryPoint: string, l: GPUBindGroupLayout): Promise<GPUComputePipeline> =>
       device.createComputePipelineAsync({ label, layout: pl(l), compute: { module, entryPoint } });
@@ -106,7 +146,41 @@ export class FlockKernels {
       mk("swarm-finalize", redMod, "finalizeCom", reduceLayout),
       mk("swarm-gather", gatherMod, "gather", gatherLayout),
     ]);
-    return new FlockKernels(simLayout, bruteLayout, keysLayout, reduceLayout, gatherLayout, brute, cellKeys, simSort, reduceOrder, finalizeCom, gather);
+    const [brainKeys, vicsekSort, vicsekBrute, couzinSort, couzinBrute, circleSums, circleCentre, aboutCentre] = await Promise.all([
+      mk("swarm-brain-keys", brainMod, "brainKeys", brainKeysLayout),
+      mk("swarm-vicsek", brainMod, "vicsekSort", brainSimLayout),
+      mk("swarm-vicsek-brute", brainMod, "vicsekBrute", brainBruteLayout),
+      mk("swarm-couzin", brainMod, "couzinSort", brainSimLayout),
+      mk("swarm-couzin-brute", brainMod, "couzinBrute", brainBruteLayout),
+      mk("swarm-circle-sums", torusMod, "circleSums", torusLayout),
+      mk("swarm-circle-centre", torusMod, "circleCentre", torusLayout),
+      mk("swarm-about-centre", torusMod, "aboutCentre", torusLayout),
+    ]);
+    return new FlockKernels(
+      simLayout,
+      bruteLayout,
+      keysLayout,
+      reduceLayout,
+      gatherLayout,
+      brute,
+      cellKeys,
+      simSort,
+      reduceOrder,
+      finalizeCom,
+      gather,
+      brainSimLayout,
+      brainBruteLayout,
+      brainKeysLayout,
+      torusLayout,
+      brainKeys,
+      vicsekSort,
+      vicsekBrute,
+      couzinSort,
+      couzinBrute,
+      circleSums,
+      circleCentre,
+      aboutCentre,
+    );
   }
 }
 
@@ -116,7 +190,15 @@ export interface FlockConfig {
   halfH: number;
   seed: number;
   rule: RuleParams;
-  init?: InitMode;
+  /** An M1 brain (./brains.ts) in place of the v4 Reynolds rule; absent = Reynolds (the gated kernel). */
+  brain?: BrainParams | null;
+  /**
+   * How the live order parameters are reduced: "v4" (the frozen v4
+   * reduction, centre of mass from raw positions) or "torus" (the circular
+   * mean, for a single school that may cross the wrapped edge).
+   */
+  orderReduce?: "v4" | "torus";
+  init?: InitMode | M1Init;
   broadphase?: Broadphase;
   /**
    * Smallest cohesion radius this flock will be tuned to: the counting sort is
@@ -135,6 +217,7 @@ export interface Checkpoint {
   ids: GPUBuffer | null;
   tick: number;
   rule: RuleParams;
+  brain: BrainParams | null;
   seed: number;
 }
 
@@ -208,8 +291,11 @@ export class Flock {
   readonly halfH: number;
   seed: number;
   rule: RuleParams;
+  /** The M1 brain, or null for the v4 Reynolds rule. */
+  brain: BrainParams | null;
+  readonly orderReduce: "v4" | "torus";
   broadphase: Broadphase;
-  initMode: InitMode;
+  initMode: InitMode | M1Init;
   /** Steps run since the flock was seeded (drives the noise hash, as v4 simStep). */
   tick = 0;
   /** The shark (null = no pointer force, v4 "pure" params). */
@@ -243,6 +329,13 @@ export class Flock {
   /** Fish ids, permuted with the boids by each reorder (null when there are none). */
   readonly idBufs: [GPUBuffer, GPUBuffer] | null;
   private readonly gatherBG: GPUBindGroup[] = [];
+  private readonly brainSimBG: GPUBindGroup[] = [];
+  private readonly brainBruteBG: GPUBindGroup[] = [];
+  private readonly brainKeysBG: GPUBindGroup[] = [];
+  private readonly torusBG: GPUBindGroup[] = [];
+  private readonly torusParams: GPUBuffer | null = null;
+  private readonly torusCentre: GPUBuffer | null = null;
+  private readonly torusCirc: GPUBuffer | null = null;
 
   constructor(device: GPUDevice, kernels: FlockKernels, cfg: FlockConfig) {
     this.device = device;
@@ -254,8 +347,11 @@ export class Flock {
     this.rule = { ...cfg.rule };
     this.broadphase = cfg.broadphase ?? "sort";
     this.initMode = cfg.init ?? "random";
-    this.grid = gridFor(this.halfW, this.halfH, this.rule.rCoh);
-    const maxGrid = gridFor(this.halfW, this.halfH, Math.min(cfg.minRCoh ?? this.rule.rCoh, this.rule.rCoh));
+    this.brain = cfg.brain ? structuredClone(cfg.brain) : null;
+    this.orderReduce = cfg.orderReduce ?? "v4";
+    const r0 = this.brain ? reach(this.brain) : this.rule.rCoh;
+    this.grid = gridFor(this.halfW, this.halfH, r0);
+    const maxGrid = gridFor(this.halfW, this.halfH, Math.min(cfg.minRCoh ?? r0, r0));
     const n = cfg.n;
     // exact sizes: the kernel reads arrayLength(&inB)
     this.boidBufs = [0, 1].map((i) => device.createBuffer({ size: n * BOID_BYTES, usage: STORAGE(), label: `swarm-boids-${i}` })) as [
@@ -278,7 +374,7 @@ export class Flock {
     this.rg = device.createBuffer({ size: 16, usage: STORAGE(), label: "swarm-com" });
     this.sortEvery = Math.max(0, Math.floor(cfg.sortEvery ?? 0));
     this.idBufs =
-      this.sortEvery > 0
+      this.sortEvery > 0 || this.brain
         ? ([0, 1].map((i) => device.createBuffer({ size: Math.max(16, n * 4), usage: STORAGE(), label: `swarm-ids-${i}` })) as [GPUBuffer, GPUBuffer])
         : null;
     // species ids: one species (v4 makeSpeciesData returns zeros for NS = 1); no obstacles
@@ -286,6 +382,13 @@ export class Flock {
     device.queue.writeBuffer(this.obs, 0, new Float32Array(128));
 
     const P0 = { buffer: this.params, offset: 0, size: PARAM_BYTES };
+    const B0 = { buffer: this.params, offset: 0, size: BRAIN_BYTES };
+    if (this.orderReduce === "torus") {
+      this.torusParams = device.createBuffer({ size: 16, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "swarm-torus-params" });
+      this.torusCentre = device.createBuffer({ size: 16, usage: STORAGE(), label: "swarm-torus-centre" });
+      this.torusCirc = device.createBuffer({ size: this.groups * 16, usage: STORAGE(), label: "swarm-torus-circle" });
+      device.queue.writeBuffer(this.torusParams, 0, new Float32Array([this.halfW, this.halfH, 0, 0]));
+    }
     for (let c = 0; c < 2; c += 1) {
       const inB = this.boidBufs[c]!;
       const outB = this.boidBufs[1 - c]!;
@@ -329,6 +432,49 @@ export class Flock {
           ],
         }),
       );
+      if (this.brain && this.idBufs) {
+        const bcore: GPUBindGroupEntry[] = [
+          { binding: 0, resource: B0 },
+          { binding: 1, resource: { buffer: inB } },
+          { binding: 2, resource: { buffer: outB } },
+          { binding: 3, resource: { buffer: this.idBufs[c]! } },
+          { binding: 4, resource: { buffer: this.diag } },
+        ];
+        this.brainBruteBG.push(device.createBindGroup({ layout: kernels.brainBruteLayout, label: `swarm-brain-brute-${c}`, entries: bcore }));
+        this.brainSimBG.push(
+          device.createBindGroup({
+            layout: kernels.brainSimLayout,
+            label: `swarm-brain-sim-${c}`,
+            entries: [...bcore, { binding: 5, resource: { buffer: this.sort.cellStart } }, { binding: 6, resource: { buffer: this.sort.order } }],
+          }),
+        );
+        this.brainKeysBG.push(
+          device.createBindGroup({
+            layout: kernels.brainKeysLayout,
+            label: `swarm-brain-keys-${c}`,
+            entries: [
+              { binding: 0, resource: B0 },
+              { binding: 1, resource: { buffer: inB } },
+              { binding: 7, resource: { buffer: this.keys } },
+            ],
+          }),
+        );
+      }
+      if (this.torusParams && this.torusCentre && this.torusCirc) {
+        this.torusBG.push(
+          device.createBindGroup({
+            layout: kernels.torusLayout,
+            label: `swarm-torus-${c}`,
+            entries: [
+              { binding: 0, resource: { buffer: this.torusParams } },
+              { binding: 1, resource: { buffer: inB } },
+              { binding: 2, resource: { buffer: this.partials } },
+              { binding: 3, resource: { buffer: this.torusCentre } },
+              { binding: 4, resource: { buffer: this.torusCirc } },
+            ],
+          }),
+        );
+      }
       if (this.idBufs) {
         this.gatherBG.push(
           device.createBindGroup({
@@ -369,10 +515,11 @@ export class Flock {
   }
 
   /** Fresh flock from (seed, init mode) — v4 reseed: tick 0, saturation flag cleared. */
-  reseed(seed: number, mode: InitMode = this.initMode): void {
+  reseed(seed: number, mode: InitMode | M1Init = this.initMode): void {
     this.seed = seed;
     this.initMode = mode;
-    this.load(makeInitData(this.n, seed, this.halfW, this.halfH, this.rule.maxSpeed, mode));
+    const speed = this.brain ? this.brain.p.speed : this.rule.maxSpeed;
+    this.load(isM1Init(mode) ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode) : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode));
   }
 
   /** Load boids (6 f32 each) and restart the step count. */
@@ -389,13 +536,43 @@ export class Flock {
 
   setRule(r: RuleParams): void {
     this.rule = { ...r };
+    if (this.brain) return;
     const g = gridFor(this.halfW, this.halfH, r.rCoh);
     // a radius below the one the sort was sized for would need more buckets than it has
     this.grid = g.cols * g.rows <= this.sort.keyCount ? g : gridFor(this.halfW, this.halfH, r.rCoh, this.sort.keyCount);
   }
 
+  /** Change the M1 brain's parameters (and the grid, if the reach changed). */
+  setBrain(b: BrainParams): void {
+    if (!this.brain || b.kind !== this.brain.kind) throw new Error(`this flock runs ${this.brain?.kind ?? "reynolds"}, not ${b.kind}`);
+    this.brain = structuredClone(b);
+    const g = gridFor(this.halfW, this.halfH, reach(b));
+    this.grid = g.cols * g.rows <= this.sort.keyCount ? g : gridFor(this.halfW, this.halfH, reach(b), this.sort.keyCount);
+  }
+
   /** Write the Params slots for the next `steps` steps (step t uses frame seed (seed ^ t)). */
   private writeSlots(steps: number, pure: boolean): void {
+    if (this.brain) {
+      const ab = this.slots.buffer;
+      const f = this.fear;
+      for (let s = 0; s < steps; s += 1) {
+        writeBrainParams(ab, s * SLOT, {
+          brain: this.brain,
+          halfW: this.halfW,
+          halfH: this.halfH,
+          cols: this.grid.cols,
+          rows: this.grid.rows,
+          cellX: this.grid.cellX,
+          cellY: this.grid.cellY,
+          seed: this.seed,
+          step: this.tick + s,
+          n: this.n,
+          fear: pure || !f ? null : f,
+        });
+      }
+      this.device.queue.writeBuffer(this.params, 0, this.slots, 0, ((steps - 1) * SLOT) / 4 + BRAIN_BYTES / 4);
+      return;
+    }
     for (let s = 0; s < steps; s += 1) {
       writeParams(this.P, {
         rule: this.rule,
@@ -416,6 +593,22 @@ export class Flock {
   private encodeOne(pass: GPUComputePassEncoder, s: number): void {
     const off = [s * SLOT];
     const c = this.cur;
+    if (this.brain) {
+      const vic = this.brain.kind === "vicsek";
+      if (this.broadphase === "brute") {
+        if (this.n > BRUTE_MAX) throw new Error(`brute force is limited to ${BRUTE_MAX} agents`);
+        pass.setPipeline(vic ? this.k.vicsekBrute : this.k.couzinBrute);
+        pass.setBindGroup(0, this.brainBruteBG[c]!, off);
+        pass.dispatchWorkgroups(Math.ceil(this.n / 64));
+      } else {
+        this.encodeKeys(pass, s);
+        pass.setPipeline(vic ? this.k.vicsekSort : this.k.couzinSort);
+        pass.setBindGroup(0, this.brainSimBG[c]!, off);
+        pass.dispatchWorkgroups(Math.ceil(this.n / 256));
+      }
+      this.cur = 1 - c;
+      return;
+    }
     if (this.broadphase === "brute") {
       if (this.n > BRUTE_MAX) throw new Error(`brute force is limited to ${BRUTE_MAX} agents`);
       pass.setPipeline(this.k.brute);
@@ -433,13 +626,24 @@ export class Flock {
     this.cur = 1 - c;
   }
 
+  /** Cell keys for the current state, then the counting sort (Params slot `s` holds the grid). */
+  private encodeKeys(pass: GPUComputePassEncoder, s: number): void {
+    const c = this.cur;
+    if (this.brain) {
+      pass.setPipeline(this.k.brainKeys);
+      pass.setBindGroup(0, this.brainKeysBG[c]!, [s * SLOT]);
+    } else {
+      pass.setPipeline(this.k.cellKeys);
+      pass.setBindGroup(0, this.keysBG[c]!, [s * SLOT]);
+    }
+    pass.dispatchWorkgroups(Math.ceil(this.n / 256));
+    this.sort.encode(pass, this.keys);
+  }
+
   /** Move the current fish into cell order in memory (keys → sort → gather), using Params slot `s`. */
   private encodeReorder(pass: GPUComputePassEncoder, s: number): void {
     const c = this.cur;
-    pass.setPipeline(this.k.cellKeys);
-    pass.setBindGroup(0, this.keysBG[c]!, [s * SLOT]);
-    pass.dispatchWorkgroups(Math.ceil(this.n / 256));
-    this.sort.encode(pass, this.keys);
+    this.encodeKeys(pass, s);
     pass.setPipeline(this.k.gather);
     pass.setBindGroup(0, this.gatherBG[c]!);
     pass.dispatchWorkgroups(Math.ceil(this.n / 256));
@@ -466,6 +670,18 @@ export class Flock {
 
   /** Record the exact order-parameter reduction of the current state (v4 encodeCurrentComReduction). */
   encodeReduce(enc: GPUCommandEncoder, timestampWrites?: GPUComputePassTimestampWrites): void {
+    if (this.orderReduce === "torus") {
+      const tp = enc.beginComputePass({ label: "swarm-torus-reduce", timestampWrites });
+      tp.setBindGroup(0, this.torusBG[this.cur]!);
+      tp.setPipeline(this.k.circleSums);
+      tp.dispatchWorkgroups(this.groups);
+      tp.setPipeline(this.k.circleCentre);
+      tp.dispatchWorkgroups(1);
+      tp.setPipeline(this.k.aboutCentre);
+      tp.dispatchWorkgroups(this.groups);
+      tp.end();
+      return;
+    }
     const pass = enc.beginComputePass({ label: "swarm-reduce", timestampWrites });
     const bg = this.reduceBG[this.cur]!;
     pass.setBindGroup(0, bg);
@@ -572,10 +788,7 @@ export class Flock {
     this.writeSlots(1, true);
     const enc = this.device.createCommandEncoder({ label: "swarm-sort-snapshot" });
     const pass = enc.beginComputePass();
-    pass.setPipeline(this.k.cellKeys);
-    pass.setBindGroup(0, this.keysBG[this.cur]!, [0]);
-    pass.dispatchWorkgroups(Math.ceil(this.n / 256));
-    this.sort.encode(pass, this.keys);
+    this.encodeKeys(pass, 0);
     pass.end();
     this.device.queue.submit([enc.finish()]);
     const [keys, cellStart, order] = await Promise.all([
@@ -599,7 +812,7 @@ export class Flock {
     enc.copyBufferToBuffer(this.boids, 0, boids, 0, this.bytes);
     if (ids && this.ids) enc.copyBufferToBuffer(this.ids, 0, ids, 0, this.n * 4);
     this.device.queue.submit([enc.finish()]);
-    return { boids, ids, tick: this.tick, rule: { ...this.rule }, seed: this.seed };
+    return { boids, ids, tick: this.tick, rule: { ...this.rule }, brain: this.brain ? structuredClone(this.brain) : null, seed: this.seed };
   }
 
   restore(c: Checkpoint): void {
@@ -611,6 +824,7 @@ export class Flock {
     this.tick = c.tick;
     this.seed = c.seed;
     this.setRule(c.rule);
+    if (c.brain && this.brain) this.setBrain(c.brain);
   }
 
   release(c: Checkpoint): void {
@@ -626,6 +840,9 @@ export class Flock {
 
   destroy(): void {
     for (const b of [...this.boidBufs, ...(this.idBufs ?? []), this.vort, this.spec, this.diag, this.keys, this.params, this.obs, this.partials, this.rg]) b.destroy();
+    this.torusParams?.destroy();
+    this.torusCentre?.destroy();
+    this.torusCirc?.destroy();
     this.sort.destroy();
   }
 }

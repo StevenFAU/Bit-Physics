@@ -5,19 +5,30 @@
 // model's limits.
 
 import type { PassTiming } from "@bp/gpu";
-import { h, readout, sparkline } from "@bp/studio";
+import { h, plotPanel, readout, sparkline } from "@bp/studio";
+import type { SweepResult } from "./dial-controller.js";
+import { SWEEP } from "./dial-controller.js";
+import type { BrainParams } from "./model/brains.js";
 import type { OrderParams } from "./model/flock.js";
+import { METER } from "./model/meter.js";
 import type { RuleParams } from "./model/params.js";
+import { TUNSTROM } from "./regime.js";
 import type { SceneDef } from "./scenes.js";
+import { VICSEK_V0, vicsekRho } from "./scenes.js";
 
 export const REPO_BLOB = "https://github.com/StevenFAU/Bit-Physics/blob/main/";
 const REYNOLDS = "https://red3d.com/cwr/papers/1987/boids.html";
 const VICSEK = "https://doi.org/10.1103/PhysRevLett.75.1226";
-const TUNSTROM = "https://doi.org/10.1371/journal.pcbi.1002915";
+const TUNSTROM_URL = "https://doi.org/10.1371/journal.pcbi.1002915";
+const COUZIN_URL = "https://doi.org/10.1006/jtbi.2002.3065";
+const BAGLIETTO_URL = "https://doi.org/10.1098/rsfs.2012.0021";
+const CHATE_URL = "https://doi.org/10.1103/PhysRevE.77.046113";
 
 export interface LearnPane {
   setScene(scene: SceneDef, proofRun: boolean): void;
   setRule(r: RuleParams): void;
+  setBrain(b: BrainParams | null): void;
+  setSweep(r: SweepResult): void;
   pushOrder(o: OrderParams): void;
   setStats(rows: [string, string][]): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
@@ -50,7 +61,12 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   const ruleCells: Record<string, HTMLElement> = {};
   const rv = (k: string): HTMLElement => (ruleCells[k] = h("span", { class: "bp-mono" }, "—"));
   const src = (label: string, path: string): HTMLAnchorElement => h("a", { href: `${REPO_BLOB}${path}`, target: "_blank", rel: "noopener" }, label);
-  pane.append(
+  const link = (href: string, label: string): HTMLAnchorElement => h("a", { href, target: "_blank", rel: "noopener" }, label);
+  const bv = (k: string): HTMLElement => (brainCells[k] = h("span", { class: "bp-mono" }, "—"));
+  const brainCells: Record<string, HTMLElement> = {};
+  const reynoldsHow = h("div", {});
+  pane.append(reynoldsHow);
+  reynoldsHow.append(
     h("h2", {}, "How it works"),
     h(
       "p",
@@ -114,14 +130,127 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ),
   );
 
-  const phi = sparkline("Polarization φ", "", 120, 3);
-  const mill = sparkline("Milling m", "", 120, 3);
+  // ---- The Order Dial: the Vicsek model ----
+  const sweepPhi = plotPanel({ title: "Polarization ⟨φ⟩ against noise η (the last sweep)", xLabel: "η", yLabel: "⟨φ⟩", height: 130 });
+  const sweepChi = plotPanel({ title: "Susceptibility χ = N·Var(φ) against η", xLabel: "η", yLabel: "χ", yScale: "log", height: 130 });
+  const sweepNote = h("p", { class: "sw-note" }, "Press Sweep η under the map to measure the curve on this GPU.");
+  const vicsekHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "Every fish swims at the same speed and, each step, turns to the average heading of every fish within its reach r — itself included — " +
+        "then wobbles by a random angle. That is the whole rule: there is no attraction, no repulsion, no leader. With little noise the fish line up into one school " +
+        "crossing the whole ocean; with enough, order breaks and the headings scatter. In between lies a phase transition, like a magnet losing its magnetism when heated (",
+      link(VICSEK, "Vicsek et al. 1995"),
+      ").",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "The rule, step by step"),
+      h(
+        "ol",
+        {},
+        h("li", {}, "Look around: every fish within reach r = ", bv("vr"), " (ρ = ", bv("rho"), " fish per r², so π·ρ neighbours on average). The counting sort finds them exactly."),
+        h("li", {}, "Add up the unit headings of those fish and your own, as whole numbers of 2⁻²⁰ — the sum is the same in any order, so brute force and the sort agree bit for bit."),
+        h(
+          "li",
+          {},
+          "Turn to the summed heading, then by a random angle up to ±η·180° (η = ",
+          bv("eta"),
+          "). The draw is a hash of the seed, the step and the fish's own id, so re-sorting the fish in memory never changes a path.",
+        ),
+        h("li", {}, `Swim one step at v₀ = ${VICSEK_V0} r, and wrap around the edges.`),
+      ),
+      h(
+        "p",
+        { class: "sw-note" },
+        "Noise convention: Vicsek's η is the full width of the random turn, from 0 to 2π. Here η = 1 is that fully random turn, so Vicsek's value is 2π times the dial's: " +
+          "his η_c ≈ 2.9 at ρ = 0.4 (a few thousand particles, v₀ = 0.03 r) is 0.46 on the dial. This noise is angular — added to the heading after averaging. " +
+          "With vectorial noise, and in large systems, the transition is discontinuous, with travelling bands of order (",
+        link(CHATE_URL, "Chaté et al. 2008"),
+        "). A million fish is a large system.",
+      ),
+      h("p", {}, "The kernel: ", src("brains.ts", "packages/boids-2d/web/src/v2/model/brains.ts"), " · ", src("spec", "docs/planning/rebuild-v2/03-boids-2d.md")),
+    ),
+    h("h2", {}, "The phase map"),
+    h(
+      "p",
+      {},
+      `Every dot on the map is a measurement on the live ocean, never a value from a paper. After you move the dial or the crowding, the meter waits ${METER.relax} steps, ` +
+        `then averages the exact polarization φ over at least ${METER.window} steps (a rolling window of up to ${METER.maxWindow.toLocaleString()}). ` +
+        `A filled dot has settled — the window's two halves agree within ${METER.settleTol} in φ; a ring is still changing, as a school does near the transition or while it slowly re-orders. ` +
+        "The susceptibility χ = N·Var(φ) is the size of φ's fluctuations; it peaks at the transition, which is how the sweep locates η_c (",
+      link(BAGLIETTO_URL, "Baglietto, Albano & Candia 2012"),
+      ").",
+    ),
+    h(
+      "p",
+      { class: "sw-note" },
+      `The sweep starts from an ordered school and turns the dial from η ${SWEEP.etas[0]} to ${SWEEP.etas[SWEEP.etas.length - 1]} in steps of 0.05, holding each value until it settles (at least ${SWEEP.minSteps} steps, at most ${METER.maxWindow.toLocaleString()}), at ${SWEEP.speed}× speed.`,
+    ),
+    sweepPhi.el,
+    sweepChi.el,
+    sweepNote,
+  );
+  vicsekHow.hidden = true;
+  pane.append(vicsekHow);
+
+  // ---- The Mill: Couzin's zones ----
+  const couzinHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "Each fish lives in three rings. Inside the smallest it only moves away from whoever is too close. Otherwise it matches the heading of fish in the middle ring " +
+        "and swims towards fish in the outer one, ignoring anything in the blind spot behind it, and it can only turn so fast. " +
+        "With a narrow middle ring the school cannot agree on one direction, yet it holds together — so it circles an empty centre: a mill, or torus (",
+      link(COUZIN_URL, "Couzin et al. 2002"),
+      "). Widen the middle ring and the same school swims off as one.",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "The rule, step by step"),
+      h(
+        "ol",
+        {},
+        h("li", {}, "Repel: any fish closer than r_r = ", bv("rr"), " → steer straight away from them (and do nothing else this step)."),
+        h("li", {}, "Otherwise align with the fish out to r_o = ", bv("ro"), " and gather towards those out to r_a = ", bv("ra"), " (it spans the school), half of each."),
+        h("li", {}, "See only ", bv("fov"), " around you; behind is blind."),
+        h("li", {}, "Add a random twist (σ = ", bv("sig"), " rad), then turn towards the chosen heading by at most ", bv("turn"), " per step, and swim ", bv("sp"), " r_r."),
+        h("li", {}, "Flee the shark: inside its ring, fleeing outweighs the school, more the closer it is."),
+      ),
+      h("p", { class: "sw-note" }, "Every sum is a whole number (units of 2⁻¹⁶), so brute force and the sort agree bit for bit, and the noise is keyed by each fish's id."),
+      h("p", {}, "The kernel: ", src("brains.ts", "packages/boids-2d/web/src/v2/model/brains.ts")),
+    ),
+    h("h2", {}, "Naming the state"),
+    h(
+      "p",
+      {},
+      `The panel on the water names the school's state from two measured numbers, with Tunstrøm et al.'s own cutoffs (`,
+      link(TUNSTROM_URL, "Tunstrøm et al. 2013"),
+      `): polarization O_p = |Σ v̂| / N and rotation O_r = |Σ r̂ × v̂| / N about the school's centre. ` +
+        `Polarized: O_p > ${TUNSTROM.hi} and O_r < ${TUNSTROM.lo}. Milling: O_p < ${TUNSTROM.lo} and O_r > ${TUNSTROM.hi}. Swarm: both below ${TUNSTROM.lo}. Anything else is transitional. ` +
+        "The centre is the circular mean of the positions, so a school crossing the wrapped edge keeps its centre.",
+    ),
+  );
+  couzinHow.hidden = true;
+  pane.append(couzinHow);
+
+  const phi = sparkline("Polarization φ (O_p)", "", 120, 3);
+  const mill = sparkline("Rotation m (O_r)", "", 120, 3);
   const orderNote = h(
     "p",
     { class: "sw-note" },
     "φ = |Σ v̂| / N is 1 when every fish swims the same way and near 0 when headings are random. " +
-      "m = |Σ r̂ × v̂| / N measures rotation about the centre of mass (Tunstrøm et al. 2013's O_r). ",
-    h("a", { href: TUNSTROM, target: "_blank", rel: "noopener" }, "Tunstrøm et al. 2013"),
+      "m = |Σ r̂ × v̂| / N measures rotation about the centre of mass (Tunstrøm et al. 2013's O_r; on a whole ocean of schools it averages away). ",
+    h("a", { href: TUNSTROM_URL, target: "_blank", rel: "noopener" }, "Tunstrøm et al. 2013"),
     ". Both are exact integer sums over every fish, computed on the GPU.",
   );
   const stats = readout("The ocean");
@@ -132,11 +261,35 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   const perfNote = h("p", { class: "sw-note" }, "");
   pane.append(h("h2", {}, "Performance"), perf.el, h("h3", {}, "GPU time per pass"), passes.el, perfNote);
 
-  pane.append(
-    h("h2", {}, "Model limits"),
+  const limitsVicsek = h(
+    "ul",
+    { class: "sw-limits" },
+    h("li", {}, h("strong", {}, "Faithful: "), "Vicsek's rule as published (self included, constant speed, angular noise), with exact neighbours."),
     h(
-      "ul",
-      { class: "sw-limits" },
+      "li",
+      {},
+      h("strong", {}, "Measured, not converged: "),
+      "a million fish relax slowly near the transition; a dot that has not settled says so. η_c from a sweep depends on the system's size, the speed and the sweep's pace — compare it with Vicsek's 0.46 with that in mind.",
+    ),
+    h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser; across GPUs only the statistics compare."),
+  );
+  const limitsCouzin = h(
+    "ul",
+    { class: "sw-limits" },
+    h("li", {}, h("strong", {}, "Faithful: "), "Couzin et al. 2002's zones, blind angle, turn limit and Gaussian heading noise, in 2D."),
+    h(
+      "li",
+      {},
+      h("strong", {}, "Chosen: "),
+      "the attraction zone spans the school (Couzin explored up to 15 r_r with 100 fish; a bigger school needs a longer reach to stay one school), so every fish sees every other in front of it — the cost grows as N², which caps The Mill at a few thousand fish.",
+    ),
+    h("li", {}, h("strong", {}, "The shark "), "is a pointer-driven fear term, not a hunting agent."),
+  );
+  limitsVicsek.hidden = true;
+  limitsCouzin.hidden = true;
+  const limitsReynolds = h(
+    "ul",
+    { class: "sw-limits" },
       h("li", {}, h("strong", {}, "Faithful: "), "the v4 lab's gated kernel, step for step; metric neighbours, found exactly; every frame is real solver steps."),
       h(
         "li",
@@ -153,8 +306,8 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       ),
       h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser. Across GPUs only the statistics (φ, m) are comparable — the flock is chaotic."),
       h("li", {}, h("strong", {}, "Measured: "), "φ and m from exact integer sums; the in-page proofs in Prove."),
-    ),
   );
+  pane.append(h("h2", {}, "Model limits"), limitsReynolds, limitsVicsek, limitsCouzin);
 
   return {
     setScene(scene, proofRun) {
@@ -163,10 +316,54 @@ export function buildLearn(pane: HTMLElement): LearnPane {
           "Fish released at random headings over a wrapped ocean. Within seconds they gather into schools that wheel, merge and split. " +
           "Each bright mark is one fish; where they crowd, their light adds up. Move the pointer into the water: you are the shark.",
         proof: "The 4,096-fish run the in-page GPU proofs replay: seed 42, the scene's rule, no shark.",
+        "order-dial":
+          "The whole ocean is one school: every fish heading the same way, each following only its nearest neighbours. The dial is the noise in each fish's turn. " +
+          "Turn it towards panic and the order melts into a swarm; turn it back and the school slowly re-forms. Every setting you hold becomes a measured dot on the map.",
+        mill:
+          "One school, circling an empty centre: every fish follows the fish ahead of it and stays close to the school, but none agrees on a direction — so they go round. " +
+          "Push it with the shark and it may break into a polarized school that swims away, or settle back into a mill.",
       };
       seeing.textContent = `${what[scene.id] ?? scene.prompt}${proofRun ? " This is the proofs' run." : ""}`;
+      const kind = scene.id === "order-dial" ? "vicsek" : scene.id === "mill" ? "couzin" : "reynolds";
+      reynoldsHow.hidden = kind !== "reynolds";
+      vicsekHow.hidden = kind !== "vicsek";
+      couzinHow.hidden = kind !== "couzin";
+      limitsReynolds.hidden = kind !== "reynolds";
+      limitsVicsek.hidden = kind !== "vicsek";
+      limitsCouzin.hidden = kind !== "couzin";
+      mill.el.hidden = kind === "vicsek";
       phi.clear();
       mill.clear();
+    },
+    setBrain(b) {
+      if (!b) return;
+      if (b.kind === "vicsek") {
+        brainCells["vr"]!.textContent = b.p.r.toFixed(4);
+        brainCells["rho"]!.textContent = vicsekRho(b.p.r).toFixed(2);
+        brainCells["eta"]!.textContent = b.p.eta.toFixed(2);
+      } else {
+        brainCells["rr"]!.textContent = b.p.rr.toFixed(1);
+        brainCells["ro"]!.textContent = b.p.ro.toFixed(2);
+        brainCells["ra"]!.textContent = b.p.ra.toFixed(0);
+        brainCells["fov"]!.textContent = `${b.p.fovDeg}°`;
+        brainCells["turn"]!.textContent = `${((b.p.maxTurn * 180) / Math.PI).toFixed(1)}°`;
+        brainCells["sig"]!.textContent = b.p.sigma.toFixed(2);
+        brainCells["sp"]!.textContent = b.p.speed.toFixed(2);
+      }
+    },
+    setSweep(r) {
+      const x = r.points.map((p) => p.eta);
+      sweepPhi.set([
+        { x, y: r.points.map((p) => p.phi), style: "dots", label: "measured" },
+        { x, y: r.points.map((p) => p.phi) },
+      ]);
+      sweepChi.set([{ x, y: r.points.map((p) => Math.max(p.chi, 1e-6)) }], r.etaC !== null ? [{ x: r.etaC, label: `η_c ${r.etaC.toFixed(2)}` }] : []);
+      const unsettled = r.points.filter((p) => !p.settled).length;
+      sweepNote.textContent =
+        `Measured on this GPU: ${r.n.toLocaleString()} fish at ρ ${r.rho}, ${r.points.length} settings` +
+        (r.etaC !== null ? `; the χ peak puts η_c at ${r.etaC.toFixed(2)} (Vicsek's η ${(2 * Math.PI * r.etaC).toFixed(2)})` : "") +
+        (unsettled ? `; ${unsettled} setting${unsettled > 1 ? "s" : ""} had not settled within ${METER.maxWindow.toLocaleString()} steps` : "") +
+        (r.complete ? "." : " (stopped early).");
     },
     setRule(r) {
       ruleCells["r"]!.textContent = r.rCoh.toFixed(3);

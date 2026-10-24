@@ -21,15 +21,18 @@ import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
 import { App, BLOOM, SHARK_RADIUS_R } from "./app.js";
 import type { SceneOptions } from "./app.js";
+import { DialController } from "./dial-controller.js";
 import { buildLearn } from "./learn.js";
+import type { BrainParams } from "./model/brains.js";
 import { FlockKernels } from "./model/flock.js";
 import type { RuleParams } from "./model/params.js";
 import { buildCanonicalCapture } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
 import type { FishColour } from "./render/ocean-view.js";
 import { DEFAULT_LOOK, OceanView } from "./render/ocean-view.js";
+import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
-import { SCENES, sceneById } from "./scenes.js";
+import { DIAL_ETA, DIAL_RHO, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho } from "./scenes.js";
 import { buildTune } from "./tune.js";
 
 const SIM_NAME = "Swarm";
@@ -45,7 +48,15 @@ const url = new UrlState(
     wc: { kind: "num", def: -1, min: -1, max: 3, digits: 3 },
     r: { kind: "num", def: -1, min: -1, max: 0.18, digits: 4 },
     vmax: { kind: "num", def: -1, min: -1, max: 0.013, digits: 5 },
-    eta: { kind: "num", def: -1, min: -1, max: 0.6, digits: 3 },
+    // panic: the Reynolds rule's noise, or The Order Dial's Vicsek η
+    eta: { kind: "num", def: -1, min: -1, max: 1, digits: 3 },
+    // The Order Dial's crowding ρ (fish per r²)
+    rho: { kind: "num", def: -1, min: -1, max: RHO_RANGE[1], digits: 3 },
+    // The Mill's Couzin zones: Δr_o, field of view (°), turn per step (°), noise σ (rad)
+    dro: { kind: "num", def: -1, min: -1, max: 8, digits: 2 },
+    fov: { kind: "num", def: -1, min: -1, max: 360, digits: 0 },
+    turn: { kind: "num", def: -1, min: -1, max: 12, digits: 1 },
+    sig: { kind: "num", def: -1, min: -1, max: 0.4, digits: 2 },
     sp: { kind: "num", def: 1, min: 0.25, max: 8 },
     shark: { kind: "num", def: SHARK_RADIUS_R, min: 4, max: 40, digits: 0 },
     col: { kind: "enum", def: "silver", values: ["silver", "heading"] },
@@ -126,6 +137,18 @@ async function boot(): Promise<void> {
     const r = app.flock.rule;
     const d = app.scene.rule;
     const or = (v: number, def: number): number => (v === def ? -1 : v);
+    const b = app.flock.brain;
+    const bd = app.scene.brain?.(app.flock.n);
+    const brainKeys: Partial<typeof parsed> = {};
+    if (b?.kind === "vicsek" && bd?.kind === "vicsek") {
+      brainKeys.eta = or(Number(b.p.eta.toFixed(3)), Number(bd.p.eta.toFixed(3)));
+      brainKeys.rho = or(Number(vicsekRho(b.p.r).toFixed(3)), Number(vicsekRho(bd.p.r).toFixed(3)));
+    } else if (b?.kind === "couzin" && bd?.kind === "couzin") {
+      brainKeys.dro = or(Number((b.p.ro - b.p.rr).toFixed(2)), Number((bd.p.ro - bd.p.rr).toFixed(2)));
+      brainKeys.fov = or(b.p.fovDeg, bd.p.fovDeg);
+      brainKeys.turn = or(Number(((b.p.maxTurn * 180) / Math.PI).toFixed(1)), Number(((bd.p.maxTurn * 180) / Math.PI).toFixed(1)));
+      brainKeys.sig = or(Number(b.p.sigma.toFixed(2)), Number(bd.p.sigma.toFixed(2)));
+    }
     return {
       s: app.scene.id,
       seed: app.seed,
@@ -135,6 +158,7 @@ async function boot(): Promise<void> {
       r: or(r.rCoh, d.rCoh),
       vmax: or(r.maxSpeed, d.maxSpeed),
       eta: or(r.noise, d.noise),
+      ...brainKeys,
       sp: app.clock.speed,
       shark: app.sharkSize,
       col: view.look.colour,
@@ -154,6 +178,7 @@ async function boot(): Promise<void> {
     studio.tune.body,
     {
       rule: (r, phase) => app.setRule(r, phase),
+      brain: (b, phase) => app.setBrain(b, phase),
       reset: () => {
         app.resetRule();
         syncTune();
@@ -162,11 +187,28 @@ async function boot(): Promise<void> {
     },
     app.scene.rule,
   );
-  studio.tune.setNote("The rule is the v4 lab's Reynolds flock. Every value keeps the kernel's exactness: same seed, same GPU, same bytes.");
-  const syncTune = (): void => tune.sync(app.flock.rule, view.look.colour);
+  const syncTune = (): void => {
+    tune.sync(app.flock.rule, app.flock.brain, view.look.colour);
+    const b = app.flock.brain;
+    studio.tune.setNote(
+      !b
+        ? "The rule is the v4 lab's Reynolds flock. Every value keeps the kernel's exactness: same seed, same GPU, same bytes."
+        : b.kind === "couzin"
+          ? "Couzin et al. 2002's zones: repel inside r_r, align out to r_o, gather across the school. Same seed, same GPU, same bytes."
+          : "The Vicsek model (Vicsek et al. 1995). Same seed, same GPU, same bytes.",
+    );
+  };
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
+
+  // ------------------------------------------- The Order Dial, The Mill --
+  const dial = new DialController(app, studio.stage);
+  dial.onSweep = (r) => {
+    learn.setSweep(r);
+    app.writeUrl();
+  };
+  const regime = new RegimePanel();
 
   // ------------------------------------------------------------- Prove --
   const prove = buildProve(studio.drawer.prove, {
@@ -296,6 +338,12 @@ async function boot(): Promise<void> {
   app.hooks = {
     onSceneChange: (scene) => {
       learn.setScene(scene, app.onProofRun);
+      dial.attach(scene.id === "order-dial");
+      if (scene.id === "mill") {
+        if (!regime.el.isConnected) studio.stage.append(regime.el);
+        regime.clear();
+      } else regime.el.remove();
+      dial.sync();
       syncTune();
       syncProve();
     },
@@ -304,9 +352,19 @@ async function boot(): Promise<void> {
       syncTune();
       syncProve();
     },
+    onBrain: (b) => {
+      learn.setBrain(b);
+      syncTune();
+    },
+    onRestore: () => {
+      dial.sync();
+      regime.clear();
+    },
     onEdited: () => syncProve(),
-    onOrder: (o) => {
+    onOrder: (o, tick) => {
       if (app.learnOpen) learn.pushOrder(o);
+      if (app.scene.id === "order-dial") dial.onOrder(o, tick);
+      else if (app.scene.id === "mill") regime.push(o.phi, o.mill);
     },
   };
 
@@ -347,10 +405,11 @@ async function boot(): Promise<void> {
       profiler.source,
     );
     const area = f.halfW * f.halfH * 4;
+    const reachR = f.brain ? (f.brain.kind === "vicsek" ? f.brain.p.r : f.brain.p.ra) : f.rule.rCoh;
     learn.setStats([
       ["Ocean", `${(f.halfW * 2).toFixed(1)} × ${(f.halfH * 2).toFixed(1)} (wraps at the edges)`],
-      ["Fish per unit²", (f.n / area).toFixed(0)],
-      ["Neighbours within r, if spread evenly", ((f.n / area) * Math.PI * f.rule.rCoh * f.rule.rCoh).toFixed(1)],
+      ["Fish per unit²", (f.n / area).toFixed(f.n / area < 10 ? 3 : 0)],
+      [f.brain?.kind === "couzin" ? "Fish within the attraction zone, if spread evenly" : "Neighbours within r, if spread evenly", ((f.n / area) * Math.PI * reachR * reachR).toFixed(1)],
       ["Grid", `${f.grid.cols} × ${f.grid.rows} cells`],
       ["Steps", f.tick.toLocaleString()],
     ]);
@@ -373,9 +432,27 @@ async function boot(): Promise<void> {
   app.sharkSize = parsed.shark;
   view.look = { ...view.look, colour: parsed.col as FishColour };
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // an M1 brain from the link (each value −1 = the scene's)
+  let brain: BrainParams | undefined;
+  if (scene.id === "order-dial") {
+    brain = { kind: "vicsek", p: vicsekFor(pick(parsed.rho, DIAL_RHO), pick(parsed.eta, DIAL_ETA)) };
+  } else if (scene.id === "mill") {
+    const p = couzinFor(sceneCount(scene, tier));
+    brain = {
+      kind: "couzin",
+      p: {
+        ...p,
+        ro: parsed.dro >= 0 ? p.rr + parsed.dro : p.ro,
+        fovDeg: pick(parsed.fov, p.fovDeg),
+        maxTurn: parsed.turn >= 0 ? (parsed.turn * Math.PI) / 180 : p.maxTurn,
+        sigma: pick(parsed.sig, p.sigma),
+      },
+    };
+  }
   const opts: SceneOptions = {
     seed: parsed.seed,
-    rule,
+    rule: scene.brain ? scene.rule : rule,
+    brain,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };
   await app.loadScene(scene.id, opts);
@@ -403,7 +480,11 @@ async function boot(): Promise<void> {
     adapter: gpu.adapterId,
     grid: [app.flock.grid.cols, app.flock.grid.rows],
     order: app.order,
+    brain: app.flock.brain,
+    regime: app.scene.id === "mill" ? regime.regime : null,
+    dial: app.scene.id === "order-dial" ? { eta: dial.eta, rho: dial.rho, last: dial.last, sweeping: dial.sweeping, points: dial.panel.measurements.length } : null,
   });
+  (globalThis as { __swarmDial?: DialController }).__swarmDial = dial;
   (globalThis as { __swarm?: App }).__swarm = app;
   (globalThis as { __swarmProve?: typeof prove }).__swarmProve = prove;
   markReady();
