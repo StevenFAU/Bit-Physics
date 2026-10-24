@@ -3,6 +3,106 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/physarum/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. Unmeasured targets.
 >
+> **Implementation status (2026-10-24): M2 built** on the same `v2/` page. Measured on the RX 6800 XT
+> (Chromium + Dawn/Vulkan). `pipeline.py validate` passes on both pages, run twice
+> (byte-identical; mass 22499.9962).
+>
+> - **Connect the Cities.** A stylised Kantō plain after Tero et al. 2010 (`src/v2/cities.ts`):
+>   - 30 real cities at approximate positions, and a coarse coastline polygon whose sea is wall;
+>   - a colony grows out of Tokyo;
+>   - Food adds and removes cities, and "Remove all food" leaves an empty map for your own.
+>
+>   This is not Tero's 36-city layout, and the card says so.
+> - **The Maze** (after Nakagaki, Yamada & Tóth 2000; `src/v2/maze.ts`).
+>   - The layout is a seeded 4-row maze with extra openings, kept only if its shortest route is
+>     unique and another route is at most 1.6× longer.
+>   - Food sits at the entrance and at the exit.
+>   - The Wall tool builds or clears walls (undoable strokes).
+>   - The scene plays at 4×.
+>   - Its prompt asks rather than promises (see the findings below).
+> - **Model additions, behind flags the gated scene leaves off:**
+>   - *Walls* (bit 3). Seeds avoid them; agents cannot step into a wall but can walk out of one
+>     drawn over them. The render shows walls as matte dark relief.
+>   - *Hunger* (bit 6, maze only). An agent counts its steps since it was last on or beside food,
+>     stored in its heading's length, so no extra buffer is needed and the re-sort carries it.
+>     Past 5× the shortest route's length, in its own steps, it goes back to a random food source
+>     and deposits there. The population and the mass balance are unchanged. The limit is
+>     re-measured through the walls after every edit, as part of applying it, so replay matches.
+> - **Network extraction** (`src/v2/model/graph.ts`), the score's foundation:
+>   1. Cells above 0.5× the dish's measured mean trail count as tube.
+>   2. Zhang–Suen thinning.
+>   3. A graph built on m-adjacency, so diagonal staircases are not read as junctions.
+>   4. Links shorter than 12 cells are contracted into their junctions (thinning's small triangles
+>      would otherwise count as fault-tolerant loops), and dead ends that are not food are pruned.
+>   5. Lengths are measured along each line resampled every 3 cells.
+>
+>   On synthetic networks (a Y, a triangle, a spur), the measured lengths are within 3% of the true
+>   ones. The extracted graph is drawn over the dish so the score can be checked.
+> - **The planner** (`src/v2/model/netopt.ts`):
+>   - the exact Euclidean MST (Prim);
+>   - a Steiner heuristic: MST, then Fermat-point insertion, then Weiszfeld relaxation. It finds the
+>     known optima for a triangle (√3) and a unit square (1 + √3), is never above the MST and never
+>     below √3/2 of it. On the Kantō cities it is 0.968× the MST. It is labelled a heuristic,
+>     never optimal.
+> - **The score card** shows Tero's three measures, each normalised by the MST on the same cities:
+>   length (TL), mean shortest distance between cities (MD), and the share of single links whose
+>   failure cuts a city off. Beside them it shows the published values, checked against the
+>   paper: Physarum TL 1.75 ± 0.30, MD 0.85 ± 0.04, cut 14 ± 4% illuminated and 20 ± 13%
+>   unconstrained; the rail ≈ 1.8, 0.85 and 4%.
+>   - A "beats the planner" sentence appears only when this run measured it.
+>   - Scoring runs every ~2 s in a worker: 70–150 ms of CPU at T3, extracted on a 2× block grid.
+>   - Overlays: the measured network (white), the MST (green, dashed), the Steiner tree (pink,
+>     dotted) and the maze's shortest path through the walls (green, dashed).
+> - **Measured — Connect the Cities.**
+>   - **T3, 5 seeds:** all 30 cities joined at 3,000, 6,000 and 12,000 steps. TL_MST 1.62–2.06
+>     (means 1.95, 1.92, 1.81); MD_MST 0.78–1.12 (means 0.81, 0.82, 0.89); cut share 2–13%. The
+>     mould beats the MST on distance and resilience at 1.6–2.1× its length, as Physarum does.
+>   - **T2:** 26–30 cities joined; TL_MST 1.27–1.77; MD_MST 0.85–0.88 when all cities are joined;
+>     cut share 9–26%.
+>   - **T1:** 20–27 cities joined, the same with finer personalities. The T1 arena is ~200 cells
+>     across, too small for 30 cities at the declared density (a limit, not a tuning gap).
+>   - Mass exact with walls and growth: rel 1e-7.
+> - **Measured — The Maze.**
+>   - **T3, 6 seeds:** at 16,000, 20,000 and 24,000 steps the food is joined in 18/18 checks, 17 of
+>     them on the shortest route. The route is 0.99–1.26× the geodesic shortest path; the tube left
+>     elsewhere is 1.3–2.8× the route.
+>   - **T2:** joined in 4–5 of 6 seeds, always along the shortest route when joined (13/13).
+>   - **T1:** joined in 2–3 of 6.
+>   - A wall across the route lengthens the shortest path (3,346 → 3,567 cells), and undo restores
+>     it.
+> - **Checks.**
+>   - `v2-acceptance.mjs` 67/67. New for M2: scenes, scores in the measured bands, the overlay,
+>     the Wall tool and its undo, mass with walls and hunger, the score card's fit and axe at 1440
+>     and 390 px.
+>   - `check-studio` clean; 127 unit tests (20 new); integrity 0 HARD_FAIL.
+> - **Performance (60 fps at 2M agents).** Cities' solver costs ~27% more per frame than the M0
+>   path (walls, growth, food). The maze at 4× runs 478 steps/s at ~9.7 ms of GPU per frame.
+>
+> **M2 findings (corrections to this spec):**
+>
+> - **No food scent in Connect the Cities.** Thirty summed scents make one pull toward the middle
+>   of the map. With it, the network collapsed onto the central cluster: about 12 of 30 cities
+>   still on the network after 6,000 steps (counted by eye, before scoring existed). Without it,
+>   all 30 (scored).
+> - **Jones's agents do not retract from dead ends.** Loops of agents sustain themselves, so a
+>   filled maze kept every corridor. Two fixes were tried and failed:
+>   - shrinking the population uniformly (random retirement down to 5%, in the spirit of Jones &
+>     Adamatzky's "shrinking blob") thinned every tube alike;
+>   - retiring hungry agents starved the middle of the route itself.
+>
+>   Returning hungry agents to food works. The limit matters: at 3× the route, the route broke in
+>   half the seeds by 16,000 steps; at 5× it held in all six.
+> - **Maze corridors must be narrow against the network's mesh.** In a 5-row maze with 30% walls,
+>   the cells acted as open rooms and the network meshed inside them. The maze is now 4 rows with
+>   walls at 55% of the pitch.
+> - **Extraction threshold 0.5× the mean, not 1×.** At 1× the faint middle of a long maze route
+>   dropped out (joined in 10 of 16 checks against 16 of 16). Between 1× and 0.5×, Cities' TL
+>   rises 0–13% (fainter tubes count), MD moves by at most 0.02 and the cut share by at most
+>   2 points.
+> - **The maze's prompt is a question.** "It will find the shortest path" holds at T3 (17 of 18
+>   checks) but not on smaller tiers, so it now reads "Will it find the shortest path? Block it
+>   and see." Each run's card says whether it did.
+>
 > **Implementation status (2026-10-24): M1 built** on the same `v2/` page. Measured on the RX 6800 XT
 > (Chromium + Dawn/Vulkan); `pipeline.py validate` still passes on both pages, run twice
 > (byte-identical, total mass 22499.9962, rel 1.7e-7).
@@ -170,8 +270,8 @@
 >   same runs later held 60 fps, and the Turing Patterns v2 page read the same 18 fps at the same
 >   time. Treat a low fps with low GPU time as contention on a shared GPU, not as the page's cost.
 >
-> Not yet (after M1): walls, network extraction and scoring (M2); morphology regression tests,
-> multi-species channels, posters and loops (M3).
+> Not yet (after M2): morphology regression tests, multi-species channels (Territories), posters
+> and loops (M3); the Cosmic Web (M4).
 
 ## Verdict on the prototype
 

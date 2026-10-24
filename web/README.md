@@ -50,7 +50,8 @@ live-solver ≡ gated-kernel check, every scene) is `packages/reaction-diffusion
 Slime Mould's (agent count and density, counting sort ≡ CPU reference, live ≡ gated bytes,
 mass at full scale, in-page gate, history, seeds across page loads; the M1 scenes, the
 personality pad against its calibration, growth, food, undo by replay, the light, the
-director, the open Tune popover under axe; bench) is
+director, the open Tune popover under axe; M2's Connect the Cities and The Maze scored in
+their measured bands, the Wall tool and its undo, the score card's fit and axe; bench) is
 `packages/physarum/web/v2-acceptance.mjs`; Grow's (the dish at step 1000 ≡ the committed canonical frame,
 live solver ≡ gate path as a sliced job, in-page gate and its fail probe, undo by replay, history,
 seeds across page loads, the director, bench) is `packages/neural-ca/web/v2-acceptance.mjs`.

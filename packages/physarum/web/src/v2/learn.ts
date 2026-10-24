@@ -120,7 +120,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       h(
         "p",
         {},
-        "Walls (Connect the Cities' sea, the maze) are cells an agent cannot step into; it turns back. In the maze, an agent that has gone three times the shortest route's length " +
+        "Walls (Connect the Cities' sea, the maze) are cells an agent cannot step into; it turns back. In the maze, an agent that has gone five times the shortest route's length " +
           "without being on or beside food is taken back to a food source — a stand-in for the organism withdrawing from where it found nothing. Without it, Jones's agents keep " +
           "every corridor's tube alive: loops sustain themselves (measured). Every agent still deposits once a step, so the mass balance is unchanged.",
       ),

@@ -167,7 +167,7 @@ export const SCENES: readonly SceneDef[] = [
   {
     id: "maze",
     title: "The Maze",
-    prompt: "It will find the shortest path. Block it.",
+    prompt: "Will it find the shortest path? Block it and see.",
     listed: true,
     kind: "live",
     personality: PAD_CENTRE,
@@ -183,7 +183,8 @@ export const SCENES: readonly SceneDef[] = [
     tools: ["pan", "wall", "probe"],
     tool: "wall",
     score: "maze",
-    hungerPerRoute: 3,
+    // measured at T3, 6 seeds: 3× broke the route in half the seeds by 16,000 steps; 5× held it in all
+    hungerPerRoute: 5,
     // dead ends empty in ~6,000–8,000 steps: about a minute at 1×
     speed: 4,
   },

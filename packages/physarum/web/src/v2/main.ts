@@ -56,7 +56,8 @@ const url = new UrlState(
     lm: { kind: "num", def: -1, min: -1, max: 8, digits: 3 },
     dep: { kind: "num", def: -1, min: -1, max: 50, digits: 2 },
     a: { kind: "num", def: -1, min: -1, max: 0.9, digits: 4 },
-    sp: { kind: "num", def: 1, min: 0.25, max: 8 },
+    // speed, written only where it differs from the scene's own (−1 = the scene's)
+    sp: { kind: "num", def: -1, min: -1, max: 8 },
     pal: { kind: "enum", def: "auto", values: ["auto", ...Object.keys(PALETTES)] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
   },
@@ -150,7 +151,7 @@ async function boot(): Promise<void> {
       lm: or(p.L_move, d.L_move),
       dep: or(p.deposit, d.deposit),
       a: or(p.decay_alpha, d.decay_alpha),
-      sp: app.clock.speed,
+      sp: app.clock.speed === (app.scene.speed ?? 1) ? -1 : app.clock.speed,
       pal: app.palette === app.scene.palette ? "auto" : app.palette,
       cam: [app.camera.cx / app.sim.w, app.camera.cy / app.sim.h, app.camera.pxPerUnit / app.camera.coverZoom()].map((v) => Number(v.toFixed(4))),
     };
@@ -417,7 +418,8 @@ async function boot(): Promise<void> {
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };
   await app.loadScene(scene.id, opts);
-  app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp === 1 ? (scene.speed ?? 1) : parsed.sp);
+  const sceneSpeed = scene.speed ?? 1;
+  app.setSpeed(parsed.sp > 0 ? Math.max(0.25, parsed.sp) : reduced ? sceneSpeed * 0.5 : sceneSpeed);
   syncTune();
   studio.veil.done();
   app.start();

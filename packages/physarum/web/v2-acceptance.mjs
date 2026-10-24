@@ -502,14 +502,14 @@ const hashAfter = (page, n) =>
     await app.loadScene("maze", { seed: 1 });
     app.clock.paused = true;
     const boot = { food: app.sim.envSpec.food.length, walls: !!app.sim.envSpec.walls, hunger: app.sim.hungerMax, speed };
-    await app.advance(10000);
+    await app.advance(16000);
     const s = await globalThis.__physarumChecks.score();
     const mass = await app.liveMass();
     return { boot, s, rel: Math.abs(mass.mass - mass.predicted) / mass.predicted };
   });
   check("The Maze: two food sources, walls, hunger set from the route, plays at 4×", m.boot.food === 2 && m.boot.walls && m.boot.hunger > 1000 && m.boot.speed === 4, JSON.stringify(m.boot));
   check(
-    "The Maze at step 10,000: the food joined along the shortest route (≤ 1.3× its length)",
+    "The Maze at step 16,000: the food joined along the shortest route (≤ 1.3× its length)",
     Number.isFinite(m.s.along) && m.s.onShortest && m.s.along / m.s.shortest < 1.3,
     `route ${(m.s.along / m.s.shortest).toFixed(2)}× the shortest path, on it: ${m.s.onShortest}, tube elsewhere ${m.s.extra.toFixed(2)}× the route`,
   );
