@@ -21,8 +21,11 @@ import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusiv
 import { App, BLOOM, SORT_EVERY } from "./app.js";
 import type { SceneOptions } from "./app.js";
 import { buildLearn } from "./learn.js";
-import { LiveKernels } from "./model/sim.js";
-import { DENSITY } from "./model/grid.js";
+import type { SeedSpec } from "./model/sim.js";
+import { LiveKernels, LiveSim } from "./model/sim.js";
+import { AGENTS, DENSITY, gridFor } from "./model/grid.js";
+import { downsample, morphology } from "./model/morphology.js";
+import type { Tier } from "@bp/gpu";
 import type { JonesParams } from "./proof/gate.js";
 import { PARAMS, createGateRunner } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
@@ -32,6 +35,7 @@ import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
+import { PAD_JITTER, PAD_N, padParams } from "./pad.js";
 
 const SIM_NAME = "Slime Mould";
 const SCENE_IDS = SCENES.map((s) => s.id);
@@ -393,6 +397,7 @@ async function boot(): Promise<void> {
     sortEvery: app.sim.sortEvery,
   });
   (globalThis as { __physarum?: App }).__physarum = app;
+  (globalThis as { __physarumPad?: unknown }).__physarumPad = { padParams, PAD_N, PAD_JITTER };
   (globalThis as { __physarumProve?: typeof prove }).__physarumProve = prove;
   (globalThis as { __physarumChecks?: unknown }).__physarumChecks = {
     /** The counting sort on the live agents against the CPU reference. */
@@ -403,6 +408,45 @@ async function boot(): Promise<void> {
     liveVsGated: () => prove.runLiveVsGated(),
     liveMass: () => prove.runLiveMass(),
     gate: () => gate.runTwiceAndAgree(),
+    /**
+     * Calibration survey (personality pad): a fresh dish at a tier's agent
+     * count and density, seeded, run to each step in `at`, with the trail's
+     * morphology and a small log-scaled thumbnail at each.
+     */
+    morph: async (o: { params: JonesParams; seed: number; at: number[]; tier?: Tier; aspect?: [number, number]; seedSpec?: Partial<SeedSpec>; threshold?: number; jitter?: number | null }) => {
+      const tierN = AGENTS[o.tier ?? app.tier];
+      const [vw, vh] = o.aspect ?? [16, 9];
+      const grid = gridFor(tierN, vw * 100, vh * 100);
+      const sim = new LiveSim(device, kernels, { ...grid, params: o.params, longRun: true, sortEvery: SORT_EVERY });
+      if (o.jitter !== undefined) sim.setTurning(o.jitter);
+      sim.seed({ mode: 0, seed: o.seed, ...o.seedSpec });
+      const out: unknown[] = [];
+      const t0 = performance.now();
+      try {
+        for (const target of o.at) {
+          while (sim.tick < target) {
+            const enc = device.createCommandEncoder();
+            sim.encodeSteps(enc, Math.min(64, target - sim.tick));
+            device.queue.submit([enc.finish()]);
+          }
+          const raw = await sim.readTrail();
+          const mean = sim.meanTrail;
+          const f = new Float32Array(raw.length);
+          for (let i = 0; i < raw.length; i += 1) f[i] = raw[i]! / mean;
+          const m = morphology(f, sim.w, sim.h, o.threshold ?? 1);
+          const step = Math.max(1, Math.round(sim.w / 340));
+          const th = downsample(f, sim.w, sim.h, step);
+          const px = new Uint8Array(th.field.length);
+          for (let i = 0; i < px.length; i += 1) px[i] = Math.min(255, Math.round((255 * Math.log2(1 + th.field[i]!)) / Math.log2(25)));
+          let bin = "";
+          for (let i = 0; i < px.length; i += 1) bin += String.fromCharCode(px[i]!);
+          out.push({ step: sim.tick, ...m, thumb: { w: th.w, h: th.h, b64: btoa(bin) } });
+        }
+      } finally {
+        sim.destroy();
+      }
+      return { grid: [grid.w, grid.h], n: tierN, seconds: (performance.now() - t0) / 1000, at: out };
+    },
   };
   markReady();
 

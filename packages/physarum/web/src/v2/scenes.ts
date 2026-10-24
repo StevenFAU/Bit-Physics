@@ -17,12 +17,13 @@
 //     lattice-aligned jets escape). Pulling a colony outward needs food —
 //     First Light's crumbs in M1.
 
-import type { SeedSpec } from "./model/sim.js";
+import type { EnvSpec, SeedSpec, Spot } from "./model/sim.js";
+import { hash3, unit } from "@bp/runtime";
 import type { JonesParams } from "./proof/gate.js";
 import { PARAMS } from "./proof/gate.js";
 import type { PaletteId } from "./render/look.js";
 
-export type SceneId = "network" | "table1" | "gated";
+export type SceneId = "first-light" | "network" | "table1" | "gated";
 
 export interface SceneDef {
   id: SceneId;
@@ -41,9 +42,49 @@ export interface SceneDef {
    * the agents again from the next seed.
    */
   director?: { everySteps: number };
+  /** The scene's environment on a w × h dish (food, lights, walls). */
+  env?: (w: number, h: number, seed: number) => EnvSpec;
+}
+
+/** Twelve crumbs in two loose rings round the centre (dish-relative, so every tier gets the same layout). */
+export function firstLightFood(w: number, h: number, seed: number): Spot[] {
+  const m = Math.min(w, h);
+  const r = Math.max(3, m * 0.007);
+  const out: Spot[] = [];
+  const ring = (count: number, radius: number, phase: number, salt: number): void => {
+    for (let i = 0; i < count; i += 1) {
+      const j = unit(hash3(seed, salt, i));
+      const k = unit(hash3(seed, salt + 1, i));
+      const a = phase + (i / count) * Math.PI * 2 + (j - 0.5) * 0.5;
+      const rr = radius * (0.88 + 0.24 * k);
+      out.push({ x: w / 2 + Math.cos(a) * rr * m, y: h / 2 + Math.sin(a) * rr * m, r });
+    }
+  };
+  ring(5, 0.2, 0.3, 11);
+  ring(7, 0.4, 0.0, 13);
+  return out;
 }
 
 export const SCENES: readonly SceneDef[] = [
+  {
+    id: "first-light",
+    title: "First Light",
+    prompt: "It's hungry. Add food and watch it reroute.",
+    listed: true,
+    kind: "live",
+    params: { ...PARAMS, L_sense: 18 },
+    seed: (w, h, seed) => ({ mode: 3, seed, centre: [w / 2, h / 2], radius: Math.min(w, h) * 0.05, spread: 0.8, wake: 0.1 }),
+    env: (w, h, seed) => ({
+      food: firstLightFood(w, h, seed),
+      lights: [],
+      walls: null,
+      foodDeposit: 40,
+      scent: 4,
+      scentRange: Math.min(w, h) * 0.3,
+      light: 0,
+    }),
+    palette: "ember",
+  },
   {
     id: "network",
     title: "The network",

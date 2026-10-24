@@ -101,6 +101,7 @@ export class App {
   private sceneT0 = performance.now();
   /** Bumped by every loadScene; a load that is no longer the latest gives up. */
   private loadSeq = 0;
+  private foldT = 0;
   /** Scene director: fading out (+1) towards a re-scatter, or back in (−1). */
   private directing = 0;
   private fade = 1;
@@ -177,6 +178,7 @@ export class App {
       });
       if (packed) sim.load(packed);
       else sim.seed(scene.seed!(grid.w, grid.h, this.seed));
+      if (scene.env) sim.setEnv(scene.env(grid.w, grid.h, this.seed));
       this.sim = sim;
       old?.destroy();
       this.view.forgetBuffers();
@@ -414,6 +416,11 @@ export class App {
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
 
     this.direct(dt);
+    // a growing colony's mass prediction folds in its awake counts about once a second
+    if (this.sim.growing && this.sim.unfoldedSteps > 0 && now - this.foldT > 1000) {
+      this.foldT = now;
+      void this.sim.foldMass().catch(() => {});
+    }
     this.profiler?.begin();
     const n = this.history.comparing ? 0 : this.clock.due(dt);
     this.ticksEma += (n - this.ticksEma) * 0.1;
@@ -593,9 +600,10 @@ export class App {
   async liveMass(): Promise<LiveMass> {
     const sim = this.sim;
     const tick = sim.tick;
-    const predicted = sim.predictedMass;
     const equilibrium = sim.equilibriumMass;
-    const trail = await sim.readTrail();
+    // both readbacks are queued now, after the same steps
+    const [, trail] = await Promise.all([sim.foldMass(), sim.readTrail()]);
+    const predicted = sim.predictedMass;
     let mass = 0;
     for (let i = 0; i < trail.length; i += 1) mass += trail[i]!;
     return { mass, predicted, equilibrium, tick };

@@ -78,6 +78,12 @@ export class GlowView {
   private readonly mipLayout: GPUBindGroupLayout;
   private readonly lookLayout: GPUBindGroupLayout;
   private readonly sparkLayout: GPUBindGroupLayout;
+  private readonly markLayout: GPUBindGroupLayout;
+  private readonly markPipe: GPURenderPipeline;
+  private readonly markInfo: GPUBuffer;
+  private markBuf: GPUBuffer;
+  private markBG: GPUBindGroup;
+  private markCount = 0;
   private readonly sampler: GPUSampler;
   private readonly lookBuf: GPUBuffer;
   private readonly prepBufA: GPUBuffer;
@@ -131,6 +137,13 @@ export class GlowView {
         { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
       ],
     });
+    this.markLayout = device.createBindGroupLayout({
+      label: "glow-marks",
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" } },
+        { binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" } },
+      ],
+    });
     const prepModule = device.createShaderModule({ code: prepSrc, label: "glow-prep" });
     const mipModule = device.createShaderModule({ code: mipSrc, label: "glow-mip" });
     const glowModule = device.createShaderModule({ code: wgsl(glowSrc), label: "glow" });
@@ -170,6 +183,17 @@ export class GlowView {
       },
       primitive: { topology: "point-list" },
     });
+    const additive: GPUBlendState = {
+      color: { srcFactor: "one", dstFactor: "one", operation: "add" },
+      alpha: { srcFactor: "zero", dstFactor: "one", operation: "add" },
+    };
+    this.markPipe = device.createRenderPipeline({
+      label: "glow-marks",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.lookLayout, this.markLayout] }),
+      vertex: { module: glowModule, entryPoint: "mark_vs" },
+      fragment: { module: glowModule, entryPoint: "mark_fs", targets: [{ format: SCENE_FORMAT, blend: additive }] },
+      primitive: { topology: "triangle-list" },
+    });
     this.sampler = device.createSampler({
       label: "glow-field",
       magFilter: "linear",
@@ -183,6 +207,34 @@ export class GlowView {
     this.prepBufA = device.createBuffer({ size: 32, usage: U, label: "glow-prep-a" });
     this.prepBufB = device.createBuffer({ size: 32, usage: U, label: "glow-prep-b" });
     this.sparkBuf = device.createBuffer({ size: 32, usage: U, label: "glow-sparks" });
+    this.markInfo = device.createBuffer({ size: 16, usage: U, label: "glow-marks-info" });
+    this.markBuf = device.createBuffer({ size: 16 * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, label: "glow-marks" });
+    this.markBG = this.makeMarkBG();
+  }
+
+  private makeMarkBG(): GPUBindGroup {
+    return this.device.createBindGroup({
+      layout: this.markLayout,
+      label: "glow-marks",
+      entries: [
+        { binding: 0, resource: { buffer: this.markInfo } },
+        { binding: 1, resource: { buffer: this.markBuf } },
+      ],
+    });
+  }
+
+  /** Food crumbs and lights to draw (cells): kind 0 food, 1 light, 2 food preview. */
+  setMarkers(list: readonly { x: number; y: number; r: number; kind: 0 | 1 | 2 }[]): void {
+    this.markCount = list.length;
+    if (list.length === 0) return;
+    if (this.markBuf.size < list.length * 16) {
+      this.markBuf.destroy();
+      this.markBuf = this.device.createBuffer({ size: list.length * 32, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, label: "glow-marks" });
+      this.markBG = this.makeMarkBG();
+    }
+    const f = new Float32Array(list.length * 4);
+    list.forEach((m, i) => f.set([m.x, m.y, m.r, m.kind], i * 4));
+    this.device.queue.writeBuffer(this.markBuf, 0, f);
   }
 
   private makeField(w: number, h: number, label: string): FieldTex {
@@ -359,6 +411,13 @@ export class GlowView {
       rp.setBindGroup(1, sparkBG);
       rp.draw(Math.ceil(src.n / stride), ix * iy);
     }
+    if (this.markCount > 0) {
+      this.device.queue.writeBuffer(this.markInfo, 0, new Uint32Array([this.markCount, ix, iy, 0]));
+      rp.setPipeline(this.markPipe);
+      rp.setBindGroup(0, this.lookBG!);
+      rp.setBindGroup(1, this.markBG);
+      rp.draw(6, this.markCount * ix * iy);
+    }
     rp.end();
   }
 
@@ -376,6 +435,6 @@ export class GlowView {
   destroy(): void {
     this.a?.tex.destroy();
     this.b?.tex.destroy();
-    for (const b of [this.lookBuf, this.prepBufA, this.prepBufB, this.sparkBuf]) b.destroy();
+    for (const b of [this.lookBuf, this.prepBufA, this.prepBufB, this.sparkBuf, this.markInfo, this.markBuf]) b.destroy();
   }
 }
