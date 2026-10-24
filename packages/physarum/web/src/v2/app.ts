@@ -972,7 +972,10 @@ export class App {
     if (d.kind === "drift") return Math.ceil((t + 1) / DRIFT_EVERY) * DRIFT_EVERY;
     if (d.kind === "crumb") {
       if ((this.sim.envSpec?.food.length ?? 0) >= DIRECTOR_FOOD) return Infinity;
-      return (this.directorCrumbs + 1) * d.everySteps;
+      // the next multiple of everySteps that is not in the past: an edit
+      // holds the director, so after an undo it may have missed some, and
+      // it never catches up on them (or gets stuck on one)
+      return Math.max(this.directorCrumbs + 1, Math.ceil(t / d.everySteps)) * d.everySteps;
     }
     return Infinity;
   }
@@ -987,7 +990,9 @@ export class App {
     let left = n;
     let timing = this.profiler ? (name: "sim" | "sort") => this.profiler!.pass(name) : undefined;
     while (left > 0) {
-      const due = this.directorDue();
+      let due = this.directorDue();
+      // never act on a step already past (defence: the loop must always progress)
+      if (due < this.sim.tick) due = Infinity;
       const seg = Math.min(left, Math.max(0, due - this.sim.tick));
       if (seg > 0) {
         this.sim.encodeSteps(enc, seg, timing);

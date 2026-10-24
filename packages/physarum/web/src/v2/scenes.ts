@@ -137,7 +137,7 @@ export const SCENES: readonly SceneDef[] = [
     personality: PAD_CENTRE,
     params: padParams(PAD_CENTRE),
     seed: growth,
-    env: (w, h, seed) => ({ food: firstLightFood(w, h, seed), lights: [], walls: null, ...FOOD, scentRange: Math.min(w, h) * 0.3, light: 0 }),
+    env: (w, h, seed) => ({ food: firstLightFood(w, h, seed), lights: [], walls: null, ...FOOD, scentRange: Math.min(w, h) * 0.3, light: 60 }),
     palette: "ember",
     // left alone, it gets a new crumb now and then and reroutes to it
     director: { kind: "crumb", everySteps: 2400 },
