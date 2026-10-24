@@ -132,7 +132,10 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
   } else {
     let s = organism(g, use_cmp);
     let a = s.a * V.extra.x;
-    let straight = s.rgb / max(s.a, 1e-3);
+    // premultiplied colour, never brighter than its own alpha (faint edge
+    // cells carry arbitrary colour channels; dividing by their alpha would
+    // turn that noise into fringes)
+    let pm = min(s.rgb, vec3<f32>(s.a));
     // alpha gradient (cells) for relief, membrane and lighting
     let h = 0.75;
     let ax0 = alpha_at(g - vec2<f32>(h, 0.0), use_cmp);
@@ -154,11 +157,11 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
     // the hidden channels, as colour
     let tv = bspline(tint_tex, g).xyz * inside(g);
     let irid = 0.5 + 0.5 * tanh(tv * 0.65);
-    var body = straight;
+    // the tint, premultiplied too: the hidden-channel colour at the organism's own brightness
+    let lum = dot(pm, vec3<f32>(0.2126, 0.7152, 0.0722));
+    var body = mix(pm, irid * (0.35 * s.a + 0.65 * lum) * 1.6, V.look.x);
     if (mode == 1u) {
-      body = irid;
-    } else {
-      body = mix(straight, irid * (0.35 + 0.65 * dot(straight, vec3<f32>(0.2126, 0.7152, 0.0722))) * 1.6, V.look.x);
+      body = irid * s.a;
     }
     if (mode == 2u) {
       // raw cells: the texels as stored, nearest, with a faint grid when zoomed in
@@ -181,8 +184,8 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
       var lit = body * (0.62 + 0.38 * diffuse);
       let hv = normalize(l + vec3<f32>(0.0, 0.0, 1.0));
       let spec = pow(max(dot(nrm, hv), 0.0), 48.0) * V.extra.z * smoothstep(0.2, 0.9, s.a);
-      lit = lit + vec3<f32>(spec);
-      c = c * (1.0 - a) + lit * a;
+      lit = lit + vec3<f32>(spec) * s.a;
+      c = c * (1.0 - a) + lit * V.extra.x;
       // membrane: a thin line where the alpha falls off steeply
       let edge = clamp(length(grad) * 1.4, 0.0, 1.0) * (1.0 - abs(2.0 * s.a - 1.0));
       c = c + V.rim.rgb * edge * V.look.y * V.extra.x;

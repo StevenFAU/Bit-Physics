@@ -1,0 +1,88 @@
+/* Grow v2 — sim-specific chrome on top of @bp/studio. The sim owns colour;
+   the chrome echoes it through --sim-accent (the glass rim's teal). */
+
+:root {
+  --sim-accent: #8fd3c8;
+}
+
+.gr-diagram {
+  width: 100%;
+  height: auto;
+  color: var(--bp-text);
+  margin: 4px 0 8px;
+}
+
+.gr-lede {
+  font-size: 14.5px;
+}
+
+.gr-note {
+  font-size: 12.5px;
+  color: var(--bp-text-dim);
+}
+
+.gr-onscreen {
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid var(--bp-hairline, rgba(255, 255, 255, 0.12));
+  border-radius: 6px;
+}
+
+.gr-rule summary {
+  cursor: pointer;
+  font-size: 13.5px;
+  color: var(--bp-text-dim);
+  margin: 6px 0;
+}
+.gr-rule ol {
+  padding-left: 20px;
+  margin: 8px 0;
+}
+.gr-rule li {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.gr-limits {
+  padding-left: 18px;
+}
+.gr-limits li {
+  margin: 6px 0;
+  line-height: 1.5;
+}
+
+.gr-capture-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.gr-tune-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 4px;
+}
+.gr-tune-label {
+  font-size: 13px;
+  color: var(--bp-text-dim);
+}
+
+.gr-probe-cap {
+  margin: 6px 0 2px;
+  font-size: 11px;
+  color: var(--bp-text-dim);
+}
+.gr-probe-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 28px;
+}
+.gr-probe-bars span {
+  flex: 1;
+  min-height: 1px;
+  background: var(--bp-accent);
+  border-radius: 1px;
+}

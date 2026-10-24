@@ -39,7 +39,7 @@ export const DEFAULT_LOOK: DishLook = {
   vignette: 0.55,
   rimWidth: 0.55,
   tint: 0.15,
-  membrane: 0.22,
+  membrane: 0.4,
   shadow: 0.55,
   relief: 2.4,
   gloss: 0.22,
