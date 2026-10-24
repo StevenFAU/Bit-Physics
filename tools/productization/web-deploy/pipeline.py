@@ -163,6 +163,7 @@ WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "reaction-diffusion-2d": (("v2/", "src/v2/main.ts"),),
     "physarum": (("v2/", "src/v2/main.ts"),),
+    "boids-2d": (("v2/", "src/v2/main.ts"),),
     "neural-ca": (("v2/", "src/v2/main.ts"),),
 }
 

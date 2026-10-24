@@ -27,8 +27,11 @@ export class GpuProfiler {
   readonly source: TimingSource;
   private readonly querySet: GPUQuerySet | null = null;
   private readonly resolveBuf: GPUBuffer | null = null;
-  private readonly staging: { buf: GPUBuffer; state: "free" | "recorded" | "mapping"; names: string[] }[] = [];
+  private readonly staging: { buf: GPUBuffer; state: "free" | "recorded" | "mapping"; names: string[]; tag: number }[] = [];
   private names: string[] = [];
+  private tag = 0;
+  /** The tag given to `begin` for the latest measured frame (e.g. its solver steps). */
+  frameTag = 0;
   private readonly passes = new Map<string, PassTiming>();
   /** Pass names of the latest measured frame (what timings() reports). */
   private latest: string[] = [];
@@ -63,13 +66,19 @@ export class GpuProfiler {
         }),
         state: "free",
         names: [],
+        tag: 0,
       });
     }
   }
 
-  /** Start a frame: forget last frame's pass list. */
-  begin(): void {
+  /**
+   * Start a frame: forget last frame's pass list. `tag` rides with the frame's
+   * measurement and comes back as `frameTag` when it lands (frames resolve
+   * asynchronously, a few behind) — e.g. how many solver steps it ran.
+   */
+  begin(tag = 0): void {
     this.names = [];
+    this.tag = tag;
   }
 
   /** timestampWrites for a pass descriptor, or undefined (no feature / out of slots). */
@@ -90,6 +99,7 @@ export class GpuProfiler {
     enc.copyBufferToBuffer(this.resolveBuf, 0, slot.buf, 0, n * 2 * 8);
     slot.state = "recorded";
     slot.names = this.names.slice();
+    slot.tag = this.tag;
   }
 
   /** Call right after `queue.submit` of the frame. */
@@ -103,6 +113,7 @@ export class GpuProfiler {
             const t = new BigUint64Array(slot.buf.getMappedRange().slice(0, slot.names.length * 16));
             slot.buf.unmap();
             slot.state = "free";
+            this.frameTag = slot.tag;
             this.ingest(slot.names, t);
           },
           () => {
