@@ -470,7 +470,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       onScreen.textContent = s.proofRun
         ? `On screen: the proofs' own run (${size}, seed ${PROOF.seed}, no shark).`
         : `On screen: ${s.scene} — ${size}, the gated kernel with the counting-sort grid` +
-          `${s.edited ? ", at the rule you tuned" : ""}. ` +
+          `${s.edited ? ", at the rule you tuned" : ""}, its fish re-sorted in memory every 16 steps for speed. ` +
           `${s.sharkOn ? "The shark's fear term is on while you hunt; no proof runs with it. " : ""}` +
           "The GPU proofs below run the same kernel and rule on their own flocks.";
       showProofBtn.hidden = s.proofRun;

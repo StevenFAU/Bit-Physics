@@ -8,4 +8,5 @@ noise, live order parameters, counting-sort broadphase, device-scoped
 brute-sort equivalence checks, and the v4 two-way stable-fluid coupling.
 
 The browser app lives at `web/`. The long-form implementation contract is
-`web/verification-demo-spec.md`.
+`web/verification-demo-spec.md`. The Swarm rebuild (Field Studies, rebuild v2) is the second
+page, `web/v2/` — see `docs/planning/rebuild-v2/03-boids-2d.md`.

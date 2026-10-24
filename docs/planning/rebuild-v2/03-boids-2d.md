@@ -2,6 +2,67 @@
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-2d/web` (the embedded v4 lab).
 > Wave A. Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+>
+> **Implementation status (2026-10-24): M0 built** as the `v2/` page of `packages/boids-2d/web`
+> (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
+>
+> - **How boids-2d is gated (found, then kept).** `verify.py` `_gate_boids_2d` (new_canonical)
+>   checks a small capture built on the CPU in f64: two 256-agent Reynolds runs (noise 0 and
+>   0.55, 120 steps) and a 32² pressure-projection probe. Two runs must be byte-identical and the
+>   observables bounded. There is no Python reference, golden or committed canonical; the GPU
+>   kernel's exactness was proved only in the v4 lab's own Verify panel. The v2 page ports that
+>   capture verbatim (`src/v2/proof/gate.ts`; `test/gate-port.test.ts` compares the text with
+>   `src/main.ts`). `pipeline.py validate` passes on both pages, and all four captures (v1 and v2,
+>   run twice each) are byte-identical: φ calm 0.3553, noisy 0.0609, max speed 0.012,
+>   divergence 0.249 → 0.116.
+> - **The GPU kernel.** The v4 lab's single-source WGSL is byte for byte in
+>   `src/v2/model/kernel.ts`: the rule body, the brute-force wrapper and the integer φ/m reduction
+>   (`test/kernel-port.test.ts` compares them with `index.html`). Only the counting-sort wrapper
+>   is new: it walks the shared `CountingSort`'s `cellStart`/`order`. On the same GPU, the v2
+>   kernel reproduces the v4 lab's trajectory SHA-256 (4,096 fish, 60 steps, seed 42) for brute
+>   force and for sort, at η = 0 and η = 0.2. In-page, brute ≡ sort and run-twice are re-earned
+>   as Prove cards, and the counting sort matches its CPU reference on the live million.
+> - **Scale.** T3 1,000,000 fish (T2 250k, T1 60k). The ocean is sized at v4's density (562.5
+>   fish per unit², v4's 4,000 agents on its 16:9 world) with the viewport's aspect. At 1280×720
+>   that is 56.2 × 31.6 units and a 535 × 301 grid.
+> - **Measured performance** (RX 6800 XT, snap Chromium headless, `?bench=1`, 1280×720):
+>   1,000,000 fish at 60 fps and 60 steps/s. Frame p50/p90/p99 is 16.7/16.7/16.8 ms, render
+>   scale 100%, no governor step-downs (three runs). The GPU-timestamp p50 read 5.7, 5.8 and
+>   10.8 ms in those runs; with two frames queued those timestamps overlap, so they over-count.
+>   - At full clock one step is about 4 ms: keys + sort 0.46 ms, the rule kernel 3.6 ms.
+>   - **Memory reorder.** Every 16 steps the live ocean moves its fish into cell order (an id
+>     rides along), which takes the rule kernel from 13.2 to 3.6 ms. Within a cell, fish are
+>     ranked by id, so the layout is deterministic. With η = 0 a reorder changes no fish's path:
+>     a Prove card checks 65,536 fish over 120 steps, fish by fish. The kernel keys its noise by
+>     memory slot, so with η > 0 the run differs from an unsorted one, but it is still the same
+>     on every replay (same seed, same bytes across page loads at 1M fish, η = 0.15).
+>   - **GPU clock trap.** With one frame in flight the GPU idles between frames and the RX 6800
+>     XT stays at its 500 MHz state. The same step then reads ~16 ms and the page runs at 30 fps.
+>     Two frames in flight let it clock up. With two frames queued, per-pass timestamps overlap
+>     and read high, so the governor watches the frame interval instead (22 ms budget, 3 s
+>     warm-up). `GpuProfiler.begin(tag)` (additive) returns each frame's step count as
+>     `frameTag`, so a catch-up frame never reads as a slow step.
+> - **Open Water + the shark.** The shark is v4's pointer "herd" force — the fear term already
+>   in the kernel (push away, linear falloff, 0.004 per step, ×1.8 while lunging) — so the kernel
+>   is untouched. It chases the pointer with a short lag; its size sets the fear radius (default
+>   14 r). Holding it over the densest school clears its half-radius from 2,669 fish to 0 in
+>   2.5 s.
+> - **Look.** Night ocean: domain-periodic caustics (Worley cell edges on a warped lattice) and
+>   fish as oriented glyphs with a tail flick. Below ~7 px a fish becomes a soft dot whose light
+>   is scaled to its true area. Silver, or heading on a constant-lightness OKLab hue circle. The
+>   shark is a soft shadow with a faint rim and a ring at its fear radius. AgX, measured exposure
+>   (99th percentile → 0.5), bloom 0.06.
+> - **Shell.** Shark and Look tools; Tune (alignment, cohesion, separation, reach, top speed,
+>   panic η, fish colour); save / restore / A-B compare (the save point's flock left of the
+>   split); share links; Learn (three depths, φ and m sparklines from the exact reduction,
+>   performance, limits). Prove has six cards: the release gate re-run in-page, brute ≡ sort,
+>   run twice, counting sort ≡ reference, the φ series at full scale run twice, and the reorder
+>   is exact. `web/tools/check-studio.mjs` passes at 390 / 820 / 1440 px and 200% zoom with
+>   zero axe violations. `packages/boids-2d/web/v2-acceptance.mjs` passes 31/31.
+> - **Not in M0.** The alarm-propagation predator model (a model change, M1+); the
+>   distribution-level φ(η) check against a CPU reference (with the Order Dial, M1); the
+>   three-LOD renderer and motion trails (M1). The fear term does not reach across the ocean's
+>   wrapped edge (v4's kernel takes one point).
 
 ## Verdict on the prototype
 

@@ -144,6 +144,13 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         h("strong", {}, "Simplified: "),
         "fish are points with a heading — no body, no vision cone (the field of view is 360°), no fatigue; the shark is a pointer-driven fear term, not a hunting agent, and it does not reach across the ocean's wrapped edge.",
       ),
+      h(
+        "li",
+        {},
+        h("strong", {}, "Changed for speed: "),
+        "every 16 steps the live ocean moves its fish into grid order in memory, so neighbours are read from nearby memory. With no noise that changes no fish's path (Prove checks it fish by fish); " +
+          "the noise draw is keyed by memory slot, so with noise the run differs from one that never re-sorts — still the same every time.",
+      ),
       h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser. Across GPUs only the statistics (φ, m) are comparable — the flock is chaotic."),
       h("li", {}, h("strong", {}, "Measured: "), "φ and m from exact integer sums; the in-page proofs in Prove."),
     ),

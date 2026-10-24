@@ -4,11 +4,11 @@ The platform the rebuilt sims stand on ([docs/planning/rebuild-v2/00-foundation.
 Plain TypeScript source packages — no build step of their own; each sim's Vite build
 compiles what it imports. The Wave 0 pilot is Turing Patterns
 (`packages/reaction-diffusion-2d/web`, page `v2/`); Wave A's first is Slime Mould
-(`packages/physarum/web`, page `v2/`).
+(`packages/physarum/web`, page `v2/`), then Swarm (`packages/boids-2d/web`, page `v2/`).
 
 | Package | What it holds |
 |---|---|
-| `@bp/gpu` (`gpu/`) | `acquireGpu` (adapter info, optional features, software-rasteriser detection), capability tiers T1–T3 (`pickTier`, per-adapter memory), the WGSL `#import` loader (`defineWgsl` / `wgsl`), buffer helpers and a no-stall `ReadbackSlot`, `GpuProfiler` (timestamp queries, else submit→done latency). `CountingSort` (bucket N items by a u32 key: clear → histogram → scan → scatter, leaving `cellStart` and `order`; order within a key is unspecified, so consumers must be invariant to it) on top of `PrefixScan` (multi-level exclusive scan, up to 1024³ values), with a CPU reference and checker for tests. WGSL modules: `bp/fullscreen`, `bp/hash`. |
+| `@bp/gpu` (`gpu/`) | `acquireGpu` (adapter info, optional features, software-rasteriser detection), capability tiers T1–T3 (`pickTier`, per-adapter memory), the WGSL `#import` loader (`defineWgsl` / `wgsl`), buffer helpers and a no-stall `ReadbackSlot`, `GpuProfiler` (timestamp queries, else submit→done latency; `begin(tag)` returns a frame's tag, e.g. its solver steps, as `frameTag` when its timings land). `CountingSort` (bucket N items by a u32 key: clear → histogram → scan → scatter, leaving `cellStart` and `order`; order within a key is unspecified, so consumers must be invariant to it) on top of `PrefixScan` (multi-level exclusive scan, up to 1024³ values), with a CPU reference and checker for tests. WGSL modules: `bp/fullscreen`, `bp/hash`. |
 | `@bp/render` (`render/`) | `HdrPipeline`: rgba16float scene target → optional bloom (dual-filter mip chain, 13-tap downsample with a Karis-averaged first level, tent upsample; energy-preserving mix, off unless `bloom.intensity > 0`) → GPU-measured exposure (64-bin log2 histogram, eased towards a percentile) → Khronos PBR Neutral or an AgX-style tone map → sRGB → 64×64 blue-noise dither. `Camera2D` (cover fit, pan/zoom/pinch, inertia, fly-to, bounds or wrap). `OrbitCamera` (orbit/dolly/truck, damping, ground clamp, saved views, reset, turntable off under reduced motion; the same gesture surface as Camera2D, so `CanvasInput` drives either). Colormap LUTs (viridis/magma/inferno/cividis + ice–fire/teal–rust, OKLab-interpolated). `FieldView2D`: scalar buffer → filtered field texture → lit material / colormap + isolines / raw texels, A/B wipe, overlay tint, context continuation outside bounded domains. WGSL: `bp/tonemap`, `bp/color`. |
 | `@bp/runtime` (`runtime/`) | `SimClock` (fixed ticks, speed, cap), `EventLog`, `History` (save point / restore / A-B / undo over sim checkpoints), `UrlState` (versioned short keys, only non-defaults written), `QualityGovernor` (p90 over 2 s → render scale → effects → size at next restart; suspended during Prove), counter-based `hash3` mirroring WGSL `bp/hash`. |
 | `@bp/studio` (`studio/`) | `createStudio` — top bar, scene heading, tool rail + options strip, Tune popover, transport, Learn/Prove drawer (right ≥ 640 px, bottom sheet below), share menu, toast, shortcut sheet, loading veil, no-WebGPU card — plus `Slider`, `Segmented`, `Toggle`, `ColorScale`, `Sparkline`, `PlotPanel`, `CalloutLayer`, `ProofCard`, `CanvasInput` (pointer/pinch/wheel/keyboard routing), `PerfOverlay`, the icon set and `studio.css`. |
@@ -49,7 +49,10 @@ The Turing Patterns acceptance run (dive, history, undo-by-replay, share links, 
 live-solver ≡ gated-kernel check, every scene) is `packages/reaction-diffusion-2d/web/v2-acceptance.mjs`;
 Slime Mould's (agent count and density, counting sort ≡ CPU reference, live ≡ gated bytes,
 mass at full scale, in-page gate, history, seeds across page loads, bench) is
-`packages/physarum/web/v2-acceptance.mjs`.
+`packages/physarum/web/v2-acceptance.mjs`; Swarm's (fish count and density, the release-gate
+capture byte-identical on v1 and v2, the v2 kernel ≡ the v4 lab's trajectory hash, brute ≡ sort,
+the memory reorder exact, the shark, history, seeds across page loads, bench) is
+`packages/boids-2d/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.
