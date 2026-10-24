@@ -3,8 +3,8 @@
 The platform the rebuilt sims stand on ([docs/planning/rebuild-v2/00-foundation.md](../docs/planning/rebuild-v2/00-foundation.md)).
 Plain TypeScript source packages — no build step of their own; each sim's Vite build
 compiles what it imports. The Wave 0 pilot is Turing Patterns
-(`packages/reaction-diffusion-2d/web`, page `v2/`); Wave A's first is Slime Mould
-(`packages/physarum/web`, page `v2/`).
+(`packages/reaction-diffusion-2d/web`, page `v2/`); Wave A adds Slime Mould
+(`packages/physarum/web`, page `v2/`) and Grow (`packages/neural-ca/web`, page `v2/`).
 
 | Package | What it holds |
 |---|---|
@@ -49,7 +49,9 @@ The Turing Patterns acceptance run (dive, history, undo-by-replay, share links, 
 live-solver ≡ gated-kernel check, every scene) is `packages/reaction-diffusion-2d/web/v2-acceptance.mjs`;
 Slime Mould's (agent count and density, counting sort ≡ CPU reference, live ≡ gated bytes,
 mass at full scale, in-page gate, history, seeds across page loads, bench) is
-`packages/physarum/web/v2-acceptance.mjs`.
+`packages/physarum/web/v2-acceptance.mjs`; Grow's (the dish at step 1000 ≡ the committed canonical frame,
+live solver ≡ gate path as a sliced job, in-page gate and its fail probe, undo by replay, history,
+seeds across page loads, the director, bench) is `packages/neural-ca/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.

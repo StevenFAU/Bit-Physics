@@ -1,7 +1,47 @@
 # 04 — Grow (neural cellular automata)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/neural-ca/web`. Wave A.
-> Status: planning, v0.1, 2026-10-17. Teach targets measured on T3 (below); the rest unmeasured.
+> Status: planning, v0.1, 2026-10-17. **M0 done 2026-10-23** (live NCA, the dish look, gate
+> ported; training spike below). Teach targets measured on T3; the rest unmeasured.
+>
+> **M0, the page (2026-10-23): done.** Grow v2 is the `v2/` page of `packages/neural-ca/web`
+> (source in `packages/neural-ca/web/src/v2/`), gated through `pipeline.py` `PAGES`; v1 is untouched.
+> Measured on the RX 6800 XT (RADV, headless snap Chromium):
+> - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0
+>   over 21 frames, two driver runs each. The v2 capture file is byte-identical to v1's. The
+>   capture path is v1's, copied verbatim onto its own buffers (two submits per step).
+> - **CI correction.** CI does not run this gate bit-exact. `web-deploy.yml` turns on the declared
+>   observable fallback for neural-ca because lavapipe lands 1.79e-7 away at step 50 (bound
+>   1.8e-6). The v2 captures pass that fallback too (run-twice identical, step-50 max_abs 0.0).
+>   Bit-exactness is a RADV result, and the Prove copy says so.
+> - **The live dish is the gated kernel.** The live solver compiles the same WGSL bytes and only
+>   changes how steps are submitted: one Params slot per step (dynamic offsets), so a frame's steps
+>   share one pass and one submit. Stepped through the canonical run, it matches the gate path on all
+>   21 frames bit for bit, and the dish at step 1000 equals the committed canonical frame.
+> - **Frame.** 60 fps at 1280 × 720 with 0.36 ms GPU per frame (p50). One step is 0.25–0.49 ms
+>   by timestamp (the GPU clocks down under this light load). The dish runs at 30 steps/s at 1×.
+> - **Checks.** `v2-acceptance.mjs` 29/29; `web/tools/check-studio.mjs` passes at 390, 820 and
+>   1440 px and 200% zoom, with no axe violations.
+> - **Scheduling seam for Teach.** `src/v2/runtime/scheduler.ts` runs background GPU work as
+>   sliced jobs inside a per-frame budget, at the job's unit boundaries, with a measured cost per
+>   unit. M0's consumer is Prove's live-vs-gated run: 1000 steps over 53 page frames while the
+>   dish kept rendering at 60 fps. M2's training job plugs in the same way.
+>
+> **What M0 found about the committed checkpoint** (numpy reference unless marked live):
+> - **It does not heal.** It is the Persistent checkpoint, not a damage-trained one. 1,600 steps
+>   after a cut, overlap with an uncut twin was 84% for a bite from the edge and 77% for half the
+>   disk. A stroke through the middle left a remnant that kept shrinking (28%, 501 living cells).
+>   *Signature moment 1* ("Cut it. It heals.") needs a regeneration-trained model (M1). The Dish's
+>   prompt says the rule keeps its shape and does not heal.
+> - **It is tied to its 64 × 64 dish.** On 128 × 128, one seed grows a rounded square that fills
+>   ~78% of the grid. On 64 × 64, seeds anywhere end as one disk at the centre: 8 random layouts of
+>   1–4 seeds were 0.4–2.1 cells off-centre by step 1,200 (live, seed 11: 2.2). The live grid stays 64 × 64, not the
+>   72 × 72 written under *The model* (that grid is the spike's training grid).
+> - **It overshoots, then breathes.** Living cells: 3,546 at step 100 (a rounded square), ~2,000
+>   from step 300 (the disk). Sampled every 1,000 steps to 12,000, it held between 1,081 and
+>   2,334 living cells and never died out. *Many seeds* shows the centring.
+> - **"First in-browser training" stays unverified.** M0's copy makes no such claim. Verify it
+>   before M2 copy uses it.
 >
 > **Training spike (2026-10-23, M0): go, with limits.** On the RX 6800 XT a browser trains the
 > Growing NCA (forward pass, backprop through time and Adam, all in WGSL) to a recognisable
