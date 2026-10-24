@@ -19,6 +19,17 @@ export const SWEEP = {
   speed: 8,
 } as const;
 
+/**
+ * Is a sweep's current setting done? Settled over at least `minSteps`, or —
+ * settled or not — held for its relaxation plus the meter's longest window.
+ * `elapsed` is solver steps since the setting began: the rolling window's own
+ * span is trimmed below maxWindow, so it cannot serve as the timeout.
+ */
+export function sweepPointDone(m: Measurement | null, elapsed: number): boolean {
+  if (!m) return false;
+  return (m.settled && m.steps >= SWEEP.minSteps) || elapsed >= METER.relax + METER.maxWindow;
+}
+
 export interface SweepResult {
   rho: number;
   n: number;
@@ -39,6 +50,8 @@ export class DialController {
   lastSweep: SweepResult | null = null;
   onSweep: ((r: SweepResult) => void) | null = null;
   private attached = false;
+  /** True while the controller itself changes the brain (its own onBrain echo is ignored). */
+  private applying = false;
   private waiter: ((m: Measurement | null) => void) | null = null;
   private cancelled = false;
 
@@ -60,6 +73,8 @@ export class DialController {
   /** Show the panel while The Order Dial is the scene. */
   attach(on: boolean): void {
     if (on === this.attached) return;
+    // leaving the scene ends a running sweep, so its cleanup (speed, controls) runs
+    if (!on && this.sweeping) this.cancel();
     this.attached = on;
     if (on) this.stage.append(this.panel.el);
     else this.panel.el.remove();
@@ -73,6 +88,25 @@ export class DialController {
     this.rho = roundRho(vicsekRho(b.p.r));
     this.panel.setSetting(this.eta, this.rho);
     this.panel.resetTrace();
+    this.restartMeter();
+  }
+
+  /**
+   * The brain changed from outside the dial (Tune's reset, a restore): follow
+   * the new setting and measure it afresh, keeping the φ trace.
+   */
+  brainChanged(): void {
+    if (this.applying || !this.attached) return;
+    const b = this.app.flock.brain;
+    if (!b || b.kind !== "vicsek") return;
+    const eta = b.p.eta;
+    const rho = roundRho(vicsekRho(b.p.r));
+    if (eta === this.eta && rho === this.rho) return;
+    // a sweep holds its own setting: a change from outside ends it
+    if (this.sweeping) this.cancel();
+    this.eta = eta;
+    this.rho = rho;
+    this.panel.setSetting(eta, rho);
     this.restartMeter();
   }
 
@@ -94,7 +128,12 @@ export class DialController {
     this.eta = Math.min(Math.max(eta, 0), 1);
     this.rho = roundRho(r);
     const p: VicsekParams = vicsekFor(this.rho, this.eta);
-    this.app.setBrain({ kind: "vicsek", p }, phase);
+    this.applying = true;
+    try {
+      this.app.setBrain({ kind: "vicsek", p }, phase);
+    } finally {
+      this.applying = false;
+    }
     this.panel.setSetting(this.eta, this.rho);
     this.restartMeter();
   }
@@ -109,10 +148,10 @@ export class DialController {
     this.panel.setMeasurement(this.last, prog);
     if (this.sweeping) {
       this.panel.setStatus(this.sweepStatus());
-      if (m && this.waiter && ((m.settled && m.steps >= SWEEP.minSteps) || m.steps >= METER.maxWindow)) {
+      if (this.waiter && sweepPointDone(this.last, tick - this.meter.since)) {
         const w = this.waiter;
         this.waiter = null;
-        w(m);
+        w(this.last);
       }
       return;
     }
@@ -148,8 +187,10 @@ export class DialController {
     const speed0 = app.clock.speed;
     const paused0 = app.clock.paused;
     const points: Measurement[] = [];
+    let n = app.flock.n;
     try {
       await app.loadScene("order-dial", { seed: app.seed, brain: { kind: "vicsek", p: vicsekFor(rho, SWEEP.etas[0]!) } });
+      n = app.flock.n;
       app.setSpeed(SWEEP.speed);
       if (app.clock.paused) app.togglePlay();
       for (let k = 0; k < SWEEP.etas.length && !this.cancelled; k += 1) {
@@ -167,7 +208,7 @@ export class DialController {
       if (app.clock.paused !== paused0) app.togglePlay();
     }
     const peak = chiPeak(points);
-    const res: SweepResult = { rho, n: app.flock.n, points, etaC: peak ? peak.eta : null, complete: points.length === SWEEP.etas.length };
+    const res: SweepResult = { rho, n, points, etaC: peak ? peak.eta : null, complete: points.length === SWEEP.etas.length };
     this.lastSweep = res;
     this.panel.setEtaC(res.etaC !== null && res.complete ? { eta: res.etaC, rho } : null);
     this.panel.setStatus(

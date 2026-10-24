@@ -6,6 +6,7 @@
 import { describe, expect, it } from "vitest";
 import fieldWgsl from "../src/v2/render/field.wgsl?raw";
 import oceanWgsl from "../src/v2/render/ocean.wgsl?raw";
+import { SWEEP, sweepPointDone } from "../src/v2/dial-controller.js";
 import { BRAIN_BYTES, BRAIN_FLOATS, WGSL_BRAINS, brainSeed, hashU32, reach, writeBrainParams } from "../src/v2/model/brains.js";
 import { makeInitM1 } from "../src/v2/model/init-m1.js";
 import { METER, OrderMeter, chiPeak, settingKey } from "../src/v2/model/meter.js";
@@ -59,6 +60,21 @@ describe("the Order Dial's meter", () => {
     expect(chiPeak(pts)!.eta).toBeCloseTo(0.33, 6);
     expect(chiPeak([{ eta: 0.1, chi: 5 }, { eta: 0.2, chi: 1 }])!.eta).toBe(0.1);
     expect(chiPeak([])).toBeNull();
+  });
+});
+
+describe("the sweep", () => {
+  const m = (settled: boolean, steps: number) => ({ eta: 0.3, rho: 1, phi: 0.5, chi: 1, sd: 0.1, drift: 0, settled, steps, samples: 20, n: 1000, tick: 0 });
+  it("moves on once a setting settles over enough steps", () => {
+    expect(sweepPointDone(null, 99999)).toBe(false);
+    expect(sweepPointDone(m(true, SWEEP.minSteps), 1300)).toBe(true);
+    expect(sweepPointDone(m(true, SWEEP.minSteps - 1), 1300)).toBe(false);
+    expect(sweepPointDone(m(false, 1000), 1500)).toBe(false);
+  });
+  it("times out on elapsed steps, even when the rolling window is trimmed below its cap", () => {
+    // a 42-step sample interval caps the window's span at 2,394 < 2,400
+    expect(sweepPointDone(m(false, 2394), METER.relax + METER.maxWindow)).toBe(true);
+    expect(sweepPointDone(m(false, 2394), METER.relax + METER.maxWindow - 1)).toBe(false);
   });
 });
 

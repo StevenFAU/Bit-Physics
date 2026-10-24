@@ -334,6 +334,33 @@ let v4 = null;
     return m && { eta: m.eta, rho: m.rho, phi: m.phi, chi: m.chi, settled: m.settled, steps: m.steps, points: globalThis.__swarmDial.panel.measurements.length };
   });
   check("a held setting is measured from the live solver and lands on the map", pt && pt.eta === 0.2 && pt.points >= 1 && pt.steps >= 600, pt ? `η ${pt.eta}, ρ ${pt.rho}: ⟨φ⟩ ${pt.phi.toFixed(3)}, χ ${pt.chi.toFixed(2)}, ${pt.settled ? "settled" : "still changing"} over ${pt.steps} steps` : "no measurement in 30 s");
+  // Tune's "back to the scene's values" moves the dial too, and measures afresh
+  const rs = await T(page, async () => {
+    const dial = globalThis.__swarmDial;
+    dial.set(0.4, 2, "end");
+    await new Promise((r) => setTimeout(r, 200));
+    globalThis.__swarm.resetRule();
+    await new Promise((r) => setTimeout(r, 200));
+    const face = document.querySelector(".sw-dial-panel [role=slider]");
+    return { eta: dial.eta, rho: dial.rho, meter: [dial.meter.eta, dial.meter.rho], since: dial.meter.since, tick: globalThis.__swarm.flock.tick, now: face.getAttribute("aria-valuenow"), brain: globalThis.__swarm.flock.brain.p.eta };
+  });
+  check("resetting the rule in Tune moves the dial and restarts its measurement", rs.eta === 0.15 && rs.rho === 1 && rs.meter[0] === 0.15 && rs.meter[1] === 1 && rs.now === "0.15" && rs.brain === 0.15 && rs.tick - rs.since < 200, JSON.stringify(rs));
+  // leaving the scene mid-sweep ends the sweep and restores the speed
+  const lv = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const dial = globalThis.__swarmDial;
+    const speed0 = app.clock.speed;
+    const run = dial.sweep();
+    await new Promise((r) => setTimeout(r, 2500));
+    const during = { sweeping: dial.sweeping, speed: app.clock.speed };
+    await app.loadScene("open-water");
+    const res = await run;
+    await new Promise((r) => setTimeout(r, 300));
+    const after = { sweeping: dial.sweeping, speed: app.clock.speed, scene: app.scene.id, complete: res?.complete };
+    await app.loadScene("order-dial");
+    return { speed0, during, after };
+  });
+  check("leaving The Order Dial mid-sweep ends the sweep and restores the speed", lv.during.sweeping && lv.during.speed === 8 && !lv.after.sweeping && lv.after.speed === lv.speed0 && lv.after.complete === false, JSON.stringify(lv));
   // the sweep: the dial turns itself; η_c at the χ peak
   const sw = await T(page, async () => {
     const t0 = performance.now();

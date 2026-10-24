@@ -357,6 +357,8 @@ async function boot(): Promise<void> {
     onBrain: (b) => {
       learn.setBrain(b);
       syncTune();
+      // Tune's reset (or any change not made by the dial) moves the dial and restarts its measurement
+      dial.brainChanged();
     },
     onRestore: () => {
       dial.sync();

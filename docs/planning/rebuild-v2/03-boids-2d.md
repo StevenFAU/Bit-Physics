@@ -38,7 +38,7 @@
 >     each value held until settled (≥ 800 steps, at most 2,400). At 1,000,000 fish and ρ 1 it takes
 >     45 s and measures φ 0.980, 0.931, 0.858, 0.752, 0.598, 0.398 (η 0.30), 0.139 (η 0.35, not
 >     settled), 0.035 (η 0.40), then below 0.005. χ peaks at η 0.35 (≈ 1,560), so η_c ≈ 0.35 — 2.2 in
->     Vicsek's units (two runs: 0.349, 0.350). That is below Vicsek's 0.46 at ρ 0.4. His systems
+>     Vicsek's units (three runs: 0.349, 0.350, 0.349). That is below Vicsek's 0.46 at ρ 0.4. His systems
 >     had at most 10⁴ particles and v₀ 0.03; with 10⁶ fish and v₀ 0.2 the transition is sharper,
 >     and angular noise in a large system makes it discontinuous. Learn says so.
 > - **φ(η) against an f64 CPU reference** (`model/vicsek-cpu.ts`: the same rule and the same noise
@@ -87,10 +87,10 @@
 >   T2 or T1 hardware.
 > - **Release gate:** `pipeline.py validate` passes for boids-2d on both pages: run twice
 >   byte-identical, φ calm 0.3553 and noisy 0.0609, the same as M0.
-> - **Checks:** `v2-acceptance.mjs` passes 61/61. `check-studio` passes on `v2/`, `v2/?s=order-dial`
+> - **Checks:** `v2-acceptance.mjs` passes 63/63 (including Tune's reset moving the dial, and leaving the scene mid-sweep ending the sweep). `check-studio` passes on `v2/`, `v2/?s=order-dial`
 >   and `v2/?s=mill` at 390 / 820 / 1440 px and 200% zoom, with zero axe violations; floating
->   panels opt in to its overlap check with `data-bp-chrome` (additive). The workspace has 125
->   unit tests (30 for Swarm, in `test/m1.test.ts`).
+>   panels opt in to its overlap check with `data-bp-chrome` (additive). The workspace has 127
+>   unit tests (32 for Swarm, in `test/m1.test.ts`).
 > - **Not in M1:** motion trails from a float accumulation buffer (the streak level carries motion
 >   at mid zoom); the alarm-propagation predator (M2+); a precomputed backdrop for the phase map
 >   (by design, it shows only measured points).
