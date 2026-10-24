@@ -59,8 +59,9 @@ export function buildTune(body: HTMLElement, act: TuneActions): TunePanel {
       const c = CORNERS.find((k) => k.at.i === i && k.at.j === j);
       const b = h("button", { type: "button", class: `ph-pad-dot${c ? " is-corner" : ""}` }) as HTMLButtonElement;
       b.dataset["pad"] = padKey(p);
+      // keyboard activation (a pointer press already picked the point on pointer-down)
       b.addEventListener("click", () => {
-        if (!b.disabled) act.pad(p);
+        if (!b.disabled && !(current && current.i === p.i && current.j === p.j)) act.pad(p);
       });
       dots.set(padKey(p), b);
       grid.append(b);
@@ -100,6 +101,8 @@ export function buildTune(body: HTMLElement, act: TuneActions): TunePanel {
   };
   grid.addEventListener("pointerdown", (e) => {
     if (!enabled) return;
+    // pick on press: capturing the pointer retargets the click away from the dot
+    pickAt(e);
     dragging = true;
     grid.setPointerCapture(e.pointerId);
   });
