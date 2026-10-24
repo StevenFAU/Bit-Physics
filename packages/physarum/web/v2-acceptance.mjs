@@ -1,5 +1,5 @@
 // Slime Mould v2 — acceptance checks in a real WebGPU browser
-// (docs/planning/rebuild-v2/02-physarum.md M0 and M1).
+// (docs/planning/rebuild-v2/02-physarum.md M0, M1 and M2).
 //
 //   npm run build   (in this directory)
 //   CHROME_BIN=/snap/bin/chromium \
@@ -19,6 +19,11 @@
 // wakes; food edits keep the mass balance exact; undo replays to the bytes
 // of a run that never had the edit; the light empties the dish under it and
 // follows a drag; the crumb director adds food at its exact step.
+// M2: Connect the Cities and The Maze boot as specified; the network is
+// scored (in a worker) within the measured ranges at fixed steps; a wall
+// drawn across the maze's route lengthens the shortest path and undo takes
+// it away; the mass balance stays exact with walls and hunger; the score
+// card fits and passes axe at 1440 and 390 px.
 // Prints a BP_BENCH line (agents, frame time) at the end.
 
 import { createServer } from "node:http";
@@ -463,6 +468,145 @@ const hashAfter = (page, n) =>
   check("left alone, First Light gets a new crumb at exactly step 2,400", r.food === 13 && r.at.length === 1 && r.at[0] === 2400, JSON.stringify(r));
   check("no console errors (director)", errors.length === 0, errors.join(" | "));
   await ctx.close();
+}
+
+// --- M2: Connect the Cities and The Maze ------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=cities");
+  const c = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    app.clock.paused = true;
+    await sleep(100);
+    await app.loadScene("cities", { seed: 1 });
+    app.clock.paused = true;
+    const boot = { food: app.sim.envSpec.food.length, walls: !!app.sim.envSpec.walls, growing: app.sim.growing, card: !document.querySelector(".ph-score").hidden };
+    await app.advance(6000);
+    const s = await globalThis.__physarumChecks.score();
+    const m = await app.liveMass();
+    return { boot, s, rel: Math.abs(m.mass - m.predicted) / m.predicted };
+  });
+  check("Connect the Cities: 30 cities, the sea as walls, a colony growing from Tokyo, the score card shown", c.boot.food === 30 && c.boot.walls && c.boot.growing && c.boot.card, JSON.stringify(c.boot));
+  const s = c.s;
+  check(
+    "Connect the Cities at step 6,000: every city joined; length, mean distance and cut share in the measured bands",
+    s.net.reached === 30 && s.tl > 1.4 && s.tl < 2.4 && s.md > 0.7 && s.md < 1 && s.cut < 0.25 && s.steinerRatio > Math.sqrt(3) / 2 && s.steinerRatio < 1,
+    `reached ${s.net.reached}/30, TL ${s.tl.toFixed(2)}× MST, MD ${s.md.toFixed(2)}× MST, cut ${(s.cut * 100).toFixed(0)}% of ${s.net.links} links, Steiner ${s.steinerRatio.toFixed(3)}× MST, scored in ${s.ms.toFixed(0)} ms`,
+  );
+  check("mass balance exact with walls and a growing colony (rel < 1e-6)", c.rel < 1e-6, `rel ${c.rel.toExponential(2)}`);
+  // the overlay draws the measured network and the MST
+  await T(page, () => { globalThis.__physarum.clock.paused = false; });
+  await page.waitForTimeout(600);
+  const ink = await T(page, () => {
+    const cv = document.querySelector(".ph-overlay");
+    const d = cv.getContext("2d").getImageData(0, 0, cv.width, cv.height).data;
+    let n = 0;
+    for (let i = 3; i < d.length; i += 16) if (d[i] > 0) n += 1;
+    return n;
+  });
+  check("the score overlay draws the measured network and the MST", ink > 500, `${ink} sampled pixels drawn`);
+  check("no console errors (Connect the Cities)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page, errors } = await open("/v2/?s=maze");
+  const m = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const speed = app.clock.speed;
+    // opened directly, the maze already runs with hunger
+    const direct = app.sim.hungerMax;
+    app.clock.paused = true;
+    await sleep(100);
+    await app.loadScene("cities", { seed: 1 });
+    const inCities = app.sim.hungerMax;
+    await app.loadScene("maze", { seed: 1 });
+    app.clock.paused = true;
+    const boot = { food: app.sim.envSpec.food.length, walls: !!app.sim.envSpec.walls, hunger: app.sim.hungerMax, speed, direct, inCities };
+    await app.advance(16000);
+    const s = await globalThis.__physarumChecks.score();
+    const mass = await app.liveMass();
+    return { boot, s, rel: Math.abs(mass.mass - mass.predicted) / mass.predicted };
+  });
+  check("The Maze: two food sources, walls, hunger set from the route, plays at 4×", m.boot.food === 2 && m.boot.walls && m.boot.hunger > 1000 && m.boot.speed === 4, JSON.stringify(m.boot));
+  check("hunger is the scene's own: on when the maze is opened directly, off in Connect the Cities", m.boot.direct > 1000 && m.boot.inCities === null, `direct ${m.boot.direct}, cities ${m.boot.inCities}`);
+  check(
+    "The Maze at step 16,000: the food joined along the shortest route (≤ 1.3× its length)",
+    Number.isFinite(m.s.along) && m.s.onShortest && m.s.along / m.s.shortest < 1.3,
+    `route ${(m.s.along / m.s.shortest).toFixed(2)}× the shortest path, on it: ${m.s.onShortest}, all tube left ${m.s.extra.toFixed(2)}× the route`,
+  );
+  check("mass balance exact with walls and hungry agents returning to food (rel < 1e-6)", m.rel < 1e-6, `rel ${m.rel.toExponential(2)}`);
+  // block the route with the Wall tool, then undo it
+  const plan = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const a = app.analysis.score;
+    const p = a.shortestPath;
+    const k = 2 * Math.floor(p.length / 4);
+    const [x, y] = [p[k], p[k + 1]];
+    // across the path: perpendicular to it
+    const dx = p[k + 2] - p[k - 2];
+    const dy = p[k + 3] - p[k - 1];
+    const L = Math.hypot(dx, dy) || 1;
+    // one corridor wide: the maze's pitch is a cell plus its wall
+    const half = app.maze.pitch * 0.3;
+    const s0 = app.camera.domainToScreen(x - (dy / L) * half, y + (dx / L) * half);
+    const s1 = app.camera.domainToScreen(x + (dy / L) * half, y - (dx / L) * half);
+    app.studio.rail.select("wall");
+    app.wallSize = 2;
+    return { x, y, s0, s1, before: a.shortest };
+  });
+  await page.mouse.move(plan.s0[0], plan.s0[1]);
+  await page.mouse.down();
+  await page.mouse.move(plan.s1[0], plan.s1[1], { steps: 12 });
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const after = await T(page, async (p) => {
+    const app = globalThis.__physarum;
+    const wallAt = () => {
+      const c = Math.floor(p.y) * app.sim.w + Math.floor(p.x);
+      return (app.sim.envSpec.walls[c >> 5] & (1 << (c & 31))) !== 0;
+    };
+    const s = await globalThis.__physarumChecks.score();
+    const blocked = { wall: wallAt(), shortest: s.shortest, hunger: app.sim.hungerMax, edits: app.edits };
+    await app.undo();
+    const s2 = await globalThis.__physarumChecks.score();
+    return { blocked, undone: { wall: wallAt(), shortest: s2.shortest } };
+  }, plan);
+  check(
+    "a wall across the route lengthens the shortest path (hunger follows); undo takes it away",
+    after.blocked.wall && after.blocked.shortest > plan.before * 1.02 && !after.undone.wall && Math.abs(after.undone.shortest - plan.before) < 1,
+    `shortest ${plan.before.toFixed(0)} → ${Number.isFinite(after.blocked.shortest) ? after.blocked.shortest.toFixed(0) : "walled off"} cells with the wall, ${after.undone.shortest.toFixed(0)} after undo; hunger ${after.blocked.hunger}`,
+  );
+  check("no console errors (The Maze)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
+  for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const { ctx, page, errors } = await open("/v2/?s=cities", vp);
+    await page.waitForTimeout(4000);
+    if (vp.width < 640) {
+      await page.click(".ph-score-fold");
+      await page.waitForTimeout(200);
+    }
+    const fit = await T(page, () => {
+      const r = (el) => { const b = el.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+      const card = r(document.querySelector(".ph-score"));
+      const others = [".bp-rail", ".bp-transport", ".bp-top-actions", ".bp-heading .bp-scene-title"].map((s) => [s, document.querySelector(s)]).filter(([, e]) => e && e.getBoundingClientRect().width > 0).map(([s, e]) => [s, r(e)]);
+      const overlap = (a, b) => a[0] < b[2] - 1 && b[0] < a[2] - 1 && a[1] < b[3] - 1 && b[1] < a[3] - 1;
+      return { card, inside: card[0] >= 0 && card[1] >= 0 && card[2] <= innerWidth && card[3] <= innerHeight, overlaps: others.filter(([, b]) => overlap(card, b)).map(([s]) => s), scored: !!globalThis.__physarum.analysis };
+    });
+    await page.evaluate(axeSource);
+    const v = await page.evaluate(async () =>
+      // eslint-disable-next-line no-undef
+      (await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } })).violations.map((x) => `${x.id}: ${x.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}`),
+    );
+    await shot(page, `04-score-${vp.width}`);
+    check(`score card at ${vp.width} px: inside the viewport, over no other chrome`, fit.inside && fit.overlaps.length === 0, JSON.stringify(fit));
+    check(`score card at ${vp.width} px: no axe violations`, v.length === 0, v.join(" | "));
+    check(`no console errors (score card at ${vp.width} px)`, errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
 }
 
 // --- review regressions (PR #44) --------------------------------------------

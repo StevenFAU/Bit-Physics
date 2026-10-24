@@ -30,7 +30,14 @@
 //     choice when both side sensors beat the centre (the gated kernel always
 //     turns left there), plus a small chance `jitter` of a random turn; the
 //     dice are a hash of the agent's own state, so a run stays repeatable and
-//     the tile re-sort (which shuffles indices) cannot change it.
+//     the tile re-sort (which shuffles indices) cannot change it. Bit 6 is
+//     hunger: an agent counts the steps since it was last on or beside food
+//     (in the heading's length, so no extra buffer and the re-sort carries
+//     it); past `hunger_max` it is taken back to a food source (a random
+//     crumb, a random point in it, a random heading) and deposits there.
+//     Agents stranded in dead ends and loops that reach no food go back;
+//     agents shuttling between food stay. Every agent still deposits once a
+//     step, so the mass balance is as before.
 //     Food crumbs deposit into the trail in a separate dispatch, in the same
 //     integer fixed point as the agents, so the mass balance stays exact.
 // Agents are reordered by tile every few steps (CountingSort in @bp/gpu) for
@@ -56,7 +63,14 @@ struct Params {
   jitter: f32,       // bit 5: chance per step of a random turn (Jones's stochastic rule)
   _p2: u32,
   _p3: u32,
+  hunger_max: f32,   // bit 6: an agent goes back to food after this many steps away from it
+  food_count: u32,   // bit 6: food sources (first in the env sources) a hungry agent returns to
+  _q1: u32,
+  _q2: u32,
 };
+
+// Hunger (bit 7) rides in the heading's length: |head| = 1 + steps since food / HUNGER_SCALE.
+const HUNGER_SCALE: f32 = 65536.0;
 
 // An environment value at or below this marks a wall cell (bit 3).
 const WALL: f32 = -1.0e30;

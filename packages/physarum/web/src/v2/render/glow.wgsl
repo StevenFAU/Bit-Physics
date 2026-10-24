@@ -71,6 +71,11 @@ fn fs(in: FullscreenOut) -> @location(0) vec4<f32> {
   let qw = q - floor(q / L.dims.zw) * L.dims.zw;          // the dish repeats; so does its grain
   let g = grain(qw * 0.11) * 0.6 + grain(qw * 0.031) * 0.4;
   var c = L.bg.rgb * (1.0 - L.bg.a + 2.0 * L.bg.a * g) + emission(s);
+  // walls: matte dark relief — a faint lit rim where the wall meets the agar
+  let wall = clamp(s.b, 0.0, 1.0);
+  let rim = wall * (1.0 - wall) * 4.0;
+  let relief = vec3<f32>(0.010, 0.010, 0.011) * (1.0 + 0.8 * g) + vec3<f32>(0.05, 0.048, 0.045) * rim;
+  c = mix(c, relief, smoothstep(0.35, 0.65, wall)) + vec3<f32>(0.03, 0.028, 0.026) * rim;
   if (comparing) {
     let d = abs(px.x - L.split.x);
     c = mix(c, vec3<f32>(0.9, 0.85, 0.8), L.split.y * (1.0 - smoothstep(0.5, 1.5, d)));

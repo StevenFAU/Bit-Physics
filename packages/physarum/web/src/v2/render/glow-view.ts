@@ -26,6 +26,9 @@ export interface GlowSource {
   depositPerAgent: number;
   /** Bumps whenever the trail changes (the sim's step count). */
   version: number;
+  /** The scene's environment (walls are marked in it) and whether it has walls. */
+  env: GPUBuffer;
+  walls: boolean;
 }
 
 export interface LookOptions {
@@ -63,7 +66,7 @@ interface FieldTex {
   levels: GPUTextureView[];
   view: GPUTextureView;
   prepBG: GPUBindGroup | null;
-  prepFor: [GPUBuffer, GPUBuffer] | null;
+  prepFor: [GPUBuffer, GPUBuffer, GPUBuffer] | null;
   mipBGs: GPUBindGroup[];
 }
 
@@ -112,6 +115,7 @@ export class GlowView {
         { binding: 1, visibility: C, buffer: { type: "read-only-storage" } },
         { binding: 2, visibility: C, buffer: { type: "read-only-storage" } },
         { binding: 3, visibility: C, storageTexture: { access: "write-only", format: "rgba16float" } },
+        { binding: 4, visibility: C, buffer: { type: "read-only-storage" } },
       ],
     });
     this.mipLayout = device.createBindGroupLayout({
@@ -282,9 +286,9 @@ export class GlowView {
     }
   }
 
-  private prepBG(f: FieldTex, buf: GPUBuffer, trail: GPUBuffer, dep: GPUBuffer): GPUBindGroup {
-    if (f.prepBG && f.prepFor?.[0] === trail && f.prepFor[1] === dep) return f.prepBG;
-    f.prepFor = [trail, dep];
+  private prepBG(f: FieldTex, buf: GPUBuffer, trail: GPUBuffer, dep: GPUBuffer, env: GPUBuffer): GPUBindGroup {
+    if (f.prepBG && f.prepFor?.[0] === trail && f.prepFor[1] === dep && f.prepFor[2] === env) return f.prepBG;
+    f.prepFor = [trail, dep, env];
     f.prepBG = this.device.createBindGroup({
       layout: this.prepLayout,
       label: "glow-prep",
@@ -293,6 +297,7 @@ export class GlowView {
         { binding: 1, resource: { buffer: trail } },
         { binding: 2, resource: { buffer: dep } },
         { binding: 3, resource: f.levels[0]! },
+        { binding: 4, resource: { buffer: env } },
       ],
     });
     return f.prepBG;
@@ -304,6 +309,7 @@ export class GlowView {
     const f = new Float32Array(ab);
     u[0] = src.w;
     u[1] = src.h;
+    u[2] = src.walls ? 1 : 0;
     f[4] = 1 / Math.max(src.meanTrail, 1e-12);
     f[5] = withAgents ? 1 / (src.depositPerAgent * SCALE) : 0;
     this.device.queue.writeBuffer(buf, 0, ab);
@@ -348,13 +354,13 @@ export class GlowView {
       const pass = enc.beginComputePass({ label: "glow-prep", timestampWrites: profiler?.pass("prep") });
       if (needA) {
         this.writePrep(this.prepBufA, src, true);
-        this.encodePrep(pass, a, this.prepBG(a, this.prepBufA, src.trail, src.deposit));
+        this.encodePrep(pass, a, this.prepBG(a, this.prepBufA, src.trail, src.deposit, src.env));
         this.preparedVersion = src.version;
       }
       if (needB && compare) {
         // a checkpoint holds no deposits: the agent glow is zeroed (the binding still needs a buffer)
         this.writePrep(this.prepBufB, src, false);
-        this.encodePrep(pass, b, this.prepBG(b, this.prepBufB, compare.trail, src.deposit));
+        this.encodePrep(pass, b, this.prepBG(b, this.prepBufB, compare.trail, src.deposit, src.env));
         this.preparedB = compare.key;
       }
       pass.end();

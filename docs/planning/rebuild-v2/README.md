@@ -1,7 +1,7 @@
 # Rebuild v2 — twelve sims, built again from the ground up
 
 > **Status:** planning specification, v0.1, 2026-10-17. Implemented so far (2026-10-23): the
-> Wave 0 foundation with Turing Patterns M0–M3, Slime Mould M0–M1 and Swarm M0 (2026-10-24) — each spec's status block
+> Wave 0 foundation with Turing Patterns M0–M3, Slime Mould M0–M2 and Swarm M0 (2026-10-24) — each spec's status block
 > records what was built and measured. Elsewhere, performance figures, particle counts and
 > timings are **targets to be measured**, not results. Prior-art claims were checked by web search on this date; anything marked
 > *verify before claiming* must be re-checked before it appears on the site.

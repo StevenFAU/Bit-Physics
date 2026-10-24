@@ -24,9 +24,11 @@ import { PARAMS } from "./proof/gate.js";
 import type { PaletteId } from "./render/look.js";
 import type { PadPoint } from "./pad.js";
 import { CORNERS, PAD_CENTRE, padParams } from "./pad.js";
+import { CITIES, kantoFood, kantoWalls, projector } from "./cities.js";
+import { makeMaze, mazeFood, mazeWalls } from "./maze.js";
 
-export type SceneId = "first-light" | "lace" | "light" | "network" | "table1" | "gated";
-export type ToolId = "pan" | "food" | "light" | "probe";
+export type SceneId = "first-light" | "cities" | "maze" | "lace" | "light" | "network" | "table1" | "gated";
+export type ToolId = "pan" | "food" | "light" | "wall" | "probe";
 
 export interface Director {
   /** What an untouched scene does to stay alive (00-foundation.md § 1, "nothing settles into nothing"). */
@@ -53,6 +55,15 @@ export interface SceneDef {
   director?: Director;
   tools: ToolId[];
   tool: ToolId;
+  /** What the score card measures: the network against the planner's trees, or the route through a maze. */
+  score?: "cities" | "maze";
+  /**
+   * Hunger: an agent that goes this many times the shortest route's length
+   * (in its own steps) without food is taken back to a food source.
+   */
+  hungerPerRoute?: number;
+  /** The speed the scene plays at when picked (its own clock is unchanged). */
+  speed?: number;
 }
 
 /** Food crumb radius on a w × h dish (cells): the same size on screen at every tier. */
@@ -132,6 +143,50 @@ export const SCENES: readonly SceneDef[] = [
     director: { kind: "crumb", everySteps: 2400 },
     tools: ["pan", "food", "light", "probe"],
     tool: "food",
+  },
+  {
+    id: "cities",
+    title: "Connect the Cities",
+    prompt: "Can a brainless mould beat a planner?",
+    listed: true,
+    kind: "live",
+    personality: PAD_CENTRE,
+    params: padParams(PAD_CENTRE),
+    // as in Tero et al. 2010: a small colony starts at Tokyo and grows across the plain
+    seed: (w, h, seed) => {
+      const t = CITIES.find((c) => c.name === "Tokyo")!;
+      return { ...growth(w, h, seed), centre: projector(w, h)(t.lon, t.lat), radius: Math.min(w, h) * 0.025 };
+    },
+    // no scent here: thirty summed scents make one pull to the middle of the map (measured)
+    env: (w, h) => ({ food: kantoFood(w, h, crumbRadius(w, h)), lights: [], walls: kantoWalls(w, h), ...FOOD, scent: 0, scentRange: Math.min(w, h) * 0.3, light: 60 }),
+    palette: "ember",
+    tools: ["pan", "food", "probe"],
+    tool: "pan",
+    score: "cities",
+  },
+  {
+    id: "maze",
+    title: "The Maze",
+    prompt: "Will it find the shortest path? Block it and see.",
+    listed: true,
+    kind: "live",
+    personality: PAD_CENTRE,
+    params: padParams(PAD_CENTRE),
+    // as in Nakagaki et al. 2000: the mould fills the maze first, then food goes in at both ends
+    seed: scatter,
+    env: (w, h, seed) => {
+      const m = makeMaze(w, h, seed);
+      // no scent: it would leak through the walls
+      return { food: mazeFood(m, crumbRadius(w, h)), lights: [], walls: mazeWalls(m, w, h), ...FOOD, scent: 0, scentRange: Math.min(w, h) * 0.3, light: 60 };
+    },
+    palette: "deepsea",
+    tools: ["pan", "wall", "probe"],
+    tool: "wall",
+    score: "maze",
+    // measured at T3, 6 seeds: 3× broke the route in half the seeds by 16,000 steps; 5× held it in all
+    hungerPerRoute: 5,
+    // the route settles in ~8,000–16,000 steps: one to two minutes at 1×
+    speed: 4,
   },
   {
     id: "lace",

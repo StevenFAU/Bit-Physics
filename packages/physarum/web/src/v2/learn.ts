@@ -117,6 +117,19 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         "In First Light the colony grows: most agents start dormant, and an agent wakes when the colony's trail under it reaches a tenth of one agent's deposit. " +
           "A dormant agent neither moves nor deposits, and the GPU counts the awake ones every step, so the mass balance follows the colony as it grows.",
       ),
+      h(
+        "p",
+        {},
+        "Walls (Connect the Cities' sea, the maze) are cells an agent cannot step into; it turns back. In the maze, an agent that has gone five times the shortest route's length " +
+          "without being on or beside food is taken back to a food source — a stand-in for the organism withdrawing from where it found nothing. Without it, Jones's agents keep " +
+          "every corridor's tube alive: loops sustain themselves (measured). Every agent still deposits once a step, so the mass balance is unchanged.",
+      ),
+      h(
+        "p",
+        {},
+        "Scoring reads the trail back, keeps the cells above half the dish's mean, thins them to lines (Zhang & Suen 1984), and turns the lines into a graph of cities and junctions. " +
+          "Length is measured along each line; the score is only as good as that extraction, so the graph is drawn over the dish (white) for you to check.",
+      ),
     ),
   );
 
@@ -155,7 +168,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         "li",
         {},
         h("strong", {}, "Added for the scenes: "),
-        "food's long-range scent (a fixed gradient standing in for the chemicals real food gives off), dormant agents that wake as a colony grows, and light as a smell to avoid rather than a change to the trail. Real Physarum also shuns light and grows toward food; here both are rules of thumb, not measured biology.",
+        "food's long-range scent (a fixed gradient standing in for the chemicals real food gives off), dormant agents that wake as a colony grows, light as a smell to avoid rather than a change to the trail, solid walls, and (in the maze) hungry agents returning to food. Real Physarum also shuns light, grows toward food and withdraws from where it finds none; here these are rules of thumb, not measured biology.",
       ),
       h("li", {}, h("strong", {}, "Measured: "), "the total trail, read back from the GPU and compared with the closed form, through food, growth and every edit, in Prove."),
     ),
@@ -164,6 +177,13 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   return {
     setScene(scene, gated) {
       const what: Record<string, string> = {
+        cities:
+          "A stylised Kantō plain: thirty cities as food, the sea as walls, and a colony that starts at Tokyo — the experiment Tero et al. ran on a real slime mould in 2010. " +
+          "The colony covers the land, then thins to tubes between the cities. The score card reads the network off the dish and measures it against the minimum spanning tree " +
+          "on the same cities (the shortest network that joins them all) and against what the real mould scored.",
+        maze:
+          "A maze with food at the entrance and the exit, after Nakagaki, Yamada & Tóth (2000). The mould fills the corridors; agents that go too long without finding food go back " +
+          "to food, so the tube that links the two food sources holds while the dead ends slowly thin (in this model they never quite empty, unlike the real plasmodium). The green line is the shortest path through the walls. Build a wall across the route (Wall) and watch it find another.",
         network:
           "Agents scattered at random over a periodic dish (it wraps at the edges). Within a few hundred steps the noise organises into a network of tubes, which then slowly prunes itself. Brightness is the trail's strength; the fine sparks are individual agents.",
         table1:

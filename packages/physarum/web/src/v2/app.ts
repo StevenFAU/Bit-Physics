@@ -12,7 +12,7 @@ import { Camera2D } from "@bp/render";
 import type { Checkpointer, QualityGovernor, SimEvent } from "@bp/runtime";
 import { EventLog, History, SimClock } from "@bp/runtime";
 import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
-import { CanvasInput, h, slider } from "@bp/studio";
+import { CanvasInput, h, segmented, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { Checkpoint, EnvSpec, Spot } from "./model/sim.js";
 import { LiveKernels, LiveSim } from "./model/sim.js";
@@ -25,6 +25,10 @@ import { PALETTES } from "./render/look.js";
 import type { PadPoint } from "./pad.js";
 import { CORNERS, PAD_JITTER, nearestOffered, padParams, padPointOf } from "./pad.js";
 import type { SceneDef, SceneId, ToolId } from "./scenes.js";
+import type { Analysis } from "./model/analysis.js";
+import { analyse } from "./model/analysis.js";
+import type { Maze } from "./maze.js";
+import { geodesic, makeMaze } from "./maze.js";
 import { SCENES, crumbRadius, lightDrift, lightRadius, nextCrumb, sameParams, sceneById } from "./scenes.js";
 
 /** Solver steps per second at 1× (spec: T3 2 steps per frame at 60 fps). */
@@ -65,16 +69,20 @@ export interface AppHooks {
   onParams?: (p: JonesParams, pad: PadPoint | null) => void;
   onEdited?: () => void;
   onFrame?: (now: number) => void;
+  onAnalysis?: (a: Analysis) => void;
 }
 
 interface AppCheckpoint {
   cp: Checkpoint;
   logIndex: number;
   pad: PadPoint | null;
+  strokes: number[][];
 }
 
 type ParamsPayload = { g: number; p: number[]; pad: number[] | null };
 type SpotsPayload = { g: number; spots: number[][] };
+/** Every wall stroke since the scene started: [x0, y0, x1, y1, radius, erase (0|1)]. */
+type WallsPayload = { g: number; strokes: number[][] };
 
 const packSpots = (s: readonly Spot[]): number[][] => s.map((q) => [q.x, q.y, q.r]);
 const unpackSpots = (s: readonly number[][]): Spot[] => s.map(([x, y, r]) => ({ x: x!, y: y!, r: r! }));
@@ -141,6 +149,17 @@ export class App {
   private activeGroup = 0;
   private applied = 0;
   private lightSize = 1;
+  /** The Maze scene's maze (for scoring). */
+  maze: Maze | null = null;
+  /** The scene's own walls, before any stroke. */
+  private baseWalls: Uint32Array | null = null;
+  /** Wall strokes so far, and the brush. */
+  private strokes: number[][] = [];
+  private wallLast: [number, number] | null = null;
+  wallSize = 1;
+  wallErase = false;
+  /** The latest score (Connect the Cities, The Maze). */
+  analysis: Analysis | null = null;
   private markerKey = "";
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: GlowView, kernels: LiveKernels, tier: Tier) {
@@ -156,10 +175,11 @@ export class App {
     this.camera.maxPxPerUnit = 24;
     this.probeBuf = this.device.createBuffer({ size: 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ, label: "phys-probe" });
     const cp: Checkpointer<AppCheckpoint> = {
-      capture: () => ({ cp: this.sim.checkpoint(), logIndex: this.log.length, pad: this.pad }),
+      capture: () => ({ cp: this.sim.checkpoint(), logIndex: this.log.length, pad: this.pad, strokes: this.strokes.slice() }),
       restore: (c) => {
         this.sim.restore(c.cp);
         this.pad = c.pad;
+        this.strokes = c.strokes.slice();
         this.view.invalidate();
         this.hooks.onParams?.(this.sim.params, this.pad);
       },
@@ -203,6 +223,8 @@ export class App {
     try {
       this.history.clear();
       this.log.clear();
+      this.strokes = [];
+      this.wallLast = null;
       this.applied = 0;
       this.group = 0;
       this.activeGroup = 0;
@@ -229,8 +251,15 @@ export class App {
       else sim.seed(scene.seed!(grid.w, grid.h, this.seed));
       this.sim = sim;
       old?.destroy();
+      this.maze = scene.score === "maze" ? makeMaze(grid.w, grid.h, this.seed) : null;
+      this.scoredTick = -1;
+      this.scoreDue = 0;
+      this.baseWalls = sim.envSpec?.walls ?? null;
+      this.analysis = null;
       this.view.forgetBuffers();
       this.scene = scene;
+      // hunger is the new scene's (it reads this.scene)
+      this.updateHunger();
       this.edits = 0;
       this.directing = 0;
       this.directorCrumbs = 0;
@@ -316,7 +345,7 @@ export class App {
    * coalesces into one event per step per group: changes at the same
    * boundary have no steps between them, so only the last can matter.
    */
-  private editEvent(kind: "params" | "food" | "light", payload: ParamsPayload | SpotsPayload): void {
+  private editEvent(kind: "params" | "food" | "light" | "walls", payload: ParamsPayload | SpotsPayload | WallsPayload): void {
     const all = this.log.all();
     const last = all[all.length - 1];
     const lp = last?.payload as { g?: number } | undefined;
@@ -336,12 +365,52 @@ export class App {
       const [delta_phi_deg, L_sense, L_move, deposit, decay_alpha] = p.p as [number, number, number, number, number];
       this.sim.setParams({ delta_phi_deg, L_sense, L_move, deposit, decay_alpha });
       this.pad = p.pad ? { i: p.pad[0]!, j: p.pad[1]! } : null;
+    } else if (e.kind === "walls") {
+      const env = this.envOrDefault();
+      this.strokes = (e.payload as WallsPayload).strokes.map((s) => s.slice());
+      this.sim.setEnv({ ...env, walls: this.wallsWith(this.strokes) });
+      this.view.invalidate();
     } else {
       const spots = unpackSpots((e.payload as SpotsPayload).spots);
       const env = this.envOrDefault();
       this.sim.setEnv(e.kind === "food" ? { ...env, food: spots } : { ...env, lights: spots });
       this.syncMarkers();
+      this.view.invalidate();
     }
+    this.updateHunger();
+  }
+
+  /** The scene's own walls with the visitor's strokes drawn over them (capsules; erase strokes clear). */
+  private wallsWith(strokes: readonly number[][]): Uint32Array | null {
+    const w = this.sim.w;
+    const h = this.sim.h;
+    if (!this.baseWalls && strokes.length === 0) return null;
+    const bits = this.baseWalls ? this.baseWalls.slice() : new Uint32Array(Math.ceil((w * h) / 32));
+    for (const [x0, y0, x1, y1, r, erase] of strokes as [number, number, number, number, number, number][]) {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const L2 = dx * dx + dy * dy;
+      for (let y = Math.max(1, Math.floor(Math.min(y0, y1) - r)); y <= Math.min(h - 2, Math.ceil(Math.max(y0, y1) + r)); y += 1) {
+        for (let x = Math.max(1, Math.floor(Math.min(x0, x1) - r)); x <= Math.min(w - 2, Math.ceil(Math.max(x0, x1) + r)); x += 1) {
+          const t = L2 > 0 ? Math.max(0, Math.min(1, ((x + 0.5 - x0) * dx + (y + 0.5 - y0) * dy) / L2)) : 0;
+          if ((x + 0.5 - x0 - t * dx) ** 2 + (y + 0.5 - y0 - t * dy) ** 2 > r * r) continue;
+          const c = y * w + x;
+          if (erase) bits[c >> 5]! &= ~(1 << (c & 31));
+          else bits[c >> 5]! |= 1 << (c & 31);
+        }
+      }
+    }
+    // never wall over a crumb
+    for (const f of this.sim.envSpec?.food ?? []) {
+      for (let y = Math.floor(f.y - f.r - 2); y <= Math.ceil(f.y + f.r + 2); y += 1) {
+        for (let x = Math.floor(f.x - f.r - 2); x <= Math.ceil(f.x + f.r + 2); x += 1) {
+          if (x < 0 || y < 0 || x >= w || y >= h || (x - f.x) ** 2 + (y - f.y) ** 2 > (f.r + 2) ** 2) continue;
+          const c = y * w + x;
+          bits[c >> 5]! &= ~(1 << (c & 31));
+        }
+      }
+    }
+    return bits;
   }
 
   /** The scene's environment, or a fresh one for a scene that had none. */
@@ -415,6 +484,16 @@ export class App {
     this.writeUrl();
   }
 
+  /** Take every crumb away (one edit): an empty map for the visitor's own cities. */
+  clearFood(): void {
+    if (this.blocked("feed it") || this.scene.kind !== "live") return;
+    if (!this.sim.envSpec?.food.length) return;
+    this.beginEdit();
+    this.editEvent("food", { g: this.activeGroup, spots: [] });
+    this.activeGroup = 0;
+    this.studio.toast.show("All food taken away — click to place your own");
+  }
+
   /** Move the light (the first; place one if there is none). */
   private moveLight(x: number, y: number): void {
     const env = this.envOrDefault();
@@ -424,6 +503,20 @@ export class App {
     const at = { x: ((x % w) + w) % w, y: ((y % h) + h) % h, r };
     const lights = env.lights.length ? [at, ...env.lights.slice(1)] : [at];
     this.editEvent("light", { g: this.activeGroup, spots: packSpots(lights) });
+  }
+
+  /** Wall brush radius on this dish (cells). */
+  get wallRadius(): number {
+    return Math.max(2, Math.min(this.sim.w, this.sim.h) * 0.012 * this.wallSize);
+  }
+
+  /** Extend the current wall stroke to a dish point (part of the active edit). */
+  private wallTo(x: number, y: number): void {
+    const last = this.wallLast ?? [x, y];
+    if (this.wallLast && Math.hypot(x - last[0], y - last[1]) < this.wallRadius * 0.5) return;
+    this.strokes = [...this.strokes, [last[0], last[1], x, y, this.wallRadius, this.wallErase ? 1 : 0]];
+    this.wallLast = [x, y];
+    this.editEvent("walls", { g: this.activeGroup, strokes: this.strokes.map((s) => s.slice()) });
   }
 
   /** Switch the light off (one edit). */
@@ -490,6 +583,7 @@ export class App {
       const kept = this.log.all().filter((e, i) => i < snap.logIndex || (e.payload as { g?: number }).g !== entry.eventId);
       this.sim.restore(snap.cp);
       this.pad = snap.pad;
+      this.strokes = snap.strokes.slice();
       this.log.load(kept);
       this.applied = snap.logIndex;
       const span = target - snap.cp.tick;
@@ -526,7 +620,10 @@ export class App {
       this.sim.encodeSteps(enc, k);
       this.device.queue.submit([enc.finish()]);
       chunks += 1;
-      if (chunks % 16 === 0) await this.device.queue.onSubmittedWorkDone();
+      if (chunks % 16 === 0) {
+        await this.device.queue.onSubmittedWorkDone();
+        if (this.sim.logged && this.sim.unfoldedSteps > 4096) await this.sim.foldMass();
+      }
     }
     await this.device.queue.onSubmittedWorkDone();
   }
@@ -571,8 +668,51 @@ export class App {
     switch (id) {
       case "probe":
         return { id, label: "Probe", icon: "probe", hint: "Point anywhere to read the trail and the agents crossing there" };
+      case "wall":
+        return {
+          id,
+          label: "Wall",
+          icon: "wall",
+          hint: "Drag to build a wall the mould cannot cross",
+          paints: true,
+          options: () => {
+            const size = slider({
+              label: "Wall width",
+              min: 0.5,
+              max: 3,
+              step: 0.05,
+              value: this.wallSize,
+              unit: "×",
+              onInput: (v) => {
+                this.wallSize = v;
+              },
+            });
+            const mode = segmented(
+              "Wall tool",
+              [
+                { value: "draw", label: "Build" },
+                { value: "erase", label: "Clear" },
+              ],
+              this.wallErase ? "erase" : "draw",
+              (v) => {
+                this.wallErase = v === "erase";
+              },
+            );
+            return h("div", { class: "ph-light-options" }, mode.el, size.el);
+          },
+        };
       case "food":
-        return { id, label: "Food", icon: "food", hint: "Click to drop a crumb · click a crumb to take it away" };
+        return {
+          id,
+          label: "Food",
+          icon: "food",
+          hint: "Click to drop a crumb · click a crumb to take it away",
+          options: () => {
+            const clear = h("button", { type: "button", class: "bp-btn bp-btn-quiet" }, "Remove all food");
+            clear.addEventListener("click", () => this.clearFood());
+            return clear;
+          },
+        };
       case "light":
         return {
           id,
@@ -611,20 +751,27 @@ export class App {
     return {
       paints: () => !!this.studio.rail.activeTool?.paints,
       down: (x, y) => {
-        if (this.studio.rail.active !== "light" || this.blocked("move the light")) return;
+        const tool = this.studio.rail.active;
+        if ((tool !== "light" && tool !== "wall") || this.blocked(tool === "wall" ? "build walls" : "move the light")) return;
         if (this.scene.kind !== "live") return;
         this.beginEdit();
         const [dx, dy] = this.camera.screenToDomain(x, y);
-        this.moveLight(dx, dy);
+        if (tool === "light") this.moveLight(dx, dy);
+        else {
+          this.wallLast = [dx, dy];
+          this.wallTo(dx, dy);
+        }
       },
       move: (x, y) => {
-        if (this.activeGroup === 0 || this.studio.rail.active !== "light") return;
+        if (this.activeGroup === 0) return;
         const [dx, dy] = this.camera.screenToDomain(x, y);
-        this.moveLight(dx, dy);
+        if (this.studio.rail.active === "light") this.moveLight(dx, dy);
+        else if (this.studio.rail.active === "wall") this.wallTo(dx, dy);
       },
       up: () => {
         if (this.activeGroup !== 0) this.writeUrl();
         this.activeGroup = 0;
+        this.wallLast = null;
       },
       hover: (x, y) => {
         this.hover = x === null || y === null ? null : [x, y];
@@ -719,7 +866,7 @@ export class App {
 
     this.direct(dt);
     // a growing colony's mass prediction folds in its awake counts about once a second
-    if (this.sim.growing && this.sim.unfoldedSteps > 0 && now - this.foldT > 1000) {
+    if (this.sim.logged && this.sim.unfoldedSteps > 0 && now - this.foldT > 1000) {
       this.foldT = now;
       void this.sim.foldMass().catch(() => {});
     }
@@ -763,6 +910,8 @@ export class App {
         meanTrail: this.sim.meanTrail,
         depositPerAgent: this.sim.params.deposit,
         version: this.sim.tick * 4 + this.sim.sorts,
+        env: this.sim.env,
+        walls: !!this.sim.envSpec?.walls,
       },
       save ? { trail: save.cp.trail, key: `cp-${this.compareKey}` } : null,
       this.profiler ?? undefined,
@@ -783,6 +932,8 @@ export class App {
     else if (!this.hover) this.studio.probe.hidden = true;
 
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
+    this.autoScore(now);
+    this.updateRing();
     if (now - this.rateT0 > 1000) {
       this.stepsPerSecond = ((this.stepsTotal - this.rateTick0) * 1000) / (now - this.rateT0);
       this.rateT0 = now;
@@ -793,6 +944,20 @@ export class App {
       this.clock.paused ? `step ${steps.toLocaleString()}` : `step ${steps.toLocaleString()} · ${Math.round(this.stepsPerSecond).toLocaleString()}/s`,
     );
     this.hooks.onFrame?.(now);
+  }
+
+  /** The Wall tool's brush ring under the pointer. */
+  private updateRing(): void {
+    const ring = this.studio.ring;
+    if (this.studio.rail.active !== "wall" || !this.hover || this.history.comparing) {
+      ring.classList.remove("is-shown");
+      return;
+    }
+    const r = this.wallRadius * this.camera.pxPerUnit;
+    ring.style.width = `${r * 2}px`;
+    ring.style.height = `${r * 2}px`;
+    ring.style.transform = `translate(${this.hover[0] - r}px, ${this.hover[1] - r}px)`;
+    ring.classList.add("is-shown");
   }
 
   /** Is the scene untouched and running, so its director may act? */
@@ -951,10 +1116,18 @@ export class App {
   /** Run `n` steps now (with the live loop paused, nothing else steps), then wait. */
   async advance(n: number): Promise<void> {
     const target = this.sim.tick + n;
+    let since = 0;
     while (this.sim.tick < target) {
       let enc = this.device.createCommandEncoder();
-      enc = this.encodeDirected(enc, Math.min(64, target - this.sim.tick));
+      const k = Math.min(64, target - this.sim.tick);
+      enc = this.encodeDirected(enc, k);
       this.device.queue.submit([enc.finish()]);
+      since += k;
+      // the awake log holds AWAKE_RING steps: fold well before it wraps
+      if (this.sim.logged && since >= 4096) {
+        since = 0;
+        await this.sim.foldMass();
+      }
     }
     await this.device.queue.onSubmittedWorkDone();
   }
@@ -975,12 +1148,105 @@ export class App {
     return { mass, predicted, equilibrium, tick };
   }
 
+  /**
+   * Score the dish now: read the trail back (queued after every step so
+   * far), extract the network and measure it (CPU, at a reduced resolution
+   * on big dishes).
+   */
+  async analyse(): Promise<Analysis | null> {
+    const sim = this.sim;
+    const kind = this.scene.score ?? null;
+    const tick = sim.tick;
+    const trail = await sim.readTrail();
+    if (sim !== this.sim) return null;
+    const env = sim.envSpec;
+    const step = sim.w * sim.h > 1.5e6 ? 2 : 1;
+    const args: Parameters<typeof analyse> = [trail, sim.w, sim.h, env?.food ?? [], env?.walls ?? null, kind, this.maze, tick, step];
+    let a: Analysis;
+    try {
+      a = await this.inWorker(args);
+    } catch {
+      a = analyse(...args);
+    }
+    if (sim !== this.sim) return null;
+    this.analysis = a;
+    this.hooks.onAnalysis?.(a);
+    return a;
+  }
+
+  private worker: Worker | null = null;
+  private workerSeq = 0;
+  private readonly workerWaits = new Map<number, { ok: (a: Analysis) => void; fail: (e: Error) => void }>();
+
+  /** Run the scoring in a worker (the trail buffer is moved, not copied). */
+  private inWorker(args: Parameters<typeof analyse>): Promise<Analysis> {
+    if (!this.worker) {
+      this.worker = new Worker(new URL("./model/analysis-worker.ts", import.meta.url), { type: "module" });
+      this.worker.onmessage = (e: MessageEvent<{ id: number; r?: Analysis; error?: string }>) => {
+        const w = this.workerWaits.get(e.data.id);
+        if (!w) return;
+        this.workerWaits.delete(e.data.id);
+        if (e.data.r) w.ok(e.data.r);
+        else w.fail(new Error(e.data.error ?? "scoring failed"));
+      };
+    }
+    const id = ++this.workerSeq;
+    return new Promise((ok, fail) => {
+      this.workerWaits.set(id, { ok, fail });
+      this.worker!.postMessage({ id, args }, [args[0].buffer]);
+    });
+  }
+
+  /** Score about every two seconds while a scored scene changes. */
+  private scoreDue = 0;
+  private scoreBusy = false;
+  private scoredTick = -1;
+  private autoScore(now: number): void {
+    if (!this.scene.score || this.scoreBusy || now < this.scoreDue || this.sim.tick === this.scoredTick || this.history.comparing) return;
+    // the network needs time to form: no score in the first second of a scene
+    if (this.sim.tick < 120) return;
+    this.scoreBusy = true;
+    this.scoreDue = now + 2000;
+    this.scoredTick = this.sim.tick;
+    void this.analyse()
+      .catch(() => null)
+      .finally(() => {
+        this.scoreBusy = false;
+      });
+  }
+
+  /** Score now (the card's button). */
+  scoreNow(): void {
+    this.scoreDue = 0;
+    this.scoredTick = -1;
+  }
+
+  /**
+   * Hunger follows the shortest route between the first two crumbs through
+   * the walls: an agent may wander `hungerPerRoute` × its length (in its own
+   * steps) before it is taken back to food. Re-measured after every wall or
+   * food edit and personality change, as part of applying the edit, so a
+   * replay sees the same limits.
+   */
+  private updateHunger(): void {
+    const k = this.scene.hungerPerRoute;
+    const env = this.sim.envSpec;
+    if (!k || !env?.walls || env.food.length < 2) {
+      if (this.sim.hungerMax !== null) this.sim.setHunger(null);
+      return;
+    }
+    const g = geodesic(env.walls, this.sim.w, this.sim.h, [env.food[0]!.x, env.food[0]!.y], [env.food[1]!.x, env.food[1]!.y]);
+    const route = Number.isFinite(g.length) ? g.length : this.sim.w + this.sim.h;
+    this.sim.setHunger(Math.round((k * route) / Math.max(this.sim.params.L_move, 0.1)));
+  }
+
   requestSnapshot(): void {
     this.snapshotWanted = true;
   }
 
   dispose(): void {
     this.disposed = true;
+    this.worker?.terminate();
   }
 }
 
