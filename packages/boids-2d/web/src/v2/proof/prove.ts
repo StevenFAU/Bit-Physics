@@ -8,6 +8,7 @@ import { h, proofCard } from "@bp/studio";
 import type { Broadphase, FlockKernels } from "../model/flock.js";
 import { BRUTE_MAX, Flock } from "../model/flock.js";
 import type { RuleParams } from "../model/params.js";
+import { V4_DENSITY, worldFor } from "../model/world.js";
 import { REPO_BLOB } from "../learn.js";
 import { PROOF } from "../scenes.js";
 import type { GateCheck } from "./gate.js";
@@ -69,6 +70,18 @@ export interface FullScale {
   seconds: number;
 }
 
+export interface Reorder {
+  n: number;
+  steps: number;
+  reorders: number;
+  differing: number;
+  identical: boolean;
+  seconds: number;
+}
+
+/** The reorder check: fish, steps, and how often the live ocean's cadence is exercised. */
+export const REORDER_CHECK = { n: 65536, steps: 120, every: 8 } as const;
+
 export interface ProvePane {
   setOnScreen(s: OnScreen): void;
   runAll(): Promise<void>;
@@ -77,6 +90,7 @@ export interface ProvePane {
   bruteSort(): Promise<BruteSort>;
   liveSort(): Promise<{ problem: string | null; items: number; cells: number; keyCount: number }>;
   fullScale(steps?: number): Promise<FullScale>;
+  reorder(): Promise<Reorder>;
   /** One trajectory hash on a scratch flock (v4 hashRun), for cross-page checks. */
   hashRun(o?: HashOptions): Promise<{ hash: string; nan: number; n: number; broadphase: Broadphase }>;
 }
@@ -176,6 +190,21 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   );
   scaleCard.set({ status: "idle", measured: "run it on this GPU (a few seconds)", budget: "identical SHA-256", adapter: "not yet run here" });
   pane.append(scaleCard.el);
+
+  // 6. the live ocean's memory reorder is exact
+  const reorderCard = proofCard(
+    {
+      title: "Re-sorting the ocean changes nothing",
+      sentence:
+        `For speed the live ocean moves its fish into cell order in memory every few steps. With no noise, that must leave every fish's path bit for bit as it was: ` +
+        `${REORDER_CHECK.n.toLocaleString()} fish, ${REORDER_CHECK.steps} steps, re-sorted every ${REORDER_CHECK.every}, compared fish by fish with a run that never moves them.`,
+      label: "byte-identical",
+      action: "Run on this GPU",
+    },
+    () => void runReorder(),
+  );
+  reorderCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "0 fish differ", adapter: "not yet run here" });
+  pane.append(reorderCard.el);
 
   pane.append(
     h(
@@ -357,6 +386,70 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     });
   }
 
+  async function reorder(): Promise<Reorder> {
+    const t0 = performance.now();
+    const { n, steps, every } = REORDER_CHECK;
+    const world = worldFor(n, 16, 9, V4_DENSITY);
+    const rule = { ...d.rule(), noise: 0 };
+    const mk = (sortEvery: number): Flock =>
+      new Flock(d.device, d.kernels, { n, ...world, seed: PROOF.seed, rule, broadphase: "sort", sortEvery });
+    const plain = mk(0);
+    const sorted = mk(every);
+    try {
+      for (let done = 0; done < steps; ) {
+        const k = Math.min(16, steps - done);
+        const enc = d.device.createCommandEncoder({ label: "swarm-reorder-check" });
+        plain.encodeSteps(enc, k, { pure: true });
+        sorted.encodeSteps(enc, k, { pure: true });
+        d.device.queue.submit([enc.finish()]);
+        done += k;
+      }
+      const [a, b, ids] = await Promise.all([plain.readBoids(), sorted.readBoids(), sorted.readIds()]);
+      const au = new Uint32Array(a.buffer, a.byteOffset, a.length);
+      const bu = new Uint32Array(b.buffer, b.byteOffset, b.length);
+      const seen = new Uint8Array(n);
+      let differing = 0;
+      for (let s = 0; s < n; s += 1) {
+        const f = ids[s]!;
+        if (f >= n || seen[f]) {
+          differing += 1;
+          continue;
+        }
+        seen[f] = 1;
+        // position and velocity (the first 4 of 6 words) must match bit for bit
+        for (let w = 0; w < 4; w += 1) {
+          if (au[f * 6 + w] !== bu[s * 6 + w]) {
+            differing += 1;
+            break;
+          }
+        }
+      }
+      return { n, steps, reorders: sorted.reorders, differing, identical: differing === 0 && sorted.reorders > 0, seconds: (performance.now() - t0) / 1000 };
+    } finally {
+      plain.destroy();
+      sorted.destroy();
+    }
+  }
+
+  async function runReorder(): Promise<void> {
+    await lock(async () => {
+      reorderCard.set({ status: "running", measured: "two runs, one re-sorted…", adapter: d.adapter });
+      try {
+        const r = await reorder();
+        reorderCard.set({
+          status: r.identical ? "pass" : "fail",
+          measured: r.identical ? `identical (${r.n.toLocaleString()} fish)` : `${r.differing.toLocaleString()} fish differ`,
+          budget: "0 fish differ",
+          ratio: r.identical ? 0 : 2,
+          adapter: d.adapter,
+          notes: [`${r.reorders} re-sorts in ${r.steps} steps`, `${r.seconds.toFixed(1)} s`],
+        });
+      } catch (e) {
+        reorderCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+      }
+    });
+  }
+
   runAllBtn.addEventListener("click", () => void runAll());
   async function runAll(): Promise<void> {
     runAllBtn.disabled = true;
@@ -365,6 +458,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       await runBruteSort();
       await runLiveSort();
       await runFullScale();
+      await runReorder();
     } finally {
       runAllBtn.disabled = false;
     }
@@ -386,6 +480,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     bruteSort,
     liveSort,
     fullScale,
+    reorder,
     hashRun,
   };
 }

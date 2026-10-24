@@ -75,7 +75,15 @@ export class FlockKernels {
     });
     const gatherLayout = device.createBindGroupLayout({
       label: "swarm-gather",
-      entries: [buf(0, "read-only-storage"), buf(1, "storage"), buf(2, "read-only-storage"), buf(3, "read-only-storage"), buf(4, "storage")],
+      entries: [
+        buf(0, "read-only-storage"),
+        buf(1, "storage"),
+        buf(2, "read-only-storage"),
+        buf(3, "read-only-storage"),
+        buf(4, "storage"),
+        buf(5, "read-only-storage"),
+        buf(6, "read-only-storage"),
+      ],
     });
     const check = async (m: GPUShaderModule, label: string): Promise<void> => {
       const info = await m.getCompilationInfo();
@@ -332,6 +340,8 @@ export class Flock {
               { binding: 2, resource: { buffer: this.sort.order } },
               { binding: 3, resource: { buffer: this.idBufs[c]! } },
               { binding: 4, resource: { buffer: this.idBufs[1 - c]! } },
+              { binding: 5, resource: { buffer: this.keys } },
+              { binding: 6, resource: { buffer: this.sort.cellStart } },
             ],
           }),
         );

@@ -408,12 +408,17 @@ ${WGSL_RULE_INTEGRATE}
 
 /**
  * NEW in v2, not part of the rule: the live ocean's memory reorder. Every few
- * steps the fish are moved in memory into cell order (out[s] = in[order[s]]),
- * so neighbours sit next to each other and the neighbour loop reads cached
- * memory. A fish id rides along. The rule sees positions and velocities only
- * through order-independent integer sums, so with no noise every fish's path
- * is unchanged bit for bit; the noise hash is keyed by the memory slot, so
- * with noise the draws follow the slot (still the same every replay).
+ * steps the fish are moved in memory into cell order, so neighbours sit next
+ * to each other and the neighbour loop reads cached memory. A fish id rides
+ * along. The counting sort leaves the order inside a cell to atomic arrival,
+ * so each fish's slot is fixed here by its rank among its cell's fish by id:
+ * the layout after a reorder is the same on every run.
+ *
+ * The rule sees positions and velocities only through order-independent
+ * integer sums, so with no noise every fish's path is unchanged bit for bit;
+ * the noise hash is keyed by the memory slot, so with noise the draws follow
+ * the slot (a different run from an unsorted one, and still the same every
+ * replay).
  */
 export const WGSL_GATHER = `
 ${WGSL_BOID}
@@ -422,10 +427,18 @@ ${WGSL_BOID}
 @group(0) @binding(2) var<storage, read> order: array<u32>;
 @group(0) @binding(3) var<storage, read> inId: array<u32>;
 @group(0) @binding(4) var<storage, read_write> outId: array<u32>;
+@group(0) @binding(5) var<storage, read> keys: array<u32>;
+@group(0) @binding(6) var<storage, read> cellStart: array<u32>;
 @compute @workgroup_size(256)
 fn gather(@builtin(global_invocation_id) gid: vec3<u32>) {
   let s = gid.x; let n = arrayLength(&inB); if (s >= n) { return; }
   let i = order[s];
-  outB[s] = inB[i];
-  outId[s] = inId[i];
+  let k = min(keys[i], arrayLength(&cellStart) - 2u);
+  let a = cellStart[k];
+  let b = cellStart[k + 1u];
+  let me = inId[i];
+  var rank = 0u;
+  for (var t = a; t < b; t = t + 1u) { if (inId[order[t]] < me) { rank = rank + 1u; } }
+  outB[a + rank] = inB[i];
+  outId[a + rank] = me;
 }`;
