@@ -405,3 +405,27 @@ ${WGSL_RULE_ACCUM}
   }
 ${WGSL_RULE_INTEGRATE}
 }`;
+
+/**
+ * NEW in v2, not part of the rule: the live ocean's memory reorder. Every few
+ * steps the fish are moved in memory into cell order (out[s] = in[order[s]]),
+ * so neighbours sit next to each other and the neighbour loop reads cached
+ * memory. A fish id rides along. The rule sees positions and velocities only
+ * through order-independent integer sums, so with no noise every fish's path
+ * is unchanged bit for bit; the noise hash is keyed by the memory slot, so
+ * with noise the draws follow the slot (still the same every replay).
+ */
+export const WGSL_GATHER = `
+${WGSL_BOID}
+@group(0) @binding(0) var<storage, read> inB: array<Boid>;
+@group(0) @binding(1) var<storage, read_write> outB: array<Boid>;
+@group(0) @binding(2) var<storage, read> order: array<u32>;
+@group(0) @binding(3) var<storage, read> inId: array<u32>;
+@group(0) @binding(4) var<storage, read_write> outId: array<u32>;
+@compute @workgroup_size(256)
+fn gather(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let s = gid.x; let n = arrayLength(&inB); if (s >= n) { return; }
+  let i = order[s];
+  outB[s] = inB[i];
+  outId[s] = inId[i];
+}`;

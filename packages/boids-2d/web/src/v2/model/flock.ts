@@ -12,7 +12,7 @@
 import { CountingSort, readBuffer } from "@bp/gpu";
 import type { InitMode } from "./init.js";
 import { BOID_BYTES, makeInitData } from "./init.js";
-import { WGSL_COMPUTE, WGSL_REDUCE, WGSL_SORT_V2 } from "./kernel.js";
+import { WGSL_COMPUTE, WGSL_GATHER, WGSL_REDUCE, WGSL_SORT_V2 } from "./kernel.js";
 import type { FearTerm, Grid, RuleParams } from "./params.js";
 import { PARAM_BYTES, PARAM_FLOATS, gridFor, writeParams } from "./params.js";
 
@@ -35,11 +35,13 @@ export class FlockKernels {
     readonly bruteLayout: GPUBindGroupLayout,
     readonly keysLayout: GPUBindGroupLayout,
     readonly reduceLayout: GPUBindGroupLayout,
+    readonly gatherLayout: GPUBindGroupLayout,
     readonly brute: GPUComputePipeline,
     readonly cellKeys: GPUComputePipeline,
     readonly simSort: GPUComputePipeline,
     readonly reduceOrder: GPUComputePipeline,
     readonly finalizeCom: GPUComputePipeline,
+    readonly gather: GPUComputePipeline,
   ) {}
 
   static async create(device: GPUDevice): Promise<FlockKernels> {
@@ -71,6 +73,10 @@ export class FlockKernels {
       label: "swarm-reduce",
       entries: [buf(0, "uniform"), buf(1, "read-only-storage"), buf(2, "storage"), buf(3, "storage")],
     });
+    const gatherLayout = device.createBindGroupLayout({
+      label: "swarm-gather",
+      entries: [buf(0, "read-only-storage"), buf(1, "storage"), buf(2, "read-only-storage"), buf(3, "read-only-storage"), buf(4, "storage")],
+    });
     const check = async (m: GPUShaderModule, label: string): Promise<void> => {
       const info = await m.getCompilationInfo();
       const errs = info.messages.filter((x) => x.type === "error");
@@ -79,18 +85,20 @@ export class FlockKernels {
     const bruteMod = device.createShaderModule({ code: WGSL_COMPUTE, label: "swarm-brute" });
     const sortMod = device.createShaderModule({ code: WGSL_SORT_V2, label: "swarm-sort" });
     const redMod = device.createShaderModule({ code: WGSL_REDUCE, label: "swarm-reduce" });
-    await Promise.all([check(bruteMod, "brute"), check(sortMod, "sort"), check(redMod, "reduce")]);
+    const gatherMod = device.createShaderModule({ code: WGSL_GATHER, label: "swarm-gather" });
+    await Promise.all([check(bruteMod, "brute"), check(sortMod, "sort"), check(redMod, "reduce"), check(gatherMod, "gather")]);
     const pl = (l: GPUBindGroupLayout): GPUPipelineLayout => device.createPipelineLayout({ bindGroupLayouts: [l] });
     const mk = (label: string, module: GPUShaderModule, entryPoint: string, l: GPUBindGroupLayout): Promise<GPUComputePipeline> =>
       device.createComputePipelineAsync({ label, layout: pl(l), compute: { module, entryPoint } });
-    const [brute, cellKeys, simSort, reduceOrder, finalizeCom] = await Promise.all([
+    const [brute, cellKeys, simSort, reduceOrder, finalizeCom, gather] = await Promise.all([
       mk("swarm-brute", bruteMod, "main", bruteLayout),
       mk("swarm-keys", sortMod, "cellKeys", keysLayout),
       mk("swarm-sim", sortMod, "simSort", simLayout),
       mk("swarm-reduce", redMod, "reduceOrder", reduceLayout),
       mk("swarm-finalize", redMod, "finalizeCom", reduceLayout),
+      mk("swarm-gather", gatherMod, "gather", gatherLayout),
     ]);
-    return new FlockKernels(simLayout, bruteLayout, keysLayout, reduceLayout, brute, cellKeys, simSort, reduceOrder, finalizeCom);
+    return new FlockKernels(simLayout, bruteLayout, keysLayout, reduceLayout, gatherLayout, brute, cellKeys, simSort, reduceOrder, finalizeCom, gather);
   }
 }
 
@@ -107,10 +115,16 @@ export interface FlockConfig {
    * sized for the grid at that radius (a coarser grid leaves buckets empty).
    */
   minRCoh?: number;
+  /**
+   * Move the fish into cell order in memory every this many steps (0 = never;
+   * the proofs' flocks never do). Speed only: see WGSL_GATHER.
+   */
+  sortEvery?: number;
 }
 
 export interface Checkpoint {
   boids: GPUBuffer;
+  ids: GPUBuffer | null;
   tick: number;
   rule: RuleParams;
   seed: number;
@@ -215,6 +229,12 @@ export class Flock {
   private readonly reduceBG: GPUBindGroup[] = [];
   /** Which boid buffer holds the current state. */
   private cur = 0;
+  /** Memory reorders: every `sortEvery` steps (0 = never). */
+  readonly sortEvery: number;
+  reorders = 0;
+  /** Fish ids, permuted with the boids by each reorder (null when there are none). */
+  readonly idBufs: [GPUBuffer, GPUBuffer] | null;
+  private readonly gatherBG: GPUBindGroup[] = [];
 
   constructor(device: GPUDevice, kernels: FlockKernels, cfg: FlockConfig) {
     this.device = device;
@@ -248,6 +268,11 @@ export class Flock {
     this.groups = Math.max(1, Math.ceil(n / 256));
     this.partials = device.createBuffer({ size: this.groups * 40, usage: STORAGE(), label: "swarm-partials" });
     this.rg = device.createBuffer({ size: 16, usage: STORAGE(), label: "swarm-com" });
+    this.sortEvery = Math.max(0, Math.floor(cfg.sortEvery ?? 0));
+    this.idBufs =
+      this.sortEvery > 0
+        ? ([0, 1].map((i) => device.createBuffer({ size: Math.max(16, n * 4), usage: STORAGE(), label: `swarm-ids-${i}` })) as [GPUBuffer, GPUBuffer])
+        : null;
     // species ids: one species (v4 makeSpeciesData returns zeros for NS = 1); no obstacles
     device.queue.writeBuffer(this.spec, 0, new Uint32Array(Math.max(1, n)));
     device.queue.writeBuffer(this.obs, 0, new Float32Array(128));
@@ -296,6 +321,21 @@ export class Flock {
           ],
         }),
       );
+      if (this.idBufs) {
+        this.gatherBG.push(
+          device.createBindGroup({
+            layout: kernels.gatherLayout,
+            label: `swarm-gather-${c}`,
+            entries: [
+              { binding: 0, resource: { buffer: inB } },
+              { binding: 1, resource: { buffer: outB } },
+              { binding: 2, resource: { buffer: this.sort.order } },
+              { binding: 3, resource: { buffer: this.idBufs[c]! } },
+              { binding: 4, resource: { buffer: this.idBufs[1 - c]! } },
+            ],
+          }),
+        );
+      }
     }
     this.reseed(cfg.seed);
   }
@@ -303,6 +343,11 @@ export class Flock {
   /** The current boid buffer (stride 24 bytes: pos.xy, vel.xy, align, dens). */
   get boids(): GPUBuffer {
     return this.boidBufs[this.cur]!;
+  }
+
+  /** The current fish ids (slot → fish), or null when the flock never reorders. */
+  get ids(): GPUBuffer | null {
+    return this.idBufs ? this.idBufs[this.cur]! : null;
   }
 
   get bytes(): number {
@@ -326,8 +371,10 @@ export class Flock {
     this.device.queue.writeBuffer(this.boidBufs[0], 0, data);
     this.device.queue.writeBuffer(this.diag, 0, new Uint32Array(4));
     this.device.queue.writeBuffer(this.rg, 0, new Float32Array(4));
+    if (this.idBufs) this.device.queue.writeBuffer(this.idBufs[0], 0, Uint32Array.from({ length: this.n }, (_, i) => i));
     this.cur = 0;
     this.tick = 0;
+    this.reorders = 0;
   }
 
   setRule(r: RuleParams): void {
@@ -376,6 +423,20 @@ export class Flock {
     this.cur = 1 - c;
   }
 
+  /** Move the current fish into cell order in memory (keys → sort → gather), using Params slot `s`. */
+  private encodeReorder(pass: GPUComputePassEncoder, s: number): void {
+    const c = this.cur;
+    pass.setPipeline(this.k.cellKeys);
+    pass.setBindGroup(0, this.keysBG[c]!, [s * SLOT]);
+    pass.dispatchWorkgroups(Math.ceil(this.n / 256));
+    this.sort.encode(pass, this.keys);
+    pass.setPipeline(this.k.gather);
+    pass.setBindGroup(0, this.gatherBG[c]!);
+    pass.dispatchWorkgroups(Math.ceil(this.n / 256));
+    this.cur = 1 - c;
+    this.reorders += 1;
+  }
+
   /**
    * Record `steps` solver steps into `enc` (one compute pass; at most
    * MAX_STEPS_PER_PASS). `pure` drops the shark, as v4 writeParams(true).
@@ -385,7 +446,10 @@ export class Flock {
     if (steps > MAX_STEPS_PER_PASS) throw new Error(`at most ${MAX_STEPS_PER_PASS} steps per pass`);
     this.writeSlots(steps, opts.pure ?? false);
     const pass = enc.beginComputePass({ label: "swarm-sim", timestampWrites: opts.timestampWrites });
-    for (let s = 0; s < steps; s += 1) this.encodeOne(pass, s);
+    for (let s = 0; s < steps; s += 1) {
+      this.encodeOne(pass, s);
+      if (this.sortEvery > 0 && this.broadphase === "sort" && (this.tick + s + 1) % this.sortEvery === 0) this.encodeReorder(pass, s);
+    }
     pass.end();
     this.tick += steps;
   }
@@ -520,15 +584,18 @@ export class Flock {
 
   checkpoint(): Checkpoint {
     const boids = this.device.createBuffer({ size: this.bytes, usage: STORAGE(), label: "swarm-checkpoint" });
+    const ids = this.idBufs ? this.device.createBuffer({ size: Math.max(16, this.n * 4), usage: STORAGE(), label: "swarm-checkpoint-ids" }) : null;
     const enc = this.device.createCommandEncoder({ label: "swarm-checkpoint" });
     enc.copyBufferToBuffer(this.boids, 0, boids, 0, this.bytes);
+    if (ids && this.ids) enc.copyBufferToBuffer(this.ids, 0, ids, 0, this.n * 4);
     this.device.queue.submit([enc.finish()]);
-    return { boids, tick: this.tick, rule: { ...this.rule }, seed: this.seed };
+    return { boids, ids, tick: this.tick, rule: { ...this.rule }, seed: this.seed };
   }
 
   restore(c: Checkpoint): void {
     const enc = this.device.createCommandEncoder({ label: "swarm-restore" });
     enc.copyBufferToBuffer(c.boids, 0, this.boidBufs[0], 0, this.bytes);
+    if (c.ids && this.idBufs) enc.copyBufferToBuffer(c.ids, 0, this.idBufs[0], 0, this.n * 4);
     this.device.queue.submit([enc.finish()]);
     this.cur = 0;
     this.tick = c.tick;
@@ -538,10 +605,17 @@ export class Flock {
 
   release(c: Checkpoint): void {
     c.boids.destroy();
+    c.ids?.destroy();
+  }
+
+  /** The current fish ids (slot → fish); identity when the flock never reorders. */
+  async readIds(): Promise<Uint32Array> {
+    if (!this.ids) return Uint32Array.from({ length: this.n }, (_, i) => i);
+    return new Uint32Array(await readBuffer(this.device, this.ids, this.n * 4));
   }
 
   destroy(): void {
-    for (const b of [...this.boidBufs, this.vort, this.spec, this.diag, this.keys, this.params, this.obs, this.partials, this.rg]) b.destroy();
+    for (const b of [...this.boidBufs, ...(this.idBufs ?? []), this.vort, this.spec, this.diag, this.keys, this.params, this.obs, this.partials, this.rg]) b.destroy();
     this.sort.destroy();
   }
 }

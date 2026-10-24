@@ -26,6 +26,10 @@ import { PROOF, SCENES, sceneById } from "./scenes.js";
 const TICK_RATE: Record<Tier, number> = { T3: 60, T2: 60, T1: 60 };
 /** Smallest cohesion radius Tune offers (the sort is sized for it). */
 export const MIN_RCOH = 0.05;
+/** The governor ignores this long after a scene loads (compiles, clock ramp). */
+const WARM_UP_MS = 3000;
+/** Live ocean: move the fish into cell order in memory every this many steps (measured: see the bench). */
+export const SORT_EVERY = 16;
 /** Bloom mix for the glow (foundation default for emissive content: ≤ 0.08). */
 export const BLOOM = 0.06;
 
@@ -111,15 +115,19 @@ export class App {
   };
   /** Fear radius as a multiple of the cohesion radius (the Shark tool's Size). */
   sharkSize = SHARK_RADIUS_R;
+  /** Memory reorder cadence for live scenes (0 = never). */
+  sortEvery = SORT_EVERY;
 
   private busy = false;
-  private inFlight = false;
+  /** Frames submitted and not yet done; at most `maxInFlight`. */
+  private inFlight = 0;
+  /** Frames allowed in flight (see the bench: one leaves the GPU idle half the time). */
+  maxInFlight = 2;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
   private fpsT0 = performance.now();
   private fps = 0;
-  private ticksEma = 0;
   private rateT0 = performance.now();
   private rateTick0 = 0;
   private stepsPerSecond = 0;
@@ -186,6 +194,8 @@ export class App {
         init: scene.init,
         broadphase: "sort",
         minRCoh: MIN_RCOH,
+        // the proof scene is the proofs' run exactly: no memory reorder
+        sortEvery: proof ? 0 : this.sortEvery,
       });
       this.flock = flock;
       old?.destroy();
@@ -515,8 +525,12 @@ export class App {
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
     // the capture lock: the live loop yields entirely while a capture or proof runs
-    if (isCapturing() || this.busy || this.inFlight) return;
-    if (this.profiler?.source === "submit-latency" && this.governor) this.governor.sample(dt * 1000, now);
+    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight) return;
+    // The governor watches the frame interval, what the visitor sees. (With two
+    // frames in flight a pass's begin timestamp can land while the previous
+    // frame still runs, so per-pass GPU times overlap and read high.) It waits
+    // out the first seconds of a scene: shader compiles and the GPU clocking up.
+    if (this.governor && now - this.sceneT0 > WARM_UP_MS) this.governor.sample(dt * 1000, now);
     const rect = this.studio.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const scale = this.governor?.renderScale ?? 1;
@@ -527,9 +541,8 @@ export class App {
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
     this.updateShark(dt);
 
-    this.profiler?.begin();
     const n = this.history.comparing ? 0 : this.clock.due(dt);
-    this.ticksEma += (n - this.ticksEma) * 0.1;
+    this.profiler?.begin(n);
     const enc = this.device.createCommandEncoder({ label: "swarm-frame" });
     this.flock.encodeSteps(enc, n, { timestampWrites: n > 0 ? this.profiler?.pass("sim") : undefined });
     this.clock.advance(n);
@@ -564,9 +577,9 @@ export class App {
       this.snapshotWanted = false;
       this.studio.canvas.toBlob((b) => b && this.onSnapshot?.(b), "image/png");
     }
-    this.inFlight = true;
+    this.inFlight += 1;
     void this.device.queue.onSubmittedWorkDone().then(() => {
-      this.inFlight = false;
+      this.inFlight -= 1;
     });
     if (orderTick >= 0) void this.collectOrder(orderTick);
 
@@ -598,13 +611,15 @@ export class App {
    * Split the measured GPU frame into solver and render cost: the solver's
    * share adapts the tick cap (the chosen speed is honoured up to what fits
    * the frame budget); the governor only sees the frame cost at 1× speed.
+   * `steps` is how many solver steps that frame ran (the profiler's frame tag),
+   * so a catch-up frame never reads as a slow step.
    */
-  adaptToTimings(passes: readonly PassTiming[], budgetMs: number): number | null {
+  adaptToTimings(passes: readonly PassTiming[], budgetMs: number, steps: number): number | null {
     const sim = passes.filter((p) => p.name === "sim").reduce((a, p) => a + p.ms, 0);
     const render = passes.filter((p) => p.name !== "sim").reduce((a, p) => a + p.ms, 0);
     const base = this.clock.ticksPerSecond / 60;
-    if (this.ticksEma < 0.5 || sim <= 0) return render;
-    const perTick = sim / this.ticksEma;
+    if (steps < 1 || sim <= 0) return render;
+    const perTick = sim / steps;
     const fit = Math.floor((budgetMs - render) / perTick);
     this.clock.maxTicksPerFrame = Math.min(MAX_STEPS_PER_PASS, Math.max(Math.ceil(base), fit));
     return render + perTick * base;
