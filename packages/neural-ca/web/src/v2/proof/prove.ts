@@ -91,7 +91,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   );
   exactCard.set({
     status: "idle",
-    measured: `${V.gate.measured_max_abs_radv.toFixed(1)} in CI (${V.gate.known_bitexact_family}); run it to measure this GPU`,
+    measured: `${V.gate.measured_max_abs_radv.toFixed(1)} on ${V.gate.known_bitexact_family}; run it to measure this GPU`,
     budget: "max |Δ| = 0 (bit-exact)",
     adapter: "not yet run here",
   });
