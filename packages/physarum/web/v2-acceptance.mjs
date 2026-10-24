@@ -343,6 +343,23 @@ const hashAfter = (page, n) =>
     await new Promise((res) => setTimeout(res, 400));
     return { i, j, params: app.sim.params, want: globalThis.__physarumPad.padParams({ i, j }), search: location.search };
   });
+  // and with a real pointer: a plain click on a dot picks it
+  const clicked = await T(page, async () => {
+    const app = globalThis.__physarum;
+    app.studio.tune.toggle();
+    await new Promise((res) => setTimeout(res, 300));
+    const dot = [...document.querySelectorAll(".ph-pad-dot:not(:disabled)")].find((b) => b.dataset.pad !== `${app.pad.i},${app.pad.j}`);
+    const r = dot.getBoundingClientRect();
+    return { key: dot.dataset.pad, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  });
+  await page.mouse.click(clicked.x, clicked.y);
+  await page.waitForTimeout(200);
+  const after = await T(page, () => {
+    const app = globalThis.__physarum;
+    app.studio.tune.toggle();
+    return { pad: `${app.pad.i},${app.pad.j}`, edits: app.edits };
+  });
+  check("a plain click on a pad dot picks that personality (one edit)", after.pad === clicked.key, `${clicked.key} → ${after.pad}, edits ${after.edits}`);
   check("picking a pad point sets that personality's numbers", sameParams(pk.params, pk.want), `(${pk.i},${pk.j}) → ${JSON.stringify(pk.params)}`);
   check("no console errors (M1 scenes, pad, food, undo)", errors.length === 0, errors.join(" | "));
   await ctx.close();
