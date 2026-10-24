@@ -5,14 +5,17 @@
 
 import { checkCountingSort } from "@bp/gpu";
 import { h, proofCard } from "@bp/studio";
+import type { BrainParams } from "../model/brains.js";
 import type { Broadphase, FlockKernels } from "../model/flock.js";
 import { BRUTE_MAX, Flock } from "../model/flock.js";
 import type { RuleParams } from "../model/params.js";
 import { V4_DENSITY, worldFor } from "../model/world.js";
 import { REPO_BLOB } from "../learn.js";
-import { PROOF } from "../scenes.js";
+import { OPEN_WATER_RULE, PROOF, couzinFor, sceneById, vicsekFor } from "../scenes.js";
 import type { GateCheck } from "./gate.js";
 import { GATE_N, GATE_RULES, GATE_STEPS, runGateTwice } from "./gate.js";
+import type { VicsekCheck } from "./vicsek-check.js";
+import { VICSEK_CHECK, runVicsekCheck } from "./vicsek-check.js";
 
 const blob = (path: string): string => `${REPO_BLOB}${path}`;
 
@@ -25,6 +28,8 @@ export interface ProveDeps {
   /** The live flock's size and world, and its sort snapshot. */
   live: () => { n: number; halfW: number; halfH: number; seed: number };
   liveSort: () => Promise<{ keys: Uint32Array; cellStart: Uint32Array; order: Uint32Array; keyCount: number; cells: number }>;
+  /** The on-screen M1 brain, or null (Open Water: the v4 kernel). */
+  brain: () => BrainParams | null;
   /** Load the proof flock into the live view. */
   showProof: () => void;
   /** Suspend/resume the quality governor (and the live loop) around in-page runs. */
@@ -33,6 +38,8 @@ export interface ProveDeps {
 
 export interface OnScreen {
   proofRun: boolean;
+  /** The on-screen scene runs an M1 brain. */
+  brain: "vicsek" | "couzin" | null;
   scene: string;
   fish: number;
   world: [number, number];
@@ -82,6 +89,21 @@ export interface Reorder {
 /** The reorder check: fish, steps, and how often the live ocean's cadence is exercised. */
 export const REORDER_CHECK = { n: 65536, steps: 120, every: 8 } as const;
 
+/** The M1 brains' exactness runs: fish, steps, seed; the re-sort check runs with noise on. */
+export const BRAIN_CHECK = { vicsekN: 4096, couzinN: 2048, steps: 60, seed: 42, reorderEta: 0.3 } as const;
+
+export interface BrainExact {
+  brain: "vicsek" | "couzin";
+  n: number;
+  brute: string;
+  sort: string;
+  sort2: string;
+  nan: number;
+  saturated: boolean;
+  identical: boolean;
+  repeatable: boolean;
+}
+
 export interface ProvePane {
   setOnScreen(s: OnScreen): void;
   runAll(): Promise<void>;
@@ -91,6 +113,12 @@ export interface ProvePane {
   liveSort(): Promise<{ problem: string | null; items: number; cells: number; keyCount: number }>;
   fullScale(steps?: number): Promise<FullScale>;
   reorder(): Promise<Reorder>;
+  /** The M1 brains: brute ≡ sort and run twice (Vicsek and Couzin). */
+  brains(): Promise<BrainExact[]>;
+  /** The Vicsek brain's re-sort with noise on, fish by fish. */
+  brainReorder(): Promise<Reorder>;
+  /** φ(η) on the GPU against the f64 CPU reference. */
+  vicsek(): Promise<VicsekCheck>;
   /** One trajectory hash on a scratch flock (v4 hashRun), for cross-page checks. */
   hashRun(o?: HashOptions): Promise<{ hash: string; nan: number; n: number; broadphase: Broadphase }>;
 }
@@ -205,6 +233,66 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   );
   reorderCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "0 fish differ", adapter: "not yet run here" });
   pane.append(reorderCard.el);
+
+  pane.append(
+    h("h3", {}, "The Order Dial and The Mill"),
+    h(
+      "p",
+      { class: "sw-note" },
+      "These scenes run two new brains — the Vicsek model and Couzin's zones — built the same way as the gated kernel: whole-number neighbour sums, noise keyed by seed, step and fish. The release gate does not cover them; these proofs do.",
+    ),
+  );
+
+  // 7. the M1 brains: brute ≡ sort, twice
+  const brainCard = proofCard(
+    {
+      title: "New brains: neighbour search is exact",
+      sentence:
+        `The Vicsek brain (${BRAIN_CHECK.vicsekN.toLocaleString()} fish) and Couzin's zones (${BRAIN_CHECK.couzinN.toLocaleString()} fish), ${BRAIN_CHECK.steps} steps each with noise on, ` +
+        "run by brute force and by the counting sort, and the sort twice: every position and velocity of every step must hash the same.",
+      label: "brute ≡ sort, run twice",
+      action: "Run on this GPU",
+      links: [{ label: "brains", href: blob("packages/boids-2d/web/src/v2/model/brains.ts") }],
+    },
+    () => void runBrains(),
+  );
+  brainCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "identical SHA-256", adapter: "not yet run here" });
+  pane.append(brainCard.el);
+
+  // 8. re-sorting with noise
+  const brainReorderCard = proofCard(
+    {
+      title: "Re-sorting changes nothing, even with noise",
+      sentence:
+        `The new brains key their noise to each fish's id, which travels with the fish when the ocean is re-sorted in memory. So with noise on (η = ${BRAIN_CHECK.reorderEta}) a re-sorted Vicsek ocean — ` +
+        `${REORDER_CHECK.n.toLocaleString()} fish, ${REORDER_CHECK.steps} steps, re-sorted every ${REORDER_CHECK.every} — must match one that never moves, fish by fish.`,
+      label: "byte-identical",
+      action: "Run on this GPU",
+    },
+    () => void runBrainReorder(),
+  );
+  brainReorderCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "0 fish differ", adapter: "not yet run here" });
+  pane.append(brainReorderCard.el);
+
+  // 9. φ(η) against the CPU reference
+  const vicsekCard = proofCard(
+    {
+      title: "The transition matches an f64 reference",
+      sentence:
+        `${VICSEK_CHECK.n.toLocaleString()} fish at ρ 1, η ${VICSEK_CHECK.etas.join(", ")}: the time-averaged polarization over ${VICSEK_CHECK.gpuSeeds.length} seeds on the GPU, ` +
+        `against ${VICSEK_CHECK.cpuSeeds.length} other seeds of the same rule in f64 on the CPU. Paths diverge — the flock is chaotic — so the statistics are the claim: ` +
+        `at every η the two means must agree within z ≤ ${VICSEK_CHECK.zMax}. A reference shifted by Δη = ${VICSEK_CHECK.probeShift} must fail.`,
+      label: "distributions agree",
+      action: "Run on this GPU",
+      links: [
+        { label: "CPU reference", href: blob("packages/boids-2d/web/src/v2/model/vicsek-cpu.ts") },
+        { label: "check", href: blob("packages/boids-2d/web/src/v2/proof/vicsek-check.ts") },
+      ],
+    },
+    () => void runVicsek(),
+  );
+  vicsekCard.set({ status: "idle", measured: "run it on this GPU (about ten seconds)", budget: `z ≤ ${VICSEK_CHECK.zMax}`, adapter: "not yet run here" });
+  pane.append(vicsekCard.el);
 
   pane.append(
     h(
@@ -454,6 +542,176 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     });
   }
 
+  /** The brains at their on-screen parameters when shown, else their scenes' defaults. */
+  const brainFor = (kind: "vicsek" | "couzin", n: number): BrainParams => {
+    const live = d.brain();
+    if (live && live.kind === kind) {
+      if (kind === "couzin" && live.kind === "couzin") return { kind, p: { ...live.p, ra: couzinFor(n).ra } };
+      return structuredClone(live);
+    }
+    return sceneById(kind === "vicsek" ? "order-dial" : "mill").brain!(n);
+  };
+
+  async function brainHash(kind: "vicsek" | "couzin", broadphase: Broadphase): Promise<{ hash: string; nan: number; saturated: boolean }> {
+    const vic = kind === "vicsek";
+    const n = vic ? BRAIN_CHECK.vicsekN : BRAIN_CHECK.couzinN;
+    const scene = sceneById(vic ? "order-dial" : "mill");
+    const world = vic ? worldFor(n, 16, 9, V4_DENSITY) : scene.world!(n, 16 / 9);
+    let brain = brainFor(kind, n);
+    if (vic && brain.kind === "vicsek") brain = { kind: "vicsek", p: { ...brain.p, eta: Math.max(brain.p.eta, 0.05) } };
+    const flock = new Flock(d.device, d.kernels, {
+      n,
+      ...world,
+      seed: BRAIN_CHECK.seed,
+      rule: OPEN_WATER_RULE,
+      brain,
+      init: vic ? "random" : "annulus",
+      broadphase,
+    });
+    try {
+      const r = await flock.hashRun(BRAIN_CHECK.steps);
+      return { hash: r.hash, nan: r.nan, saturated: await flock.readSaturated() };
+    } finally {
+      flock.destroy();
+    }
+  }
+
+  async function brains(): Promise<BrainExact[]> {
+    const out: BrainExact[] = [];
+    for (const kind of ["vicsek", "couzin"] as const) {
+      const b = await brainHash(kind, "brute");
+      const s1 = await brainHash(kind, "sort");
+      const s2 = await brainHash(kind, "sort");
+      out.push({
+        brain: kind,
+        n: kind === "vicsek" ? BRAIN_CHECK.vicsekN : BRAIN_CHECK.couzinN,
+        brute: b.hash,
+        sort: s1.hash,
+        sort2: s2.hash,
+        nan: b.nan + s1.nan + s2.nan,
+        saturated: b.saturated || s1.saturated || s2.saturated,
+        identical: b.hash === s1.hash && b.nan === 0 && s1.nan === 0,
+        repeatable: s1.hash === s2.hash && s2.nan === 0,
+      });
+    }
+    return out;
+  }
+
+  async function runBrains(): Promise<void> {
+    await lock(async () => {
+      brainCard.set({ status: "running", measured: "Vicsek, then Couzin: brute force, the sort, the sort again…", adapter: d.adapter });
+      const t0 = performance.now();
+      try {
+        const r = await brains();
+        const ok = r.every((x) => x.identical && x.repeatable);
+        brainCard.set({
+          status: ok ? "pass" : "fail",
+          measured: ok ? "identical, both brains" : r.map((x) => `${x.brain}: ${x.identical ? "brute ≡ sort" : "brute ≠ sort"}, ${x.repeatable ? "twice ≡" : "twice ≠"}`).join("; "),
+          budget: "identical SHA-256",
+          ratio: ok ? 0 : 2,
+          adapter: d.adapter,
+          notes: [
+            ...r.map((x) => `${x.brain} ${x.n.toLocaleString()}  ${x.sort.slice(0, 24)}…`),
+            r.some((x) => x.saturated) ? "fixed-point sums came near saturation" : "fixed-point sums clean",
+            `${((performance.now() - t0) / 1000).toFixed(1)} s for six runs`,
+          ],
+        });
+      } catch (e) {
+        brainCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+      }
+    });
+  }
+
+  async function brainReorder(): Promise<Reorder> {
+    const t0 = performance.now();
+    const { n, steps, every } = REORDER_CHECK;
+    const world = worldFor(n, 16, 9, V4_DENSITY);
+    const live = brainFor("vicsek", n);
+    const p = live.kind === "vicsek" ? live.p : vicsekFor(1, BRAIN_CHECK.reorderEta);
+    const brain: BrainParams = { kind: "vicsek", p: { ...p, eta: BRAIN_CHECK.reorderEta } };
+    const mk = (sortEvery: number): Flock =>
+      new Flock(d.device, d.kernels, { n, ...world, seed: PROOF.seed, rule: OPEN_WATER_RULE, brain, init: "random", broadphase: "sort", sortEvery });
+    const plain = mk(0);
+    const sorted = mk(every);
+    try {
+      for (let done = 0; done < steps; ) {
+        const k = Math.min(16, steps - done);
+        const enc = d.device.createCommandEncoder({ label: "swarm-brain-reorder-check" });
+        plain.encodeSteps(enc, k, { pure: true });
+        sorted.encodeSteps(enc, k, { pure: true });
+        d.device.queue.submit([enc.finish()]);
+        done += k;
+      }
+      const [a, b, ids] = await Promise.all([plain.readBoids(), sorted.readBoids(), sorted.readIds()]);
+      const au = new Uint32Array(a.buffer, a.byteOffset, a.length);
+      const bu = new Uint32Array(b.buffer, b.byteOffset, b.length);
+      const seen = new Uint8Array(n);
+      let differing = 0;
+      for (let s = 0; s < n; s += 1) {
+        const f = ids[s]!;
+        if (f >= n || seen[f]) {
+          differing += 1;
+          continue;
+        }
+        seen[f] = 1;
+        for (let w = 0; w < 4; w += 1) {
+          if (au[f * 6 + w] !== bu[s * 6 + w]) {
+            differing += 1;
+            break;
+          }
+        }
+      }
+      return { n, steps, reorders: sorted.reorders, differing, identical: differing === 0 && sorted.reorders > 0, seconds: (performance.now() - t0) / 1000 };
+    } finally {
+      plain.destroy();
+      sorted.destroy();
+    }
+  }
+
+  async function runBrainReorder(): Promise<void> {
+    await lock(async () => {
+      brainReorderCard.set({ status: "running", measured: "two noisy runs, one re-sorted…", adapter: d.adapter });
+      try {
+        const r = await brainReorder();
+        brainReorderCard.set({
+          status: r.identical ? "pass" : "fail",
+          measured: r.identical ? `identical (${r.n.toLocaleString()} fish, η ${BRAIN_CHECK.reorderEta})` : `${r.differing.toLocaleString()} fish differ`,
+          budget: "0 fish differ",
+          ratio: r.identical ? 0 : 2,
+          adapter: d.adapter,
+          notes: [`${r.reorders} re-sorts in ${r.steps} steps`, `${r.seconds.toFixed(1)} s`],
+        });
+      } catch (e) {
+        brainReorderCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+      }
+    });
+  }
+
+  async function runVicsek(): Promise<VicsekCheck | null> {
+    return lock(async () => {
+      vicsekCard.set({ status: "running", measured: `${VICSEK_CHECK.etas.length * VICSEK_CHECK.gpuSeeds.length} GPU runs, then the CPU reference…`, adapter: d.adapter });
+      try {
+        const r = await runVicsekCheck(d.device, d.kernels);
+        vicsekCard.set({
+          status: r.pass && r.probeFails ? "pass" : "fail",
+          measured: `largest z ${r.maxZ.toFixed(2)}${r.probeFails ? "" : `; the shifted reference did not fail (z ${r.probeZ.toFixed(2)})`}`,
+          budget: `z ≤ ${VICSEK_CHECK.zMax}`,
+          ratio: r.maxZ / VICSEK_CHECK.zMax,
+          adapter: `${d.adapter} vs CPU (f64)`,
+          notes: [
+            ...r.rows.map((x) => `η ${x.eta.toFixed(2)}  ⟨φ⟩ GPU ${x.gpuMean.toFixed(3)} · CPU ${x.cpuMean.toFixed(3)}  z ${x.z.toFixed(2)}`),
+            `shifted reference (Δη ${VICSEK_CHECK.probeShift}): z ${r.probeZ.toFixed(1)} — ${r.probeFails ? "fails, as it must" : "passes — the check is too weak"}`,
+            `GPU ${r.gpuSeconds.toFixed(1)} s · CPU ${r.cpuSeconds.toFixed(1)} s`,
+          ],
+        });
+        return r;
+      } catch (e) {
+        vicsekCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+        return null;
+      }
+    });
+  }
+
   runAllBtn.addEventListener("click", () => void runAll());
   async function runAll(): Promise<void> {
     runAllBtn.disabled = true;
@@ -463,6 +721,9 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       await runLiveSort();
       await runFullScale();
       await runReorder();
+      await runBrains();
+      await runBrainReorder();
+      await runVicsek();
     } finally {
       runAllBtn.disabled = false;
     }
@@ -473,7 +734,11 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       const size = `${s.fish.toLocaleString()} fish on a ${s.world[0].toFixed(1)} × ${s.world[1].toFixed(1)} ocean`;
       onScreen.textContent = s.proofRun
         ? `On screen: the proofs' own run (${size}, seed ${PROOF.seed}, no shark).`
-        : `On screen: ${s.scene} — ${size}, the gated kernel with the counting-sort grid` +
+        : s.brain
+          ? `On screen: ${s.scene} — ${size}, the ${s.brain === "vicsek" ? "Vicsek brain" : "Couzin brain"} with the counting-sort grid, its fish re-sorted in memory every 16 steps for speed. ` +
+            `${s.sharkOn ? "The shark's fear term is on while you hunt; no proof runs with it. " : ""}` +
+            "The new-brain proofs below run this brain at its on-screen settings; the first six check the gated kernel that runs Open Water."
+          : `On screen: ${s.scene} — ${size}, the gated kernel with the counting-sort grid` +
           `${s.edited ? ", at the rule you tuned" : ""}, its fish re-sorted in memory every 16 steps for speed. ` +
           `${s.sharkOn ? "The shark's fear term is on while you hunt; no proof runs with it. " : ""}` +
           "The GPU proofs below run the same kernel and rule on their own flocks.";
@@ -486,5 +751,12 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     fullScale,
     reorder,
     hashRun,
+    brains,
+    brainReorder,
+    vicsek: async () => {
+      const r = await runVicsek();
+      if (!r) throw new Error("the φ(η) check could not run");
+      return r;
+    },
   };
 }

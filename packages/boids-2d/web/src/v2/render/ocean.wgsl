@@ -1,8 +1,11 @@
 // Swarm look (03-boids-2d.md § The look): night ocean from above. Deep
-// blue-black water with slow caustics, fish as small luminous oriented glyphs
-// (a tail flick at close zoom, a soft dot when they are smaller than a few
-// pixels), and the shark as a soft dark shadow with a faint ring at its fear
-// radius. Everything is emitted into the HDR scene target and tone-mapped by
+// blue-black water with slow caustics; fish in three levels of detail chosen
+// by their size on screen — oriented glyphs with a tail flick up close,
+// motion streaks at mid zoom, and (./field.wgsl splats them) a density and
+// heading field when a fish is smaller than a pixel — cross-faded by that
+// size, each fish's light the same in every level so nothing pops; and the
+// shark as a soft dark shadow with a faint ring at its fear radius.
+// Everything is emitted into the HDR scene target and tone-mapped by
 // @bp/render; nothing here feeds back into the simulation.
 //
 // Coordinates: world (−halfW … halfW, −halfH … halfH) is the kernel's; the
@@ -23,12 +26,15 @@ struct View {
   shark: vec4<f32>,    // world x, y, heading (rad), body length (world)
   shark2: vec4<f32>,   // fear radius (world), presence 0–1, lunge 0–1, ring gain
   split: vec4<f32>,    // compare split in target px (< 0 off), divider alpha, unused, unused
+  lod: vec4<f32>,      // glyph weight, field weight, far light factor, field cell (target px)
+  grid: vec4<f32>,     // field cells across, down, unused, unused
 };
 
 struct Boid { pos: vec2<f32>, vel: vec2<f32>, align: f32, dens: f32 };
 
 @group(0) @binding(0) var<uniform> V: View;
 @group(1) @binding(0) var<storage, read> boids: array<Boid>;
+@group(2) @binding(0) var<storage, read> fieldGrid: array<u32>;
 
 // ------------------------------------------------------------------ water --
 
@@ -121,9 +127,10 @@ fn water_fs(in: FullscreenOut) -> @location(0) vec4<f32> {
 
 struct FishOut {
   @builtin(position) pos: vec4<f32>,
-  @location(0) local: vec2<f32>,         // quad coords: x along the heading, y across (−1 … 1)
+  @location(0) pxo: vec2<f32>,                              // px from the fish's centre: x along its heading, y across
   @location(1) col: vec3<f32>,
-  @location(2) @interpolate(flat) shape: vec4<f32>,  // half length (px), width / length, flick phase, roundness
+  @location(2) @interpolate(flat) shape: vec4<f32>,         // glyph half length (px), streak length, streak width (px), flick phase
+  @location(3) @interpolate(flat) mixw: vec4<f32>,          // glyph weight, streak light scale, (1 − field weight), unused
 };
 
 fn oklab_to_linear(lab: vec3<f32>) -> vec3<f32> {
@@ -144,6 +151,13 @@ fn oklab_to_linear(lab: vec3<f32>) -> vec3<f32> {
 fn heading_colour(dir: vec2<f32>) -> vec3<f32> {
   let c = 0.11;
   return max(oklab_to_linear(vec3<f32>(0.80, c * dir.x, c * dir.y)), vec3<f32>(0.0));
+}
+
+// The light one fish emits in every level of detail, in (radiance · px²):
+// far ⇒ 0.498 · gain · len² (a soft dot of the fish's true area, as Swarm's
+// M0 drew it), near ⇒ the glyph's own area, 0.168 · gain · len².
+fn fish_energy_k(lenPx: f32) -> f32 {
+  return mix(V.lod.z, 0.168, smoothstep(1.5, 8.0, lenPx));
 }
 
 @vertex
@@ -167,63 +181,110 @@ fn fish_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> 
   let dir = select(vec2<f32>(1.0, 0.0), b.vel / max(sp, 1e-12), sp > 1e-12);
   let perp = vec2<f32>(-dir.y, dir.x);
   let lenPx = V.fish.x / V.cam.z;
-  let drawn = max(lenPx, V.fish.y);
-  let dotness = 1.0 - smoothstep(2.5, 7.0, drawn);        // tiny fish: a round soft dot
-  let aspect = mix(0.42, 1.0, dotness);
-  let hl = 0.5 * drawn * (1.0 + 0.6 * dotness);            // dots get a soft margin
-  let hw = hl * aspect;
+  let g = V.lod.x;
+  // the glyph: the fish at its true size; the streak: a soft line a little longer than the fish
+  let hlg = 0.5 * lenPx;
+  let Ls = max(1.8 * lenPx, 3.0);
+  let Ws = max(0.32 * lenPx, 1.1);
+  let hl = max(select(0.0, hlg, g > 0.0), 0.5 * Ls) + 1.0;
+  let hw = max(select(0.0, hlg * 0.62, g > 0.0), 1.6 * Ws) + 1.0;
 
-  // two triangles: corners (±1, ±1)
   var corners = array<vec2<f32>, 6>(
     vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, -1.0), vec2<f32>(1.0, 1.0),
     vec2<f32>(-1.0, -1.0), vec2<f32>(1.0, 1.0), vec2<f32>(-1.0, 1.0),
   );
   let c = corners[vi];
-  var p = centre + dir * (c.x * hl) + perp * (c.y * hw);
+  let off = vec2<f32>(c.x * hl, c.y * hw);
+  var p = centre + dir * off.x + perp * off.y;
   // off-screen fish collapse to a degenerate point (no fragments)
   let margin = hl + 2.0;
   if (centre.x < -margin || centre.y < -margin || centre.x > V.dims.x + margin || centre.y > V.dims.y + margin) {
     p = vec2<f32>(-10.0, -10.0);
   }
   o.pos = vec4<f32>(p.x / V.dims.x * 2.0 - 1.0, 1.0 - p.y / V.dims.y * 2.0, 0.0, 1.0);
-  o.local = c;
-  // energy: a fish drawn larger than its true size keeps its true light
-  let weight = min(1.0, (lenPx * lenPx) / (drawn * drawn));
+  o.pxo = off;
   var col = V.silver.rgb;
   if (V.fish.w > 0.5) {
     col = heading_colour(dir);
   }
-  o.col = col * (V.fish.z * weight);
+  o.col = col * V.fish.z;
+  // the streak's profile integrates to 0.245 · Ws · Ls px²; scale it to this size's light
+  let streakScale = fish_energy_k(lenPx) * lenPx * lenPx / (0.245 * Ws * Ls);
   let phase = bp_unit(bp_hash3(i, 7u, 3u)) * 6.2831853;
-  o.shape = vec4<f32>(hl, aspect, phase, dotness);
+  o.shape = vec4<f32>(hlg, Ls, Ws, phase);
+  o.mixw = vec4<f32>(g, streakScale, 1.0 - V.lod.y, 0.0);
   return o;
 }
 
 @fragment
 fn fish_fs(in: FishOut) -> @location(0) vec4<f32> {
-  let hl = in.shape.x;
-  let aspect = in.shape.y;
-  let dotness = in.shape.w;
-  // fish coordinates in units of the half length: x forward, y across
-  let f = vec2<f32>(in.local.x, in.local.y * aspect);
-  let px = 1.0 / max(hl, 1e-3);                            // one pixel in these units
-  // round dot (small fish)
-  let rr = length(in.local);
-  let blob = exp(-rr * rr * 4.0);
-  // body: an ellipse; tail: a forked fin that flicks
-  let flick = sin(V.cam.w * 9.0 + in.shape.z) * V.silver.a;
-  let be = length(vec2<f32>((f.x - 0.12) / 0.78, f.y / 0.26)) - 1.0;
-  let body = 1.0 - smoothstep(-px * 0.26, px * 0.26, be * 0.26);
-  let tx = -f.x - 0.62;                                    // 0 at the tail root, grows to the tip
-  let ty = abs(f.y - flick * max(tx, 0.0) * 1.2);
-  let tailW = 0.04 + tx * 0.75;
-  let inTail = (1.0 - smoothstep(tailW - px, tailW + px, ty)) * step(0.0, tx) * (1.0 - smoothstep(0.30, 0.38, tx));
-  let fish = max(body, inTail * 0.85);
-  let a = mix(fish, blob, dotness);
-  if (a < 0.004) {
+  let g = in.mixw.x;
+  var a = 0.0;
+  if (g < 0.999) {
+    // streak: brightest at the head, a soft tail behind
+    let Ls = in.shape.y;
+    let Ws = in.shape.z;
+    let t = (in.pxo.x + 0.5 * Ls) / Ls;
+    let across = in.pxo.y / (0.5 * Ws);
+    let ramp = mix(0.2, 1.0, clamp(t, 0.0, 1.0)) * smoothstep(0.0, 0.08, t) * (1.0 - smoothstep(0.92, 1.0, t));
+    a = a + (1.0 - g) * exp(-4.0 * across * across) * ramp * in.mixw.y;
+  }
+  if (g > 0.001) {
+    // glyph: an ellipse body and a forked tail that flicks
+    let hlg = max(in.shape.x, 1e-3);
+    let f = in.pxo / hlg;
+    let px = 1.0 / hlg;
+    let flick = sin(V.cam.w * 9.0 + in.shape.w) * V.silver.a;
+    let be = length(vec2<f32>((f.x - 0.12) / 0.78, f.y / 0.26)) - 1.0;
+    let body = 1.0 - smoothstep(-px * 0.26, px * 0.26, be * 0.26);
+    let tx = -f.x - 0.62;
+    let ty = abs(f.y - flick * max(tx, 0.0) * 1.2);
+    let tailW = 0.04 + tx * 0.75;
+    let inTail = (1.0 - smoothstep(tailW - px, tailW + px, ty)) * step(0.0, tx) * (1.0 - smoothstep(0.30, 0.38, tx));
+    a = a + g * max(body, inTail * 0.85);
+  }
+  a = a * in.mixw.z;
+  if (a < 0.002) {
     discard;
   }
   return vec4<f32>(in.col * a, 0.0);
+}
+
+// ------------------------------------------------------------------ field --
+// Far away a fish is smaller than a pixel: ./field.wgsl adds every fish's
+// colour (fixed point, 1/1024) into a grid of `lod.w`-px cells, and this pass
+// spreads each cell's light over its pixels with a bilinear tent, scaled by the
+// same light per fish as the streaks it fades from.
+
+fn field_cell(x: i32, y: i32) -> vec3<f32> {
+  let gw = i32(V.grid.x);
+  let gh = i32(V.grid.y);
+  let cx = clamp(x, 0, gw - 1);
+  let cy = clamp(y, 0, gh - 1);
+  let k = u32(cy * gw + cx) * 3u;
+  return vec3<f32>(f32(fieldGrid[k]), f32(fieldGrid[k + 1u]), f32(fieldGrid[k + 2u])) / 1024.0;
+}
+
+@vertex
+fn field_vs(@builtin(vertex_index) vi: u32) -> FullscreenOut {
+  return fullscreen_vertex(vi);
+}
+
+@fragment
+fn field_fs(in: FullscreenOut) -> @location(0) vec4<f32> {
+  let px = in.uv * V.dims.xy;
+  let C = V.lod.w;
+  let q = px / C - 0.5;
+  let i0 = vec2<i32>(floor(q));
+  let f = q - floor(q);
+  let s = mix(mix(field_cell(i0.x, i0.y), field_cell(i0.x + 1, i0.y), f.x), mix(field_cell(i0.x, i0.y + 1), field_cell(i0.x + 1, i0.y + 1), f.x), f.y);
+  let lenPx = V.fish.x / V.cam.z;
+  let e = V.fish.z * fish_energy_k(lenPx) * lenPx * lenPx / (C * C);
+  let rgb = s * e * V.lod.y;
+  if (dot(rgb, rgb) <= 0.0) {
+    discard;
+  }
+  return vec4<f32>(rgb, 0.0);
 }
 
 // ------------------------------------------------------- shark and overlay --

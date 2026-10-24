@@ -55,7 +55,7 @@ export class RegimePanel {
       "section",
       { class: "sw-regime bp-surface", "aria-label": "The school's regime", "data-bp-chrome": "", "data-bp2": "studio-chrome" },
       this.canvas,
-      h("div", { class: "sw-regime-text" }, h("span", { class: "sw-regime-key" }, "Regime (Tunstrøm et al. 2013)"), this.nameEl, this.numsEl),
+      h("div", { class: "sw-regime-text" }, h("span", { class: "sw-regime-key" }, "Regime · Tunstrøm et al."), this.nameEl, this.numsEl),
     );
     this.draw();
   }

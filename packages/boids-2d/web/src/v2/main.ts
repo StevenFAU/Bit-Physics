@@ -216,6 +216,7 @@ async function boot(): Promise<void> {
     device,
     kernels,
     rule: () => app.flock.rule,
+    brain: () => app.flock.brain,
     live: () => ({ n: app.flock.n, halfW: app.flock.halfW, halfH: app.flock.halfH, seed: app.seed }),
     liveSort: () => app.flock.sortSnapshot(),
     showProof: () => {
@@ -228,6 +229,7 @@ async function boot(): Promise<void> {
   const syncProve = (): void =>
     prove.setOnScreen({
       proofRun: app.onProofRun,
+      brain: app.flock.brain?.kind ?? null,
       scene: app.scene.title,
       fish: app.flock.n,
       world: [app.flock.halfW * 2, app.flock.halfH * 2],

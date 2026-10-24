@@ -325,7 +325,8 @@ export class OrderDialPanel {
       ctx.moveTo(x + 0.5, PAD.t);
       ctx.lineTo(x + 0.5, H - PAD.b);
       ctx.stroke();
-      ctx.fillText(((k / 4) * ETA_MAX).toFixed(2).replace(/0$/, ""), x, H - PAD.b + 11);
+      ctx.textAlign = k === 0 ? "left" : k === 4 ? "right" : "center";
+      ctx.fillText(String(Number(((k / 4) * ETA_MAX).toFixed(2))), k === 0 ? x - 2 : k === 4 ? x + 4 : x, H - PAD.b + 11);
     }
     // the visitor's path
     if (this.path.length > 1) {
@@ -385,4 +386,4 @@ export class OrderDialPanel {
   }
 }
 
-const PAD = { l: 28, r: 8, t: 6, b: 16 };
+const PAD = { l: 28, r: 12, t: 6, b: 16 };

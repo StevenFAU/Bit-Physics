@@ -232,6 +232,8 @@ export class App {
       this.view.look = { ...this.view.look, fishLength: sc.fishLength, causticCell: sc.causticCell };
       if (o.camera) {
         this.camera.set({ cx: o.camera.cx * world.halfW * 2, cy: o.camera.cy * world.halfH * 2, pxPerUnit: this.camera.coverZoom() * o.camera.zoom });
+      } else if (scene.zoom && scene.zoom !== 1) {
+        this.camera.set({ cx: world.halfW, cy: world.halfH, pxPerUnit: this.camera.coverZoom() * scene.zoom });
       } else {
         this.camera.fit(1);
       }

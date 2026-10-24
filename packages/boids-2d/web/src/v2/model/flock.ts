@@ -323,6 +323,12 @@ export class Flock {
   private readonly reduceBG: GPUBindGroup[] = [];
   /** Which boid buffer holds the current state. */
   private cur = 0;
+  /**
+   * Which id buffer holds the current fish ids. Ids move only when the ocean is
+   * re-sorted (the gather), not on solver steps, so this flips independently of
+   * `cur`; bind groups exist for every (cur, idCur) pair.
+   */
+  private idCur = 0;
   /** Memory reorders: every `sortEvery` steps (0 = never). */
   readonly sortEvery: number;
   reorders = 0;
@@ -433,21 +439,23 @@ export class Flock {
         }),
       );
       if (this.brain && this.idBufs) {
-        const bcore: GPUBindGroupEntry[] = [
-          { binding: 0, resource: B0 },
-          { binding: 1, resource: { buffer: inB } },
-          { binding: 2, resource: { buffer: outB } },
-          { binding: 3, resource: { buffer: this.idBufs[c]! } },
-          { binding: 4, resource: { buffer: this.diag } },
-        ];
-        this.brainBruteBG.push(device.createBindGroup({ layout: kernels.brainBruteLayout, label: `swarm-brain-brute-${c}`, entries: bcore }));
-        this.brainSimBG.push(
-          device.createBindGroup({
-            layout: kernels.brainSimLayout,
-            label: `swarm-brain-sim-${c}`,
-            entries: [...bcore, { binding: 5, resource: { buffer: this.sort.cellStart } }, { binding: 6, resource: { buffer: this.sort.order } }],
-          }),
-        );
+        for (let k = 0; k < 2; k += 1) {
+          const bcore: GPUBindGroupEntry[] = [
+            { binding: 0, resource: B0 },
+            { binding: 1, resource: { buffer: inB } },
+            { binding: 2, resource: { buffer: outB } },
+            { binding: 3, resource: { buffer: this.idBufs[k]! } },
+            { binding: 4, resource: { buffer: this.diag } },
+          ];
+          this.brainBruteBG.push(device.createBindGroup({ layout: kernels.brainBruteLayout, label: `swarm-brain-brute-${c}${k}`, entries: bcore }));
+          this.brainSimBG.push(
+            device.createBindGroup({
+              layout: kernels.brainSimLayout,
+              label: `swarm-brain-sim-${c}${k}`,
+              entries: [...bcore, { binding: 5, resource: { buffer: this.sort.cellStart } }, { binding: 6, resource: { buffer: this.sort.order } }],
+            }),
+          );
+        }
         this.brainKeysBG.push(
           device.createBindGroup({
             layout: kernels.brainKeysLayout,
@@ -476,21 +484,23 @@ export class Flock {
         );
       }
       if (this.idBufs) {
-        this.gatherBG.push(
-          device.createBindGroup({
-            layout: kernels.gatherLayout,
-            label: `swarm-gather-${c}`,
-            entries: [
-              { binding: 0, resource: { buffer: inB } },
-              { binding: 1, resource: { buffer: outB } },
-              { binding: 2, resource: { buffer: this.sort.order } },
-              { binding: 3, resource: { buffer: this.idBufs[c]! } },
-              { binding: 4, resource: { buffer: this.idBufs[1 - c]! } },
-              { binding: 5, resource: { buffer: this.keys } },
-              { binding: 6, resource: { buffer: this.sort.cellStart } },
-            ],
-          }),
-        );
+        for (let k = 0; k < 2; k += 1) {
+          this.gatherBG.push(
+            device.createBindGroup({
+              layout: kernels.gatherLayout,
+              label: `swarm-gather-${c}${k}`,
+              entries: [
+                { binding: 0, resource: { buffer: inB } },
+                { binding: 1, resource: { buffer: outB } },
+                { binding: 2, resource: { buffer: this.sort.order } },
+                { binding: 3, resource: { buffer: this.idBufs[k]! } },
+                { binding: 4, resource: { buffer: this.idBufs[1 - k]! } },
+                { binding: 5, resource: { buffer: this.keys } },
+                { binding: 6, resource: { buffer: this.sort.cellStart } },
+              ],
+            }),
+          );
+        }
       }
     }
     this.reseed(cfg.seed);
@@ -503,7 +513,7 @@ export class Flock {
 
   /** The current fish ids (slot → fish), or null when the flock never reorders. */
   get ids(): GPUBuffer | null {
-    return this.idBufs ? this.idBufs[this.cur]! : null;
+    return this.idBufs ? this.idBufs[this.idCur]! : null;
   }
 
   get bytes(): number {
@@ -530,6 +540,7 @@ export class Flock {
     this.device.queue.writeBuffer(this.rg, 0, new Float32Array(4));
     if (this.idBufs) this.device.queue.writeBuffer(this.idBufs[0], 0, Uint32Array.from({ length: this.n }, (_, i) => i));
     this.cur = 0;
+    this.idCur = 0;
     this.tick = 0;
     this.reorders = 0;
   }
@@ -598,12 +609,12 @@ export class Flock {
       if (this.broadphase === "brute") {
         if (this.n > BRUTE_MAX) throw new Error(`brute force is limited to ${BRUTE_MAX} agents`);
         pass.setPipeline(vic ? this.k.vicsekBrute : this.k.couzinBrute);
-        pass.setBindGroup(0, this.brainBruteBG[c]!, off);
+        pass.setBindGroup(0, this.brainBruteBG[c * 2 + this.idCur]!, off);
         pass.dispatchWorkgroups(Math.ceil(this.n / 64));
       } else {
         this.encodeKeys(pass, s);
         pass.setPipeline(vic ? this.k.vicsekSort : this.k.couzinSort);
-        pass.setBindGroup(0, this.brainSimBG[c]!, off);
+        pass.setBindGroup(0, this.brainSimBG[c * 2 + this.idCur]!, off);
         pass.dispatchWorkgroups(Math.ceil(this.n / 256));
       }
       this.cur = 1 - c;
@@ -645,9 +656,10 @@ export class Flock {
     const c = this.cur;
     this.encodeKeys(pass, s);
     pass.setPipeline(this.k.gather);
-    pass.setBindGroup(0, this.gatherBG[c]!);
+    pass.setBindGroup(0, this.gatherBG[c * 2 + this.idCur]!);
     pass.dispatchWorkgroups(Math.ceil(this.n / 256));
     this.cur = 1 - c;
+    this.idCur = 1 - this.idCur;
     this.reorders += 1;
   }
 
@@ -821,6 +833,7 @@ export class Flock {
     if (c.ids && this.idBufs) enc.copyBufferToBuffer(c.ids, 0, this.idBufs[0], 0, this.n * 4);
     this.device.queue.submit([enc.finish()]);
     this.cur = 0;
+    this.idCur = 0;
     this.tick = c.tick;
     this.seed = c.seed;
     this.setRule(c.rule);

@@ -36,6 +36,8 @@ export interface SceneDef {
   torusOrder?: boolean;
   /** World units of the Shark tool's Size ("r"). Default: the rule's reach r. */
   sharkUnit?: (n: number) => number;
+  /** Starting zoom relative to the cover fit (default 1: the whole ocean). */
+  zoom?: number;
   /** World units per fish length / caustic cell (default: the look's own). */
   scale?: { fishLength: number; causticCell: number };
 }
@@ -143,6 +145,7 @@ export const SCENES: readonly SceneDef[] = [
     brain: (n) => ({ kind: "couzin", p: couzinFor(n) }),
     torusOrder: true,
     sharkUnit: () => 2,
+    zoom: 1.8,
     scale: { fishLength: 0.7, causticCell: 24 },
   },
   {
