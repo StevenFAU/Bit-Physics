@@ -35,16 +35,20 @@ import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
-import { PAD_JITTER, PAD_N, padParams } from "./pad.js";
+import type { PadPoint } from "./pad.js";
+import { PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
+
 
 const SIM_NAME = "Slime Mould";
 const SCENE_IDS = SCENES.map((s) => s.id);
 
 const url = new UrlState(
   {
-    s: { kind: "enum", def: "network", values: SCENE_IDS },
+    s: { kind: "enum", def: "first-light", values: SCENE_IDS },
     seed: { kind: "int", def: 1, min: 0, max: 2 ** 31 - 1 },
-    // Jones parameters, written only where they differ from the scene's (−1 = the scene's value)
+    // the personality on the pad, i·5 + j (−1: the scene's own)
+    pad: { kind: "int", def: -1, min: -1, max: PAD_N * PAD_N - 1 },
+    // Jones parameters, written only where they differ from the personality's or scene's (−1 = that value)
     dphi: { kind: "num", def: -1, min: -1, max: 180, digits: 2 },
     ls: { kind: "num", def: -1, min: -1, max: 64, digits: 2 },
     lm: { kind: "num", def: -1, min: -1, max: 8, digits: 3 },
@@ -131,11 +135,14 @@ async function boot(): Promise<void> {
   const parsed = url.parse(location.search).values;
   const current = (): Partial<typeof parsed> => {
     const p = app.sim.params;
-    const d = app.scene.params;
+    const sp = app.scene.personality;
+    const samePad = !!app.pad && !!sp && app.pad.i === sp.i && app.pad.j === sp.j;
+    const d = app.pad ? padParams(app.pad) : app.scene.params;
     const or = (v: number, def: number): number => (v === def ? -1 : v);
     return {
       s: app.scene.id,
       seed: app.seed,
+      pad: app.pad && !samePad ? app.pad.i * PAD_N + app.pad.j : -1,
       dphi: or(p.delta_phi_deg, d.delta_phi_deg),
       ls: or(p.L_sense, d.L_sense),
       lm: or(p.L_move, d.L_move),
@@ -150,6 +157,7 @@ async function boot(): Promise<void> {
 
   // -------------------------------------------------------------- Tune --
   const tune = buildTune(studio.tune.body, {
+    pad: (p) => app.setPad(p),
     params: (p, phase) => app.setParams(p, phase),
     reset: () => {
       app.resetParams();
@@ -160,7 +168,7 @@ async function boot(): Promise<void> {
   studio.tune.setNote(
     `The gate runs Jones 2010 Table 1: turn ${PARAMS.delta_phi_deg}°, reach ${PARAMS.L_sense}, step ${PARAMS.L_move}, deposit ${PARAMS.deposit}, fade ${PARAMS.decay_alpha}. Any values keep the mass balance.`,
   );
-  const syncTune = (): void => tune.sync(app.sim.params, app.palette);
+  const syncTune = (): void => tune.sync(app.sim.params, app.pad, app.palette, app.tier, !!app.scene.personality);
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
@@ -186,6 +194,11 @@ async function boot(): Promise<void> {
       agents: app.sim.n,
       grid: [app.sim.w, app.sim.h],
       params: app.sim.params,
+      personality: app.personalityName,
+      stochastic: !!app.scene.personality,
+      food: app.sim.envSpec?.food.length ?? 0,
+      lights: app.sim.envSpec?.lights.length ?? 0,
+      growing: app.sim.growing,
     });
 
   // The developer capture control — the headless gate's entry point.
@@ -223,7 +236,7 @@ async function boot(): Promise<void> {
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
     SCENES.filter((s) => s.listed).map((s) => ({ id: s.id, title: s.title })),
-    "network",
+    "first-light",
   );
   studio.heading.onPick = (id) => {
     void app.loadScene(id as SceneId).then(() => app.writeUrl());
@@ -240,7 +253,7 @@ async function boot(): Promise<void> {
     save: () => app.savePoint(),
     restore: () => app.restoreSave(),
     compare: () => app.toggleCompare(),
-    undo: () => studio.toast.show("Nothing to undo — Slime Mould has no edit tools yet"),
+    undo: () => void app.undo(),
   };
   studio.transport.onStatus = () => studio.drawer.open("learn");
   studio.drawer.onChange = ((orig) => (open: boolean, tab: "learn" | "prove") => {
@@ -279,7 +292,8 @@ async function boot(): Promise<void> {
   studio.key("Space", "Play / pause", () => app.togglePlay());
   studio.key(".", "Step once", () => studio.transport.handlers?.step());
   studio.key("R", "Restart the scene", () => void app.restart());
-  studio.key("1 2", "Choose a tool", (e) => studio.rail.selectIndex(Number(e.key) - 1));
+  studio.key("1 2 3 4", "Choose a tool", (e) => studio.rail.selectIndex(Number(e.key) - 1));
+  studio.key("Z", "Undo the last edit", () => void app.undo());
   studio.key("S", "Save point", () => app.savePoint());
   studio.key("C", "Compare with the save point", () => app.toggleCompare());
   studio.key("T", "Tune", () => studio.tune.toggle());
@@ -291,7 +305,7 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onParams: (p) => {
-      learn.setParams(p);
+      learn.setParams(p, app.personalityName);
       syncTune();
       syncProve();
     },
@@ -357,7 +371,10 @@ async function boot(): Promise<void> {
   studio.veil.step("Scattering the agents");
   const scene = sceneById(parsed.s as SceneId);
   const pick = (v: number, def: number): number => (v >= 0 ? v : def);
-  const sp = scene.params;
+  // the personality: the link's, else the scene's (nearest offered on this tier)
+  const linkPad: PadPoint | null = parsed.pad >= 0 && scene.personality ? { i: Math.floor(parsed.pad / PAD_N), j: parsed.pad % PAD_N } : null;
+  const startPad = scene.personality ? (linkPad ?? nearestOffered(scene.personality, app.tier)) : null;
+  const sp = startPad ? padParams(startPad) : scene.params;
   const params: JonesParams = {
     delta_phi_deg: pick(parsed.dphi, sp.delta_phi_deg),
     L_sense: pick(parsed.ls, sp.L_sense),
@@ -369,6 +386,7 @@ async function boot(): Promise<void> {
   const opts: SceneOptions = {
     seed: parsed.seed,
     params,
+    pad: startPad,
     palette: parsed.pal !== "auto" ? (parsed.pal as PaletteId) : undefined,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };

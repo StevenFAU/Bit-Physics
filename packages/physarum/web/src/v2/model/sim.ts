@@ -41,8 +41,20 @@ export interface SeedSpec {
   wake?: number;
 }
 
-/** Food's halo (cells beyond a crumb's edge) in which dormant agents never wake. */
-export const FOOD_HALO = 8;
+/** The lowest wake threshold a scene uses (agents' deposits); sizes the food halo. */
+export const WAKE_MIN = 0.1;
+
+/**
+ * The halo (cells beyond a crumb's edge) in which dormant agents never wake:
+ * past it a crumb's own trail is below the wake threshold. A steady source
+ * under 3 × 3 spreading (D = 1/3 cell² per step) and fade α falls off with
+ * length λ = √(D/α); the crumb's trail is at most its deposit / α, so it
+ * reaches the threshold within λ·ln(food / (α·wake)) cells. Plus 3 to spare.
+ */
+export function foodHalo(foodDeposit: number, alpha: number): number {
+  const lambda = Math.sqrt(1 / 3 / alpha);
+  return Math.ceil(lambda * Math.log(Math.max(foodDeposit / (alpha * WAKE_MIN), 1)) + 3);
+}
 
 /** A food crumb or a light, in cells. */
 export interface Spot {
@@ -471,15 +483,16 @@ export class LiveSim {
     this.foodCount = cells.length / 2;
     this.foodPerStep = 0;
     for (let k = 1; k < cells.length; k += 2) this.foodPerStep += cells[k]! / 65536;
-    const foodKey = cells.join(",");
+    const foodKey = `${cells.join(",")}|${spec ? foodHalo(spec.foodDeposit, this.params.decay_alpha) : 0}`;
     if (foodKey !== this.foodKey || walls !== this.wallsRef) {
       this.foodKey = foodKey;
       this.wallsRef = walls;
       const bits = new Uint32Array(this.bitsWords * 2);
       if (walls) bits.set(walls.subarray(0, this.bitsWords));
       // the food plane covers each crumb and its halo
+      const halo = spec ? foodHalo(spec.foodDeposit, this.params.decay_alpha) : 0;
       for (const f of spec?.food ?? []) {
-        const r = Math.max(0.5, f.r) + FOOD_HALO;
+        const r = Math.max(0.5, f.r) + halo;
         for (let dy = Math.floor(-r); dy <= Math.ceil(r); dy += 1) {
           for (let dx = Math.floor(-r); dx <= Math.ceil(r); dx += 1) {
             if (dx * dx + dy * dy > r * r) continue;

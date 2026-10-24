@@ -15,7 +15,7 @@ const TERO = "https://doi.org/10.1126/science.1177894";
 
 export interface LearnPane {
   setScene(scene: SceneDef, gated: boolean): void;
-  setParams(p: JonesParams): void;
+  setParams(p: JonesParams, personality: string | null): void;
   setStats(rows: [string, string][], mass: { mass: number; predicted: number; equilibrium: number } | null): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
 }
@@ -85,6 +85,39 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       ),
       h("p", {}, h("a", { href: JONES, target: "_blank", rel: "noopener" }, "Jones 2010, Artificial Life 16(2)"), " · ", h("a", { href: blob(V.links.algebraic), target: "_blank", rel: "noopener" }, "derivation")),
     ),
+    h(
+      "details",
+      { class: "ph-rule" },
+      h("summary", {}, "Personalities, food, light and growth"),
+      h(
+        "p",
+        {},
+        "The personality pad (in Tune) moves two things at once. Across, ",
+        h("strong", {}, "explorer to forager"),
+        ": the turn angle widens from 22.5° to 67.5° while the step shortens from 2 cells to 0.5 — explorers run long and straight, foragers turn tightly and stay. Up, ",
+        h("strong", {}, "fine to bold"),
+        ": the sensor reach grows from 12 to 24 cells while the fade slows from 0.15 to 0.05, so networks get broader and softer. ",
+        "The deposit is not on the pad: without food it only scales the trail, and an agent comparing three smells cannot tell. Each personality was run from three seeds on every tier; only those that came out the same are offered.",
+      ),
+      h(
+        "p",
+        {},
+        "Living scenes turn by Jones's own stochastic rule — when both side sensors beat the centre, a random side, and a 5% chance per step of a random turn. " +
+          "The gate keeps the deterministic version (always left). The dice are a hash of each agent's own position and heading, so a run still repeats exactly.",
+      ),
+      h(
+        "p",
+        {},
+        "Food crumbs deposit into the trail like 40 agents per cell, in the same whole 1/65,536ths, so the mass balance still holds exactly. They also give off a scent agents can sense far away " +
+          "— the trail itself only reaches about two cells before it fades — which is how a colony finds food it cannot touch yet. A light is a strong smell the agents turn away from; it never touches the trail.",
+      ),
+      h(
+        "p",
+        {},
+        "In First Light the colony grows: most agents start dormant, and an agent wakes when the colony's trail under it reaches a tenth of one agent's deposit. " +
+          "A dormant agent neither moves nor deposits, and the GPU counts the awake ones every step, so the mass balance follows the colony as it grows.",
+      ),
+    ),
   );
 
   // ---- instruments --------------------------------------------------------
@@ -118,7 +151,13 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         h("strong", {}, "Changed for long runs: "),
         "on the live dish, positions wrap back into the dish after each move and headings are renormalised after each turn, so hours-long runs keep their precision on every GPU. The gated dish keeps the gated kernel exactly.",
       ),
-      h("li", {}, h("strong", {}, "Measured: "), "the total trail, read back from the GPU and compared with d·N·(1 − α)/α in Prove."),
+      h(
+        "li",
+        {},
+        h("strong", {}, "Added for the scenes: "),
+        "food's long-range scent (a fixed gradient standing in for the chemicals real food gives off), dormant agents that wake as a colony grows, and light as a smell to avoid rather than a change to the trail. Real Physarum also shuns light and grows toward food; here both are rules of thumb, not measured biology.",
+      ),
+      h("li", {}, h("strong", {}, "Measured: "), "the total trail, read back from the GPU and compared with the closed form, through food, growth and every edit, in Prove."),
     ),
   );
 
@@ -129,16 +168,24 @@ export function buildLearn(pane: HTMLElement): LearnPane {
           "Agents scattered at random over a periodic dish (it wraps at the edges). Within a few hundred steps the noise organises into a network of tubes, which then slowly prunes itself. Brightness is the trail's strength; the fine sparks are individual agents.",
         table1:
           "The same dish at Jones's Table 1 values — the gated ones. At this density the network forms and then breaks into straight rods: with no crowding rule and no random turns, agents in a strand fall into step and march straight.",
+        "first-light":
+          "A colony released at the centre of a dark dish with a dozen crumbs of food. The rest of the agents are dormant; the colony's trail wakes them, so it grows outward in branching fronts. " +
+          "The crumbs' scent pulls the explorers; once the dish is covered, the network thins to the tubes that link the food. Drop a crumb (Food) and watch it reroute.",
+        lace: "The Lace personality left alone on the whole dish: the finest foam the pad offers, hundreds of small closed cells that slowly merge as the network coarsens. Every so often it starts again from the next seed.",
+        light:
+          "A network under a movable light. The agents sense the light as a strong smell to avoid, so the lit pool empties, its trail fades within a second or two, and the network rebuilds round it. Drag it (Light) to herd the mould.",
         gated: "The release gate's own run, tiled across the screen: 500 agents on a 256 × 256 dish from the committed seed-42 start.",
       };
       seeing.textContent = `${what[scene.id] ?? scene.prompt}${gated ? " This is the gated run." : ""}`;
     },
-    setParams(p) {
-      paramCells["ls"]!.textContent = `${p.L_sense} cells`;
-      paramCells["dphi"]!.textContent = `${p.delta_phi_deg}°`;
-      paramCells["lm"]!.textContent = `${p.L_move}`;
-      paramCells["dep"]!.textContent = `${p.deposit}`;
-      paramCells["a"]!.textContent = `${p.decay_alpha}`;
+    setParams(p, personality) {
+      void personality;
+      const n = (v: number): number => Number(v.toPrecision(4));
+      paramCells["ls"]!.textContent = `${n(p.L_sense)} cells`;
+      paramCells["dphi"]!.textContent = `${n(p.delta_phi_deg)}°`;
+      paramCells["lm"]!.textContent = `${n(p.L_move)}`;
+      paramCells["dep"]!.textContent = `${n(p.deposit)}`;
+      paramCells["a"]!.textContent = `${n(p.decay_alpha)}`;
     },
     setStats(rows, m) {
       stats.set(rows);

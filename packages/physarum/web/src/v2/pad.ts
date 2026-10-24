@@ -21,11 +21,13 @@
 // points whose morphology agreed across seeds are offered at a tier
 // (src/v2/generated/pad-calibration.json); the puck snaps to those.
 
+import type { Tier } from "@bp/gpu";
+import CAL from "./generated/pad-calibration.json";
 import type { JonesParams } from "./proof/gate.js";
 
 export const PAD_N = 5;
 
-/** Chance per step of a random turn (Jones's pCD) for every personality. */
+/** Chance per step of a random turn, for every personality (on top of Jones's random side when both beat the centre). */
 export const PAD_JITTER = 0.05;
 
 export interface PadPoint {
@@ -46,10 +48,10 @@ export function padParams(p: PadPoint): JonesParams {
   const v = p.j / (PAD_N - 1);
   return {
     delta_phi_deg: snap(lerp(22.5, 67.5, u), 0.25),
-    L_move: snap(geo(2, 0.5, u), 0.01),
     L_sense: snap(geo(12, 24, v), 0.1),
-    decay_alpha: snap(geo(0.15, 0.05, v), 0.001),
+    L_move: snap(geo(2, 0.5, u), 0.01),
     deposit: 5,
+    decay_alpha: snap(geo(0.15, 0.05, v), 0.001),
   };
 }
 
@@ -65,6 +67,36 @@ export const PAD_CENTRE: PadPoint = { i: 2, j: 2 };
 
 export function padKey(p: PadPoint): string {
   return `${p.i},${p.j}`;
+}
+
+interface CalPoint {
+  i: number;
+  j: number;
+  stable: boolean;
+}
+
+/** Points offered at a tier: those whose morphology agreed across seeds there (pad-calibration.json). */
+export function stablePoints(tier: Tier): Set<string> {
+  const t = (CAL.tiers as Record<string, { points: CalPoint[] }>)[tier];
+  return new Set((t?.points ?? []).filter((p) => p.stable).map((p) => padKey(p)));
+}
+
+/** The offered point nearest `p` at a tier (p itself when offered). */
+export function nearestOffered(p: PadPoint, tier: Tier): PadPoint {
+  const offered = stablePoints(tier);
+  if (offered.has(padKey(p)) || offered.size === 0) return p;
+  let best = p;
+  let bd = Infinity;
+  for (const k of offered) {
+    const [i, j] = k.split(",").map(Number) as [number, number];
+    // ties prefer the forager side (the networks that close loops)
+    const d = (i - p.i) ** 2 + (j - p.j) ** 2 - i * 1e-3;
+    if (d < bd) {
+      bd = d;
+      best = { i, j };
+    }
+  }
+  return best;
 }
 
 /** The pad point whose parameters these are, if any. */

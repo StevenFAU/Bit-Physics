@@ -48,7 +48,9 @@ CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-de
 The Turing Patterns acceptance run (dive, history, undo-by-replay, share links, the
 live-solver ≡ gated-kernel check, every scene) is `packages/reaction-diffusion-2d/web/v2-acceptance.mjs`;
 Slime Mould's (agent count and density, counting sort ≡ CPU reference, live ≡ gated bytes,
-mass at full scale, in-page gate, history, seeds across page loads, bench) is
+mass at full scale, in-page gate, history, seeds across page loads; the M1 scenes, the
+personality pad against its calibration, growth, food, undo by replay, the light, the
+director, the open Tune popover under axe; bench) is
 `packages/physarum/web/v2-acceptance.mjs`; Grow's (the dish at step 1000 ≡ the committed canonical frame,
 live solver ≡ gate path as a sliced job, in-page gate and its fail probe, undo by replay, history,
 seeds across page loads, the director, bench) is `packages/neural-ca/web/v2-acceptance.mjs`.

@@ -1,5 +1,5 @@
 // Slime Mould v2 — acceptance checks in a real WebGPU browser
-// (docs/planning/rebuild-v2/02-physarum.md M0).
+// (docs/planning/rebuild-v2/02-physarum.md M0 and M1).
 //
 //   npm run build   (in this directory)
 //   CHROME_BIN=/snap/bin/chromium \
@@ -13,12 +13,19 @@
 // the in-page gate (run twice + mass); save / restore / compare; a seed
 // reproduces the same bytes across page loads; parameters ride the share
 // link; probe; every scene boots; overlapping scene loads keep the newest.
+// M1: First Light, Lace and Light Avoidance boot at their personalities; the
+// pad offers exactly the calibrated points for the tier and a pad link
+// reproduces its personality; a growing colony starts mostly dormant and
+// wakes; food edits keep the mass balance exact; undo replays to the bytes
+// of a run that never had the edit; the light empties the dish under it and
+// follows a drag; the crumb director adds food at its exact step.
 // Prints a BP_BENCH line (agents, frame time) at the end.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module";
 
 const pw = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
 const chromium = pw.chromium ?? pw.default.chromium;
@@ -69,6 +76,8 @@ async function open(path = "/v2/", viewport = { width: 1280, height: 720 }) {
 }
 const shot = async (page, name) => { if (out) await page.screenshot({ path: join(out, `${name}.png`) }); };
 const T = (page, fn, arg) => page.evaluate(fn, arg);
+const KEYS = ["delta_phi_deg", "L_sense", "L_move", "deposit", "decay_alpha"];
+const sameParams = (a, b) => KEYS.every((k) => a[k] === b[k]);
 
 // trail hash after n steps from the scene start, with the live loop paused
 const hashAfter = (page, n) =>
@@ -90,7 +99,7 @@ const hashAfter = (page, n) =>
   await page.waitForTimeout(3000);
   const d = await T(page, () => globalThis.__bpDebug());
   const want = { T3: 2000000, T2: 500000, T1: 150000 }[d.tier];
-  check("boots into The network", d.scene === "network", d.scene);
+  check("boots into First Light", d.scene === "first-light", d.scene);
   check(`boots at the tier's agent count (${d.tier})`, d.agents === want, `${d.agents.toLocaleString()} agents on ${d.domain[0]} × ${d.domain[1]}, adapter ${d.adapter}`);
   check("density held at the declared agents per cell (±1%)", Math.abs(d.density / d.declaredDensity - 1) < 0.01, `${d.density.toFixed(4)} vs ${d.declaredDensity.toFixed(4)}`);
   const aspect = d.domain[0] / d.domain[1] / (d.viewport[0] / d.viewport[1]);
@@ -225,6 +234,217 @@ const hashAfter = (page, n) =>
   });
   check("overlapping scene loads keep the newest choice", r.scene === "network" && r.n > 500 && r.heading === "The network", JSON.stringify(r));
   check("no console errors (overlapping loads)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M1: the living scenes, the pad, food, light, growth, undo --------------
+{
+  const { ctx, page, errors } = await open();
+  await page.waitForTimeout(800);
+  const cal = JSON.parse(await readFile(fileURLToPath(new URL("./src/v2/generated/pad-calibration.json", import.meta.url)), "utf8"));
+  const r = await T(page, async (calTiers) => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const out = {};
+    // the pad offers the calibrated points for this tier, and nothing else
+    const stable = calTiers[app.tier].points.filter((p) => p.stable).map((p) => `${p.i},${p.j}`).sort();
+    const dots = [...document.querySelectorAll(".ph-pad-dot")];
+    const enabled = dots.filter((b) => !b.disabled).map((b) => b.dataset.pad).sort();
+    out.pad = { tier: app.tier, stable: stable.length, enabled: enabled.length, same: JSON.stringify(stable) === JSON.stringify(enabled), dots: dots.length };
+    // scenes and their personalities
+    out.scenes = {};
+    for (const id of ["first-light", "lace", "light"]) {
+      await app.loadScene(id);
+      await sleep(300);
+      out.scenes[id] = { pad: app.pad, personality: app.personalityName, stochastic: !!app.scene.personality, food: app.sim.envSpec?.food.length ?? 0, lights: app.sim.envSpec?.lights.length ?? 0, growing: app.sim.growing };
+    }
+    // growth: a First Light colony starts mostly dormant and wakes as it spreads
+    app.clock.paused = true;
+    await sleep(150);
+    await app.loadScene("first-light", { seed: 5 });
+    app.clock.paused = true;
+    const awake0 = await app.sim.awakeCount();
+    await app.advance(600);
+    const awake600 = await app.sim.awakeCount();
+    await app.advance(600);
+    const awake1200 = await app.sim.awakeCount();
+    const m = await app.liveMass();
+    out.growth = { n: app.sim.n, awake0, awake600, awake1200, massRel: Math.abs(m.mass - m.predicted) / m.predicted };
+    return out;
+  }, cal.tiers);
+  check(`the pad offers exactly the ${r.pad.tier} calibrated points`, r.pad.same && r.pad.dots === 25, `${r.pad.enabled} of 25 enabled, ${r.pad.stable} stable in pad-calibration.json`);
+  const fl = r.scenes["first-light"];
+  check("First Light: a growing colony, 12 crumbs, a personality, Jones's stochastic rule", fl.growing && fl.food === 12 && fl.pad && fl.stochastic, JSON.stringify(fl));
+  const lace = r.scenes.lace;
+  check("Lace boots at the Lace personality (or the nearest offered)", lace.pad && !lace.growing && lace.food === 0, JSON.stringify(lace));
+  const li = r.scenes.light;
+  check("Light Avoidance boots with one light", li.lights === 1 && li.pad, JSON.stringify(li));
+  const g = r.growth;
+  check(
+    "growth: starts mostly dormant, most agents awake within 1,200 steps",
+    g.awake0 < 0.02 * g.n && g.awake1200 > 0.5 * g.n && g.awake600 > g.awake0,
+    `awake ${g.awake0.toLocaleString()} → ${g.awake600.toLocaleString()} (600 steps) → ${g.awake1200.toLocaleString()} (1,200) of ${g.n.toLocaleString()}`,
+  );
+  check("mass balance exact through growth and food (rel < 1e-6)", g.massRel < 1e-6, `rel ${g.massRel.toExponential(2)}`);
+
+  // food + undo by replay
+  const u = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const hash = async () => {
+      const t = await app.sim.readTrail();
+      const d = await crypto.subtle.digest("SHA-256", t.buffer);
+      return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    };
+    app.clock.paused = true;
+    await sleep(100);
+    await app.loadScene("first-light", { seed: 3 });
+    app.clock.paused = true;
+    await app.advance(150);
+    const food0 = app.sim.envSpec.food.length;
+    app.toggleFood(app.sim.w * 0.3, app.sim.h * 0.3);
+    const food1 = app.sim.envSpec.food.length;
+    const perStep = app.sim.foodPerStep;
+    await app.advance(150);
+    const hEdit = await hash();
+    const mEdit = await app.liveMass();
+    // removing it again is a second edit
+    app.toggleFood(app.sim.w * 0.3, app.sim.h * 0.3);
+    const food2 = app.sim.envSpec.food.length;
+    await app.undo();
+    const food3 = app.sim.envSpec.food.length;
+    await app.undo();
+    const food4 = app.sim.envSpec.food.length;
+    const tick = app.sim.tick;
+    const hUndo = await hash();
+    await app.loadScene("first-light", { seed: 3 });
+    app.clock.paused = true;
+    await app.advance(300);
+    const hRef = await hash();
+    return { food0, food1, food2, food3, food4, tick, perStep, editRel: Math.abs(mEdit.mass - mEdit.predicted) / mEdit.predicted, same: hUndo === hRef, differs: hEdit !== hRef, canUndo: app.history.canUndo };
+  });
+  check("Food adds a crumb and takes it away again", u.food1 === u.food0 + 1 && u.food2 === u.food0, `${u.food0} → ${u.food1} → ${u.food2}`);
+  check("mass balance exact with a crumb added (rel < 1e-6)", u.editRel < 1e-6, `rel ${u.editRel.toExponential(2)}, food adds ${u.perStep.toLocaleString()} per step`);
+  check("undo, undo: replays to the exact bytes of a run without either edit (300 steps)", u.same && u.differs && u.food3 === u.food1 && u.food4 === u.food0 && u.tick === 300, JSON.stringify({ same: u.same, differs: u.differs, food: [u.food3, u.food4], tick: u.tick }));
+
+  // the pad: picking a point sets its parameters and rides the share link
+  const pk = await T(page, async () => {
+    const app = globalThis.__physarum;
+    await app.loadScene("lace");
+    const offered = [...document.querySelectorAll(".ph-pad-dot:not(:disabled)")].map((b) => b.dataset.pad);
+    const pick = offered.find((k) => k !== `${app.pad.i},${app.pad.j}`);
+    const [i, j] = pick.split(",").map(Number);
+    app.setPad({ i, j });
+    await new Promise((res) => setTimeout(res, 400));
+    return { i, j, params: app.sim.params, want: globalThis.__physarumPad.padParams({ i, j }), search: location.search };
+  });
+  check("picking a pad point sets that personality's numbers", sameParams(pk.params, pk.want), `(${pk.i},${pk.j}) → ${JSON.stringify(pk.params)}`);
+  check("no console errors (M1 scenes, pad, food, undo)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+  {
+    const b = await open(`/v2/${pk.search}`);
+    const q = await T(b.page, () => ({ pad: globalThis.__physarum.pad, params: globalThis.__physarum.sim.params, scene: globalThis.__physarum.scene.id }));
+    check("a pad link reproduces the personality", q.scene === "lace" && q.pad && q.pad.i === pk.i && q.pad.j === pk.j && sameParams(q.params, pk.want), `${pk.search} → ${JSON.stringify(q.pad)}`);
+    await b.ctx.close();
+  }
+}
+
+// --- M1: the pad in the Tune popover — fits, and passes axe ----------------
+{
+  const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
+  for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const { ctx, page, errors } = await open("/v2/", vp);
+    await page.waitForTimeout(500);
+    await T(page, () => globalThis.__physarum.studio.tune.toggle());
+    await page.waitForTimeout(400);
+    const fit = await T(page, () => {
+      const tune = document.querySelector(".bp-tune");
+      const pad = document.querySelector(".ph-pad");
+      const t = tune.getBoundingClientRect();
+      const labels = [...document.querySelectorAll(".ph-pad-axis, .ph-pad-corner")].map((e) => e.getBoundingClientRect());
+      const inside = (r) => r.left >= t.left - 0.5 && r.right <= t.right + 0.5;
+      return { open: !tune.hidden, padW: pad.getBoundingClientRect().width, labelsInside: labels.every(inside), overflowX: tune.scrollWidth > tune.clientWidth + 1 };
+    });
+    await page.evaluate(axeSource);
+    const v = await page.evaluate(async () =>
+      // eslint-disable-next-line no-undef
+      (await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } })).violations.map((x) => `${x.id}: ${x.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}`),
+    );
+    await shot(page, `03-tune-${vp.width}`);
+    check(`Tune with the pad at ${vp.width} px: open, fits, no horizontal overflow`, fit.open && fit.labelsInside && !fit.overflowX && fit.padW > 120, JSON.stringify(fit));
+    check(`Tune with the pad at ${vp.width} px: no axe violations`, v.length === 0, v.join(" | "));
+    check(`no console errors (Tune at ${vp.width} px)`, errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
+}
+
+// --- M1: the light empties the dish under it; a drag moves it -------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=light");
+  await page.waitForTimeout(600);
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    app.clock.paused = true;
+    await sleep(100);
+    await app.loadScene("light", { seed: 2 });
+    app.clock.paused = true;
+    await app.advance(900);
+    const L = app.sim.envSpec.lights[0];
+    const t = await app.sim.readTrail();
+    const w = app.sim.w;
+    const h = app.sim.h;
+    let inside = 0;
+    let nIn = 0;
+    let all = 0;
+    for (let y = 0; y < h; y += 1) {
+      for (let x = 0; x < w; x += 1) {
+        const v = t[y * w + x];
+        all += v;
+        let dx = Math.abs(x - L.x);
+        let dy = Math.abs(y - L.y);
+        dx = Math.min(dx, w - dx);
+        dy = Math.min(dy, h - dy);
+        if (dx * dx + dy * dy < (0.8 * L.r) ** 2) {
+          inside += v;
+          nIn += 1;
+        }
+      }
+    }
+    return { insideMean: inside / nIn, dishMean: all / (w * h), light: L };
+  });
+  check("the light empties the dish under it (mean trail inside < 5% of the dish's)", r.insideMean < 0.05 * r.dishMean, `inside ${r.insideMean.toFixed(3)} vs dish ${r.dishMean.toFixed(3)} (${((r.insideMean / r.dishMean) * 100).toFixed(2)}%)`);
+  await T(page, () => globalThis.__physarum.studio.rail.select("light"));
+  await page.mouse.move(300, 300);
+  await page.mouse.down();
+  await page.mouse.move(420, 360, { steps: 6 });
+  await page.mouse.move(500, 420, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const d = await T(page, () => {
+    const app = globalThis.__physarum;
+    const L = app.sim.envSpec.lights[0];
+    const [x, y] = app.camera.screenToDomain(500, 420);
+    return { L, want: [x, y], edits: app.edits, canUndo: app.history.canUndo };
+  });
+  check("dragging the light moves it to the pointer (one undoable edit)", Math.hypot(d.L.x - d.want[0], d.L.y - d.want[1]) < 2 && d.edits === 1 && d.canUndo, JSON.stringify(d));
+  check("no console errors (light)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M1: the crumb director acts at its exact step -------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?sp=8");
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const t0 = performance.now();
+    while (app.sim.tick < 2500 && performance.now() - t0 < 30000) await sleep(100);
+    const log = app.log.all().filter((e) => e.kind === "food");
+    return { tick: app.sim.tick, food: app.sim.envSpec.food.length, at: log.map((e) => e.tick) };
+  });
+  check("left alone, First Light gets a new crumb at exactly step 2,400", r.food === 13 && r.at.length === 1 && r.at[0] === 2400, JSON.stringify(r));
+  check("no console errors (director)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
 
