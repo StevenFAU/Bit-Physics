@@ -722,6 +722,8 @@ export class LiveSim {
     this.params = { ...c.params };
     this.growing = c.growing;
     this.wakeMul = c.wakeMul;
+    // the deposit-derived terms first: setEnv sizes the food's deposit from them
+    this.writeParams();
     this.setEnv(c.env);
     this.mass = { mass: c.mass.mass, foldedTick: c.mass.foldedTick, pending: c.mass.pending.slice() };
   }

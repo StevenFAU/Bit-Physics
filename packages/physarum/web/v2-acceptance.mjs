@@ -448,6 +448,69 @@ const hashAfter = (page, n) =>
   await ctx.close();
 }
 
+// --- review regressions (PR #44) --------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?sp=8");
+  // 1. an edit holds the crumb director past its step; undoing it re-enables
+  //    the director with that step in the past — the page must not hang
+  const r1 = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    const t0 = performance.now();
+    while (app.sim.tick < 600 && performance.now() - t0 < 20000) await sleep(50);
+    app.toggleFood(app.sim.w * 0.3, app.sim.h * 0.3);
+    while (app.sim.tick < 2700 && performance.now() - t0 < 40000) await sleep(50);
+    await app.undo();
+    const after = app.sim.tick;
+    await sleep(1500);
+    return { undoneAt: after, later: app.sim.tick, food: app.sim.envSpec.food.length, edits: app.edits };
+  });
+  check("undo past the crumb director's step does not stall the dish", r1.later > r1.undoneAt + 100 && r1.edits === 0 && r1.food === 12, JSON.stringify(r1));
+  // 2. restoring across a deposit change rebuilds the food from the restored deposit
+  const r2 = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    app.clock.paused = true;
+    await sleep(100);
+    await app.loadScene("first-light", { seed: 4 });
+    app.clock.paused = true;
+    await app.advance(100);
+    const food5 = app.sim.foodPerStep;
+    app.savePoint();
+    app.setParams({ ...app.sim.params, deposit: 10 }, "start");
+    app.setParams({ ...app.sim.params, deposit: 10 }, "end");
+    const food10 = app.sim.foodPerStep;
+    await app.advance(100);
+    app.restoreSave();
+    const restored = app.sim.foodPerStep;
+    await app.advance(200);
+    const m = await app.liveMass();
+    return { food5, food10, restored, rel: Math.abs(m.mass - m.predicted) / m.predicted };
+  });
+  check("restore across a deposit change: food back to its own amount, mass exact", r2.restored === r2.food5 && r2.food10 === 2 * r2.food5 && r2.rel < 1e-6, JSON.stringify(r2));
+  // 3. the Light tool in First Light repels
+  const r3 = await T(page, async () => {
+    const app = globalThis.__physarum;
+    app.studio.rail.select("light");
+    const [x, y] = app.camera.domainToScreen(app.sim.w * 0.7, app.sim.h * 0.5);
+    return { x, y };
+  });
+  await page.mouse.move(r3.x, r3.y);
+  await page.mouse.down();
+  await page.mouse.up();
+  await page.waitForTimeout(200);
+  const r4 = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const L = app.sim.envSpec.lights[0];
+    const env = await app.sim.readEnv();
+    const v = env[Math.round(L.y) * app.sim.w + Math.round(L.x)];
+    return { light: !!L, depth: v / app.sim.meanTrail };
+  });
+  check("First Light's Light tool repels (env at its centre ≪ 0)", r4.light && r4.depth < -10, JSON.stringify(r4));
+  check("no console errors (review regressions)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
 // --- frame time at the boot scene -------------------------------------------
 {
   const { ctx, page } = await open("/v2/?bench=1");
