@@ -12,6 +12,11 @@
 > **Wave A (2026-10-23, with Slime Mould M0):** bloom (§ 3.1, dual-filter, mixed in by
 > `HdrPipeline`, off unless a sim asks for it) and the GPU counting sort with its prefix scan
 > (`CountingSort`, `PrefixScan` in `@bp/gpu`; Swarm's broadphase reuses it).
+>
+> **Swarm M0 (2026-10-24):** `GpuProfiler.begin(tag)` returns each frame's tag (its solver
+> steps) as `frameTag`, and a `shark` icon joins the set. Measured: with one frame in flight the
+> RX 6800 XT idles at 500 MHz between frames; Swarm keeps two in flight and governs on the frame
+> interval (see 03-boids-2d.md).
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is
