@@ -28,6 +28,7 @@ struct View {
 @group(0) @binding(4) var look_cmp : texture_2d<f32>;
 @group(0) @binding(5) var samp : sampler;
 @group(0) @binding(6) var grain : texture_2d<f32>;
+@group(0) @binding(7) var tint_cmp : texture_2d<f32>;
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> FullscreenOut {
@@ -155,7 +156,12 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
     c = mix(c, agar, in_dish);
 
     // the hidden channels, as colour
-    let tv = bspline(tint_tex, g).xyz * inside(g);
+    // the save point's own hidden channels on the compare side
+    var tv = bspline(tint_tex, g).xyz;
+    if (use_cmp) {
+      tv = bspline(tint_cmp, g).xyz;
+    }
+    tv = tv * inside(g);
     let irid = 0.5 + 0.5 * tanh(tv * 0.65);
     // the tint, premultiplied too: the hidden-channel colour at the organism's own brightness
     let lum = dot(pm, vec3<f32>(0.2126, 0.7152, 0.0722));

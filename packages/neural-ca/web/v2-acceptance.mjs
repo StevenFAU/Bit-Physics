@@ -12,9 +12,11 @@
 // frames, run as a sliced job while the dish keeps rendering; the in-page
 // gate (bit-exact + run twice) and its seed-43 fail probe; the checkpoint
 // sha; undo by replay reproduces the never-cut bytes; save / restore /
-// compare; the same seed gives the same bytes across page loads; the share
-// link carries rate, view and speed; Many seeds settles in the middle; a dish
-// with nothing alive regrows; probe. Prints a BP_BENCH line at the end.
+// compare (in Hidden view, with the save point's own hidden channels); a
+// keyboard step on the Tune slider sticks; the same seed gives the same bytes
+// across page loads; the share link carries rate, view and speed; Many seeds
+// settles in the middle; a dish with nothing alive regrows; probe. Prints a
+// BP_BENCH line at the end.
 //
 // Bit-exactness against the committed canonical is backend-conditional: it
 // holds on RADV (where the canonical was made). On another backend those two
@@ -239,6 +241,72 @@ const hashAfter = (page, n) =>
   check("a drag with Cut is logged as one undoable edit", after.events > drag.events && after.edits === 1 && after.canUndo, JSON.stringify(after));
   await shot(page, "02-cut");
   check("no console errors (edits, history, probe)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- Tune: a keyboard change to the update chance sticks ----------------------
+{
+  const { ctx, page, errors } = await open();
+  await page.waitForTimeout(800);
+  await T(page, () => globalThis.__grow.studio.tune.show());
+  await page.waitForTimeout(200);
+  const range = page.locator(".bp-tune input[type=range]").first();
+  await range.focus();
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(300);
+  const r = await T(page, () => ({ p: globalThis.__grow.sim.fireRate, input: document.querySelector(".bp-tune input[type=range]")?.value, events: globalThis.__grow.log.length, gated: globalThis.__grow.onGatedRun }));
+  check("a keyboard step on the update-chance slider applies and stays (0.5 → 0.55)", r.p === 0.55 && Number(r.input) === 0.55 && r.events === 1 && !r.gated, JSON.stringify(r));
+  check("no console errors (Tune)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- compare shows the save point's own hidden channels -----------------------
+{
+  const { ctx, page, errors } = await open("/v2/?show=hidden&chrome=off");
+  await page.waitForTimeout(800);
+  await T(page, async () => {
+    const app = globalThis.__grow;
+    app.studio.callouts.enabled = false;
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    await app.loadScene("dish", { view: "hidden" });
+    app.studio.callouts.enabled = false;
+    app.clock.paused = true;
+    await app.advance(300);
+  });
+  await page.waitForTimeout(400);
+  const clip = { x: 440, y: 160, width: 400, height: 400 };
+  const atSave = (await page.screenshot({ clip })).toString("base64");
+  await T(page, async () => {
+    const app = globalThis.__grow;
+    app.savePoint();
+    app.cutAt([16, 32, 48, 32], 6);
+    await app.advance(120);
+  });
+  await page.waitForTimeout(400);
+  const live = (await page.screenshot({ clip })).toString("base64");
+  await T(page, () => { const app = globalThis.__grow; app.toggleCompare(); app.view.split = 1; });
+  await page.waitForTimeout(400);
+  const saved = (await page.screenshot({ clip })).toString("base64");
+  const diff = await T(page, async ([a, b, c]) => {
+    const pixels = async (b64) => {
+      const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+      const cv = new OffscreenCanvas(bmp.width, bmp.height);
+      const cx = cv.getContext("2d");
+      cx.drawImage(bmp, 0, 0);
+      return cx.getImageData(0, 0, bmp.width, bmp.height).data;
+    };
+    const [pa, pb, pc] = await Promise.all([pixels(a), pixels(b), pixels(c)]);
+    const mad = (x, y) => { let s = 0; for (let i = 0; i < x.length; i += 4) s += Math.abs(x[i] - y[i]) + Math.abs(x[i + 1] - y[i + 1]) + Math.abs(x[i + 2] - y[i + 2]); return s / (x.length / 4) / 3; };
+    return { savedVsAtSave: mad(pc, pa), liveVsAtSave: mad(pb, pa) };
+  }, [atSave, live, saved]);
+  check(
+    "compare (Hidden view) draws the save point's own hidden channels",
+    diff.savedVsAtSave < 1.5 && diff.liveVsAtSave > 5,
+    `saved side vs the dish when saved: ${diff.savedVsAtSave.toFixed(2)}; live vs saved: ${diff.liveVsAtSave.toFixed(2)} (mean |Δ| per channel, 0–255)`,
+  );
+  if (out) await page.screenshot({ path: join(out, "04-compare-hidden.png") });
+  check("no console errors (compare)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
 

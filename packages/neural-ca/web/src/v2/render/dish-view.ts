@@ -223,6 +223,7 @@ export class DishView {
           { binding: 4, resource: this.cmpLook!.createView() },
           { binding: 5, resource: this.sampler },
           { binding: 6, resource: this.grain.createView() },
+          { binding: 7, resource: this.cmpTint!.createView() },
         ],
         label: `grow-dish-${key}`,
       });

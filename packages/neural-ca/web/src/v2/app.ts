@@ -314,12 +314,18 @@ export class App {
     const all = this.log.all();
     const lastE = all[all.length - 1];
     const lp = lastE?.payload as FirePayload | undefined;
-    if (lastE && lastE.kind === "fire" && lastE.tick === this.sim.tick && lp?.g === this.activeGroup && this.applied === this.log.length) {
+    // a drag (or a key press: input, then change) coalesces into one event per
+    // step boundary — applied or still pending, only its last value matters
+    if (lastE && lastE.kind === "fire" && lastE.tick === this.sim.tick && lp?.g === this.activeGroup) {
       (lastE as SimEvent).payload = { g: this.activeGroup, p } satisfies FirePayload as never;
-      this.sim.fireRate = p;
     } else {
       this.log.push(this.sim.tick, "fire", { g: this.activeGroup, p } satisfies FirePayload as never);
     }
+    // The rate only affects steps recorded from now on, and the event sits at
+    // this step boundary, so applying it now is the same as at the next frame
+    // (which sets the same value again). Applying it before onEdited lets Tune
+    // re-sync to the new rate instead of snapping the slider back to the old one.
+    this.sim.fireRate = p;
     if (phase === "end") {
       this.activeGroup = 0;
       this.writeUrl();
