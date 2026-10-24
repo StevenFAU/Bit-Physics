@@ -44,3 +44,40 @@ describe("GpuProfiler timings", () => {
     expect(p.timings().map((t) => t.name)).toEqual(["sim"]);
   });
 });
+
+describe("GpuProfiler frame tags", () => {
+  /** A device whose staging buffers map to one pass of `ms` milliseconds. */
+  function fakeDevice(ms: number): GPUDevice {
+    const buffer = () => ({
+      mapAsync: () => Promise.resolve(),
+      getMappedRange: () => new BigUint64Array([1_000_000n, 1_000_000n + BigInt(Math.round(ms * 1e6))]).buffer,
+      unmap: () => {},
+      destroy: () => {},
+    });
+    return { createQuerySet: () => ({ destroy: () => {} }), createBuffer: buffer } as unknown as GPUDevice;
+  }
+  const enc = { resolveQuerySet: () => {}, copyBufferToBuffer: () => {} } as unknown as GPUCommandEncoder;
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  it("returns the tag a frame began with when its timings land", async () => {
+    // Node has no WebGPU globals: the profiler only reads these flag constants
+    const g = globalThis as Record<string, unknown>;
+    g["GPUBufferUsage"] ??= { MAP_READ: 1, COPY_SRC: 4, COPY_DST: 8, QUERY_RESOLVE: 0x200 };
+    g["GPUMapMode"] ??= { READ: 1 };
+    const p = new GpuProfiler(fakeDevice(2), true);
+    expect(p.frameTag).toBe(0);
+    p.begin(3);
+    p.pass("sim");
+    p.end(enc);
+    p.submitted();
+    await flush();
+    expect(p.frameTag).toBe(3);
+    expect(p.timings()[0]!.ms).toBeCloseTo(2, 9);
+    p.begin();
+    p.pass("sim");
+    p.end(enc);
+    p.submitted();
+    await flush();
+    expect(p.frameTag).toBe(0);
+  });
+});
