@@ -291,7 +291,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     },
     () => void runVicsek(),
   );
-  vicsekCard.set({ status: "idle", measured: "run it on this GPU (about ten seconds)", budget: `z ≤ ${VICSEK_CHECK.zMax}`, adapter: "not yet run here" });
+  vicsekCard.set({ status: "idle", measured: "run it on this GPU (a few seconds)", budget: `z ≤ ${VICSEK_CHECK.zMax}`, adapter: "not yet run here" });
   pane.append(vicsekCard.el);
 
   pane.append(

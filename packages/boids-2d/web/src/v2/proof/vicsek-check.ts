@@ -10,6 +10,7 @@
 import type { FlockKernels } from "../model/flock.js";
 import { Flock, orderParams, sumPartials } from "../model/flock.js";
 import { makeInitM1 } from "../model/init-m1.js";
+import type { VicsekRun } from "../model/vicsek-cpu.js";
 import { runVicsekCpu } from "../model/vicsek-cpu.js";
 import { OPEN_WATER_RULE, VICSEK_V0 } from "../scenes.js";
 
@@ -28,8 +29,8 @@ export const VICSEK_CHECK = {
   /** Declared after measuring (see the status note in 03-boids-2d.md). */
   zMax: 4,
   probeShift: 0.05,
-  /** The shifted reference runs at these η (where a shift moves φ most). */
-  probeEtas: [0.25, 0.4],
+  /** The shifted reference runs at these η (one ordered, one near the transition). */
+  probeEtas: [0.1, 0.4],
 } as const;
 
 export interface EtaRow {
@@ -133,27 +134,61 @@ export async function gpuMeans(device: GPUDevice, kernels: FlockKernels, etas: r
   }
 }
 
-/** ⟨φ⟩ per (η, seed) on the CPU reference (f64), yielding between runs. */
-export async function cpuMeans(etas: readonly number[] = C.etas): Promise<number[][]> {
-  const out: number[][] = [];
-  for (const eta of etas) {
-    const row: number[] = [];
-    for (const seed of C.cpuSeeds) {
-      const init = Float64Array.from(
-        (() => {
-          const f = initFor(seed);
-          const a: number[] = [];
-          for (let i = 0; i < C.n; i += 1) a.push(f[i * 6]!, f[i * 6 + 1]!, f[i * 6 + 2]!, f[i * 6 + 3]!);
-          return a;
-        })(),
-      );
-      const phi = runVicsekCpu({ n: C.n, L: C.L, v0: C.v0, eta, seed, steps: C.steps, every: C.every, init });
-      row.push(settledMean(phi, C.every, C.relax));
+/** Run CPU reference jobs on a few workers (or here, without Worker support). */
+async function runJobs(jobs: VicsekRun[]): Promise<Float64Array[]> {
+  const out: Float64Array[] = new Array(jobs.length);
+  const cores = typeof navigator !== "undefined" ? (navigator.hardwareConcurrency ?? 2) : 2;
+  const count = typeof Worker === "undefined" ? 0 : Math.max(1, Math.min(6, cores - 1));
+  if (count === 0) {
+    for (let k = 0; k < jobs.length; k += 1) {
+      out[k] = runVicsekCpu(jobs[k]!);
       await new Promise((r) => setTimeout(r, 0));
     }
-    out.push(row);
+    return out;
   }
-  return out;
+  const workers = Array.from({ length: count }, () => new Worker(new URL("./vicsek-worker.ts", import.meta.url), { type: "module" }));
+  try {
+    let next = 0;
+    await Promise.all(
+      workers.map(
+        (w) =>
+          new Promise<void>((resolve, reject) => {
+            const take = (): void => {
+              if (next >= jobs.length) {
+                resolve();
+                return;
+              }
+              const id = next++;
+              w.postMessage({ id, run: jobs[id] });
+            };
+            w.onmessage = (e: MessageEvent<{ id: number; phi: Float64Array }>) => {
+              out[e.data.id] = e.data.phi;
+              take();
+            };
+            w.onerror = (e) => reject(new Error(`CPU reference worker: ${e.message}`));
+            take();
+          }),
+      ),
+    );
+    return out;
+  } finally {
+    for (const w of workers) w.terminate();
+  }
+}
+
+/** ⟨φ⟩ per (η, seed) on the CPU reference (f64). */
+export async function cpuMeans(etas: readonly number[] = C.etas): Promise<number[][]> {
+  const jobs: VicsekRun[] = [];
+  for (const eta of etas) {
+    for (const seed of C.cpuSeeds) {
+      const f = initFor(seed);
+      const init = new Float64Array(C.n * 4);
+      for (let i = 0; i < C.n; i += 1) for (let w = 0; w < 4; w += 1) init[i * 4 + w] = f[i * 6 + w]!;
+      jobs.push({ n: C.n, L: C.L, v0: C.v0, eta, seed, steps: C.steps, every: C.every, init });
+    }
+  }
+  const phis = await runJobs(jobs);
+  return etas.map((_, i) => C.cpuSeeds.map((_, k) => settledMean(phis[i * C.cpuSeeds.length + k]!, C.every, C.relax)));
 }
 
 export async function runVicsekCheck(device: GPUDevice, kernels: FlockKernels): Promise<VicsekCheck> {

@@ -504,6 +504,8 @@ export class App {
   private setCallouts(): void {
     const s = this.scene;
     const t = (): number => performance.now() - this.sceneT0;
+    // clear of the dial's panel (bottom right on wide screens, a bottom sheet on phones)
+    const freeSpot = (): [number, number] => [this.camera.viewW >= 640 ? (this.camera.viewW - 340) / 2 : this.camera.viewW / 2, this.camera.viewH * 0.3];
     if (s.id === "order-dial") {
       let wasOrdered = false;
       this.studio.callouts.set([
@@ -512,7 +514,7 @@ export class App {
           text: `${this.flock.n.toLocaleString()} fish, all heading one way`,
           detail: "Turn the dial towards panic and watch the order melt",
           style: "label",
-          anchor: () => [this.camera.viewW / 2, this.camera.viewH * 0.22],
+          anchor: freeSpot,
           when: () => t() > 600 && t() < 7000,
         },
         {
@@ -520,7 +522,7 @@ export class App {
           text: "Order breaks",
           detail: "Polarization φ fell below 0.3 — the school has become a swarm",
           style: "label",
-          anchor: () => [this.camera.viewW / 2, this.camera.viewH * 0.22],
+          anchor: freeSpot,
           when: () => {
             const o = this.order;
             if (o && o.phi > 0.6) wasOrdered = true;
@@ -562,7 +564,8 @@ export class App {
                     text: "A mill",
                     detail: "Every fish circles the empty centre — no fish leads it",
                     style: "label" as const,
-                    anchor: (): [number, number] => [this.camera.viewW / 2, this.camera.viewH * 0.18],
+                    // below the regime panel on phones (it sits under the title there)
+                    anchor: (): [number, number] => [this.camera.viewW / 2, this.camera.viewH * (this.camera.viewW < 640 ? 0.34 : 0.18)],
                     when: () => t() > 1500 && t() < 9000 && this.shark.seen === 0 && !!this.order && this.order.mill > 0.65 && this.order.phi < 0.35,
                   },
                 ]

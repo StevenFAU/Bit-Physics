@@ -1,5 +1,5 @@
 // Swarm v2 — acceptance checks in a real WebGPU browser
-// (docs/planning/rebuild-v2/03-boids-2d.md M0).
+// (docs/planning/rebuild-v2/03-boids-2d.md M0 and M1).
 //
 //   npm run build   (in this directory)
 //   CHROME_BIN=/snap/bin/chromium \
@@ -14,7 +14,14 @@
 // live million; the memory reorder changes no fish's path; the φ series at
 // full scale repeats; the shark clears the water around it; save / restore /
 // compare; a seed reproduces the same bytes across page loads; the rule rides
-// the share link; the proof flock scene. Prints a BP_BENCH line at the end.
+// the share link; the proof flock scene. M1: The Order Dial (the Vicsek brain
+// at the tier's count; the dial by keyboard; a measured point on the map; a
+// full η sweep with η_c at the χ peak; its link; seeds across loads with
+// noise and re-sorts), The Mill (Tunstrøm's milling region, measured; the
+// shark breaks it; the Couzin zones ride the link; save / restore), the new
+// brains' proofs (brute ≡ sort, run twice, re-sort with noise, φ(η) against
+// the f64 CPU reference), the three levels of detail and their frame times.
+// Prints BP_BENCH lines at the end (Open Water, The Order Dial, The Mill).
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -297,13 +304,200 @@ let v4 = null;
   await ctx.close();
 }
 
-// --- frame time at the boot scene -------------------------------------------
+
+// --- M1: The Order Dial --------------------------------------------------------
 {
-  const { ctx, page } = await open("/v2/?bench=1");
+  const { ctx, page, errors } = await open("/v2/?s=order-dial");
+  await page.waitForTimeout(3000);
+  const d = await T(page, () => globalThis.__bpDebug());
+  const want = { T3: 1000000, T2: 250000, T1: 60000 }[d.tier];
+  check("The Order Dial boots at the tier's fish count on the Vicsek brain", d.scene === "order-dial" && d.agents === want && d.brain?.kind === "vicsek", `${d.agents.toLocaleString()} fish, r ${d.brain?.p.r.toFixed(4)}, v₀ ${d.brain?.p.speed.toFixed(5)}`);
+  check("it starts as one ordered school (φ > 0.8)", d.order && d.order.phi > 0.8, `φ ${d.order?.phi.toFixed(3)}`);
+  await shot(page, "10-order-dial");
+  // the dial is an ARIA slider and answers the keyboard
+  const k = await T(page, async () => {
+    const face = document.querySelector(".sw-dial-panel [role=slider]");
+    face.focus();
+    for (let i = 0; i < 5; i += 1) face.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    await new Promise((r) => setTimeout(r, 300));
+    return { now: face.getAttribute("aria-valuenow"), eta: globalThis.__swarm.flock.brain.p.eta, url: location.search };
+  });
+  check("the dial is a slider; five arrow presses turn η up by 0.05", Math.abs(k.eta - 0.2) < 1e-9 && k.now === "0.2" && /eta=0\.2/.test(k.url), JSON.stringify(k));
+  // a held setting becomes a measured point (8× speed)
+  const pt = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.setSpeed(8);
+    const t0 = performance.now();
+    while (!globalThis.__swarmDial.last && performance.now() - t0 < 30000) await new Promise((r) => setTimeout(r, 200));
+    const m = globalThis.__swarmDial.last;
+    app.setSpeed(1);
+    return m && { eta: m.eta, rho: m.rho, phi: m.phi, chi: m.chi, settled: m.settled, steps: m.steps, points: globalThis.__swarmDial.panel.measurements.length };
+  });
+  check("a held setting is measured from the live solver and lands on the map", pt && pt.eta === 0.2 && pt.points >= 1 && pt.steps >= 600, pt ? `η ${pt.eta}, ρ ${pt.rho}: ⟨φ⟩ ${pt.phi.toFixed(3)}, χ ${pt.chi.toFixed(2)}, ${pt.settled ? "settled" : "still changing"} over ${pt.steps} steps` : "no measurement in 30 s");
+  // the sweep: the dial turns itself; η_c at the χ peak
+  const sw = await T(page, async () => {
+    const t0 = performance.now();
+    const r = await globalThis.__swarmDial.sweep();
+    return { seconds: (performance.now() - t0) / 1000, rho: r.rho, n: r.n, etaC: r.etaC, complete: r.complete, pts: r.points.map((p) => [p.eta, +p.phi.toFixed(4), +p.chi.toFixed(2), p.settled]) };
+  });
+  const phis = sw.pts.map((p) => p[1]);
+  check("a full sweep measures φ(η) from order to disorder", sw.complete && phis[0] > 0.9 && phis[phis.length - 1] < 0.05, `${sw.n.toLocaleString()} fish, ρ ${sw.rho}, ${sw.seconds.toFixed(0)} s: ${sw.pts.map((p) => `${p[0]}:${p[1]}${p[3] ? "" : "*"}`).join(" ")}`);
+  check("η_c sits at the χ peak, inside the dial", sw.etaC !== null && sw.etaC > 0.1 && sw.etaC < 0.7, `η_c ${sw.etaC?.toFixed(3)} (Vicsek's units ${(2 * Math.PI * sw.etaC).toFixed(2)}); χ ${sw.pts.map((p) => p[2]).join(" ")}`);
+  await shot(page, "11-order-dial-swept");
+  // the new brains' proofs
+  const br = await T(page, () => globalThis.__swarmProve.brains());
+  for (const b of br) check(`${b.brain} brain: brute ≡ sort and run twice (${b.n} fish, noise on)`, b.identical && b.repeatable && b.nan === 0 && !b.saturated, `${b.sort.slice(0, 16)}…`);
+  const bro = await T(page, () => globalThis.__swarmProve.brainReorder());
+  check("re-sorting changes no fish's path even with noise (Vicsek, η 0.3)", bro.identical, `${bro.n.toLocaleString()} fish, ${bro.reorders} re-sorts, ${bro.differing} differ`);
+  const vc = await T(page, () => globalThis.__swarmProve.vicsek());
+  check("φ(η) on the GPU matches the f64 CPU reference (z ≤ 4 at every η)", vc.pass, `${vc.rows.map((r) => `η ${r.eta}: ${r.gpuMean.toFixed(3)} vs ${r.cpuMean.toFixed(3)} (z ${r.z.toFixed(2)})`).join("; ")}; ${(vc.gpuSeconds + vc.cpuSeconds).toFixed(1)} s`);
+  check("…and a reference shifted by Δη 0.05 fails it", vc.probeFails, `z ${vc.probeZ.toFixed(1)}`);
+  check("no console errors (The Order Dial)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page, errors } = await open("/v2/?s=order-dial&eta=0.4&rho=2");
+  const b = await T(page, () => ({ ...globalThis.__swarm.flock.brain.p, dial: [globalThis.__swarmDial.eta, globalThis.__swarmDial.rho] }));
+  const rho = b.r * b.r * 562.5;
+  check("an Order Dial link sets η and ρ", Math.abs(b.eta - 0.4) < 1e-9 && Math.abs(rho - 2) < 1e-6 && b.dial[0] === 0.4 && b.dial[1] === 2, JSON.stringify(b));
+  check("no console errors (Order Dial link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+  // same seed, same bytes with the Vicsek brain (noise keyed by fish id, re-sorts on)
+  const a1 = await open("/v2/?s=order-dial&seed=5&eta=0.3");
+  const h1 = await hashAfter(a1.page, 300);
+  await a1.ctx.close();
+  const a2 = await open("/v2/?s=order-dial&seed=5&eta=0.3");
+  const h2 = await hashAfter(a2.page, 300);
+  await a2.ctx.close();
+  check("The Order Dial: same seed, same bytes across page loads (η 0.3, 300 steps, re-sorts)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
+}
+
+// --- M1: The Mill ------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=mill");
+  const r = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    await app.advance(1500);
+    const o = await app.flock.readOrder();
+    app.clock.paused = false;
+    return { n: app.flock.n, tier: app.tier, brain: app.flock.brain, phi: o.phi, mill: o.mill, disp: o.dispersion, sat: await app.flock.readSaturated() };
+  });
+  const want = { T3: 8192, T2: 4096, T1: 2048 }[r.tier];
+  check("The Mill boots at its tier count on Couzin's zones", r.n === want && r.brain?.kind === "couzin", `${r.n.toLocaleString()} fish; r_r ${r.brain?.p.rr}, r_o ${r.brain?.p.ro}, r_a ${r.brain?.p.ra.toFixed(1)}, ${r.brain?.p.fovDeg}° view, ${(r.brain?.p.maxTurn * 180 / Math.PI).toFixed(1)}° per step`);
+  check("after 1,500 steps the school mills — Tunstrøm's region, measured (O_p < 0.35, O_r > 0.65)", r.phi < 0.35 && r.mill > 0.65 && !r.sat, `O_p ${r.phi.toFixed(3)}, O_r ${r.mill.toFixed(3)}, mean radius ${r.disp.toFixed(1)} r_r`);
+  await page.waitForTimeout(1500);
+  const lab = await T(page, () => globalThis.__bpDebug().regime);
+  check("the panel names it with Tunstrøm's cutoffs", lab === "milling", lab);
+  await shot(page, "12-mill");
+  const tune = await T(page, () => {
+    const t = document.querySelector(".bp-tune");
+    // the sliders in the brain's own box (the other boxes carry hidden)
+    return t ? [...t.querySelectorAll(".bp-tune-body .bp-slider-label")].filter((e) => !e.closest(".bp-tune-body > [hidden]")).map((e) => e.textContent) : [];
+  });
+  check("Tune shows Couzin's knobs on The Mill", tune.some((t) => t.startsWith("Orientation zone")) && tune.some((t) => t.startsWith("Field of view")), tune.join(", "));
+  // the shark: sit on the mill's centre and lunge
+  const c = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.studio.rail.select("shark");
+    const b = await app.flock.readBoids();
+    let sx = 0, sy = 0;
+    for (let i = 0; i < app.flock.n; i += 1) { sx += b[i * 6]; sy += b[i * 6 + 1]; }
+    const cx = sx / app.flock.n, cy = sy / app.flock.n;
+    const [x, y] = app.camera.domainToScreen(cx + app.flock.halfW, cy + app.flock.halfH);
+    return { x, y };
+  });
+  await page.mouse.move(c.x - 20, c.y);
+  await page.mouse.move(c.x, c.y, { steps: 4 });
+  await page.mouse.down();
+  const hit = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const t0 = app.flock.tick;
+    let minMill = 1;
+    while (app.flock.tick < t0 + 600) {
+      await new Promise((r) => setTimeout(r, 250));
+      const o = await app.flock.readOrder();
+      minMill = Math.min(minMill, o.mill);
+    }
+    return { minMill, steps: app.flock.tick - t0 };
+  });
+  await page.mouse.up();
+  await shot(page, "13-mill-shark");
+  check("the shark pushes the school out of the mill (O_r falls below 0.65)", hit.minMill < 0.65, `lowest O_r ${hit.minMill.toFixed(3)} over ${hit.steps} steps of lunging at its centre`);
+  // save / restore with the brain and its ids
+  const sr = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const hash = async () => {
+      const t = await app.flock.readBoids();
+      const d = await crypto.subtle.digest("SHA-256", t.buffer);
+      return [...new Uint8Array(d)].map((x) => x.toString(16).padStart(2, "0")).join("");
+    };
+    app.clock.paused = true;
+    await new Promise((r) => setTimeout(r, 200));
+    app.savePoint();
+    const a = await hash();
+    await app.advance(100);
+    const after1 = await hash();
+    app.restoreSave();
+    const b = await hash();
+    await app.advance(100);
+    const after2 = await hash();
+    return { restored: a === b, replay: after1 === after2 };
+  });
+  check("The Mill: restore returns the exact bytes, and replays the same 100 steps", sr.restored && sr.replay, JSON.stringify(sr));
+  check("no console errors (The Mill)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  // Couzin et al.: widen the orientation zone and the school stops milling
+  const { ctx, page, errors } = await open("/v2/?s=mill&dro=6&fov=300");
+  const r = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    await app.advance(1500);
+    const o = await app.flock.readOrder();
+    return { ro: app.flock.brain.p.ro, fov: app.flock.brain.p.fovDeg, phi: o.phi, mill: o.mill };
+  });
+  check("a Mill link sets Couzin's zones", r.ro === 7 && r.fov === 300, JSON.stringify(r));
+  console.log(`INFO  Mill with Δr_o 6, α 300°: O_p ${r.phi.toFixed(3)}, O_r ${r.mill.toFixed(3)} after 1,500 steps`);
+  check("no console errors (Mill link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M1: three levels of detail -------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?chrome=off");
+  await page.waitForTimeout(2000);
+  for (const [zoom, want] of [[1, "field"], [6, "streak"], [20, "glyph"]]) {
+    const r = await T(page, async (z) => {
+      const app = globalThis.__swarm;
+      const c = app.camera;
+      c.set({ cx: c.domainW / 2, cy: c.domainH / 2, pxPerUnit: c.coverZoom() * z });
+      await new Promise((r) => setTimeout(r, 2000));
+      const t = [];
+      let last = performance.now();
+      await new Promise((res) => {
+        let k = 0;
+        const f = (now) => { t.push(now - last); last = now; if (++k < 120) requestAnimationFrame(f); else res(); };
+        requestAnimationFrame(f);
+      });
+      t.sort((a, b) => a - b);
+      return { lod: app.view.lod.name, len: app.view.look.fishLength * c.pxPerUnit, p50: t[60], p90: t[108], n: app.flock.n, field: app.profiler?.timings().find((p) => p.name === "field")?.avg ?? null };
+    }, zoom);
+    await shot(page, `20-lod-${want}`);
+    check(`${want} level of detail at ${zoom}× (fish ${r.len.toFixed(1)} px), 60 fps at ${r.n.toLocaleString()} fish`, r.lod === want && r.p50 < 17.5, `frame p50 ${r.p50.toFixed(1)} / p90 ${r.p90.toFixed(1)} ms${r.field !== null ? `, field splat ${r.field.toFixed(2)} ms` : ""}`);
+  }
+  check("no console errors (levels of detail)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- frame time: the boot scene and the M1 scenes ------------------------------
+for (const scene of ["open-water", "order-dial", "mill"]) {
+  const { ctx, page } = await open(`/v2/?s=${scene}&bench=1`);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
   console.log(`BP_BENCH ${JSON.stringify(b)}`);
-  check("bench ran", b.frames > 0, `${b.agents.toLocaleString()} fish, ${b.fps.toFixed(1)} fps, frame p50 ${b.frameP50.toFixed(1)} ms / p90 ${b.frameP90.toFixed(1)} ms, GPU p50 ${b.gpuP50.toFixed(2)} ms, ${Math.round(b.stepsPerSecond)} steps/s, render scale ${b.renderScale}`);
+  check(`bench ran (${scene})`, b.frames > 0, `${b.agents.toLocaleString()} fish, ${b.fps.toFixed(1)} fps, frame p50 ${b.frameP50.toFixed(1)} ms / p90 ${b.frameP90.toFixed(1)} ms, GPU p50 ${b.gpuP50.toFixed(2)} ms, ${Math.round(b.stepsPerSecond)} steps/s, render scale ${b.renderScale}`);
   await ctx.close();
 }
 
