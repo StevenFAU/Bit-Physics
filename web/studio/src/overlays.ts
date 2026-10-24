@@ -35,7 +35,7 @@ export class ShortcutSheet {
       h(
         "div",
         { class: "bp-sheet-card bp-surface" },
-        h("header", {}, h("h2", { id: "bp-sheet-title" }, "Keyboard shortcuts"), close),
+        h("header", { role: "none" }, h("h2", { id: "bp-sheet-title" }, "Keyboard shortcuts"), close),
         this.list,
       ),
     );

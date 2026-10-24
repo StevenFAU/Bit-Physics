@@ -247,7 +247,8 @@ export class TunePopover {
     this.el = h(
       "div",
       { class: "bp-tune bp-surface", role: "dialog", "aria-label": "Tune", hidden: true, "data-bp2": "studio-chrome" },
-      h("header", {}, h("h2", {}, "Tune"), close),
+      // a header outside sectioning content is a page banner; the page has one (the top bar)
+      h("header", { role: "none" }, h("h2", {}, "Tune"), close),
       this.body,
       this.note,
     );

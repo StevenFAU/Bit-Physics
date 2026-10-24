@@ -3,6 +3,91 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/physarum/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. Unmeasured targets.
 >
+> **Implementation status (2026-10-24): M1 built** on the same `v2/` page. Measured on the RX 6800 XT
+> (Chromium + Dawn/Vulkan); `pipeline.py validate` still passes on both pages, run twice
+> (byte-identical, total mass 22499.9962, rel 1.7e-7).
+>
+> - **Scenes.** *First Light* is the default: a colony grows from the centre of a dark dish
+>   with twelve crumbs. *Lace* is the finest-foam personality on the whole dish. In *Light
+>   Avoidance*, a light drifts on a slow loop until the visitor drags it.
+> - **Tools.** Food (click to drop or take away a crumb) and Light (drag; size; switch off). Every
+>   edit is a logged event at its step. Undo restores the checkpoint taken before the edit and
+>   replays the later events. After a food edit, an undo and 300 steps, the trail is byte-identical
+>   to a run that never had the edit (with growth, stochastic turning and food all on).
+> - **Model additions (live scenes only, behind flags the gated scene leaves off):**
+>   - *Food* deposits into the trail like 40 agents per crumb cell, in the same whole
+>     1/65,536ths. Food also gives off a long-range scent s·e^(−r/λ), with s = 4× the mean
+>     trail and λ = 0.3 of the dish's short side. Agents sense the scent but it never enters
+>     the trail. The scent's own effect was not measured separately.
+>   - *Light* is a repellent agents sense, 60× the mean trail deep. After 900 steps the lit
+>     pool holds 0.40% of the dish's mean trail.
+>   - *Growth*: outside the released disc, agents start dormant and wake once the trail under
+>     them reaches 0.1 of one agent's deposit. They never wake on food or its halo. The halo is
+>     λ·ln(food / (α·0.1)) + 3 cells, with λ = √(D/α) and D = 1/3: past it, a crumb's own trail
+>     cannot reach the threshold.
+>   - *Stochastic turning*: Jones's random side when both side sensors beat the centre, plus a
+>     5% chance of a random turn per step. The dice are a hash of each agent's position and
+>     heading, so runs repeat exactly and the tile re-sort cannot change them.
+> - **The mass balance stays exact through all of it.** Food amounts are integers, and a
+>   growing colony's awake count is logged on the GPU every step and folded into the f64
+>   prediction: M ← (M + d·N_awake + F)(1−α). At 2M agents, after 1,200 steps of growth with
+>   food, rel 1.1e-7; with a crumb added, 3.0e-8.
+> - **Directors act at exact steps,** not at frame boundaries, so an untouched scene still
+>   replays byte for byte:
+>   - First Light gets a new crumb every 2,400 steps (up to 24);
+>   - Light Avoidance moves its light every 16 steps;
+>   - Lace re-scatters every 4,800 steps.
+> - **The personality pad** (Tune) is a 5 × 5 lattice of tested points with four named corners:
+>   *Veins* (explorer, fine), *Lace* (forager, fine), *Rivers* (explorer, bold) and *Cells*
+>   (forager, bold).
+>   - The axes: Explorer↔Forager moves the turn angle 22.5° → 67.5° and the step 2 → 0.5;
+>     Fine↔Bold moves the reach 12 → 24 and the fade 0.15 → 0.05.
+>   - Calibration (`v2-calibrate.mjs` → `src/v2/generated/pad-calibration.json`) ran each point
+>     from three seeds at the T1, T2 and T3 agent counts (16:9 dishes of 744 × 424, 1368 × 768
+>     and 2728 × 1536) and measured the trail's morphology at 1,000 and 3,000 steps
+>     (`src/v2/model/morphology.ts`).
+>   - A point is offered at a tier only if, at both steps, every seed's tube length per area is
+>     within ±10% of the mean and every gap count within ±max(30%, 2√n).
+>   - Offered: **T3 22/25, T2 16/25, T1 9/25**. The puck snaps to offered points; a scene whose
+>     personality is not offered on a tier starts at the nearest one that is.
+> - **Checks.** `v2-acceptance.mjs` passes 47/47, adding for M1: scenes, pad versus calibration,
+>   pad links, growth, food, undo, light, the director, and the open Tune popover under axe.
+>   `check-studio` passes at 390 / 820 / 1440 px and 200% zoom. Workspace typecheck and 107 unit
+>   tests (13 new) pass.
+> - **Performance at full clock (1280 × 720, 2M agents, 60 fps).** The solver takes 0.98 ms per
+>   frame on *The network* (the M0 path), 0.94 on Lace (stochastic turning is free) and 1.23 on
+>   First Light (+26%: environment sensing, the wake test, food and the awake log). GPU per frame
+>   is 1.4–1.5 ms at p50.
+>
+> **M1 findings (corrections to this spec):**
+>
+> - **The deposit cannot be a personality axis.** Without food, the deposit only scales the
+>   trail, and an agent comparing three samples cannot tell the difference. The fade changes the
+>   shape, so Bold uses the fade.
+> - **Jones's stochastic turning stops the rods.** In a T2 survey at reach 18 with a 2% or 10%
+>   chance of a random turn, the network stayed in one or two connected pieces from 1,000 to
+>   12,000 steps. The deterministic rule broke into rods by ~6,000. Networks still coarsen, slowly (Lace at T3: ~390 gaps at 1,000
+>   steps, ~165 at 3,000).
+> - **A colony grows only from dormant agents.** With the rest of the dish dormant and a wake
+>   threshold of 0.1 deposit, a branching front fills a T3 dish in about ten seconds: 8,726
+>   agents awake at the start, 663,610 after 600 steps and 1,579,052 after 1,200. At thresholds
+>   of 0.25 and up, the released disc collapses into a rod before it wakes anyone.
+> - **Food must be strong to shape the network.** At 40 agents' deposit per crumb cell, the
+>   network contracts onto straight tubes between crumbs, with three-way junctions, within
+>   ~5,000 steps (Tero-like, unscored until M2). At 2×, crumbs barely register.
+> - **The Explorer column is not reproducible on small dishes.** Explorers make a few long
+>   meandering runners with almost no closed loops, so at T1 and T2 seeds disagree. The T1 dish
+>   holds only ~10–40 features.
+> - **The first stability rule was wrong, and was replaced after the first run.** It judged gap
+>   counts by ±30% alone, which rejects points on counting noise (a T1 dish holds ~15 gaps:
+>   ±26% at one standard deviation). That rule offered T3 19, T2 16, T1 7; the JSON keeps its
+>   verdict per point as `stableFirstRule`.
+> - **Lace keeps the declared density.** The spec called for "high density", but M0 showed
+>   density sets the scale, not the morphology. Lace is the finest-foam personality instead.
+> - **Shell fix.** Opening the Tune popover produced a second `banner` landmark (axe: *landmark-no-duplicate-banner*).
+>   `check-studio` never opens Tune, so it did not catch this. The popover headers now carry
+>   `role="none"`.
+>
 > **Implementation status (2026-10-23): M0 built** as the `v2/` page of `packages/physarum/web`
 > (served at `/sims/physarum/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
 >
@@ -85,8 +170,8 @@
 >   same runs later held 60 fps, and the Turing Patterns v2 page read the same 18 fps at the same
 >   time. Treat a low fps with low GPU time as contention on a shared GPU, not as the page's cost.
 >
-> Not yet: the personality pad, the M1–M3 scenes and tools (food, light, walls), network
-> extraction and scoring, morphology regression tests, multi-species channels, posters and loops.
+> Not yet (after M1): walls, network extraction and scoring (M2); morphology regression tests,
+> multi-species channels, posters and loops (M3).
 
 ## Verdict on the prototype
 

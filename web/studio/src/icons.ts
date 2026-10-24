@@ -37,6 +37,10 @@ const PATHS = {
   chevronDown: '<path d="M6 9l6 6 6-6"/>',
   check: '<path d="M5 12.5l4.2 4.2L19 7"/>',
   alert: '<path d="M12 4l9 16H3z"/><path d="M12 10v4.5M12 17.2v.01"/>',
+  food: '<circle cx="9.5" cy="9.5" r="3.6"/><circle cx="16" cy="14.5" r="2.6"/><circle cx="8.6" cy="17.4" r="1.7"/>',
+  light:
+    '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
+  wall: '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M9 14.3V19"/>',
   shark: '<path d="M7 15.5C8.4 10.6 11.6 6.5 17 4.5c-1.2 3.6-1 7.4.8 11"/><path d="M3 17.5c2.2-1.2 4.4-1.2 6 0s3.8 1.2 6 0 4.4-1.2 6 0"/>',
 } as const;
 

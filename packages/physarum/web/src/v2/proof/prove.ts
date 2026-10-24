@@ -32,6 +32,14 @@ export interface OnScreen {
   grid: [number, number];
   /** The parameters on screen (compared with Jones 2010 Table 1, the gated ones). */
   params: JonesParams;
+  /** The personality's name, if the parameters are a pad point. */
+  personality?: string | null;
+  /** Jones's stochastic turning instead of the gated deterministic rule. */
+  stochastic?: boolean;
+  food?: number;
+  lights?: number;
+  /** A growing colony (dormant agents waking). */
+  growing?: boolean;
 }
 
 export interface LiveVsGated {
@@ -60,7 +68,8 @@ const PARAM_NAMES: [keyof JonesParams, string, string][] = [
 
 /** "at the gated parameters", or which values differ: "at sensor reach 18 (the gate uses 9)". */
 function paramsVsGated(p: JonesParams): string {
-  const diff = PARAM_NAMES.filter(([k]) => p[k] !== PARAMS[k]).map(([k, name, unit]) => `${name} ${p[k]}${unit} (the gate uses ${PARAMS[k]}${unit})`);
+  const n = (v: number): number => Number(v.toPrecision(4));
+  const diff = PARAM_NAMES.filter(([k]) => p[k] !== PARAMS[k]).map(([k, name, unit]) => `${name} ${n(p[k])}${unit} (the gate uses ${PARAMS[k]}${unit})`);
   return diff.length === 0 ? "at the gated parameters" : `at ${diff.join(", ")}`;
 }
 
@@ -148,8 +157,9 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     {
       title: "Mass balance at full scale",
       sentence:
-        "The same closed form holds for the dish on screen, step by step: each step adds d·N and keeps (1−α), so the " +
-        "trail must hold exactly what M ← (M + d·N)(1−α) predicts after the steps run so far — through any parameter change — settling at d·N·(1−α)/α.",
+        "The same closed form holds for the dish on screen, step by step: each step adds d for every awake agent and the food's own deposit F, and keeps (1−α), so the " +
+        "trail must hold exactly what M ← (M + d·N + F)(1−α) predicts after the steps run so far — through any parameter change, food you add, " +
+        "and a colony that is still waking up (the GPU counts the awake agents every step) — settling at (d·N + F)·(1−α)/α.",
       label: "analytic check passed",
       action: "Check the live dish",
     },
@@ -295,7 +305,9 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         adapter: d.adapter,
         notes: [
           `at step ${r.tick.toLocaleString()}`,
-          settled < 1e-9 ? `settled at d·N·(1−α)/α = ${r.equilibrium.toExponential(6)}` : `still ${(settled * 100).toFixed(3)}% from where it settles (${r.equilibrium.toExponential(6)})`,
+          settled < 1e-9
+            ? `settled at (d·N + F)·(1−α)/α = ${r.equilibrium.toExponential(6)}`
+            : `still ${(settled * 100).toFixed(3)}% from where it settles with every agent awake (${r.equilibrium.toExponential(6)})`,
         ],
       });
       return { massRel, pass };
@@ -320,10 +332,17 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   return {
     setOnScreen(s: OnScreen) {
       const size = `${s.agents.toLocaleString()} agents on ${s.grid[0]} × ${s.grid[1]}`;
+      const extras: string[] = [];
+      if (s.stochastic) extras.push("turns by Jones's stochastic rule (a random side when both beat the centre, plus a 5% chance of a random turn) where the gate always turns left");
+      if (s.growing) extras.push("the colony is still growing (agents wake when its trail reaches them)");
+      if (s.food) extras.push(`${s.food} food crumb${s.food === 1 ? "" : "s"} deposit into the trail and give off a scent the agents follow`);
+      if (s.lights) extras.push("a light the agents turn away from (they sense it; it never touches the trail)");
       onScreen.textContent = s.gated
         ? `On screen: the gated run itself (${size}, canonical parameters, no edits).`
-        : `On screen: ${s.scene} — ${size}. The gated kernel's arithmetic ${paramsVsGated(s.params)}; ` +
-          "for hours-long runs positions wrap back into the dish and headings are renormalised after each turn, so it is not the gated run.";
+        : `On screen: ${s.scene}${s.personality ? ` (personality: ${s.personality})` : ""} — ${size}. The gated kernel's arithmetic ${paramsVsGated(s.params)}` +
+          (extras.length ? `; it ${extras.join("; ")}` : "") +
+          "; for hours-long runs positions wrap back into the dish and headings are renormalised after each turn, so it is not the gated run. " +
+          "The mass balance below still holds exactly.";
       showGatedBtn.hidden = s.gated;
     },
     runAll,

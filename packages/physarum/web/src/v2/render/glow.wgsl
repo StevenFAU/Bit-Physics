@@ -106,7 +106,13 @@ fn spark_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) ->
     o.pos = vec4<f32>(2.0, 2.0, 0.0, 1.0);
     return o;
   }
-  let p = agents[idx].xy;
+  let ag = agents[idx];
+  if (ag.z > 1.5) {
+    // dormant (a growing colony has not reached it yet): not drawn
+    o.pos = vec4<f32>(2.0, 2.0, 0.0, 1.0);
+    return o;
+  }
+  let p = ag.xy;
   let dom = L.dims.zw;
   // the image of p nearest the view centre, then this instance's periodic offset
   var d = p - L.cam.xy;
@@ -128,4 +134,64 @@ fn spark_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) ->
 @fragment
 fn spark_fs(in: SparkOut) -> @location(0) vec4<f32> {
   return vec4<f32>(in.c, 1.0);
+}
+
+// ---- markers: food crumbs (small warm discs) and lights (a soft pool with a halo)
+
+struct Marks {
+  count: u32,
+  images_x: u32,
+  images_y: u32,
+  _p0: u32,
+};
+@group(1) @binding(0) var<uniform> MK: Marks;
+@group(1) @binding(1) var<storage, read> marks: array<vec4<f32>>;   // x, y, r (cells), kind (0 food, 1 light, 2 food ghost)
+
+struct MarkOut {
+  @builtin(position) pos: vec4<f32>,
+  @location(0) local: vec2<f32>,                       // in units of the marker radius
+  @location(1) @interpolate(flat) kind: f32,
+  @location(2) @interpolate(flat) rpx: f32,            // radius in scene px
+};
+
+@vertex
+fn mark_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> MarkOut {
+  var o: MarkOut;
+  let m = marks[ii % MK.count];
+  let img = ii / MK.count;
+  var corners = array<vec2<f32>, 6>(vec2(-1.0, -1.0), vec2(1.0, -1.0), vec2(-1.0, 1.0), vec2(-1.0, 1.0), vec2(1.0, -1.0), vec2(1.0, 1.0));
+  let corner = corners[vi];
+  let ext = select(1.6, 2.2, m.w == 1.0);              // lights carry a wide halo
+  let dom = L.dims.zw;
+  var d = m.xy - L.cam.xy;
+  d = d - round(d / dom) * dom;
+  let ox = f32(img % MK.images_x) - f32(MK.images_x / 2u);
+  let oy = f32(img / MK.images_x) - f32(MK.images_y / 2u);
+  d = d + vec2<f32>(ox, oy) * dom;
+  // never smaller than a few px on screen, so a crumb stays visible zoomed out
+  let rpx = max(m.z / L.cam.z, select(3.0, 6.0, m.w == 1.0));
+  let spx = d / L.cam.z + corner * rpx * ext;
+  let ndc = spx / (0.5 * L.dims.xy);
+  o.pos = vec4<f32>(ndc.x, -ndc.y, 0.0, 1.0);
+  o.local = corner * ext;
+  o.kind = m.w;
+  o.rpx = rpx;
+  return o;
+}
+
+@fragment
+fn mark_fs(in: MarkOut) -> @location(0) vec4<f32> {
+  let d = length(in.local);
+  let aa = 1.5 / max(in.rpx, 1.0);                     // about a pixel and a half of edge
+  if (in.kind == 1.0) {
+    let pool = 0.06 * (1.0 - smoothstep(0.0, 1.0, d));
+    let ring = 0.55 * exp(-pow((d - 1.0) / max(0.05, 2.0 * aa), 2.0));
+    let halo = 0.05 * exp(-max(d - 1.0, 0.0) * 3.0) * step(1.0, d);
+    return vec4<f32>(vec3<f32>(0.78, 0.86, 1.0) * (pool + ring + halo), 1.0);
+  }
+  // food: a warm disc with a soft rim; a ghost is the hover preview
+  let disc = 1.0 - smoothstep(1.0 - aa, 1.0 + aa, d);
+  let rim = exp(-pow((d - 1.0) / 0.25, 2.0)) * 0.35;
+  let k = select(1.0, 0.35, in.kind == 2.0);
+  return vec4<f32>(vec3<f32>(1.0, 0.62, 0.28) * (2.2 * disc + rim) * k, 1.0);
 }

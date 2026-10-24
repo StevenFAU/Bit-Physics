@@ -1,28 +1,39 @@
-// Slime Mould scenes (M0). Every scene starts from a fixed seed, so Restart
-// reproduces it. The live scenes run the Jones kernel at the tier's full
-// agent count on the density-coupled grid; the gated scene is the release
-// gate's own run, on screen. (M1 adds First Light, Lace and Light Avoidance
-// with the personality pad.)
+// Slime Mould scenes. Every scene starts from a fixed seed, so Restart
+// reproduces it. Living scenes (M1) start from a personality on the pad and
+// turn by Jones's stochastic rule; the M0 scenes keep the gated rule.
 //
 // Measured in M0 (docs/planning/rebuild-v2/02-physarum.md, "M0 findings"):
 //   * at the declared density, Jones's Table 1 values (reach 9) knit a network
-//     for a few seconds and then break into separate straight rods — the
-//     model has no crowding rule and no random turns, so agents in a strand
-//     lock step and march straight. Doubling the sensor reach to 18 (all else
-//     Table 1) gives a true polygon network that coarsens slowly instead. That
-//     is the default; Table 1 itself is a scene, labelled as such;
-//   * no "colony released at the centre" scene: a dense release never spreads
-//     under the Jones rule (agents are captured by the strongest trail, so a
-//     disc or ring collapses into a stable hot ring and only four
-//     lattice-aligned jets escape). Pulling a colony outward needs food —
-//     First Light's crumbs in M1.
+//     for a few seconds and then break into separate straight rods; reach 18
+//     gives a polygon network that coarsens slowly. Table 1 is a scene;
+//   * a dense colony released at the centre never spreads under the Jones
+//     rule (agents are captured by the strongest trail).
+// Measured in M1:
+//   * a colony grows outward if the rest of the agents start dormant and wake
+//     when its trail reaches them (0.1 of one agent's deposit): a branching
+//     front fills a T3 dish in about ten seconds. Higher thresholds (0.25 and
+//     up) never wake anyone — the colony collapses first;
+//   * crumbs depositing 40 agents' worth per cell per step anchor the network:
+//     it contracts onto straight tubes between crumbs with three-way junctions
+//     within ~5,000 steps. At 2× they barely register.
 
-import type { SeedSpec } from "./model/sim.js";
+import type { EnvSpec, SeedSpec, Spot } from "./model/sim.js";
+import { hash3, unit } from "@bp/runtime";
 import type { JonesParams } from "./proof/gate.js";
 import { PARAMS } from "./proof/gate.js";
 import type { PaletteId } from "./render/look.js";
+import type { PadPoint } from "./pad.js";
+import { CORNERS, PAD_CENTRE, padParams } from "./pad.js";
 
-export type SceneId = "network" | "table1" | "gated";
+export type SceneId = "first-light" | "lace" | "light" | "network" | "table1" | "gated";
+export type ToolId = "pan" | "food" | "light" | "probe";
+
+export interface Director {
+  /** What an untouched scene does to stay alive (00-foundation.md § 1, "nothing settles into nothing"). */
+  kind: "rescatter" | "crumb" | "drift";
+  /** Rescatter / crumb: act every this many steps. */
+  everySteps: number;
+}
 
 export interface SceneDef {
   id: SceneId;
@@ -32,29 +43,144 @@ export interface SceneDef {
   kind: "live" | "gated";
   /** The parameters the scene starts with. */
   params: JonesParams;
+  /** The pad point the scene starts at (null: a scene of the gated rule). */
+  personality: PadPoint | null;
   /** Live scenes: the starting agents on a w × h dish. */
   seed?: (w: number, h: number, seed: number) => SeedSpec;
+  /** The scene's environment on a w × h dish (food, lights, walls). */
+  env?: (w: number, h: number, seed: number) => EnvSpec;
   palette: PaletteId;
-  /**
-   * "Nothing settles into nothing" (00-foundation.md § 1): once the network
-   * has pruned itself (after this many steps), an untouched scene scatters
-   * the agents again from the next seed.
-   */
-  director?: { everySteps: number };
+  director?: Director;
+  tools: ToolId[];
+  tool: ToolId;
 }
 
+/** Food crumb radius on a w × h dish (cells): the same size on screen at every tier. */
+export const crumbRadius = (w: number, h: number): number => Math.max(3, Math.min(w, h) * 0.007);
+
+/** Twelve crumbs in two loose rings round the centre (dish-relative, so every tier gets the same layout). */
+export function firstLightFood(w: number, h: number, seed: number): Spot[] {
+  const m = Math.min(w, h);
+  const r = crumbRadius(w, h);
+  const out: Spot[] = [];
+  const ring = (count: number, radius: number, phase: number, salt: number): void => {
+    for (let i = 0; i < count; i += 1) {
+      const j = unit(hash3(seed, salt, i));
+      const k = unit(hash3(seed, salt + 1, i));
+      const a = phase + (i / count) * Math.PI * 2 + (j - 0.5) * 0.5;
+      const rr = radius * (0.88 + 0.24 * k);
+      out.push({ x: w / 2 + Math.cos(a) * rr * m, y: h / 2 + Math.sin(a) * rr * m, r });
+    }
+  };
+  ring(5, 0.2, 0.3, 11);
+  ring(7, 0.4, 0.0, 13);
+  return out;
+}
+
+/** The director's next crumb for First Light: somewhere on the dish not too close to the others. */
+export function nextCrumb(w: number, h: number, seed: number, k: number, food: readonly Spot[]): Spot {
+  const r = crumbRadius(w, h);
+  const m = Math.min(w, h);
+  let best: Spot = { x: w / 2, y: h / 2, r };
+  let bestD = -1;
+  for (let t = 0; t < 12; t += 1) {
+    const x = (0.08 + 0.84 * unit(hash3(seed, 101 + k, t))) * w;
+    const y = (0.1 + 0.8 * unit(hash3(seed, 211 + k, t))) * h;
+    let d = Infinity;
+    for (const f of food) d = Math.min(d, Math.hypot(f.x - x, f.y - y));
+    if (d > 0.18 * m) return { x, y, r };
+    if (d > bestD) {
+      bestD = d;
+      best = { x, y, r };
+    }
+  }
+  return best;
+}
+
+/** Light Avoidance: the light's radius and its untouched drift (a slow loop round the dish centre). */
+export const lightRadius = (w: number, h: number): number => Math.min(w, h) * 0.13;
+export function lightDrift(w: number, h: number, tick: number): { x: number; y: number } {
+  const t = tick / 120;
+  return { x: w * (0.5 + 0.26 * Math.sin(t * 0.11)), y: h * (0.5 + 0.22 * Math.sin(t * 0.17 + 1.1)) };
+}
+
+const growth = (w: number, h: number, seed: number): SeedSpec => ({
+  mode: 3,
+  seed,
+  centre: [w / 2, h / 2],
+  radius: Math.min(w, h) * 0.05,
+  spread: 0.8,
+  wake: 0.1,
+});
+const scatter = (_w: number, _h: number, seed: number): SeedSpec => ({ mode: 0, seed });
+const cornerAt = (id: string): PadPoint => CORNERS.find((c) => c.id === id)!.at;
+const FOOD = { foodDeposit: 40, scent: 4 } as const;
+
 export const SCENES: readonly SceneDef[] = [
+  {
+    id: "first-light",
+    title: "First Light",
+    prompt: "It's hungry. Add food and watch it reroute.",
+    listed: true,
+    kind: "live",
+    personality: PAD_CENTRE,
+    params: padParams(PAD_CENTRE),
+    seed: growth,
+    env: (w, h, seed) => ({ food: firstLightFood(w, h, seed), lights: [], walls: null, ...FOOD, scentRange: Math.min(w, h) * 0.3, light: 60 }),
+    palette: "ember",
+    // left alone, it gets a new crumb now and then and reroutes to it
+    director: { kind: "crumb", everySteps: 2400 },
+    tools: ["pan", "food", "light", "probe"],
+    tool: "food",
+  },
+  {
+    id: "lace",
+    title: "Lace",
+    prompt: "Nothing to solve. Just watch.",
+    listed: true,
+    kind: "live",
+    personality: cornerAt("lace"),
+    params: padParams(cornerAt("lace")),
+    seed: scatter,
+    palette: "deepsea",
+    // the finest foam coarsens as it ages; start again before it thins out
+    director: { kind: "rescatter", everySteps: 4800 },
+    tools: ["pan", "food", "light", "probe"],
+    tool: "pan",
+  },
+  {
+    id: "light",
+    title: "Light Avoidance",
+    prompt: "Shine the light; it retreats and rebuilds.",
+    listed: true,
+    kind: "live",
+    personality: PAD_CENTRE,
+    params: padParams(PAD_CENTRE),
+    seed: scatter,
+    env: (w, h) => {
+      const at = lightDrift(w, h, 0);
+      return { food: [], lights: [{ ...at, r: lightRadius(w, h) }], walls: null, ...FOOD, scentRange: Math.min(w, h) * 0.3, light: 60 };
+    },
+    palette: "ember",
+    // left alone, the light wanders on a slow loop
+    director: { kind: "drift", everySteps: 0 },
+    tools: ["pan", "light", "food", "probe"],
+    tool: "light",
+  },
   {
     id: "network",
     title: "The network",
     prompt: "Agents scattered at random knit a network of glowing tubes, then slowly prune it.",
     listed: true,
     kind: "live",
+    personality: null,
     params: { ...PARAMS, L_sense: 18 },
-    seed: (_w, _h, seed) => ({ mode: 0, seed }),
+    seed: scatter,
     palette: "ember",
     // measured: polygons by ~2,000 steps, mostly pruned to rods by ~7,000
-    director: { everySteps: 7200 },
+    director: { kind: "rescatter", everySteps: 7200 },
+    tools: ["pan", "probe"],
+    tool: "pan",
   },
   {
     id: "table1",
@@ -62,9 +188,12 @@ export const SCENES: readonly SceneDef[] = [
     prompt: "The gated parameters at full scale: the network forms, then breaks into marching rods.",
     listed: true,
     kind: "live",
+    personality: null,
     params: { ...PARAMS },
-    seed: (_w, _h, seed) => ({ mode: 0, seed }),
+    seed: scatter,
     palette: "deepsea",
+    tools: ["pan", "probe"],
+    tool: "pan",
   },
   {
     id: "gated",
@@ -72,8 +201,11 @@ export const SCENES: readonly SceneDef[] = [
     prompt: "The exact run the release gate checks: 500 agents on 256 × 256 from the committed seed-42 start.",
     listed: true,
     kind: "gated",
+    personality: null,
     params: { ...PARAMS },
     palette: "ember",
+    tools: ["pan", "probe"],
+    tool: "pan",
   },
 ];
 

@@ -16,7 +16,23 @@
 //     over hours); bit 1 renormalises the heading after a turn (a turn
 //     multiplies |h| by √(cos² + sin²) of the builtins, which is 1 − 2e-8 on
 //     an accurate driver but can be off by ~1e-3 where WGSL trig is only
-//     2⁻¹¹ accurate — agents would freeze or run away within minutes).
+//     2⁻¹¹ accurate — agents would freeze or run away within minutes);
+//   * scene flags, also off for the gated arithmetic: bit 2 adds the scene's
+//     environment field (food scent, light) to what the agents sense — never
+//     to the trail, so the mass balance is untouched; bit 3 makes wall cells
+//     solid (an agent whose step would land in one stays put and turns back);
+//     bit 4 lets agents start dormant (heading stored + 3 in x): a dormant
+//     agent neither moves nor deposits until the trail under it reaches
+//     `wake` (never on or beside food: a crumb's own trail must not start a
+//     colony), so a colony grows outward from where it was released. The
+//     awake count is kept on the GPU, step by step, so the mass balance
+//     stays exact while the colony grows. Bit 5 restores Jones's random
+//     choice when both side sensors beat the centre (the gated kernel always
+//     turns left there), plus a small chance `jitter` of a random turn; the
+//     dice are a hash of the agent's own state, so a run stays repeatable and
+//     the tile re-sort (which shuffles indices) cannot change it.
+//     Food crumbs deposit into the trail in a separate dispatch, in the same
+//     integer fixed point as the agents, so the mass balance stays exact.
 // Agents are reordered by tile every few steps (CountingSort in @bp/gpu) for
 // cache coherence. The trail is a function of the multiset of agents, and the
 // deposit is integer atomics, so the reorder never changes a byte of it.
@@ -27,7 +43,7 @@ struct Params {
   n_agents: u32,
   w: u32,
   h: u32,
-  flags: u32,        // bit 0: wrap positions after each move; bit 1: renormalise headings after a turn
+  flags: u32,        // bit 0 wrap positions; bit 1 renormalise headings; bit 2 sense the environment; bit 3 solid walls
   delta_phi: f32,    // radians
   l_sense: f32,
   l_move: f32,
@@ -35,8 +51,15 @@ struct Params {
   decay_alpha: f32,
   tiles_x: u32,      // sort tiles per row
   tile_shift: u32,   // log2 of the tile side, cells
-  _p0: u32,
+  bits_words: u32,   // u32 words per cell-bit plane (walls, then food and its halo)
+  wake: f32,         // bit 4: a dormant agent wakes when the trail under it reaches this
+  jitter: f32,       // bit 5: chance per step of a random turn (Jones's stochastic rule)
+  _p2: u32,
+  _p3: u32,
 };
+
+// An environment value at or below this marks a wall cell (bit 3).
+const WALL: f32 = -1.0e30;
 
 @group(0) @binding(0) var<uniform> P: Params;
 

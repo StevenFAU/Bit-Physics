@@ -5,7 +5,7 @@
 
 struct Seed {
   seed: u32,
-  mode: u32,        // 0 whole dish, 1 disc, 2 ring
+  mode: u32,        // 0 whole dish, 1 disc, 2 ring, 3 whole dish dormant outside a disc
   _p0: u32,
   _p1: u32,
   centre: vec2<f32>,
@@ -14,6 +14,7 @@ struct Seed {
 };
 @group(1) @binding(0) var<uniform> S: Seed;
 @group(1) @binding(1) var<storage, read_write> seeded: array<vec4<f32>>;
+@group(1) @binding(2) var<storage, read_write> awake: array<atomic<u32>>;
 
 const TAU: f32 = 6.283185307179586;
 
@@ -26,9 +27,15 @@ fn seed_agents(@builtin(global_invocation_id) gid: vec3<u32>) {
   let u2 = bp_unit(bp_hash3(S.seed, i, 2u));
   var p: vec2<f32>;
   var th: f32;
-  if (S.mode == 0u) {
+  var dormant = false;
+  if (S.mode == 0u || S.mode == 3u) {
     p = vec2<f32>(u0 * f32(P.w), u1 * f32(P.h));
     th = u2 * TAU;
+    if (S.mode == 3u) {
+      let d = p - S.centre;
+      dormant = dot(d, d) > S.radius * S.radius;
+      if (!dormant) { th = atan2(d.y, d.x) + (u2 - 0.5) * S.spread; }
+    }
   } else {
     let a = u0 * TAU;
     var r = S.radius * sqrt(u1);
@@ -39,5 +46,7 @@ fn seed_agents(@builtin(global_invocation_id) gid: vec3<u32>) {
   let dims = vec2<f32>(f32(P.w), f32(P.h));
   p = p - floor(p / dims) * dims;
   p = min(p, dims - vec2<f32>(1e-3));
-  seeded[i] = vec4<f32>(p, cos(th), sin(th));
+  var hd = vec2<f32>(cos(th), sin(th));
+  if (dormant) { hd.x = hd.x + 3.0; } else if (S.mode == 3u) { atomicAdd(&awake[0], 1u); }
+  seeded[i] = vec4<f32>(p, hd);
 }
