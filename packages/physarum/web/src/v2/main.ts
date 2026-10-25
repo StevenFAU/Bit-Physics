@@ -33,12 +33,13 @@ import { DEFAULT_LOOK, GlowView } from "./render/glow-view.js";
 import type { PaletteId } from "./render/look.js";
 import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
-import { SCENES, sceneById } from "./scenes.js";
+import { RIVALRY, SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
 import { buildScoreCard } from "./score.js";
+import { buildTerritoryCard } from "./territory-card.js";
 import { ScoreOverlay } from "./render/overlay.js";
 import type { PadPoint } from "./pad.js";
-import { PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
+import { CORNERS, PAD_CENTRE, PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
 
 
 const SIM_NAME = "Slime Mould";
@@ -60,6 +61,12 @@ const url = new UrlState(
     sp: { kind: "num", def: -1, min: -1, max: 8 },
     pal: { kind: "enum", def: "auto", values: ["auto", ...Object.keys(PALETTES)] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+    // territories: colonies (−1 = the scene's), rivalry (−1 = the scene's), a mixed start (1),
+    // each colony's personality: pad point i·5 + j, 25 = the shared one, −1 = the scene's
+    col: { kind: "int", def: -1, min: -1, max: 4 },
+    riv: { kind: "num", def: -1, min: -1, max: 2, digits: 2 },
+    mix: { kind: "int", def: 0, min: 0, max: 1 },
+    cp: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 0 },
   },
   2,
 );
@@ -154,6 +161,16 @@ async function boot(): Promise<void> {
       sp: app.clock.speed === (app.scene.speed ?? 1) ? -1 : app.clock.speed,
       pal: app.palette === app.scene.palette ? "auto" : app.palette,
       cam: [app.camera.cx / app.sim.w, app.camera.cy / app.sim.h, app.camera.pxPerUnit / app.camera.coverZoom()].map((v) => Number(v.toFixed(4))),
+      col: app.scene.colonies && app.sim.colonies !== app.scene.colonies ? app.sim.colonies : -1,
+      riv: app.sim.colonies > 1 && app.rivalry !== RIVALRY ? app.rivalry : -1,
+      mix: app.mixed ? 1 : 0,
+      cp: [0, 1, 2, 3].map((k) => {
+        if (k >= app.colonyPads.length) return -1;
+        const q = app.colonyPads[k] ?? null;
+        const d = app.scene.colonyPads?.[k] ?? null;
+        if ((q === null && d === null) || (q && d && q.i === d.i && q.j === d.j)) return -1;
+        return q ? q.i * PAD_N + q.j : PAD_N * PAD_N;
+      }),
     };
   };
   app.writeUrl = () => url.write(current());
@@ -204,6 +221,8 @@ async function boot(): Promise<void> {
       growing: app.sim.growing,
       walls: !!app.sim.envSpec?.walls,
       hunger: app.sim.hungerMax !== null,
+      colonies: app.sim.colonies,
+      rivalry: app.rivalry,
     });
 
   // The developer capture control — the headless gate's entry point.
@@ -247,6 +266,23 @@ async function boot(): Promise<void> {
     scoreOverlay.layers = l;
   };
   scoreCard.onScore = () => app.scoreNow();
+  const terrCard = buildTerritoryCard();
+  studio.stage.append(terrCard.el);
+  terrCard.onPad = (k, p) => app.setColonyPad(k, p);
+  terrCard.onRivalry = (v, phase) => app.setRivalry(v, phase);
+  terrCard.onCount = (n) => void app.setColonyCount(n);
+  terrCard.onMixed = (m) => void app.setMixed(m);
+  const syncColonies = (): void => {
+    terrCard.setShown(app.sim.colonies > 1);
+    if (app.sim.colonies > 1) terrCard.sync(app.colonyPads, app.rivalry, app.tier, app.mixed, sharedName());
+  };
+  // the shared personality's short name, for colonies that follow Tune
+  const sharedName = (): string => {
+    const p = app.pad;
+    if (!p) return "custom";
+    const c = CORNERS.find((k) => k.at.i === p.i && k.at.j === p.j);
+    return c ? c.name : p.i === PAD_CENTRE.i && p.j === PAD_CENTRE.j ? "Middle" : `pad ${p.i + 1}, ${p.j + 1}`;
+  };
 
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
@@ -330,11 +366,17 @@ async function boot(): Promise<void> {
       learn.setParams(p, app.personalityName);
       syncTune();
       syncProve();
+      syncColonies();
     },
     onEdited: () => syncProve(),
     onAnalysis: (a) => {
       scoreOverlay.analysis = a;
       scoreCard.set(a, false);
+    },
+    onTerritory: (t) => terrCard.set(t),
+    onColonies: () => {
+      syncColonies();
+      syncProve();
     },
   };
 
@@ -416,6 +458,10 @@ async function boot(): Promise<void> {
     pad: startPad,
     palette: parsed.pal !== "auto" ? (parsed.pal as PaletteId) : undefined,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
+    colonies: parsed.col >= 2 ? parsed.col : undefined,
+    rivalry: parsed.riv >= 0 ? parsed.riv : undefined,
+    colonyPads: parsed.cp.map((v) => (v === PAD_N * PAD_N ? null : v >= 0 && v < PAD_N * PAD_N ? { i: Math.floor(v / PAD_N), j: v % PAD_N } : undefined)),
+    mixed: parsed.mix === 1,
   };
   await app.loadScene(scene.id, opts);
   const sceneSpeed = scene.speed ?? 1;

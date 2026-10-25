@@ -5,16 +5,19 @@
 //       does not depend on the deposit, the decay or the density)
 //   g = agents that deposited in the cell on the last step
 //   b = 1 in a wall cell (scenes with walls), else 0
+// Territories: one channel per colony instead, rgba = colony 0–3's plane ÷
+// the mean that plane holds when the dish's agents are shared equally.
 
 struct Prep {
   w: u32,
   h: u32,
   walls: u32,        // 1: read the wall mark from env
-  _p1: u32,
+  colonies: u32,     // territories: trail planes (1: the plain dish)
   inv_mean: f32,     // 1 / mean trail
   inv_agent: f32,    // 1 / (deposit · 65536): u32 deposit → agent count
   _p2: f32,
   _p3: f32,
+  inv_col: vec4<f32>,   // territories: 1 / each colony's mean
 };
 
 @group(0) @binding(0) var<uniform> R: Prep;
@@ -27,6 +30,13 @@ struct Prep {
 fn prep(@builtin(global_invocation_id) gid: vec3<u32>) {
   if (gid.x >= R.w || gid.y >= R.h) { return; }
   let i = gid.y * R.w + gid.x;
+  if (R.colonies > 1u) {
+    let plane = R.w * R.h;
+    var v = vec4<f32>(0.0);
+    for (var k = 0u; k < R.colonies; k = k + 1u) { v[k] = trail[k * plane + i] * R.inv_col[k]; }
+    textureStore(field, vec2<i32>(gid.xy), v);
+    return;
+  }
   let t = trail[i] * R.inv_mean;
   let a = f32(dep[i]) * R.inv_agent;
   var wall = 0.0;

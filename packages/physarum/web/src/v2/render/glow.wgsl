@@ -12,7 +12,8 @@ struct Look {
   bg: vec4<f32>,        // agar rgb, a = grain amount
   shape: vec4<f32>,     // trail at the top of the ramp (× mean), HDR gain, glow from agents, overall gain
   spark: vec4<f32>,     // spark rgb, a = spark gain
-  split: vec4<f32>,     // compare split in px (< 0 off), divider alpha, lod bias, unused
+  split: vec4<f32>,     // compare split in px (< 0 off), divider alpha, lod bias, colonies (territories; ≤ 1 plain)
+  hues: array<vec4<f32>, 4>,   // territories: each colony's hue (linear rgb)
 };
 
 @group(0) @binding(0) var<uniform> L: Look;
@@ -57,6 +58,27 @@ fn emission(s: vec4<f32>) -> vec3<f32> {
   return (lit + busy) * L.shape.w;
 }
 
+// territories: a ramp through the colony's hue — deep, saturated, then white-hot
+fn colony_ramp(t: f32, hue: vec3<f32>) -> vec3<f32> {
+  let x = clamp(t, 0.0, 1.0) * 4.0;
+  var s = array<vec3<f32>, 5>(vec3<f32>(0.0), hue * hue * 0.16, hue * 0.78, mix(hue, vec3<f32>(1.0), 0.25), mix(hue, vec3<f32>(1.0), 0.7));
+  let i = min(u32(x), 3u);
+  return mix(s[i], s[i + 1u], x - f32(i));
+}
+
+// territories: each colony's plane in its own hue, added — where two meet, the light mixes
+fn colony_emission(s: vec4<f32>) -> vec3<f32> {
+  var c = vec3<f32>(0.0);
+  let n = u32(L.split.w);
+  for (var k = 0u; k < n; k = k + 1u) {
+    let tr = max(s[k], 0.0);
+    let t = log2(1.0 + tr) / log2(1.0 + L.shape.x);
+    let hot = max(t - 0.8, 0.0);
+    c = c + colony_ramp(t, L.hues[k].rgb) * (1.0 + L.shape.y * hot * hot);
+  }
+  return c * L.shape.w;
+}
+
 @fragment
 fn fs(in: FullscreenOut) -> @location(0) vec4<f32> {
   let px = in.uv * L.dims.xy;
@@ -70,9 +92,12 @@ fn fs(in: FullscreenOut) -> @location(0) vec4<f32> {
   }
   let qw = q - floor(q / L.dims.zw) * L.dims.zw;          // the dish repeats; so does its grain
   let g = grain(qw * 0.11) * 0.6 + grain(qw * 0.031) * 0.4;
-  var c = L.bg.rgb * (1.0 - L.bg.a + 2.0 * L.bg.a * g) + emission(s);
+  let colonies = L.split.w > 1.5;
+  var light: vec3<f32>;
+  if (colonies) { light = colony_emission(s); } else { light = emission(s); }
+  var c = L.bg.rgb * (1.0 - L.bg.a + 2.0 * L.bg.a * g) + light;
   // walls: matte dark relief — a faint lit rim where the wall meets the agar
-  let wall = clamp(s.b, 0.0, 1.0);
+  let wall = select(clamp(s.b, 0.0, 1.0), 0.0, colonies);
   let rim = wall * (1.0 - wall) * 4.0;
   let relief = vec3<f32>(0.010, 0.010, 0.011) * (1.0 + 0.8 * g) + vec3<f32>(0.05, 0.048, 0.045) * rim;
   c = mix(c, relief, smoothstep(0.35, 0.65, wall)) + vec3<f32>(0.03, 0.028, 0.026) * rim;
@@ -91,7 +116,7 @@ struct Sparks {
   count: u32,       // agents in the buffer
   images_x: u32,    // periodic images drawn across (zoomed out past the dish)
   images_y: u32,
-  _p0: u32,
+  colonies: u32,    // territories: the colony rides in the heading's length, 1 + k/8
   _p1: u32,
   _p2: u32,
 };
@@ -129,6 +154,10 @@ fn spark_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) ->
   let ndc = spx / (0.5 * L.dims.xy);
   o.pos = vec4<f32>(ndc.x, -ndc.y, 0.0, 1.0);
   var c = L.spark.rgb * L.spark.a;
+  if (K.colonies > 1u) {
+    let k = min(u32(round((length(ag.zw) - 1.0) * 8.0)), 3u);
+    c = mix(L.hues[k].rgb, vec3<f32>(1.0), 0.45) * L.spark.a;
+  }
   if (L.split.x >= 0.0 && spx.x + 0.5 * L.dims.x < L.split.x) {
     c = vec3<f32>(0.0);  // compare: sparks belong to the live side
   }

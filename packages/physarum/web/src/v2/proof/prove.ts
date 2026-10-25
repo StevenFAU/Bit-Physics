@@ -22,7 +22,7 @@ export interface ProveDeps {
   /** Suspend/resume the quality governor around in-page runs. */
   hold: (on: boolean) => void;
   /** Mass of the live trail now and the closed form's prediction for the same step. */
-  liveMass: () => Promise<{ mass: number; predicted: number; equilibrium: number; tick: number }>;
+  liveMass: () => Promise<{ mass: number; predicted: number; equilibrium: number; tick: number; colonies?: { mass: number; predicted: number }[] }>;
 }
 
 export interface OnScreen {
@@ -43,6 +43,9 @@ export interface OnScreen {
   walls?: boolean;
   /** Hungry agents go back to food. */
   hunger?: boolean;
+  /** Territories: colonies on the dish and the rivalry. */
+  colonies?: number;
+  rivalry?: number;
 }
 
 export interface LiveVsGated {
@@ -297,7 +300,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         scaleCard.set({ status: "info", measured: "no steps run yet — press play", budget: `relative error < ${thr}`, adapter: d.adapter });
         return null;
       }
-      const massRel = Math.abs(r.mass - r.predicted) / r.predicted;
+      const total = Math.abs(r.mass - r.predicted) / r.predicted;
+      // territories: every colony's plane against its own prediction
+      const perColony = (r.colonies ?? []).map((c) => (c.predicted > 0 ? Math.abs(c.mass - c.predicted) / c.predicted : c.mass === 0 ? 0 : Infinity));
+      const massRel = Math.max(total, ...perColony);
       const pass = Number.isFinite(r.mass) && massRel < thr;
       const settled = Math.abs(r.predicted - r.equilibrium) / r.equilibrium;
       scaleCard.set({
@@ -308,6 +314,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         adapter: d.adapter,
         notes: [
           `at step ${r.tick.toLocaleString()}`,
+          ...(perColony.length ? [`plane by plane (each colony's trail against its own M ← (M + d·N_k)(1−α_k)): worst relative error ${Math.max(...perColony).toExponential(2)}`] : []),
           settled < 1e-9
             ? `settled at (d·N + F)·(1−α)/α = ${r.equilibrium.toExponential(6)}`
             : `still ${(settled * 100).toFixed(3)}% from where it settles with every agent awake (${r.equilibrium.toExponential(6)})`,
@@ -342,6 +349,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       if (s.lights) extras.push("a light the agents turn away from (they sense it; it never touches the trail)");
       if (s.walls) extras.push("walls the agents cannot enter");
       if (s.hunger) extras.push("agents that go too long without food are taken back to a food source (each still deposits once a step)");
+      if (s.colonies && s.colonies > 1) extras.push(`${s.colonies} colonies, each laying its own trail and smelling its own minus the others' (rivalry ${s.rivalry ?? 1})`);
       onScreen.textContent = s.gated
         ? `On screen: the gated run itself (${size}, canonical parameters, no edits).`
         : `On screen: ${s.scene}${s.personality ? ` (personality: ${s.personality})` : ""} — ${size}. The gated kernel's arithmetic ${paramsVsGated(s.params)}` +

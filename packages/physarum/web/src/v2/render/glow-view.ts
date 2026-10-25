@@ -10,6 +10,7 @@ import prepSrc from "./glow-prep.wgsl?raw";
 import mipSrc from "./glow-mip.wgsl?raw";
 import glowSrc from "./glow.wgsl?raw";
 import type { Palette } from "./look.js";
+import { COLONIES } from "./look.js";
 
 const MIPS = 4;
 const SCALE = 65536;
@@ -29,6 +30,9 @@ export interface GlowSource {
   /** The scene's environment (walls are marked in it) and whether it has walls. */
   env: GPUBuffer;
   walls: boolean;
+  /** Territories: colonies (trail planes) and each plane's mean when the agents are shared equally. */
+  colonies?: number;
+  colonyMeans?: number[];
 }
 
 export interface LookOptions {
@@ -207,9 +211,9 @@ export class GlowView {
       addressModeV: "repeat",
     });
     const U = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-    this.lookBuf = device.createBuffer({ size: 176, usage: U, label: "glow-look" });
-    this.prepBufA = device.createBuffer({ size: 32, usage: U, label: "glow-prep-a" });
-    this.prepBufB = device.createBuffer({ size: 32, usage: U, label: "glow-prep-b" });
+    this.lookBuf = device.createBuffer({ size: 240, usage: U, label: "glow-look" });
+    this.prepBufA = device.createBuffer({ size: 48, usage: U, label: "glow-prep-a" });
+    this.prepBufB = device.createBuffer({ size: 48, usage: U, label: "glow-prep-b" });
     this.sparkBuf = device.createBuffer({ size: 32, usage: U, label: "glow-sparks" });
     this.markInfo = device.createBuffer({ size: 16, usage: U, label: "glow-marks-info" });
     this.markBuf = device.createBuffer({ size: 16 * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, label: "glow-marks" });
@@ -304,14 +308,18 @@ export class GlowView {
   }
 
   private writePrep(buf: GPUBuffer, src: GlowSource, withAgents: boolean): void {
-    const ab = new ArrayBuffer(32);
+    const ab = new ArrayBuffer(48);
     const u = new Uint32Array(ab);
     const f = new Float32Array(ab);
     u[0] = src.w;
     u[1] = src.h;
     u[2] = src.walls ? 1 : 0;
+    u[3] = src.colonies ?? 1;
     f[4] = 1 / Math.max(src.meanTrail, 1e-12);
     f[5] = withAgents ? 1 / (src.depositPerAgent * SCALE) : 0;
+    (src.colonyMeans ?? []).slice(0, 4).forEach((m, k) => {
+      f[8 + k] = 1 / Math.max(m, 1e-12);
+    });
     this.device.queue.writeBuffer(buf, 0, ab);
   }
 
@@ -370,14 +378,15 @@ export class GlowView {
     // look uniform
     const L = this.look;
     const cam = camera.uniform(pixelScale);
-    const f = new Float32Array(44);
+    const f = new Float32Array(60);
     f.set([cam.cx, cam.cy, cam.unitsPerPx, 0], 0);
     f.set([targetW, targetH, src.w, src.h], 4);
     L.palette.stops.forEach((s, i) => f.set([s[0], s[1], s[2], 0], 8 + i * 4));
     f.set([...L.palette.bg, L.grain], 28);
     f.set([L.top, L.hot, L.busy, L.gain * this.fade], 32);
     f.set([...L.palette.spark, L.spark * this.fade], 36);
-    f.set([compare && this.split !== null ? this.split * targetW : -1, 0.7, 0, 0], 40);
+    f.set([compare && this.split !== null ? this.split * targetW : -1, 0.7, 0, src.colonies ?? 1], 40);
+    COLONIES.forEach((c, k) => f.set([...c.hue, 0], 44 + k * 4));
     this.device.queue.writeBuffer(this.lookBuf, 0, f);
 
     // sparks: periodic images needed to cover the view
@@ -388,7 +397,7 @@ export class GlowView {
     const images = (view: number, dom: number): number => Math.min(5, 2 * Math.max(0, Math.ceil(view / (2 * dom) + 0.5) - 1) + 1);
     const ix = images(viewW, src.w);
     const iy = images(viewH, src.h);
-    this.device.queue.writeBuffer(this.sparkBuf, 0, new Uint32Array([stride, 0, src.n, ix, iy, 0, 0, 0]));
+    this.device.queue.writeBuffer(this.sparkBuf, 0, new Uint32Array([stride, 0, src.n, ix, iy, src.colonies ?? 1, 0, 0]));
     let sparkBG = this.sparkBGs.get(src.agents);
     if (!sparkBG) {
       sparkBG = this.device.createBindGroup({

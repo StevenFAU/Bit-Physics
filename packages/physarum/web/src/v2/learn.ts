@@ -127,6 +127,13 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       h(
         "p",
         {},
+        "In Territories each colony lays its own trail, kept in its own plane of the dish; the planes spread and fade side by side. An agent smells its own colony's trail minus the rivalry " +
+          "times the others' — the multi-species extension of Jones's model common in physarum art. A sleeping agent wakes into the colony whose trail under it is strongest. " +
+          "The GPU counts each colony's agents every step, so the mass balance holds colony by colony. A colony may carry its own personality (turn, reach, step and fade); the deposit is shared.",
+      ),
+      h(
+        "p",
+        {},
         "Scoring reads the trail back, keeps the cells above half the dish's mean, thins them to lines (Zhang & Suen 1984), and turns the lines into a graph of cities and junctions. " +
           "Length is measured along each line; the score is only as good as that extraction, so the graph is drawn over the dish (white) for you to check.",
       ),
@@ -195,6 +202,10 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         light:
           "A network under a movable light. The agents sense the light as a strong smell to avoid, so the lit pool empties, its trail fades within a second or two, and the network rebuilds round it. Drag it (Light) to herd the mould.",
         gated: "The release gate's own run, tiled across the screen: 500 agents on a 256 × 256 dish from the committed seed-42 start.",
+        territories:
+          "Three colonies released on a dormant dish. Each lays its own trail (its own colour) and smells its own trail minus the others' (the rivalry), so the colonies shun each other. " +
+          "A sleeping agent joins whichever colony's trail reaches it first, so the colonies race outward, meet, and hold borders that keep shifting. " +
+          "The card measures who holds the dish. Give each colony its own personality there to stage a contest — say, Lace against Cells.",
       };
       seeing.textContent = `${what[scene.id] ?? scene.prompt}${gated ? " This is the gated run." : ""}`;
     },

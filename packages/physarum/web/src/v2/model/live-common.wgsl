@@ -40,6 +40,16 @@
 //     step, so the mass balance is as before.
 //     Food crumbs deposit into the trail in a separate dispatch, in the same
 //     integer fixed point as the agents, so the mass balance stays exact.
+//     Bit 7 is territories: up to four colonies on one dish, each depositing
+//     into its own trail plane (plane k at k·w·h; the planes diffuse and fade
+//     side by side) and smelling its own trail minus `rivalry` × the others'.
+//     An agent's colony rides in its heading's length, |head| = 1 + k/8 (so a
+//     dormant heading, x + 3, still reads as dormant, and the re-sort carries
+//     it). Each colony may have its own turn, reach, step and fade (`sp`);
+//     the deposit is shared. A dormant agent wakes into the colony whose trail
+//     under it is strongest. The awake count is logged per colony as well, so
+//     the mass balance holds plane by plane. Territories never use hunger
+//     (both ride in the heading's length) or food crumbs.
 // Agents are reordered by tile every few steps (CountingSort in @bp/gpu) for
 // cache coherence. The trail is a function of the multiset of agents, and the
 // deposit is integer atomics, so the reorder never changes a byte of it.
@@ -50,7 +60,7 @@ struct Params {
   n_agents: u32,
   w: u32,
   h: u32,
-  flags: u32,        // bit 0 wrap positions; bit 1 renormalise headings; bit 2 sense the environment; bit 3 solid walls
+  flags: u32,        // bit 0 wrap positions; bit 1 renormalise headings; bit 2 sense the environment; bit 3 solid walls; … bit 7 territories
   delta_phi: f32,    // radians
   l_sense: f32,
   l_move: f32,
@@ -61,15 +71,23 @@ struct Params {
   bits_words: u32,   // u32 words per cell-bit plane (walls, then food and its halo)
   wake: f32,         // bit 4: a dormant agent wakes when the trail under it reaches this
   jitter: f32,       // bit 5: chance per step of a random turn (Jones's stochastic rule)
-  _p2: u32,
-  _p3: u32,
+  rivalry: f32,      // bit 7: a colony smells its own trail minus this × the other colonies'
+  species: u32,      // bit 7: colonies on the dish (trail planes), 1–4
   hunger_max: f32,   // bit 6: an agent goes back to food after this many steps away from it
   food_count: u32,   // bit 6: food sources (first in the env sources) a hungry agent returns to
   _q1: u32,
   _q2: u32,
+  sp: array<vec4<f32>, 4>,   // bit 7: per colony (turn radians, reach, step, fade)
 };
 
-// Hunger (bit 7) rides in the heading's length: |head| = 1 + steps since food / HUNGER_SCALE.
+// Territories (bit 7): the per-colony awake counts and their ring follow the
+// shared awake log ([count, step, ring of RING counts]).
+const AWAKE_RING: u32 = 16384u;
+const SP_COUNT: u32 = 16386u;            // 2 + AWAKE_RING: four per-colony awake counts
+const SP_RING: u32 = 16390u;             // SP_COUNT + 4: four rings of AWAKE_RING counts
+const SPECIES_STEP: f32 = 0.125;         // |head| = 1 + colony · SPECIES_STEP
+
+// Hunger (bit 6) rides in the heading's length: |head| = 1 + steps since food / HUNGER_SCALE.
 const HUNGER_SCALE: f32 = 65536.0;
 
 // An environment value at or below this marks a wall cell (bit 3).
