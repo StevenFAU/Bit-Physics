@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { PRESENT, REACH, TILE, territoryFromTiles } from "../src/v2/model/territory.js";
+import { PRESENT, REACH, TILE, colonyOverlap, territoryFromTiles } from "../src/v2/model/territory.js";
 import { colonySites } from "../src/v2/scenes.js";
 
 /** Per-tile strengths (vec4 per tile) from a function of the tile coordinates. */
@@ -61,4 +61,15 @@ describe("colony release sites", () => {
       expect(new Set(offsets).size).toBe(1);
     });
   }
+});
+
+describe("colony overlap", () => {
+  it("is the share of occupied cells that two or more colonies occupy", () => {
+    const cells = 4;
+    // colony 0 strong on cells 0, 1; colony 1 strong on cells 1, 2; nobody on 3
+    const trail = new Float32Array([2, 2, 0, 0, 0, 3, 3, 0]);
+    expect(colonyOverlap(trail, cells, 2, [1, 1])).toBeCloseTo(1 / 3);
+    // judged against each colony's own mean
+    expect(colonyOverlap(trail, cells, 2, [1, 4])).toBe(0);
+  });
 });

@@ -95,10 +95,8 @@ export function buildTerritoryCard(): TerritoryCard {
     h(
       "div",
       { class: "ph-terr-setup" },
-      h("span", { class: "ph-tune-label" }, "Colonies"),
-      count.el,
-      h("span", { class: "ph-tune-label" }, "Start"),
-      start.el,
+      h("span", { class: "ph-terr-pair" }, h("span", { class: "ph-tune-label" }, "Colonies"), count.el),
+      h("span", { class: "ph-terr-pair" }, h("span", { class: "ph-tune-label" }, "Start"), start.el),
     ),
   );
   const el = h("section", { class: "ph-score ph-terr bp-surface", "aria-labelledby": "ph-terr-title", hidden: true }, fold, main);

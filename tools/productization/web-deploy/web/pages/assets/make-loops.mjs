@@ -159,6 +159,17 @@ const SIMS = {
   "terrain-erosion": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 48, hide: ["body > header", ".scene-heading", "#tools", ".tool-options", ".viewport-actions", "#hint", "footer", "#toast", "#section"] },
 };
 
+// Staged assets for a rebuilt page that has not replaced its sim's v1 page yet
+// (docs/planning/rebuild-v2): filmed now, committed beside the live assets as
+// <name>.png / <name>.webm, and swapped into the landing card only at the
+// release step (an owner-approved URL swap). cfg.sim names the package whose
+// dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
+// holds; filmed only when named on the command line.
+const STAGED = {
+  // Slime Mould v2 (rebuild-v2 M3): Territories on a mixed start — the ribbons
+  // sorting themselves out and slowly coarsening.
+  "physarum-v2": { sim: "physarum", page: "v2/", query: "?chrome=off&s=territories&mix=1", canvas: ".bp-canvas", start: 90, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
+};
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
 // config must be a registered sim — fail loud instead of silently skipping a
@@ -199,7 +210,7 @@ function serve(dir) {
 }
 
 async function loop(browser, sim, cfg) {
-  const dist = join(REPO, "packages", sim, "web", "dist");
+  const dist = join(REPO, "packages", cfg.sim ?? sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
   // cfg.page: a sim's extra page inside its dist (e.g. "v2/", the rebuild-v2 page)
@@ -291,8 +302,8 @@ const browser = await chromium.launch({
   executablePath: process.env.CHROME_BIN, headless: false, args: ARGS, chromiumSandbox: false,
 });
 let total = 0;
-for (const [sim, cfg] of Object.entries(SIMS)) {
-  if (wanted.length && !wanted.includes(sim)) continue;
+for (const [sim, cfg] of [...Object.entries(SIMS), ...Object.entries(STAGED)]) {
+  if (wanted.length ? !wanted.includes(sim) : sim in STAGED) continue;
   total += await loop(browser, sim, cfg);
 }
 console.log(`total loop bytes: ${Math.round(total / 1024)} KB (budget: 1536 KB/sim, 10240 KB page total)`);

@@ -175,7 +175,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         "li",
         {},
         h("strong", {}, "Added for the scenes: "),
-        "food's long-range scent (a fixed gradient standing in for the chemicals real food gives off), dormant agents that wake as a colony grows, light as a smell to avoid rather than a change to the trail, solid walls, and (in the maze) hungry agents returning to food. Real Physarum also shuns light, grows toward food and withdraws from where it finds none; here these are rules of thumb, not measured biology.",
+        "food's long-range scent (a fixed gradient standing in for the chemicals real food gives off), dormant agents that wake as a colony grows, light as a smell to avoid rather than a change to the trail, solid walls, (in the maze) hungry agents returning to food, and (in Territories) colonies that smell their own trail minus the others' — the multi-species extension used in physarum art, not a measured behaviour of real slime moulds. Real Physarum also shuns light, grows toward food and withdraws from where it finds none; here these are rules of thumb, not measured biology.",
       ),
       h("li", {}, h("strong", {}, "Measured: "), "the total trail, read back from the GPU and compared with the closed form, through food, growth and every edit, in Prove."),
     ),

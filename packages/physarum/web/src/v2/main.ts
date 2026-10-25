@@ -25,6 +25,8 @@ import type { SeedSpec } from "./model/sim.js";
 import { LiveKernels, LiveSim } from "./model/sim.js";
 import { AGENTS, DENSITY, gridFor } from "./model/grid.js";
 import { downsample, morphology } from "./model/morphology.js";
+import { bandOf, describeDish } from "./model/regress.js";
+import { colonyOverlap } from "./model/territory.js";
 import type { Tier } from "@bp/gpu";
 import type { JonesParams } from "./proof/gate.js";
 import { PARAMS, createGateRunner } from "./proof/gate.js";
@@ -508,6 +510,55 @@ async function boot(): Promise<void> {
       const plain = s?.kind === "cities" ? { tl: s.tl, md: s.md, cut: s.cut, steinerRatio: s.steinerRatio, mstLength: s.mst.length } : s?.kind === "maze" ? { shortest: s.shortest, along: s.along, onShortest: s.onShortest, extra: s.extra, route: s.route.length } : null;
       return { tick: a.tick, ms: a.ms, net: a.net, nodes: a.graph.nodes.length, ...plain };
     },
+    /**
+     * Morphology regression (v2-morphology.mjs): a scene from its seed at a
+     * tier's agent count, run `steps` steps with the live loop paused (so no
+     * director acts), then described (model/regress.ts) — plus the scene's
+     * own measures: the score (Connect the Cities, The Maze) or who holds the
+     * dish (Territories).
+     */
+    regress: async (o: { scene: SceneId; seed: number; steps: number; tier?: Tier; mixed?: boolean; agents?: number }) => {
+      const before = app.tier;
+      if (o.tier) app.tier = o.tier;
+      try {
+        app.clock.paused = true;
+        await app.loadScene(o.scene, { seed: o.seed, mixed: o.mixed, agents: o.agents });
+        app.clock.paused = true;
+        const t0 = performance.now();
+        await app.advance(o.steps);
+        const sim = app.sim;
+        const trail = await sim.readTrail();
+        const seconds = (performance.now() - t0) / 1000;
+        // a measure the run does not have (a mean distance before every city is joined) is null
+        const d: Record<string, number | null> = describeDish(trail, sim.w, sim.h, sim.colonies, sim.meanTrail, sim.envSpec?.walls ?? null);
+        const s = app.scene.score ? (await app.analyse())?.score : null;
+        if (s?.kind === "cities") {
+          const net = app.analysis!.net;
+          d["reached"] = net.reached;
+          d["tl"] = s.tl;
+          d["md"] = Number.isFinite(s.md) ? s.md : null;
+          // links, and links whose loss cuts a city off, per 100,000 cells (their ratio, the
+          // card's cut share, is a ratio of a handful of links on a small dish)
+          d["links"] = (net.links * 1e5) / sim.cells;
+          d["cutLinks"] = (net.cutLinks * 1e5) / sim.cells;
+        } else if (s?.kind === "maze") {
+          d["joined"] = Number.isFinite(s.along) ? 1 : 0;
+          d["route"] = Number.isFinite(s.along) ? s.along / s.shortest : null;
+        }
+        if (sim.colonies > 1) {
+          const t = (await app.readTerritory())!;
+          const all = t.agents.reduce((a, b) => a + b, 0);
+          t.agents.forEach((v, k) => (d[`share${k}`] = v / all));
+          t.shares.held.forEach((v, k) => (d[`held${k}`] = v / t.shares.cells));
+          d["overlap"] = colonyOverlap(trail, sim.cells, sim.colonies, Array.from({ length: sim.colonies }, (_, k) => sim.colonyMean(k)));
+        }
+        return { scene: o.scene, mixed: !!o.mixed, tier: app.tier, seed: o.seed, steps: sim.tick, grid: [sim.w, sim.h], n: sim.n, seconds, d };
+      } finally {
+        app.tier = before;
+      }
+    },
+    /** The band rule for the morphology baseline (model/regress.ts). */
+    band: (key: string, values: number[], cells: number) => bandOf(key, values, cells),
     /**
      * Calibration survey (personality pad): a fresh dish at a tier's agent
      * count and density, seeded, run to each step in `at`, with the trail's

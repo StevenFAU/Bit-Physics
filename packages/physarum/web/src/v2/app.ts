@@ -16,7 +16,7 @@ import { CanvasInput, h, segmented, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { Checkpoint, EnvSpec, SeedSpec, Shares, Spot } from "./model/sim.js";
 import { LiveKernels, LiveSim } from "./model/sim.js";
-import { AGENTS, tierGrid } from "./model/grid.js";
+import { AGENTS, gridFor, tierGrid } from "./model/grid.js";
 import type { JonesParams } from "./proof/gate.js";
 import { H as GATED_H, NA as GATED_N, PARAMS, W as GATED_W, fetchCanonicalIC } from "./proof/gate.js";
 import type { GlowView } from "./render/glow-view.js";
@@ -77,6 +77,8 @@ export interface SceneOptions {
   rivalry?: number;
   colonyPads?: (PadPoint | null | undefined)[];
   mixed?: boolean;
+  /** Test hook (morphology regression): a dish of this many agents at the declared density, instead of the tier's. */
+  agents?: number;
 }
 
 export interface AppHooks {
@@ -263,7 +265,7 @@ export class App {
       this.view.split = null;
       const old = this.sim as LiveSim | undefined;
       const rect = this.studio.canvas.getBoundingClientRect();
-      const grid = gated ? { w: GATED_W, h: GATED_H, n: GATED_N } : tierGrid(this.tier, rect.width, rect.height);
+      const grid = gated ? { w: GATED_W, h: GATED_H, n: GATED_N } : o.agents ? gridFor(o.agents, rect.width, rect.height) : tierGrid(this.tier, rect.width, rect.height);
       this.seed = o.seed ?? 1;
       // the personality: as asked, else the scene's; parameters follow it unless given
       this.pad = scene.personality ? (o.pad !== undefined ? o.pad : nearestOffered(scene.personality, this.tier)) : null;

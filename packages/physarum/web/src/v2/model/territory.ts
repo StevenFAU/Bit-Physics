@@ -78,3 +78,22 @@ export function territoryFromTiles(strength: Float32Array, w: number, h: number,
   for (let t = 0; t < n; t += 1) if (owner[t]! >= 0) held[owner[t]!]! += area(t);
   return { held, border, cells: w * h, owner, tilesX: tx, tilesY: ty };
 }
+
+/**
+ * How much the colonies share their tubes: of the cells where at least one
+ * colony's trail reaches `threshold` × its own mean, the fraction where two
+ * or more do. Colonies that ignore each other (rivalry 0) overlap where their
+ * networks happen to cross; colonies that shun each other keep apart.
+ */
+export function colonyOverlap(trail: Float32Array, cells: number, colonies: number, means: number[], threshold = 1): number {
+  let any = 0;
+  let shared = 0;
+  const lim = means.map((m) => m * threshold);
+  for (let i = 0; i < cells; i += 1) {
+    let n = 0;
+    for (let k = 0; k < colonies; k += 1) if (trail[k * cells + i]! >= lim[k]!) n += 1;
+    if (n > 0) any += 1;
+    if (n > 1) shared += 1;
+  }
+  return any > 0 ? shared / any : 0;
+}

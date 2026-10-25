@@ -410,6 +410,11 @@
   gap: 6px 10px;
   margin-top: 8px;
 }
+.ph-terr-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
 .ph-terr-line {
   margin: 4px 0;
   font-size: 12px;
