@@ -13,6 +13,7 @@ import {
   BWD_GATHER,
   BWD_GEMM,
   BWD_MLP,
+  DAMAGE,
   FWD_MASK,
   FWD_MLP,
   GEMM_CHUNK,
@@ -99,6 +100,7 @@ export class NcaTrainer {
     gradReduce: GPUBindGroup;
     adam: GPUBindGroup;
     seedFill: GPUBindGroup;
+    damage: GPUBindGroup;
   };
 
   constructor(
@@ -177,6 +179,7 @@ export class NcaTrainer {
     this.kernel("gradReduce", GRAD_REDUCE, ["u", "r", "rw"]);
     this.kernel("adam", ADAM, ["u", "r", "rw", "rw", "rw"]);
     this.kernel("seedFill", SEED_FILL, ["u", "ud", "r", "r", "rw"]);
+    this.kernel("damage", DAMAGE, ["u", "ud", "r", "r", "rw"]);
 
     const st = { buffer: this.stepBuf, offset: 0, size: 16 };
     const it = this.iterBuf;
@@ -209,6 +212,7 @@ export class NcaTrainer {
       gradReduce: this.group("gradReduce", [this.reduceParams, this.partial, this.grad]),
       adam: this.group("adam", [this.adamParams, this.grad, this.theta, this.mom, this.vel]),
       seedFill: this.group("seedFill", [it, st, this.idxBuf, this.poolLoss, this.states[0]!]),
+      damage: this.group("damage", [it, st, this.idxBuf, this.poolLoss, this.states[0]!]),
     };
   }
 
@@ -350,7 +354,7 @@ export class NcaTrainer {
   encode(
     enc: GPUCommandEncoder,
     T: number,
-    opts: { pool: number[] | null; seedAll: boolean; adam: boolean; timed: boolean },
+    opts: { pool: number[] | null; seedAll: boolean; adam: boolean; timed: boolean; damage?: boolean },
   ): void {
     const { B } = this.shape;
     const sampleBytes = this.stateBytes / B;
@@ -362,8 +366,16 @@ export class NcaTrainer {
       }
     }
     let p = this.beginPass(enc, opts.timed ? 0 : null);
+    // Damage (Menagerie): the drawn samples' current losses first, so the
+    // reset and the damage both rank the batch as it is now.
+    const damage = !!opts.pool && !!opts.damage;
+    if (damage) {
+      this.dispatch(p, "loss", this.bg.loss[0]!, 0, cells);
+      this.dispatch(p, "lossReduce", this.bg.lossReduce, 0, [1, 1, 1]);
+    }
     // seedFill reads Iter.mode: pool mode resets only the worst sample, mode 0 seeds all.
     if (opts.pool || opts.seedAll) this.dispatch(p, "seedFill", this.bg.seedFill, 0, cells);
+    if (damage) this.dispatch(p, "damage", this.bg.damage, 0, cells);
     p.end();
     p = this.beginPass(enc, opts.timed ? 1 : null);
     for (let t = 0; t < T; t += 1) {
@@ -423,14 +435,16 @@ export class NcaTrainer {
     pool: number[] | null,
     lr: number,
     dense = false,
+    damage = 0,
   ): Promise<{ result: Promise<IterationResult | null> }> {
     const slot = this.ring[iter % RING]!;
     if (slot.pending) await slot.pending;
     if (pool) this.device.queue.writeBuffer(this.idxBuf, 0, new Uint32Array(pool));
-    this.writeIter(seed, (pool ? 1 : 0) | (dense ? 2 : 0));
+    const dmg = pool && damage > 0 ? 4 | (Math.min(damage, 255) << 8) : 0;
+    this.writeIter(seed, (pool ? 1 : 0) | (dense ? 2 : 0) | dmg);
     this.writeAdam(lr, iter + 1);
     const enc = this.device.createCommandEncoder();
-    this.encode(enc, T, { pool, seedAll: pool === null, adam: true, timed: this.querySet !== null });
+    this.encode(enc, T, { pool, seedAll: pool === null, adam: true, timed: this.querySet !== null, damage: dmg !== 0 });
     enc.copyBufferToBuffer(this.lossOut, 0, slot.buf, 0, (this.shape.B + 1) * 4);
     if (this.querySet && this.resolveBuf) {
       enc.resolveQuerySet(this.querySet, 0, PASSES.length * 2, this.resolveBuf, 0);

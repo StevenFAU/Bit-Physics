@@ -1,0 +1,142 @@
+[
+ {
+  "label": "regen-gecko-s1",
+  "targetFile": "gecko.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 2000
+ },
+ {
+  "label": "regen-starfish-s1",
+  "targetFile": "starfish.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ },
+ {
+  "label": "regen-butterfly-s1",
+  "targetFile": "butterfly.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ },
+ {
+  "label": "regen-ladybug-s1",
+  "targetFile": "ladybug.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ },
+ {
+  "label": "regen-mushroom-s1",
+  "targetFile": "mushroom.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ },
+ {
+  "label": "regen-fish-s1",
+  "targetFile": "fish.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ },
+ {
+  "label": "regen-turtle-s1",
+  "targetFile": "turtle.f32",
+  "G": 64,
+  "B": 8,
+  "Tmin": 64,
+  "Tmax": 96,
+  "poolSize": 1024,
+  "iters": 8000,
+  "lr": 0.002,
+  "decayAt": 2000,
+  "seed": 1,
+  "damage": 3,
+  "evalEvery": 500,
+  "evalSteps": [
+   96,
+   300
+  ],
+  "snapshotEvery": 4000
+ }
+]
