@@ -1,0 +1,94 @@
+{
+  "what": "Grow v2 Teach gradient check: float64 autograd gradients of one NCA rollout per case, with the trainer's counter-hash fire masks (neural_ca/gradcheck.py)",
+  "generator": "packages/neural-ca/python/neural_ca/gradcheck.py",
+  "grid": 64,
+  "channels": 16,
+  "nparam": 8320,
+  "param_layout": "trainer: W1 [128][3][16] planar, b1 [128], W2^T [128][16]",
+  "starts": {
+    "seed": "the canonical seed cell (channels 3..15 = 1 at (32, 32)) in every sample",
+    "blob": "cells with (x-32)^2 + (y-32)^2 <= 81: channel c of sample b = u = bp_unit(bp_hash3(7, b*16 + c, y*64 + x)), alpha 0.15 + 0.85u (f64, rounded to f32)"
+  },
+  "target": "neural_ca.target.make_emoji_target(64), premultiplied RGBA",
+  "loss": "mean((x_T[:, :4] - target)^2) over batch, 4 channels and the grid",
+  "fire_mask": "bp_hash3(seed, t, (b*G + y)*G + x) >> 8 < 2^23",
+  "random_params_seed": 4242,
+  "torch": "2.12.0+cu130",
+  "sha256": "0157b62a885818e359eafa86aa321296aac44dfd61bc7d190862d989a6ae47ff",
+  "arrays": {
+    "target": {
+      "offset": 0,
+      "bytes": 65536,
+      "dtype": "float32",
+      "count": 16384
+    },
+    "random_params": {
+      "offset": 65536,
+      "bytes": 33280,
+      "dtype": "float32",
+      "count": 8320
+    }
+  },
+  "cases": [
+    {
+      "name": "disk-T24",
+      "weights": "disk",
+      "weights_file": "packages/neural-ca/web/public/nca-weights.bin",
+      "start": "seed",
+      "steps": 24,
+      "batch": 2,
+      "seed": 9001,
+      "grad64": {
+        "offset": 98816,
+        "bytes": 66560,
+        "dtype": "float64",
+        "count": 8320
+      },
+      "loss64": 0.3043043117285835,
+      "alive_cells64": 3195,
+      "living_at_end64": 304,
+      "f32_autograd_rel_l2": 1.0608041516973605e-07,
+      "f32_autograd_loss_rel": 3.2828468484155514e-08
+    },
+    {
+      "name": "gecko-T64",
+      "weights": "gecko",
+      "weights_file": "packages/neural-ca/web/public/menagerie/gecko.bin",
+      "start": "seed",
+      "steps": 64,
+      "batch": 4,
+      "seed": 9007,
+      "grad64": {
+        "offset": 165376,
+        "bytes": 66560,
+        "dtype": "float64",
+        "count": 8320
+      },
+      "loss64": 0.2678770456872132,
+      "alive_cells64": 113729,
+      "living_at_end64": 1928,
+      "f32_autograd_rel_l2": 1.813257386643248e-07,
+      "f32_autograd_loss_rel": 1.2668739937711568e-08
+    },
+    {
+      "name": "random-T16",
+      "weights": "random",
+      "weights_file": null,
+      "start": "blob",
+      "steps": 16,
+      "batch": 2,
+      "seed": 9003,
+      "grad64": {
+        "offset": 231936,
+        "bytes": 66560,
+        "dtype": "float64",
+        "count": 8320
+      },
+      "loss64": 0.29901602065471383,
+      "alive_cells64": 10605,
+      "living_at_end64": 455,
+      "f32_autograd_rel_l2": 5.0715750920586074e-08,
+      "f32_autograd_loss_rel": 7.295388973864735e-08
+    }
+  ]
+}
