@@ -90,9 +90,10 @@
 > - **Benches** (`?bench=1`, 1280×720): Current 262,144 fish at 58.3–59.3 fps, frame p50 / p90
 >   16.7 / 16.7 ms, 60 steps/s, render scale 100% (sim pass 3.9 ms with the water, render
 >   2.3 ms); Food Chain 32,768 slots at 58.6 fps, 16.7 / 16.7 ms, 60 steps/s (sim 2.6 ms, render
->   1.8 ms). Today the machine is noisier than on 2026-10-24: Open Water read 56–58 fps with the
->   governor sometimes at 85% on both `main` and this branch (six interleaved runs each, in both
->   orders) — no difference between them.
+>   1.8 ms). The machine was loaded during these runs (very likely another session's training run,
+>   which held most of the CPU): Open Water read 56–58 fps with the governor sometimes at 85% on
+>   both `main` and this branch (six interleaved runs each, in both orders) — no difference between
+>   them.
 > - **Release gate:** `pipeline.py validate` passes for boids-2d on both pages: run twice
 >   byte-identical, φ calm 0.3553 and noisy 0.0609, as in M0 and M1.
 > - **Checks:** `v2-acceptance.mjs` passes 88/88 (M2 adds Current's live divergence, the push,
@@ -104,20 +105,19 @@
 >   (15 new in `test/m2.test.ts`: the Stockham passes against a direct DFT, ψ = ω/λ against the
 >   grid Laplacian, the bilinear curl's zero divergence and edge continuity, the Kolmogorov start,
 >   the dispersion index, the shark layout, the ecology's rates).
-> - **Firefox at ~20 fps (the observation from M1), measured in headless Firefox 158.0.1 on this
->   machine:** two causes, neither a per-frame readback (the page has none: order readbacks are
->   every sixth frame and never awaited; the only sync point gates submission on
->   `onSubmittedWorkDone`).
->   1. **The shell's backdrop blur.** At the T1 count (60,000 fish, 60 steps/s) the page presents
->      at ~30 fps (rAF p50 33.7 ms); with `?chrome=off`, or with `backdrop-filter: none` injected,
->      at ~58 fps (17.3 ms). Headless Firefox composites the chrome's 12 px blur over the WebGPU
->      canvas at half rate. A shared `@bp/studio` question (a Firefox fallback without the blur),
->      not changed here; headed Firefox not measured.
->   2. **GPU cost at a million fish.** One frame in flight: 10 steps/s (each frame ~100 ms from
->      submit to done); two: 23; three: 21.6 — so the in-flight gate is not the limit; Firefox's
->      WebGPU spends ~45 ms of GPU time per frame where Chrome spends ~16 ms on the same GPU.
+> - **Firefox at ~20 fps (the observation from M1): not explained yet; Swarm-specific.** A first
+>   reading in this milestone blamed the shell's backdrop blur. It was taken in headless Firefox
+>   (which composites on the CPU) while another session's training run held most of the CPU, and
+>   a follow-up session on a quiet machine refuted it. With and without the blur, headed Firefox
+>   158 draws Swarm at ~20 fps at both 60,000 and 1,000,000 fish, while Turing Patterns and Slime
+>   Mould draw at the display's 165 and Chrome draws Swarm at 140–165. Because the rate is the
+>   same at both counts, it is a fixed cost inside Swarm, not GPU load (the earlier "~45 ms of GPU
+>   per frame at a million fish" reading does not hold either), and not the shell. The page does no
+>   per-frame readback (order readbacks every sixth frame, never awaited); its one sync point gates
+>   submission on `onSubmittedWorkDone`. The cause is under investigation in a separate session.
+>   Measure Firefox headed, on a quiet machine, with the sim's own fps readout.
 > - **Not in M2:** motion trails from a float accumulation buffer; a precomputed backdrop for the
->   phase map; a Firefox fallback for the shell's blur (shared); Eyes Only, Species Matrix,
+>   phase map; the cause of Swarm's ~20 fps in Firefox; Eyes Only, Species Matrix,
 >   Watch one, posters and loops (M3).
 >
 > **M1 — The Order Dial, The Mill, three levels of detail.** Measured on the RX 6800 XT (snap
