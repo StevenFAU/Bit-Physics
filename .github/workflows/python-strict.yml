@@ -419,9 +419,11 @@ jobs:
           fi
           git lfs pull --include="tools/testkit/golden/checkpoints/**"
 
-      - name: pytest (neural-ca train + golden + PBT)
+      # test_teach_gradcheck: the Grow v2 Teach gradient-check fixture (float64 autograd,
+      # regenerated from committed inputs; reads plain, non-LFS files under web/public/)
+      - name: pytest (neural-ca train + golden + PBT + Teach gradient check)
         working-directory: packages/neural-ca/python
-        run: uv run pytest tests/test_train_convergence.py tests/test_checkpoint_serialization.py tests/test_golden_anchors.py tests/test_pbt_invariants.py
+        run: uv run pytest tests/test_train_convergence.py tests/test_checkpoint_serialization.py tests/test_golden_anchors.py tests/test_pbt_invariants.py tests/test_teach_gradcheck.py
 
   test-neural-ca-infer:
     runs-on: ubuntu-24.04
