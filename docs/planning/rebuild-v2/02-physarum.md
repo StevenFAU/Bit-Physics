@@ -3,6 +3,13 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/physarum/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. Unmeasured targets.
 >
+> **Released (2026-10-29):** the v2 page replaced v1 at `/sims/physarum/`. v1 is kept at
+> `/sims/physarum/v1/` for one release, and the old `/v2/` address forwards to the root with its
+> query. `pipeline.py validate` gates both pages, run twice (byte-identical; mass 22499.9962 on
+> each). The staged `physarum-v2` poster and loop are now the landing card's `physarum.png` /
+> `.webm`, under the new name Slime Mould, and the splash reel's Network clip is filmed from the
+> v2 Network scene.
+>
 > **Implementation status (2026-10-25): M3 built** on the same `v2/` page. Measured on the RX 6800 XT
 > (Chromium + Dawn/Vulkan). `pipeline.py validate` passes on both pages, run twice
 > (byte-identical; mass 22499.9962, rel 1.7e-7). The live ≡ gated Prove card still finds 0

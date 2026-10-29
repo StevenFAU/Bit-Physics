@@ -58,11 +58,12 @@ const REPO = join(HERE, "../../../../../..");
 const SIMS = {
   // 32k-bird murmuration under the seeded Director camera; wraps with a cut.
   "boids-3d": { start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46, boost: "brightness(1.35) saturate(1.5)" },
-  // transport-network growth from the noise field.
-  physarum: { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
+  // Slime Mould (the root page since the release swap): Territories on a mixed
+  // start — the ribbons sorting themselves out and slowly coarsening.
+  physarum: { query: "?chrome=off&s=territories&mix=1", canvas: ".bp-canvas", start: 90, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
   // Turing Patterns v2 (rebuild-v2 M3): "On a Shape", chrome off — coral
   // spreading over a slowly turning torus from its seed discs. Wraps with a cut.
-  "reaction-diffusion-2d": { page: "v2/", query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
+  "reaction-diffusion-2d": { query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", start: 60, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
   // Phase-6 sph-water: the dam-break collapse + crown splash — the loop
   // covers frames 30..330 (~the whole violent phase); frame-indexed live
   // loop, deterministic per device. Loop wraps with a cut (declared).
@@ -165,11 +166,7 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {
-  // Slime Mould v2 (rebuild-v2 M3): Territories on a mixed start — the ribbons
-  // sorting themselves out and slowly coarsening.
-  "physarum-v2": { sim: "physarum", page: "v2/", query: "?chrome=off&s=territories&mix=1", canvas: ".bp-canvas", start: 90, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
-};
+const STAGED = {};
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
 // config must be a registered sim — fail loud instead of silently skipping a

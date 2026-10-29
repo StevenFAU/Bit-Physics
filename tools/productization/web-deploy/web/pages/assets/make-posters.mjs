@@ -58,16 +58,15 @@ const SIMS = {
   // column rise past mid-canvas with rolled-up side vortices. The v2-style
   // render (relief + glow + in-shader tonemap) carries its own exposure.
   "eulerian-smoke": { frames: 500, px: 512, boost: "brightness(1.6) saturate(1.6)" },
-  // verification-demo rework: render.wgsl v2 (bilinear + relief + flow +
-  // in-shader tonemap) regenerated at the same 650 frames — the canonical
-  // 500-agent network reads best mid-growth (a branching junction, before it
-  // contracts to a couple of trunks); the shader carries its own exposure.
-  physarum: { frames: 650, px: 512 },
+  // Slime Mould (rebuild-v2 M3, the root page since the release swap):
+  // Territories on a mixed start — three colonies dealt over the whole dish,
+  // sorted by their rivalry into ribbons. Chrome off; frame 420.
+  physarum: { query: "?chrome=off&s=territories&mix=1", canvas: ".bp-canvas", frames: 420, px: 512 },
   // Turing Patterns v2 (rebuild-v2 M3): the card shows the v2 page's "On a
   // Shape" scene with its chrome off — coral grown on a torus, the spec's
   // "coral-coated object" poster. ~900 frames lets the coral cover the ring
   // while the turntable turns it a little; the HDR pipeline sets exposure.
-  "reaction-diffusion-2d": { page: "v2/", query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", frames: 900, px: 512 },
+  "reaction-diffusion-2d": { query: "?chrome=off&s=shape&sh=torus&pat=coral", canvas: ".bp-canvas", frames: 900, px: 512 },
   // verification-demo rework (ising): render.wgsl v2 (AA-nearest two-tone +
   // domain-wall emphasis + flip-activity layer, in-shader tonemap). Frames
   // drop 600→150: at the critical default T the seed-42 trajectory has gone
@@ -143,11 +142,7 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {
-  // Slime Mould v2 (rebuild-v2 M3): Territories on a mixed start — three
-  // colonies dealt over the whole dish, sorted by their rivalry into ribbons.
-  "physarum-v2": { sim: "physarum", page: "v2/", query: "?chrome=off&s=territories&mix=1", canvas: ".bp-canvas", frames: 420, px: 512 },
-};
+const STAGED = {};
 
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
