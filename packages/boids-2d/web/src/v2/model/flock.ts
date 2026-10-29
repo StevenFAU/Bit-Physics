@@ -184,6 +184,24 @@ export class FlockKernels {
   }
 }
 
+/**
+ * An M2 extension riding the flock's steps (Current's water, Food Chain's
+ * ecology). Absent, every path is exactly as M1 left it.
+ */
+export interface FlockExt {
+  /** Steps about to be encoded (write per-step uniforms). */
+  prepare?(steps: number, tick: number, pure: boolean): void;
+  /** Encode the whole step reading boidBufs[c], writing boidBufs[1 − c]; true if it did. */
+  step?(pass: GPUComputePassEncoder, s: number, c: number): boolean;
+  /** After a step: boidBufs[cur] holds the new state. */
+  after?(pass: GPUComputePassEncoder, s: number, cur: number): void;
+  reseed?(seed: number): void;
+  checkpoint?(): unknown;
+  restore?(c: unknown): void;
+  release?(c: unknown): void;
+  destroy(): void;
+}
+
 export interface FlockConfig {
   n: number;
   halfW: number;
@@ -210,6 +228,8 @@ export interface FlockConfig {
    * the proofs' flocks never do). Speed only: see WGSL_GATHER.
    */
   sortEvery?: number;
+  /** An M2 extension, built once the flock's buffers exist. */
+  ext?: (flock: Flock) => FlockExt;
 }
 
 export interface Checkpoint {
@@ -219,6 +239,8 @@ export interface Checkpoint {
   rule: RuleParams;
   brain: BrainParams | null;
   seed: number;
+  /** The extension's own saved state. */
+  ext?: unknown;
 }
 
 /** Exact integer order-parameter totals for one step (v4 D-9). */
@@ -342,6 +364,8 @@ export class Flock {
   private readonly torusParams: GPUBuffer | null = null;
   private readonly torusCentre: GPUBuffer | null = null;
   private readonly torusCirc: GPUBuffer | null = null;
+  /** The M2 extension (null for every M0/M1 scene). */
+  ext: FlockExt | null = null;
 
   constructor(device: GPUDevice, kernels: FlockKernels, cfg: FlockConfig) {
     this.device = device;
@@ -504,6 +528,10 @@ export class Flock {
       }
     }
     this.reseed(cfg.seed);
+    if (cfg.ext) {
+      this.ext = cfg.ext(this);
+      this.ext.reseed?.(cfg.seed);
+    }
   }
 
   /** The current boid buffer (stride 24 bytes: pos.xy, vel.xy, align, dens). */
@@ -530,6 +558,7 @@ export class Flock {
     this.initMode = mode;
     const speed = this.brain ? this.brain.p.speed : this.rule.maxSpeed;
     this.load(isM1Init(mode) ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode) : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode));
+    this.ext?.reseed?.(seed);
   }
 
   /** Load boids (6 f32 each) and restart the step count. */
@@ -563,6 +592,7 @@ export class Flock {
 
   /** Write the Params slots for the next `steps` steps (step t uses frame seed (seed ^ t)). */
   private writeSlots(steps: number, pure: boolean): void {
+    this.ext?.prepare?.(steps, this.tick, pure);
     if (this.brain) {
       const ab = this.slots.buffer;
       const f = this.fear;
@@ -604,6 +634,11 @@ export class Flock {
   private encodeOne(pass: GPUComputePassEncoder, s: number): void {
     const off = [s * SLOT];
     const c = this.cur;
+    if (this.ext?.step?.(pass, s, c)) {
+      this.cur = 1 - c;
+      this.ext.after?.(pass, s, this.cur);
+      return;
+    }
     if (this.brain) {
       const vic = this.brain.kind === "vicsek";
       if (this.broadphase === "brute") {
@@ -618,6 +653,7 @@ export class Flock {
         pass.dispatchWorkgroups(Math.ceil(this.n / 256));
       }
       this.cur = 1 - c;
+      this.ext?.after?.(pass, s, this.cur);
       return;
     }
     if (this.broadphase === "brute") {
@@ -635,6 +671,7 @@ export class Flock {
       pass.dispatchWorkgroups(Math.ceil(this.n / 256));
     }
     this.cur = 1 - c;
+    this.ext?.after?.(pass, s, this.cur);
   }
 
   /** Cell keys for the current state, then the counting sort (Params slot `s` holds the grid). */
@@ -824,7 +861,7 @@ export class Flock {
     enc.copyBufferToBuffer(this.boids, 0, boids, 0, this.bytes);
     if (ids && this.ids) enc.copyBufferToBuffer(this.ids, 0, ids, 0, this.n * 4);
     this.device.queue.submit([enc.finish()]);
-    return { boids, ids, tick: this.tick, rule: { ...this.rule }, brain: this.brain ? structuredClone(this.brain) : null, seed: this.seed };
+    return { boids, ids, tick: this.tick, rule: { ...this.rule }, brain: this.brain ? structuredClone(this.brain) : null, seed: this.seed, ext: this.ext?.checkpoint?.() };
   }
 
   restore(c: Checkpoint): void {
@@ -838,11 +875,13 @@ export class Flock {
     this.seed = c.seed;
     this.setRule(c.rule);
     if (c.brain && this.brain) this.setBrain(c.brain);
+    if (c.ext !== undefined) this.ext?.restore?.(c.ext);
   }
 
   release(c: Checkpoint): void {
     c.boids.destroy();
     c.ids?.destroy();
+    if (c.ext !== undefined) this.ext?.release?.(c.ext);
   }
 
   /** The current fish ids (slot → fish); identity when the flock never reorders. */
@@ -857,5 +896,6 @@ export class Flock {
     this.torusCentre?.destroy();
     this.torusCirc?.destroy();
     this.sort.destroy();
+    this.ext?.destroy();
   }
 }

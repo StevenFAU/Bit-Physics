@@ -2,17 +2,28 @@
 // it. Open Water runs the gated v4 kernel at the tier's full fish count; the
 // proof flock is the in-page GPU proofs' own pinned run, on screen. M1 adds
 // The Order Dial (the Vicsek model, ./model/brains.ts) and The Mill (Couzin's
-// zones). (M2 adds Food Chain and Current.)
+// zones). M2 adds Current (the water as a solved incompressible fluid,
+// ./model/fluid.ts, coupled two ways to the v4 flock) and Food Chain.
 
 import type { Tier } from "@bp/gpu";
 import type { BrainParams, CouzinParams, VicsekParams } from "./model/brains.js";
+import type { FluidParams } from "./model/fluid.js";
+import { CURRENT_FLUID } from "./model/fluid.js";
 import type { InitMode } from "./model/init.js";
 import type { M1Init } from "./model/init-m1.js";
 import type { RuleParams } from "./model/params.js";
 import type { World } from "./model/world.js";
 import { AGENTS, V4_DENSITY, worldFor } from "./model/world.js";
 
-export type SceneId = "open-water" | "order-dial" | "mill" | "proof";
+export type SceneId = "open-water" | "order-dial" | "mill" | "current" | "food-chain" | "proof";
+
+/** Current's water: grid rows per tier, motes per tier, the fluid's numbers and the push (laminar peak speed). */
+export interface WaterDef {
+  rows: Record<Tier, number>;
+  motes: Record<Tier, number>;
+  params: FluidParams;
+  tide: number;
+}
 
 export interface SceneDef {
   id: SceneId;
@@ -40,6 +51,8 @@ export interface SceneDef {
   zoom?: number;
   /** World units per fish length / caustic cell (default: the look's own). */
   scale?: { fishLength: number; causticCell: number };
+  /** M2 Current: the water the fish swim in. */
+  water?: WaterDef;
 }
 
 /** v4's "flock" preset (index.html PRESETS.flock), the rule the v4 lab opened with. */
@@ -103,6 +116,20 @@ export function couzinFor(n: number): CouzinParams {
   };
 }
 
+// ---- Current: the water as a solved fluid ------------------------------------------------
+//
+// The fish are Open Water's (the gated v4 kernel, untouched) at Open Water's
+// density; the water is ./model/fluid.ts. The push's laminar peak speed is
+// v4's top speed, so the current is as fast as a fish swims.
+
+export const CURRENT_COUNTS: Record<Tier, number> = { T3: 262144, T2: 131072, T1: 65536 };
+export const CURRENT_WATER: WaterDef = {
+  rows: { T3: 128, T2: 128, T1: 64 },
+  motes: { T3: 65536, T2: 49152, T1: 24576 },
+  params: CURRENT_FLUID,
+  tide: 0.0065,
+};
+
 export const SCENES: readonly SceneDef[] = [
   {
     id: "open-water",
@@ -147,6 +174,19 @@ export const SCENES: readonly SceneDef[] = [
     sharkUnit: () => 2,
     zoom: 1.8,
     scale: { fishLength: 0.7, causticCell: 24 },
+  },
+  {
+    id: "current",
+    title: "Current",
+    prompt: "Paint a current. The school rides it — and pushes back.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    density: V4_DENSITY,
+    init: "random",
+    shark: true,
+    counts: CURRENT_COUNTS,
+    water: CURRENT_WATER,
   },
   {
     id: "proof",

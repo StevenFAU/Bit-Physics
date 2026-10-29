@@ -25,11 +25,13 @@ import { DialController } from "./dial-controller.js";
 import { buildLearn } from "./learn.js";
 import type { BrainParams } from "./model/brains.js";
 import { FlockKernels } from "./model/flock.js";
+import { FluidKernels } from "./model/fluid.js";
 import type { RuleParams } from "./model/params.js";
 import { buildCanonicalCapture } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
 import type { FishColour } from "./render/ocean-view.js";
 import { DEFAULT_LOOK, OceanView } from "./render/ocean-view.js";
+import { SeaView } from "./render/sea-view.js";
 import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
 import { DIAL_ETA, DIAL_RHO, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho } from "./scenes.js";
@@ -121,9 +123,11 @@ async function boot(): Promise<void> {
   // frame-interval budget: a 60 Hz frame is 16.7 ms, a missed vsync 33 ms
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   studio.veil.step("Compiling the flock kernel");
-  const kernels = await FlockKernels.create(device);
+  const [kernels, fluidKernels] = await Promise.all([FlockKernels.create(device), FluidKernels.create(device)]);
   const view = new OceanView(device, DEFAULT_LOOK);
   const app = new App(gpu, studio, hdr, view, kernels, tier);
+  app.fluidKernels = fluidKernels;
+  app.sea = new SeaView(device);
   // GPU timings set how many steps a frame may take at high speed (16.7 ms frames)
   if (gpu.timestamps) profiler.onFrame = () => void app.adaptToTimings(profiler.timings(), 14, profiler.frameTag);
   app.profiler = profiler;
@@ -487,6 +491,7 @@ async function boot(): Promise<void> {
     brain: app.flock.brain,
     regime: app.scene.id === "mill" ? regime.regime : null,
     dial: app.scene.id === "order-dial" ? { eta: dial.eta, rho: dial.rho, last: dial.last, sweeping: dial.sweeping, points: dial.panel.measurements.length } : null,
+    fluid: app.current ? { grid: [app.current.fluid.gw, app.current.fluid.gh], motes: app.current.fluid.nMotes, fb: app.current.fluid.fb, stats: app.fluidStats } : null,
   });
   (globalThis as { __swarmDial?: DialController }).__swarmDial = dial;
   (globalThis as { __swarm?: App }).__swarm = app;
