@@ -222,7 +222,7 @@ def rollout_grad(
         alive_cells += int(alive.sum().item())
         x = x1 * alive.to(dtype)
     loss = ((x[:, :4] - tgt) ** 2).mean()
-    loss.backward()
+    loss.backward()  # type: ignore[no-untyped-call]
     assert w1p.grad is not None and b1.grad is not None and w2t.grad is not None
     grad = np.concatenate(
         [

@@ -942,6 +942,8 @@ export class Teach implements TeachHost {
 
   /** The scene changed (main's onSceneChange). Leaving Teach pauses training. */
   onScene(isTeach: boolean): void {
+    // the App laid the scene out before this hook ran: when the panel appears or goes, lay it out again
+    if (this.el.hidden === isTeach) this.d.app.relayout();
     this.el.hidden = !isTeach;
     if (!isTeach && this.run?.running) void this.pauseTraining();
     if (isTeach) this.updateWarnings();

@@ -829,6 +829,16 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
   );
   const card = await T(page, () => [...document.querySelectorAll(".bp-proof-card, [class*='proof']")].map((e) => e.textContent).find((t) => /Backprop on this GPU/.test(t)) ?? "");
   check("the Prove card shows the measured gradient error", /worst relative L2/.test(card), card.slice(0, 160));
+  // entering Teach from another scene: the dish is laid out again beside the panel, not under it
+  const entered = await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("teach");
+    await new Promise((r) => setTimeout(r, 800));
+    const panel = document.querySelector(".gr-teach-panel").getBoundingClientRect();
+    const c = app.studio.canvas.getBoundingClientRect();
+    return { glassRight: app.toScreen(0, 32 + app.dishRadius, 32)[0] + c.left, panelLeft: panel.left };
+  });
+  check("entering Teach from the Dish lays the dish out beside the Teach panel", entered.glassRight <= entered.panelLeft + 1, `glass ends at ${entered.glassRight.toFixed(0)} px, panel starts at ${entered.panelLeft.toFixed(0)} px`);
   check("no console errors (gradient check)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
