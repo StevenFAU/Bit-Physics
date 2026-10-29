@@ -74,7 +74,17 @@ export class CurrentExt implements FlockExt {
       seed: cfg.seed,
       params: cfg.params,
     });
+    this.tideSpeed = cfg.tide;
     this.fluid.tide = tideForce(cfg.tide, cfg.params, flock.halfH * 2);
+  }
+
+  /** The push's laminar peak speed U (world units per step). */
+  tideSpeed: number;
+
+  /** Set the push's laminar speed, or re-derive its force after ν or μ changed. */
+  setTide(U = this.tideSpeed): void {
+    this.tideSpeed = U;
+    this.fluid.tide = tideForce(U, this.fluid.params, this.flock.halfH * 2);
   }
 
   prepare(_steps: number, _tick: number, pure: boolean): void {

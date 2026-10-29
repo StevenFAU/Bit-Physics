@@ -1,10 +1,115 @@
 # 03 — Swarm (2D collective motion)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-2d/web` (the embedded v4 lab).
-> Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24 (below).
+> Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24, M2 built 2026-10-29 (below).
 >
-> **Implementation status (2026-10-24): M0 and M1 built** as the `v2/` page of `packages/boids-2d/web`
+> **Implementation status (2026-10-29): M0, M1 and M2 built** as the `v2/` page of `packages/boids-2d/web`
 > (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
+>
+> **M2 — Current and Food Chain.** Measured on the RX 6800 XT (snap Chromium, RADV, T3) unless a
+> line says otherwise. The gated v4 kernel and the gate path are untouched; `Flock` gains an
+> optional extension hook (`FlockExt`: prepare / step / after / checkpoint), absent in every M0–M1
+> scene, so their paths are as they were.
+>
+> - **Current: the water is a solved fluid, not a pattern** (`src/v2/model/fluid.ts`). 2D
+>   Navier–Stokes in vorticity–stream-function form on a periodic power-of-two grid (256 × 128 at
+>   T3/T2, 128 × 64 at T1): semi-Lagrangian RK2 advection of ω, an exact FFT Poisson solve
+>   (Stockham radix 2, f64-computed twiddles; ψ̂ = ω̂/λ with λ the 5-point Laplacian's own
+>   eigenvalue; ω̂ + iψ̂ comes back from one inverse transform), implicit viscosity ν 2e-4 and
+>   floor friction μ 4e-4 per mode, and the mean flow U₀ (the k = 0 mode a torus stream function
+>   cannot hold) kept separately. A steady Kolmogorov push f_x = F sin(2πy/H), F = U(μ + νk²), keeps
+>   a current at a fish's top speed running east through the middle and west along the edges.
+>   - **Incompressible by construction (derived, and measured).** At nodes, the central-difference
+>     divergence of a central-difference curl cancels identically; between nodes the fish and the
+>     motes feel the exact curl of bilinear ψ, divergence-free inside each cell (u = c + dx,
+>     v = −(b + dy)) with continuous normal flow across every edge. `test/m2.test.ts` checks both
+>     in f64. Live: max |∇·u| 2.8e-9 against max |∇u| 0.031 (ratio 9e-8, f32 rounding); Poisson
+>     residual max |∇²ψ + ω| / max |ω| 2e-5–5e-4 (f32 tables and the second difference). The
+>     motes card: 65,536 motes stirred for 2,400 steps keep an index of dispersion of 1.027
+>     (0.974 at the start; random points scatter ±0.06), declared ≤ 1.25; the same motes moved
+>     along ∇ψ instead of its curl (same speeds, compressible) pile up to 1,155.
+>   - **Two-way coupling (v4's drag model, on the new solver).** Each step a fish's velocity moves
+>     6% of the way to the water's; the opposite impulse goes to its 4 nodes as i32 sums of 2⁻²⁰,
+>     and the fish takes exactly what the integers say (mass ratio fb = 0.6 · nodes / fish = 0.075
+>     at T3). Measured balance with the fish's swimming off: fish +0.0750587, water −0.0750587,
+>     imbalance 2.1e-10 of the exchange (declared ≤ 1e-6). From one seed, coupled vs drag 0:
+>     fish–water heading alignment 0.97 vs −0.02 (declared gain ≥ 0.5); the water ends with 18%
+>     more energy coupled (1.25e-5 vs 1.06e-5 per node) — the school stirs it.
+>   - **Not claimed:** a fish is a point that drags its 4 nodes, with no wake or thrust (a real
+>     swimmer is nearly force-free); semi-Lagrangian advection smooths ω more than ν alone; the
+>     split step is first order in time. Learn says so.
+>   - **Scene:** the Open Water flock (gated kernel) at half its density, 262,144 / 131,072 /
+>     65,536 fish by tier, 65,536 motes drawn as streaks, a faint sheen where the water runs and a
+>     spin tint; it opens at 2.2× zoom. Tools: Current (a Gaussian push towards the brush's speed,
+>     capped at twice a fish's top speed, through the same integer sums), Shark, Look. A panel
+>     shows the fastest water, |∇·u| / |∇u| and the mean drift, all measured.
+> - **Food Chain** (`src/v2/model/ecology.ts`): plankton (logistic growth r 0.015, diffusion,
+>   grazing P(1 − e^(−a n)), faint seeding) on the fish's own sort grid; forager fish (Open
+>   Water's weights in a new kernel with i32 neighbour sums) that graze, climb the plankton
+>   gradient when hungry, flee sharks within 0.35, split at energy 1 and starve at 0; up to 128
+>   sharks that charge the nearest crowd (argmax n/(d² + 0.02) — a fish-weighted centre sat in
+>   the hole the school opens round the shark, and every shark starved), catch the nearest fish
+>   in their jaws by an integer `atomicMin` key, handle it 10 steps, split at 2 and starve at 0.
+>   Births fill empty slots deterministically: two exclusive `PrefixScan`s rank newborns and
+>   empty slots, the k-th newborn takes the k-th slot. Immigration: 4 fish every 120 steps, a
+>   shark every 900 steps while fewer than 2 live — no resets.
+>   - **Tuned from a measurement, not by hand-waving:** immortal non-breeding sharks catch one
+>     fish per ~46 steps whatever the fish density between 6k and 16k (a saturated response), so
+>     shark upkeep 0.0042 against 0.25 per fish puts break-even at one catch per 60 steps, and
+>     fish efficiency 0.11 keeps their surplus below what 128 sharks can eat. Faster-breeding fish
+>     pinned the sharks at their slot ceiling in a steady state; costlier sharks died out.
+>   - **Measured (seed 1, 32,768 fish slots, 50,235 steps ≈ 14 simulated minutes):** fish
+>     803–7,707, sharks 3–128, mean plankton 0.60–0.95 of its ceiling; three predator–prey cycles,
+>     shark booms near steps 8–12k, 27–31k and 44–48k (period ≈ 18,000 steps, 5 min at 1×); no
+>     extinction. Sharks reach their 128 slots at each peak — the ceiling binds for a few thousand
+>     steps per cycle, which Learn states.
+>   - **Replays byte for byte:** two runs of 600 steps (2,096 births, 151 fish eaten) give one
+>     SHA-256 over fish, sharks and plankton; another seed differs. Fish slots T3 32,768, T2
+>     16,384, T1 8,192; sharks 128 / 96 / 64.
+>   - **Scene:** plankton glows green where it grows (grazed trails go dark), sharks are soft
+>     shadows with a rim that warms when fed. Tools: Feed (hold to bloom), Release (300 fish),
+>     Look. A live census panel (fish, sharks, plankton over time, with a plain reading of the
+>     cycle) and census sparklines in Learn.
+> - **Shared with the page:** Tune shows each scene's own knobs (the water's drag, fish weight,
+>   push, ν, μ; the ecology's plankton growth, fish efficiency, shark upkeep and speed); they ride
+>   the share link (`wp`, `ep`) and survive a restart. Prove has four new cards (motes, momentum
+>   exchange, riding, replay) and says which kernel is on screen. Shared additions: the `wave` and
+>   `fish` icons only.
+> - **Bug found on the way:** the renderer's `Shark` struct was 32 bytes against the ecology's 48,
+>   so every shark after the first was drawn from the wrong bytes; `test/m2.test.ts` now pins
+>   the three WGSL copies of the struct to one layout.
+> - **Benches** (`?bench=1`, 1280×720): Current 262,144 fish at 58.3–59.3 fps, frame p50 / p90
+>   16.7 / 16.7 ms, 60 steps/s, render scale 100% (sim pass 3.9 ms with the water, render
+>   2.3 ms); Food Chain 32,768 slots at 58.6 fps, 16.7 / 16.7 ms, 60 steps/s (sim 2.6 ms, render
+>   1.8 ms). Today the machine is noisier than on 2026-10-24: Open Water read 56–58 fps with the
+>   governor sometimes at 85% on both `main` and this branch (six interleaved runs each, in both
+>   orders) — no difference between them.
+> - **Release gate:** `pipeline.py validate` passes for boids-2d on both pages: run twice
+>   byte-identical, φ calm 0.3553 and noisy 0.0609, as in M0 and M1.
+> - **Checks:** `v2-acceptance.mjs` passes 88/88 (M2 adds Current's live divergence, the push,
+>   the brush, the three water cards, save / restore and a seed across loads with the water;
+>   Food Chain's census, Feed, Release, replay, save / restore, a seed across loads, ten simulated
+>   minutes — fish 786–7,714, sharks 5–128, booms at steps 7,778 and 26,562 — and the M2 knobs on
+>   the link). `check-studio` passes on `v2/`, `v2/?s=current` and `v2/?s=food-chain` at
+>   390 / 820 / 1440 px and 200% zoom with zero axe violations. The workspace has 198 unit tests
+>   (15 new in `test/m2.test.ts`: the Stockham passes against a direct DFT, ψ = ω/λ against the
+>   grid Laplacian, the bilinear curl's zero divergence and edge continuity, the Kolmogorov start,
+>   the dispersion index, the shark layout, the ecology's rates).
+> - **Firefox at ~20 fps (the observation from M1), measured in headless Firefox 158.0.1 on this
+>   machine:** two causes, neither a per-frame readback (the page has none: order readbacks are
+>   every sixth frame and never awaited; the only sync point gates submission on
+>   `onSubmittedWorkDone`).
+>   1. **The shell's backdrop blur.** At the T1 count (60,000 fish, 60 steps/s) the page presents
+>      at ~30 fps (rAF p50 33.7 ms); with `?chrome=off`, or with `backdrop-filter: none` injected,
+>      at ~58 fps (17.3 ms). Headless Firefox composites the chrome's 12 px blur over the WebGPU
+>      canvas at half rate. A shared `@bp/studio` question (a Firefox fallback without the blur),
+>      not changed here; headed Firefox not measured.
+>   2. **GPU cost at a million fish.** One frame in flight: 10 steps/s (each frame ~100 ms from
+>      submit to done); two: 23; three: 21.6 — so the in-flight gate is not the limit; Firefox's
+>      WebGPU spends ~45 ms of GPU time per frame where Chrome spends ~16 ms on the same GPU.
+> - **Not in M2:** motion trails from a float accumulation buffer; a precomputed backdrop for the
+>   phase map; a Firefox fallback for the shell's blur (shared); Eyes Only, Species Matrix,
+>   Watch one, posters and loops (M3).
 >
 > **M1 — The Order Dial, The Mill, three levels of detail.** Measured on the RX 6800 XT (snap
 > Chromium, RADV, T3) unless a line says otherwise.

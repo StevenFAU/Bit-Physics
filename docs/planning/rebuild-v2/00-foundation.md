@@ -17,6 +17,9 @@
 > steps) as `frameTag`, and a `shark` icon joins the set. Measured: with one frame in flight the
 > RX 6800 XT idles at 500 MHz between frames; Swarm keeps two in flight and governs on the frame
 > interval (see 03-boids-2d.md).
+>
+> **Swarm M2 (2026-10-29):** `wave` and `fish` icons join the set (Current's brush, Food Chain's
+> Release). Nothing else shared changed.
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

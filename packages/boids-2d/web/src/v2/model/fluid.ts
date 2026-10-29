@@ -44,6 +44,8 @@
 // The fish's own steering and speed limit are not part of the exchange: they
 // are the fish swimming, an external force on the pair.
 
+import { readBuffer } from "@bp/gpu";
+
 /** Fixed point for the impulse sums (v4: FLUID_SCALE). */
 export const FLUID_FP = 1048576;
 
@@ -150,7 +152,7 @@ struct FP {
   dt: f32, nu: f32, mu: f32, scale: f32,
   drag: f32, fb: f32, stirX: f32, stirY: f32,
   stirIX: f32, stirIY: f32, stirR: f32, nMotes: u32,
-  tide: f32, tideK: f32, _a: f32, _b: f32,
+  tide: f32, tideK: f32, moteMode: f32, _b: f32,
 };`;
 
 const FLUID_HEADER = `
@@ -356,8 +358,11 @@ fn wrapW(p0: vec2<f32>) -> vec2<f32> {
 fn drift(@builtin(global_invocation_id) gid: vec3<u32>) {
   let k = gid.x; if (k >= F.nMotes) { return; }
   let p = motes[k];
-  let u1 = velAt(toNode(p));
-  let u2 = velAt(toNode(p + 0.5 * F.dt * u1));
+  var u1 = velAt(toNode(p));
+  // the control (Prove only): the gradient of ψ instead of its curl — the same speeds, but compressible
+  if (F.moteMode > 0.5) { u1 = vec2<f32>(-u1.y, u1.x); }
+  var u2 = velAt(toNode(p + 0.5 * F.dt * u1));
+  if (F.moteMode > 0.5) { u2 = vec2<f32>(-u2.y, u2.x); }
   motes[k] = wrapW(p + F.dt * u2);
 }
 `;
@@ -512,6 +517,8 @@ export class Fluid {
   private readonly U = new ArrayBuffer(96);
   /** Kolmogorov forcing amplitude F (f_x = F sin(2πy/H)), world units per step². */
   tide = 0;
+  /** Motes ride the curl of ψ (0, the water) or its gradient (1: Prove's compressible control). */
+  moteMode = 0;
 
   constructor(device: GPUDevice, kernels: FluidKernels, cfg: FluidConfig) {
     this.device = device;
@@ -646,6 +653,7 @@ export class Fluid {
     u[19] = this.nMotes;
     f[20] = this.tide;
     f[21] = (2 * Math.PI) / (2 * this.halfH);
+    f[22] = this.moteMode;
     this.device.queue.writeBuffer(this.uni, 0, this.U);
   }
 
@@ -712,6 +720,27 @@ export class Fluid {
     p.setBindGroup(0, this.statsBG);
     p.dispatchWorkgroups(this.groups);
     p.end();
+  }
+
+  /** Read the motes back (Prove). */
+  async readMotes(): Promise<Float32Array> {
+    return new Float32Array(await readBuffer(this.device, this.motes, this.nMotes * 8));
+  }
+
+  /** Read ψ and the state (U₀) back. */
+  async readPsi(): Promise<{ psi: Float32Array; u0: [number, number] }> {
+    const [p, st] = await Promise.all([readBuffer(this.device, this.psi, this.cells * 4), readBuffer(this.device, this.state, 16)]);
+    const s = new Float32Array(st);
+    return { psi: new Float32Array(p), u0: [s[0]!, s[1]!] };
+  }
+
+  /** Stats now (encode, submit, read). */
+  async readStats(): Promise<FluidStats> {
+    const enc = this.device.createCommandEncoder();
+    this.encodeStats(enc);
+    this.device.queue.submit([enc.finish()]);
+    const [a, b] = await Promise.all([readBuffer(this.device, this.statsOut, this.statsBytes), readBuffer(this.device, this.state, 16)]);
+    return this.reduceStats(new Float32Array(a), new Float32Array(b));
   }
 
   get statsBuffer(): GPUBuffer {

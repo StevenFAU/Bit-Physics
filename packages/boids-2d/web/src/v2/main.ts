@@ -34,7 +34,6 @@ import type { FishColour } from "./render/ocean-view.js";
 import { DEFAULT_LOOK, OceanView } from "./render/ocean-view.js";
 import { SeaView } from "./render/sea-view.js";
 import { PopulationPanel, WaterPanel } from "./m2-panels.js";
-import { tideForce } from "./model/current.js";
 import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
 import { DIAL_ETA, DIAL_RHO, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho } from "./scenes.js";
@@ -66,6 +65,10 @@ const url = new UrlState(
     shark: { kind: "num", def: SHARK_RADIUS_R, min: 4, max: 40, digits: 0 },
     col: { kind: "enum", def: "silver", values: ["silver", "heading"] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+    // Current's water: drag, fish weight, push (× fish speed), ν, μ (−1 = the scene's)
+    wp: { kind: "nums", def: [-1, -1, -1, -1, -1], n: 5, digits: 5 },
+    // Food Chain: plankton growth, fish efficiency, shark upkeep, shark speed (−1 = the scene's)
+    ep: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 5 },
   },
   2,
 );
@@ -157,7 +160,21 @@ async function boot(): Promise<void> {
       brainKeys.turn = or(Number(((b.p.maxTurn * 180) / Math.PI).toFixed(1)), Number(((bd.p.maxTurn * 180) / Math.PI).toFixed(1)));
       brainKeys.sig = or(Number(b.p.sigma.toFixed(2)), Number(bd.p.sigma.toFixed(2)));
     }
+    const m2: Partial<typeof parsed> = {};
+    const cw = app.current;
+    const sw = app.scene.water;
+    if (cw && sw) {
+      const p = cw.fluid.params;
+      m2.wp = [or(p.drag, sw.params.drag), or(p.massRatio, sw.params.massRatio), or(Number((cw.tideSpeed / app.flock.rule.maxSpeed).toFixed(4)), Number((sw.tide / app.flock.rule.maxSpeed).toFixed(4))), or(p.nu, sw.params.nu), or(p.mu, sw.params.mu)];
+    }
+    const ec = app.ecology;
+    const se = app.scene.ecology;
+    if (ec && se) {
+      const p = ec.params;
+      m2.ep = [or(p.growth, se.params.growth), or(p.efficiency, se.params.efficiency), or(p.sharkCost, se.params.sharkCost), or(p.sharkSpeed, se.params.sharkSpeed)];
+    }
     return {
+      ...m2,
       s: app.scene.id,
       seed: app.seed,
       ws: or(r.wSep, d.wSep),
@@ -230,13 +247,11 @@ async function boot(): Promise<void> {
     const e = app.ecology;
     if (c) {
       const f = c.fluid;
-      const H = app.flock.halfH * 2;
-      let tide = c.cfg.tide;
       tune.setExtra(
         "The water",
         [
-          { label: "Drag", symbol: "fraction per step", min: 0, max: 0.3, step: 0.01, digits: 2, hint: "How fast a fish's velocity moves towards the water's. At 0 the fish ignore the water and the water ignores them.", get: () => f.params.drag, set: (v) => (f.params = { ...f.params, drag: v }) },
-          { label: "Fish weight", symbol: "of the water", min: 0.05, max: 2, step: 0.05, digits: 2, hint: "The fish's total mass against the water's. Heavier fish drag the water more and are carried less.", get: () => f.params.massRatio, set: (v) => (f.params = { ...f.params, massRatio: v }) },
+          { label: "Drag", symbol: "fraction per step", min: 0, max: 0.3, step: 0.01, digits: 2, hint: "How fast a fish's velocity moves towards the water's. At 0 the fish ignore the water and the water ignores them.", get: () => f.params.drag, set: (v) => ((f.params = { ...f.params, drag: v }), app.writeUrl()) },
+          { label: "Fish weight", symbol: "of the water", min: 0.05, max: 2, step: 0.05, digits: 2, hint: "The fish's total mass against the water's. Heavier fish drag the water more and are carried less.", get: () => f.params.massRatio, set: (v) => ((f.params = { ...f.params, massRatio: v }), app.writeUrl()) },
           {
             label: "Steady push",
             symbol: "× fish speed",
@@ -245,19 +260,22 @@ async function boot(): Promise<void> {
             step: 0.05,
             digits: 2,
             hint: "The current the steady push would keep without the fish (Kolmogorov forcing), as a multiple of a fish's top speed.",
-            get: () => tide / app.flock.rule.maxSpeed,
+            get: () => c.tideSpeed / app.flock.rule.maxSpeed,
             set: (v) => {
-              tide = v * app.flock.rule.maxSpeed;
-              f.tide = tideForce(tide, f.params, H);
+              c.setTide(v * app.flock.rule.maxSpeed);
+              app.writeUrl();
             },
           },
-          { label: "Viscosity", symbol: "ν", min: 0, max: 0.002, step: 0.0001, digits: 4, hint: "How quickly the water's eddies smooth out (world units² per step).", get: () => f.params.nu, set: (v) => ((f.params = { ...f.params, nu: v }), (f.tide = tideForce(tide, f.params, H))) },
-          { label: "Floor friction", symbol: "μ", min: 0, max: 0.004, step: 0.0001, digits: 4, hint: "How quickly the sea floor slows the whole flow (per step).", get: () => f.params.mu, set: (v) => ((f.params = { ...f.params, mu: v }), (f.tide = tideForce(tide, f.params, H))) },
+          { label: "Viscosity", symbol: "ν", min: 0, max: 0.002, step: 0.0001, digits: 4, hint: "How quickly the water's eddies smooth out (world units² per step).", get: () => f.params.nu, set: (v) => ((f.params = { ...f.params, nu: v }), c.setTide(), app.writeUrl()) },
+          { label: "Floor friction", symbol: "μ", min: 0, max: 0.004, step: 0.0001, digits: 4, hint: "How quickly the sea floor slows the whole flow (per step).", get: () => f.params.mu, set: (v) => ((f.params = { ...f.params, mu: v }), c.setTide(), app.writeUrl()) },
         ],
         false,
       );
     } else if (e) {
-      const set = (k: "growth" | "efficiency" | "sharkCost" | "sharkSpeed") => (v: number) => (e.params = { ...e.params, [k]: v });
+      const set = (k: "growth" | "efficiency" | "sharkCost" | "sharkSpeed") => (v: number) => {
+        e.params = { ...e.params, [k]: v };
+        app.writeUrl();
+      };
       tune.setExtra(
         "The food chain",
         [
@@ -276,6 +294,8 @@ async function boot(): Promise<void> {
     adapter: gpu.adapterId,
     device,
     kernels,
+    fluidKernels,
+    ecoKernels,
     rule: () => app.flock.rule,
     brain: () => app.flock.brain,
     live: () => ({ n: app.flock.n, halfW: app.flock.halfW, halfH: app.flock.halfH, seed: app.seed }),
@@ -291,6 +311,7 @@ async function boot(): Promise<void> {
     prove.setOnScreen({
       proofRun: app.onProofRun,
       brain: app.flock.brain?.kind ?? null,
+      m2: app.scene.ecology ? "food-chain" : app.scene.water ? "current" : null,
       scene: app.scene.title,
       fish: app.flock.n,
       world: [app.flock.halfW * 2, app.flock.halfH * 2],
@@ -540,6 +561,19 @@ async function boot(): Promise<void> {
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };
   await app.loadScene(scene.id, opts);
+  // M2 knobs from the link (each −1 = the scene's)
+  if (app.current) {
+    const [dr, ma, pu, nu, mu] = parsed.wp;
+    const f = app.current.fluid;
+    f.params = { ...f.params, drag: pick(dr!, f.params.drag), massRatio: pick(ma!, f.params.massRatio), nu: pick(nu!, f.params.nu), mu: pick(mu!, f.params.mu) };
+    app.current.setTide(pu! >= 0 ? pu! * app.flock.rule.maxSpeed : app.current.tideSpeed);
+  }
+  if (app.ecology) {
+    const [gr, ef, sc, ss] = parsed.ep;
+    const p = app.ecology.params;
+    app.ecology.params = { ...p, growth: pick(gr!, p.growth), efficiency: pick(ef!, p.efficiency), sharkCost: pick(sc!, p.sharkCost), sharkSpeed: pick(ss!, p.sharkSpeed) };
+  }
+  extraTune();
   app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
   syncTune();
   studio.veil.done();

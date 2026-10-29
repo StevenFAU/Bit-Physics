@@ -15,9 +15,9 @@ import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { BrainParams } from "./model/brains.js";
 import { CurrentExt } from "./model/current.js";
-import type { Census, EcoKernels } from "./model/ecology.js";
+import type { Census, EcoKernels, EcoParams } from "./model/ecology.js";
 import { EcologyExt } from "./model/ecology.js";
-import type { FluidKernels, FluidStats } from "./model/fluid.js";
+import type { FluidKernels, FluidParams, FluidStats } from "./model/fluid.js";
 import type { Checkpoint, OrderParams } from "./model/flock.js";
 import { Flock, FlockKernels, MAX_STEPS_PER_PASS, orderParams, sumPartials } from "./model/flock.js";
 import type { RuleParams } from "./model/params.js";
@@ -46,6 +46,9 @@ export interface SceneOptions {
   /** The scene's brain with changed parameters (M1 scenes). */
   brain?: BrainParams;
   camera?: { cx: number; cy: number; zoom: number };
+  /** M2 knobs carried across a restart (the scene's own when absent). */
+  water?: { params: FluidParams; tide: number };
+  eco?: EcoParams;
 }
 
 export interface AppHooks {
@@ -269,15 +272,15 @@ export class App {
                 fish0: Math.round(eco.fish0 * n),
                 sharkSlots: eco.sharkSlots[this.tier],
                 sharks0: eco.sharks0,
-                params: eco.params,
+                params: o.eco ?? eco.params,
               }))
           : water
           ? (f) =>
               (current = new CurrentExt(this.device, this.fluidKernels!, f, {
                 rows: water.rows[this.tier],
                 motes: water.motes[this.tier],
-                params: water.params,
-                tide: water.tide,
+                params: o.water?.params ?? water.params,
+                tide: o.water?.tide ?? water.tide,
                 seed: this.seed,
               }))
           : undefined,
@@ -351,7 +354,13 @@ export class App {
       this.clock.ticksPerSecond = TICK_RATE[this.tier];
       this.studio.toast.show(`Restarted with fewer fish (${AGENTS[this.tier].toLocaleString()}) to hold the frame rate`);
     }
-    await this.loadScene(this.scene.id, { seed: this.seed, rule: this.flock.rule, brain: this.flock.brain ?? undefined });
+    await this.loadScene(this.scene.id, {
+      seed: this.seed,
+      rule: this.flock.rule,
+      brain: this.flock.brain ?? undefined,
+      water: this.current ? { params: { ...this.current.fluid.params }, tide: this.current.tideSpeed } : undefined,
+      eco: this.ecology ? { ...this.ecology.params } : undefined,
+    });
   }
 
   /** World units of the Shark tool's Size unit ("r"). */
@@ -731,6 +740,36 @@ export class App {
       ]);
       return;
     }
+    if (s.id === "food-chain") {
+      const slots = (): number => this.ecology?.sharkSlots ?? 128;
+      this.studio.callouts.set([
+        {
+          id: "food-start",
+          text: "Fish graze the glowing plankton; sharks hunt the fish",
+          detail: "Hold Feed to make a bloom · Release drops a school",
+          style: "label",
+          anchor: freeSpot,
+          when: () => t() > 600 && t() < 7000,
+        },
+        {
+          id: "shark-boom",
+          text: "A shark boom",
+          detail: "Plenty of fish, so the sharks multiply — the fish will crash",
+          style: "label",
+          anchor: freeSpot,
+          when: () => !!this.census && this.census.sharks >= 0.8 * slots() && t() > 7000,
+        },
+        {
+          id: "fish-crash",
+          text: "The fish have crashed",
+          detail: "The sharks will starve; then the fish come back",
+          style: "label",
+          anchor: freeSpot,
+          when: () => !!this.census && this.census.fish < 0.06 * this.flock.n && t() > 7000,
+        },
+      ]);
+      return;
+    }
     const near = (): [number, number] | null => {
       const v = this.sharkView();
       if (!v) return null;
@@ -756,6 +795,18 @@ export class App {
               anchor: near,
               when: () => this.shark.lunged > 0.15 && this.shark.lunged < 3.5,
             },
+            ...(s.id === "current"
+              ? [
+                  {
+                    id: "current-start",
+                    text: "The water is moving",
+                    detail: "Drag through it to push a current — the schools ride it",
+                    style: "label" as const,
+                    anchor: freeSpot,
+                    when: () => t() > 600 && t() < 7000 && this.shark.seen === 0 && this.brush.painted === 0,
+                  },
+                ]
+              : []),
             ...(s.id === "mill"
               ? [
                   {

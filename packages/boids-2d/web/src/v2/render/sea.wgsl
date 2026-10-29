@@ -19,7 +19,8 @@ struct SV {
   shark: vec4<f32>,   // body length (world), shark slots, unused, unused
 };
 struct FS { u0x: f32, u0y: f32, sumX: i32, sumY: i32 };
-struct Shark { pos: vec2<f32>, vel: vec2<f32>, energy: f32, alive: f32, meals: i32, age: f32 };
+// model/ecology.ts's Shark, field for field (48 bytes; test/m2.test.ts checks)
+struct Shark { pos: vec2<f32>, vel: vec2<f32>, energy: f32, alive: f32, meals: u32, age: f32, cool: f32, catchKey: u32, lastCatch: u32, _p: u32 };
 
 @group(0) @binding(0) var<uniform> V: SV;
 @group(1) @binding(0) var<storage, read> psi: array<f32>;

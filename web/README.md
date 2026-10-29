@@ -78,7 +78,9 @@ Swarm's (fish count and density, the release-gate capture byte-identical on v1 a
 kernel ≡ the v4 lab's trajectory hash, brute ≡ sort, the memory reorder exact, the shark, history,
 seeds across page loads; M1: the Order Dial by keyboard, measured map points and a full η sweep,
 the Mill's measured Tunstrøm regime, the new brains' brute ≡ sort / run-twice / re-sort-with-noise,
-φ(η) against the f64 CPU reference, the three levels of detail; bench per scene) is
+φ(η) against the f64 CPU reference, the three levels of detail; M2: Current's live divergence,
+the brush, motes / momentum exchange / riding cards, save and seeds with the water, Food Chain's
+census, Feed and Release, replay, ten simulated minutes without extinction; bench per scene) is
 `packages/boids-2d/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`

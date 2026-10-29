@@ -162,7 +162,7 @@ fn limit(v: vec2<f32>, m: f32) -> vec2<f32> { let l = length(v); return select(v
 fn rot(v: vec2<f32>, a: f32) -> vec2<f32> { let c = cos(a); let s = sin(a); return vec2<f32>(v.x * c - v.y * s, v.x * s + v.y * c); }
 `;
 
-const SHARK_A = `struct Shark { pos: vec2<f32>, vel: vec2<f32>, energy: f32, alive: f32, meals: u32, age: f32, cool: f32, catchKey: atomic<u32>, lastCatch: u32, _p: u32 };`;
+export const SHARK_A = `struct Shark { pos: vec2<f32>, vel: vec2<f32>, energy: f32, alive: f32, meals: u32, age: f32, cool: f32, catchKey: atomic<u32>, lastCatch: u32, _p: u32 };`;
 
 // ---- keys: alive fish → their cell; empty slots → the bucket past the grid ------------------
 const WGSL_KEYS = `
@@ -518,7 +518,7 @@ fn hunt(@builtin(local_invocation_id) lid: vec3<u32>) {
 `;
 
 // ---- the census the page reads every few frames ------------------------------------------------
-const WGSL_CENSUS = `
+export const WGSL_CENSUS = `
 ${WGSL_COMMON}
 struct SharkR { pos: vec2<f32>, vel: vec2<f32>, energy: f32, alive: f32, meals: u32, age: f32, cool: f32, catchKey: u32, lastCatch: u32, _p: u32 };
 @group(0) @binding(0) var<uniform> E: EP;
