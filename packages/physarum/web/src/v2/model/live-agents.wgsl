@@ -38,6 +38,21 @@ fn sample(px: f32, py: f32) -> f32 {
   return v;
 }
 
+// Territories (bit 7): colony k smells its own plane minus rivalry × the others'.
+fn sample_colony(px: f32, py: f32, k: u32) -> f32 {
+  let idx = cell(px, py);
+  let plane = P.w * P.h;
+  var own = 0.0;
+  var others = 0.0;
+  for (var j = 0u; j < P.species; j = j + 1u) {
+    let t = T_in[j * plane + idx];
+    if (j == k) { own = t; } else { others = others + t; }
+  }
+  var v = own - P.rivalry * others;
+  if ((P.flags & 4u) != 0u) { v = v + env[idx]; }
+  return v;
+}
+
 fn near_food(c: u32) -> bool {
   return (cell_bits[P.bits_words + (c >> 5u)] & (1u << (c & 31u))) != 0u;
 }
@@ -49,13 +64,30 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
   let a = agents[i];
   let p = a.xy;
   var hh = a.zw;
+  let colonies = (P.flags & 128u) != 0u;
+  var k = 0u;   // the agent's colony (territories)
   if ((P.flags & 16u) != 0u && hh.x > 1.5) {
     // dormant until the colony's trail reaches it (never on or beside food):
     // no move, no deposit
     let c = cell(p.x, p.y);
-    if (T_in[c] < P.wake || near_food(c)) { return; }
+    if (colonies) {
+      // territories: it joins the colony whose trail under it is strongest
+      var best = T_in[c];
+      for (var j = 1u; j < P.species; j = j + 1u) {
+        let t = T_in[j * P.w * P.h + c];
+        if (t > best) { best = t; k = j; }
+      }
+      if (best < P.wake || near_food(c)) { return; }
+      atomicAdd(&awake[SP_COUNT + k], 1u);
+    } else {
+      if (T_in[c] < P.wake || near_food(c)) { return; }
+    }
     hh = vec2<f32>(hh.x - 3.0, hh.y);
     atomicAdd(&awake[0], 1u);
+  } else if (colonies) {
+    let m = length(hh);
+    k = u32(round((m - 1.0) / SPECIES_STEP));
+    hh = hh / m;
   }
 
   // hunger (bit 6): the heading's length carries the steps since food
@@ -81,13 +113,26 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
     }
   }
 
-  let cphi = cos(P.delta_phi); let sphi = sin(P.delta_phi);
+  var cphi: f32; var sphi: f32; var ls: f32; var lm: f32;
+  if (colonies) {
+    let q = P.sp[k];
+    cphi = cos(q.x); sphi = sin(q.x); ls = q.y; lm = q.z;
+  } else {
+    cphi = cos(P.delta_phi); sphi = sin(P.delta_phi); ls = P.l_sense; lm = P.l_move;
+  }
   let hl = vec2<f32>(hh.x * cphi - hh.y * sphi, hh.x * sphi + hh.y * cphi);   // +phi
   let hr = vec2<f32>(hh.x * cphi + hh.y * sphi, -hh.x * sphi + hh.y * cphi);  // -phi
 
-  let lr = sample(p.x + P.l_sense * hl.x, p.y + P.l_sense * hl.y);
-  let cr = sample(p.x + P.l_sense * hh.x, p.y + P.l_sense * hh.y);
-  let rr = sample(p.x + P.l_sense * hr.x, p.y + P.l_sense * hr.y);
+  var lr: f32; var cr: f32; var rr: f32;
+  if (colonies) {
+    lr = sample_colony(p.x + ls * hl.x, p.y + ls * hl.y, k);
+    cr = sample_colony(p.x + ls * hh.x, p.y + ls * hh.y, k);
+    rr = sample_colony(p.x + ls * hr.x, p.y + ls * hr.y, k);
+  } else {
+    lr = sample(p.x + ls * hl.x, p.y + ls * hl.y);
+    cr = sample(p.x + ls * hh.x, p.y + ls * hh.y);
+    rr = sample(p.x + ls * hr.x, p.y + ls * hr.y);
+  }
 
   let mx = max(max(lr, cr), rr);
   var nh = hh;
@@ -107,7 +152,7 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
     nh = nh * inverseSqrt(dot(nh, nh));
   }
 
-  var np = p + P.l_move * nh;
+  var np = p + lm * nh;
   if ((P.flags & 1u) != 0u) {
     let fw = f32(P.w); let fh = f32(P.h);
     if (np.x < 0.0) { np.x = np.x + fw; } else if (np.x >= fw) { np.x = np.x - fw; }
@@ -122,10 +167,13 @@ fn agents_step(@builtin(global_invocation_id) gid: vec3<u32>) {
   if ((P.flags & 64u) != 0u) {
     nh = nh * inverseSqrt(dot(nh, nh)) * (1.0 + hunger / HUNGER_SCALE);
   }
+  if (colonies) {
+    nh = nh * inverseSqrt(dot(nh, nh)) * (1.0 + f32(k) * SPECIES_STEP);
+  }
   agents[i] = vec4<f32>(np, nh);
 
   let dx = u32(wrapi(i32(round(np.x)), i32(P.w)));
   let dy = u32(wrapi(i32(round(np.y)), i32(P.h)));
   let add = u32(round(P.deposit * SCALE));
-  atomicAdd(&dep[dy * P.w + dx], add);
+  atomicAdd(&dep[k * P.w * P.h + dy * P.w + dx], add);
 }

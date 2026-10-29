@@ -208,6 +208,20 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" v2/ "${{ runner.temp }}/studio-check"
+      - name: Slime Mould morphology regression (every scene against its committed band)
+        # Not a gate — a regression test (docs/planning/rebuild-v2/02-physarum.md
+        # § The proof, M3). Every v2 scene runs from seed 1 on the "ci" profile's
+        # 37,500-agent dish, and its shape (tube cover and length, gaps, pieces,
+        # junction degrees, the scene's own measures) must land inside the band
+        # measured over ten seeds (src/v2/generated/morphology-baseline.json).
+        # The software GPU's trig differs in the last bits, so the run takes its
+        # own path through the same dynamics: a band, not bytes.
+        if: matrix.sim == 'physarum'
+        timeout-minutes: 30
+        env:
+          PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
+          BITPHYSICS_READY_TIMEOUT_MS: "180000"
+        run: node packages/physarum/web/v2-morphology.mjs check --profile ci "${{ runner.temp }}/morphology"
       - name: Surface results
         if: always()
         run: cat results.json || true

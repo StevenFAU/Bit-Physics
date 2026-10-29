@@ -335,3 +335,93 @@
     top: 104px;
   }
 }
+
+/* Territories card (M3): who holds the dish, beside the colony controls */
+.bp-studio.is-chromeless .ph-terr {
+  display: none;
+}
+.ph-terr-rows {
+  display: grid;
+  gap: 8px;
+  margin: 2px 0 6px;
+}
+.ph-terr-row {
+  display: grid;
+  gap: 3px;
+}
+.ph-terr-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+.ph-terr-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.ph-terr-select {
+  margin-left: auto;
+  max-width: 150px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--bp-hairline);
+  background: var(--bp-surface, transparent);
+  color: var(--bp-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 400;
+}
+.ph-terr-bar {
+  display: grid;
+  grid-template-columns: 52px 1fr 40px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+.ph-terr-track {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bp-hairline);
+  overflow: hidden;
+}
+.ph-terr-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+.ph-terr-fill.is-agents {
+  opacity: 0.55;
+}
+.ph-terr-num {
+  text-align: right;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  color: var(--bp-text);
+}
+.ph-terr-setup {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 8px;
+}
+.ph-terr-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ph-terr-line {
+  margin: 4px 0;
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-terr-fill {
+    transition: none;
+  }
+}

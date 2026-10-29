@@ -3,6 +3,137 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/physarum/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. Unmeasured targets.
 >
+> **Implementation status (2026-10-25): M3 built** on the same `v2/` page. Measured on the RX 6800 XT
+> (Chromium + Dawn/Vulkan). `pipeline.py validate` passes on both pages, run twice
+> (byte-identical; mass 22499.9962, rel 1.7e-7). The live ≡ gated Prove card still finds 0
+> cells different over 5,000 steps (78 re-sorts).
+>
+> - **Territories** (`scenes.ts`, `territory-card.ts`). Up to four colonies share one dish.
+>   - Each colony deposits into its own trail plane (plane k at k·w·h). The planes spread and
+>     fade side by side, and each colony smells its own trail minus *rivalry* × the others'.
+>   - A colony may carry its own personality (turn, reach, step, fade); the deposit is shared.
+>   - An agent's colony rides in its heading's length, |h| = 1 + k/8. The tile re-sort carries
+>     it, and the dormant test (x > 1.5) is unchanged. Territories never combine with hunger
+>     (which also lives in the length) or food crumbs (a crumb's trail would be one colony's
+>     and repel the rest).
+>   - **Apart** (the default start): three colonies are released from their own discs on a
+>     sleeping dish. A sleeper wakes into the colony whose trail under it is strongest, so the
+>     colonies race to recruit the dish. The default contest is Tune's personality against Lace
+>     and Cells.
+>   - **Mixed**: every agent is dealt to a colony at random; the rivalry sorts them.
+>   - The card measures who holds the dish: 32 × 32-cell tiles, each held by the colony with
+>     the most trail there for its own mean, and empty tiles going to the nearest held tile
+>     within four tiles. It also shows each colony's agents and the borders. Controls: each
+>     colony's personality, the rivalry, 2–4 colonies, and the start.
+>   - The look: each colony's plane in its own hue (orange, blue, violet, green), added, so
+>     borders mix. Sparks take their colony's hue.
+>   - Left alone, the scene re-releases from the next seed every 4,800 steps.
+> - **Mass balance per colony.** The GPU logs each colony's awake count every step, and each
+>   plane follows M_k ← (M_k + d·N_k)(1 − α_k) in f64. At 2M agents: rel ≤ 1.9e-7 per colony
+>   while the colonies grow, and 1.1e-7 on a mixed start. The Prove card checks every plane.
+> - **Measured — Territories (T3, seed 1 unless noted).**
+>   - *Fair sites:* with one shared personality the colonies recruit 33.4 / 33.2 / 33.3% of
+>     the agents and hold 33.8 / 33.1 / 32.6% of the dish at step 1,200.
+>   - *The race decides the dish.* All agents are awake by ~600 steps, and the split never
+>     changes after that. Default contest (10 seeds): Tune's (Middle) 53.9%, Lace 20.4%,
+>     Cells 25.8% of the agents (± 2 points). Veins against Lace and Cells (seed 1): Veins
+>     71%, Lace 13%, Cells 16%.
+>     The explorer's long step grabs sleepers fastest.
+>   - *Rivalry decides a mixed start.* At rivalry 0 the three nets overlap freely; at 1 they
+>     sort into parallel ribbons. Tube cells two colonies share at step 1,500: 16.9% at rivalry 0, 2.2% at rivalry 1.
+> - **Morphology regression tests** (`model/regress.ts`, `v2-morphology.mjs`,
+>   `generated/morphology-baseline.json`). Not gates.
+>   - Every scene runs from fixed seeds with the live loop paused, so no director acts. Each
+>     run is described by: tube cover and length per area, enclosed gaps and pieces per area,
+>     a node-degree histogram (loose ends, three-way and four-or-more-way junctions per area,
+>     from the score card's extraction with links under 12 cells contracted), and each scene's
+>     own measures: cities joined, length against the MST, links and cutting links per area;
+>     whether the maze's food is joined and the route against the shortest path; agent shares,
+>     dish held and tube overlap for Territories.
+>   - Bands: mean ± max(5 SD over 10 seeds, a floor). A fresh run of the same dynamics lands
+>     outside about once in a thousand numbers (Student's t, 9 degrees of freedom); a check
+>     reads ~100. The floor is 0.02 for fractions, 3% for lengths and ratios, and 2·√count for
+>     feature densities. A measure only some seeds have (the mean distance before every city
+>     is joined) is recorded, not banded.
+>   - Two profiles. *full*: T1, T2 and T3 at each scene's full run (First Light 3,000 steps,
+>     Cities 6,000, Maze 16,000, Territories 1,500 apart and mixed, Lace 3,000, Light 1,800,
+>     the network 2,000, Table 1 3,000). *ci*: 37,500 agents (a quarter of T1, same density)
+>     and runs of 800–1,500 steps.
+>   - On this GPU, seed 1 reproduces every committed value exactly: 27/27 full-profile runs and 9/9 ci runs identical.
+>   - On SwiftShader (Chromium's CPU Vulkan, the local stand-in for CI's software GPU), the ci
+>     check passes 9/9 in band in 0.5 min on 20 cores. A 10-seed SwiftShader survey put
+>     830/830 values inside the GPU's bands; no number's mean differs by |t| ≥ 3 (largest 2.9).
+>   - CI runs the ci profile in the physarum job of `web-deploy.yml`, after the shell checks.
+>   - T3 bands are tight where the scene is settled: Territories' agent shares ± 2 points, tube
+>     length ± 9–12% for Territories, Lace and Light, ± 18–20% for Cities and the network. They
+>     are wide where the scene is still changing at the step measured: First Light ± 46%, the
+>     maze ± 59%. Small dishes hold few features (T1 ± 18–146%, the ci profile wider still), so
+>     those bands catch a scene that stops forming a network or changes its character, not a
+>     10% drift. In the full profile at T3, Connect the Cities joined all 30 cities in 9 of 10
+>     seeds (29 in the other), and the maze joined its food in 10 of 10, 1.11× the shortest
+>     path on average.
+> - **Posters and loops** for the v2 page, staged and not on the landing card.
+>   - `make-posters.mjs` / `make-loops.mjs` gained a `STAGED` table (not `SIMS`, so
+>     `check_registry.py`'s one-key-per-sim rule holds) and a `cfg.sim` package override.
+>   - `physarum-v2.png` and `physarum-v2.webm`: Territories on a mixed start with the chrome
+>     off (frame 420 at 512 × 512, 555 KB; loop: 300 frames at 30 fps from frame 90, crf 46, 609 KB). Committed plain, not LFS.
+>   - The landing card and URLs are unchanged; swapping these in is the release step.
+> - **Checks.** `v2-acceptance.mjs` 89/89. New for M3 (plus one review regression from #47: a paused colony edit keeps the card's reading): Territories boots, fair sites, the
+>   contest's winner, mass per colony (apart and mixed), rivalry against overlap, colony
+>   personality undo replaying to the same bytes, a share link, the card's fit and axe at
+>   1440 and 390 px, and the morphology baseline at the boot tier. `check-studio` clean;
+>   174 unit tests (13 new); integrity 0 HARD_FAIL; `check_registry.py` OK.
+> - **Performance at T3** (1280 × 720, 2M agents on 2728 × 1536, `?bench=1`): Territories
+>   holds 60 fps and 120 steps/s. GPU per frame 6.1 ms (apart) and 6.5 ms (mixed) at p50; the
+>   solver takes 4.6–4.8 ms per frame against First Light's 2.5 ms in the same clock state
+>   (three trail planes to spread, and three planes read per sample, ~1.9×). The shares pass
+>   reads back 16 bytes per 32-cell tile twice a second.
+>
+> **M3 findings (corrections to this spec):**
+>
+> - **Colonies released apart race; the race decides the dish.** Every sleeper is claimed in
+>   ~600 steps, and nothing changes hands after that. So "Who claims the dish?" is answered by
+>   how fast each personality grows, not by fighting at borders. Rivalry barely matters here
+>   (borders ≤ 0.7% of the dish at any rivalry). It matters on a mixed start, which the scene
+>   now offers.
+> - **Release sites must be a lattice of the periodic dish.** Three sites round a circle on a
+>   16:9 dish gave the top colony 22% of the agents and the others 39% each. The sites are
+>   now k·(w, h)/3 (and the 2 × 2 grid for four), so every colony's surroundings are the same
+>   shape.
+> - **"Held" cannot mean tube cells.** Counting cells above half a colony's mean gave 8–12%
+>   shares while a colony plainly owned a third of the dish, and the shares fell as the
+>   network coarsened. Tiles wider than the network's gaps, plus nearest-network fill, read
+>   33% each for a fair split.
+> - **Losing colonies collapse into rings** (M0's finding about released colonies, again).
+>   By ~5,000 steps the winner's network is a few long tubes, hence the 4,800-step
+>   re-release.
+> - **The first band rule failed its first independent check, and was replaced before any
+>   commit of it.** Measured over 5 seeds at ± 4 SD, the ci bands let SwiftShader's seed-1 run
+>   out on three of nine scenes: the maze's loopiness (a ratio of two or three features: 2/3 on
+>   every GPU seed, 1/2 on SwiftShader), the light's tube length and Table 1's cover and
+>   length. With 5 seeds a fresh run falls outside 4 SD about 2% of the time per number
+>   (Student's t, 4 degrees of freedom), so ~2 misses per 90-number check were expected. Now:
+>   10 seeds, ± 5 SD, no banded ratios of small counts (loopiness dropped; the cut share
+>   replaced by links and cutting links per area). A 10-seed SwiftShader survey of the ci
+>   profile matched the GPU's distributions (830/830 values in band, largest |t| 2.9).
+> - **A software GPU cannot afford the full baseline in CI.** SwiftShader ran the T1 scenes
+>   at 15–61 steps a second on 20 cores. Hence the separate ci profile with its own measured
+>   bands.
+> - **Spec items not built:** per-scene screenshot baselines (the morphology numbers stand in
+>   for them: screenshots are GPU-dependent and the solver's trig differs across drivers);
+>   the Release and Erase tools; food in Territories.
+>
+> **M3 acceptance against the spec:**
+>
+> - Met: Territories with up to four colonies, each in its own channel, sensing own − λ·others
+>   (λ = rivalry); each colony a distinct hue with additive mixing; the per-channel mass
+>   invariant (measured, every plane); morphology regression per scene and tier (length per
+>   area and node-degree histogram within recorded bands), checked in CI; posters and loops
+>   for the v2 page (staged); the gate on both pages, run twice.
+> - Not met: screenshot baselines per scene and tier; Release and Erase tools; the landing
+>   card and URL swap (a separate, owner-approved release step); the Cosmic Web (M4,
+>   stretch).
+>
 > **Implementation status (2026-10-24): M2 built** on the same `v2/` page. Measured on the RX 6800 XT
 > (Chromium + Dawn/Vulkan). `pipeline.py validate` passes on both pages, run twice
 > (byte-identical; mass 22499.9962).
@@ -275,8 +406,8 @@
 >   same runs later held 60 fps, and the Turing Patterns v2 page read the same 18 fps at the same
 >   time. Treat a low fps with low GPU time as contention on a shared GPU, not as the page's cost.
 >
-> Not yet (after M2): morphology regression tests, multi-species channels (Territories), posters
-> and loops (M3); the Cosmic Web (M4).
+> Not yet (after M3): the Release and Erase tools; per-scene screenshot baselines; the landing
+> card and URL swap to v2 (a separate, owner-approved release step); the Cosmic Web (M4).
 
 ## Verdict on the prototype
 

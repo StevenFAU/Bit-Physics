@@ -27,7 +27,7 @@ import { CORNERS, PAD_CENTRE, padParams } from "./pad.js";
 import { CITIES, kantoFood, kantoWalls, projector } from "./cities.js";
 import { makeMaze, mazeFood, mazeWalls } from "./maze.js";
 
-export type SceneId = "first-light" | "cities" | "maze" | "lace" | "light" | "network" | "table1" | "gated";
+export type SceneId = "first-light" | "cities" | "maze" | "territories" | "lace" | "light" | "network" | "table1" | "gated";
 export type ToolId = "pan" | "food" | "light" | "wall" | "probe";
 
 export interface Director {
@@ -64,6 +64,33 @@ export interface SceneDef {
   hungerPerRoute?: number;
   /** The speed the scene plays at when picked (its own clock is unchanged). */
   speed?: number;
+  /** Territories: colonies on the dish, each in its own trail plane (default 1). */
+  colonies?: number;
+  /** Territories: each colony's starting personality (null: the shared one from Tune). */
+  colonyPads?: (PadPoint | null)[];
+}
+
+/** Territories: a colony smells its own trail minus this × the others' (the scene's default rivalry). */
+export const RIVALRY = 1;
+
+/**
+ * Territories: where each of `count` colonies is released, and the disc
+ * radius. The sites form a lattice on the periodic dish — k·(w, h)/count for
+ * two and three colonies, the 2 × 2 grid for four — so every colony's share
+ * of the dish around it is the same shape: none starts cornered. (Measured:
+ * three sites round a circle on a 16:9 dish gave the top colony 22% of the
+ * agents and the other two 39% each.)
+ */
+export function colonySites(w: number, h: number, count: number): { sites: [number, number][]; radius: number } {
+  const m = Math.min(w, h);
+  const at = (u: number, v: number): [number, number] => [u * w, v * h];
+  const sites =
+    count === 4
+      ? [at(0.25, 0.25), at(0.75, 0.25), at(0.75, 0.75), at(0.25, 0.75)]
+      : count === 3
+        ? [at(0.5, 0.5), at(1 / 6, 1 / 6), at(5 / 6, 5 / 6)]
+        : [at(0.25, 0.25), at(0.75, 0.75)];
+  return { sites: sites.slice(0, count), radius: m * 0.04 };
 }
 
 /** Food crumb radius on a w × h dish (cells): the same size on screen at every tier. */
@@ -187,6 +214,30 @@ export const SCENES: readonly SceneDef[] = [
     hungerPerRoute: 5,
     // the route settles in ~8,000–16,000 steps: one to two minutes at 1×
     speed: 4,
+  },
+  {
+    id: "territories",
+    title: "Territories",
+    prompt: "Who claims the dish?",
+    listed: true,
+    kind: "live",
+    personality: PAD_CENTRE,
+    params: padParams(PAD_CENTRE),
+    // three colonies released on a dormant dish; a sleeper joins whichever colony's trail reaches it first
+    seed: (w, h, seed) => {
+      const c = colonySites(w, h, 3);
+      return { ...growth(w, h, seed), radius: c.radius, colonies: c.sites };
+    },
+    colonies: 3,
+    // a contest from the first frame: the shared personality (Tune) against Lace and Cells.
+    // Measured at T3: the middle of the pad recruits ~54% of the dish's agents, Cells ~26%, Lace ~20%
+    colonyPads: [null, cornerAt("lace"), cornerAt("cells")],
+    palette: "ember",
+    // the race is over in ~1,000 steps; by ~5,000 the losers have shrunk to rings and the
+    // winner's net to a few long tubes — start again from the next seed
+    director: { kind: "rescatter", everySteps: 4800 },
+    tools: ["pan", "light", "probe"],
+    tool: "pan",
   },
   {
     id: "lace",

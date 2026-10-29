@@ -14,9 +14,9 @@ import { EventLog, History, SimClock } from "@bp/runtime";
 import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, segmented, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
-import type { Checkpoint, EnvSpec, Spot } from "./model/sim.js";
+import type { Checkpoint, EnvSpec, SeedSpec, Shares, Spot } from "./model/sim.js";
 import { LiveKernels, LiveSim } from "./model/sim.js";
-import { AGENTS, tierGrid } from "./model/grid.js";
+import { AGENTS, gridFor, tierGrid } from "./model/grid.js";
 import type { JonesParams } from "./proof/gate.js";
 import { H as GATED_H, NA as GATED_N, PARAMS, W as GATED_W, fetchCanonicalIC } from "./proof/gate.js";
 import type { GlowView } from "./render/glow-view.js";
@@ -29,7 +29,8 @@ import type { Analysis } from "./model/analysis.js";
 import { analyse } from "./model/analysis.js";
 import type { Maze } from "./maze.js";
 import { geodesic, makeMaze } from "./maze.js";
-import { SCENES, crumbRadius, lightDrift, lightRadius, nextCrumb, sameParams, sceneById } from "./scenes.js";
+import { RIVALRY, SCENES, colonySites, crumbRadius, lightDrift, lightRadius, nextCrumb, sameParams, sceneById } from "./scenes.js";
+import { COLONIES } from "./render/look.js";
 
 /** Solver steps per second at 1× (spec: T3 2 steps per frame at 60 fps). */
 const TICK_RATE: Record<Tier, number> = { T3: 120, T2: 120, T1: 60 };
@@ -54,6 +55,15 @@ export interface LiveMass {
   /** Where the current parameters settle: (d·N + F)·(1−α)/α. */
   equilibrium: number;
   tick: number;
+  /** Territories: each colony's plane, summed (f64), beside its own prediction. */
+  colonies?: { mass: number; predicted: number }[];
+}
+
+/** Territories: who holds the dish now, and each colony's agents. */
+export interface TerritoryReading {
+  tick: number;
+  shares: Shares;
+  agents: number[];
 }
 
 export interface SceneOptions {
@@ -62,6 +72,13 @@ export interface SceneOptions {
   pad?: PadPoint | null;
   palette?: PaletteId;
   camera?: { cx: number; cy: number; zoom: number };
+  /** Territories: how many colonies (2–4), the rivalry, each colony's personality (null: the shared one; undefined: the scene's), and a mixed start. */
+  colonies?: number;
+  rivalry?: number;
+  colonyPads?: (PadPoint | null | undefined)[];
+  mixed?: boolean;
+  /** Test hook (morphology regression): a dish of this many agents at the declared density, instead of the tier's. */
+  agents?: number;
 }
 
 export interface AppHooks {
@@ -70,6 +87,8 @@ export interface AppHooks {
   onEdited?: () => void;
   onFrame?: (now: number) => void;
   onAnalysis?: (a: Analysis) => void;
+  onTerritory?: (t: TerritoryReading) => void;
+  onColonies?: () => void;
 }
 
 interface AppCheckpoint {
@@ -77,12 +96,15 @@ interface AppCheckpoint {
   logIndex: number;
   pad: PadPoint | null;
   strokes: number[][];
+  colonyPads: (PadPoint | null)[];
 }
 
 type ParamsPayload = { g: number; p: number[]; pad: number[] | null };
 type SpotsPayload = { g: number; spots: number[][] };
 /** Every wall stroke since the scene started: [x0, y0, x1, y1, radius, erase (0|1)]. */
 type WallsPayload = { g: number; strokes: number[][] };
+/** Territories: the rivalry and each colony's pad point ([i, j], or null: the shared personality). */
+type ColoniesPayload = { g: number; rivalry: number; pads: (number[] | null)[] };
 
 const packSpots = (s: readonly Spot[]): number[][] => s.map((q) => [q.x, q.y, q.r]);
 const unpackSpots = (s: readonly number[][]): Spot[] => s.map(([x, y, r]) => ({ x: x!, y: y!, r: r! }));
@@ -161,6 +183,17 @@ export class App {
   /** The latest score (Connect the Cities, The Maze). */
   analysis: Analysis | null = null;
   private markerKey = "";
+  /** Territories: each colony's personality (null: follows the shared one) and the rivalry. */
+  colonyPads: (PadPoint | null)[] = [];
+  rivalry = RIVALRY;
+  /** Territories: every agent dealt to a colony at random on the whole dish, instead of colonies released apart. */
+  mixed = false;
+  /** Territories: the latest reading of who holds the dish. */
+  territory: TerritoryReading | null = null;
+  private territoryDue = 0;
+  private territoryBusy = false;
+  /** Bumped when the dish changes under a reading (restore, undo): a reading begun before is dropped. */
+  private territoryGen = 0;
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: GlowView, kernels: LiveKernels, tier: Tier) {
     this.gpu = gpu;
@@ -173,13 +206,17 @@ export class App {
     this.clock = new SimClock(TICK_RATE[tier], 16);
     this.camera.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     this.camera.maxPxPerUnit = 24;
-    this.probeBuf = this.device.createBuffer({ size: 8, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ, label: "phys-probe" });
+    this.probeBuf = this.device.createBuffer({ size: 8 * COLONIES.length, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ, label: "phys-probe" });
     const cp: Checkpointer<AppCheckpoint> = {
-      capture: () => ({ cp: this.sim.checkpoint(), logIndex: this.log.length, pad: this.pad, strokes: this.strokes.slice() }),
+      capture: () => ({ cp: this.sim.checkpoint(), logIndex: this.log.length, pad: this.pad, strokes: this.strokes.slice(), colonyPads: this.colonyPads.slice() }),
       restore: (c) => {
         this.sim.restore(c.cp);
         this.pad = c.pad;
         this.strokes = c.strokes.slice();
+        this.colonyPads = c.colonyPads.slice();
+        this.rivalry = c.cp.rivalry;
+        this.forgetTerritory();
+        this.hooks.onColonies?.();
         this.view.invalidate();
         this.hooks.onParams?.(this.sim.params, this.pad);
       },
@@ -231,24 +268,36 @@ export class App {
       this.view.split = null;
       const old = this.sim as LiveSim | undefined;
       const rect = this.studio.canvas.getBoundingClientRect();
-      const grid = gated ? { w: GATED_W, h: GATED_H, n: GATED_N } : tierGrid(this.tier, rect.width, rect.height);
+      const grid = gated ? { w: GATED_W, h: GATED_H, n: GATED_N } : o.agents ? gridFor(o.agents, rect.width, rect.height) : tierGrid(this.tier, rect.width, rect.height);
       this.seed = o.seed ?? 1;
       // the personality: as asked, else the scene's; parameters follow it unless given
       this.pad = scene.personality ? (o.pad !== undefined ? o.pad : nearestOffered(scene.personality, this.tier)) : null;
       const params = o.params ?? (this.pad ? padParams(this.pad) : scene.params);
       if (this.pad && !sameParams(params, padParams(this.pad))) this.pad = padPointOf(params);
+      const colonies = scene.colonies ? Math.max(2, Math.min(COLONIES.length, Math.round(o.colonies ?? scene.colonies))) : 1;
       const sim = new LiveSim(this.device, this.kernels, {
         ...grid,
         params,
         // the gated scene keeps the gated kernel's arithmetic exactly
         longRun: !gated,
         sortEvery: gated ? 0 : SORT_EVERY,
+        colonies,
       });
       if (scene.personality) sim.setTurning(PAD_JITTER);
+      this.colonyPads =
+        colonies > 1
+          ? Array.from({ length: colonies }, (_, k) => {
+              const given = o.colonyPads?.[k];
+              return given !== undefined ? given : (scene.colonyPads?.[k] ?? null);
+            })
+          : [];
+      this.rivalry = o.rivalry ?? RIVALRY;
+      this.mixed = colonies > 1 && !!o.mixed;
+      if (colonies > 1) sim.setColonies(this.colonyParamsFor(), this.rivalry);
       // the environment first: a growing colony's seed must not wake on food
       if (scene.env) sim.setEnv(scene.env(grid.w, grid.h, this.seed));
       if (packed) sim.load(packed);
-      else sim.seed(scene.seed!(grid.w, grid.h, this.seed));
+      else sim.seed(this.seedSpec(scene, grid.w, grid.h, this.seed, colonies));
       this.sim = sim;
       old?.destroy();
       this.maze = scene.score === "maze" ? makeMaze(grid.w, grid.h, this.seed) : null;
@@ -256,6 +305,8 @@ export class App {
       this.scoreDue = 0;
       this.baseWalls = sim.envSpec?.walls ?? null;
       this.analysis = null;
+      this.territory = null;
+      this.territoryDue = 0;
       this.view.forgetBuffers();
       this.scene = scene;
       // hunger is the new scene's (it reads this.scene)
@@ -290,9 +341,26 @@ export class App {
       this.syncTransport();
       this.hooks.onSceneChange?.(scene);
       this.hooks.onParams?.(sim.params, this.pad);
+      this.hooks.onColonies?.();
     } finally {
       this.busy = false;
     }
+  }
+
+  /** A scene's starting agents; territories place one disc per colony (or deal every agent to a colony: mixed). */
+  private seedSpec(scene: SceneDef, w: number, h: number, seed: number, colonies: number): SeedSpec {
+    const spec = scene.seed!(w, h, seed);
+    if (colonies > 1 && this.mixed) return { mode: 0, seed };
+    if (colonies > 1) {
+      const c = colonySites(w, h, colonies);
+      return { ...spec, colonies: c.sites, radius: c.radius };
+    }
+    return spec;
+  }
+
+  /** Territories: each colony's parameters (null: the shared personality). */
+  private colonyParamsFor(): (JonesParams | null)[] {
+    return this.colonyPads.map((p) => (p ? padParams(p) : null));
   }
 
   /** Restart the current scene from its starting state (same seed, same grid, current personality). */
@@ -303,7 +371,51 @@ export class App {
       this.clock.ticksPerSecond = TICK_RATE[this.tier];
       this.studio.toast.show(`Restarted with fewer agents (${AGENTS[this.tier].toLocaleString()}) to hold the frame rate`);
     }
-    await this.loadScene(this.scene.id, { seed: this.seed, params: this.sim.params, pad: this.pad, palette: this.palette });
+    await this.loadScene(this.scene.id, { seed: this.seed, params: this.sim.params, pad: this.pad, palette: this.palette, ...this.colonyOptions() });
+  }
+
+  /** Territories: the options that restart the same match-up (none elsewhere). */
+  colonyOptions(): Pick<SceneOptions, "colonies" | "rivalry" | "colonyPads" | "mixed"> {
+    if (this.sim.colonies < 2) return {};
+    return { colonies: this.sim.colonies, rivalry: this.rivalry, colonyPads: this.colonyPads.slice(), mixed: this.mixed };
+  }
+
+  /** Territories: how many colonies (a restart from the scene's start, same seed). */
+  async setColonyCount(n: number): Promise<void> {
+    if (this.blocked("change the colonies") || !this.scene.colonies || n === this.sim.colonies) return;
+    // colonies the dish already had keep their personalities; new ones start at the scene's
+    const pads = Array.from({ length: n }, (_, k) => (k < this.colonyPads.length ? this.colonyPads[k] : undefined));
+    await this.loadScene(this.scene.id, { ...this.colonyOptions(), seed: this.seed, params: this.sim.params, pad: this.pad, palette: this.palette, colonies: n, colonyPads: pads });
+    this.writeUrl();
+  }
+
+  /** Territories: release the colonies apart, or deal every agent to a colony at random (a restart, same seed). */
+  async setMixed(mixed: boolean): Promise<void> {
+    if (this.blocked("change the start") || !this.scene.colonies || mixed === this.mixed) return;
+    await this.loadScene(this.scene.id, { ...this.colonyOptions(), seed: this.seed, params: this.sim.params, pad: this.pad, palette: this.palette, mixed });
+    this.writeUrl();
+  }
+
+  /** Territories: one colony's personality (null: the shared one) — one edit. */
+  setColonyPad(k: number, p: PadPoint | null): void {
+    if (this.blocked("change a colony") || this.sim.colonies < 2) return;
+    const pads = this.colonyPads.slice();
+    pads[k] = p;
+    this.beginEdit();
+    this.editEvent("colonies", { g: this.activeGroup, rivalry: this.rivalry, pads: pads.map((q) => (q ? [q.i, q.j] : null)) });
+    this.activeGroup = 0;
+    this.writeUrl();
+  }
+
+  /** Territories: the rivalry (a drag is one edit). */
+  setRivalry(v: number, phase: "start" | "move" | "end" = "end"): void {
+    if (this.blocked("change the rivalry") || this.sim.colonies < 2) return;
+    if (phase === "start" || this.activeGroup === 0) this.beginEdit();
+    this.editEvent("colonies", { g: this.activeGroup, rivalry: v, pads: this.colonyPads.map((q) => (q ? [q.i, q.j] : null)) });
+    if (phase === "end") {
+      this.activeGroup = 0;
+      this.writeUrl();
+    }
   }
 
   /** Is the live view exactly the gated run (gated scene, canonical parameters, no edits)? */
@@ -345,7 +457,7 @@ export class App {
    * coalesces into one event per step per group: changes at the same
    * boundary have no steps between them, so only the last can matter.
    */
-  private editEvent(kind: "params" | "food" | "light" | "walls", payload: ParamsPayload | SpotsPayload | WallsPayload): void {
+  private editEvent(kind: "params" | "food" | "light" | "walls" | "colonies", payload: ParamsPayload | SpotsPayload | WallsPayload | ColoniesPayload): void {
     const all = this.log.all();
     const last = all[all.length - 1];
     const lp = last?.payload as { g?: number } | undefined;
@@ -365,6 +477,12 @@ export class App {
       const [delta_phi_deg, L_sense, L_move, deposit, decay_alpha] = p.p as [number, number, number, number, number];
       this.sim.setParams({ delta_phi_deg, L_sense, L_move, deposit, decay_alpha });
       this.pad = p.pad ? { i: p.pad[0]!, j: p.pad[1]! } : null;
+    } else if (e.kind === "colonies") {
+      const c = e.payload as ColoniesPayload;
+      this.rivalry = c.rivalry;
+      this.colonyPads = c.pads.map((q) => (q ? { i: q[0]!, j: q[1]! } : null));
+      this.sim.setColonies(this.colonyParamsFor(), this.rivalry);
+      this.hooks.onColonies?.();
     } else if (e.kind === "walls") {
       const env = this.envOrDefault();
       this.strokes = (e.payload as WallsPayload).strokes.map((s) => s.slice());
@@ -584,6 +702,9 @@ export class App {
       this.sim.restore(snap.cp);
       this.pad = snap.pad;
       this.strokes = snap.strokes.slice();
+      this.colonyPads = snap.colonyPads.slice();
+      this.rivalry = snap.cp.rivalry;
+      this.forgetTerritory();
       this.log.load(kept);
       this.applied = snap.logIndex;
       const span = target - snap.cp.tick;
@@ -599,6 +720,7 @@ export class App {
       this.view.invalidate();
       this.syncMarkers();
       this.hooks.onParams?.(this.sim.params, this.pad);
+      this.hooks.onColonies?.();
       this.hooks.onEdited?.();
       this.writeUrl();
     } finally {
@@ -888,6 +1010,11 @@ export class App {
       probeIdx = iy * this.sim.w + ix;
       enc.copyBufferToBuffer(this.sim.trail, probeIdx * 4, this.probeBuf, 0, 4);
       enc.copyBufferToBuffer(this.sim.lastDeposit, probeIdx * 4, this.probeBuf, 4, 4);
+      // territories: the other colonies' planes, and their deposits
+      for (let k = 1; k < this.sim.colonies; k += 1) {
+        enc.copyBufferToBuffer(this.sim.trail, (k * this.sim.cells + probeIdx) * 4, this.probeBuf, 8 * k, 4);
+        enc.copyBufferToBuffer(this.sim.lastDeposit, (k * this.sim.cells + probeIdx) * 4, this.probeBuf, 8 * k + 4, 4);
+      }
       this.probeBusy = true;
       this.probeDue = now + 70;
     }
@@ -912,6 +1039,8 @@ export class App {
         version: this.sim.tick * 4 + this.sim.sorts,
         env: this.sim.env,
         walls: !!this.sim.envSpec?.walls,
+        colonies: this.sim.colonies,
+        colonyMeans: Array.from({ length: this.sim.colonies }, (_, k) => this.sim.colonyMean(k)),
       },
       save ? { trail: save.cp.trail, key: `cp-${this.compareKey}` } : null,
       this.profiler ?? undefined,
@@ -933,6 +1062,7 @@ export class App {
 
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
     this.autoScore(now);
+    this.autoTerritory(now);
     this.updateRing();
     if (now - this.rateT0 > 1000) {
       this.stepsPerSecond = ((this.stepsTotal - this.rateTick0) * 1000) / (now - this.rateT0);
@@ -1040,7 +1170,7 @@ export class App {
       this.fade = Math.max(0, this.fade - dt / FADE_S);
       if (this.fade === 0) {
         this.seed += 1;
-        this.sim.seed(this.scene.seed!(this.sim.w, this.sim.h, this.seed));
+        this.sim.seed(this.seedSpec(this.scene, this.sim.w, this.sim.h, this.seed, this.sim.colonies));
         this.log.clear();
         this.applied = 0;
         this.clock.reset();
@@ -1062,27 +1192,40 @@ export class App {
       const ab = this.probeBuf.getMappedRange().slice(0);
       this.probeBuf.unmap();
       if (!this.hover) return;
-      const trail = new Float32Array(ab, 0, 1)[0]!;
-      const dep = new Uint32Array(ab, 4, 1)[0]!;
-      const agents = dep / (this.sim.params.deposit * 65536);
       const x = idx % this.sim.w;
       const y = Math.floor(idx / this.sim.w);
       const p = this.studio.probe;
       p.hidden = false;
       p.innerHTML = "";
-      p.append(
-        h("strong", {}, `Cell ${x}, ${y}`),
-        h(
-          "dl",
-          {},
-          h("dt", {}, "Trail"),
-          h("dd", {}, trail.toFixed(2)),
-          h("dt", {}, "× the dish's mean"),
-          h("dd", {}, (trail / this.sim.meanTrail).toFixed(2)),
-          h("dt", {}, "Agents here, last step"),
-          h("dd", {}, Math.round(agents).toLocaleString()),
-        ),
-      );
+      const perAgent = this.sim.params.deposit * 65536;
+      if (this.sim.colonies > 1) {
+        // territories: each colony's trail here, against its own mean
+        const rows: HTMLElement[] = [];
+        let agents = 0;
+        for (let k = 0; k < this.sim.colonies; k += 1) {
+          const t = new Float32Array(ab, 8 * k, 1)[0]!;
+          agents += new Uint32Array(ab, 8 * k + 4, 1)[0]! / perAgent;
+          rows.push(h("dt", {}, `${COLONIES[k]!.name} trail`), h("dd", {}, `${(t / this.sim.colonyMean(k)).toFixed(2)}× its mean`));
+        }
+        p.append(h("strong", {}, `Cell ${x}, ${y}`), h("dl", {}, ...rows, h("dt", {}, "Agents here, last step"), h("dd", {}, Math.round(agents).toLocaleString())));
+      } else {
+        const trail = new Float32Array(ab, 0, 1)[0]!;
+        const dep = new Uint32Array(ab, 4, 1)[0]!;
+        const agents = dep / perAgent;
+        p.append(
+          h("strong", {}, `Cell ${x}, ${y}`),
+          h(
+            "dl",
+            {},
+            h("dt", {}, "Trail"),
+            h("dd", {}, trail.toFixed(2)),
+            h("dt", {}, "× the dish's mean"),
+            h("dd", {}, (trail / this.sim.meanTrail).toFixed(2)),
+            h("dt", {}, "Agents here, last step"),
+            h("dd", {}, Math.round(agents).toLocaleString()),
+          ),
+        );
+      }
       const [hx, hy] = this.hover;
       const left = Math.min(hx + 18, this.camera.viewW - 200);
       const top = Math.min(hy + 18, this.camera.viewH - 140);
@@ -1145,7 +1288,49 @@ export class App {
     const predicted = sim.predictedMass;
     let mass = 0;
     for (let i = 0; i < trail.length; i += 1) mass += trail[i]!;
-    return { mass, predicted, equilibrium, tick };
+    const per = sim.predictedColonies;
+    if (!per) return { mass, predicted, equilibrium, tick };
+    // territories: plane by plane
+    const colonies = per.map((p, k) => {
+      let m = 0;
+      for (let i = k * sim.cells; i < (k + 1) * sim.cells; i += 1) m += trail[i]!;
+      return { mass: m, predicted: p };
+    });
+    return { mass, predicted, equilibrium, tick, colonies };
+  }
+
+  /** Territories: read who holds the dish now (a GPU count, queued after every step so far). */
+  async readTerritory(): Promise<TerritoryReading | null> {
+    const sim = this.sim;
+    if (sim.colonies < 2) return null;
+    const tick = sim.tick;
+    const gen = this.territoryGen;
+    const [shares, agents] = await Promise.all([sim.shares(), sim.colonyCounts()]);
+    if (sim !== this.sim || gen !== this.territoryGen) return null;
+    const t = { tick, shares, agents };
+    this.territory = t;
+    this.hooks.onTerritory?.(t);
+    return t;
+  }
+
+  /** Territories: the dish changed without its step moving (restore, undo): read it again, even paused. */
+  private forgetTerritory(): void {
+    this.territory = null;
+    this.territoryDue = 0;
+    this.territoryGen += 1;
+  }
+
+  /** Territories: read the shares about twice a second while the dish changes. */
+  private autoTerritory(now: number): void {
+    if (this.sim.colonies < 2 || this.territoryBusy || now < this.territoryDue || this.history.comparing) return;
+    if (this.territory && this.territory.tick === this.sim.tick) return;
+    this.territoryBusy = true;
+    this.territoryDue = now + 500;
+    void this.readTerritory()
+      .catch(() => null)
+      .finally(() => {
+        this.territoryBusy = false;
+      });
   }
 
   /**

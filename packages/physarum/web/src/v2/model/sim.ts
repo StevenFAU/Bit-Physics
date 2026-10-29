@@ -8,6 +8,12 @@
 // on contact. The mass balance stays exact through all of it: food deposits
 // are whole fixed-point numbers, and a growing colony's awake count is
 // logged on the GPU step by step and folded into the f64 prediction.
+//
+// Territories (M3): up to four colonies share a dish, each depositing into
+// its own trail plane and smelling its own trail minus `rivalry` × the
+// others'. Each colony may carry its own personality (turn, reach, step,
+// fade; the deposit is shared). The awake count is logged per colony, so the
+// mass balance holds plane by plane: M_k ← (M_k + d·N_k)(1 − α_k).
 
 import { CountingSort, readBuffer, wgsl } from "@bp/gpu";
 import commonSrc from "./live-common.wgsl?raw";
@@ -19,8 +25,11 @@ import seedSrc from "./live-seed.wgsl?raw";
 import foodSrc from "./live-food.wgsl?raw";
 import envSrc from "./live-env.wgsl?raw";
 import logSrc from "./live-log.wgsl?raw";
+import sharesSrc from "./live-shares.wgsl?raw";
 import type { JonesParams } from "../proof/gate.js";
 import { TILE_SHIFT } from "./grid.js";
+import type { Territory } from "./territory.js";
+import { TILE, territoryFromTiles } from "./territory.js";
 
 const LOCAL = { "physarum/live-common": commonSrc };
 const U = (): typeof GPUBufferUsage => GPUBufferUsage;
@@ -28,8 +37,14 @@ const U = (): typeof GPUBufferUsage => GPUBufferUsage;
 /** Food crumbs and lights a dish can hold (the env sources buffer is sized once). */
 export const MAX_SOURCES = 256;
 
-/** Steps of awake counts the GPU ring holds (live-log.wgsl RING); fold at least this often. */
+/** Steps of awake counts the GPU ring holds (live-common.wgsl AWAKE_RING); fold at least this often. */
 export const AWAKE_RING = 16384;
+/** Most colonies a dish holds (trail planes). */
+export const MAX_COLONIES = 4;
+/** live-common.wgsl: the per-colony awake counts and rings follow the shared log. */
+const SP_COUNT = 2 + AWAKE_RING;
+const SP_RING = SP_COUNT + MAX_COLONIES;
+const AWAKE_WORDS = SP_RING + MAX_COLONIES * AWAKE_RING;
 
 export interface SeedSpec {
   /** 0 whole dish, 1 disc, 2 ring, 3 whole dish but dormant outside the disc (a growing colony). */
@@ -42,6 +57,8 @@ export interface SeedSpec {
   spread?: number;
   /** Mode 3: a dormant agent wakes when the trail under it reaches this many agents' deposits. */
   wake?: number;
+  /** Territories, mode 3: each colony's starting disc centre (cells), radius `radius`. */
+  colonies?: [number, number][];
 }
 
 /** The lowest wake threshold a scene uses (agents' deposits); sizes the food halo. */
@@ -97,6 +114,8 @@ export interface LiveConfig {
   longRun: boolean;
   /** Reorder agents by tile every this many steps (0 = never). */
   sortEvery: number;
+  /** Colonies on the dish (territories), 1–4; default 1 (the plain model). */
+  colonies?: number;
 }
 
 /** One step's terms of the mass recurrence, kept until the awake count for it is read back. */
@@ -104,11 +123,15 @@ interface StepTerms {
   perAgent: number;
   keep: number;
   food: number;
+  /** Territories: each colony's keep (1 − α_k as the kernel rounds it). */
+  keeps: number[] | null;
 }
 
 interface MassState {
-  /** The prediction after `foldedTick` steps. */
+  /** The prediction after `foldedTick` steps (territories: the colonies' sum). */
   mass: number;
+  /** Territories: each colony's plane. */
+  colonies: number[] | null;
   foldedTick: number;
   pending: StepTerms[];
 }
@@ -125,6 +148,9 @@ export interface Checkpoint {
   hungerMax: number | null;
   wakeMul: number;
   env: EnvSpec | null;
+  colonyParams: (JonesParams | null)[] | null;
+  rivalry: number;
+  awakeColonies: number[];
 }
 
 /** WGSL round(): to nearest, ties to even. */
@@ -145,6 +171,7 @@ export class LiveKernels {
     readonly foodLayout: GPUBindGroupLayout,
     readonly envLayout: GPUBindGroupLayout,
     readonly logLayout: GPUBindGroupLayout,
+    readonly sharesLayout: GPUBindGroupLayout,
     readonly agents: GPUComputePipeline,
     readonly diffuse: GPUComputePipeline,
     readonly keys: GPUComputePipeline,
@@ -153,6 +180,7 @@ export class LiveKernels {
     readonly food: GPUComputePipeline,
     readonly env: GPUComputePipeline,
     readonly log: GPUComputePipeline,
+    readonly shares: GPUComputePipeline,
   ) {}
 
   static async create(device: GPUDevice): Promise<LiveKernels> {
@@ -170,13 +198,14 @@ export class LiveKernels {
     const foodLayout = layout("phys-food", [ro, "storage"]);
     const envLayout = layout("phys-env", ["uniform", ro, ro, "storage"]);
     const logLayout = layout("phys-log", ["storage"]);
+    const sharesLayout = layout("phys-shares", [ro, "storage", "uniform"]);
     const mk = (label: string, src: string, entryPoint: string, l: GPUBindGroupLayout): Promise<GPUComputePipeline> =>
       device.createComputePipelineAsync({
         label,
         layout: device.createPipelineLayout({ bindGroupLayouts: [paramsLayout, l] }),
         compute: { module: device.createShaderModule({ code: wgsl(src, LOCAL), label }), entryPoint },
       });
-    const [agents, diffuse, keys, gather, seed, food, env, log] = await Promise.all([
+    const [agents, diffuse, keys, gather, seed, food, env, log, shares] = await Promise.all([
       mk("phys-agents", agentsSrc, "agents_step", agentsLayout),
       mk("phys-diffuse", diffuseSrc, "diffuse", diffuseLayout),
       mk("phys-keys", sortSrc, "sort_keys", keysLayout),
@@ -185,6 +214,7 @@ export class LiveKernels {
       mk("phys-food", foodSrc, "food_deposit", foodLayout),
       mk("phys-env", envSrc, "build_env", envLayout),
       mk("phys-log", logSrc, "log_awake", logLayout),
+      mk("phys-shares", sharesSrc, "shares", sharesLayout),
     ]);
     return new LiveKernels(
       paramsLayout,
@@ -196,6 +226,7 @@ export class LiveKernels {
       foodLayout,
       envLayout,
       logLayout,
+      sharesLayout,
       agents,
       diffuse,
       keys,
@@ -204,9 +235,13 @@ export class LiveKernels {
       food,
       env,
       log,
+      shares,
     );
   }
 }
+
+/** Territories: who holds the dish (model/territory.ts). */
+export type Shares = Territory;
 
 export class LiveSim {
   readonly w: number;
@@ -236,9 +271,18 @@ export class LiveSim {
   hungerMax: number | null = null;
   private foodSources = 0;
 
-  /** Agents can wake, so the awake count is logged every step. */
+  /** Colonies on the dish (1: the plain model; more: territories, one trail plane each). */
+  readonly colonies: number;
+  /** Territories: each colony's personality (null, or a null entry: follows `params`). The deposit is always `params.deposit`. */
+  colonyParams: (JonesParams | null)[] | null = null;
+  /** Territories: a colony smells its own trail minus this × the others'. */
+  rivalry = 1;
+  /** Territories: agents per colony at the last fold (the counts the mass balance used). */
+  awakeColonies: number[] = [];
+
+  /** Agents can wake, or colonies are counted, so the awake count is logged every step. */
   get logged(): boolean {
-    return this.growing;
+    return this.growing || this.colonies > 1;
   }
 
   /**
@@ -265,9 +309,10 @@ export class LiveSim {
    * Without a growing colony every step folds at once; with one, a step
    * folds when its awake count is read back (`foldMass`).
    */
-  private mass: MassState = { mass: 0, foldedTick: 0, pending: [] };
+  private mass: MassState = { mass: 0, colonies: null, foldedTick: 0, pending: [] };
   private perAgent = 0;
   private keep = 1;
+  private keeps: number[] | null = null;
   private foldGen = 0;
 
   private readonly device: GPUDevice;
@@ -302,6 +347,7 @@ export class LiveSim {
   private readonly seedBG: GPUBindGroup;
   private readonly envBG: GPUBindGroup;
   private readonly logBG: GPUBindGroup;
+  private sharesRes: { out: GPUBuffer; read: GPUBuffer; uni: GPUBuffer; bg: GPUBindGroup[] } | null = null;
   /** Which trail buffer is current (the deposit parity equals it, see `encodeSteps`). */
   private t = 0;
   /** Which agent buffer is current. */
@@ -318,26 +364,29 @@ export class LiveSim {
     this.params = { ...cfg.params };
     this.longRun = cfg.longRun;
     this.sortEvery = cfg.sortEvery;
+    this.colonies = Math.max(1, Math.min(MAX_COLONIES, Math.round(cfg.colonies ?? 1)));
     const S = U().STORAGE | U().COPY_DST | U().COPY_SRC;
     const agentBytes = cfg.n * 16;
     const cellBytes = this.cells * 4;
+    // one trail plane per colony
+    const planeBytes = cellBytes * this.colonies;
     this.agentBufs = [0, 1].map((i) => device.createBuffer({ size: agentBytes, usage: S, label: `phys-agents-${i}` })) as [GPUBuffer, GPUBuffer];
-    this.trailBufs = [0, 1].map((i) => device.createBuffer({ size: cellBytes, usage: S, label: `phys-trail-${i}` })) as [GPUBuffer, GPUBuffer];
-    this.depBufs = [0, 1].map((i) => device.createBuffer({ size: cellBytes, usage: S, label: `phys-dep-${i}` })) as [GPUBuffer, GPUBuffer];
+    this.trailBufs = [0, 1].map((i) => device.createBuffer({ size: planeBytes, usage: S, label: `phys-trail-${i}` })) as [GPUBuffer, GPUBuffer];
+    this.depBufs = [0, 1].map((i) => device.createBuffer({ size: planeBytes, usage: S, label: `phys-dep-${i}` })) as [GPUBuffer, GPUBuffer];
     this.keys = device.createBuffer({ size: Math.max(16, cfg.n * 4), usage: S, label: "phys-keys" });
     this.tilesX = Math.ceil(cfg.w / (1 << TILE_SHIFT));
     const tilesY = Math.ceil(cfg.h / (1 << TILE_SHIFT));
     this.sort = new CountingSort(device, { maxItems: cfg.n, keyCount: this.tilesX * tilesY, label: "phys-sort" });
-    this.uniform = device.createBuffer({ size: 80, usage: U().UNIFORM | U().COPY_DST, label: "phys-params" });
-    this.seedUniform = device.createBuffer({ size: 32, usage: U().UNIFORM | U().COPY_DST, label: "phys-seed" });
+    this.uniform = device.createBuffer({ size: 144, usage: U().UNIFORM | U().COPY_DST, label: "phys-params" });
+    this.seedUniform = device.createBuffer({ size: 64, usage: U().UNIFORM | U().COPY_DST, label: "phys-seed" });
     this.env = device.createBuffer({ size: cellBytes, usage: S, label: "phys-env" });
     this.bitsWords = Math.ceil(this.cells / 32);
     this.cellBits = device.createBuffer({ size: Math.max(16, this.bitsWords * 8), usage: S, label: "phys-cell-bits" });
     this.envUniform = device.createBuffer({ size: 16, usage: U().UNIFORM | U().COPY_DST, label: "phys-env-info" });
     // sized once for MAX_SOURCES so the bind groups that read it never go stale
     this.envSrcs = device.createBuffer({ size: MAX_SOURCES * 32, usage: S, label: "phys-env-srcs" });
-    this.awake = device.createBuffer({ size: (2 + AWAKE_RING) * 4, usage: S, label: "phys-awake" });
-    this.flags = cfg.longRun ? 3 : 0;
+    this.awake = device.createBuffer({ size: AWAKE_WORDS * 4, usage: S, label: "phys-awake" });
+    this.flags = (cfg.longRun ? 3 : 0) | (this.colonies > 1 ? 128 : 0);
     this.writeParams();
 
     const bg = (layout: GPUBindGroupLayout, label: string, ...bufs: GPUBuffer[]): GPUBindGroup =>
@@ -361,7 +410,7 @@ export class LiveSim {
     this.logBG = bg(kernels.logLayout, "phys-log", this.awake);
   }
 
-  /** Current trail (row-major, w × h f32). */
+  /** Current trail (row-major, w × h f32; territories: one such plane per colony). */
   get trail(): GPUBuffer {
     return this.trailBufs[this.t]!;
   }
@@ -376,18 +425,57 @@ export class LiveSim {
     return this.agentBufs[this.a]!;
   }
 
+  /** Bytes of the trail: every colony's plane. */
   get trailBytes(): number {
-    return this.cells * 4;
+    return this.cells * 4 * this.colonies;
   }
 
-  /** Mean trail per cell at equilibrium for the current parameters (every agent awake). */
+  /** Mean trail per cell at equilibrium for the current parameters (every agent awake; territories: the planes' sum, colonies of equal size). */
   get meanTrail(): number {
+    if (this.colonies > 1) {
+      let m = 0;
+      for (let k = 0; k < this.colonies; k += 1) m += this.colonyMean(k);
+      return m;
+    }
     return (this.params.deposit * (this.n / this.cells) * (1 - this.params.decay_alpha)) / this.params.decay_alpha;
   }
 
-  /** Total mass at equilibrium, (d·N + F)·(1−α)/α (every agent awake). */
+  /** Territories: colony k's personality (its turn, reach, step and fade; the shared deposit). */
+  colonyAt(k: number): JonesParams {
+    const c = this.colonyParams?.[k];
+    return c ? { ...c, deposit: this.params.deposit } : this.params;
+  }
+
+  /** Territories: the mean of colony k's plane at balance if the dish's agents were shared equally. */
+  colonyMean(k: number): number {
+    const p = this.colonyAt(k);
+    return (p.deposit * (this.n / this.colonies / this.cells) * (1 - p.decay_alpha)) / p.decay_alpha;
+  }
+
+  /** Total mass at equilibrium, (d·N + F)·(1−α)/α (every agent awake; territories: at the last counts, each colony at its own fade). */
   get equilibriumMass(): number {
+    if (this.colonies > 1) {
+      const counts = this.awakeColonies.length ? this.awakeColonies : Array.from({ length: this.colonies }, () => this.n / this.colonies);
+      let m = 0;
+      counts.forEach((nk, k) => {
+        const p = this.colonyAt(k);
+        m += (p.deposit * nk * (1 - p.decay_alpha)) / p.decay_alpha;
+      });
+      return m;
+    }
     return ((this.params.deposit * this.n + this.foodPerStep) * (1 - this.params.decay_alpha)) / this.params.decay_alpha;
+  }
+
+  /** Territories: each colony's prediction after the steps folded so far. */
+  get predictedColonies(): number[] | null {
+    return this.mass.colonies ? this.mass.colonies.slice() : null;
+  }
+
+  /** Territories: give each colony its own personality (null, or a null entry: follows `params`), and the rivalry. */
+  setColonies(params: (JonesParams | null)[] | null, rivalry: number): void {
+    this.colonyParams = params ? params.map((p) => (p ? { ...p } : null)) : null;
+    this.rivalry = rivalry;
+    this.writeParams();
   }
 
   /**
@@ -415,10 +503,11 @@ export class LiveSim {
     const d = Math.fround(this.params.deposit);
     this.perAgent = roundEven(Math.fround(d * 65536)) / 65536;
     this.keep = Math.fround(1 - Math.fround(this.params.decay_alpha));
+    this.keeps = this.colonies > 1 ? Array.from({ length: this.colonies }, (_, k) => Math.fround(1 - Math.fround(this.colonyAt(k).decay_alpha))) : null;
   }
 
   private writeParams(): void {
-    const ab = new ArrayBuffer(80);
+    const ab = new ArrayBuffer(144);
     const dv = new DataView(ab);
     const p = this.params;
     dv.setUint32(0, this.n, true);
@@ -436,15 +525,31 @@ export class LiveSim {
     dv.setUint32(44, this.bitsWords, true);
     dv.setFloat32(48, this.wakeMul * Math.fround(p.deposit), true);
     dv.setFloat32(52, this.jitter, true);
+    dv.setFloat32(56, this.rivalry, true);
+    dv.setUint32(60, this.colonies, true);
     dv.setFloat32(64, this.hungerMax ?? 0, true);
     dv.setUint32(68, this.foodSources, true);
+    for (let k = 0; k < this.colonies && this.colonies > 1; k += 1) {
+      const q = this.colonyAt(k);
+      dv.setFloat32(80 + k * 16, (q.delta_phi_deg * Math.PI) / 180, true);
+      dv.setFloat32(84 + k * 16, q.L_sense, true);
+      dv.setFloat32(88 + k * 16, q.L_move, true);
+      dv.setFloat32(92 + k * 16, q.decay_alpha, true);
+    }
     this.device.queue.writeBuffer(this.uniform, 0, ab);
     this.massTerms();
   }
 
   private setFlags(): void {
     const sensing = !!this.envSpec && (this.envSpec.food.length + this.envSpec.lights.length > 0 || !!this.envSpec.walls);
-    this.flags = (this.longRun ? 3 : 0) | (sensing ? 4 : 0) | (this.envSpec?.walls ? 8 : 0) | (this.growing ? 16 : 0) | (this.stochastic ? 32 : 0) | (this.hungerMax !== null ? 64 : 0);
+    this.flags =
+      (this.longRun ? 3 : 0) |
+      (sensing ? 4 : 0) |
+      (this.envSpec?.walls ? 8 : 0) |
+      (this.growing ? 16 : 0) |
+      (this.stochastic ? 32 : 0) |
+      (this.hungerMax !== null ? 64 : 0) |
+      (this.colonies > 1 ? 128 : 0);
     this.writeParams();
   }
 
@@ -478,9 +583,10 @@ export class LiveSim {
     dev.queue.writeBuffer(this.envUniform, 0, new Uint32Array([count, 0, 0, 0]));
 
     // food: every cell of every crumb deposits the same whole number of 1/65536ths per step
+    // (not in territories: a crumb's trail would be one colony's, and repel the rest)
     const walls = spec?.walls ?? null;
     const cells: number[] = [];
-    if (spec && spec.food.length > 0) {
+    if (spec && spec.food.length > 0 && this.colonies === 1) {
       const amount = Math.max(1, Math.round(spec.foodDeposit * this.perAgent * 65536));
       for (const f of spec.food) {
         const r = Math.max(0.5, f.r);
@@ -555,13 +661,13 @@ export class LiveSim {
   private clearField(enc: GPUCommandEncoder): void {
     for (const b of [...this.trailBufs, ...this.depBufs]) enc.clearBuffer(b);
     this.t = 0;
-    this.mass = { mass: 0, foldedTick: 0, pending: [] };
+    this.mass = { mass: 0, colonies: this.colonies > 1 ? new Array<number>(this.colonies).fill(0) : null, foldedTick: 0, pending: [] };
     this.foldGen += 1;
   }
 
   /** Seed the colony on the GPU from (seed, index); clears the trail. */
   seed(s: SeedSpec): void {
-    const ab = new ArrayBuffer(32);
+    const ab = new ArrayBuffer(64);
     const u = new Uint32Array(ab);
     const f = new Float32Array(ab);
     u[0] = s.seed >>> 0;
@@ -570,12 +676,19 @@ export class LiveSim {
     f[5] = s.centre?.[1] ?? this.h / 2;
     f[6] = s.radius ?? Math.min(this.w, this.h) * 0.1;
     f[7] = s.spread ?? 0.6;
+    (s.colonies ?? []).slice(0, MAX_COLONIES).forEach(([x, y], k) => {
+      f[8 + k * 2] = x;
+      f[9 + k * 2] = y;
+    });
     this.device.queue.writeBuffer(this.seedUniform, 0, ab);
     this.growing = s.mode === 3;
     this.wakeMul = s.wake ?? 1;
     this.setFlags();
-    // the awake log starts empty; the seed pass counts a growing colony's awake agents
-    this.device.queue.writeBuffer(this.awake, 0, new Uint32Array([this.growing ? 0 : this.n, 0]));
+    // the awake log starts empty; the seed pass counts a growing colony's (or each colony's) awake agents
+    const counted = this.growing || this.colonies > 1;
+    this.device.queue.writeBuffer(this.awake, 0, new Uint32Array([counted ? 0 : this.n, 0]));
+    this.device.queue.writeBuffer(this.awake, SP_COUNT * 4, new Uint32Array(MAX_COLONIES));
+    this.awakeColonies = [];
     const enc = this.device.createCommandEncoder({ label: "phys-seed" });
     this.clearField(enc);
     const pass = enc.beginComputePass({ label: "phys-seed" });
@@ -613,6 +726,7 @@ export class LiveSim {
     const wgA = Math.ceil(this.n / 256);
     const wgX = Math.ceil(this.w / 16);
     const wgY = Math.ceil(this.h / 16);
+    const wgZ = this.colonies;
     let pass = enc.beginComputePass({ label: "phys-sim", timestampWrites: timing?.("sim") });
     pass.setBindGroup(0, this.paramsBG);
     let sortedThisFrame = false;
@@ -632,11 +746,11 @@ export class LiveSim {
       }
       pass.setPipeline(this.k.diffuse);
       pass.setBindGroup(1, this.diffuseBG[this.t]!);
-      pass.dispatchWorkgroups(wgX, wgY);
+      pass.dispatchWorkgroups(wgX, wgY, wgZ);
       this.t = 1 - this.t;
       this.tick += 1;
       if (this.logged) {
-        this.mass.pending.push({ perAgent: this.perAgent, keep: this.keep, food: this.foodPerStep });
+        this.mass.pending.push({ perAgent: this.perAgent, keep: this.keep, food: this.foodPerStep, keeps: this.keeps });
       } else {
         this.mass.mass = (this.mass.mass + this.perAgent * this.n + this.foodPerStep) * this.keep;
         this.mass.foldedTick = this.tick;
@@ -662,7 +776,8 @@ export class LiveSim {
     if (!this.logged || this.mass.foldedTick === this.tick) return;
     const gen = this.foldGen;
     const upTo = this.tick;
-    const data = new Uint32Array(await readBuffer(this.device, this.awake, (2 + AWAKE_RING) * 4));
+    const words = this.colonies > 1 ? SP_RING + this.colonies * AWAKE_RING : 2 + AWAKE_RING;
+    const data = new Uint32Array(await readBuffer(this.device, this.awake, words * 4));
     if (gen !== this.foldGen) return;
     const logged = data[1]!;
     const m = this.mass;
@@ -671,10 +786,24 @@ export class LiveSim {
     // folds can resolve out of order: a later one may already have covered this one
     if (to <= from) return;
     if (to - from > AWAKE_RING) throw new Error(`awake log overrun: ${to - from} steps since the last fold`);
-    for (let k = from; k < to; k += 1) {
-      const terms = m.pending[k - from]!;
-      const awake = data[2 + (k % AWAKE_RING)]!;
-      m.mass = (m.mass + terms.perAgent * awake + terms.food) * terms.keep;
+    if (m.colonies) {
+      // territories: plane by plane, each colony's count at its own fade (no food)
+      const c = m.colonies;
+      for (let k = from; k < to; k += 1) {
+        const terms = m.pending[k - from]!;
+        for (let j = 0; j < c.length; j += 1) {
+          const awake = data[SP_RING + j * AWAKE_RING + (k % AWAKE_RING)]!;
+          c[j] = (c[j]! + terms.perAgent * awake) * terms.keeps![j]!;
+        }
+      }
+      m.mass = c.reduce((a, b) => a + b, 0);
+      this.awakeColonies = Array.from({ length: c.length }, (_, j) => data[SP_RING + j * AWAKE_RING + ((to - 1) % AWAKE_RING)]!);
+    } else {
+      for (let k = from; k < to; k += 1) {
+        const terms = m.pending[k - from]!;
+        const awake = data[2 + (k % AWAKE_RING)]!;
+        m.mass = (m.mass + terms.perAgent * awake + terms.food) * terms.keep;
+      }
     }
     m.pending.splice(0, to - from);
     m.foldedTick = to;
@@ -684,6 +813,71 @@ export class LiveSim {
   async awakeCount(): Promise<number> {
     if (!this.logged) return this.n;
     return new Uint32Array(await readBuffer(this.device, this.awake, 8))[0]!;
+  }
+
+  /** Territories: agents in each colony now (awake ones; read back). */
+  async colonyCounts(): Promise<number[]> {
+    if (this.colonies === 1) return [await this.awakeCount()];
+    const d = new Uint32Array(await readBuffer(this.device, this.awake, (SP_COUNT + MAX_COLONIES) * 4));
+    return Array.from(d.subarray(SP_COUNT, SP_COUNT + this.colonies));
+  }
+
+  /**
+   * Territories: who holds the dish now. A GPU pass sums each colony's trail
+   * per 32 × 32-cell tile (live-shares.wgsl); the CPU decides each tile's
+   * owner from those (model/territory.ts). Reads back 16 bytes per tile.
+   */
+  shares(): Promise<Shares> {
+    // one read at a time: the staging buffer maps once
+    const run = this.sharesQ.then(() => this.sharesNow());
+    this.sharesQ = run.catch(() => undefined);
+    return run;
+  }
+
+  private sharesQ: Promise<unknown> = Promise.resolve();
+
+  private async sharesNow(): Promise<Shares> {
+    const dev = this.device;
+    const tx = Math.ceil(this.w / TILE);
+    const ty = Math.ceil(this.h / TILE);
+    const bytes = tx * ty * 16;
+    if (!this.sharesRes) {
+      const out = dev.createBuffer({ size: bytes, usage: U().STORAGE | U().COPY_SRC, label: "phys-shares" });
+      const read = dev.createBuffer({ size: bytes, usage: U().COPY_DST | U().MAP_READ, label: "phys-shares-read" });
+      const uni = dev.createBuffer({ size: 32, usage: U().UNIFORM | U().COPY_DST, label: "phys-shares-info" });
+      const bg = this.trailBufs.map((t, i) =>
+        dev.createBindGroup({
+          layout: this.k.sharesLayout,
+          label: `phys-shares-${i}`,
+          entries: [
+            { binding: 0, resource: { buffer: t } },
+            { binding: 1, resource: { buffer: out } },
+            { binding: 2, resource: { buffer: uni } },
+          ],
+        }),
+      );
+      this.sharesRes = { out, read, uni, bg };
+    }
+    const r = this.sharesRes;
+    const info = new ArrayBuffer(32);
+    const f = new Float32Array(info);
+    f.fill(1, 0, 4);
+    for (let k = 0; k < this.colonies; k += 1) f[k] = Math.max(1e-12, this.colonyMean(k));
+    new Uint32Array(info)[4] = tx;
+    dev.queue.writeBuffer(r.uni, 0, info);
+    const enc = dev.createCommandEncoder({ label: "phys-shares" });
+    const pass = enc.beginComputePass({ label: "phys-shares" });
+    pass.setPipeline(this.k.shares);
+    pass.setBindGroup(0, this.paramsBG);
+    pass.setBindGroup(1, r.bg[this.t]!);
+    pass.dispatchWorkgroups(tx, ty);
+    pass.end();
+    enc.copyBufferToBuffer(r.out, 0, r.read, 0, bytes);
+    dev.queue.submit([enc.finish()]);
+    await r.read.mapAsync(GPUMapMode.READ);
+    const v = new Float32Array(r.read.getMappedRange().slice(0));
+    r.read.unmap();
+    return territoryFromTiles(v, this.w, this.h, this.colonies);
   }
 
   /** Reorder agents into tile order now (keys → counting sort → gather). */
@@ -707,11 +901,11 @@ export class LiveSim {
   checkpoint(): Checkpoint {
     const S = U().STORAGE | U().COPY_DST | U().COPY_SRC;
     const agents = this.device.createBuffer({ size: this.n * 16, usage: S, label: "phys-cp-agents" });
-    const trail = this.device.createBuffer({ size: this.cells * 4, usage: S, label: "phys-cp-trail" });
+    const trail = this.device.createBuffer({ size: this.trailBytes, usage: S, label: "phys-cp-trail" });
     const awake = this.logged ? this.device.createBuffer({ size: this.awake.size, usage: S, label: "phys-cp-awake" }) : null;
     const enc = this.device.createCommandEncoder({ label: "phys-checkpoint" });
     enc.copyBufferToBuffer(this.agents, 0, agents, 0, this.n * 16);
-    enc.copyBufferToBuffer(this.trail, 0, trail, 0, this.cells * 4);
+    enc.copyBufferToBuffer(this.trail, 0, trail, 0, this.trailBytes);
     if (awake) enc.copyBufferToBuffer(this.awake, 0, awake, 0, this.awake.size);
     this.device.queue.submit([enc.finish()]);
     return {
@@ -720,11 +914,14 @@ export class LiveSim {
       awake,
       tick: this.tick,
       params: { ...this.params },
-      mass: { mass: this.mass.mass, foldedTick: this.mass.foldedTick, pending: this.mass.pending.slice() },
+      mass: { mass: this.mass.mass, colonies: this.mass.colonies?.slice() ?? null, foldedTick: this.mass.foldedTick, pending: this.mass.pending.slice() },
       growing: this.growing,
       hungerMax: this.hungerMax,
       wakeMul: this.wakeMul,
       env: this.envSpec,
+      colonyParams: this.colonyParams ? this.colonyParams.map((p) => (p ? { ...p } : null)) : null,
+      rivalry: this.rivalry,
+      awakeColonies: this.awakeColonies.slice(),
     };
   }
 
@@ -732,7 +929,7 @@ export class LiveSim {
     const enc = this.device.createCommandEncoder({ label: "phys-restore" });
     this.clearField(enc);
     enc.copyBufferToBuffer(c.agents, 0, this.agentBufs[0], 0, this.n * 16);
-    enc.copyBufferToBuffer(c.trail, 0, this.trailBufs[0], 0, this.cells * 4);
+    enc.copyBufferToBuffer(c.trail, 0, this.trailBufs[0], 0, this.trailBytes);
     if (c.awake) enc.copyBufferToBuffer(c.awake, 0, this.awake, 0, this.awake.size);
     this.device.queue.submit([enc.finish()]);
     this.a = 0;
@@ -742,10 +939,13 @@ export class LiveSim {
     this.growing = c.growing;
     this.hungerMax = c.hungerMax;
     this.wakeMul = c.wakeMul;
+    this.colonyParams = c.colonyParams ? c.colonyParams.map((p) => (p ? { ...p } : null)) : null;
+    this.rivalry = c.rivalry;
+    this.awakeColonies = c.awakeColonies.slice();
     // the deposit-derived terms first: setEnv sizes the food's deposit from them
     this.writeParams();
     this.setEnv(c.env);
-    this.mass = { mass: c.mass.mass, foldedTick: c.mass.foldedTick, pending: c.mass.pending.slice() };
+    this.mass = { mass: c.mass.mass, colonies: c.mass.colonies?.slice() ?? null, foldedTick: c.mass.foldedTick, pending: c.mass.pending.slice() };
   }
 
   release(c: Checkpoint): void {
@@ -754,7 +954,7 @@ export class LiveSim {
     c.awake?.destroy();
   }
 
-  /** Read the trail back (f32, row-major). */
+  /** Read the trail back (f32, row-major; territories: every colony's plane, one after another). */
   async readTrail(): Promise<Float32Array> {
     return new Float32Array(await readBuffer(this.device, this.trail, this.trailBytes));
   }
@@ -804,6 +1004,7 @@ export class LiveSim {
     ])
       b.destroy();
     this.foodBuf?.destroy();
+    if (this.sharesRes) for (const b of [this.sharesRes.out, this.sharesRes.read, this.sharesRes.uni]) b.destroy();
     this.sort.destroy();
   }
 }

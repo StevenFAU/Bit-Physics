@@ -24,6 +24,14 @@
 // drawn across the maze's route lengthens the shortest path and undo takes
 // it away; the mass balance stays exact with walls and hunger; the score
 // card fits and passes axe at 1440 and 390 px.
+// M3: Territories boots with three colonies in their own trail planes; with
+// one shared personality the release sites split the dish fairly; the
+// default contest has a winner; the mass balance holds colony by colony
+// (apart and mixed); rivalry keeps a mixed start's colonies out of each
+// other's tubes; a colony's personality is one undoable edit that replays to
+// the bytes of a run without it; a share link reproduces the match-up; the
+// card fits and passes axe at 1440 and 390 px; the morphology baseline
+// (v2-morphology.mjs) reproduces exactly for seed 1 at the boot tier.
 // Prints a BP_BENCH line (agents, frame time) at the end.
 
 import { createServer } from "node:http";
@@ -669,6 +677,174 @@ const hashAfter = (page, n) =>
   });
   check("First Light's Light tool repels (env at its centre ≪ 0)", r4.light && r4.depth < -10, JSON.stringify(r4));
   check("no console errors (review regressions)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+
+// --- M3: Territories ----------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=territories");
+  await page.waitForTimeout(800);
+  const t = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    app.clock.paused = true;
+    await sleep(150);
+    const boot = { colonies: app.sim.colonies, growing: app.sim.growing, planes: app.sim.trailBytes / (app.sim.cells * 4), card: !document.querySelector(".ph-terr").hidden, pads: app.colonyPads.map((p) => (p ? `${p.i},${p.j}` : null)) };
+    const rel = (m) => Math.max(...m.colonies.map((c) => Math.abs(c.mass - c.predicted) / c.predicted));
+    const shares = async () => {
+      const r = await app.readTerritory();
+      const all = r.agents.reduce((a, b) => a + b, 0);
+      return r.agents.map((v) => v / all);
+    };
+    // the default contest (Tune's personality against Lace and Cells)
+    await app.loadScene("territories", { seed: 1 });
+    app.clock.paused = true;
+    await app.advance(1200);
+    const contest = await shares();
+    const contestMass = rel(await app.liveMass());
+    // one shared personality: the release sites are fair
+    await app.loadScene("territories", { seed: 1, colonyPads: [null, null, null] });
+    app.clock.paused = true;
+    await app.advance(1200);
+    const fair = await shares();
+    // a mixed start, rivalry 0 and 1
+    const overlap = {};
+    let mixedMass = 0;
+    for (const rivalry of [0, 1]) {
+      await app.loadScene("territories", { seed: 1, mixed: true, rivalry, colonyPads: [null, null, null] });
+      app.clock.paused = true;
+      await app.advance(1500);
+      const m = await app.liveMass();
+      mixedMass = Math.max(mixedMass, rel(m));
+      const trail = await app.sim.readTrail();
+      const cells = app.sim.cells;
+      let any = 0;
+      let shared = 0;
+      const lim = [0, 1, 2].map((k) => app.sim.colonyMean(k));
+      for (let i = 0; i < cells; i += 1) {
+        let n = 0;
+        for (let k = 0; k < 3; k += 1) if (trail[k * cells + i] >= lim[k]) n += 1;
+        if (n > 0) any += 1;
+        if (n > 1) shared += 1;
+      }
+      overlap[rivalry] = shared / any;
+    }
+    return { boot, contest, contestMass, fair, overlap, mixedMass };
+  });
+  check("Territories: three colonies, each in its own trail plane, released on a sleeping dish; the card shown", t.boot.colonies === 3 && t.boot.planes === 3 && t.boot.growing && t.boot.card, JSON.stringify(t.boot));
+  check("one shared personality: the release sites split the agents fairly (each 33% ± 2%)", t.fair.every((v) => Math.abs(v - 1 / 3) < 0.02), t.fair.map((v) => (v * 100).toFixed(1)).join(" / "));
+  check("the default contest has a winner: Tune's personality recruits the most agents", t.contest[0] > t.contest[1] && t.contest[0] > t.contest[2], t.contest.map((v) => (v * 100).toFixed(1)).join(" / "));
+  check("mass balance exact colony by colony while they grow (rel < 1e-6)", t.contestMass < 1e-6, `worst colony rel ${t.contestMass.toExponential(2)}`);
+  check("mass balance exact colony by colony on a mixed start (rel < 1e-6)", t.mixedMass < 1e-6, `worst colony rel ${t.mixedMass.toExponential(2)}`);
+  check("rivalry keeps a mixed start's colonies out of each other's tubes (overlap at rivalry 1 < ¼ of rivalry 0's)", t.overlap[1] < 0.25 * t.overlap[0], `tube cells two colonies share: ${(t.overlap[0] * 100).toFixed(1)}% at rivalry 0, ${(t.overlap[1] * 100).toFixed(2)}% at rivalry 1`);
+
+  // a colony's personality: one undoable edit; undo replays to the bytes of a run without it
+  const u = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const hash = async () => {
+      const tr = await app.sim.readTrail();
+      const d = await crypto.subtle.digest("SHA-256", tr.buffer);
+      return [...new Uint8Array(d)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    };
+    await app.loadScene("territories", { seed: 3 });
+    app.clock.paused = true;
+    await app.advance(600);
+    const plain = await hash();
+    await app.loadScene("territories", { seed: 3 });
+    app.clock.paused = true;
+    await app.advance(300);
+    app.setColonyPad(1, { i: 2, j: 0 });
+    const edited = { pad: app.colonyPads[1], edits: app.edits };
+    await app.advance(300);
+    const withEdit = await hash();
+    await app.undo();
+    const undone = await hash();
+    return { plain, withEdit, undone, edited, after: app.colonyPads[1], tick: app.sim.tick };
+  });
+  check("a colony's personality is one edit; undo replays to the bytes of a run that never had it", u.edited.edits === 1 && u.withEdit !== u.plain && u.undone === u.plain && u.tick === 600 && JSON.stringify(u.after) === JSON.stringify({ i: 4, j: 0 }), JSON.stringify({ edited: u.edited, after: u.after, same: u.undone === u.plain }));
+  check("no console errors (Territories)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  // review regression (PR #47): paused, a colony's personality edit rebuilds the card; it must
+  // keep the dish's reading (none is taken at the same step), and an undo must read again
+  const { ctx, page, errors } = await open("/v2/?s=territories");
+  await page.waitForTimeout(3000);
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    if (!app.clock.paused) app.togglePlay();
+    await sleep(1500);
+    const nums = () => [...document.querySelectorAll(".ph-terr-num")].map((e) => e.textContent);
+    app.setColonyPad(1, { i: 2, j: 0 });
+    await sleep(1000);
+    const afterEdit = nums();
+    await app.undo();
+    await sleep(1500);
+    return { afterEdit, afterUndo: nums(), read: app.territory?.tick, tick: app.sim.tick };
+  });
+  check("paused: a colony edit keeps the card's reading, and undo reads the dish again", r.afterEdit.every((t) => t !== "—") && r.afterUndo.every((t) => t !== "—") && r.read === r.tick, JSON.stringify(r));
+  check("no console errors (paused colony edit)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  // a share link reproduces the match-up: two colonies, a personality each, rivalry, a mixed start
+  const { ctx, page, errors } = await open("/v2/?s=territories&col=2&riv=0.5&mix=1&cp=24,25,-1,-1&seed=7");
+  const r = await T(page, () => {
+    const app = globalThis.__physarum;
+    return { colonies: app.sim.colonies, rivalry: app.sim.rivalry, mixed: app.mixed, pads: app.colonyPads, seed: app.seed, card: document.querySelectorAll(".ph-terr-row").length };
+  });
+  check("a territories link reproduces colonies, personalities, rivalry and the mixed start", r.colonies === 2 && r.rivalry === 0.5 && r.mixed && r.seed === 7 && JSON.stringify(r.pads) === JSON.stringify([{ i: 4, j: 4 }, null]) && r.card === 2, JSON.stringify(r));
+  check("no console errors (territories link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
+  for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
+    const { ctx, page, errors } = await open("/v2/?s=territories", vp);
+    await page.waitForTimeout(3000);
+    if (vp.width < 640) {
+      await page.click(".ph-terr .ph-score-fold");
+      await page.waitForTimeout(200);
+    }
+    const fit = await T(page, () => {
+      const r = (el) => { const b = el.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
+      const card = r(document.querySelector(".ph-terr"));
+      const others = [".bp-rail", ".bp-transport", ".bp-top-actions", ".bp-heading .bp-scene-title"].map((s) => [s, document.querySelector(s)]).filter(([, e]) => e && e.getBoundingClientRect().width > 0).map(([s, e]) => [s, r(e)]);
+      const overlap = (a, b) => a[0] < b[2] - 1 && b[0] < a[2] - 1 && a[1] < b[3] - 1 && b[1] < a[3] - 1;
+      const el = document.querySelector(".ph-terr");
+      return { card, inside: card[0] >= 0 && card[1] >= 0 && card[2] <= innerWidth && card[3] <= innerHeight, overlaps: others.filter(([, b]) => overlap(card, b)).map(([s]) => s), scrolls: el.scrollHeight > el.clientHeight + 1, read: !!globalThis.__physarum.territory };
+    });
+    await page.evaluate(axeSource);
+    const v = await page.evaluate(async () =>
+      // eslint-disable-next-line no-undef
+      (await axe.run(document, { runOnly: { type: "tag", values: ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "best-practice"] } })).violations.map((x) => `${x.id}: ${x.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(", ")}`),
+    );
+    await shot(page, `05-territories-${vp.width}`);
+    check(`territories card at ${vp.width} px: inside the viewport, over no other chrome${vp.width >= 1024 ? ", no scrolling" : ""}`, fit.inside && fit.overlaps.length === 0 && (vp.width < 1024 || !fit.scrolls) && fit.read, JSON.stringify(fit));
+    check(`territories card at ${vp.width} px: no axe violations`, v.length === 0, v.join(" | "));
+    check(`no console errors (territories card at ${vp.width} px)`, errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
+}
+{
+  // the morphology baseline reproduces exactly at the boot tier (seed 1), where it was measured
+  const base = JSON.parse(await readFile(new URL("./src/v2/generated/morphology-baseline.json", import.meta.url), "utf8"));
+  const { ctx, page, errors } = await open("/v2/");
+  const d = await T(page, () => globalThis.__bpDebug());
+  const same = base.profiles.full.adapter === d.adapter;
+  const full = base.profiles.full.runs;
+  const res = [];
+  for (const key of ["network", "territories", "lace"]) {
+    const b = full[key];
+    const bt = b.dishes[d.tier];
+    const g = await T(page, (o) => globalThis.__physarumChecks.regress(o), { scene: b.scene, seed: base.profiles.full.seeds[0], steps: b.steps, mixed: b.mixed });
+    const off = Object.entries(bt.bands).filter(([k, band]) => (same ? g.d[k] !== band.seen[0] : typeof band.lo === "number" && !(g.d[k] >= band.lo && g.d[k] <= band.hi))).map(([k]) => k);
+    res.push(`${key}: ${off.length ? `off in ${off.join(", ")}` : same ? "identical" : "in band"}`);
+  }
+  check(`morphology baseline at ${d.tier}: seed 1 ${same ? "reproduces the measured values exactly" : "lands in every band"} (network, territories, lace)`, res.every((x) => !x.includes("off")), res.join(" · "));
+  check("no console errors (morphology baseline)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
 

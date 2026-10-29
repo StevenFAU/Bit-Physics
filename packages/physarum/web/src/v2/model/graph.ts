@@ -74,6 +74,8 @@ export interface ExtractOptions {
   foodMargin: number;
   /** Links shorter than this (cells) are contracted into their junctions. */
   minLink: number;
+  /** Return the traced graph as it is — no contraction, no pruning (morphology's degree count). */
+  raw?: boolean;
 }
 
 /** Tubes are cells above half the dish's measured mean trail (scores barely move between 0.25 and 1; at 1 the faint middle of a long route drops out). */
@@ -306,6 +308,7 @@ export function extractNetwork(field: Float32Array, w: number, h: number, food: 
   }
   // before pruning: every traced line, dead ends included (spurs shorter than a link are thinning's noise)
   const rawLength = links.reduce((s, l) => s + (l.len >= o.minLink ? l.len : 0), 0);
+  if (o.raw) return { nodes, links, foodNode, rawLength };
   return { ...prune({ nodes, links, foodNode }, o.minLink), rawLength };
 }
 

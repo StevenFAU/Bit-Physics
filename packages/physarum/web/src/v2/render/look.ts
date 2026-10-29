@@ -45,3 +45,16 @@ export const PALETTES: Record<PaletteId, Palette> = {
     accent: "#5fd4e0",
   },
 };
+
+/**
+ * Territories (M3): each colony's hue (linear RGB) and its name. Chosen to
+ * stay apart for the common colour-vision deficiencies (orange / blue are the
+ * safe pair; violet and green come third and fourth), and every readout
+ * names the colony as well as showing its colour.
+ */
+export const COLONIES: { name: string; hue: [number, number, number]; css: string }[] = [
+  { name: "Orange", hue: [1.0, 0.34, 0.05], css: "#ff9440" },
+  { name: "Blue", hue: [0.05, 0.5, 1.0], css: "#4aa8ff" },
+  { name: "Violet", hue: [0.72, 0.18, 1.0], css: "#c27bff" },
+  { name: "Green", hue: [0.42, 1.0, 0.1], css: "#8fe24a" },
+];

@@ -25,6 +25,8 @@ import type { SeedSpec } from "./model/sim.js";
 import { LiveKernels, LiveSim } from "./model/sim.js";
 import { AGENTS, DENSITY, gridFor } from "./model/grid.js";
 import { downsample, morphology } from "./model/morphology.js";
+import { bandOf, describeDish } from "./model/regress.js";
+import { colonyOverlap } from "./model/territory.js";
 import type { Tier } from "@bp/gpu";
 import type { JonesParams } from "./proof/gate.js";
 import { PARAMS, createGateRunner } from "./proof/gate.js";
@@ -33,12 +35,13 @@ import { DEFAULT_LOOK, GlowView } from "./render/glow-view.js";
 import type { PaletteId } from "./render/look.js";
 import { PALETTES } from "./render/look.js";
 import type { SceneId } from "./scenes.js";
-import { SCENES, sceneById } from "./scenes.js";
+import { RIVALRY, SCENES, sceneById } from "./scenes.js";
 import { buildTune } from "./tune.js";
 import { buildScoreCard } from "./score.js";
+import { buildTerritoryCard } from "./territory-card.js";
 import { ScoreOverlay } from "./render/overlay.js";
 import type { PadPoint } from "./pad.js";
-import { PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
+import { CORNERS, PAD_CENTRE, PAD_JITTER, PAD_N, nearestOffered, padParams } from "./pad.js";
 
 
 const SIM_NAME = "Slime Mould";
@@ -60,6 +63,12 @@ const url = new UrlState(
     sp: { kind: "num", def: -1, min: -1, max: 8 },
     pal: { kind: "enum", def: "auto", values: ["auto", ...Object.keys(PALETTES)] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+    // territories: colonies (−1 = the scene's), rivalry (−1 = the scene's), a mixed start (1),
+    // each colony's personality: pad point i·5 + j, 25 = the shared one, −1 = the scene's
+    col: { kind: "int", def: -1, min: -1, max: 4 },
+    riv: { kind: "num", def: -1, min: -1, max: 2, digits: 2 },
+    mix: { kind: "int", def: 0, min: 0, max: 1 },
+    cp: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 0 },
   },
   2,
 );
@@ -154,6 +163,16 @@ async function boot(): Promise<void> {
       sp: app.clock.speed === (app.scene.speed ?? 1) ? -1 : app.clock.speed,
       pal: app.palette === app.scene.palette ? "auto" : app.palette,
       cam: [app.camera.cx / app.sim.w, app.camera.cy / app.sim.h, app.camera.pxPerUnit / app.camera.coverZoom()].map((v) => Number(v.toFixed(4))),
+      col: app.scene.colonies && app.sim.colonies !== app.scene.colonies ? app.sim.colonies : -1,
+      riv: app.sim.colonies > 1 && app.rivalry !== RIVALRY ? app.rivalry : -1,
+      mix: app.mixed ? 1 : 0,
+      cp: [0, 1, 2, 3].map((k) => {
+        if (k >= app.colonyPads.length) return -1;
+        const q = app.colonyPads[k] ?? null;
+        const d = app.scene.colonyPads?.[k] ?? null;
+        if ((q === null && d === null) || (q && d && q.i === d.i && q.j === d.j)) return -1;
+        return q ? q.i * PAD_N + q.j : PAD_N * PAD_N;
+      }),
     };
   };
   app.writeUrl = () => url.write(current());
@@ -204,6 +223,8 @@ async function boot(): Promise<void> {
       growing: app.sim.growing,
       walls: !!app.sim.envSpec?.walls,
       hunger: app.sim.hungerMax !== null,
+      colonies: app.sim.colonies,
+      rivalry: app.rivalry,
     });
 
   // The developer capture control — the headless gate's entry point.
@@ -247,6 +268,27 @@ async function boot(): Promise<void> {
     scoreOverlay.layers = l;
   };
   scoreCard.onScore = () => app.scoreNow();
+  const terrCard = buildTerritoryCard();
+  studio.stage.append(terrCard.el);
+  terrCard.onPad = (k, p) => app.setColonyPad(k, p);
+  terrCard.onRivalry = (v, phase) => app.setRivalry(v, phase);
+  terrCard.onCount = (n) => void app.setColonyCount(n);
+  terrCard.onMixed = (m) => void app.setMixed(m);
+  const syncColonies = (): void => {
+    terrCard.setShown(app.sim.colonies > 1);
+    if (app.sim.colonies > 1) {
+      terrCard.sync(app.colonyPads, app.rivalry, app.tier, app.mixed, sharedName());
+      // a rebuilt card starts blank: give it the reading the dish already has (paused edits take none)
+      terrCard.set(app.territory);
+    }
+  };
+  // the shared personality's short name, for colonies that follow Tune
+  const sharedName = (): string => {
+    const p = app.pad;
+    if (!p) return "custom";
+    const c = CORNERS.find((k) => k.at.i === p.i && k.at.j === p.j);
+    return c ? c.name : p.i === PAD_CENTRE.i && p.j === PAD_CENTRE.j ? "Middle" : `pad ${p.i + 1}, ${p.j + 1}`;
+  };
 
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
@@ -330,11 +372,17 @@ async function boot(): Promise<void> {
       learn.setParams(p, app.personalityName);
       syncTune();
       syncProve();
+      syncColonies();
     },
     onEdited: () => syncProve(),
     onAnalysis: (a) => {
       scoreOverlay.analysis = a;
       scoreCard.set(a, false);
+    },
+    onTerritory: (t) => terrCard.set(t),
+    onColonies: () => {
+      syncColonies();
+      syncProve();
     },
   };
 
@@ -416,6 +464,10 @@ async function boot(): Promise<void> {
     pad: startPad,
     palette: parsed.pal !== "auto" ? (parsed.pal as PaletteId) : undefined,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
+    colonies: parsed.col >= 2 ? parsed.col : undefined,
+    rivalry: parsed.riv >= 0 ? parsed.riv : undefined,
+    colonyPads: parsed.cp.map((v) => (v === PAD_N * PAD_N ? null : v >= 0 && v < PAD_N * PAD_N ? { i: Math.floor(v / PAD_N), j: v % PAD_N } : undefined)),
+    mixed: parsed.mix === 1,
   };
   await app.loadScene(scene.id, opts);
   const sceneSpeed = scene.speed ?? 1;
@@ -462,6 +514,55 @@ async function boot(): Promise<void> {
       const plain = s?.kind === "cities" ? { tl: s.tl, md: s.md, cut: s.cut, steinerRatio: s.steinerRatio, mstLength: s.mst.length } : s?.kind === "maze" ? { shortest: s.shortest, along: s.along, onShortest: s.onShortest, extra: s.extra, route: s.route.length } : null;
       return { tick: a.tick, ms: a.ms, net: a.net, nodes: a.graph.nodes.length, ...plain };
     },
+    /**
+     * Morphology regression (v2-morphology.mjs): a scene from its seed at a
+     * tier's agent count, run `steps` steps with the live loop paused (so no
+     * director acts), then described (model/regress.ts) — plus the scene's
+     * own measures: the score (Connect the Cities, The Maze) or who holds the
+     * dish (Territories).
+     */
+    regress: async (o: { scene: SceneId; seed: number; steps: number; tier?: Tier; mixed?: boolean; agents?: number }) => {
+      const before = app.tier;
+      if (o.tier) app.tier = o.tier;
+      try {
+        app.clock.paused = true;
+        await app.loadScene(o.scene, { seed: o.seed, mixed: o.mixed, agents: o.agents });
+        app.clock.paused = true;
+        const t0 = performance.now();
+        await app.advance(o.steps);
+        const sim = app.sim;
+        const trail = await sim.readTrail();
+        const seconds = (performance.now() - t0) / 1000;
+        // a measure the run does not have (a mean distance before every city is joined) is null
+        const d: Record<string, number | null> = describeDish(trail, sim.w, sim.h, sim.colonies, sim.meanTrail, sim.envSpec?.walls ?? null);
+        const s = app.scene.score ? (await app.analyse())?.score : null;
+        if (s?.kind === "cities") {
+          const net = app.analysis!.net;
+          d["reached"] = net.reached;
+          d["tl"] = s.tl;
+          d["md"] = Number.isFinite(s.md) ? s.md : null;
+          // links, and links whose loss cuts a city off, per 100,000 cells (their ratio, the
+          // card's cut share, is a ratio of a handful of links on a small dish)
+          d["links"] = (net.links * 1e5) / sim.cells;
+          d["cutLinks"] = (net.cutLinks * 1e5) / sim.cells;
+        } else if (s?.kind === "maze") {
+          d["joined"] = Number.isFinite(s.along) ? 1 : 0;
+          d["route"] = Number.isFinite(s.along) ? s.along / s.shortest : null;
+        }
+        if (sim.colonies > 1) {
+          const t = (await app.readTerritory())!;
+          const all = t.agents.reduce((a, b) => a + b, 0);
+          t.agents.forEach((v, k) => (d[`share${k}`] = v / all));
+          t.shares.held.forEach((v, k) => (d[`held${k}`] = v / t.shares.cells));
+          d["overlap"] = colonyOverlap(trail, sim.cells, sim.colonies, Array.from({ length: sim.colonies }, (_, k) => sim.colonyMean(k)));
+        }
+        return { scene: o.scene, mixed: !!o.mixed, tier: app.tier, seed: o.seed, steps: sim.tick, grid: [sim.w, sim.h], n: sim.n, seconds, d };
+      } finally {
+        app.tier = before;
+      }
+    },
+    /** The band rule for the morphology baseline (model/regress.ts). */
+    band: (key: string, values: number[], cells: number) => bandOf(key, values, cells),
     /**
      * Calibration survey (personality pad): a fresh dish at a tier's agent
      * count and density, seeded, run to each step in `at`, with the trail's
