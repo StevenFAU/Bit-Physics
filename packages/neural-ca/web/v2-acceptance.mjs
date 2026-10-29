@@ -26,7 +26,12 @@
 // Teach end to end (draw, train to a recognisable organism at 60 fps, grow it
 // on the gated kernel, its regrowth score, save / reload / grow / import /
 // delete in the local library); same weights at either training pace; T1
-// does not train. Prints BP_BENCH lines at the end (the Dish, the Menagerie).
+// does not train. M3: Chimera (one rule ≡ the gated kernel bit for bit, the
+// opening graft, grafts and Rewrite carry rules, undo, determinism, the pair
+// picker, what grows over time) and Textures (weights SHA, the plane's colour
+// statistics against the reference's, erase → regrow, undo, the picker).
+// Prints BP_BENCH lines at the end (the Dish, the Menagerie, Chimera, Textures).
+// ACCEPT_ONLY=m3 runs the M3 checks alone.
 //
 // Bit-exactness against the committed canonical is backend-conditional: it
 // holds on RADV (where the canonical was made). On another backend those two
@@ -100,6 +105,19 @@ const hashAfter = (page, n) =>
     await app.advance(steps);
     return app.stateHash();
   }, n);
+
+async function finish() {
+  await browser.close();
+  server.close();
+  const failed = results.filter((r) => !r.ok);
+  if (out) await writeFile(join(out, "acceptance.json"), JSON.stringify(results, null, 2));
+  console.log(`\n${results.length - failed.length}/${results.length} passed`);
+  process.exit(failed.length ? 1 : 0);
+}
+if (process.env.ACCEPT_ONLY === "m3") {
+  await m3Checks();
+  await finish();
+}
 
 // --- boot order: ready once the gate path is up, the live dish after ------------
 {
@@ -990,8 +1008,10 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
   await t1.ctx.close();
 }
 
-// --- frame time: the boot scene, and the Menagerie's eight dishes -------------
-for (const [label, path] of [["the Dish", "/v2/?bench=1"], ["the Menagerie", "/v2/?s=menagerie&bench=1"]]) {
+await m3Checks();
+
+// --- frame time: the boot scene, the Menagerie's eight dishes, Chimera, Textures ---
+for (const [label, path] of [["the Dish", "/v2/?bench=1"], ["the Menagerie", "/v2/?s=menagerie&bench=1"], ["Chimera", "/v2/?s=chimera&bench=1"], ["Textures", "/v2/?s=textures&bench=1"]]) {
   const { ctx, page } = await open(path);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
@@ -1000,9 +1020,287 @@ for (const [label, path] of [["the Dish", "/v2/?bench=1"], ["the Menagerie", "/v
   await ctx.close();
 }
 
-await browser.close();
-server.close();
-const failed = results.filter((r) => !r.ok);
-if (out) await writeFile(join(out, "acceptance.json"), JSON.stringify(results, null, 2));
-console.log(`\n${results.length - failed.length}/${results.length} passed`);
-process.exit(failed.length ? 1 : 0);
+await finish();
+
+// --- M3 -------------------------------------------------------------------------
+async function m3Checks() {
+  // ---- Chimera ----
+  {
+    const { ctx, page, errors } = await open("/v2/?s=chimera&o=gecko");
+    await page.waitForTimeout(800);
+    const b = await T(page, () => {
+      const app = globalThis.__grow;
+      return {
+        scene: app.scene.id,
+        dishes: app.dishes.map((d) => ({ org: d.org.def.id, rules: typeof d.sim.readRules === "function", home: d.sim.home })),
+        partner: app.partner?.def.id,
+        auto: app.lib.partnerFor("gecko"),
+        tools: [...document.querySelectorAll("[data-tool]")].map((e) => e.getAttribute("data-tool")),
+        tool: app.studio.rail.active,
+        prompt: document.querySelector(".bp-heading")?.textContent ?? "",
+      };
+    });
+    check(
+      "Chimera boots: two dishes whose cells carry a rule (host gecko, donor the next healer), Graft selected, Rewrite offered",
+      b.scene === "chimera" && b.dishes.length === 2 && b.dishes.every((d, i) => d.rules && d.home === i) && b.dishes[0].org === "gecko" && b.partner === b.auto && b.partner !== "gecko" && b.tool === "graft" && b.tools.includes("rewrite"),
+      JSON.stringify(b),
+    );
+    // one rule ≡ the gated kernel (Prove's card)
+    const one = await T(page, () => globalThis.__growProve.runChimeraOneRule());
+    check("Chimera with one rule is the gated kernel, bit for bit over the 21 gated frames (Prove)", one && one.identical && one.frames === 21, one ? `${one.differing} values differ, max |Δ| ${one.maxAbs}` : "did not run");
+    // the opening graft, determinism, what grows
+    const run = await T(page, async (G) => {
+      const app = globalThis.__grow;
+      const hex = async (u) => Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", u.buffer)), (x) => x.toString(16).padStart(2, "0")).join("");
+      const count = async (d) => {
+        const st = await app.dishes[d].sim.readState();
+        const r = await app.dishes[d].sim.readRules();
+        const c = [0, 0];
+        for (let i = 0; i < 64 * 64; i += 1) if (st[i * 16 + 3] > 0.1) c[r[i]] += 1;
+        return c;
+      };
+      const out = {};
+      for (const k of [0, 1]) {
+        app.clock.paused = true;
+        await new Promise((res) => setTimeout(res, 100));
+        await app.loadScene("chimera", { organism: "gecko", partner: "butterfly" });
+        app.clock.paused = true;
+        await app.advance(G.at - 1);
+        out.before = await count(0);
+        await app.advance(1);
+        out.events = app.log.all().map((e) => `${e.kind}@${e.tick}/g${e.payload.g}`);
+        out.at = await count(0);
+        out.edits = app.edits;
+        await app.advance(600 - G.at);
+        out[`h${k}`] = (await app.stateHash(0)) + (await hex(await app.dishes[0].sim.readRules()));
+      }
+      out.counts = {};
+      out.counts[600] = await count(0);
+      for (const t of [1000, 2000, 4000]) {
+        await app.advance(t - app.sim.tick);
+        out.counts[t] = await count(0);
+      }
+      out.gpuCounts = app.ruleCounts;
+      return out;
+    }, { at: 240 });
+    check(
+      "the opening graft lands at step 240 by itself (not an edit): donor cells on the donor's rule appear in the host",
+      run.before[1] === 0 && run.at[1] > 150 && run.events.join() === "graft@240/g0" && run.edits === 0,
+      `before ${JSON.stringify(run.before)}, at ${JSON.stringify(run.at)}, ${run.events.join()}`,
+    );
+    check("same scene, same bytes and rules (step 600, twice)", run.h0 === run.h1, `${run.h0.slice(0, 16)}… vs ${run.h1.slice(0, 16)}…`);
+    console.log(`BP_CHIMERA gecko+butterfly living cells [gecko rule, butterfly rule] in the gecko's dish: ${JSON.stringify(run.counts)}`);
+    // grafts carry rules; Rewrite; undo
+    const g = await T(page, async () => {
+      const app = globalThis.__grow;
+      await app.loadScene("chimera", { organism: "gecko", partner: "butterfly", script: false });
+      app.clock.paused = true;
+      await app.advance(300);
+      const clean = (await app.stateHash(0)) + (await app.stateHash(1));
+      app.graftAt([32, 32], [20, 40], 6, false, 1, 0);
+      const r = await app.dishes[0].sim.readRules();
+      let carried = 0, cells = 0;
+      for (let y = 0; y < 64; y += 1) for (let x = 0; x < 64; x += 1) {
+        if (Math.hypot(x - 20, y - 40) > 6) continue;
+        cells += 1;
+        carried += r[y * 64 + x] === 1 ? 1 : 0;
+      }
+      app.rewriteAt([28, 20, 40, 20], 1, 3, 0);
+      const r2 = await app.dishes[0].sim.readRules();
+      let rewritten = 0, line = 0;
+      for (let y = 0; y < 64; y += 1) for (let x = 0; x < 64; x += 1) {
+        const px = x + 0.5, py = y + 0.5;
+        const t = Math.min(1, Math.max(0, (px - 28) / 12));
+        if (Math.hypot(px - (28 + 12 * t), py - 20) > 3) continue;
+        line += 1;
+        rewritten += r2[y * 64 + x] === 1 ? 1 : 0;
+      }
+      await app.advance(200);
+      const edited = (await app.stateHash(0)) + (await app.stateHash(1));
+      await app.undo();
+      await app.undo();
+      const undone = (await app.stateHash(0)) + (await app.stateHash(1));
+      const r3 = await app.dishes[0].sim.readRules();
+      const home = r3.every((v) => v === 0);
+      await app.advance(200);
+      // replaying from the start, untouched, gives the never-edited bytes at step 500
+      await app.loadScene("chimera", { organism: "gecko", partner: "butterfly", script: false });
+      app.clock.paused = true;
+      await app.advance(500);
+      const never = (await app.stateHash(0)) + (await app.stateHash(1));
+      return { cells, carried, line, rewritten, edited, undone, clean, home, back: (await app.stateHash(0)) + (await app.stateHash(1)), never };
+    });
+    check("a graft from the donor carries its cells' rule into the host (every cell of the disc)", g.carried === g.cells && g.cells > 100, `${g.carried}/${g.cells}`);
+    check("Rewrite sets the rule of the cells along its stroke", g.rewritten === g.line && g.line > 50, `${g.rewritten}/${g.line}`);
+    check("undoing both edits replays to the never-edited bytes and rules (step 500)", g.undone === g.never && g.home && g.edited !== g.never, `${g.undone.slice(0, 16)}… vs ${g.never.slice(0, 16)}…`);
+    // the pair picker and the link
+    await T(page, () => {
+      globalThis.__grow.clock.paused = false;
+      globalThis.__grow.syncTransport();
+    });
+    await page.selectOption('select[aria-label="Second organism (the donor)"]', "turtle");
+    await page.waitForTimeout(600);
+    const pick = await T(page, () => ({ partner: globalThis.__grow.partner.def.id, url: location.search }));
+    check("the second-organism picker reloads Chimera with that pair; the link carries it", pick.partner === "turtle" && /with=turtle/.test(pick.url), JSON.stringify(pick));
+    await page.waitForTimeout(9000);
+    await shot(page, "m3-chimera");
+    const leg = await T(page, () => ({ legend: document.querySelector(".gr-legend")?.textContent ?? "", tick: globalThis.__grow.sim.tick }));
+    check("each dish's label counts its living cells on each rule", /Gecko \d[\d,]* living cells · \d[\d,]* on the turtle rule/.test(leg.legend) && leg.tick > 240, leg.legend.slice(0, 160));
+    check("no console errors (Chimera)", errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
+  // ---- Chimera, every healer pair: what grows (measured, printed) ----
+  {
+    const { ctx, page } = await open("/v2/?s=chimera&o=gecko");
+    const rows = await T(page, async () => {
+      const app = globalThis.__grow;
+      const ids = app.lib.healers.map((d) => d.id);
+      const rows = [];
+      for (const host of ids) {
+        for (const donor of ids) {
+          if (donor === host) continue;
+          await app.loadScene("chimera", { organism: host, partner: donor });
+          app.clock.paused = true;
+          await app.advance(1240);
+          const st = await app.dishes[0].sim.readState();
+          const r = await app.dishes[0].sim.readRules();
+          const c = [0, 0];
+          for (let i = 0; i < 64 * 64; i += 1) if (st[i * 16 + 3] > 0.1) c[r[i]] += 1;
+          rows.push([host, donor, c[0], c[1]]);
+        }
+      }
+      return rows;
+    });
+    const share = rows.map((r) => r[3] / Math.max(1, r[2] + r[3]));
+    console.log(`BP_CHIMERA_PAIRS ${JSON.stringify(rows)}`);
+    check(
+      "every healer pair measured 1,000 steps after the opening graft (donor share of the host's living cells, printed)",
+      rows.length >= 30,
+      `${rows.length} pairs; donor share min ${Math.min(...share).toFixed(3)}, median ${share.slice().sort((a, b) => a - b)[share.length >> 1].toFixed(3)}, max ${Math.max(...share).toFixed(3)}; donor gone in ${share.filter((x) => x === 0).length}`,
+    );
+    await ctx.close();
+  }
+  // ---- Textures ----
+  {
+    const { ctx, page, errors } = await open("/v2/?s=textures");
+    await page.waitForTimeout(1000);
+    const b = await T(page, () => {
+      const app = globalThis.__grow;
+      return {
+        scene: app.scene.id,
+        kind: app.dishes.map((d) => (typeof d.sim.readRules === "function" ? "chimera" : d.sim.grid === 64 ? "dish" : "plane")).join(),
+        grid: app.grid,
+        tier: app.tier,
+        plane: app.dishes[0].view.plane,
+        tools: [...document.querySelectorAll("[data-tool]")].map((e) => e.getAttribute("data-tool")),
+        texture: app.texture?.def.id,
+        first: app.textures.defs[0].id,
+        tick: app.sim.tick,
+        domain: [app.camera.domainW, app.camera.domainH],
+        viewport: [app.camera.viewW, app.camera.viewH],
+      };
+    });
+    check(
+      "Textures boots: one plane on the texture kernel, 256 × 256 on T3, drawn as a plane; Erase/Graft/Freeze, no Seed or Probe",
+      b.scene === "textures" && b.kind === "plane" && b.grid === (b.tier === "T3" ? 256 : b.tier === "T2" ? 192 : 128) && b.plane && b.texture === b.first && !b.tools.includes("seed") && !b.tools.includes("probe") && b.tools.includes("cut"),
+      JSON.stringify(b),
+    );
+    check("the steps advance on the plane", b.tick > 10, `${b.tick}`);
+    const shas = await T(page, () => globalThis.__growProve.checkTextures());
+    check("every texture's downloaded weights match the manifest's SHA-256", shas.length >= 3 && shas.every((x) => x.matches), shas.map((x) => `${x.id} ${x.sha.slice(0, 8)}`).join(", "));
+    // colour statistics against the reference's, per texture, at step 1024
+    const stats = await T(page, async () => {
+      const app = globalThis.__grow;
+      const rows = [];
+      for (const d of app.textures.defs) {
+        await app.loadScene("textures", { texture: d.id });
+        app.clock.paused = true;
+        await app.advance(1024);
+        const st = await app.sim.readState();
+        const n = app.grid * app.grid;
+        const s = [0, 0, 0], s2 = [0, 0, 0];
+        for (let i = 0; i < n; i += 1) for (let c = 0; c < 3; c += 1) {
+          const v = Math.min(1, Math.max(0, st[i * 16 + c] + 0.5));
+          s[c] += v;
+          s2[c] += v * v;
+        }
+        const mean = s.map((v) => v / n);
+        const std = s2.map((v, c) => Math.sqrt(Math.max(0, v / n - mean[c] * mean[c])));
+        const ref = d.measured;
+        rows.push({ id: d.id, dMean: Math.max(...mean.map((m, c) => Math.abs(m - ref.rgb_mean["1024"][c]))), dStd: Math.max(...std.map((m, c) => Math.abs(m - ref.rgb_std["1024"][c]))), mean, std, finite: st.every(Number.isFinite) });
+      }
+      return rows;
+    });
+    console.log(`BP_TEXTURE_STATS ${JSON.stringify(stats)}`);
+    check(
+      "each texture's plane (step 1,024) has the reference's colour statistics: |Δ mean| ≤ 0.04 and |Δ std| ≤ 0.04 per channel",
+      stats.every((r) => r.finite && r.dMean <= 0.04 && r.dStd <= 0.04),
+      stats.map((r) => `${r.id} ${r.dMean.toFixed(3)}/${r.dStd.toFixed(3)}`).join(", "),
+    );
+    // erase → it grows back; undo
+    const e = await T(page, async () => {
+      const app = globalThis.__grow;
+      const G = app.grid;
+      await app.loadScene("textures", { texture: app.textures.defs[0].id });
+      app.clock.paused = true;
+      await app.advance(512);
+      const clean = await (async () => {
+        await app.advance(256);
+        return app.stateHash();
+      })();
+      await app.loadScene("textures", { texture: app.textures.defs[0].id });
+      app.clock.paused = true;
+      await app.advance(512);
+      const c = G / 2;
+      app.cutAt([c - 10, c, c + 10, c], 14);
+      const st0 = await app.sim.readState();
+      const inside = (i) => {
+        const x = i % G, y = Math.floor(i / G);
+        const t = Math.min(1, Math.max(0, (x + 0.5 - (c - 10)) / 20));
+        return Math.hypot(x + 0.5 - (c - 10 + 20 * t), y + 0.5 - c) <= 14;
+      };
+      let zeroed = 0, n = 0;
+      for (let i = 0; i < G * G; i += 1) if (inside(i)) { n += 1; if (st0[i * 16] === 0 && st0[i * 16 + 5] === 0) zeroed += 1; }
+      const contrast = (st) => {
+        // luminance std inside the erased region vs outside
+        const acc = [[0, 0, 0], [0, 0, 0]];
+        for (let i = 0; i < G * G; i += 1) {
+          const v = (c) => Math.min(1, Math.max(0, st[i * 16 + c] + 0.5));
+          const L = 0.3 * v(0) + 0.59 * v(1) + 0.11 * v(2);
+          const k = inside(i) ? 0 : 1;
+          acc[k][0] += 1; acc[k][1] += L; acc[k][2] += L * L;
+        }
+        const sd = (a) => Math.sqrt(Math.max(0, a[2] / a[0] - (a[1] / a[0]) ** 2));
+        return [sd(acc[0]), sd(acc[1])];
+      };
+      const at0 = contrast(st0);
+      await app.advance(64);
+      const at64 = contrast(await app.sim.readState());
+      await app.advance(192);
+      const at256 = contrast(await app.sim.readState());
+      await app.undo();
+      const undone = await app.stateHash();
+      return { n, zeroed, at0, at64, at256, clean, undone };
+    });
+    check("Erase zeroes the cells under the stroke (the plane's seed state)", e.zeroed === e.n && e.n > 500, `${e.zeroed}/${e.n}`);
+    check(
+      "the erased region grows the pattern back: 256 steps later its contrast is within 25% of the rest's",
+      e.at0[0] < 0.01 && Math.abs(e.at256[0] - e.at256[1]) <= 0.25 * e.at256[1],
+      `luminance std inside/outside: ${e.at0.map((v) => v.toFixed(3)).join("/")} → ${e.at64.map((v) => v.toFixed(3)).join("/")} (64) → ${e.at256.map((v) => v.toFixed(3)).join("/")} (256)`,
+    );
+    check("undoing the erase replays to the never-erased bytes (step 768)", e.undone === e.clean, `${e.undone.slice(0, 16)}… vs ${e.clean.slice(0, 16)}…`);
+    // the picker and the link
+    const second = await T(page, () => globalThis.__grow.textures.defs[1].id);
+    await page.selectOption('select[aria-label="Texture"]', second);
+    await page.waitForTimeout(6000);
+    const pk = await T(page, () => ({ tex: globalThis.__grow.texture.def.id, url: location.search }));
+    check("the texture picker switches the plane's texture; the link carries it", pk.tex === second && new RegExp(`tex=${second}`).test(pk.url), JSON.stringify(pk));
+    await shot(page, "m3-textures");
+    await page.click(".gr-about");
+    await page.waitForTimeout(200);
+    const card = await T(page, () => document.querySelector('.gr-card[aria-label="Texture"]:not([hidden])')?.textContent ?? null);
+    check("a texture's card says how it was trained (offline, PyTorch, VGG16) and what was measured", !!card && /on a CPU with PyTorch/.test(card) && /Measured/.test(card) && /Erased/.test(card), (card ?? "hidden").slice(0, 140));
+    check("no console errors (Textures)", errors.length === 0, errors.join(" | "));
+    await ctx.close();
+  }
+}

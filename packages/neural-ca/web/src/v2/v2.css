@@ -575,3 +575,43 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* M3: Chimera's per-dish labels (rules), Textures' card and heading scrim */
+.gr-legend[hidden] {
+  display: none;
+}
+.gr-legend-tag {
+  margin: 0;
+  cursor: default;
+  font-weight: 400;
+}
+.gr-legend-tag strong {
+  font-weight: 600;
+}
+.gr-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex: none;
+}
+.gr-legend-0 {
+  background: #ffb35c;
+}
+.gr-legend-1 {
+  background: #7fd8ff;
+}
+.gr-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+}
+.gr-about[hidden] {
+  display: none;
+}
+.gr-card-texture {
+  image-rendering: pixelated;
+}
+.bp-studio[data-scene="textures"] .bp-heading::before {
+  background: radial-gradient(closest-side, rgba(6, 9, 12, 0.8), rgba(6, 9, 12, 0));
+}

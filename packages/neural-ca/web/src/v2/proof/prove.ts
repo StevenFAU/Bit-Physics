@@ -18,6 +18,9 @@ import TEACH from "../../generated/teach.json";
 import type { GradcheckResult } from "../teach/gradcheck.js";
 import { fetchGradcheck, runGradcheck } from "../teach/gradcheck.js";
 import type { TrainKernels } from "../teach/trainer.js";
+import type { M3Kernels } from "../app.js";
+import { ChimeraNca } from "../model/chimera.js";
+import type { TextureLibrary } from "../model/textures.js";
 
 const blob = (path: string): string => `${V.repo_blob_base}${path}`;
 
@@ -35,6 +38,9 @@ export interface ProveDeps {
   hold: (on: boolean) => void;
   /** Teach's training pipelines (compiled after the page is up). */
   trainKernels: () => Promise<TrainKernels>;
+  /** Chimera's and Textures' pipelines (M3). */
+  m3: () => Promise<M3Kernels>;
+  textures: TextureLibrary;
 }
 
 export interface OnScreen {
@@ -66,6 +72,8 @@ export interface ProvePane {
   checkWeights(): { sha: string; matches: boolean };
   checkMenagerie(): Promise<{ id: string; sha: string; matches: boolean }[]>;
   runGradcheck(): Promise<GradcheckResult | null>;
+  runChimeraOneRule(): Promise<LiveVsGated | null>;
+  checkTextures(): Promise<{ id: string; sha: string; matches: boolean }[]>;
 }
 
 export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
@@ -261,6 +269,93 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     return rows;
   }
 
+  // 7. Chimera (M3): its per-cell-rule step, with one rule, is the gated kernel
+  const chimCard = proofCard(
+    {
+      title: "Chimera with one rule",
+      sentence:
+        "Chimera's step reads each cell's rule before it reads the weights; nothing else in the arithmetic changes. " +
+        "With every cell on the committed checkpoint's rule, stepped through the gated run, it must match the gate's own frames on this GPU bit for bit.",
+      label: "byte-identical to the gated kernel",
+      action: "Run on this GPU",
+      links: [{ label: "Chimera's kernel", href: blob("packages/neural-ca/web/src/v2/model/chimera.wgsl") }],
+    },
+    () => void runChimera(),
+  );
+  chimCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "0 values differ", adapter: "not yet run here" });
+  pane.append(chimCard.el);
+  async function runChimera(): Promise<LiveVsGated | null> {
+    return lock(async () => {
+      chimCard.set({ status: "running", measured: "starting…", adapter: d.adapter });
+      try {
+        const k = await d.m3();
+        const gated = lastGateFrames ?? (await d.gate.runRollout(CANONICAL_SEED, FIRE_RATE, (s) => chimCard.set({ status: "running", measured: `gate path — step ${s.toLocaleString()}`, adapter: d.adapter })));
+        lastGateFrames = gated;
+        const t0 = performance.now();
+        const job = new LiveVsGatedJob(d.device, d.kernels, d.checkpoint, (cfg) => new ChimeraNca(d.device, d.kernels, k.chim, [d.checkpoint], 0, cfg));
+        job.onProgress = (st) => chimCard.set({ status: "running", measured: `Chimera — step ${st.toLocaleString()} of ${CANONICAL_STEPS.toLocaleString()}`, adapter: d.adapter });
+        try {
+          await d.scheduler.add(job);
+          const diff = compareFrames(job.frames, gated);
+          const r = { ...diff, seconds: (performance.now() - t0) / 1000, slices: job.slices };
+          const values = (GRID * GRID * 4 * r.frames).toLocaleString();
+          chimCard.set({
+            status: r.identical ? "pass" : "fail",
+            measured: r.identical ? `identical (${r.frames} frames, ${values} values)` : `${r.differing.toLocaleString()} values differ, max |Δ| ${r.maxAbs.toExponential(2)}`,
+            budget: "0 values differ",
+            ratio: r.identical ? 0 : 2,
+            adapter: d.adapter,
+          });
+          return r;
+        } finally {
+          job.destroy();
+        }
+      } catch (e) {
+        chimCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+        return null;
+      }
+    });
+  }
+
+  // 8. Textures (M3): the weights are the trained files
+  const nt = d.textures.defs.length;
+  const texCard = proofCard(
+    {
+      title: "The Textures' networks",
+      sentence:
+        `Each of the ${nt} textures is ${(48 * 96 + 96 + 96 * 12).toLocaleString()} numbers, trained offline (PyTorch, VGG16 style loss) and run here on the Textures kernel — not the gated one. ` +
+        "Every file this page downloads must match the SHA-256 recorded with its training run.",
+      label: "every texture's weights match",
+      action: "Check them",
+      links: [{ label: "how they were trained", href: blob("packages/neural-ca/textures/README.md") }],
+    },
+    () => void checkTextures(),
+  );
+  texCard.set({ status: "idle", measured: "run it to fetch and check all of them", budget: `${nt} of ${nt} match`, adapter: "your browser" });
+  pane.append(texCard.el);
+  async function checkTextures(): Promise<{ id: string; sha: string; matches: boolean }[]> {
+    texCard.set({ status: "running", measured: "fetching…", adapter: "your browser" });
+    const rows: { id: string; sha: string; matches: boolean }[] = [];
+    for (const def of d.textures.defs) {
+      try {
+        const t = await d.textures.get(def.id);
+        rows.push({ id: def.id, sha: t.ck.sha256, matches: t.ck.sha256 === def.sha256 });
+      } catch (e) {
+        rows.push({ id: def.id, sha: (e as Error).message, matches: false });
+      }
+    }
+    const ok = rows.filter((r) => r.matches).length;
+    texCard.set({
+      status: ok === nt ? "pass" : "fail",
+      measured: `${ok} of ${nt} match`,
+      budget: `${nt} of ${nt} match`,
+      ratio: ok === nt ? 0 : 2,
+      adapter: "your browser (SHA-256 of each download)",
+      notes: rows.map((r) => `${r.id}  ${r.sha.slice(0, 16)}…${r.matches ? "" : "  MISMATCH"}`),
+    });
+    return rows;
+  }
+
   pane.append(
     h(
       "p",
@@ -383,6 +478,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     await runGc();
     checkWeights();
     await checkMenagerie();
+    await runChimera();
+    await checkTextures();
   }
 
   return {
@@ -411,5 +508,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     checkWeights,
     checkMenagerie,
     runGradcheck: () => runGc(),
+    runChimeraOneRule: () => runChimera(),
+    checkTextures,
   };
 }

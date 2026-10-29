@@ -25,9 +25,11 @@ export class LiveVsGatedJob implements SlicedJob {
   private recordedFirst = false;
   onProgress: ((step: number) => void) | null = null;
 
-  constructor(device: GPUDevice, kernels: LiveKernels, ck: Checkpoint) {
+  /** `make`: another solver to step through the same protocol (Chimera's one-rule dish); by default the live solver. */
+  constructor(device: GPUDevice, kernels: LiveKernels, ck: Checkpoint, make?: (cfg: { grid: number; seed: number; fireRate: number }) => LiveNca) {
     this.device = device;
-    this.sim = new LiveNca(device, kernels, ck, { grid: GRID, seed: CANONICAL_SEED, fireRate: FIRE_RATE });
+    const cfg = { grid: GRID, seed: CANONICAL_SEED, fireRate: FIRE_RATE };
+    this.sim = make ? make(cfg) : new LiveNca(device, kernels, ck, cfg);
     this.sim.load(seedState(GRID));
   }
 

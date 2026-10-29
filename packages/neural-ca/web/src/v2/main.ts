@@ -29,7 +29,11 @@ import type { Studio } from "@bp/studio";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
 import { App, STEP_PASS, TICKS_PER_SECOND, TOOLS } from "./app.js";
-import type { SceneOptions } from "./app.js";
+import type { M3Kernels, SceneOptions } from "./app.js";
+import { buildM3Ui } from "./m3-ui.js";
+import { ChimeraKernels } from "./model/chimera.js";
+import { TextureKernels, TextureLibrary, fetchTextures } from "./model/textures.js";
+import type { TextureManifest } from "./model/textures.js";
 import { buildCellPanel } from "./cell-view.js";
 import { buildLearn } from "./learn.js";
 import { buildMenagerieUi } from "./menagerie-ui.js";
@@ -49,15 +53,17 @@ import { SCENES, sceneById } from "./scenes.js";
 import { VIEW_MODES, buildTune } from "./tune.js";
 
 const SIM_NAME = "Grow";
-const SCENE_IDS = SCENES.map((s) => s.id);
 
 /** The share-link schema; `o` (the organism) lists the menagerie's ids, so it is built once the manifest is in. */
-function urlSchema(organisms: string[]) {
+function urlSchema(scenes: string[], organisms: string[], textures: string[]) {
   return new UrlState(
     {
-      s: { kind: "enum", def: "dish", values: SCENE_IDS },
+      s: { kind: "enum", def: "dish", values: scenes },
       // "today": the Dish's daily organism (a link always carries the organism it showed)
       o: { kind: "enum", def: "today", values: ["today", ...organisms] },
+      // Chimera's second organism ("auto": the next healer after the first)
+      with: { kind: "enum", def: "auto", values: ["auto", ...organisms] },
+      tex: { kind: "enum", def: textures[0] ?? "none", values: textures.length ? textures : ["none"] },
       seed: { kind: "int", def: CANONICAL_SEED, min: 0, max: 2 ** 31 - 1 },
       p: { kind: "num", def: FIRE_RATE, min: 0.05, max: 1, digits: 2 },
       sp: { kind: "num", def: 1, min: 0.25, max: 8 },
@@ -126,6 +132,8 @@ async function boot(): Promise<void> {
   mark("weights");
   const manifestP = fetchMenagerie(); // network only; awaited once the gate is up
   manifestP.catch(() => {}); // a failure surfaces where it is awaited
+  const texturesP = fetchTextures();
+  texturesP.catch(() => {});
   studio.veil.step("Compiling the gate");
   const gate = await createGateRunner(device, ck);
   mark("gate");
@@ -187,7 +195,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------- the live dish, after --
   try {
-    await startLive({ studio, gpu, query, ck, gate, manifestP, bootGpu, held });
+    await startLive({ studio, gpu, query, ck, gate, manifestP, texturesP, bootGpu, held });
   } catch (e) {
     fail(`the live dish could not start (${(e as Error).message}). The release gate's capture still works.`);
   }
@@ -200,6 +208,7 @@ interface LiveBoot {
   ck: Checkpoint;
   gate: GateRunner;
   manifestP: Promise<MenagerieManifest>;
+  texturesP: Promise<TextureManifest>;
   bootGpu: <T>(fn: () => T | Promise<T>) => Promise<T>;
   held: { governor: QualityGovernor | null };
 }
@@ -212,7 +221,18 @@ async function startLive(b: LiveBoot): Promise<void> {
   studio.veil.step("Fetching the menagerie");
   const manifest = await b.manifestP;
   const lib = new OrganismLibrary(manifest, ck);
-  const url = urlSchema(manifest.organisms.map((o) => o.id));
+  // a page whose textures do not arrive still runs every other scene
+  const texManifest = await b.texturesP.catch((e: unknown): TextureManifest => {
+    console.warn(`Textures unavailable: ${(e as Error).message}`);
+    return { layout: { channels: 12, hidden: 96, count: 0, b1Off: 0, w1Off: 0, w2Off: 0 }, textures: [] };
+  });
+  const textures = new TextureLibrary(texManifest);
+  const scenes = SCENES.filter((s) => s.kind !== "texture" || texManifest.textures.length > 0);
+  const url = urlSchema(
+    scenes.map((s) => s.id),
+    manifest.organisms.map((o) => o.id),
+    texManifest.textures.map((t) => t.id),
+  );
   studio.veil.step("Compiling the live dish");
   // the live solver's compiles start first (async); the renderer's run alongside
   const kernelsP = LiveKernels.create(device);
@@ -252,6 +272,23 @@ async function startLive(b: LiveBoot): Promise<void> {
     }
     return trainKernelsP;
   };
+  // Chimera's and Textures' pipelines: compiled once the dish is live (or when a scene first needs them), never before ready
+  let m3P: Promise<M3Kernels> | null = null;
+  const m3Kernels = (): Promise<M3Kernels> => {
+    if (!m3P) {
+      const t0 = performance.now();
+      // pipeline compiles only: nothing is written to the queue, so a capture may run alongside
+      m3P = Promise.all([ChimeraKernels.create(device), TextureKernels.create(device)]).then(([chim, tex]) => {
+        bootMarks["m3CompileMs"] = Math.round(performance.now() - t0);
+        mark("m3Kernels");
+        return { chim, tex };
+      });
+      m3P.catch(() => {
+        m3P = null;
+      });
+    }
+    return m3P;
+  };
   const renderer = await bootGpu(() => new DishRenderer(device));
   mark("renderer");
   const kernels = await kernelsP;
@@ -265,6 +302,8 @@ async function startLive(b: LiveBoot): Promise<void> {
   }
   app.profiler = profiler;
   app.governor = governor;
+  app.m3 = m3Kernels;
+  app.textures = textures;
 
   // ---------------------------------------------------------------- URL --
   const parsed = url.parse(location.search).values;
@@ -282,6 +321,8 @@ async function startLive(b: LiveBoot): Promise<void> {
       app.camera.pxPerUnit / app.camera.coverZoom(),
     ].map((x) => Number(x.toFixed(4))),
     cell: app.scene.kind === "cell" ? app.cellSel.slice() : [GRID / 2, GRID / 2],
+    with: app.partner && lib.inGallery(app.partner.def.id) && app.partner.def.id !== lib.partnerFor(app.organism.def.id) ? app.partner.def.id : "auto",
+    tex: app.texture?.def.id ?? texManifest.textures[0]?.id ?? "none",
   });
   app.writeUrl = () => url.write(current());
 
@@ -322,14 +363,24 @@ async function startLive(b: LiveBoot): Promise<void> {
       governor.suspended = on;
     },
     trainKernels,
+    m3: m3Kernels,
+    textures,
   });
   let lastOnScreen = "";
   const syncProve = (): void => {
     const shown = app.dishes[0]?.org.def ?? app.organism.def;
+    const kind = app.scene.kind;
     const s = {
       scene: app.scene.title,
-      organism: app.dishes.length > 1 ? `all ${app.dishes.length} ${app.scene.kind === "teach" ? "dishes of the training batch" : "organisms"}` : shown.name,
-      gatedOrganism: app.dishes.length === 1 && shown.gated && app.scene.kind !== "teach",
+      organism:
+        kind === "texture"
+          ? `the ${app.texture?.def.name.toLowerCase() ?? ""} texture network on its own kernel`
+          : kind === "chimera"
+            ? `the ${app.organism.def.name.toLowerCase()} and the ${app.partner?.def.name.toLowerCase() ?? ""} rules side by side (Chimera's per-cell-rule copy of the update)`
+            : app.dishes.length > 1
+              ? `all ${app.dishes.length} ${kind === "teach" ? "dishes of the training batch" : "organisms"}`
+              : shown.name,
+      gatedOrganism: app.dishes.length === 1 && shown.gated && kind !== "teach" && kind !== "texture",
       canonical: app.onGatedRun,
       tick: app.sim.tick,
       edits: app.edits,
@@ -344,7 +395,7 @@ async function startLive(b: LiveBoot): Promise<void> {
 
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
-    SCENES.map((s) => ({ id: s.id, title: s.title })),
+    scenes.map((s) => ({ id: s.id, title: s.title })),
     "dish",
   );
   studio.heading.onPick = (id) => {
@@ -360,6 +411,15 @@ async function startLive(b: LiveBoot): Promise<void> {
     pick: (id) => {
       const sc = app.scene.kind === "menagerie" ? "dish" : app.scene.id;
       void app.loadScene(sc, { organism: id, seed: app.seed, fireRate: app.sim.fireRate, view: app.viewMode, cell: app.cellSel }).then(() => app.writeUrl());
+    },
+  });
+  // Chimera's second organism, Textures' texture
+  const m3ui = buildM3Ui(studio.stage, studio.heading.picker.parentElement ?? studio.heading.extra, manifest.organisms, texManifest, {
+    partner: (id) => {
+      void app.loadScene("chimera", { organism: app.organism.def.id, partner: id, seed: app.seed, fireRate: app.sim.fireRate, view: app.viewMode }).then(() => app.writeUrl());
+    },
+    texture: (id) => {
+      void app.loadScene("textures", { texture: id, seed: app.seed, fireRate: app.sim.fireRate, view: app.viewMode }).then(() => app.writeUrl());
     },
   });
   // Teach (M2): its panel, the paint tools, training, the library
@@ -447,9 +507,16 @@ async function startLive(b: LiveBoot): Promise<void> {
 
   app.hooks = {
     onSceneChange: (scene) => {
-      learn.setScene(scene, app.onGatedRun, app.dishes.length > 1 ? null : (app.dishes[0]?.org.def ?? app.organism.def));
+      learn.setScene(scene, app.onGatedRun, app.dishes.length > 1 && scene.kind !== "chimera" ? null : app.organism.def, {
+        partner: app.partner?.def,
+        texture: app.texture?.def,
+        grid: app.grid,
+      });
       menagerie.setDishes(scene.kind === "menagerie" ? app.dishes.map((d) => d.org.def) : null);
-      menagerie.setOrganism(app.organism.def.id, scene.kind !== "menagerie" && scene.kind !== "teach");
+      menagerie.setOrganism(app.organism.def.id, scene.kind !== "menagerie" && scene.kind !== "teach" && scene.kind !== "texture");
+      m3ui.setPartner(scene.kind === "chimera" ? (app.partner?.def.id ?? null) : null);
+      m3ui.setTexture(scene.kind === "texture" ? (app.texture?.def.id ?? null) : null);
+      m3ui.setLegend(null, []);
       teach.onScene(scene.kind === "teach");
       cellPanel.el.hidden = scene.kind !== "cell";
       cellPanel.set(null, app.sim.fireRate, app.clock.paused);
@@ -458,13 +525,23 @@ async function startLive(b: LiveBoot): Promise<void> {
       syncProve();
     },
     onEdited: () => {
-      learn.setScene(app.scene, app.onGatedRun, app.dishes.length > 1 ? null : app.organism.def);
+      learn.setScene(app.scene, app.onGatedRun, app.dishes.length > 1 && app.scene.kind !== "chimera" ? null : app.organism.def, {
+        partner: app.partner?.def,
+        texture: app.texture?.def,
+        grid: app.grid,
+      });
       syncTune();
       syncProve();
     },
     onCell: (c) => cellPanel.set(c, app.sim.fireRate, app.clock.paused),
     onStats: (s) => {
-      if (app.learnOpen) learn.setStats(s, GRID, app.sim.tick);
+      if (app.scene.kind === "chimera") {
+        m3ui.setLegend(
+          app.dishes.map((d, i) => ({ name: d.org.def.name, counts: app.ruleCounts[i] ?? [] })),
+          app.dishes.map((d) => d.org.def.name),
+        );
+      }
+      if (app.learnOpen) learn.setStats(s, app.grid, app.sim.tick, app.scene.kind === "chimera" ? app.ruleCounts : null);
     },
     onBasis: (b) => learn.setBasis(b),
   };
@@ -479,6 +556,10 @@ async function startLive(b: LiveBoot): Promise<void> {
   if (overlay) studio.root.append(overlay.el);
   app.hooks.onFrame = (now) => {
     teach.onFrame(now);
+    if (app.scene.kind === "chimera") {
+      const R = app.dishRadius;
+      m3ui.placeLegend(app.dishes.map((_, i) => app.toScreen(i, GRID / 2, GRID / 2 + R * 0.86)));
+    }
     if (app.scene.kind === "menagerie") {
       const R = app.dishRadius;
       menagerie.place(
@@ -503,7 +584,12 @@ async function startLive(b: LiveBoot): Promise<void> {
       [
         ["Adapter", gpu.adapterId],
         ["Tier", `${app.tier}${gpu.info.software ? " (software)" : ""}`],
-        ["Dish", `${app.dishes.length > 1 ? `${app.dishes.length} dishes of ` : ""}${GRID} × ${GRID} cells, 16 channels`],
+        [
+          "Dish",
+          app.scene.kind === "texture"
+            ? `a ${app.grid} × ${app.grid} wrap-around plane, 12 channels`
+            : `${app.dishes.length > 1 ? `${app.dishes.length} dishes of ` : ""}${GRID} × ${GRID} cells, 16 channels`,
+        ],
         ["Steps / second", `${Math.round(TICKS_PER_SECOND * app.clock.speed)} at ${app.clock.speed}×`],
         ["GPU per step", `${(scheduler.costOf(STEP_PASS) * 1000).toFixed(0)} µs`],
         ["Frame (p50 / p90)", `${percentile(rafTimes, 0.5).toFixed(1)} / ${percentile(rafTimes, 0.9).toFixed(1)} ms`],
@@ -526,6 +612,8 @@ async function startLive(b: LiveBoot): Promise<void> {
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
     organism: parsed.o === "today" ? lib.today() : parsed.o,
     cell: [parsed.cell[0]!, parsed.cell[1]!],
+    partner: parsed.with === "auto" ? undefined : parsed.with,
+    texture: parsed.tex === "none" ? undefined : parsed.tex,
   };
   await bootGpu(() => app.loadScene(scene.id, opts));
   mark("scene");
@@ -541,7 +629,10 @@ async function startLive(b: LiveBoot): Promise<void> {
     dishes: app.dishes.length,
     tier: app.tier,
     tick: app.sim.tick,
-    grid: GRID,
+    grid: app.grid,
+    partner: app.partner?.def.id ?? null,
+    texture: app.texture?.def.id ?? null,
+    ruleCounts: app.ruleCounts,
     domain: [app.camera.domainW, app.camera.domainH],
     origin: app.origin,
     dishRadius: app.dishRadius,
@@ -562,8 +653,11 @@ async function startLive(b: LiveBoot): Promise<void> {
   (globalThis as { __growTeach?: Teach }).__growTeach = teach;
   (globalThis as { __growLive?: boolean }).__growLive = true;
   mark("live");
-  // Teach's pipelines compile now, after the dish is live (Teach and Prove's gradient check wait for them)
-  void trainKernels().catch((e: unknown) => console.warn(`Teach's training pipelines did not compile: ${(e as Error).message}`));
+  // Teach's pipelines compile now, after the dish is live (Teach and Prove's gradient check wait for them), then Chimera's and Textures'
+  void trainKernels()
+    .catch((e: unknown) => console.warn(`Teach's training pipelines did not compile: ${(e as Error).message}`))
+    .then(() => m3Kernels())
+    .catch((e: unknown) => console.warn(`Chimera's and Textures' pipelines did not compile: ${(e as Error).message}`));
 
   if (query.get("bench") === "1") void bench(app, profiler, scheduler, rafTimes);
 }

@@ -7,6 +7,9 @@
 // iridescent tint from its hidden channels (principal components, ~15 %).
 // M1: frozen cells (Freeze) are drawn under a cool veil of frost with a
 // bright line along the edge of the frozen region.
+// M3: Textures draw the grid as a periodic plane (no glass, wrapped across
+// the whole view, the texture's sRGB colours); Chimera outlines and tints
+// the cells that run another dish's rule.
 // Render-only: every number the gate checks comes from the state buffer,
 // never from these pixels. Writes linear HDR into the scene target.
 #import bp/fullscreen
@@ -21,7 +24,8 @@ struct View {
   rim : vec4<f32>,     // rim / membrane colour (linear), rim width (cells)
   light : vec4<f32>,   // light direction (unit, z towards the viewer); compare split (target uv x, < 0 off)
   extra : vec4<f32>,   // organism fade, target px per cell, gloss, has compare
-  frost : vec4<f32>,   // has a frozen region, time (s)
+  frost : vec4<f32>,   // has a frozen region, time (s), plane (Textures), -
+  rules : vec4<f32>,   // show the Chimera overlay; its colour (linear)
 };
 
 @group(0) @binding(0) var<uniform> V : View;
@@ -33,6 +37,7 @@ struct View {
 @group(0) @binding(6) var grain : texture_2d<f32>;
 @group(0) @binding(7) var tint_cmp : texture_2d<f32>;
 @group(0) @binding(8) var freeze_tex : texture_2d<f32>;
+@group(0) @binding(9) var rule_tex : texture_2d<f32>;
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> FullscreenOut {
@@ -100,6 +105,70 @@ fn hash12(p : vec2<f32>) -> f32 {
   return fract((r.x + r.y) * r.x);
 }
 
+// Textures: one texel of a periodic grid, and a bilinear tap that wraps.
+fn tap_wrap(t : texture_2d<f32>, p : vec2<i32>) -> vec4<f32> {
+  let n = i32(V.dims.z);
+  return textureLoad(t, ((p % n) + n) % n, 0);
+}
+
+fn bilerp_wrap(t : texture_2d<f32>, g : vec2<f32>) -> vec4<f32> {
+  let p = g - 0.5;
+  let i = floor(p);
+  let f = p - i;
+  let i0 = vec2<i32>(i);
+  let a = tap_wrap(t, i0);
+  let b = tap_wrap(t, i0 + vec2<i32>(1, 0));
+  let c = tap_wrap(t, i0 + vec2<i32>(0, 1));
+  let d = tap_wrap(t, i0 + vec2<i32>(1, 1));
+  return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+fn srgb_to_linear(c : vec3<f32>) -> vec3<f32> {
+  let lo = c / 12.92;
+  let hi = pow((c + 0.055) / 1.055, vec3<f32>(2.4));
+  return select(hi, lo, c <= vec3<f32>(0.04045));
+}
+
+// The Textures plane: the whole view is pattern; zooming in far shows the cells.
+fn plane(in : FullscreenOut, g : vec2<f32>, mode : u32, use_cmp : bool, pxc : f32) -> vec3<f32> {
+  let n = V.dims.z;
+  var col : vec3<f32>;
+  if (mode == 2u) {
+    let cell = vec2<i32>(floor(g));
+    col = select(tap_wrap(look_cur, cell), tap_wrap(look_cmp, cell), use_cmp).rgb;
+  } else if (mode == 1u) {
+    let tv = bilerp_wrap(tint_tex, g).xyz;
+    col = 0.5 + 0.5 * tanh(tv * 1.5);
+  } else if (use_cmp) {
+    col = bilerp_wrap(look_cmp, g).rgb;
+  } else {
+    col = mix(bilerp_wrap(look_prev, g), bilerp_wrap(look_cur, g), V.dims.w).rgb;
+  }
+  var c = srgb_to_linear(clamp(col, vec3<f32>(0.0), vec3<f32>(1.0)));
+  // the cells, faintly, once they are large on screen
+  if (mode == 2u) {
+    let fg = abs(fract(g) - 0.5);
+    let line = 1.0 - smoothstep(0.5 - pxc * 1.2, 0.5, max(fg.x, fg.y));
+    c = mix(c, c * 0.8, line * smoothstep(6.0, 14.0, V.extra.y));
+  }
+  // frost over frozen cells (wrapped like the plane)
+  if (V.frost.x > 0.5) {
+    let gw = g - n * floor(g / n);
+    let fz = bilerp_wrap(freeze_tex, gw).r;
+    if (fz > 0.002) {
+      let ice = vec3<f32>(0.62, 0.84, 1.0);
+      let veil = smoothstep(0.05, 0.55, fz);
+      let edge = 1.0 - smoothstep(0.0, 0.16, abs(fz - 0.5));
+      c = mix(c, c * 0.55 + ice * 0.12, veil);
+      c = c + ice * 0.3 * edge;
+    }
+  }
+  // a soft vignette keeps the chrome legible over a busy pattern
+  let sv = (in.uv - 0.5) * vec2<f32>(V.dims.x / max(V.dims.y, 1.0), 1.0);
+  c = c * (1.0 - 0.35 * smoothstep(0.45, 1.1, length(sv)));
+  return c;
+}
+
 @fragment
 fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
   let px = in.uv * V.dims.xy;
@@ -111,6 +180,15 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
   let mode = u32(V.origin.w + 0.5);
   let pxc = max(V.cam.z, 1e-6);            // cells per target px
   let use_cmp = V.extra.w > 0.5 && V.light.w >= 0.0 && in.uv.x < V.light.w;
+
+  if (V.frost.z > 0.5) {
+    var pc = plane(in, g, mode, use_cmp, pxc);
+    if (V.light.w >= 0.0 && V.extra.w > 0.5) {
+      let dd = abs(in.uv.x - V.light.w) * V.dims.x;
+      pc = mix(pc, vec3<f32>(0.85, 0.95, 0.95), (1.0 - smoothstep(0.75, 1.75, dd)) * 0.8);
+    }
+    return vec4<f32>(max(pc, vec3<f32>(0.0)), 1.0);
+  }
 
   // ---- the dish -----------------------------------------------------------
   let d = q - centre;
@@ -199,6 +277,14 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
       // membrane: a thin line where the alpha falls off steeply
       let edge = clamp(length(grad) * 1.4, 0.0, 1.0) * (1.0 - abs(2.0 * s.a - 1.0));
       c = c + V.rim.rgb * edge * V.look.y * V.extra.x;
+    }
+    // Chimera: tissue on another dish's rule, tinted, with a line where the rules meet
+    if (V.rules.x > 0.5) {
+      let fr = textureSampleLevel(rule_tex, samp, g / n, 0.0).r * inside(g);
+      let body_w = smoothstep(0.08, 0.5, s.a) * V.extra.x;
+      let line = 1.0 - smoothstep(0.0, 0.14, abs(fr - 0.5));
+      c = mix(c, c * 0.8 + V.rules.yzw * 0.16, smoothstep(0.35, 0.75, fr) * body_w * 0.7);
+      c = c + V.rules.yzw * line * body_w * 0.55;
     }
   }
 
