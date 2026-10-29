@@ -190,7 +190,15 @@ export class App {
   private group = 0;
   private activeGroup = 0;
   private busy = false;
-  private inFlight = false;
+  /** Frames submitted and not yet done on the GPU. */
+  private inFlight = 0;
+  /**
+   * Frames allowed in flight. One, except while Teach trains: with one frame
+   * in flight the GPU idles between frames and the RX 6800 XT's power manager
+   * keeps it near 500 MHz (measured: 7.8 iterations/s at 43 fps, against 28
+   * at 60 fps when the clocks were up) — Swarm M0 found the same.
+   */
+  maxInFlight = 1;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
@@ -413,6 +421,11 @@ export class App {
       this.camera.set({ cx: a[0] + rel[0] * GRID, cy: a[1] + rel[1] * GRID, pxPerUnit: this.camera.coverZoom() * z });
     }
     this.viewport = [w, h];
+  }
+
+  /** Lay the dishes out again on the next frame (a side panel changed size). */
+  relayout(): void {
+    this.viewport = [0, 0];
   }
 
   /** The camera's reference point for the URL: the primary dish's grid corner, or the Menagerie's lattice corner. */
@@ -1263,7 +1276,7 @@ export class App {
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
     // the capture lock: the live loop yields entirely while a capture runs
-    if (isCapturing() || this.busy || this.inFlight || this.dishes.length === 0) return;
+    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight || this.dishes.length === 0) return;
     if (this.profiler?.source === "submit-latency" && this.governor) this.governor.sample(dt * 1000, now);
     const rect = this.studio.canvas.getBoundingClientRect();
     if (rect.width !== this.viewport[0] || rect.height !== this.viewport[1]) this.reframe(rect.width, rect.height);
@@ -1377,9 +1390,9 @@ export class App {
       this.snapshotWanted = false;
       this.studio.canvas.toBlob((b) => b && this.onSnapshot?.(b), "image/png");
     }
-    this.inFlight = true;
+    this.inFlight += 1;
     void this.device.queue.onSubmittedWorkDone().then(() => {
-      this.inFlight = false;
+      this.inFlight -= 1;
     });
     if (statsRecorded) void this.collectStats();
     if (probe) void this.readProbe(probe.d, probe.idx);

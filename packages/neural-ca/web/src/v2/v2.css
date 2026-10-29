@@ -409,10 +409,28 @@
 .gr-teach-panel {
   overflow-x: hidden;
 }
-.gr-teach-panel header {
+.gr-teach-fold > summary {
   display: flex;
   align-items: center;
   gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.gr-teach-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.gr-teach-fold > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  opacity: 0.6;
+}
+.gr-teach-fold[open] > summary::after {
+  transform: rotate(-135deg);
 }
 .gr-teach-panel h2 {
   margin: 0;
@@ -541,6 +559,13 @@
 .gr-teach-box[hidden],
 .gr-teach-ghost[hidden] {
   display: none;
+}
+/* phones: the Teach sheet sits above the tool options (teach.ts sets its bottom from them) */
+@media (max-width: 639px) {
+  .gr-teach-panel {
+    bottom: 252px;
+    max-height: 46vh;
+  }
 }
 .gr-visually-hidden {
   position: absolute;

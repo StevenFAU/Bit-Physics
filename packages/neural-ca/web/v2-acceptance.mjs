@@ -1,5 +1,5 @@
 // Grow v2 — acceptance checks in a real WebGPU browser
-// (docs/planning/rebuild-v2/04-neural-ca.md M0 and M1).
+// (docs/planning/rebuild-v2/04-neural-ca.md M0, M1 and M2).
 //
 //   npm run build   (in this directory)
 //   CHROME_BIN=/snap/bin/chromium \
@@ -22,7 +22,11 @@
 // manifest's reference numbers; Freeze (frozen cells keep their bytes, thaw,
 // undo by replay); Graft (copy, move, across dishes, undo); Inside the Cell
 // (the CPU arithmetic against the GPU's next step, share link); the organism
-// picker and card. Prints BP_BENCH lines at the end (the Dish, the Menagerie).
+// picker and card. M2: Prove's gradient check against the float64 reference;
+// Teach end to end (draw, train to a recognisable organism at 60 fps, grow it
+// on the gated kernel, its regrowth score, save / reload / grow / import /
+// delete in the local library); same weights at either training pace; T1
+// does not train. Prints BP_BENCH lines at the end (the Dish, the Menagerie).
 //
 // Bit-exactness against the committed canonical is backend-conditional: it
 // holds on RADV (where the canonical was made). On another backend those two
@@ -800,6 +804,180 @@ const IOU_HELPERS = `
   check("the heading's organism picker swaps the organism in place", picked.scene === "cell" && picked.o === "fish", JSON.stringify(picked));
   check("no console errors (Inside the Cell)", errors.length === 0, errors.join(" | "));
   await ctx.close();
+}
+
+// ============================================================== M2 ==========
+// Teach: the gradient check in Prove; draw → train → grow → save; the library;
+// same weights however training falls into frames; T1 does not train.
+
+const TEACH_GEN = JSON.parse(await readFile(fileURLToPath(new URL("./src/generated/teach.json", import.meta.url)), "utf8"));
+const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
+
+// --- the gradient check (Prove) and the boot order --------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?o=disk");
+  const boot = await T(page, () => globalThis.__growBoot);
+  await page.waitForFunction(() => globalThis.__growBoot.trainKernels !== undefined, undefined, { timeout: 120000 });
+  const boot2 = await T(page, () => globalThis.__growBoot);
+  check("ready before the live dish, the training pipelines compiled after it", boot.ready <= boot.live && boot2.trainKernels >= boot2.live, `ready ${boot.ready} ms, live ${boot.live} ms, trainer ${boot2.trainKernels} ms (compile ${boot2.trainCompileMs} ms)`);
+  const r = await T(page, () => globalThis.__growProve.runGradcheck());
+  const ok = r && r.cases.length === 3 && r.worst <= GC_BUDGET && r.cases.every((c) => c.aliveCells === c.aliveCellsRef);
+  check(
+    "Prove: this GPU's gradients match the float64 reference within the declared budget (3 cases)",
+    ok,
+    r ? `worst rel L2 ${r.worst.toExponential(2)} (budget ${GC_BUDGET}); ${r.cases.map((c) => `${c.name} ${c.relL2.toExponential(2)}`).join(", ")}; ${r.slices} frames, ${r.seconds.toFixed(2)} s` : "did not run",
+  );
+  const card = await T(page, () => [...document.querySelectorAll(".bp-proof-card, [class*='proof']")].map((e) => e.textContent).find((t) => /Backprop on this GPU/.test(t)) ?? "");
+  check("the Prove card shows the measured gradient error", /worst relative L2/.test(card), card.slice(0, 160));
+  check("no console errors (gradient check)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- Teach end to end: draw, train, grow it, save it --------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=teach");
+  await T(page, () => globalThis.__growTeach.loadPreset("gecko"));
+  await page.waitForTimeout(500);
+  const drawn = await T(page, () => ({ s: globalThis.__growTeach.state(), btn: document.querySelector(".gr-teach-panel .bp-btn-primary")?.disabled, tools: globalThis.__grow.studio.rail.active }));
+  await shot(page, "15-teach-draw");
+  check("Teach opens on a drawing with Paint, and the drawing is learnable", drawn.s.phase === "draw" && drawn.tools === "paint" && drawn.s.target.cells > 300 && drawn.s.target.warnings.length === 0 && drawn.btn === false, JSON.stringify({ cells: drawn.s.target.cells, w: drawn.s.target.warnings, btn: drawn.btn }));
+  // painting: a stroke on the dish adds covered cells
+  const painted = await T(page, async () => {
+    const t = globalThis.__growTeach;
+    const before = t.state().target.cells;
+    t.paint("down", 16, 16);
+    t.paint("move", 24, 18);
+    t.paint("up", 0, 0);
+    await new Promise((r) => setTimeout(r, 200));
+    const after = t.state().target.cells;
+    await t.loadPreset("gecko");
+    await new Promise((r) => setTimeout(r, 300));
+    return { before, after };
+  });
+  check("a Paint stroke on the dish adds to the drawing", painted.after > painted.before + 10, `${painted.before} → ${painted.after} cells`);
+  const run = await T(page, async () => {
+    const t = globalThis.__growTeach;
+    const t0 = performance.now();
+    await t.startTraining();
+    const fps = [];
+    let shot = false;
+    while (performance.now() - t0 < 150000) {
+      await new Promise((r) => setTimeout(r, 1000));
+      const s = t.state();
+      if (s.run.iter > 50) fps.push(s.fps);
+      if (!shot && s.run.iter > 500) { shot = true; console.log("teach-shot"); }
+      if (s.run.recognisable && s.run.iter >= s.run.recognisable.iter + 100) break;
+    }
+    const s = t.state();
+    const lattice = (() => {
+      const app = globalThis.__grow;
+      const panel = document.querySelector(".gr-teach-panel").getBoundingClientRect();
+      const c = app.studio.canvas.getBoundingClientRect();
+      return app.dishes.map((_, i) => {
+        const [x0, y0] = app.toScreen(i, 0, 0);
+        const [x1, y1] = app.toScreen(i, 64, 64);
+        return x1 + c.left <= panel.left + 1 || y0 + c.top >= panel.bottom - 1 || x0 + c.left >= panel.right - 1;
+      });
+    })();
+    return { s, fpsMin: Math.min(...fps), fpsMean: fps.reduce((a, b) => a + b, 0) / fps.length, dishes: globalThis.__grow.dishes.length, still: globalThis.__grow.still, lattice };
+  });
+  const rr = run.s.run;
+  check("Teach trains: the loss falls and the batch shows in a lattice of eight still dishes", rr.lastLoss < rr.firstLoss / 4 && run.dishes === 8 && run.still && rr.evals.length > 10, `loss ${rr.firstLoss.toExponential(2)} → ${rr.lastLoss.toExponential(2)} over ${rr.iter} iterations; ${run.dishes} dishes`);
+  check("the batch's dishes stay clear of the Teach panel", run.lattice.every(Boolean), run.lattice.join(","));
+  check("training runs in slices: each iteration spread over several page frames", rr.slices > rr.iter * 1.5, `${rr.slices} frames for ${rr.iter} iterations`);
+  check("a recognisable organism, grown from one cell (overlap ≥ 0.85 at 96 and 300 steps), within 90 s of training on this GPU", !!rr.recognisable && rr.recognisable.seconds < 90, rr.recognisable ? `iteration ${rr.recognisable.iter}, ${rr.recognisable.seconds.toFixed(1)} s of training (${rr.itPerS.toFixed(1)} it/s, recipe batch ${rr.recipe.B}, pool ${rr.recipe.pool})` : "not reached");
+  check("the page keeps its frame rate while it trains (smooth pace)", run.fpsMin >= 50, `${run.fpsMean.toFixed(1)} fps mean, ${run.fpsMin.toFixed(1)} min, ${rr.budgetMs} ms of training per frame; ${rr.memoryMiB.toFixed(0)} MiB of GPU memory`);
+  await shot(page, "16-teach-train");
+  // grow it: the weights move to the committed layout and grow in the dish through the gated kernel
+  const live = await T(page, async () => {
+    const t = globalThis.__growTeach;
+    const app = globalThis.__grow;
+    await t.finish();
+    for (let i = 0; i < 100 && !t.state().regrow; i += 1) await new Promise((r) => setTimeout(r, 300));
+    app.clock.paused = true;
+    await app.loadScene("teach");
+    app.clock.paused = true;
+    await app.advance(300);
+    const st = await app.sim.readState();
+    const tg = t.taught.target;
+    let inter = 0, uni = 0;
+    for (let c = 0; c < 64 * 64; c += 1) {
+      const a = Math.min(1, Math.max(0, st[c * 16 + 3])) > 0.5;
+      const b = tg[c * 4 + 3] > 0.5;
+      if (a && b) inter += 1;
+      if (a || b) uni += 1;
+    }
+    app.clock.paused = false;
+    return { s: t.state(), iou: inter / uni, still: app.still, tools: app.studio.rail.active, kernelIsGated: app.dishes[0].sim !== undefined };
+  });
+  await page.waitForTimeout(1500);
+  await shot(page, "17-teach-live");
+  // overlap measured 0.75–0.88 over three runs: it depends on where training stopped
+  check("“Grow it” grows the taught organism in the dish on the live (gated) kernel: overlap with the drawing at step 300", live.s.phase === "live" && !live.still && live.tools === "cut" && live.iou > 0.7, `IoU ${live.iou.toFixed(3)}`);
+  check("its card carries a regrowth score measured on the live kernel", live.s.regrow && Number.isFinite(live.s.regrow.mean) && live.s.taught.card.regrow === live.s.regrow.mean, live.s.regrow ? `mean ${live.s.regrow.mean.toFixed(3)} (${Object.entries(live.s.regrow.after).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(", ")})` : "none");
+  // the library: save, survives a reload, grows back with the same bytes, download/import, delete
+  const saved = await T(page, async () => {
+    const t = globalThis.__growTeach;
+    t.nameIn.value = "Acceptance gecko";
+    const m = await t.save();
+    return { id: m?.id, sha: t.taught.org.ck.sha256, n: (await t.library.list()).length };
+  });
+  check("Save keeps the model in this browser's library", !!saved.id && saved.n >= 1, JSON.stringify(saved));
+  await page.reload({ waitUntil: "load" });
+  await page.waitForFunction(() => globalThis.__growLive === true, undefined, { timeout: 60000 });
+  const back = await T(page, async (id) => {
+    const t = globalThis.__growTeach;
+    const list = await t.library.list();
+    await t.growSaved(id);
+    const s = t.state();
+    const m = await t.library.get(id);
+    const imp = new Blob([m.weights]);
+    await t.importFile(imp);
+    const after = await t.library.list();
+    const twin = after.find((x) => x.id !== id && x.sha256 === m.sha256);
+    const libText = document.querySelector(".gr-teach-libbox")?.textContent ?? "";
+    if (twin) await t.library.remove(twin.id);
+    await t.library.remove(id);
+    return { listed: list.some((x) => x.id === id && x.name === "Acceptance gecko"), phase: s.phase, sha: s.taught?.sha, imported: !!twin, left: (await t.library.list()).length, note: /only in this browser/.test(libText) };
+  }, saved.id);
+  check("after a reload the saved model is still listed and grows with the same weights", back.listed && back.phase === "live" && back.sha === saved.sha, JSON.stringify(back));
+  check("a downloaded weights file imports back into the library (same SHA-256); delete removes it", back.imported && back.left === saved.n - 1, `${back.left} left`);
+  check("the library says its models live only in this browser", back.note);
+  check("no console errors (Teach)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- same weights however training falls into frames; T1 does not train ------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=teach");
+  const shas = await T(page, async () => {
+    const t = globalThis.__growTeach;
+    const out = {};
+    for (const [label, pace, seed] of [["smooth", "smooth", 1], ["fast", "fast", 1], ["seed2", "smooth", 2]]) {
+      t.pace = pace;
+      t.overrides = { seed };
+      t.stopAfter = 120;
+      await t.loadPreset("starfish");
+      await new Promise((r) => setTimeout(r, 300));
+      await t.startTraining();
+      await t.run.done;
+      const w = await t.run.job.readWeightsIdle();
+      const d = await crypto.subtle.digest("SHA-256", w.buffer);
+      out[label] = { sha: Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, "0")).join(""), iter: t.run.job.iter, slices: t.state().run.slices };
+      await t.backToDraw();
+    }
+    t.stopAfter = null;
+    t.overrides = null;
+    return out;
+  });
+  check("same run seed ⇒ the same weights whether training runs at the smooth or the faster pace (120 iterations)", shas.smooth.sha === shas.fast.sha && shas.smooth.iter === 120, `${shas.smooth.sha.slice(0, 16)}… vs ${shas.fast.sha.slice(0, 16)}…`);
+  check("a different run seed gives different weights", shas.seed2.sha !== shas.smooth.sha);
+  check("no console errors (determinism)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+  const t1 = await open("/v2/?s=teach&tier=T1");
+  const st = await T(t1.page, () => ({ can: globalThis.__growTeach.canTrain, btn: document.querySelector(".gr-teach-panel .bp-btn-primary")?.disabled, note: document.querySelector(".gr-teach-panel")?.textContent ?? "" }));
+  check("T1 does not train: Teach says so and grows saved models only", st.can === false && st.btn === true && /too slow to train/.test(st.note), JSON.stringify({ can: st.can, btn: st.btn }));
+  await t1.ctx.close();
 }
 
 // --- frame time: the boot scene, and the Menagerie's eight dishes -------------

@@ -60,15 +60,16 @@ interface Recipe {
 // as 1,024 in its run, 243 MiB less), the Menagerie's damage recipe so the
 // result heals. T2: the spec's batch 4 / 64 steps. Measured 2026-10-29 on the
 // RX 6800 XT (headless Chromium, the Menagerie's gecko target, damage from the
-// first iteration): T3 recognisable after 1,250–1,350 iterations (run seeds
-// 1–3) = 46–49 s at the smooth pace, 27–28 iterations/s, page 59.8–59.9 fps;
-// T2 (forced with ?tier=T2) after 1,150 and 1,450 (seeds 1–2), 38
-// iterations/s. Starting damage at iteration 600 instead was slower (1,600).
-// A 30 ms "faster" pace gained only 7% here, at 24 fps. No integrated GPU was
-// available: T2's speed on one is the visitor's own measurement.
+// first iteration, two frames in flight): T3 recognisable after 1,250–1,350
+// iterations (run seeds 1–3) = 36–38 s at the smooth pace (34–37 it/s, page
+// 60 fps), 26 s at the faster pace (53 it/s, 33 fps); T2 (forced with
+// ?tier=T2) after 1,150 and 1,450 iterations (seeds 1–2) = 42 and 59 s at
+// 60 fps. Starting damage at iteration 600 instead was slower (1,600). No
+// integrated GPU was available: T2's speed on one is the visitor's own
+// measurement.
 const RECIPES: Record<"T3" | "T2", Recipe> = {
-  T3: { B: 8, pool: 256, Tmin: 64, Tmax: 96, damage: 3, damageFrom: 0, lr: 2e-3, decayAt: 2000, smooth: 12, fast: 30, gecko: [1250, 1350], seed: 1, geckoTime: "46–49 s on an RX 6800 XT, at 60 fps" },
-  T2: { B: 4, pool: 256, Tmin: 64, Tmax: 64, damage: 1, damageFrom: 0, lr: 2e-3, decayAt: 2000, smooth: 10, fast: 30, gecko: [1150, 1450], seed: 1, geckoTime: "30–38 s on an RX 6800 XT; an integrated GPU will be slower" },
+  T3: { B: 8, pool: 256, Tmin: 64, Tmax: 96, damage: 3, damageFrom: 0, lr: 2e-3, decayAt: 2000, smooth: 12, fast: 30, gecko: [1250, 1350], seed: 1, geckoTime: "36–38 s on an RX 6800 XT at 60 fps, 26 s at the faster pace" },
+  T2: { B: 4, pool: 256, Tmin: 64, Tmax: 64, damage: 1, damageFrom: 0, lr: 2e-3, decayAt: 2000, smooth: 10, fast: 30, gecko: [1150, 1450], seed: 1, geckoTime: "42–59 s on an RX 6800 XT at 60 fps; an integrated GPU will be slower" },
 };
 const EVAL_EVERY = 50;
 const EVAL_STEPS = [96, 300];
@@ -176,7 +177,7 @@ export class Teach implements TeachHost {
       if (preset.value) void this.loadPreset(preset.value);
       preset.value = "";
     });
-    const file = h("input", { type: "file", accept: "image/*", class: "gr-visually-hidden", id: "gr-teach-image", tabindex: "-1" });
+    const file = h("input", { type: "file", accept: "image/*", class: "gr-visually-hidden", id: "gr-teach-image", tabindex: "-1", "aria-label": "An image to start the drawing from" });
     file.addEventListener("change", () => {
       const f = file.files?.[0];
       if (f) void this.loadImage(f);
@@ -268,7 +269,7 @@ export class Teach implements TeachHost {
       { class: "gr-note" },
       "Saved models live only in this browser, on this device: nothing is uploaded, another browser starts empty, and clearing this site's data deletes them. Download one to keep it.",
     );
-    const importIn = h("input", { type: "file", accept: ".bin,application/octet-stream", class: "gr-visually-hidden", tabindex: "-1" });
+    const importIn = h("input", { type: "file", accept: ".bin,application/octet-stream", class: "gr-visually-hidden", tabindex: "-1", "aria-label": "A Grow model file to import" });
     importIn.addEventListener("change", () => {
       const f = importIn.files?.[0];
       if (f) void this.importFile(f);
@@ -276,16 +277,20 @@ export class Teach implements TeachHost {
     });
     const importBtn = h("button", { type: "button", class: "bp-btn bp-btn-quiet" }, "Import a model…");
     importBtn.addEventListener("click", () => importIn.click());
-    this.el = h(
-      "section",
-      { class: "gr-teach-panel bp-surface", "aria-label": "Teach", "data-bp-chrome": "", "data-bp2": "studio-chrome" },
-      h("header", {}, h("h2", {}, "Teach"), this.badge),
+    // the panel folds to its header (phones start folded, so the drawing box stays clear)
+    const body = h(
+      "details",
+      { class: "gr-teach-fold" },
+      h("summary", {}, h("h2", {}, "Teach"), this.badge),
       this.status,
       drawSec,
       trainSec,
       liveSec,
       h("details", { class: "gr-teach-libbox" }, h("summary", {}, "Saved in this browser"), this.libNote, this.libList, h("div", { class: "gr-tool-row" }, importBtn, importIn)),
     );
+    body.open = !matchMedia("(max-width: 639px)").matches;
+    body.addEventListener("toggle", () => d.app.relayout());
+    this.el = h("section", { class: "gr-teach-panel bp-surface", "aria-label": "Teach", "data-bp-chrome": "", "data-bp2": "studio-chrome" }, body);
     this.el.hidden = true;
     d.studio.stage.append(this.el);
     d.app.sidePanel = this.el;
@@ -300,6 +305,8 @@ export class Teach implements TeachHost {
 
   /** Test hook (acceptance runs): replace parts of the recipe. */
   overrides: Partial<Recipe> | null = null;
+  /** Test hook: stop training after this many iterations (null: train until told to stop). */
+  stopAfter: number | null = null;
 
   private recipe(): Recipe {
     return { ...RECIPES[this.d.tier === "T2" ? "T2" : "T3"], ...this.overrides };
@@ -432,6 +439,7 @@ export class Teach implements TeachHost {
       this.updateWarnings();
     }
     this.placeOverlays(inScene);
+    if (inScene) this.placeSheet();
     if (now > this.uiDue && inScene) {
       this.uiDue = now + 250;
       this.updateTrainUi();
@@ -444,6 +452,29 @@ export class Teach implements TeachHost {
     const avg = this.frames.reduce((a, b) => a + b, 0) / this.frames.length;
     return 1000 / avg;
   }
+
+  private sheetBottom = "";
+
+  /** Phones: the panel is a sheet just above the tool options strip (or the rail), whatever its height. */
+  private placeSheet(): void {
+    if (!this.phone.matches) {
+      if (this.sheetBottom) this.el.style.bottom = this.sheetBottom = "";
+      return;
+    }
+    const stage = this.d.studio.stage.getBoundingClientRect();
+    let top = stage.bottom;
+    for (const el of [this.d.studio.rail.optionsEl, this.d.studio.rail.el]) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0) top = Math.min(top, r.top);
+    }
+    const b = `${Math.round(stage.bottom - top + 8)}px`;
+    if (b !== this.sheetBottom) {
+      this.el.style.bottom = this.sheetBottom = b;
+      this.d.app.relayout();
+    }
+  }
+
+  private readonly phone = matchMedia("(max-width: 639px)");
 
   private placeOverlays(inScene: boolean): void {
     const app = this.d.app;
@@ -599,8 +630,10 @@ export class Teach implements TeachHost {
     if (!r || r.running) return;
     r.running = true;
     r.since = performance.now();
-    r.job.runUntil(null);
+    r.job.runUntil(this.stopAfter);
     this.d.scheduler.budgetMs = this.budget();
+    // two frames in flight keep the GPU busy (and its clocks up) between frames
+    this.d.app.maxInFlight = 2;
     if (this.d.app.governor) this.d.app.governor.suspended = true;
     r.done = this.d.scheduler.add(r.job).catch(() => {});
     this.pauseBtn.textContent = "Pause";
@@ -617,6 +650,7 @@ export class Teach implements TeachHost {
     r.since = null;
     r.running = false;
     this.d.scheduler.budgetMs = this.baseBudget;
+    this.d.app.maxInFlight = 1;
     if (this.d.app.governor) this.d.app.governor.suspended = false;
     this.pauseBtn.textContent = "Resume";
     this.say("Paused.");
