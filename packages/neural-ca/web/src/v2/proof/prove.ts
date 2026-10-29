@@ -12,6 +12,7 @@ import { CANONICAL_SEED, CANONICAL_STEPS, FIRE_RATE, GRID } from "./gate.js";
 import type { FrameDiff } from "./live-vs-gated.js";
 import { LiveVsGatedJob, compareFrames } from "./live-vs-gated.js";
 import type { LiveKernels } from "../model/live.js";
+import type { OrganismLibrary } from "../model/organisms.js";
 import type { FrameScheduler } from "../runtime/scheduler.js";
 
 const blob = (path: string): string => `${V.repo_blob_base}${path}`;
@@ -22,6 +23,7 @@ export interface ProveDeps {
   gate: GateRunner;
   kernels: LiveKernels;
   checkpoint: Checkpoint;
+  library: OrganismLibrary;
   scheduler: FrameScheduler;
   /** Load the gated run into the live view. */
   showGated: () => void;
@@ -31,6 +33,10 @@ export interface ProveDeps {
 
 export interface OnScreen {
   scene: string;
+  /** The organism on the dish ("all 8 organisms" in the Menagerie). */
+  organism: string;
+  /** A single dish running the committed checkpoint. */
+  gatedOrganism: boolean;
   /** The canonical start, seed 42, fire rate 0.5, no edits. */
   canonical: boolean;
   tick: number;
@@ -52,6 +58,7 @@ export interface ProvePane {
   runGate(seed?: number): Promise<GateProof | null>;
   runLiveVsGated(): Promise<LiveVsGated | null>;
   checkWeights(): { sha: string; matches: boolean };
+  checkMenagerie(): Promise<{ id: string; sha: string; matches: boolean }[]>;
 }
 
 export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
@@ -152,6 +159,45 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   };
   checkWeights();
   pane.append(ckCard.el);
+
+  // 5. the Menagerie's weights are the committed files
+  const n = d.library.defs.length;
+  const menCard = proofCard(
+    {
+      title: "The Menagerie's networks",
+      sentence:
+        `Each of the ${n} organisms is ${(8320).toLocaleString()} numbers in the committed checkpoint's layout, run by the same gated kernel. ` +
+        "Every file this page downloads must match the SHA-256 recorded with its training run.",
+      label: "every organism's weights match",
+      action: "Check them",
+      links: [{ label: "how they were trained", href: blob("packages/neural-ca/menagerie/README.md") }],
+    },
+    () => void checkMenagerie(),
+  );
+  menCard.set({ status: "idle", measured: "run it to fetch and check all of them", budget: `${n} of ${n} match`, adapter: "your browser" });
+  pane.append(menCard.el);
+  async function checkMenagerie(): Promise<{ id: string; sha: string; matches: boolean }[]> {
+    menCard.set({ status: "running", measured: "fetching…", adapter: "your browser" });
+    const rows: { id: string; sha: string; matches: boolean }[] = [];
+    for (const def of d.library.defs) {
+      try {
+        const o = await d.library.get(def.id);
+        rows.push({ id: def.id, sha: o.ck.sha256, matches: o.ck.sha256 === def.sha256 });
+      } catch (e) {
+        rows.push({ id: def.id, sha: (e as Error).message, matches: false });
+      }
+    }
+    const ok = rows.filter((r) => r.matches).length;
+    menCard.set({
+      status: ok === n ? "pass" : "fail",
+      measured: `${ok} of ${n} match`,
+      budget: `${n} of ${n} match`,
+      ratio: ok === n ? 0 : 2,
+      adapter: "your browser (SHA-256 of each download)",
+      notes: rows.map((r) => `${r.id}  ${r.sha.slice(0, 16)}…${r.matches ? "" : "  MISMATCH"}`),
+    });
+    return rows;
+  }
 
   pane.append(
     h(
@@ -273,6 +319,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     await runGate();
     await runLive();
     checkWeights();
+    await checkMenagerie();
   }
 
   return {
@@ -284,11 +331,14 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         onScreen.textContent = `On screen: the gated run, carried on past its ${CANONICAL_STEPS.toLocaleString()} gated steps (${steps}) with the same rule and the same random mask.`;
       } else {
         const why: string[] = [];
+        if (!s.gatedOrganism) why.push(`${s.organism} (the gate runs the committed disk)`);
         if (s.scene !== "The Dish") why.push(`the ${s.scene} scene`);
         if (s.edits > 0) why.push(`${s.edits} edit${s.edits === 1 ? "" : "s"}`);
         if (s.fireRate !== FIRE_RATE) why.push(`update chance ${s.fireRate} (the gate uses ${FIRE_RATE})`);
         if (s.seed !== CANONICAL_SEED) why.push(`mask seed ${s.seed} (the gate uses ${CANONICAL_SEED})`);
-        onScreen.textContent = `On screen: the committed network and kernel with ${why.join(", ")} — ${steps}. Not the gated run.`;
+        onScreen.textContent = s.gatedOrganism
+          ? `On screen: the committed network and kernel with ${why.join(", ")} — ${steps}. Not the gated run.`
+          : `On screen: the gated kernel running ${why.join(", ")} — ${steps}. Not the gated run.`;
       }
       showGatedBtn.hidden = s.canonical;
     },
@@ -296,5 +346,6 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     runGate: (seed) => runGate(seed),
     runLiveVsGated: () => runLive(),
     checkWeights,
+    checkMenagerie,
   };
 }

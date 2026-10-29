@@ -10,11 +10,16 @@
 // gives the gate path's state byte for byte — measured in Prove ("The live
 // dish is the gated kernel") and in v2-acceptance.mjs.
 //
-// Edits (Cut, Seed) are a separate brush pass encoded between two steps.
+// Edits (Cut, Seed, Graft) are separate passes encoded between two steps.
+// Freeze (M1) adds one pass after a step's mask pass that copies the step's
+// input back over frozen cells; with nothing frozen it is not encoded, so the
+// step is the gated kernel's bytes alone.
 
 import type { Checkpoint } from "../proof/gate.js";
 import { CN, KERNEL_WGSL } from "../proof/gate.js";
 import brushSrc from "./brush.wgsl?raw";
+import freezeSrc from "./freeze.wgsl?raw";
+import graftSrc from "./graft.wgsl?raw";
 import statsSrc from "./stats.wgsl?raw";
 
 /** Uniform slot stride: the default minUniformBufferOffsetAlignment. */
@@ -26,6 +31,7 @@ export const MAX_STEPS_PER_ENCODE = 128;
 const BRUSH_SLOT = 512;
 const BRUSH_RING = 32;
 export const MAX_SEGS = 24;
+const GRAFT_RING = 16;
 
 export type StampMode = "cut" | "seed";
 
@@ -48,6 +54,32 @@ export interface LiveCheckpoint {
   tick: number;
   seed: number;
   fireRate: number;
+  /** The frozen cells (1 = frozen), or null when none were. */
+  freeze: Uint8Array | null;
+}
+
+/** Cells whose centre lies within `radius` of a polyline (a single point when it has one vertex) — the brush's rule. */
+export function rasterStroke(grid: number, pts: readonly number[], radius: number, visit: (i: number) => void): void {
+  const segs: [number, number, number, number][] = [];
+  if (pts.length === 2) segs.push([pts[0]!, pts[1]!, pts[0]!, pts[1]!]);
+  for (let i = 0; i + 3 < pts.length; i += 2) segs.push([pts[i]!, pts[i + 1]!, pts[i + 2]!, pts[i + 3]!]);
+  for (const [ax, ay, bx, by] of segs) {
+    const x0 = Math.max(0, Math.floor(Math.min(ax, bx) - radius - 1));
+    const x1 = Math.min(grid - 1, Math.ceil(Math.max(ax, bx) + radius + 1));
+    const y0 = Math.max(0, Math.floor(Math.min(ay, by) - radius - 1));
+    const y1 = Math.min(grid - 1, Math.ceil(Math.max(ay, by) + radius + 1));
+    const vx = bx - ax;
+    const vy = by - ay;
+    const l2 = vx * vx + vy * vy;
+    for (let y = y0; y <= y1; y += 1) {
+      for (let x = x0; x <= x1; x += 1) {
+        const px = x + 0.5;
+        const py = y + 0.5;
+        const t = l2 > 1e-8 ? Math.min(1, Math.max(0, ((px - ax) * vx + (py - ay) * vy) / l2)) : 0;
+        if (Math.hypot(px - (ax + vx * t), py - (ay + vy * t)) <= radius) visit(y * grid + x);
+      }
+    }
+  }
 }
 
 export interface LiveStats {
@@ -68,6 +100,10 @@ export class LiveKernels {
     readonly brush: GPUComputePipeline,
     readonly statsLayout: GPUBindGroupLayout,
     readonly stats: GPUComputePipeline,
+    readonly freezeLayout: GPUBindGroupLayout,
+    readonly freeze: GPUComputePipeline,
+    readonly graftLayout: GPUBindGroupLayout,
+    readonly graft: GPUComputePipeline,
   ) {}
 
   static async create(device: GPUDevice): Promise<LiveKernels> {
@@ -100,9 +136,28 @@ export class LiveKernels {
         { binding: 2, visibility: C, buffer: { type: "storage" } },
       ],
     });
+    const freezeLayout = device.createBindGroupLayout({
+      label: "nca-freeze",
+      entries: [
+        { binding: 0, visibility: C, buffer: { type: "uniform" } },
+        { binding: 1, visibility: C, buffer: { type: "read-only-storage" } },
+        { binding: 2, visibility: C, buffer: { type: "read-only-storage" } },
+        { binding: 3, visibility: C, buffer: { type: "storage" } },
+      ],
+    });
+    const graftLayout = device.createBindGroupLayout({
+      label: "nca-graft",
+      entries: [
+        { binding: 0, visibility: C, buffer: { type: "uniform", hasDynamicOffset: true, minBindingSize: 32 } },
+        { binding: 1, visibility: C, buffer: { type: "read-only-storage" } },
+        { binding: 2, visibility: C, buffer: { type: "storage" } },
+      ],
+    });
     const brushModule = device.createShaderModule({ code: brushSrc, label: "nca-brush" });
     const statsModule = device.createShaderModule({ code: statsSrc, label: "nca-stats" });
-    const [update, mask, brush, stats] = await Promise.all([
+    const freezeModule = device.createShaderModule({ code: freezeSrc, label: "nca-freeze" });
+    const graftModule = device.createShaderModule({ code: graftSrc, label: "nca-graft" });
+    const [update, mask, brush, stats, freeze, graft] = await Promise.all([
       device.createComputePipelineAsync({ label: "nca-live-update", layout: stepPL, compute: { module, entryPoint: "update" } }),
       device.createComputePipelineAsync({ label: "nca-live-mask", layout: stepPL, compute: { module, entryPoint: "mask" } }),
       device.createComputePipelineAsync({
@@ -115,8 +170,18 @@ export class LiveKernels {
         layout: device.createPipelineLayout({ bindGroupLayouts: [statsLayout] }),
         compute: { module: statsModule, entryPoint: "main" },
       }),
+      device.createComputePipelineAsync({
+        label: "nca-freeze",
+        layout: device.createPipelineLayout({ bindGroupLayouts: [freezeLayout] }),
+        compute: { module: freezeModule, entryPoint: "main" },
+      }),
+      device.createComputePipelineAsync({
+        label: "nca-graft",
+        layout: device.createPipelineLayout({ bindGroupLayouts: [graftLayout] }),
+        compute: { module: graftModule, entryPoint: "main" },
+      }),
     ]);
-    return new LiveKernels(stepLayout, update, mask, brushLayout, brush, statsLayout, stats);
+    return new LiveKernels(stepLayout, update, mask, brushLayout, brush, statsLayout, stats, freezeLayout, freeze, graftLayout, graft);
   }
 }
 
@@ -130,6 +195,11 @@ export class LiveNca {
   tick = 0;
   /** Bumped whenever the state changes (steps, edits, restores). */
   version = 0;
+  /** Frozen cells (1 = frozen), CPU side; mirrored into `freezeBuf`. */
+  readonly freeze: Uint8Array;
+  frozenCount = 0;
+  /** Bumped whenever the frozen region changes. */
+  freezeVersion = 0;
 
   private readonly device: GPUDevice;
   private readonly kernels: LiveKernels;
@@ -146,6 +216,12 @@ export class LiveNca {
   private readonly msk: [GPUBindGroup, GPUBindGroup];
   private readonly brushBG: [GPUBindGroup, GPUBindGroup];
   private readonly statsBG: [GPUBindGroup, GPUBindGroup];
+  private readonly freezeBuf: GPUBuffer;
+  private readonly freezeParams: GPUBuffer;
+  private readonly freezeBG: [GPUBindGroup, GPUBindGroup];
+  private readonly graftBuf: GPUBuffer;
+  private readonly graftBG: [GPUBindGroup, GPUBindGroup];
+  private graftSlot = 0;
   private parity = 0;
   private slot = 0;
   private brushSlot = 0;
@@ -208,6 +284,35 @@ export class LiveNca {
         ],
       });
     this.statsBG = [statsBG(a), statsBG(b)];
+
+    this.freeze = new Uint8Array(this.cells);
+    this.freezeBuf = device.createBuffer({ size: this.cells * 4, usage: U.STORAGE | U.COPY_DST, label: "nca-freeze-mask" });
+    this.freezeParams = device.createBuffer({ size: 16, usage: U.UNIFORM | U.COPY_DST, label: "nca-freeze-params" });
+    device.queue.writeBuffer(this.freezeParams, 0, new Uint32Array([cfg.grid, 0, 0, 0]));
+    const freezeBG = (cur: GPUBuffer, nxt: GPUBuffer): GPUBindGroup =>
+      device.createBindGroup({
+        layout: kernels.freezeLayout,
+        entries: [
+          { binding: 0, resource: { buffer: this.freezeParams } },
+          { binding: 1, resource: { buffer: cur } },
+          { binding: 2, resource: { buffer: this.freezeBuf } },
+          { binding: 3, resource: { buffer: nxt } },
+        ],
+      });
+    // parity 0 steps a → b, parity 1 steps b → a (as msk above)
+    this.freezeBG = [freezeBG(a, b), freezeBG(b, a)];
+    this.graftBuf = device.createBuffer({ size: SLOT * GRAFT_RING, usage: U.UNIFORM | U.COPY_DST, label: "nca-graft" });
+    // the graft reads a copy of the source state taken into `mid` (free between steps: update rewrites all of it)
+    const graftBG = (s: GPUBuffer): GPUBindGroup =>
+      device.createBindGroup({
+        layout: kernels.graftLayout,
+        entries: [
+          { binding: 0, resource: { buffer: this.graftBuf, size: 32 } },
+          { binding: 1, resource: { buffer: this.mid } },
+          { binding: 2, resource: { buffer: s } },
+        ],
+      });
+    this.graftBG = [graftBG(a), graftBG(b)];
   }
 
   /** The buffer holding the current state (16 channels per cell, cell-major). */
@@ -225,6 +330,7 @@ export class LiveNca {
     q.writeBuffer(this.mid, 0, zeros);
     this.tick = tick;
     this.version += 1;
+    this.setFreeze(null);
   }
 
   /** The gate's 32-byte Params block for `step`, at a fresh ring slot; returns its byte offset. */
@@ -247,9 +353,20 @@ export class LiveNca {
 
   /** Record `n` steps (update then mask each) into one compute pass. */
   encodeSteps(enc: GPUCommandEncoder, n: number, timestampWrites?: GPUComputePassTimestampWrites): number {
+    return LiveNca.encodeStepsMany(enc, [this], n, timestampWrites);
+  }
+
+  /** Record `n` steps of every dish into one compute pass (the Menagerie's dishes share a clock). */
+  static encodeStepsMany(enc: GPUCommandEncoder, sims: readonly LiveNca[], n: number, timestampWrites?: GPUComputePassTimestampWrites): number {
     const k = Math.max(0, Math.min(n, MAX_STEPS_PER_ENCODE));
-    if (k === 0) return 0;
+    if (k === 0 || sims.length === 0) return 0;
     const pass = enc.beginComputePass({ label: "nca-steps", timestampWrites });
+    for (const sim of sims) sim.recordSteps(pass, k);
+    pass.end();
+    return k;
+  }
+
+  private recordSteps(pass: GPUComputePassEncoder, k: number): void {
     for (let s = 0; s < k; s += 1) {
       const off = this.writeParams(this.tick);
       pass.setPipeline(this.kernels.update);
@@ -258,12 +375,69 @@ export class LiveNca {
       pass.setPipeline(this.kernels.mask);
       pass.setBindGroup(0, this.msk[this.parity]!, [off]);
       pass.dispatchWorkgroups(this.wg, this.wg);
+      if (this.frozenCount > 0) {
+        pass.setPipeline(this.kernels.freeze);
+        pass.setBindGroup(0, this.freezeBG[this.parity]!);
+        pass.dispatchWorkgroups(this.wg, this.wg);
+      }
       this.parity ^= 1;
       this.tick += 1;
     }
+    this.version += 1;
+  }
+
+  // ------------------------------------------------------------- freeze --
+
+  /** Freeze (on) or thaw (off) the cells within `radius` of a stroke. */
+  paintFreeze(pts: readonly number[], radius: number, on: boolean): void {
+    rasterStroke(this.grid, pts, radius, (i) => {
+      this.freeze[i] = on ? 1 : 0;
+    });
+    this.uploadFreeze();
+  }
+
+  /** Replace the frozen region (null: thaw everything). */
+  setFreeze(mask: Uint8Array | null): void {
+    if (mask) this.freeze.set(mask);
+    else this.freeze.fill(0);
+    this.uploadFreeze();
+  }
+
+  private uploadFreeze(): void {
+    let n = 0;
+    for (let i = 0; i < this.cells; i += 1) n += this.freeze[i]!;
+    this.frozenCount = n;
+    this.device.queue.writeBuffer(this.freezeBuf, 0, Uint32Array.from(this.freeze));
+    this.freezeVersion += 1;
+  }
+
+  // -------------------------------------------------------------- graft --
+
+  /**
+   * Set down the disc of `from`'s cells within `radius` of `src` at `dst`
+   * (whole cells) in this dish; `move` clears the source disc too when the
+   * source is this dish (another dish's source is cleared by a cut there).
+   */
+  encodeGraft(enc: GPUCommandEncoder, from: LiveNca, src: readonly [number, number], dst: readonly [number, number], radius: number, move: boolean): void {
+    enc.copyBufferToBuffer(from.state, 0, this.mid, 0, this.stateBytes);
+    const off = this.graftSlot * SLOT;
+    this.graftSlot = (this.graftSlot + 1) % GRAFT_RING;
+    const ab = new ArrayBuffer(32);
+    const dv = new DataView(ab);
+    dv.setUint32(0, this.grid, true);
+    dv.setUint32(4, move && from === this ? 1 : 0, true);
+    dv.setFloat32(8, radius, true);
+    dv.setInt32(16, src[0], true);
+    dv.setInt32(20, src[1], true);
+    dv.setInt32(24, dst[0], true);
+    dv.setInt32(28, dst[1], true);
+    this.device.queue.writeBuffer(this.graftBuf, off, ab);
+    const pass = enc.beginComputePass({ label: "nca-graft" });
+    pass.setPipeline(this.kernels.graft);
+    pass.setBindGroup(0, this.graftBG[this.parity]!, [off]);
+    pass.dispatchWorkgroups(this.wg, this.wg);
     pass.end();
     this.version += 1;
-    return k;
   }
 
   /** Record an edit at the current step boundary. Long strokes are split into several passes. */
@@ -338,7 +512,7 @@ export class LiveNca {
     const enc = this.device.createCommandEncoder({ label: "nca-checkpoint" });
     enc.copyBufferToBuffer(this.state, 0, state, 0, this.stateBytes);
     this.device.queue.submit([enc.finish()]);
-    return { state, tick: this.tick, seed: this.seed, fireRate: this.fireRate };
+    return { state, tick: this.tick, seed: this.seed, fireRate: this.fireRate, freeze: this.frozenCount > 0 ? this.freeze.slice() : null };
   }
 
   restore(c: LiveCheckpoint): void {
@@ -349,6 +523,7 @@ export class LiveNca {
     this.seed = c.seed;
     this.fireRate = c.fireRate;
     this.version += 1;
+    if (c.freeze || this.frozenCount > 0) this.setFreeze(c.freeze);
   }
 
   release(c: LiveCheckpoint): void {
@@ -356,6 +531,6 @@ export class LiveNca {
   }
 
   destroy(): void {
-    for (const b of [...this.bufs, this.mid, this.weights, this.params, this.brushBuf, this.statsParams, this.statsOut]) b.destroy();
+    for (const b of [...this.bufs, this.mid, this.weights, this.params, this.brushBuf, this.statsParams, this.statsOut, this.freezeBuf, this.freezeParams, this.graftBuf]) b.destroy();
   }
 }

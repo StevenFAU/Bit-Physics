@@ -20,13 +20,16 @@ import { HdrPipeline } from "@bp/render";
 import { QualityGovernor, UrlState, percentile } from "@bp/runtime";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
-import { App, STEP_PASS, TICKS_PER_SECOND } from "./app.js";
+import { App, STEP_PASS, TICKS_PER_SECOND, TOOLS } from "./app.js";
 import type { SceneOptions } from "./app.js";
+import { buildCellPanel } from "./cell-view.js";
 import { buildLearn } from "./learn.js";
+import { buildMenagerieUi } from "./menagerie-ui.js";
 import { LiveKernels } from "./model/live.js";
+import { OrganismLibrary, fetchMenagerie } from "./model/organisms.js";
 import { CANONICAL_SEED, CANONICAL_STEPS, FIRE_RATE, GRID, createGateRunner, fetchCheckpoint } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
-import { DEFAULT_LOOK, DishView } from "./render/dish-view.js";
+import { DishRenderer } from "./render/dish-view.js";
 import type { ViewMode } from "./render/dish-view.js";
 import { FrameScheduler } from "./runtime/scheduler.js";
 import type { SceneId } from "./scenes.js";
@@ -36,17 +39,23 @@ import { VIEW_MODES, buildTune } from "./tune.js";
 const SIM_NAME = "Grow";
 const SCENE_IDS = SCENES.map((s) => s.id);
 
-const url = new UrlState(
-  {
-    s: { kind: "enum", def: "dish", values: SCENE_IDS },
-    seed: { kind: "int", def: CANONICAL_SEED, min: 0, max: 2 ** 31 - 1 },
-    p: { kind: "num", def: FIRE_RATE, min: 0.05, max: 1, digits: 2 },
-    sp: { kind: "num", def: 1, min: 0.25, max: 8 },
-    show: { kind: "enum", def: "specimen", values: VIEW_MODES.map((m) => m.value) },
-    cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
-  },
-  2,
-);
+/** The share-link schema; `o` (the organism) lists the menagerie's ids, so it is built once the manifest is in. */
+function urlSchema(organisms: string[]) {
+  return new UrlState(
+    {
+      s: { kind: "enum", def: "dish", values: SCENE_IDS },
+      // "today": the Dish's daily organism (a link always carries the organism it showed)
+      o: { kind: "enum", def: "today", values: ["today", ...organisms] },
+      seed: { kind: "int", def: CANONICAL_SEED, min: 0, max: 2 ** 31 - 1 },
+      p: { kind: "num", def: FIRE_RATE, min: 0.05, max: 1, digits: 2 },
+      sp: { kind: "num", def: 1, min: 0.25, max: 8 },
+      show: { kind: "enum", def: "specimen", values: VIEW_MODES.map((m) => m.value) },
+      cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+      cell: { kind: "nums", def: [GRID / 2, GRID / 2], n: 2, digits: 0 },
+    },
+    2,
+  );
+}
 
 function download(blob: Blob, name: string): void {
   const a = document.createElement("a");
@@ -62,7 +71,7 @@ async function boot(): Promise<void> {
     simName: SIM_NAME,
     eyebrow: "04 / LEARNED RULES",
     canvasLabel:
-      "A petri dish where a disk-shaped organism grows from one cell under a learned rule. Choose Cut and drag across it to cut it, Seed to plant new cells, Look to pan and zoom, or Probe to read a cell.",
+      "A petri dish where an organism grows from one cell under a learned rule. Choose Cut and drag across it to cut it, Seed to plant new cells, Graft to move a piece of it, Freeze to stop a region updating, Look to pan and zoom, or Probe to read a cell.",
   });
   if (query.get("chrome") === "off") studio.setChrome(false);
   studio.veil.step("Requesting the GPU");
@@ -92,8 +101,10 @@ async function boot(): Promise<void> {
   });
 
   const tier = pickTier(gpu, readTierEnvironment(), query.get("tier"));
-  studio.veil.step("Fetching the trained network");
-  const ck = await fetchCheckpoint();
+  studio.veil.step("Fetching the trained networks");
+  const [ck, manifest] = await Promise.all([fetchCheckpoint(), fetchMenagerie()]);
+  const lib = new OrganismLibrary(manifest, ck);
+  const url = urlSchema(manifest.organisms.map((o) => o.id));
   studio.veil.step("Compiling the renderer");
   const hdr = new HdrPipeline(gpu, studio.canvas, {
     toneMap: "neutral",
@@ -111,8 +122,8 @@ async function boot(): Promise<void> {
   const scheduler = new FrameScheduler({ budgetMs: tier === "T1" ? 3 : 6, defaultUnitMs: 0.25, minUnits: 1, maxUnits: 64 });
   studio.veil.step("Compiling the network and the gate");
   const [kernels, gate] = await Promise.all([LiveKernels.create(device), createGateRunner(device, ck)]);
-  const view = new DishView(device, DEFAULT_LOOK);
-  const app = new App(gpu, studio, hdr, view, kernels, ck, scheduler, tier);
+  const renderer = new DishRenderer(device);
+  const app = new App(gpu, studio, hdr, renderer, kernels, lib, scheduler, tier);
   if (gpu.timestamps) {
     profiler.onFrame = () => {
       const at1x = app.adaptToTimings(profiler.timings());
@@ -126,15 +137,17 @@ async function boot(): Promise<void> {
   const parsed = url.parse(location.search).values;
   const current = (): Partial<typeof parsed> => ({
     s: app.scene.id,
+    o: app.organism.def.id,
     seed: app.seed,
     p: app.sim.fireRate,
     sp: app.clock.speed,
-    show: app.view.mode,
+    show: app.viewMode,
     cam: [
-      (app.camera.cx - app.origin[0]) / GRID,
-      (app.camera.cy - app.origin[1]) / GRID,
+      (app.camera.cx - app.anchor()[0]) / GRID,
+      (app.camera.cy - app.anchor()[1]) / GRID,
       app.camera.pxPerUnit / app.camera.coverZoom(),
     ].map((x) => Number(x.toFixed(4))),
+    cell: app.scene.kind === "cell" ? app.cellSel.slice() : [GRID / 2, GRID / 2],
   });
   app.writeUrl = () => url.write(current());
 
@@ -151,10 +164,10 @@ async function boot(): Promise<void> {
   studio.tune.setNote(
     `The gate runs the update chance at ${FIRE_RATE} with the random mask seeded ${CANONICAL_SEED}. Other values run the same network; they are not the gated run.`,
   );
-  const syncTune = (): void => tune.sync(app.sim.fireRate, app.view.mode);
+  const syncTune = (): void => tune.sync(app.sim.fireRate, app.viewMode);
 
   // ------------------------------------------------------------- Learn --
-  const learn = buildLearn(studio.drawer.learn);
+  const learn = buildLearn(studio.drawer.learn, manifest);
 
   // ------------------------------------------------------------- Prove --
   const prove = buildProve(studio.drawer.prove, {
@@ -163,9 +176,10 @@ async function boot(): Promise<void> {
     gate,
     kernels,
     checkpoint: ck,
+    library: lib,
     scheduler,
     showGated: () => {
-      void app.loadScene("dish", { seed: CANONICAL_SEED, fireRate: FIRE_RATE, view: app.view.mode }).then(() => {
+      void app.loadScene("dish", { seed: CANONICAL_SEED, fireRate: FIRE_RATE, view: app.viewMode, organism: lib.gatedId }).then(() => {
         syncTune();
         app.writeUrl();
       });
@@ -178,6 +192,8 @@ async function boot(): Promise<void> {
   const syncProve = (): void => {
     const s = {
       scene: app.scene.title,
+      organism: app.dishes.length > 1 ? `all ${app.dishes.length} organisms` : app.organism.def.name,
+      gatedOrganism: app.dishes.length === 1 && app.organism.def.gated,
       canonical: app.onGatedRun,
       tick: app.sim.tick,
       edits: app.edits,
@@ -227,8 +243,26 @@ async function boot(): Promise<void> {
     "dish",
   );
   studio.heading.onPick = (id) => {
-    void app.loadScene(id as SceneId, { fireRate: app.sim.fireRate, view: app.view.mode }).then(() => app.writeUrl());
+    void app.loadScene(id as SceneId, { fireRate: app.sim.fireRate, view: id === "cell" || app.scene.id === "cell" ? undefined : app.viewMode }).then(() => app.writeUrl());
   };
+
+  // ---------------------------------------------- Menagerie, organisms --
+  const menagerie = buildMenagerieUi(studio.stage, studio.heading.picker.parentElement ?? studio.heading.extra, manifest, {
+    grow: (id) => {
+      menagerie.close();
+      void app.loadScene("dish", { organism: id, fireRate: app.sim.fireRate, view: app.viewMode }).then(() => app.writeUrl());
+    },
+    pick: (id) => {
+      const sc = app.scene.kind === "menagerie" ? "dish" : app.scene.id;
+      void app.loadScene(sc, { organism: id, seed: app.seed, fireRate: app.sim.fireRate, view: app.viewMode, cell: app.cellSel }).then(() => app.writeUrl());
+    },
+  });
+  // Inside the Cell's inspector
+  const cellPanel = buildCellPanel(studio.stage, {
+    step: () => studio.transport.handlers?.step(),
+    play: () => app.togglePlay(),
+  });
+  cellPanel.el.hidden = true;
   studio.rail.onSelect = (id) => app.selectTool(id);
   studio.transport.handlers = {
     play: () => app.togglePlay(),
@@ -280,29 +314,35 @@ async function boot(): Promise<void> {
   studio.key("Space", "Play / pause", () => app.togglePlay());
   studio.key(".", "Step once", () => studio.transport.handlers?.step());
   studio.key("R", "Restart the scene", () => void app.restart());
-  studio.key("1 2 3 4", "Choose a tool", (e) => studio.rail.selectIndex(Number(e.key) - 1));
-  studio.key("[ ]", "Narrower / wider cut", (e) => app.scaleBrush(e.key === "]" ? 1.4 : 1 / 1.4));
+  studio.key(TOOLS.map((_, i) => String(i + 1)).join(" "), "Choose a tool", (e) => studio.rail.selectIndex(Number(e.key) - 1));
+  studio.key("[ ]", "Narrower / wider brush", (e) => app.scaleBrush(e.key === "]" ? 1.4 : 1 / 1.4));
   studio.key("S", "Save point", () => app.savePoint());
   studio.key("C", "Compare with the save point", () => app.toggleCompare());
   studio.key("Z", "Undo the last edit", () => void app.undo());
   studio.key("T", "Tune", () => studio.tune.toggle());
   studio.key("V", "Next view: specimen, hidden channels, cells", () => {
-    const i = VIEW_MODES.findIndex((m) => m.value === app.view.mode);
+    const i = VIEW_MODES.findIndex((m) => m.value === app.viewMode);
     app.setView(VIEW_MODES[(i + 1) % VIEW_MODES.length]!.value);
     syncTune();
   });
 
   app.hooks = {
     onSceneChange: (scene) => {
-      learn.setScene(scene, app.onGatedRun);
+      learn.setScene(scene, app.onGatedRun, app.dishes.length > 1 ? null : app.organism.def);
+      menagerie.setDishes(scene.kind === "menagerie" ? app.dishes.map((d) => d.org.def) : null);
+      menagerie.setOrganism(app.organism.def.id, scene.kind !== "menagerie");
+      cellPanel.el.hidden = scene.kind !== "cell";
+      cellPanel.set(null, app.sim.fireRate, app.clock.paused);
+      studio.root.classList.toggle("gr-has-panel", scene.kind === "cell");
       syncTune();
       syncProve();
     },
     onEdited: () => {
-      learn.setScene(app.scene, app.onGatedRun);
+      learn.setScene(app.scene, app.onGatedRun, app.dishes.length > 1 ? null : app.organism.def);
       syncTune();
       syncProve();
     },
+    onCell: (c) => cellPanel.set(c, app.sim.fireRate, app.clock.paused),
     onStats: (s) => {
       if (app.learnOpen) learn.setStats(s, GRID, app.sim.tick);
     },
@@ -318,6 +358,13 @@ async function boot(): Promise<void> {
   const overlay = query.get("debug") === "perf" ? new PerfOverlay() : null;
   if (overlay) studio.root.append(overlay.el);
   app.hooks.onFrame = (now) => {
+    if (app.scene.kind === "menagerie") {
+      const R = app.dishRadius;
+      menagerie.place(
+        app.dishes.map((_, i) => app.toScreen(i, GRID / 2, GRID / 2 + R * 0.72)),
+        2 * R * app.camera.pxPerUnit,
+      );
+    }
     overlay?.push({ frameMs: now - lastFrame, gpuMs: profiler.frameMs, passes: profiler.timings() });
     rafTimes.push(now - lastFrame);
     if (rafTimes.length > 600) rafTimes.shift();
@@ -335,7 +382,7 @@ async function boot(): Promise<void> {
       [
         ["Adapter", gpu.adapterId],
         ["Tier", `${app.tier}${gpu.info.software ? " (software)" : ""}`],
-        ["Dish", `${GRID} × ${GRID} cells, 16 channels`],
+        ["Dish", `${app.dishes.length > 1 ? `${app.dishes.length} dishes of ` : ""}${GRID} × ${GRID} cells, 16 channels`],
         ["Steps / second", `${Math.round(TICKS_PER_SECOND * app.clock.speed)} at ${app.clock.speed}×`],
         ["GPU per step", `${(scheduler.costOf(STEP_PASS) * 1000).toFixed(0)} µs`],
         ["Frame (p50 / p90)", `${percentile(rafTimes, 0.5).toFixed(1)} / ${percentile(rafTimes, 0.9).toFixed(1)} ms`],
@@ -354,8 +401,10 @@ async function boot(): Promise<void> {
   const opts: SceneOptions = {
     seed: parsed.seed,
     fireRate: parsed.p,
-    view: parsed.show as ViewMode,
+    view: query.has("show") || scene.kind !== "cell" ? (parsed.show as ViewMode) : undefined,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
+    organism: parsed.o === "today" ? lib.today() : parsed.o,
+    cell: [parsed.cell[0]!, parsed.cell[1]!],
   };
   await app.loadScene(scene.id, opts);
   app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
@@ -366,6 +415,8 @@ async function boot(): Promise<void> {
   // test / inspection hooks (layout checks, acceptance runs): read-only summaries
   (globalThis as { __bpDebug?: () => unknown }).__bpDebug = () => ({
     scene: app.scene.id,
+    organism: app.organism.def.id,
+    dishes: app.dishes.length,
     tier: app.tier,
     tick: app.sim.tick,
     grid: GRID,

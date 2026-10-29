@@ -42,6 +42,8 @@ const PATHS = {
     '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6"/>',
   wall: '<rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 9.7h18M3 14.3h18M9 5v4.7M15 9.7v4.6M9 14.3V19"/>',
   shark: '<path d="M7 15.5C8.4 10.6 11.6 6.5 17 4.5c-1.2 3.6-1 7.4.8 11"/><path d="M3 17.5c2.2-1.2 4.4-1.2 6 0s3.8 1.2 6 0 4.4-1.2 6 0"/>',
+  graft: '<circle cx="7" cy="17" r="3.5" stroke-dasharray="2 2.2"/><circle cx="17" cy="7" r="3.5"/><path d="M10 14l4-4"/><path d="M10.5 10H14v3.5"/>',
+  freeze: '<path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.5 4l2.5 2.5L14.5 4M9.5 20l2.5-2.5 2.5 2.5"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

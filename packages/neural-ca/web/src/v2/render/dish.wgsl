@@ -5,6 +5,8 @@
 // a soft contact shadow so it sits on the agar, a little relief and gloss
 // from its alpha, a thin membrane where the alpha falls off, and a gentle
 // iridescent tint from its hidden channels (principal components, ~15 %).
+// M1: frozen cells (Freeze) are drawn under a cool veil of frost with a
+// bright line along the edge of the frozen region.
 // Render-only: every number the gate checks comes from the state buffer,
 // never from these pixels. Writes linear HDR into the scene target.
 #import bp/fullscreen
@@ -19,6 +21,7 @@ struct View {
   rim : vec4<f32>,     // rim / membrane colour (linear), rim width (cells)
   light : vec4<f32>,   // light direction (unit, z towards the viewer); compare split (target uv x, < 0 off)
   extra : vec4<f32>,   // organism fade, target px per cell, gloss, has compare
+  frost : vec4<f32>,   // has a frozen region, time (s)
 };
 
 @group(0) @binding(0) var<uniform> V : View;
@@ -29,6 +32,7 @@ struct View {
 @group(0) @binding(5) var samp : sampler;
 @group(0) @binding(6) var grain : texture_2d<f32>;
 @group(0) @binding(7) var tint_cmp : texture_2d<f32>;
+@group(0) @binding(8) var freeze_tex : texture_2d<f32>;
 
 @vertex
 fn vs(@builtin(vertex_index) vi : u32) -> FullscreenOut {
@@ -195,6 +199,19 @@ fn fs(in : FullscreenOut) -> @location(0) vec4<f32> {
       // membrane: a thin line where the alpha falls off steeply
       let edge = clamp(length(grad) * 1.4, 0.0, 1.0) * (1.0 - abs(2.0 * s.a - 1.0));
       c = c + V.rim.rgb * edge * V.look.y * V.extra.x;
+    }
+  }
+
+  // ---- frost: the frozen region ---------------------------------------------
+  if (V.frost.x > 0.5 && near) {
+    let fz = textureSampleLevel(freeze_tex, samp, g / n, 0.0).r * inside(g);
+    if (fz > 0.002) {
+      let ice = vec3<f32>(0.62, 0.84, 1.0);
+      let veil = smoothstep(0.05, 0.55, fz);
+      let sparkle = step(0.93, hash12(floor(q * 3.0)));
+      let edge = 1.0 - smoothstep(0.0, 0.16, abs(fz - 0.5));
+      c = mix(c, c * 0.8 + ice * 0.055, veil);
+      c = c + ice * (0.035 * sparkle * veil + 0.2 * edge);
     }
   }
 

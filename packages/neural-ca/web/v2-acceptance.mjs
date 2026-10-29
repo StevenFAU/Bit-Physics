@@ -1,5 +1,5 @@
 // Grow v2 — acceptance checks in a real WebGPU browser
-// (docs/planning/rebuild-v2/04-neural-ca.md M0).
+// (docs/planning/rebuild-v2/04-neural-ca.md M0 and M1).
 //
 //   npm run build   (in this directory)
 //   CHROME_BIN=/snap/bin/chromium \
@@ -15,8 +15,14 @@
 // compare (in Hidden view, with the save point's own hidden channels); a
 // keyboard step on the Tune slider sticks; the same seed gives the same bytes
 // across page loads; the share link carries rate, view and speed; Many seeds
-// settles in the middle; a dish with nothing alive regrows; probe. Prints a
-// BP_BENCH line at the end.
+// settles in the middle; a dish with nothing alive regrows; probe.
+// M1: the Dish boots on the day's regenerating organism; the Menagerie (eight
+// dishes, weights SHA-checked, its gated disk still bit-exact at step 1000);
+// regrowth after the standard cuts measured on the live kernel against the
+// manifest's reference numbers; Freeze (frozen cells keep their bytes, thaw,
+// undo by replay); Graft (copy, move, across dishes, undo); Inside the Cell
+// (the CPU arithmetic against the GPU's next step, share link); the organism
+// picker and card. Prints BP_BENCH lines at the end (the Dish, the Menagerie).
 //
 // Bit-exactness against the committed canonical is backend-conditional: it
 // holds on RADV (where the canonical was made). On another backend those two
@@ -89,12 +95,27 @@ const hashAfter = (page, n) =>
     return app.stateHash();
   }, n);
 
-// --- boot ---------------------------------------------------------------------
+// --- boot: the day's organism ---------------------------------------------------
 {
   const { ctx, page, errors } = await open();
+  await page.waitForTimeout(2500);
+  const r = await T(page, () => {
+    const app = globalThis.__grow;
+    const d = app.organism.def;
+    return { scene: app.scene.id, organism: d.id, today: app.lib.today(), heals: d.training.regime === "regenerating", gated: app.onGatedRun, prompt: document.querySelector(".bp-scene-prompt")?.textContent };
+  });
+  check("boots into The Dish on the day's regenerating organism (not the gated run)", r.scene === "dish" && r.organism === r.today && r.heals && !r.gated && /it heals/.test(r.prompt), JSON.stringify(r));
+  await shot(page, "00-dish-today");
+  check("no console errors (boot, today's organism)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- boot: the gated disk -------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?o=disk");
   await page.waitForTimeout(3000);
   const d = await T(page, () => globalThis.__bpDebug());
-  check("boots into The Dish, the gated run on screen", d.scene === "dish" && d.gated === true, `${d.scene}, gated ${d.gated}, adapter ${d.adapter}`);
+  check("?o=disk boots into The Dish with the gated run on screen", d.scene === "dish" && d.organism === "disk" && d.gated === true, `${d.scene}, ${d.organism}, gated ${d.gated}, adapter ${d.adapter}`);
   const aspect = d.domain[0] / d.domain[1] / (d.viewport[0] / d.viewport[1]);
   check("full-bleed: the camera's domain has the viewport's aspect", Math.abs(aspect - 1) < 0.01, aspect.toFixed(4));
   const dishPx = 2 * d.dishRadius * d.zoom;
@@ -108,7 +129,7 @@ const hashAfter = (page, n) =>
     const app = globalThis.__grow;
     app.clock.paused = true;
     await new Promise((r) => setTimeout(r, 100));
-    await app.loadScene("dish");
+    await app.loadScene("dish", { organism: "disk" });
     app.clock.paused = true;
     await app.advance(1000);
     const st = await app.sim.readState();
@@ -162,7 +183,7 @@ const hashAfter = (page, n) =>
 
 // --- edits, undo by replay, history ------------------------------------------
 {
-  const { ctx, page, errors } = await open();
+  const { ctx, page, errors } = await open("/v2/?o=disk");
   const r = await T(page, async () => {
     const app = globalThis.__grow;
     app.clock.paused = true;
@@ -246,7 +267,7 @@ const hashAfter = (page, n) =>
 
 // --- Tune: a keyboard change to the update chance sticks ----------------------
 {
-  const { ctx, page, errors } = await open();
+  const { ctx, page, errors } = await open("/v2/?o=disk");
   await page.waitForTimeout(800);
   await T(page, () => globalThis.__grow.studio.tune.show());
   await page.waitForTimeout(200);
@@ -262,7 +283,7 @@ const hashAfter = (page, n) =>
 
 // --- compare shows the save point's own hidden channels -----------------------
 {
-  const { ctx, page, errors } = await open("/v2/?show=hidden&chrome=off");
+  const { ctx, page, errors } = await open("/v2/?o=disk&show=hidden&chrome=off");
   await page.waitForTimeout(800);
   await T(page, async () => {
     const app = globalThis.__grow;
@@ -312,13 +333,13 @@ const hashAfter = (page, n) =>
 
 // --- a seed reproduces the same bytes across page loads ---------------------
 {
-  const a = await open("/v2/?s=seeds&seed=7");
+  const a = await open("/v2/?s=seeds&seed=7&o=disk");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?s=seeds&seed=7");
+  const b = await open("/v2/?s=seeds&seed=7&o=disk");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
-  const c = await open("/v2/?s=seeds&seed=8");
+  const c = await open("/v2/?s=seeds&seed=8&o=disk");
   const h3 = await hashAfter(c.page, 300);
   await c.ctx.close();
   check("same seed, same bytes across page loads (Many seeds, 300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -327,14 +348,14 @@ const hashAfter = (page, n) =>
 
 // --- share link; Many seeds settles in the middle ----------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=seeds&seed=11&p=0.35&show=cells&sp=2");
-  const p = await T(page, () => ({ scene: globalThis.__grow.scene.id, p: globalThis.__grow.sim.fireRate, show: globalThis.__grow.view.mode, sp: globalThis.__grow.clock.speed, gated: globalThis.__grow.onGatedRun }));
-  check("a share link sets scene, update chance, view and speed", p.scene === "seeds" && p.p === 0.35 && p.show === "cells" && p.sp === 2 && !p.gated, JSON.stringify(p));
+  const { ctx, page, errors } = await open("/v2/?s=seeds&o=disk&seed=11&p=0.35&show=cells&sp=2");
+  const p = await T(page, () => ({ scene: globalThis.__grow.scene.id, o: globalThis.__grow.organism.def.id, p: globalThis.__grow.sim.fireRate, show: globalThis.__grow.view.mode, sp: globalThis.__grow.clock.speed, gated: globalThis.__grow.onGatedRun }));
+  check("a share link sets scene, organism, update chance, view and speed", p.scene === "seeds" && p.o === "disk" && p.p === 0.35 && p.show === "cells" && p.sp === 2 && !p.gated, JSON.stringify(p));
   await shot(page, "03-cells");
   const settle = await T(page, async () => {
     const app = globalThis.__grow;
     app.clock.paused = true;
-    await app.loadScene("seeds", { seed: 11, fireRate: 0.5 });
+    await app.loadScene("seeds", { seed: 11, fireRate: 0.5, organism: "disk" });
     app.clock.paused = true;
     await app.advance(1200);
     const st = await app.sim.readState();
@@ -363,13 +384,372 @@ const hashAfter = (page, n) =>
   await ctx.close();
 }
 
-// --- frame time at the boot scene -------------------------------------------
+// ============================================================== M1 ==========
+
+// in-page helpers: the target's mask (from its PNG) and IoU of opacity > 0.5 against it
+const IOU_HELPERS = `
+  globalThis.__accTarget = async (id) => {
+    const def = globalThis.__grow.lib.def(id);
+    const bmp = await createImageBitmap(await (await fetch(new URL("../" + def.target, location.href))).blob());
+    const cv = new OffscreenCanvas(bmp.width, bmp.height);
+    const cx = cv.getContext("2d");
+    cx.drawImage(bmp, 0, 0);
+    const px = cx.getImageData(0, 0, bmp.width, bmp.height).data;
+    const m = new Uint8Array(64 * 64);
+    for (let i = 0; i < 64 * 64; i += 1) m[i] = px[i * 4 + 3] > 127.5 ? 1 : 0;
+    return m;
+  };
+  globalThis.__accIou = (st, mask) => {
+    let inter = 0, uni = 0;
+    for (let i = 0; i < 64 * 64; i += 1) {
+      const a = Math.min(1, Math.max(0, st[i * 16 + 3])) > 0.5 ? 1 : 0;
+      inter += a & mask[i];
+      uni += a | mask[i];
+    }
+    return uni ? inter / uni : 0;
+  };
+`;
+
+// --- the Menagerie --------------------------------------------------------------
 {
-  const { ctx, page } = await open("/v2/?bench=1");
+  const { ctx, page, errors } = await open("/v2/?s=menagerie");
+  await page.waitForTimeout(2500);
+  await shot(page, "10-menagerie");
+  const r = await T(page, async () => {
+    const app = globalThis.__grow;
+    const ids = app.dishes.map((d) => d.org.def.id);
+    const manifest = app.lib.defs.map((d) => d.id);
+    const labels = [...document.querySelectorAll(".gr-label")].map((b) => b.textContent);
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    await app.loadScene("menagerie");
+    app.clock.paused = true;
+    await app.advance(300);
+    const alive = [];
+    for (let i = 0; i < app.dishes.length; i += 1) {
+      const st = await app.dishes[i].sim.readState();
+      let n = 0;
+      for (let c = 0; c < 64 * 64; c += 1) if (st[c * 16 + 3] > 0.1) n += 1;
+      alive.push(n);
+    }
+    const shas = await globalThis.__growProve.checkMenagerie();
+    return { ids, manifest, labels, alive, shas, gated: app.onGatedRun };
+  });
+  check(
+    "the Menagerie shows every trained organism, one dish each, in the manifest's order",
+    r.ids.length === 8 && r.ids.join() === r.manifest.join() && r.labels.length === 8 && !r.gated,
+    `${r.ids.join(", ")}`,
+  );
+  check("every organism's downloaded weights match the manifest's SHA-256", r.shas.length === 8 && r.shas.every((x) => x.matches), r.shas.map((x) => `${x.id} ${x.sha.slice(0, 8)}`).join(", "));
+  check("all eight organisms grow (300 steps, one clock)", r.alive.every((n) => n > 150), r.alive.join(" / "));
+
+  // the gated disk inside the Menagerie is still the gated kernel's run, bit for bit
+  const canon = await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("menagerie");
+    app.clock.paused = true;
+    await app.advance(1000);
+    const st = await app.dishes[0].sim.readState();
+    const frames = await globalThis.__growGate.fetchCanonFrames();
+    const last = frames[frames.length - 1];
+    let differ = 0;
+    for (let c = 0; c < 64 * 64; c += 1) {
+      for (let ch = 0; ch < 4; ch += 1) if (Math.fround(Math.min(1, Math.max(0, st[c * 16 + ch]))) !== last[c * 4 + ch]) differ += 1;
+    }
+    return { differ, organism: app.dishes[0].org.def.id, tick: app.sim.tick };
+  });
+  check("the Menagerie's disk at step 1000 equals the committed canonical frame (eight dishes per pass change nothing)", canon.organism === "disk" && canon.differ === 0 && canon.tick === 1000, `${canon.differ} values differ`);
+
+  // a graft from one dish into another lands as the same cells, under the new dish's rule
+  const cross = await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("menagerie");
+    app.clock.paused = true;
+    await app.advance(300);
+    const from = await app.dishes[1].sim.readState();
+    app.graftAt([32, 30], [32, 30], 6, true, 1, 2);
+    await new Promise((res) => setTimeout(res, 50));
+    const to = await app.dishes[2].sim.readState();
+    const src = await app.dishes[1].sim.readState();
+    let same = 0, cells = 0, cleared = 0;
+    for (let y = 0; y < 64; y += 1) {
+      for (let x = 0; x < 64; x += 1) {
+        if (Math.hypot(x - 32, y - 30) > 6) continue;
+        cells += 1;
+        const b = (y * 64 + x) * 16;
+        let eq = true, zero = true;
+        for (let c = 0; c < 16; c += 1) {
+          if (to[b + c] !== from[b + c]) eq = false;
+          if (src[b + c] !== 0) zero = false;
+        }
+        same += eq ? 1 : 0;
+        cleared += zero ? 1 : 0;
+      }
+    }
+    return { cells, same, cleared, edits: app.edits, names: [app.dishes[1].org.def.name, app.dishes[2].org.def.name] };
+  });
+  check(
+    "Graft across dishes: the piece arrives byte for byte, and a move clears it from the donor",
+    cross.same === cross.cells && cross.cleared === cross.cells && cross.edits === 1,
+    `${cross.names.join(" → ")}: ${cross.same}/${cross.cells} cells identical, ${cross.cleared} cleared`,
+  );
+
+  // the organism card, then "Grow it in the Dish"
+  await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("menagerie");
+    app.clock.paused = false;
+  });
+  await page.waitForTimeout(400);
+  await page.locator(".gr-label").nth(1).click();
+  await page.waitForTimeout(300);
+  const card = await T(page, () => {
+    const c = document.querySelector(".gr-card");
+    return c && !c.hidden ? c.textContent : null;
+  });
+  await shot(page, "11-menagerie-card");
+  check("an organism's card shows how it was trained and what was measured", !!card && /How it was trained/.test(card) && /training steps in \d+ s on/.test(card) && /Measured/.test(card), (card ?? "hidden").slice(0, 120));
+  await page.locator(".gr-card .bp-btn-primary").click();
+  await page.waitForTimeout(800);
+  const opened = await T(page, () => ({ scene: globalThis.__grow.scene.id, organism: globalThis.__grow.organism.def.id, card: !document.querySelector(".gr-card") || document.querySelector(".gr-card").hidden }));
+  check("“Grow it in the Dish” opens that organism on The Dish", opened.scene === "dish" && opened.organism === "gecko" && opened.card, JSON.stringify(opened));
+  check("no console errors (Menagerie)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- regrowth on the live kernel, against the manifest's reference ----------------
+{
+  const { ctx, page, errors } = await open("/v2/?o=gecko");
+  await page.evaluate(IOU_HELPERS);
+  const rows = await T(page, async () => {
+    const app = globalThis.__grow;
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    const cuts = {
+      "right half": [[48, -2, 48, 66], 16],
+      "bottom half": [[-2, 48, 66, 48], 16],
+      "middle disc": [[32, 32], 9],
+    };
+    const out = [];
+    for (const def of app.lib.defs) {
+      const mask = await globalThis.__accTarget(def.id);
+      const ref = def.measured.regrow.rows.filter((r) => r.seed === 42);
+      const ious = [];
+      for (const [kind, [pts, r]] of Object.entries(cuts)) {
+        await app.loadScene("dish", { organism: def.id, seed: 42 });
+        app.clock.paused = true;
+        await app.advance(400);
+        app.cutAt(pts, r);
+        await app.advance(200);
+        const st = await app.sim.readState();
+        ious.push({ kind, live: globalThis.__accIou(st, mask), ref: ref.find((x) => x.cut === kind)?.iou_200 });
+      }
+      const mean = ious.reduce((a, b) => a + b.live, 0) / ious.length;
+      const refMean = ious.reduce((a, b) => a + b.ref, 0) / ious.length;
+      out.push({ id: def.id, heals: def.training.regime === "regenerating" && def.measured.regrow.mean_iou_200 >= 0.8, mean, refMean, ious });
+    }
+    return out;
+  });
+  for (const r of rows) console.log(`  regrow ${r.id.padEnd(10)} live ${r.ious.map((x) => x.live.toFixed(3)).join(" ")}  ref ${r.ious.map((x) => x.ref.toFixed(3)).join(" ")}`);
+  const healers = rows.filter((r) => r.heals);
+  check(
+    "every organism the page says heals does heal on this GPU: mean overlap ≥ 0.8, 200 steps after the three standard cuts (mask seed 42)",
+    healers.length === 7 && healers.every((r) => r.mean >= 0.8),
+    healers.map((r) => `${r.id} ${r.mean.toFixed(2)}`).join(", "),
+  );
+  const disk = rows.find((r) => r.id === "disk");
+  check("the gated disk does not: a right-half cut does not grow back", disk && disk.ious[0].live < 0.5, disk ? `right half ${disk.ious[0].live.toFixed(3)}, mean ${disk.mean.toFixed(2)}` : "");
+  const worst = Math.max(...rows.flatMap((r) => r.ious.map((x) => Math.abs(x.live - x.ref))));
+  check("the live kernel's regrowth agrees with the manifest's reference numbers (|Δ IoU| per cut)", worst < 0.05, `max |Δ| ${worst.toFixed(4)} over ${rows.length * 3} cuts`);
+  check("no console errors (regrowth)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- Freeze ----------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?o=gecko");
+  const r = await T(page, async () => {
+    const app = globalThis.__grow;
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    await app.loadScene("dish", { organism: "gecko" });
+    app.clock.paused = true;
+    await app.advance(160);
+    const clean = await app.stateHash();
+    await app.loadScene("dish", { organism: "gecko" });
+    app.clock.paused = true;
+    await app.advance(40);
+    app.freezeAt([32, 32], 6, true);
+    const mask = app.sim.freeze.slice();
+    const s0 = await app.sim.readState();
+    await app.advance(120);
+    const s1 = await app.sim.readState();
+    let frozen = 0, kept = 0, moved = 0;
+    for (let i = 0; i < 64 * 64; i += 1) {
+      let eq = true;
+      for (let c = 0; c < 16; c += 1) if (s0[i * 16 + c] !== s1[i * 16 + c]) eq = false;
+      if (mask[i]) { frozen += 1; kept += eq ? 1 : 0; } else if (!eq) moved += 1;
+    }
+    const gated = app.onGatedRun;
+    const frozenHash = await app.stateHash();
+    await app.undo();
+    const undone = await app.stateHash();
+    // thaw: the region updates again
+    await app.loadScene("dish", { organism: "gecko" });
+    app.clock.paused = true;
+    await app.advance(40);
+    app.freezeAt([32, 32], 6, true);
+    await app.advance(60);
+    const t0 = await app.sim.readState();
+    app.thawAll();
+    const count = app.sim.frozenCount;
+    await app.advance(60);
+    const t1 = await app.sim.readState();
+    let changed = 0;
+    for (let i = 0; i < 64 * 64; i += 1) if (mask[i] && t0[i * 16 + 3] !== t1[i * 16 + 3]) changed += 1;
+    return { frozen, kept, moved, gated, clean, frozenHash, undone, count, changed, tick: app.sim.tick };
+  });
+  check("Freeze: every frozen cell keeps its 16 values through 120 steps while the rest grows", r.frozen > 80 && r.kept === r.frozen && r.moved > 100 && !r.gated, `${r.kept}/${r.frozen} frozen cells unchanged, ${r.moved} other cells changed`);
+  check("undoing a freeze replays to the never-frozen bytes", r.undone === r.clean && r.frozenHash !== r.clean, `${r.undone.slice(0, 16)}… vs ${r.clean.slice(0, 16)}…`);
+  check("Thaw all: nothing frozen, and the region updates again", r.count === 0 && r.changed > 20, `${r.changed} thawed cells changed opacity in 60 steps`);
+  await shot(page, "12-freeze");
+  check("no console errors (Freeze)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- Graft -----------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?o=starfish");
+  const r = await T(page, async () => {
+    const app = globalThis.__grow;
+    app.clock.paused = true;
+    await new Promise((res) => setTimeout(res, 100));
+    await app.loadScene("dish", { organism: "starfish" });
+    app.clock.paused = true;
+    await app.advance(300);
+    const clean300 = await app.stateHash();
+    await app.advance(100);
+    const clean = await app.stateHash();
+    await app.loadScene("dish", { organism: "starfish" });
+    app.clock.paused = true;
+    await app.advance(300);
+    const s0 = await app.sim.readState();
+    app.graftAt([32, 32], [12, 12], 5, false);
+    const s1 = await app.sim.readState();
+    let copied = 0, cells = 0, srcKept = true;
+    for (let y = 0; y < 64; y += 1) {
+      for (let x = 0; x < 64; x += 1) {
+        const b = (y * 64 + x) * 16;
+        if (Math.hypot(x - 12, y - 12) <= 5) {
+          cells += 1;
+          const sb = ((y + 20) * 64 + (x + 20)) * 16;
+          let eq = true;
+          for (let c = 0; c < 16; c += 1) if (s1[b + c] !== s0[sb + c]) eq = false;
+          copied += eq ? 1 : 0;
+        } else {
+          for (let c = 0; c < 16; c += 1) if (s1[b + c] !== s0[b + c]) srcKept = false;
+        }
+      }
+    }
+    await app.advance(100);
+    const grafted = await app.stateHash();
+    await app.undo();
+    const undone = await app.stateHash();
+    // move: the source disc is cleared
+    await app.loadScene("dish", { organism: "starfish" });
+    app.clock.paused = true;
+    await app.advance(300);
+    app.graftAt([32, 32], [50, 14], 5, true);
+    const m = await app.sim.readState();
+    let cleared = 0, src = 0;
+    for (let y = 0; y < 64; y += 1) for (let x = 0; x < 64; x += 1) {
+      if (Math.hypot(x - 32, y - 32) > 5) continue;
+      src += 1;
+      let z = true;
+      for (let c = 0; c < 16; c += 1) if (m[(y * 64 + x) * 16 + c] !== 0) z = false;
+      cleared += z ? 1 : 0;
+    }
+    return { cells, copied, srcKept, grafted, undone, clean, clean300, cleared, src, edits: app.edits };
+  });
+  check("Graft (copy): the destination disc is the source disc, byte for byte; nothing else changes", r.copied === r.cells && r.srcKept, `${r.copied}/${r.cells} cells`);
+  check("Graft (move) clears the source disc", r.cleared === r.src, `${r.cleared}/${r.src}`);
+  check("undoing a graft replays to the never-grafted bytes", r.undone === r.clean && r.grafted !== r.clean, `${r.undone.slice(0, 16)}… vs ${r.clean.slice(0, 16)}…`);
+
+  // a real drag with the Graft tool goes through the event log
+  await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("dish", { organism: "starfish" });
+    app.clock.paused = true;
+    await app.advance(300);
+    app.studio.rail.select("graft");
+  });
+  await page.waitForTimeout(200);
+  await page.mouse.move(640, 360);
+  await page.mouse.down();
+  for (let i = 1; i <= 10; i += 1) { await page.mouse.move(640 + i * 14, 360 - i * 9); await page.waitForTimeout(25); }
+  const ghost = await T(page, () => !document.querySelector(".gr-ghost").hidden);
+  await shot(page, "13-graft-drag");
+  await page.mouse.up();
+  await page.waitForTimeout(250);
+  const after = await T(page, () => ({ events: globalThis.__grow.log.all().map((e) => e.kind), edits: globalThis.__grow.edits, canUndo: globalThis.__grow.history.canUndo }));
+  check("a drag with Graft lifts a ghost of the piece and logs one undoable graft", ghost && after.events.join() === "graft" && after.edits === 1 && after.canUndo, JSON.stringify({ ghost, ...after }));
+  check("no console errors (Graft)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- Inside the Cell -------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=cell&o=turtle&cell=30,20");
+  await page.waitForTimeout(2000);
+  const link = await T(page, () => ({ scene: globalThis.__grow.scene.id, o: globalThis.__grow.organism.def.id, cell: globalThis.__grow.cellSel, view: globalThis.__grow.viewMode, panel: !document.querySelector(".gr-cell-panel").hidden }));
+  check("a share link opens Inside the Cell on its organism and cell, in the Cells view", link.scene === "cell" && link.o === "turtle" && link.cell.join() === "30,20" && link.view === "cells" && link.panel, JSON.stringify(link));
+  const r = await T(page, async () => {
+    const app = globalThis.__grow;
+    const out = [];
+    for (const o of ["turtle", "gecko", "disk"]) {
+      await app.loadScene("cell", { organism: o, cell: [32, 32] });
+      app.clock.paused = true;
+      await app.advance(30 + out.length * 25);
+      for (const c of [[32, 32], [31, 22], [40, 37], [22, 30], [32, 12], [45, 45]]) {
+        app.selectCell(c[0], c[1]);
+        const k = await app.checkCell();
+        out.push({ o, c, maxAbs: k.maxAbs, lives: k.step.lives, fires: k.step.fires, active: k.step.think.active });
+      }
+    }
+    return out;
+  });
+  const worst = Math.max(...r.map((x) => x.maxAbs));
+  const mix = { lives: r.filter((x) => x.lives).length, dies: r.filter((x) => !x.lives).length, fires: r.filter((x) => x.fires).length };
+  check("Inside the Cell: the page's arithmetic predicts the GPU's next step for the cell (18 cells, 3 organisms)", worst < 1e-5 && mix.lives > 3 && mix.fires > 3, `max |Δ| ${worst === 0 ? "0 (identical)" : worst.toExponential(2)}; ${mix.lives} live, ${mix.dies} empty/dying, ${mix.fires} fired`);
+  // the panel's own check line, after Step once
+  await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("cell", { organism: "gecko", cell: [32, 30] });
+    app.clock.paused = true;
+    await app.advance(80);
+  });
+  await page.waitForTimeout(600);
+  await page.locator(".gr-cell-actions .bp-btn").first().click();
+  await page.waitForTimeout(800);
+  const line = await T(page, () => document.querySelector(".gr-cell-check")?.textContent ?? "");
+  await shot(page, "14-inside-the-cell");
+  check("its check line reports the comparison after Step once", /Checked against your GPU/.test(line), line);
+  // the organism picker
+  await page.locator(".gr-organism-picker").selectOption("fish");
+  await page.waitForTimeout(800);
+  const picked = await T(page, () => ({ scene: globalThis.__grow.scene.id, o: globalThis.__grow.organism.def.id }));
+  check("the heading's organism picker swaps the organism in place", picked.scene === "cell" && picked.o === "fish", JSON.stringify(picked));
+  check("no console errors (Inside the Cell)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- frame time: the boot scene, and the Menagerie's eight dishes -------------
+for (const [label, path] of [["the Dish", "/v2/?bench=1"], ["the Menagerie", "/v2/?s=menagerie&bench=1"]]) {
+  const { ctx, page } = await open(path);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
   console.log(`BP_BENCH ${JSON.stringify(b)}`);
-  check("bench ran", b.frames > 0, `${b.fps.toFixed(1)} fps, frame p50 ${b.frameP50.toFixed(1)} ms / p90 ${b.frameP90.toFixed(1)} ms, GPU p50 ${b.gpuP50.toFixed(2)} ms, ${Math.round(b.stepsPerSecond)} steps/s, ${(b.stepCostMs * 1000).toFixed(0)} µs/step`);
+  check(`bench ran (${label})`, b.frames > 0, `${b.fps.toFixed(1)} fps, frame p50 ${b.frameP50.toFixed(1)} ms / p90 ${b.frameP90.toFixed(1)} ms, GPU p50 ${b.gpuP50.toFixed(2)} ms, ${Math.round(b.stepsPerSecond)} steps/s, ${(b.stepCostMs * 1000).toFixed(0)} µs/step`);
   await ctx.close();
 }
 

@@ -1,7 +1,10 @@
 // Grow renderer: state → (prep) look + tint textures → the dish pass into the
 // HDR scene target. Two look textures hold the previous and the current step,
 // so a dish stepping slower than the display blends between them; a third
-// holds a save point's state for the A/B compare.
+// holds a save point's state for the A/B compare. M1: the pipelines live in a
+// DishRenderer shared by every dish; the Menagerie draws one DishView per
+// dish, each into its own scissored tile of the same target, and a frozen
+// region (Freeze) is drawn as frost from a small per-dish mask texture.
 
 import type { GpuProfiler } from "@bp/gpu";
 import { wgsl } from "@bp/gpu";
@@ -51,6 +54,8 @@ export interface DishSource {
   grid: number;
   /** Bumps whenever the state changes. */
   version: number;
+  /** The frozen region (Freeze), drawn as frost. */
+  freeze?: { mask: Uint8Array; count: number; version: number };
 }
 
 export interface DishFrame {
@@ -66,13 +71,53 @@ export interface DishFrame {
 }
 
 const PREP_BYTES = 224;
-const VIEW_BYTES = 144;
+const VIEW_BYTES = 160;
+
+/** Pipelines, sampler and grain shared by every dish on the device. */
+export class DishRenderer {
+  readonly prepPipe: GPUComputePipeline;
+  readonly viewPipe: GPURenderPipeline;
+  readonly sampler: GPUSampler;
+  readonly grain: GPUTexture;
+
+  constructor(readonly device: GPUDevice) {
+    this.prepPipe = device.createComputePipeline({
+      label: "grow-prep",
+      layout: "auto",
+      compute: { module: device.createShaderModule({ code: prepSrc, label: "grow-prep" }), entryPoint: "main" },
+    });
+    const viewModule = device.createShaderModule({ code: wgsl(dishSrc), label: "grow-dish" });
+    this.viewPipe = device.createRenderPipeline({
+      label: "grow-dish",
+      layout: "auto",
+      vertex: { module: viewModule, entryPoint: "vs" },
+      fragment: { module: viewModule, entryPoint: "fs", targets: [{ format: SCENE_FORMAT }] },
+      primitive: { topology: "triangle-list" },
+    });
+    this.sampler = device.createSampler({ magFilter: "linear", minFilter: "linear", label: "grow-clamp" });
+    this.grain = createBlueNoiseTexture(device);
+  }
+
+  destroy(): void {
+    this.grain.destroy();
+  }
+}
+
+/** How one dish's pass shares the target: the first clears it; a tile limits it to a rectangle (target px). */
+export interface DishPassOptions {
+  load: boolean;
+  scissor?: [number, number, number, number];
+  /** Suffix for this dish's profiler pass names (each dish's passes are timed apart). */
+  tag?: string;
+}
 
 export class DishView {
   look: DishLook;
   mode: ViewMode = "specimen";
   /** Compare split in target-uv x (null = off). */
   split: number | null = null;
+  /** Hidden-channel tint strength (null: the look's). */
+  tintOverride: number | null = null;
 
   private readonly device: GPUDevice;
   private readonly prepPipe: GPUComputePipeline;
@@ -82,6 +127,9 @@ export class DishView {
   private readonly viewUniform: GPUBuffer;
   private readonly sampler: GPUSampler;
   private readonly grain: GPUTexture;
+  private freezeTex: GPUTexture | null = null;
+  private freezeVersion = -1;
+  private hasFreeze = false;
   private grid = 0;
   private looks: GPUTexture[] = [];
   private tint: GPUTexture | null = null;
@@ -100,28 +148,28 @@ export class DishView {
   private readonly bufIds = new WeakMap<GPUBuffer, number>();
   private nextBufId = 1;
 
-  constructor(device: GPUDevice, look: DishLook) {
+  constructor(renderer: DishRenderer, look: DishLook) {
+    const device = renderer.device;
     this.device = device;
     this.look = look;
-    this.prepPipe = device.createComputePipeline({
-      label: "grow-prep",
-      layout: "auto",
-      compute: { module: device.createShaderModule({ code: prepSrc, label: "grow-prep" }), entryPoint: "main" },
-    });
-    const viewModule = device.createShaderModule({ code: wgsl(dishSrc), label: "grow-dish" });
-    this.viewPipe = device.createRenderPipeline({
-      label: "grow-dish",
-      layout: "auto",
-      vertex: { module: viewModule, entryPoint: "vs" },
-      fragment: { module: viewModule, entryPoint: "fs", targets: [{ format: SCENE_FORMAT }] },
-      primitive: { topology: "triangle-list" },
-    });
+    this.prepPipe = renderer.prepPipe;
+    this.viewPipe = renderer.viewPipe;
+    this.sampler = renderer.sampler;
+    this.grain = renderer.grain;
     const U = GPUBufferUsage;
     this.prepUniform = device.createBuffer({ size: PREP_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-prep" });
     this.prepCmpUniform = device.createBuffer({ size: PREP_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-prep-cmp" });
     this.viewUniform = device.createBuffer({ size: VIEW_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-dish" });
-    this.sampler = device.createSampler({ magFilter: "linear", minFilter: "linear", label: "grow-clamp" });
-    this.grain = createBlueNoiseTexture(device);
+  }
+
+  /** The frozen cells (1 = frozen) to draw as frost; re-uploaded when `version` changes. */
+  setFreeze(mask: Uint8Array, count: number, version: number): void {
+    if (version === this.freezeVersion || !this.freezeTex) return;
+    this.freezeVersion = version;
+    this.hasFreeze = count > 0;
+    const bytes = new Uint8Array(mask.length);
+    for (let i = 0; i < mask.length; i += 1) bytes[i] = mask[i] ? 255 : 0;
+    this.device.queue.writeTexture({ texture: this.freezeTex }, bytes, { bytesPerRow: this.grid }, [this.grid, this.grid]);
   }
 
   private bufId(b: GPUBuffer): number {
@@ -135,7 +183,15 @@ export class DishView {
 
   private ensure(grid: number): void {
     if (grid === this.grid) return;
-    for (const t of [...this.looks, this.tint, this.cmpLook, this.cmpTint]) t?.destroy();
+    for (const t of [...this.looks, this.tint, this.cmpLook, this.cmpTint, this.freezeTex]) t?.destroy();
+    this.freezeTex = this.device.createTexture({
+      size: [grid, grid],
+      format: "r8unorm",
+      usage: GPUTextureUsage.TEXTURE_BINDING | GPUTextureUsage.COPY_DST,
+      label: "grow-freeze",
+    });
+    this.freezeVersion = -1;
+    this.hasFreeze = false;
     const tex = (label: string): GPUTexture =>
       this.device.createTexture({
         size: [grid, grid],
@@ -224,6 +280,7 @@ export class DishView {
           { binding: 5, resource: this.sampler },
           { binding: 6, resource: this.grain.createView() },
           { binding: 7, resource: this.cmpTint!.createView() },
+          { binding: 8, resource: this.freezeTex!.createView() },
         ],
         label: `grow-dish-${key}`,
       });
@@ -243,12 +300,13 @@ export class DishView {
     v.set([cam.cx, cam.cy, cam.unitsPerPx, f.time], 0);
     v.set([w, h, this.grid, f.blend], 4);
     v.set([f.origin[0], f.origin[1], f.radius, MODE[this.mode]], 8);
-    v.set([L.tint * (this.basis ? 1 : 0), L.membrane, L.shadow, L.relief], 12);
+    v.set([(this.tintOverride ?? L.tint) * (this.basis ? 1 : 0), L.membrane, L.shadow, L.relief], 12);
     v.set([...agar, L.grain], 16);
     v.set([...bench, L.vignette], 20);
     v.set([...rim, L.rimWidth], 24);
     v.set([L.light[0] / ln, L.light[1] / ln, L.light[2] / ln, this.split === null || !hasCmp ? -1 : this.split], 28);
     v.set([f.fade, 1 / Math.max(cam.unitsPerPx, 1e-6), L.gloss, hasCmp ? 1 : 0], 32);
+    v.set([this.hasFreeze ? 1 : 0, f.time, 0, 0], 36);
     this.device.queue.writeBuffer(this.viewUniform, 0, v);
   }
 
@@ -264,8 +322,10 @@ export class DishView {
     frame: DishFrame,
     compare: { buffer: GPUBuffer; key: string } | null,
     profiler?: GpuProfiler,
+    passOpts: DishPassOptions = { load: false },
   ): void {
     this.ensure(src.grid);
+    if (src.freeze) this.setFreeze(src.freeze.mask, src.freeze.count, src.freeze.version);
     const wg = Math.ceil(this.grid / 8);
     const changed = src.version !== this.preparedVersion || src.buffer !== this.preparedBuffer || this.basisDirty;
     const cmpChanged = compare !== null && (compare.key !== this.cmpKey || this.basisDirty);
@@ -274,7 +334,7 @@ export class DishView {
         this.writePrep(this.prepUniform);
         this.writePrep(this.prepCmpUniform);
       }
-      const pass = enc.beginComputePass({ label: "grow-prep", timestampWrites: profiler?.pass("prep") });
+      const pass = enc.beginComputePass({ label: "grow-prep", timestampWrites: profiler?.pass(`prep${passOpts.tag ?? ""}`) });
       pass.setPipeline(this.prepPipe);
       if (changed) {
         if (this.snapNext || this.basisDirty) {
@@ -304,9 +364,10 @@ export class DishView {
     this.writeView(camera, w, h, pixelScale, frame, compare !== null);
     const rp = enc.beginRenderPass({
       label: "grow-dish",
-      colorAttachments: [{ view: target, loadOp: "clear", storeOp: "store", clearValue: { r: 0, g: 0, b: 0, a: 1 } }],
-      timestampWrites: profiler?.pass("dish"),
+      colorAttachments: [{ view: target, loadOp: passOpts.load ? "load" : "clear", storeOp: "store", clearValue: { r: 0, g: 0, b: 0, a: 1 } }],
+      timestampWrites: profiler?.pass(`dish${passOpts.tag ?? ""}`),
     });
+    if (passOpts.scissor) rp.setScissorRect(...passOpts.scissor);
     rp.setPipeline(this.viewPipe);
     rp.setBindGroup(0, this.viewBG());
     rp.draw(3);
@@ -314,7 +375,7 @@ export class DishView {
   }
 
   destroy(): void {
-    for (const t of [...this.looks, this.tint, this.cmpLook, this.cmpTint, this.grain]) t?.destroy();
+    for (const t of [...this.looks, this.tint, this.cmpLook, this.cmpTint, this.freezeTex]) t?.destroy();
     for (const b of [this.prepUniform, this.prepCmpUniform, this.viewUniform]) b.destroy();
   }
 }
