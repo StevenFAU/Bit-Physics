@@ -7,6 +7,8 @@
 
 import type { Tier } from "@bp/gpu";
 import type { BrainParams, CouzinParams, VicsekParams } from "./model/brains.js";
+import type { EcoParams } from "./model/ecology.js";
+import { FOOD_CHAIN } from "./model/ecology.js";
 import type { FluidParams } from "./model/fluid.js";
 import { CURRENT_FLUID } from "./model/fluid.js";
 import type { InitMode } from "./model/init.js";
@@ -23,6 +25,14 @@ export interface WaterDef {
   motes: Record<Tier, number>;
   params: FluidParams;
   tide: number;
+}
+
+/** Food Chain: fish slots are the scene's counts; this many start alive, and the sharks. */
+export interface EcologyDef {
+  fish0: number;
+  sharkSlots: Record<Tier, number>;
+  sharks0: number;
+  params: EcoParams;
 }
 
 export interface SceneDef {
@@ -53,6 +63,10 @@ export interface SceneDef {
   scale?: { fishLength: number; causticCell: number };
   /** M2 Current: the water the fish swim in. */
   water?: WaterDef;
+  /** M2 Food Chain: plankton, fish lives, sharks. */
+  ecology?: EcologyDef;
+  /** Memory reorder cadence override (Food Chain: 0 — a fish's slot holds its life). */
+  sortEvery?: number;
 }
 
 /** v4's "flock" preset (index.html PRESETS.flock), the rule the v4 lab opened with. */
@@ -130,6 +144,19 @@ export const CURRENT_WATER: WaterDef = {
   tide: 0.0065,
 };
 
+// ---- Food Chain: plankton → fish → sharks -------------------------------------------------------
+//
+// The fish slots are the ceiling on the fish; the ocean holds them all at
+// Open Water's density. A quarter start alive, with six sharks.
+
+export const FOOD_COUNTS: Record<Tier, number> = { T3: 32768, T2: 16384, T1: 8192 };
+export const FOOD_CHAIN_DEF: EcologyDef = {
+  fish0: 0.15,
+  sharkSlots: { T3: 128, T2: 96, T1: 64 },
+  sharks0: 6,
+  params: FOOD_CHAIN,
+};
+
 export const SCENES: readonly SceneDef[] = [
   {
     id: "open-water",
@@ -182,11 +209,28 @@ export const SCENES: readonly SceneDef[] = [
     listed: true,
     kind: "live",
     rule: OPEN_WATER_RULE,
-    density: V4_DENSITY,
     init: "random",
     shark: true,
     counts: CURRENT_COUNTS,
     water: CURRENT_WATER,
+    // half Open Water's crowding, so open water shows between the schools
+    density: V4_DENSITY / 2,
+    zoom: 2.2,
+  },
+  {
+    id: "food-chain",
+    title: "Food Chain",
+    prompt: "Populations rise and crash. Keep them alive.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    density: V4_DENSITY,
+    init: "random",
+    shark: false,
+    counts: FOOD_COUNTS,
+    ecology: FOOD_CHAIN_DEF,
+    sortEvery: 0,
+    scale: { fishLength: 0.03, causticCell: 0.7 },
   },
   {
     id: "proof",

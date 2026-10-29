@@ -155,7 +155,7 @@ fn plankton_fs(in: FullscreenOut) -> @location(0) vec4<f32> {
   let p = clamp(bilin(q, 1u) / max(V.plank.y, 1e-9), 0.0, 2.0);
   // a cool green glow that saturates as the bloom fills its carrying capacity
   let g = p * (1.15 - 0.45 * p);
-  let col = vec3<f32>(0.010, 0.060, 0.045) * g * V.plank.x;
+  let col = vec3<f32>(0.022, 0.135, 0.100) * g * V.plank.x;
   return vec4<f32>(col, 0.0);
 }
 

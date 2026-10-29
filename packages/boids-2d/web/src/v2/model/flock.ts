@@ -196,6 +196,8 @@ export interface FlockExt {
   /** After a step: boidBufs[cur] holds the new state. */
   after?(pass: GPUComputePassEncoder, s: number, cur: number): void;
   reseed?(seed: number): void;
+  /** Shape the boids the flock seeds (e.g. empty slots) before they load. */
+  shapeInit?(data: Float32Array): void;
   checkpoint?(): unknown;
   restore?(c: unknown): void;
   release?(c: unknown): void;
@@ -530,7 +532,8 @@ export class Flock {
     this.reseed(cfg.seed);
     if (cfg.ext) {
       this.ext = cfg.ext(this);
-      this.ext.reseed?.(cfg.seed);
+      if (this.ext.shapeInit) this.reseed(cfg.seed);
+      else this.ext.reseed?.(cfg.seed);
     }
   }
 
@@ -557,7 +560,9 @@ export class Flock {
     this.seed = seed;
     this.initMode = mode;
     const speed = this.brain ? this.brain.p.speed : this.rule.maxSpeed;
-    this.load(isM1Init(mode) ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode) : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode));
+    const data = isM1Init(mode) ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode) : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode);
+    this.ext?.shapeInit?.(data);
+    this.load(data);
     this.ext?.reseed?.(seed);
   }
 

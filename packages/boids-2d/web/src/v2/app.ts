@@ -15,6 +15,8 @@ import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { BrainParams } from "./model/brains.js";
 import { CurrentExt } from "./model/current.js";
+import type { Census, EcoKernels } from "./model/ecology.js";
+import { EcologyExt } from "./model/ecology.js";
 import type { FluidKernels, FluidStats } from "./model/fluid.js";
 import type { Checkpoint, OrderParams } from "./model/flock.js";
 import { Flock, FlockKernels, MAX_STEPS_PER_PASS, orderParams, sumPartials } from "./model/flock.js";
@@ -57,6 +59,8 @@ export interface AppHooks {
   onOrder?: (o: OrderParams, tick: number) => void;
   /** Current: the water's live statistics (every few frames). */
   onFluid?: (s: FluidStats, tick: number) => void;
+  /** Food Chain: the census (every few frames). */
+  onCensus?: (c: Census, tick: number) => void;
   onFrame?: (now: number) => void;
 }
 
@@ -155,6 +159,11 @@ export class App {
   sea: SeaView | null = null;
   current: CurrentExt | null = null;
   fluidStats: FluidStats | null = null;
+  ecoKernels: EcoKernels | null = null;
+  ecology: EcologyExt | null = null;
+  census: Census | null = null;
+  /** Feed: plankton per step at the brush's centre (units of K). */
+  feedRate = 0.03;
   readonly brush: BrushState = { at: null, down: false, vx: 0, vy: 0, last: null, painted: 0 };
   /** Brush radius (world units). */
   brushRadius = BRUSH_RADIUS;
@@ -181,6 +190,7 @@ export class App {
   private fluidSlot: ReadbackSlot | null = null;
   private frameNo = 0;
   private stateSlot: ReadbackSlot | null = null;
+  private censusSlot: ReadbackSlot | null = null;
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: OceanView, kernels: FlockKernels, tier: Tier) {
     this.gpu = gpu;
@@ -238,6 +248,9 @@ export class App {
       const water = !proof ? scene.water : undefined;
       if (water && !this.fluidKernels) throw new Error("Current needs the fluid kernels");
       let current: CurrentExt | null = null;
+      const eco = !proof ? scene.ecology : undefined;
+      if (eco && !this.ecoKernels) throw new Error("Food Chain needs the ecology kernels");
+      let ecology: EcologyExt | null = null;
       const flock = new Flock(this.device, this.kernels, {
         n,
         ...world,
@@ -249,8 +262,16 @@ export class App {
         broadphase: "sort",
         minRCoh: minReach,
         // the proof scene is the proofs' run exactly: no memory reorder
-        sortEvery: proof ? 0 : this.sortEvery,
-        ext: water
+        sortEvery: proof ? 0 : (scene.sortEvery ?? this.sortEvery),
+        ext: eco
+          ? (f) =>
+              (ecology = new EcologyExt(this.device, this.ecoKernels!, f, {
+                fish0: Math.round(eco.fish0 * n),
+                sharkSlots: eco.sharkSlots[this.tier],
+                sharks0: eco.sharks0,
+                params: eco.params,
+              }))
+          : water
           ? (f) =>
               (current = new CurrentExt(this.device, this.fluidKernels!, f, {
                 rows: water.rows[this.tier],
@@ -263,6 +284,8 @@ export class App {
       });
       this.current = current;
       this.fluidStats = null;
+      this.ecology = ecology;
+      this.census = null;
       this.flock = flock;
       old?.destroy();
       this.orderSlot?.destroy();
@@ -271,6 +294,8 @@ export class App {
       this.stateSlot?.destroy();
       this.fluidSlot = current ? new ReadbackSlot(this.device, (current as CurrentExt).fluid.statsBytes, "swarm-fluid-stats") : null;
       this.stateSlot = current ? new ReadbackSlot(this.device, 16, "swarm-fluid-state") : null;
+      this.censusSlot?.destroy();
+      this.censusSlot = ecology ? new ReadbackSlot(this.device, 32, "swarm-census") : null;
       this.order = null;
       this.view.forgetBuffers();
       this.scene = scene;
@@ -296,6 +321,7 @@ export class App {
       this.hdr.resetExposure();
       const tools = [
         ...(scene.water ? [this.toolSpec("current")] : []),
+        ...(scene.ecology ? [this.toolSpec("feed"), this.toolSpec("release")] : []),
         ...(scene.shark ? [this.toolSpec("shark")] : []),
         this.toolSpec("pan"),
       ];
@@ -450,6 +476,19 @@ export class App {
         options: () => this.sharkOptions(),
       };
     }
+    if (id === "feed") {
+      return {
+        id,
+        label: "Feed",
+        icon: "food",
+        hint: "Hold to make plankton bloom under the pointer · right-drag or two fingers to pan",
+        paints: true,
+        options: () => this.brushOptions(),
+      };
+    }
+    if (id === "release") {
+      return { id, label: "Release", icon: "fish", hint: "Click to release a school of 300 fish", paints: true };
+    }
     if (id === "current") {
       return {
         id,
@@ -473,7 +512,7 @@ export class App {
       value: this.brushRadius,
       format: (v) => v.toFixed(1),
       unit: " units",
-      hint: "How wide a stroke of water you push (the ocean's own units).",
+      hint: this.ecology ? "How wide a bloom you feed (the ocean's own units)." : "How wide a stroke of water you push (the ocean's own units).",
       onInput: (v) => {
         this.brushRadius = v;
       },
@@ -517,10 +556,15 @@ export class App {
 
   private toolHandlers(): ToolHandlers {
     const sharkTool = (): boolean => this.studio.rail.active === "shark" && this.scene.shark;
-    const brushTool = (): boolean => this.studio.rail.active === "current" && !!this.current;
+    const brushTool = (): boolean => (this.studio.rail.active === "current" && !!this.current) || (this.studio.rail.active === "feed" && !!this.ecology);
+    const releaseTool = (): boolean => this.studio.rail.active === "release" && !!this.ecology;
     return {
-      paints: () => sharkTool() || brushTool(),
+      paints: () => sharkTool() || brushTool() || releaseTool(),
       down: (x, y) => {
+        if (releaseTool()) {
+          this.releaseAt(this.toWorld(x, y));
+          return;
+        }
         if (brushTool()) {
           this.brush.at = this.toWorld(x, y);
           this.brush.last = null;
@@ -601,10 +645,23 @@ export class App {
    * under it towards the brush's own speed (capped at twice a fish's top
    * speed). The impulse goes through the same integer sums as the fish's.
    */
+  /** Release: 300 fish around a point, at the next step (into empty slots, as births are). */
+  releaseAt(at: [number, number], count = 300): void {
+    if (!this.ecology || this.blocked("release fish")) return;
+    this.ecology.brush = { ...this.ecology.brush, release: { x: at[0], y: at[1], radius: 0.35, count } };
+    this.edits += 1;
+  }
+
   private updateBrush(dt: number): void {
+    const b = this.brush;
+    const e = this.ecology;
+    if (e) {
+      e.brush = { ...e.brush, feed: b.down && b.at ? { x: b.at[0], y: b.at[1], radius: this.brushRadius, amount: this.feedRate } : undefined };
+      if (b.down && b.at) b.painted += dt;
+      return;
+    }
     const c = this.current;
     if (!c) return;
-    const b = this.brush;
     const W = this.flock.halfW * 2;
     const H = this.flock.halfH * 2;
     if (b.at && b.last) {
@@ -767,6 +824,7 @@ export class App {
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
     this.updateShark(dt);
     this.updateBrush(dt);
+    this.frameNo += 1;
 
     const n = this.history.comparing ? 0 : this.clock.due(dt);
     this.profiler?.begin(n);
@@ -785,11 +843,18 @@ export class App {
 
     // the water's statistics, every few frames
     let fluidTick = -1;
-    if (this.current && this.fluidSlot && this.stateSlot && !this.fluidSlot.pending && !this.stateSlot.pending && ++this.frameNo % 10 === 0) {
+    if (this.current && this.fluidSlot && this.stateSlot && !this.fluidSlot.pending && !this.stateSlot.pending && this.frameNo % 10 === 0) {
       this.current.fluid.encodeStats(enc);
       this.fluidSlot.record(enc, this.current.fluid.statsBuffer);
       this.stateSlot.record(enc, this.current.fluid.state);
       fluidTick = this.flock.tick;
+    }
+
+    let censusTick = -1;
+    if (this.ecology && this.censusSlot && !this.censusSlot.pending && this.frameNo % 10 === 5) {
+      this.ecology.encodeCensus(enc);
+      this.censusSlot.record(enc, this.ecology.census);
+      censusTick = this.flock.tick;
     }
 
     const save = this.history.comparing ? this.history.savePoint : null;
@@ -822,6 +887,7 @@ export class App {
     });
     if (orderTick >= 0) void this.collectOrder(orderTick);
     if (fluidTick >= 0) void this.collectFluid(fluidTick);
+    if (censusTick >= 0) void this.collectCensus(censusTick);
 
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
     if (now - this.rateT0 > 1000) {
@@ -838,6 +904,23 @@ export class App {
 
   /** What the sea renderer draws for this scene (null: nothing). */
   seaSource(): SeaSource | null {
+    const e = this.ecology;
+    if (e) {
+      return {
+        halfW: this.flock.halfW,
+        halfH: this.flock.halfH,
+        life: {
+          cols: e.grid.cols,
+          rows: e.grid.rows,
+          cellX: e.grid.cellX,
+          cellY: e.grid.cellY,
+          plankton: e.plankton[e.pCur]!,
+          K: e.params.K,
+          sharks: e.sharks,
+          sharkSlots: e.sharkSlots,
+        },
+      };
+    }
     const c = this.current;
     if (!c) return null;
     const f = c.fluid;
@@ -846,6 +929,15 @@ export class App {
       halfH: this.flock.halfH,
       fluid: { gw: f.gw, gh: f.gh, hx: f.hx, hy: f.hy, psi: f.psi, omega: f.omega, state: f.state, motes: f.motes, nMotes: f.nMotes },
     };
+  }
+
+  private async collectCensus(tick: number): Promise<void> {
+    const e = this.ecology;
+    if (!e || !this.censusSlot) return;
+    const a = await this.censusSlot.collect();
+    if (!a || e !== this.ecology) return;
+    this.census = EcologyExt.readCensus(new Float32Array(a));
+    this.hooks.onCensus?.(this.census, tick);
   }
 
   private async collectFluid(tick: number): Promise<void> {
