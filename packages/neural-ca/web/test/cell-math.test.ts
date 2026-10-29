@@ -1,18 +1,20 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import type { Block } from "../src/v2/model/cell-math.js";
 import { CN, pcgFire, stepCell, think } from "../src/v2/model/cell-math.js";
 import fixture from "./fixtures/cell-step.json";
 
-// The committed checkpoint, in its committed layout (nca-layout.json).
-const raw = readFileSync(new URL("../public/nca-weights.bin", import.meta.url));
-const weights = new Float32Array(raw.buffer.slice(raw.byteOffset, raw.byteOffset + raw.byteLength));
-const W = { w: weights, b1Off: 0, w1Off: 128, w2Off: 6272 };
-
 const f32 = (b64: string): Float32Array => {
-  const b = Buffer.from(b64, "base64");
-  return new Float32Array(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength));
+  const bin = atob(b64);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i += 1) bytes[i] = bin.charCodeAt(i);
+  return new Float32Array(bytes.buffer);
 };
+
+// The committed checkpoint, in its committed layout (nca-layout.json); binary assets import as data URLs.
+const inline = import.meta.glob<string>("../public/nca-weights.bin", { eager: true, query: "?inline", import: "default" });
+const url = Object.values(inline)[0]!;
+const weights = f32(url.slice(url.indexOf(",") + 1));
+const W = { w: weights, b1Off: 0, w1Off: 128, w2Off: 6272 };
 
 describe("pcgFire", () => {
   it("matches the kernel's hash (values from neural_ca.reference.nca_numpy.pcg_fire)", () => {

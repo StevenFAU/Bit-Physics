@@ -48,6 +48,11 @@ uv run --no-sync python packages/neural-ca/train-spike/spike_ref.py compare --ca
 node packages/neural-ca/train-spike/run-spike.mjs --out $OUT train <config.json>   # configs: see results/
 ```
 
+**Damage mode (M1).** A config with `"damage": n` trains the Distill *Regenerating* way: before each
+rollout the drawn batch's current losses are computed, the worst sample is reset to the seed and the
+`n` best are cut by a random disc drawn from the iteration seed (`DAMAGE` in `src/kernels.ts`). The
+Menagerie's organisms were trained this way; see `packages/neural-ca/menagerie/README.md`.
+
 A training config is a JSON object or array, for example:
 `{"label":"t3-gecko-s1","targetFile":"gecko.f32","G":72,"B":8,"Tmin":64,"Tmax":96,"poolSize":1024,"iters":2000,"lr":0.002,"decayAt":2000,"seed":1,"evalEvery":50,"evalSteps":[96,300],"snapshotEvery":100}`.
 `targetFile` is resolved relative to the config file, so copy `$OUT/targets/*.f32` next to it.

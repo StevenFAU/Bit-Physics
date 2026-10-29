@@ -2,7 +2,56 @@
 
 > Part of [Rebuild v2](README.md). Replaces `packages/neural-ca/web`. Wave A.
 > Status: planning, v0.1, 2026-10-17. **M0 done 2026-10-23** (live NCA, the dish look, gate
-> ported; training spike below). Teach targets measured on T3; the rest unmeasured.
+> ported; training spike below). **M1 done 2026-10-28** (Menagerie, Cut / Seed / Graft / Freeze,
+> Inside the Cell). Teach targets measured on T3; the rest unmeasured.
+>
+> **M1, the Menagerie, the tools and Inside the Cell (2026-10-28): done.** On the `v2/` page only;
+> the v1 page, the gated kernel, the capture path and the committed checkpoint are untouched.
+> Measured on the RX 6800 XT (RADV, headless snap Chromium):
+> - **Seven trained organisms.** Gecko, starfish, butterfly, ladybug, mushroom, clownfish and turtle,
+>   each 8,320 numbers in the committed checkpoint's layout, so the page runs them through the gated
+>   kernel unchanged. Trained offline by the M0 spike, extended with the Distill *Regenerating*
+>   recipe (each iteration resets the worst sample to the seed and cuts a random disc out of the three
+>   best). 64 × 64 dish (the page's, not 72²), 40 × 40 targets drawn by
+>   `packages/neural-ca/menagerie/targets.py`, batch 8, pool 1,024, rollouts 64–96, 8,000 iterations:
+>   142–182 s each. Provenance (target, trainer, adapter, seed, iterations, loss curve) and the
+>   measurements below are in `packages/neural-ca/web/public/menagerie/menagerie.json`; the weights are
+>   committed plain, 33 kB each. Damage training is deterministic: a second gecko run in a fresh
+>   browser gave the same weights SHA and identical losses at all 8,000 iterations.
+> - **They heal.** On the package's NumPy reference of the gated kernel: grown from one cell, 0.975–0.996
+>   overlap (IoU) with the target at step 300, held to step 4,000. Cut at step 400 (right half, bottom
+>   half, a disc through the middle; three masks), the mean overlap 200 steps later is 0.85 (turtle) to
+>   0.99 (butterfly); worst single cut 0.63 (ladybug) to 0.98 (butterfly); 0.82–0.99 after 800 steps.
+>   The committed disk, measured the same way, does not heal (mean 0.70; a right-half cut dies out).
+>   On the live kernel (mask seed 42) all seven heal (mean 0.84–0.99), within 0.024 IoU of the
+>   reference on every one of 24 cuts.
+> - **The Dish** opens on the day's healer (the spec's "rotating daily"; a link carries the organism
+>   it showed). `?o=disk`, the organism menu or Prove › *Show the gated run* is the gated run.
+> - **Menagerie.** Eight dishes on one clock, one organism each, every weights file SHA-checked against
+>   the manifest (also a Prove card). Edits name their dish, so undo by replay and save points cover all
+>   eight. Drawn as one dish view per scissored tile, laid out in the space the chrome leaves free.
+>   The disk inside it is still the gated run: at step 1,000 it equals the committed canonical frame
+>   bit for bit. Each organism has a card: its target, how it was trained, what was measured.
+> - **Freeze** is a pass after each step that copies the step's input back over frozen cells; with
+>   nothing frozen it is not encoded. 112 of 112 frozen cells kept their 16 values through 120 steps
+>   while the gecko grew around them; undo replays to the never-frozen bytes.
+> - **Graft** lifts a disc (move or copy) and sets it down at a step boundary, also across the
+>   Menagerie's dishes: the piece arrives byte for byte (113 of 113 cells), and lands under the new
+>   dish's rule. Cells do not carry their rule: Chimera (M3) still needs per-cell rule ids.
+> - **Inside the Cell** works one cell's step on the CPU (48 perception values, 128 units, 16 changes,
+>   the coin, the two alive checks) and checks it against the GPU's next step: max |Δ| 3.8e-6 over 18
+>   cells of three organisms (often 0). Against the NumPy reference (unit test): < 1e-5, no disagreement
+>   about which cells die.
+> - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0 over
+>   21 frames, two driver runs each; all four captures are identical.
+> - **Frame.** 60 fps at 1280 × 720 on both scenes. The Dish: GPU 0.58 ms per frame (p50), 0.50 ms
+>   per step. The Menagerie: GPU 0.62 / 2.7 ms per frame (p50 / p90); a step of all eight dishes is
+>   3.8 ms, so 30 steps/s leaves most of the frame.
+> - **Checks.** `v2-acceptance.mjs` 62/62 (M0's checks pinned to `?o=disk`, plus M1's);
+>   `web/tools/check-studio.mjs` clean for the Dish, the Menagerie and Inside the Cell at 390, 820 and
+>   1440 px and 200% zoom, no axe violations; `npm test` 164/164; integrity 0 HARD_FAIL.
+> - **Still unverified:** "first in-browser NCA training". No copy claims it; the cards say only that
+>   these organisms were trained with WebGPU in a headless browser by this repository's spike.
 >
 > **M0, the page (2026-10-23): done.** Grow v2 is the `v2/` page of `packages/neural-ca/web`
 > (source in `packages/neural-ca/web/src/v2/`), gated through `pipeline.py` `PAGES`; v1 is untouched.

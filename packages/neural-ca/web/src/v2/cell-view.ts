@@ -103,8 +103,12 @@ export function buildCellPanel(stage: HTMLElement, act: { step: () => void; play
       }
       const s = r.step;
       title.textContent = `Cell ${s.x}, ${s.y}`;
-      status.textContent = s.state[3]! > ALIVE ? "living" : "empty";
-      status.className = `gr-badge ${s.state[3]! > ALIVE ? "gr-badge-heals" : "gr-badge-persists"}`;
+      // the paper's terms: mature (opacity > 0.1), growing (a mature neighbour), empty
+      const kind = s.state[3]! > ALIVE ? "mature" : s.maxAlphaBefore > ALIVE ? "growing" : "empty";
+      status.textContent = kind;
+      status.title =
+        kind === "mature" ? "Opacity above 0.1" : kind === "growing" ? "Opacity 0.1 or less, next to a mature cell: it updates" : "No mature cell nearby: it does not change";
+      status.className = `gr-badge ${kind === "empty" ? "gr-badge-persists" : "gr-badge-heals"}`;
       when.textContent = `${r.organism} · step ${s.step.toLocaleString()}`;
 
       // sense: the 3 × 3 colours, then [value, slope x, slope y] × 16
