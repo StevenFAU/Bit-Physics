@@ -1,6 +1,6 @@
 // Slime Mould — the v2 page (docs/planning/rebuild-v2/02-physarum.md), Wave A
-// of the Field Studies rebuild. Served at /sims/physarum/v2/ while v1 stays
-// live at /sims/physarum/.
+// of the Field Studies rebuild. Served at /sims/physarum/ since it replaced
+// v1, which is kept at /sims/physarum/v1/ for one release.
 //
 // Capture contract with the headless gate (tools/productization/web-deploy):
 //   * createStudio mounts the shell; its Prove drawer carries [data-bp-panel];

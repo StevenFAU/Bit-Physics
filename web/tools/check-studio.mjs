@@ -4,9 +4,11 @@
 //
 //   CHROME_BIN=/snap/bin/chromium \
 //   PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js \
-//   node web/tools/check-studio.mjs packages/reaction-diffusion-2d/web/dist v2/ [out-dir]
+//   node web/tools/check-studio.mjs packages/boids-2d/web/dist v2/ [out-dir]
 //
-// The page may carry a query (e.g. `v2/?s=mill` for one scene). A sim's own
+// The page is "" for a sim whose v2 page has replaced v1 at the dist root
+// (reaction-diffusion-2d, physarum). It may carry a query (e.g. `v2/?s=mill`
+// for one scene). A sim's own
 // floating panels opt in to the overflow and overlap checks with the
 // attribute data-bp-chrome.
 //

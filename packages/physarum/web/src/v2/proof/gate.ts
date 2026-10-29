@@ -13,6 +13,7 @@
 
 import gatedWgsl from "../../../../src/physarum.wgsl?raw";
 import V from "../../generated/verification.json";
+import { simAsset } from "../../sim-root.js";
 import { field, sha256hex } from "@bp/verify";
 import type { CaptureBundle } from "@bp/verify";
 
@@ -46,9 +47,9 @@ if (
 export const equilibriumMass = (p: Pick<JonesParams, "deposit" | "decay_alpha">, n: number): number =>
   (p.deposit * n * (1 - p.decay_alpha)) / p.decay_alpha;
 
-/** Public assets live at the dist root; this page is one level down (…/v2/). */
+/** A public asset (dist root), resolved from the bundle so any page depth works. */
 export function assetUrl(name: string): string {
-  return new URL(`../${name}`, location.href).toString();
+  return simAsset(name);
 }
 
 export interface CanonicalIC {

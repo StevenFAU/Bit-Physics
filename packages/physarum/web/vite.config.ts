@@ -6,9 +6,13 @@ import { defineConfig } from "vite";
 // (`?raw`) — no extra plugin needed.
 //
 // Two pages share one dist (the deploy pipeline's per-sim contract is
-// unchanged): index.html is the v1 page at /sims/physarum/, and v2/index.html
-// is the Slime Mould rebuild (Field Studies, Wave A) at /sims/physarum/v2/ —
-// both gated by pipeline.py validate.
+// unchanged): index.html is Slime Mould, the Field Studies rebuild, at
+// /sims/physarum/, and v1/index.html is the previous page, kept at
+// /sims/physarum/v1/ for one release (docs/planning/rebuild-v2/README.md,
+// release rule) — both gated by pipeline.py validate. public/v2/index.html
+// forwards the rebuild's old /v2/ address to the root. Both pages read the
+// public/ files through src/sim-root.ts, which resolves them from the bundle
+// rather than the page, so either depth works.
 const page = (p: string): string => fileURLToPath(new URL(p, import.meta.url));
 
 export default defineConfig({
@@ -18,7 +22,7 @@ export default defineConfig({
     target: "es2022",
     sourcemap: true,
     rollupOptions: {
-      input: { main: page("./index.html"), v2: page("./v2/index.html") },
+      input: { main: page("./index.html"), v1: page("./v1/index.html") },
     },
   },
 });

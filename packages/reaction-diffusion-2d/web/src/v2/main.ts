@@ -1,6 +1,7 @@
 // Turing Patterns — the v2 page (docs/planning/rebuild-v2/01-reaction-diffusion.md),
 // the Wave 0 pilot of the Field Studies platform. Served at
-// /sims/reaction-diffusion-2d/v2/ while v1 stays live at /sims/reaction-diffusion-2d/.
+// /sims/reaction-diffusion-2d/ since it replaced v1, which is kept at
+// /sims/reaction-diffusion-2d/v1/ for one release.
 //
 // Capture contract with the headless gate (tools/productization/web-deploy):
 //   * createStudio mounts the shell; its Prove drawer carries [data-bp-panel];

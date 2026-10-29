@@ -199,7 +199,7 @@ jobs:
             --skip-build --json > results.json
           cat results.json
       - name: Field Studies shell checks (layout at 390/820/1440 + 200% zoom, axe-core)
-        # The rebuilt v2 pages (pipeline.py PAGES) only. Full-bleed (no
+        # The rebuilt v2 pages only (pipeline.py PAGES and ROOT_ENTRY). Full-bleed (no
         # letterboxing), no chrome overflow/overlap, the capture control live at
         # boot, and zero axe violations in the boot, Learn and Prove states.
         if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d'
@@ -207,7 +207,12 @@ jobs:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
         run: |
           npm ci --no-audit --no-fund
-          node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" v2/ "${{ runner.temp }}/studio-check"
+          # A swapped sim (pipeline.py ROOT_ENTRY) serves its v2 page at the root.
+          case "${{ matrix.sim }}" in
+            reaction-diffusion-2d|physarum) page="" ;;
+            *) page="v2/" ;;
+          esac
+          node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" "$page" "${{ runner.temp }}/studio-check"
       - name: Slime Mould morphology regression (every scene against its committed band)
         # Not a gate — a regression test (docs/planning/rebuild-v2/02-physarum.md
         # § The proof, M3). Every v2 scene runs from seed 1 on the "ci" profile's

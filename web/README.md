@@ -3,9 +3,10 @@
 The platform the rebuilt sims stand on ([docs/planning/rebuild-v2/00-foundation.md](../docs/planning/rebuild-v2/00-foundation.md)).
 Plain TypeScript source packages — no build step of their own; each sim's Vite build
 compiles what it imports. The Wave 0 pilot is Turing Patterns
-(`packages/reaction-diffusion-2d/web`, page `v2/`); Wave A adds Slime Mould
-(`packages/physarum/web`, page `v2/`), Grow (`packages/neural-ca/web`, page `v2/`) and Swarm
-(`packages/boids-2d/web`, page `v2/`).
+(`packages/reaction-diffusion-2d/web`); Wave A adds Slime Mould (`packages/physarum/web`),
+Grow (`packages/neural-ca/web`, page `v2/`) and Swarm (`packages/boids-2d/web`, page `v2/`).
+Turing Patterns and Slime Mould have replaced their v1 pages at the sim root (v1 kept at
+`v1/`); see "The release swap" below.
 
 | Package | What it holds |
 |---|---|
@@ -28,7 +29,21 @@ marker (`createStudio` or the v1 `createSettingsPanel`).
 A v2 page is a second Vite input in the sim's own package (`v2/index.html` →
 `dist/v2/`), so the per-sim build and `dist/` contract are unchanged; register it in
 `pipeline.py` `PAGES` and `validate` drives it through the sim's same established gate.
-Public assets live at the dist root, one level up from the page (`../<asset>`).
+Public assets live at the dist root. Resolve them from the bundle, not the page (a sim-local
+`src/sim-root.ts`, as in Turing Patterns and Slime Mould), so the page works at either depth.
+
+### The release swap
+
+When a v2 page passes its gate and its spec's acceptance, it replaces v1 at `/sims/<sim>/`
+and v1 is kept at `/sims/<sim>/v1/` for one release
+([README](../docs/planning/rebuild-v2/README.md), release rule). In the sim's package:
+`index.html` becomes the v2 page and `v1/index.html` the old one (the Vite inputs follow);
+`public/v2/index.html` is a static page that forwards the old `/v2/` address, query and hash
+to the root. In `pipeline.py` the sim gets a `ROOT_ENTRY` (`src/v2/main.ts`) and its `PAGES`
+entry becomes `v1/` → `src/main.ts`, so `validate` still gates both pages. The v1 page calls
+`rebaseSharedChrome()` from `src/sim-root.ts` so common-web's `../../` site links work from
+`v1/`. The landing card, poster, loop and splash entries move to the root page in the same PR,
+and the CI studio check runs the root page.
 
 ## Commands
 
@@ -41,11 +56,12 @@ npx tsc --noEmit -p web/studio   # one shared package (gpu, render, runtime, stu
 
 Layout + accessibility in a real WebGPU browser (390 / 820 / 1440 px and 200% zoom,
 full-bleed, chrome overflow and overlap, axe-core in the boot, Learn and Prove states; a
-page may carry a query such as `v2/?s=mill`, and a sim's own floating panels join the
-overflow / overlap checks by carrying `data-bp-chrome`):
+page may carry a query such as `v2/?s=mill`, a swapped sim's page is `""` (its dist root),
+and a sim's own floating panels join the overflow / overlap checks by carrying
+`data-bp-chrome`):
 
 ```bash
-CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js node web/tools/check-studio.mjs packages/reaction-diffusion-2d/web/dist v2/
+CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js node web/tools/check-studio.mjs packages/boids-2d/web/dist v2/
 ```
 
 The Turing Patterns acceptance run (dive, history, undo-by-replay, share links, the

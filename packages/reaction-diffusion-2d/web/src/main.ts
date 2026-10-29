@@ -46,6 +46,7 @@ import renderWgsl from "./render.wgsl?raw";
 import V from "./generated/verification.json";
 import { installExplainPanel } from "./explain.js";
 import { installVerifyPanel } from "./verify-panel.js";
+import { rebaseSharedChrome, simAsset } from "./sim-root.js";
 
 const N = 128;
 const CANONICAL_STEPS = 2000;
@@ -140,7 +141,7 @@ function injectStyles(): void {
 
 /** Build the seed-42 canonical IC by fetching the committed binary asset. */
 async function fetchCanonicalIC(): Promise<Float32Array<ArrayBuffer>> {
-  const res = await fetch(`${import.meta.env.BASE_URL}rd2d-ic-seed42.bin`);
+  const res = await fetch(simAsset("rd2d-ic-seed42.bin"));
   if (!res.ok) throw new Error(`IC asset fetch failed: ${res.status}`);
   const buf = await res.arrayBuffer();
   const ic = new Float32Array(buf);
@@ -1158,4 +1159,6 @@ async function main(): Promise<void> {
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 
+// This page is served from v1/ (the previous version, kept for one release).
+rebaseSharedChrome();
 void main();

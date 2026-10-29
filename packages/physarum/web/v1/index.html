@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The previous version, kept at v1/ for one release so it can be compared
+         with the rebuilt page at the sim root (docs/planning/rebuild-v2/README.md). -->
+    <meta name="robots" content="noindex" />
+    <title>Physarum Transport Network — Bit-Physics</title>
+    <meta name="description" content="A million blind agents deposit and follow chemical trails — an efficient transport network emerges, with order-independent atomics conserving every unit of mass." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Physarum Transport Network — Bit-Physics" />
+    <meta property="og:description" content="A million blind agents deposit and follow chemical trails — an efficient transport network emerges, with order-independent atomics conserving every unit of mass." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/physarum/v1/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/physarum.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Physarum Transport Network — Bit-Physics" />
+    <meta name="twitter:description" content="A million blind agents deposit and follow chemical trails — an efficient transport network emerges, with order-independent atomics conserving every unit of mass." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/physarum.png" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      #view { image-rendering: pixelated; width: min(90vmin, 768px); height: min(90vmin, 768px); }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="512" height="512" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="../src/main.ts"></script>
+  </body>
+</html>

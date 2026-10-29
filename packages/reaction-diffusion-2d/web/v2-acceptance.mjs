@@ -57,7 +57,7 @@ const check = (name, ok, detail = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-async function open(path = "/v2/", viewport = { width: 1440, height: 900 }) {
+async function open(path = "/", viewport = { width: 1440, height: 900 }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
@@ -162,7 +162,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 
 // --- history: save / restore / compare / undo-by-replay ------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=mitosis&seed=7");
+  const { ctx, page, errors } = await open("/?s=mitosis&seed=7");
   const r = await T(page, async () => {
     const a = __turing;
     a.clock.paused = true;
@@ -269,7 +269,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 
 // --- exports, reduced motion, the dev overlay ----------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?debug=perf");
+  const { ctx, page, errors } = await open("/?debug=perf");
   await page.waitForTimeout(800);
   const snap = await T(page, () => new Promise((resolve) => {
     __turing.onSnapshot = (b) => resolve(b.size);
@@ -283,7 +283,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
   await ctx.close();
   const rctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, reducedMotion: "reduce" });
   const rp = await rctx.newPage();
-  await rp.goto(`${origin}/v2/`, { waitUntil: "load" });
+  await rp.goto(`${origin}/`, { waitUntil: "load" });
   await rp.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
   const rm = await T(rp, () => ({ speed: __turing.clock.speed, still: __turing.camera.reducedMotion }));
   check("reduced motion: the sim starts slowed and the camera never animates", rm.speed === 0.25 && rm.still, JSON.stringify(rm));
@@ -295,7 +295,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 // the live kernel (per-cell chemistry, fast neighbour indexing) must produce
 // the same bytes as the gated kernel after 2000 steps on this GPU.
 {
-  const { ctx, page, errors } = await open("/v2/?s=gated");
+  const { ctx, page, errors } = await open("/?s=gated");
   const r = await T(page, async () => {
     const a = __turing;
     a.clock.paused = true;
@@ -305,7 +305,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
     const gated = await a.stateHash();
     await a.loadScene("dish", { F: 0.0367, k: 0.0649, grid: [128, 128] });
     a.clock.paused = true;
-    const res = await fetch(new URL("../rd2d-ic-seed42.bin", location.href));
+    const res = await fetch(new URL("./rd2d-ic-seed42.bin", location.href));
     a.sim.upload(new Float32Array(await res.arrayBuffer()));
     await a.advanceTicks(500);
     return { gated, live: await a.stateHash(), kernel: a.sim.kernel, periodic: a.sim.periodic };
@@ -321,7 +321,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 
 // --- M3: the extra models and the analytic Turing check, on this GPU ---------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=gated");
+  const { ctx, page, errors } = await open("/?s=gated");
   const models = await T(page, async () => (await __turingProve.runModels()).map((r) => ({ m: r.model, worst: r.worst, budget: r.budget, pass: r.pass })));
   for (const r of models) check(`model golden: ${r.m} agrees with its f64 golden`, r.pass, `${r.worst.toExponential(2)} of max|field| · budget ${r.budget.toExponential(0)}`);
   const again = await T(page, async () => (await __turingProve.runModels()).map((r) => r.worst));
@@ -344,7 +344,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 
 // --- M3: On a Shape ---------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=shape");
+  const { ctx, page, errors } = await open("/?s=shape");
   const boot = await T(page, () => ({ scene: __turing.scene.id, kernel: __turing.sim.kernel, cells: __turing.sim.cells, controls: !!document.querySelector(".rd-shape-controls") }));
   check("On a Shape boots on a sphere with the object and pattern pickers", boot.scene === "shape" && boot.kernel === "surface" && boot.cells > 10000 && boot.controls, JSON.stringify(boot));
   await page.waitForTimeout(3000);
@@ -422,7 +422,7 @@ const T = (page, fn, arg) => page.evaluate(fn, arg);
 
 // --- every listed scene boots and grows ------------------------------------------
 for (const id of ["mitosis", "coral", "solitons", "spirals", "garden", "stripes", "spacing", "excitable", "shape", "gated"]) {
-  const { ctx, page, errors } = await open(`/v2/?s=${id}`);
+  const { ctx, page, errors } = await open(`/?s=${id}`);
   await page.waitForTimeout(4500);
   const s = await T(page, () => ({ scene: __turing.scene.id, tick: __turing.sim.tick, tone: document.querySelector(".bp-studio")?.dataset.tone }));
   await shot(page, `scene-${id}`);

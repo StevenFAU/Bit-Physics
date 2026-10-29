@@ -50,8 +50,11 @@ const REPO = join(HERE, "../../../../../..");
 //                               [data-bp2="preset:<label>"]; lab buttons)
 //   { pick: "<regex>" }       — find the <select> with an <option> whose text
 //                               or value matches, select it, fire change+input
-// Per-clip fields mirror make-loops.mjs: start/shots/gap/fps/px/crf/boost/hide,
-// plus query (boot search string), stage, preset, and href. The click-through
+// Per-clip fields mirror make-loops.mjs: start/shots/gap/fps/px/crf/boost/hide/
+// canvas, plus query (boot search string), stage, preset, and href.
+// canvas: the selector of the canvas to film (default the first <canvas>);
+// a Field Studies page films ".bp-canvas" with ?chrome=off, and its href then
+// names the scene without chrome=off. The click-through
 // URL (splash.html manifest) resolves in priority order href → query →
 // preset → default: a clip staged via chips sets `preset` (the sim's own
 // preset id) so the typed splash address opens the scene shown, not the sim's
@@ -159,9 +162,18 @@ const CLIPS = [
   { sim: "sph-multiphase", id: "coalescence", start: 60, gap: 1, crf: 52, preset: "coalescence",
     stage: [chip("coalescence lab")] },
 
-  // ---- reaction-diffusion-2d: regime chips (timelapse gap, card precedent)
-  { sim: "reaction-diffusion-2d", id: "solitons", start: 300, gap: 6, crf: 50, stage: [chip("solitons")] },
-  { sim: "reaction-diffusion-2d", id: "coral", start: 300, gap: 6, crf: 50, stage: [chip("coral")] },
+  // ---- reaction-diffusion-2d: Turing Patterns (the root page since the
+  // rebuild-v2 release swap), chrome off; timelapse gap, card precedent.
+  // Only the nocturne palette is dark (ink, enamel and coral are paper-light
+  // and would strobe the dark reel), so the clip is The Map, the v2 page's
+  // signature scene. crf 63 + 340 shots: the full-frame labyrinth measured
+  // 3.9 MB at crf 50 / 400 shots, past the 2 MB clip budget (boids-2d
+  // precedent). spirals (nocturne): CUT — the broken fronts film as a
+  // turbulent soup, 5.6 MB at gap 6 / crf 50 and still 2.9 MB at gap 2 /
+  // crf 60, already blocky. (The v1 clips were solitons and coral, filmed
+  // from the v1 page's chips.)
+  { sim: "reaction-diffusion-2d", id: "map", query: "?chrome=off&s=map", href: "./sims/reaction-diffusion-2d/?s=map",
+    canvas: ".bp-canvas", start: 300, gap: 6, crf: 63, shots: 340 },
 
   // ---- strange-attractors: other systems' boot trace-in (system select)
   { sim: "strange-attractors", id: "aizawa", start: 1, gap: 2, crf: 52,
@@ -175,8 +187,10 @@ const CLIPS = [
   { sim: "phase-field-fracture", id: "en-passant", start: 30, gap: 2, crf: 50, shots: 250, hide: HIDE_PFF, preset: "enpassant",
     stage: [chip("en-passant")] },
 
-  // ---- physarum: later window than the card — the coarsened transport network
-  { sim: "physarum", id: "network", start: 400, gap: 2, crf: 52 },
+  // ---- physarum: Slime Mould's Network scene (the root page since the
+  // rebuild-v2 release swap), chrome off — the card shows Territories.
+  { sim: "physarum", id: "network", query: "?chrome=off&s=network", href: "./sims/physarum/?s=network",
+    canvas: ".bp-canvas", start: 400, gap: 2, crf: 52 },
 
   // neural-ca: CUT — the organism renders on a white field, which strobes the
   // dark ambient reel and washes out the typed line (dark-render follow-up).
@@ -262,11 +276,11 @@ async function film(browser, clip) {
       if (boot) boot.style.display = "none";
       if (cfg.hide) for (const sel of cfg.hide)
         document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
-      const canvas = document.querySelector("canvas");
+      const canvas = document.querySelector(cfg.canvas ?? "canvas");
       canvas.style.width = `${cfg.px}px`;
       canvas.style.height = "auto";
       if (cfg.boost) canvas.style.filter = cfg.boost;
-    }, { hide: clip.hide, px: PX, boost: clip.boost });
+    }, { hide: clip.hide, px: PX, boost: clip.boost, canvas: clip.canvas });
 
     // scene/look staging via the sim's own UI — FAIL LOUD on a missing target
     for (const op of clip.stage ?? []) {
@@ -299,7 +313,7 @@ async function film(browser, clip) {
     await page.waitForFunction((t) => window.__posterFrames >= t, clip.start, { timeout: 240000, polling: 100 });
     await page.waitForTimeout(250);
 
-    const canvas = page.locator("canvas").first();
+    const canvas = page.locator(clip.canvas ?? "canvas").first();
     const shots = clip.shots ?? SHOTS;
     for (let i = 0; i < shots; i += 1) {
       await canvas.screenshot({ path: join(frames, `${String(i).padStart(5, "0")}.png`) });

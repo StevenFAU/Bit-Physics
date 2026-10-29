@@ -160,11 +160,20 @@ WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 # is unchanged. Each page is driven separately and gated by the sim's SAME
 # established gate (GATE_KIND); the sim passes only if every page passes.
 # Values: (page path under dist/, its entry module relative to the web dir).
+# At the release swap the v2 page moves to the root (ROOT_ENTRY) and v1 becomes
+# the extra page at v1/, kept for one release (docs/planning/rebuild-v2/README.md).
 PAGES: dict[str, tuple[tuple[str, str], ...]] = {
-    "reaction-diffusion-2d": (("v2/", "src/v2/main.ts"),),
-    "physarum": (("v2/", "src/v2/main.ts"),),
+    "reaction-diffusion-2d": (("v1/", "src/main.ts"),),
+    "physarum": (("v1/", "src/main.ts"),),
     "boids-2d": (("v2/", "src/v2/main.ts"),),
     "neural-ca": (("v2/", "src/v2/main.ts"),),
+}
+
+# The root page's entry module, where it is not src/main.ts: a swapped sim's
+# root page is its rebuilt v2 page.
+ROOT_ENTRY: dict[str, str] = {
+    "reaction-diffusion-2d": "src/v2/main.ts",
+    "physarum": "src/v2/main.ts",
 }
 
 # Discovery greps each page's entry for the capture hook and a shell marker:
@@ -208,7 +217,8 @@ def _entry_qualifies(entry: Path, label: str) -> tuple[bool, str]:
 def _qualifies(web: Path, name: str | None = None) -> tuple[bool, str]:
     if not (web / "package.json").exists():
         return False, "no package.json (no Vite build)"
-    ok, why = _entry_qualifies(web / "src" / "main.ts", "src/main.ts")
+    root_entry = ROOT_ENTRY.get(name or "", "src/main.ts")
+    ok, why = _entry_qualifies(web / root_entry, root_entry)
     if not ok:
         return ok, why
     for page, entry in PAGES.get(name or "", ()):

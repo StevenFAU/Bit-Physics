@@ -38,6 +38,7 @@ import renderWgsl from "./render.wgsl?raw";
 import V from "./generated/verification.json";
 import { installExplainPanel } from "./explain.js";
 import { installVerifyPanel } from "./verify-panel.js";
+import { rebaseSharedChrome, simAsset } from "./sim-root.js";
 
 const W = 256;
 const H = 256;
@@ -143,7 +144,7 @@ function injectStyles(): void {
 }
 
 async function fetchIC(): Promise<{ pos: Float32Array; head: Float32Array }> {
-  const res = await fetch(`${import.meta.env.BASE_URL}physarum-ic-seed42.bin`);
+  const res = await fetch(simAsset("physarum-ic-seed42.bin"));
   if (!res.ok) throw new Error(`IC fetch failed: ${res.status}`);
   const all = new Float32Array(await res.arrayBuffer());
   return { pos: all.slice(0, NA * 2), head: all.slice(NA * 2) };
@@ -1109,4 +1110,6 @@ async function main(): Promise<void> {
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 
+// This page is served from v1/ (the previous version, kept for one release).
+rebaseSharedChrome();
 void main();

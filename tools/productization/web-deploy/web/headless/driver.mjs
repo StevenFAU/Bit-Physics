@@ -16,8 +16,9 @@
 // Usage:
 //   node driver.mjs <dist-dir> <sim> <gate_kind> <out-dir> [--runs N] [--entry <page>/]
 // Writes <out-dir>/capture-<i>.json (one per run; new_canonical needs --runs 2).
-// --entry drives a page below the dist root (e.g. a sim's rebuilt "v2/" page,
-// pipeline.py PAGES) instead of the root index.html.
+// --entry drives a page below the dist root (pipeline.py PAGES: a sim's rebuilt
+// "v2/" page, or after the release swap its previous "v1/" page) instead of the
+// root index.html. The default is whatever page the sim's dist has at its root.
 // CHROME_BIN overrides the executable; PLAYWRIGHT_MODULE overrides the resolver.
 
 import { createServer } from "node:http";

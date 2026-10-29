@@ -3,6 +3,14 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/reaction-diffusion-2d/web`. Wave 0 —
 > the foundation pilot. Status: planning, v0.1, 2026-10-17. Unmeasured targets.
 >
+> **Released (2026-10-29):** the v2 page replaced v1 at `/sims/reaction-diffusion-2d/`. v1 is
+> kept at `/sims/reaction-diffusion-2d/v1/` for one release, and the old `/v2/` address forwards
+> to the root with its query. `pipeline.py validate` gates both pages with the same
+> `capture_roundtrip` gate (max abs error 2.64e-5 on each, byte-identical captures), and the
+> landing card, poster and loop show the v2 page. The splash reel's Turing clip is now The Map,
+> in the dark nocturne palette (the other palettes are paper-light and would strobe the dark
+> reel); Spirals was tried and cut (too busy to fit the 2 MB clip budget cleanly).
+>
 > **Implementation status (2026-10-17):** M0–M2 built as the `v2/` page of
 > `packages/reaction-diffusion-2d/web` (served at `/sims/reaction-diffusion-2d/v2/`, v1 unchanged).
 > The `capture_roundtrip` gate passes from the v2 page with the v1 page's exact bytes. Scenes
