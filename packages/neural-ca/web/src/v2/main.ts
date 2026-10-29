@@ -99,6 +99,15 @@ async function boot(): Promise<void> {
       "A petri dish where an organism grows from one cell under a learned rule. Choose Cut and drag across it to cut it, Seed to plant new cells, Graft to move a piece of it, Freeze to stop a region updating, Look to pan and zoom, or Probe to read a cell.",
   });
   if (query.get("chrome") === "off") studio.setChrome(false);
+  // the canvas takes its box's shape now: ready comes before the renderer
+  // sizes it, and a 300 × 150 default would set its aspect for anything that
+  // sizes it by width (the poster and loop generators do)
+  {
+    const r = studio.canvas.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    studio.canvas.width = Math.max(1, Math.round(r.width * dpr));
+    studio.canvas.height = Math.max(1, Math.round(r.height * dpr));
+  }
   studio.veil.step("Requesting the GPU");
 
   let gpu: GpuContext;
@@ -381,6 +390,12 @@ async function startLive(b: LiveBoot): Promise<void> {
               ? `all ${app.dishes.length} ${kind === "teach" ? "dishes of the training batch" : "organisms"}`
               : shown.name,
       gatedOrganism: app.dishes.length === 1 && shown.gated && kind !== "teach" && kind !== "texture",
+      kernel:
+        kind === "texture"
+          ? `the ${app.texture?.def.name.toLowerCase() ?? ""} texture network on the Textures kernel`
+          : kind === "chimera"
+            ? `the ${app.organism.def.name.toLowerCase()} and ${app.partner?.def.name.toLowerCase() ?? ""} rules on Chimera's per-cell-rule copy of the update`
+            : undefined,
       canonical: app.onGatedRun,
       tick: app.sim.tick,
       edits: app.edits,
@@ -541,7 +556,7 @@ async function startLive(b: LiveBoot): Promise<void> {
           app.dishes.map((d) => d.org.def.name),
         );
       }
-      if (app.learnOpen) learn.setStats(s, app.grid, app.sim.tick, app.scene.kind === "chimera" ? app.ruleCounts : null);
+      if (app.learnOpen && app.scene.kind !== "texture") learn.setStats(s, app.grid, app.sim.tick, app.scene.kind === "chimera" ? app.ruleCounts : null);
     },
     onBasis: (b) => learn.setBasis(b),
   };

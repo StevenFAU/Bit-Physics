@@ -228,6 +228,7 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
             h("li", {}, "The targets are drawn by a script in this repository (reaction–diffusion spots and stripes, a Voronoi giraffe, a basket weave) — no photographs."),
           );
         }
+        stats.set([["Plane", `${grid} × ${grid} cells, 12 channels, wraps around at its edges`]]);
         alive.clear();
         mass.clear();
         return;

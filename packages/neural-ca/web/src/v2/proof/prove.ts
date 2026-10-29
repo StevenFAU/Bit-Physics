@@ -55,6 +55,8 @@ export interface OnScreen {
   edits: number;
   seed: number;
   fireRate: number;
+  /** M3: what runs instead of the gated kernel (Chimera's per-cell-rule copy, the Textures kernel). */
+  kernel?: string;
 }
 
 export interface LiveVsGated extends FrameDiff {
@@ -489,6 +491,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         onScreen.textContent = `On screen: the gated run itself — ${steps} of ${CANONICAL_STEPS.toLocaleString()}, from the canonical seed cell, update chance ${FIRE_RATE}, mask seed ${CANONICAL_SEED}, no edits.`;
       } else if (s.canonical) {
         onScreen.textContent = `On screen: the gated run, carried on past its ${CANONICAL_STEPS.toLocaleString()} gated steps (${steps}) with the same rule and the same random mask.`;
+      } else if (s.kernel) {
+        onScreen.textContent = `On screen: ${s.kernel} — ${steps}. Not the gated kernel, so not the gated run.`;
       } else {
         const why: string[] = [];
         if (!s.gatedOrganism) why.push(`${s.organism} (the gate runs the committed disk)`);
