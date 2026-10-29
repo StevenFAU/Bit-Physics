@@ -42,6 +42,7 @@ import { buildProve } from "./proof/prove.js";
 import { DishRenderer } from "./render/dish-view.js";
 import type { ViewMode } from "./render/dish-view.js";
 import { FrameScheduler } from "./runtime/scheduler.js";
+import { TrainKernels } from "./teach/trainer.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
 import { VIEW_MODES, buildTune } from "./tune.js";
@@ -232,7 +233,24 @@ async function startLive(b: LiveBoot): Promise<void> {
   b.held.governor = governor;
   // GPU ms per frame for compute (the dish's steps + background jobs). The
   // render takes ~1–3 ms on a desktop GPU; T1 leaves more of the frame alone.
-  const scheduler = new FrameScheduler({ budgetMs: tier === "T1" ? 3 : 6, defaultUnitMs: 0.25, minUnits: 1, maxUnits: 64 });
+  // maxUnits: Teach's training units are ~0.07 ms each on a desktop GPU, so a frame takes a hundred or more
+  const scheduler = new FrameScheduler({ budgetMs: tier === "T1" ? 3 : 6, defaultUnitMs: 0.25, minUnits: 1, maxUnits: 1024 });
+  // Teach's training pipelines: compiled once the dish is live (or when first asked for), never before ready
+  let trainKernelsP: Promise<TrainKernels> | null = null;
+  const trainKernels = (): Promise<TrainKernels> => {
+    if (!trainKernelsP) {
+      const t0 = performance.now();
+      trainKernelsP = TrainKernels.create(device).then((k) => {
+        bootMarks["trainCompileMs"] = Math.round(performance.now() - t0);
+        mark("trainKernels");
+        return k;
+      });
+      trainKernelsP.catch(() => {
+        trainKernelsP = null;
+      });
+    }
+    return trainKernelsP;
+  };
   const renderer = await bootGpu(() => new DishRenderer(device));
   mark("renderer");
   const kernels = await kernelsP;
@@ -301,6 +319,7 @@ async function startLive(b: LiveBoot): Promise<void> {
     hold: (on) => {
       governor.suspended = on;
     },
+    trainKernels,
   });
   let lastOnScreen = "";
   const syncProve = (): void => {
@@ -523,6 +542,8 @@ async function startLive(b: LiveBoot): Promise<void> {
   (globalThis as { __growProve?: typeof prove }).__growProve = prove;
   (globalThis as { __growLive?: boolean }).__growLive = true;
   mark("live");
+  // Teach's pipelines compile now, after the dish is live (Teach and Prove's gradient check wait for them)
+  void trainKernels().catch((e: unknown) => console.warn(`Teach's training pipelines did not compile: ${(e as Error).message}`));
 
   if (query.get("bench") === "1") void bench(app, profiler, scheduler, rafTimes);
 }

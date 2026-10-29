@@ -14,6 +14,10 @@ import { LiveVsGatedJob, compareFrames } from "./live-vs-gated.js";
 import type { LiveKernels } from "../model/live.js";
 import type { OrganismLibrary } from "../model/organisms.js";
 import type { FrameScheduler } from "../runtime/scheduler.js";
+import TEACH from "../../generated/teach.json";
+import type { GradcheckResult } from "../teach/gradcheck.js";
+import { fetchGradcheck, runGradcheck } from "../teach/gradcheck.js";
+import type { TrainKernels } from "../teach/trainer.js";
 
 const blob = (path: string): string => `${V.repo_blob_base}${path}`;
 
@@ -29,6 +33,8 @@ export interface ProveDeps {
   showGated: () => void;
   /** Suspend/resume the quality governor around in-page runs. */
   hold: (on: boolean) => void;
+  /** Teach's training pipelines (compiled after the page is up). */
+  trainKernels: () => Promise<TrainKernels>;
 }
 
 export interface OnScreen {
@@ -59,6 +65,7 @@ export interface ProvePane {
   runLiveVsGated(): Promise<LiveVsGated | null>;
   checkWeights(): { sha: string; matches: boolean };
   checkMenagerie(): Promise<{ id: string; sha: string; matches: boolean }[]>;
+  runGradcheck(): Promise<GradcheckResult | null>;
 }
 
 export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
@@ -137,7 +144,62 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   liveCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "0 values differ", adapter: "not yet run here" });
   pane.append(liveCard.el);
 
-  // 4. the checkpoint
+  // 4. Teach's backprop against float64 autograd
+  const GC = TEACH.gradcheck;
+  const gcBudget = GC.budget_rel_l2 as number | null;
+  const gcCard = proofCard(
+    {
+      title: "Backprop on this GPU",
+      sentence:
+        "Teach trains the network here, with forward and backward passes written for the GPU. " +
+        `On ${GC.cases.length} small fixed cases, this GPU's gradients of all ${(8320).toLocaleString()} weights are compared with float64 autograd's, committed with the page. ` +
+        "It runs through the same sliced training job Teach uses, a slice per frame.",
+      label: "gradients match float64",
+      action: "Run on this GPU",
+      links: [
+        { label: "reference", href: blob(GC.generator) },
+        { label: "budget", href: blob(GC.tolerance_table) },
+        { label: "trainer", href: blob("packages/neural-ca/web/src/v2/teach/kernels.ts") },
+      ],
+    },
+    () => void runGc(),
+  );
+  const gcBudgetText = gcBudget === null ? "not declared yet" : `relative L2 ≤ ${gcBudget.toExponential(0)}`;
+  gcCard.set({ status: "idle", measured: "run it to compute this GPU's gradients", budget: gcBudgetText, adapter: "not yet run here" });
+  pane.append(gcCard.el);
+  let gcFixture: Promise<Awaited<ReturnType<typeof fetchGradcheck>>> | null = null;
+  async function runGc(): Promise<GradcheckResult | null> {
+    return lock(async () => {
+      gcCard.set({ status: "running", measured: "compiling the trainer…", adapter: d.adapter });
+      try {
+        gcFixture ??= fetchGradcheck();
+        const [fx, kernels] = await Promise.all([gcFixture, d.trainKernels()]);
+        const r = await runGradcheck(d.device, kernels, d.scheduler, fx, d.checkpoint, d.library, (m) => gcCard.set({ status: "running", measured: m, adapter: d.adapter }));
+        const pass = gcBudget !== null && r.worst <= gcBudget;
+        gcCard.set({
+          status: gcBudget === null ? "info" : pass ? "pass" : "fail",
+          measured: `worst relative L2 ${r.worst.toExponential(2)}`,
+          budget: gcBudgetText,
+          ratio: gcBudget === null ? undefined : r.worst / gcBudget,
+          adapter: d.adapter,
+          notes: [
+            ...r.cases.map(
+              (c) =>
+                `${c.name} (${c.steps} steps, batch ${c.batch}): ${c.relL2.toExponential(2)} — float32 autograd on a CPU: ${c.f32Autograd.toExponential(2)}` +
+                (c.aliveCells === c.aliveCellsRef ? "" : `; living cells ${c.aliveCells} vs ${c.aliveCellsRef}`),
+            ),
+            `${r.seconds.toFixed(2)} s, spread over ${r.slices} page frames`,
+          ],
+        });
+        return r;
+      } catch (e) {
+        gcCard.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+        return null;
+      }
+    });
+  }
+
+  // 5. the checkpoint
   const ckCard = proofCard(
     {
       title: "The committed network",
@@ -160,7 +222,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   checkWeights();
   pane.append(ckCard.el);
 
-  // 5. the Menagerie's weights are the committed files
+  // 6. the Menagerie's weights are the committed files
   const n = d.library.defs.length;
   const menCard = proofCard(
     {
@@ -318,6 +380,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   async function runAll(): Promise<void> {
     await runGate();
     await runLive();
+    await runGc();
     checkWeights();
     await checkMenagerie();
   }
@@ -347,5 +410,6 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     runLiveVsGated: () => runLive(),
     checkWeights,
     checkMenagerie,
+    runGradcheck: () => runGc(),
   };
 }

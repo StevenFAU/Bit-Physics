@@ -452,6 +452,30 @@ golden_checkpoint_l2_max = 0.03
 training_loss_distributional_bound = "EFECT"
 training_loss_3sigma_upper = 0.07
 
+# Row 3 — the Grow v2 Teach GRADIENT CHECK (rebuild-v2 M2; single-stack, Stack-B
+# WGSL training kernels vs float64 autograd). The v2 page trains the NCA in the
+# browser with hand-written WGSL forward + backward passes
+# (packages/neural-ca/web/src/v2/teach/); its Prove drawer computes the raw
+# parameter gradients of one rollout on three fixed cases (disk T24 B2 and gecko
+# T64 B4 from the seed cell, random weights T16 B2 from a hashed blob) and compares
+# them with the committed float64 PyTorch autograd gradients drawn with the SAME
+# counter-hash fire masks (packages/neural-ca/web/public/teach/gradcheck.json,
+# generator neural_ca/gradcheck.py). Metric: relative L2 over all 8320 gradients,
+# worst case. MEASURED 2026-10-29: RADV (RX 6800 XT, snap Chromium) 1.14e-7 and
+# SwiftShader (Playwright Chromium) 1.11e-7, worst case gecko-T64 on both, living
+# cell counts identical to float64 on every case; float32 autograd on a CPU reaches
+# 1.813e-7 on the same case (the f32 floor). DECLARED 1e-6 = the f32-CPU floor 1.813e-7
+# x 4.05 (worst observed RADV->lavapipe family spread) = 7.3e-7, rounded up (8.8x the
+# measured GPU worst). Cases are chosen where float32 itself stays within ~2e-7 of
+# float64: a 96-step disk rollout is chaotic in float32 (1.9e-5), which would test
+# float32 rather than the backprop. lavapipe (CI's backend) NOT measured: the
+# release gate does not run this check; it is a visitor-facing Prove card.
+[golden_tolerance.continuous-ca.neural-ca-gradcheck]
+grad_rel_l2_max = 1e-6
+measured_worst_radv = 1.14e-7
+measured_worst_swiftshader = 1.11e-7
+f32_autograd_floor = 1.8133e-7
+
 # -----------------------------------------------------------------------------
 # Phase-3 pinn-poisson (task-7, sub-phase-phase-3-pinn-poisson) — golden-table
 # tolerances. FIRST `learned-dynamics.*` row. Single-stack sim (Stack E Warp

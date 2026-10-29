@@ -222,13 +222,21 @@ export class NcaTrainer {
     this.mom = this.buf("optimiser", NPARAM * 4, S);
     this.vel = this.buf("optimiser", NPARAM * 4, S);
     this.grad = this.buf("optimiser", NPARAM * 4, S);
-    // checkpoints: Tmax + 1 states packed into buffers of at most 128 MiB (the default binding limit)
+    // checkpoints: Tmax + 1 states packed into buffers of at most 128 MiB (the default binding
+    // limit). A step reads state t and writes t + 1, and one dispatch may not read and write the
+    // same buffer even at different offsets, so even and odd steps live in separate buffers.
     const chunkCap = Math.min(lim.maxStorageBufferBindingSize, lim.maxBufferSize, 128 * 2 ** 20);
     const perChunk = Math.max(1, Math.floor(chunkCap / this.stateBytes));
-    for (let t = 0; t <= Tmax; t += perChunk) {
-      const n = Math.min(perChunk, Tmax + 1 - t);
-      const chunk = this.buf("state checkpoints", n * this.stateBytes, S);
-      for (let i = 0; i < n; i += 1) this.states.push({ buffer: chunk, offset: i * this.stateBytes });
+    for (let parity = 0; parity < 2; parity += 1) {
+      const ts: number[] = [];
+      for (let t = parity; t <= Tmax; t += 2) ts.push(t);
+      for (let k = 0; k < ts.length; k += perChunk) {
+        const part = ts.slice(k, k + perChunk);
+        const chunk = this.buf("state checkpoints", part.length * this.stateBytes, S);
+        part.forEach((t, i) => {
+          this.states[t] = { buffer: chunk, offset: i * this.stateBytes };
+        });
+      }
     }
     this.xmid = this.buf("forward temp", this.stateBytes, S);
     this.alive = this.buf("alive masks", Math.max(1, Tmax) * this.N * 4, S);

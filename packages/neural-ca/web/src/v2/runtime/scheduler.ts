@@ -59,6 +59,8 @@ export class FrameScheduler<E extends EncoderLike = GPUCommandEncoder> {
   /** Units recorded per frame (EMA), by name — pairs with the profiler's per-pass ms. */
   private readonly unitsEma = new Map<string, number>();
   private readonly entries: Entry<E>[] = [];
+  /** Frames in which each job name recorded work (readouts: "spread over N frames"). */
+  private readonly slices = new Map<string, number>();
 
   constructor(o: SchedulerOptions) {
     this.budgetMs = o.budgetMs;
@@ -102,6 +104,11 @@ export class FrameScheduler<E extends EncoderLike = GPUCommandEncoder> {
     if (msPerUnit > 0 && Number.isFinite(msPerUnit)) this.unitMs.set(name, msPerUnit);
   }
 
+  /** Frames in which jobs named `name` recorded at least one unit, since the page started. */
+  slicesOf(name: string): number {
+    return this.slices.get(name) ?? 0;
+  }
+
   /** Queue a job; resolves when it has no units left (rejects if a slice throws). */
   add(job: SlicedJob<E>): Promise<void> {
     return new Promise<void>((resolve, reject) => {
@@ -142,6 +149,7 @@ export class FrameScheduler<E extends EncoderLike = GPUCommandEncoder> {
         continue;
       }
       this.noteUnits(e.job.name, e.ranThisFrame);
+      if (e.ranThisFrame > 0) this.slices.set(e.job.name, this.slicesOf(e.job.name) + 1);
     }
   }
 

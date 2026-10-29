@@ -78,3 +78,14 @@ def test_reference_gradients_regenerate(case: G.Case, manifest: dict, blob: byte
 def test_fire_mask_rate() -> None:
     m = G.fire_masks(1, 4, 2, 64)
     assert abs(float(m.mean()) - 0.5) < 0.01
+
+
+def test_budget_covers_the_float32_floor(manifest: dict) -> None:  # type: ignore[type-arg]
+    """The declared budget (tolerance.toml) must admit float32 autograd itself on every case."""
+    import tomllib
+
+    tol = tomllib.loads((G.REPO / "tools/testkit/equivalence/tolerance.toml").read_text())
+    row = tol["golden_tolerance"]["continuous-ca"]["neural-ca-gradcheck"]
+    worst = max(c["f32_autograd_rel_l2"] for c in manifest["cases"])
+    assert abs(worst - row["f32_autograd_floor"]) <= 1e-3 * worst  # the row states it to 5 digits
+    assert row["f32_autograd_floor"] < row["grad_rel_l2_max"]
