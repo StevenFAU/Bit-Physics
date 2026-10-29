@@ -3,7 +3,8 @@
 // on (the committed checkpoint is tied to that dish — measured: on 128 × 128
 // one seed grows a rounded square that fills the grid — and the Menagerie's
 // organisms were trained on it too). M1 adds the Menagerie and Inside the
-// Cell; Teach, Chimera and Textures come later.
+// Cell; M2 adds Teach (trained on the same 64 × 64 dish); Chimera and
+// Textures come later.
 
 import { hash3 } from "@bp/runtime";
 import type { OrganismDef } from "./model/organisms.js";
@@ -11,7 +12,7 @@ import { heals } from "./model/organisms.js";
 import { CN, GRID, seedState } from "./proof/gate.js";
 import type { ViewMode } from "./render/dish-view.js";
 
-export type SceneId = "dish" | "menagerie" | "cell" | "seeds";
+export type SceneId = "dish" | "menagerie" | "cell" | "seeds" | "teach";
 
 export interface SceneDef {
   id: SceneId;
@@ -20,9 +21,10 @@ export interface SceneDef {
   prompt(o: OrganismDef): string;
   /**
    * canonical: one dish from the canonical seed cell (the gated run's start, with the gated organism);
-   * seeds: one dish, seeds placed from the URL seed; menagerie: one dish per organism; cell: one dish, zoomed in on a cell.
+   * seeds: one dish, seeds placed from the URL seed; menagerie: one dish per organism; cell: one dish, zoomed in on a cell;
+   * teach: Teach (M2) decides the dishes — the drawing, the training batch, or the taught organism.
    */
-  kind: "canonical" | "seeds" | "menagerie" | "cell";
+  kind: "canonical" | "seeds" | "menagerie" | "cell" | "teach";
   /** Starting state for `seed`. */
   start(seed: number): Float32Array<ArrayBuffer>;
   /** Untouched and playing this long (steps), the director grows it again from the start. */
@@ -82,6 +84,15 @@ export const SCENES: readonly SceneDef[] = [
     regrowEvery: Infinity,
     tool: "probe",
     view: "cells",
+  },
+  {
+    id: "teach",
+    title: "Teach",
+    prompt: () => "Draw something simple. Watch it learn to grow.",
+    kind: "teach",
+    start: () => new Float32Array(GRID * GRID * CN),
+    regrowEvery: 4000,
+    tool: "paint",
   },
   {
     id: "seeds",

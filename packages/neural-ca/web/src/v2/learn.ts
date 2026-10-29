@@ -184,6 +184,21 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
         seeing.textContent =
           `${scene.title}: one cell of the ${name}, its neighbourhood, and its whole step worked out in the open — the numbers it senses, what the network makes of them, the change it adds, the coin and the alive check. ` +
           "The page does the same arithmetic as the GPU, and checks it against the GPU's next step.";
+      } else if (scene.kind === "teach") {
+        seeing.textContent =
+          `${scene.title}: you draw a target, and this GPU trains a network of ${params.toLocaleString()} weights to grow it from one cell — the forward pass, backpropagation through time and Adam, all in WebGPU on this page. ` +
+          "While it trains, the dishes show the batch it learns from. Then the result grows in the dish through the same compiled kernel as every other organism.";
+        limits.textContent = "";
+        limits.append(
+          h("li", {}, "Checked: Prove compares this GPU's gradients with float64 autograd on fixed cases (Backprop on this GPU)."),
+          h("li", {}, "It learns one thing: to grow your drawing from one seed in the middle of this 64 × 64 dish, from a pool of its own grown states, with cuts during training so that it heals (the Distill recipe). Several seeds, or a seed near the edge, are outside what it practised."),
+          h("li", {}, "One training iteration takes longer than a 60 fps frame, so training runs in slices between frames. The panel shows the page's frame rate and the training speed as measured, on this GPU."),
+          h("li", {}, "Saved models stay in this browser on this device (IndexedDB); a download is the way to keep one."),
+          h("li", {}, "The look is presentation: soft edges, shadow and gloss are drawn from the state; the checks read the numbers, never the pixels."),
+        );
+        alive.clear();
+        mass.clear();
+        return;
       } else if (scene.kind === "canonical") {
         seeing.textContent = org?.gated
           ? `${scene.title}: one living cell, planted in the middle of a 64 × 64 dish, grows into a two-tone disk and holds it. ` +

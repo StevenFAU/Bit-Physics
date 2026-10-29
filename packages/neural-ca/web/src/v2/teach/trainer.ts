@@ -495,6 +495,12 @@ export class NcaTrainer {
     enc.copyBufferToBuffer(s.buffer, s.offset + b * this.sampleBytes, dst, dstOffset, this.sampleBytes);
   }
 
+  /** Copy pool sample `i` into `dst`. */
+  copyPoolSample(enc: GPUCommandEncoder, i: number, dst: GPUBuffer, dstOffset = 0): void {
+    const [buf, off] = this.poolAt(i);
+    enc.copyBufferToBuffer(buf, off, dst, dstOffset, this.sampleBytes);
+  }
+
   // --------------------------------------- evaluation: forward only, from the seed
 
   /** Open an evaluation rollout of `B` samples (≤ the batch) from the seed cell. */

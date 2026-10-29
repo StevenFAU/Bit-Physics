@@ -79,6 +79,18 @@ export interface AppHooks {
   onCell?: (c: CellReport | null) => void;
 }
 
+/**
+ * Teach (M2) owns its scene's dishes: what grows (or stands still) in them,
+ * the tools, the prompt, and the paint brush. The App asks it at every load.
+ */
+export interface TeachHost {
+  plan(): { orgs: Organism[]; start: Float32Array<ArrayBuffer>; still: boolean; prompt: string; tools: string[]; tool: string };
+  toolSpec(id: string): ToolSpec | null;
+  /** A paint or erase stroke on the dish, in grid cells. */
+  paint(phase: "down" | "move" | "up", gx: number, gy: number): void;
+  brushRadius(): number;
+}
+
 /** One dish of a scene: its solver, its view, its organism, and where it sits. */
 export interface Dish {
   sim: LiveNca;
@@ -158,6 +170,13 @@ export class App {
   cellSel: [number, number] = [GRID / 2, GRID / 2];
   lastCell: CellReport | null = null;
 
+  /** Teach's host (set once Teach is built). */
+  teach: TeachHost | null = null;
+  /** The dishes hold still: no steps (Teach's drawing and its training batch). */
+  still = false;
+  /** A side panel the dishes are laid out beside (Teach's). */
+  sidePanel: HTMLElement | null = null;
+
   /** Tool settings. */
   cutRadius = 4;
   graftRadius = 5;
@@ -214,6 +233,7 @@ export class App {
   private fade = 1;
   private deadSince = 0;
   private endGroupAfterFlush = false;
+  private painting = false;
 
   constructor(
     gpu: GpuContext,
@@ -315,7 +335,8 @@ export class App {
     // the rail is a column on the left (wide screens) or a row above the transport (phones, short screens);
     // the tool options sit beside the column, or above the row
     const rail = box(this.studio.rail.el);
-    const column = !!rail && rail.y1 - rail.y0 > rail.x1 - rail.x0;
+    // (a column of one tool is wider than tall: it is still a column if it is narrow beside the viewport)
+    const column = !!rail && (rail.y1 - rail.y0 > rail.x1 - rail.x0 || (rail.x1 - rail.x0 < w * 0.3 && rail.x0 < w * 0.2 && rail.y1 < h * 0.8));
     if (rail) {
       if (column) l = Math.max(l, rail.x1);
       else b = Math.min(b, rail.y0);
@@ -324,6 +345,11 @@ export class App {
     if (opts) {
       if (column && opts.x1 < w * 0.4) l = Math.max(l, opts.x1);
       else if (!column) b = Math.min(b, opts.y0);
+    }
+    const side = this.sidePanel && !this.sidePanel.hidden ? box(this.sidePanel) : null;
+    if (side) {
+      if (side.x0 > w * 0.45) r = Math.min(r, side.x0);
+      else if (side.y0 > h * 0.35) b = Math.min(b, side.y0);
     }
     const pad = 6;
     if (r - l < w * 0.4 || b - t < h * 0.35) return [0, 0, w, h];
@@ -348,7 +374,7 @@ export class App {
     let base: [number, number];
     let dw: number;
     let dh: number;
-    if (n === 1) {
+    if (n === 1 && this.scene.kind !== "teach") {
       fit = Math.min(w, h) / pitch;
       dw = w / fit;
       dh = h / fit;
@@ -458,7 +484,8 @@ export class App {
     this.busy = true;
     try {
       const orgId = o.organism ?? this.organism?.def.id ?? this.lib.today();
-      const orgs = scene.kind === "menagerie" ? await this.lib.all() : [await this.lib.get(orgId)];
+      const plan = scene.kind === "teach" && this.teach ? this.teach.plan() : null;
+      const orgs = plan ? plan.orgs : scene.kind === "menagerie" ? await this.lib.all() : [await this.lib.get(orgId)];
       if (seq !== this.loadSeq) return;
       this.history.clear();
       this.log.clear();
@@ -475,7 +502,8 @@ export class App {
       const old = this.dishes;
       this.seed = o.seed ?? CANONICAL_SEED;
       const rate = o.fireRate ?? FIRE_RATE;
-      const start = scene.start(this.seed);
+      const start = plan ? plan.start : scene.start(this.seed);
+      this.still = plan?.still ?? false;
       this.dishes = orgs.map((org, i) => {
         const sim = new LiveNca(this.device, this.kernels, org.ck, { grid: GRID, seed: this.seed, fireRate: rate });
         sim.load(start);
@@ -488,7 +516,8 @@ export class App {
         return { sim, view, org, origin: [0, 0], stats: null, basis };
       });
       for (const d of old) d.sim.destroy();
-      if (scene.kind !== "menagerie" || !this.organism) this.organism = orgs.find((x) => x.def.id === orgId) ?? orgs[0]!;
+      // Teach's dishes do not change the organism the other scenes open with
+      if ((scene.kind !== "menagerie" && scene.kind !== "teach") || !this.organism) this.organism = orgs.find((x) => x.def.id === orgId) ?? orgs[0]!;
       this.focus = 0;
       if (o.view) this.viewMode = o.view;
       else if (scene.view && this.scene.id !== scene.id) this.viewMode = scene.view;
@@ -501,14 +530,16 @@ export class App {
       this.clock.reset();
       this.sceneT0 = performance.now();
       // the chrome first: the Menagerie lays its dishes out in the space it leaves
+      const tools = plan ? plan.tools : [...TOOLS];
+      const tool = plan ? plan.tool : scene.tool;
       this.studio.rail.setTools(
-        TOOLS.map((t) => this.toolSpec(t)),
-        scene.tool,
+        tools.map((t) => this.toolSpec(t)),
+        tool,
       );
-      this.studio.root.dataset["tool"] = scene.tool;
+      this.studio.root.dataset["tool"] = tool;
       this.studio.root.dataset["scene"] = scene.id;
       this.studio.heading.setCurrent(scene.id);
-      this.studio.heading.set(scene.title, scene.prompt(this.organism.def));
+      this.studio.heading.set(scene.title, plan ? plan.prompt : scene.prompt(this.organism.def));
       const rect = this.studio.canvas.getBoundingClientRect();
       this.viewport = [0, 0];
       this.reframe(rect.width, rect.height);
@@ -865,6 +896,8 @@ export class App {
 
   toolSpec(id: string): ToolSpec {
     const cell = this.scene.kind === "cell";
+    const taught = this.teach?.toolSpec(id);
+    if (taught) return taught;
     switch (id) {
       case "cut":
         return {
@@ -1002,6 +1035,7 @@ export class App {
   }
 
   private brushRadius(id: string): number {
+    if (id === "paint" || id === "erase") return this.teach?.brushRadius() ?? 2;
     if (id === "cut") return this.cutRadius;
     if (id === "freeze") return this.freezeRadius;
     if (id === "graft") return this.graftRadius;
@@ -1036,10 +1070,17 @@ export class App {
     return {
       paints: () => {
         const a = this.studio.rail.active;
-        return a === "cut" || a === "seed" || a === "graft" || a === "freeze";
+        return a === "cut" || a === "seed" || a === "graft" || a === "freeze" || a === "paint" || a === "erase";
       },
       down: (x, y) => {
         const tool = this.studio.rail.active;
+        if (tool === "paint" || tool === "erase") {
+          if (this.busy || isCapturing()) return;
+          const { gx, gy } = this.toGrid(x, y, 0);
+          this.painting = true;
+          this.teach?.paint("down", gx, gy);
+          return;
+        }
         if (this.blocked(tool === "cut" ? "cut" : tool === "graft" ? "graft" : tool === "freeze" ? "freeze" : "plant")) return;
         const { d, gx, gy } = this.toGrid(x, y);
         this.focus = d;
@@ -1060,6 +1101,11 @@ export class App {
       move: (x, y) => {
         this.hover = [x, y];
         this.updateRing();
+        if (this.painting) {
+          const { gx, gy } = this.toGrid(x, y, 0);
+          this.teach?.paint("move", gx, gy);
+          return;
+        }
         if (this.graftFrom) {
           this.placeGhost(x, y);
           return;
@@ -1078,6 +1124,11 @@ export class App {
         }
       },
       up: (x, y) => {
+        if (this.painting) {
+          this.painting = false;
+          this.teach?.paint("up", 0, 0);
+          return;
+        }
         if (this.graftFrom) {
           const from = this.graftFrom;
           this.graftFrom = null;
@@ -1166,7 +1217,7 @@ export class App {
 
   private setCallouts(): void {
     const s = this.scene;
-    if (s.kind === "menagerie" || s.kind === "cell") {
+    if (s.kind === "menagerie" || s.kind === "cell" || s.kind === "teach") {
       this.studio.callouts.set([]);
       return;
     }
@@ -1236,7 +1287,7 @@ export class App {
       if (!this.stroke) this.activeGroup = 0;
     }
     // the dishes' steps, capped by their measured cost within the frame budget
-    const due = this.history.comparing ? 0 : this.clock.due(dt);
+    const due = this.history.comparing || this.still ? 0 : this.clock.due(dt);
     const cap = this.scheduler.unitsFor(STEP_PASS, this.scheduler.budgetMs, Math.min(due, 1), 16);
     const n = Math.min(due, cap);
     // steps stop at the next logged event so it lands on its own boundary
@@ -1378,6 +1429,7 @@ export class App {
    */
   private direct(dt: number): void {
     const FADE_S = 0.8;
+    if (this.still) return;
     if (this.directing === 0) {
       const dead = this.dishes.every((d) => d.stats !== null && d.stats.alive === 0) && this.sim.tick > 40;
       if (dead) {
@@ -1564,6 +1616,14 @@ export class App {
   /** SHA-256 of the current state of dish `d` (all 16 channels). */
   async stateHash(d = 0): Promise<string> {
     return sha256hex(await this.dishes[d]!.sim.readState());
+  }
+
+  /** Teach: the still dishes' states were rewritten (a stroke, a new batch) — show them as they are. */
+  touchDishes(): void {
+    for (const d of this.dishes) {
+      d.sim.touch();
+      d.view.snap();
+    }
   }
 
   requestSnapshot(): void {

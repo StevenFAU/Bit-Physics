@@ -107,8 +107,10 @@ export class TrainJob implements SlicedJob {
   private readonly lossRing: { buf: GPUBuffer; state: "free" | "recorded" | "mapping"; iter: number }[] = [];
   private evalReads: Task[] = [];
   private weightWaiters: { buf: GPUBuffer; resolve: (v: Float32Array) => void; reject: (e: unknown) => void; recorded: boolean }[] = [];
-  /** Buffers the batch is copied into after every iteration (one per sample), or null. */
-  display: GPUBuffer[] | null = null;
+  /** Buffers the batch is copied into after every iteration (one per sample), or null; asked at each iteration's end. */
+  displayTargets: () => GPUBuffer[] | null = () => null;
+  /** The latest pool draw (the batch now on display). */
+  private lastPool: number[] | null = null;
   events: TrainEvents = {};
 
   constructor(
@@ -216,6 +218,18 @@ export class TrainJob implements SlicedJob {
     });
   }
 
+  /** Copy the latest batch (back in the pool) onto the display now, with a submit of its own (the job is idle). */
+  refreshDisplay(): void {
+    const shown = this.displayTargets();
+    if (!shown || !this.lastPool) return;
+    const enc = this.trainer.device.createCommandEncoder({ label: "teach-display" });
+    this.lastPool.forEach((idx, b) => {
+      if (shown[b]) this.trainer.copyPoolSample(enc, idx, shown[b]!);
+    });
+    this.trainer.device.queue.submit([enc.finish()]);
+    this.events.onDisplay?.(this.iter);
+  }
+
   /** Read the weights now with a submit of its own (the job is idle: not queued, or between frames). */
   async readWeightsIdle(): Promise<Float32Array> {
     const d = this.trainer.device;
@@ -315,10 +329,12 @@ export class TrainJob implements SlicedJob {
             slot.state = "recorded";
             slot.iter = k.i;
           }
-          if (this.display) {
-            for (let b = 0; b < Math.min(this.display.length, tr.shape.B); b += 1) tr.copySample(enc, p.T, b, this.display[b]!);
+          const shown = this.displayTargets();
+          if (shown) {
+            for (let b = 0; b < Math.min(shown.length, tr.shape.B); b += 1) tr.copySample(enc, p.T, b, shown[b]!);
             this.displayIter = k.i + 1;
           }
+          if (p.pool) this.lastPool = p.pool.slice();
           this.iter = Math.max(this.iter, k.i + 1);
           this.task = null;
           break;

@@ -42,6 +42,7 @@ import { buildProve } from "./proof/prove.js";
 import { DishRenderer } from "./render/dish-view.js";
 import type { ViewMode } from "./render/dish-view.js";
 import { FrameScheduler } from "./runtime/scheduler.js";
+import { Teach } from "./teach/teach.js";
 import { TrainKernels } from "./teach/trainer.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
@@ -269,7 +270,8 @@ async function startLive(b: LiveBoot): Promise<void> {
   const parsed = url.parse(location.search).values;
   const current = (): Partial<typeof parsed> => ({
     s: app.scene.id,
-    o: app.organism.def.id,
+    // only the Menagerie's organisms go in links (taught and saved models live in this browser)
+    o: lib.inGallery(app.organism.def.id) ? app.organism.def.id : "today",
     seed: app.seed,
     p: app.sim.fireRate,
     sp: app.clock.speed,
@@ -323,10 +325,11 @@ async function startLive(b: LiveBoot): Promise<void> {
   });
   let lastOnScreen = "";
   const syncProve = (): void => {
+    const shown = app.dishes[0]?.org.def ?? app.organism.def;
     const s = {
       scene: app.scene.title,
-      organism: app.dishes.length > 1 ? `all ${app.dishes.length} organisms` : app.organism.def.name,
-      gatedOrganism: app.dishes.length === 1 && app.organism.def.gated,
+      organism: app.dishes.length > 1 ? `all ${app.dishes.length} ${app.scene.kind === "teach" ? "dishes of the training batch" : "organisms"}` : shown.name,
+      gatedOrganism: app.dishes.length === 1 && shown.gated && app.scene.kind !== "teach",
       canonical: app.onGatedRun,
       tick: app.sim.tick,
       edits: app.edits,
@@ -358,6 +361,20 @@ async function startLive(b: LiveBoot): Promise<void> {
       const sc = app.scene.kind === "menagerie" ? "dish" : app.scene.id;
       void app.loadScene(sc, { organism: id, seed: app.seed, fireRate: app.sim.fireRate, view: app.viewMode, cell: app.cellSel }).then(() => app.writeUrl());
     },
+  });
+  // Teach (M2): its panel, the paint tools, training, the library
+  const teach = new Teach({
+    app,
+    studio,
+    gpu,
+    tier,
+    lib,
+    gated: ck,
+    manifest,
+    scheduler,
+    liveKernels: kernels,
+    trainKernels,
+    download,
   });
   // Inside the Cell's inspector
   const cellPanel = buildCellPanel(studio.stage, {
@@ -430,9 +447,10 @@ async function startLive(b: LiveBoot): Promise<void> {
 
   app.hooks = {
     onSceneChange: (scene) => {
-      learn.setScene(scene, app.onGatedRun, app.dishes.length > 1 ? null : app.organism.def);
+      learn.setScene(scene, app.onGatedRun, app.dishes.length > 1 ? null : (app.dishes[0]?.org.def ?? app.organism.def));
       menagerie.setDishes(scene.kind === "menagerie" ? app.dishes.map((d) => d.org.def) : null);
-      menagerie.setOrganism(app.organism.def.id, scene.kind !== "menagerie");
+      menagerie.setOrganism(app.organism.def.id, scene.kind !== "menagerie" && scene.kind !== "teach");
+      teach.onScene(scene.kind === "teach");
       cellPanel.el.hidden = scene.kind !== "cell";
       cellPanel.set(null, app.sim.fireRate, app.clock.paused);
       studio.root.classList.toggle("gr-has-panel", scene.kind === "cell");
@@ -460,6 +478,7 @@ async function startLive(b: LiveBoot): Promise<void> {
   const overlay = query.get("debug") === "perf" ? new PerfOverlay() : null;
   if (overlay) studio.root.append(overlay.el);
   app.hooks.onFrame = (now) => {
+    teach.onFrame(now);
     if (app.scene.kind === "menagerie") {
       const R = app.dishRadius;
       menagerie.place(
@@ -540,6 +559,7 @@ async function startLive(b: LiveBoot): Promise<void> {
   });
   (globalThis as { __grow?: App }).__grow = app;
   (globalThis as { __growProve?: typeof prove }).__growProve = prove;
+  (globalThis as { __growTeach?: Teach }).__growTeach = teach;
   (globalThis as { __growLive?: boolean }).__growLive = true;
   mark("live");
   // Teach's pipelines compile now, after the dish is live (Teach and Prove's gradient check wait for them)

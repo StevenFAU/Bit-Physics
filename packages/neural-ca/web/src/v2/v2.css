@@ -208,7 +208,8 @@
 
 /* floating panels: the organism card and Inside the Cell's inspector */
 .gr-card,
-.gr-cell-panel {
+.gr-cell-panel,
+.gr-teach-panel {
   position: absolute;
   right: var(--bp-gutter);
   top: 64px;
@@ -223,11 +224,13 @@
   line-height: 1.45;
 }
 .gr-card[hidden],
-.gr-cell-panel[hidden] {
+.gr-cell-panel[hidden],
+.gr-teach-panel[hidden] {
   display: none;
 }
 .bp-studio.is-drawer-open .gr-card,
-.bp-studio.is-drawer-open .gr-cell-panel {
+.bp-studio.is-drawer-open .gr-cell-panel,
+.bp-studio.is-drawer-open .gr-teach-panel {
   right: calc(var(--bp-drawer-w) + 2 * var(--bp-gutter));
 }
 .gr-card header,
@@ -364,7 +367,8 @@
 
 @media (max-width: 1099px) {
   .bp-studio.is-drawer-open .gr-card,
-  .bp-studio.is-drawer-open .gr-cell-panel {
+  .bp-studio.is-drawer-open .gr-cell-panel,
+  .bp-studio.is-drawer-open .gr-teach-panel {
     display: none;
   }
 }
@@ -372,7 +376,8 @@
 /* short screens: the rail is a bottom row and the options sit above it */
 @media (min-width: 640px) and (max-height: 620px) {
   .gr-card,
-  .gr-cell-panel {
+  .gr-cell-panel,
+  .gr-teach-panel {
     width: 264px;
     max-height: calc(100% - 64px - 134px);
     padding: 8px 10px;
@@ -385,7 +390,8 @@
 /* phones: a sheet above the tool row and its options strip */
 @media (max-width: 639px) {
   .gr-card,
-  .gr-cell-panel {
+  .gr-cell-panel,
+  .gr-teach-panel {
     left: var(--bp-gutter);
     right: var(--bp-gutter);
     top: auto;
@@ -397,4 +403,150 @@
   .gr-cell-cap {
     display: none;
   }
+}
+
+/* Teach (M2) */
+.gr-teach-panel {
+  overflow-x: hidden;
+}
+.gr-teach-panel header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.gr-teach-panel h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.gr-teach-panel p {
+  margin: 6px 0;
+}
+.gr-teach-sec[hidden] {
+  display: none;
+}
+.gr-teach-sec .gr-tool-row {
+  margin: 8px 0;
+  flex-wrap: wrap;
+}
+.gr-teach-status:empty,
+.gr-teach-warn:empty {
+  display: none;
+}
+.gr-teach-warn {
+  color: var(--bp-warn, #f0c27a);
+}
+.gr-teach-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+  margin: 8px 0;
+}
+.gr-teach-dl dt {
+  color: var(--bp-text-dim);
+}
+.gr-teach-dl dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+.gr-teach-plot {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.gr-teach-check {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 6px;
+}
+.gr-teach-thumb {
+  width: 72px;
+  height: 72px;
+  flex: none;
+  border-radius: 50%;
+  image-rendering: auto;
+}
+.gr-teach-fit {
+  font-size: 12.5px;
+}
+.gr-teach-fit:empty {
+  display: none;
+}
+.gr-teach-libbox {
+  margin-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+}
+.gr-teach-libbox summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.gr-teach-lib {
+  list-style: none;
+  padding: 0;
+  margin: 6px 0;
+}
+.gr-teach-lib li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 3px 0;
+}
+.gr-teach-libname {
+  flex: 1;
+  min-width: 6em;
+  overflow-wrap: anywhere;
+}
+.gr-teach-panel .bp-input {
+  flex: 1;
+  min-width: 8em;
+}
+.gr-swatches {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.gr-swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--sw);
+  padding: 0;
+  cursor: pointer;
+}
+.gr-swatch[aria-checked="true"] {
+  border-color: #fff;
+  box-shadow: 0 0 0 2px rgba(143, 211, 200, 0.7);
+}
+.gr-teach-box,
+.gr-teach-ghost {
+  position: absolute;
+  pointer-events: none;
+  z-index: 1;
+}
+.gr-teach-box {
+  border: 1.5px dashed rgba(235, 245, 240, 0.45);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+.gr-teach-ghost {
+  opacity: 0.4;
+}
+.gr-teach-box[hidden],
+.gr-teach-ghost[hidden] {
+  display: none;
+}
+.gr-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }

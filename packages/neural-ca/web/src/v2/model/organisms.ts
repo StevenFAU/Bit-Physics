@@ -142,6 +142,16 @@ export class OrganismLibrary {
     return p;
   }
 
+  /** Teach (M2): make a taught or saved organism loadable by id (it is not in the manifest and never in a link). */
+  register(o: Organism): void {
+    this.cache.set(o.def.id, Promise.resolve(o));
+  }
+
+  /** In the committed menagerie (shareable by link)? */
+  inGallery(id: string): boolean {
+    return this.defs.some((d) => d.id === id);
+  }
+
   all(): Promise<Organism[]> {
     return Promise.all(this.defs.map((d) => this.get(d.id)));
   }
