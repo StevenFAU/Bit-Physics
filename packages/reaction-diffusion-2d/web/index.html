@@ -2,32 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Gray-Scott Reaction-Diffusion 2D — Bit-Physics</title>
-    <meta name="description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0b1016" />
+    <title>Turing Patterns · Bit Physics</title>
+    <meta name="description" content="Fly across the map of pattern space: one dish where every point is a different chemistry, then dive in and steer it. Gray–Scott reaction–diffusion, verified against a float64 reference on your GPU." />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Gray-Scott Reaction-Diffusion 2D — Bit-Physics" />
-    <meta property="og:description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
+    <meta property="og:title" content="Turing Patterns · Bit Physics" />
+    <meta property="og:description" content="Fly across the map of pattern space, land anywhere, and grow it." />
     <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/reaction-diffusion-2d/" />
     <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/reaction-diffusion-2d.png" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Gray-Scott Reaction-Diffusion 2D — Bit-Physics" />
-    <meta name="twitter:description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
-    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/reaction-diffusion-2d.png" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <style>
-      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
-         imported by src/main.ts and bundled by Vite. */
-      html, body { margin: 0; height: 100%; background: #06090d; }
-      /* Bilinear reconstruction lives in the fragment shader now (render.wgsl
-         v2) and the backing store is sized to CSS × dpr at boot — no CSS
-         pixelation hint; the raw-grid toggle is the honest texel view. */
-      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); }
+      /* pre-bundle paint only; the shell's own styles arrive with the bundle */
+      html, body { margin: 0; height: 100%; background: #0b0f13; }
     </style>
   </head>
   <body>
-    <div id="app" class="bps-stage"><canvas id="view" width="512" height="512" class="bps-canvas"></canvas></div>
-    <div id="boot" class="bps-boot">initializing WebGPU…</div>
-    <script type="module" src="/src/main.ts"></script>
+    <noscript><p style="color:#eee;font:16px system-ui;padding:24px">Turing Patterns needs JavaScript and WebGPU.</p></noscript>
+    <script type="module" src="/src/v2/main.ts"></script>
   </body>
 </html>

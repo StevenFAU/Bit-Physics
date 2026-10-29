@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- The previous version, kept at v1/ for one release so it can be compared
+         with the rebuilt page at the sim root (docs/planning/rebuild-v2/README.md). -->
+    <meta name="robots" content="noindex" />
+    <title>Gray-Scott Reaction-Diffusion 2D — Bit-Physics</title>
+    <meta name="description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Gray-Scott Reaction-Diffusion 2D — Bit-Physics" />
+    <meta property="og:description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
+    <meta property="og:url" content="https://stevenfau.github.io/Bit-Physics/sims/reaction-diffusion-2d/v1/" />
+    <meta property="og:image" content="https://stevenfau.github.io/Bit-Physics/assets/reaction-diffusion-2d.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gray-Scott Reaction-Diffusion 2D — Bit-Physics" />
+    <meta name="twitter:description" content="Two chemicals feed, react, and diffuse — Turing’s recipe for pattern: spots, stripes, and living labyrinths from one PDE." />
+    <meta name="twitter:image" content="https://stevenfau.github.io/Bit-Physics/assets/reaction-diffusion-2d.png" />
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg" />
+    <style>
+      /* Pre-bundle paint only — the canon is common-web/src/theme.css,
+         imported by src/main.ts and bundled by Vite. */
+      html, body { margin: 0; height: 100%; background: #06090d; }
+      /* Bilinear reconstruction lives in the fragment shader now (render.wgsl
+         v2) and the backing store is sized to CSS × dpr at boot — no CSS
+         pixelation hint; the raw-grid toggle is the honest texel view. */
+      #view { width: min(90vmin, 720px); height: min(90vmin, 720px); }
+    </style>
+  </head>
+  <body>
+    <div id="app" class="bps-stage"><canvas id="view" width="512" height="512" class="bps-canvas"></canvas></div>
+    <div id="boot" class="bps-boot">initializing WebGPU…</div>
+    <script type="module" src="../src/main.ts"></script>
+  </body>
+</html>

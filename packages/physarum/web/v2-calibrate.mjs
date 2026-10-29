@@ -58,7 +58,7 @@ const browser = await chromium.launch({
 const page = await (await browser.newContext({ viewport: { width: 640, height: 360 } })).newPage();
 page.on("pageerror", (e) => console.log(`pageerror: ${e.message}`));
 // the gated scene is the lightest live load while the survey runs
-await page.goto(`http://localhost:${server.address().port}/v2/?s=gated`);
+await page.goto(`http://localhost:${server.address().port}/?s=gated`);
 await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
 await page.evaluate(() => { globalThis.__physarum.clock.paused = true; });
 const pad = await page.evaluate(() => ({ n: globalThis.__physarumPad.PAD_N, jitter: globalThis.__physarumPad.PAD_JITTER }));

@@ -77,7 +77,7 @@ const check = (name, ok, detail = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-async function open(path = "/v2/", viewport = { width: 1280, height: 720 }) {
+async function open(path = "/", viewport = { width: 1280, height: 720 }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
@@ -173,13 +173,13 @@ const hashAfter = (page, n) =>
 
 // --- a seed reproduces the same bytes across page loads ---------------------
 {
-  const a = await open("/v2/?seed=7");
+  const a = await open("/?seed=7");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?seed=7");
+  const b = await open("/?seed=7");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
-  const c = await open("/v2/?seed=8");
+  const c = await open("/?seed=8");
   const h3 = await hashAfter(c.page, 300);
   await c.ctx.close();
   check("same seed, same bytes across page loads (300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -188,7 +188,7 @@ const hashAfter = (page, n) =>
 
 // --- parameters ride the share link ------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?dphi=30&ls=15&a=0.05&pal=deepsea");
+  const { ctx, page, errors } = await open("/?dphi=30&ls=15&a=0.05&pal=deepsea");
   const p = await T(page, () => ({ ...globalThis.__physarum.sim.params, pal: globalThis.__physarum.palette, link: location.search }));
   check("a share link sets the parameters and palette", p.delta_phi_deg === 30 && p.L_sense === 15 && p.decay_alpha === 0.05 && p.pal === "deepsea", JSON.stringify(p));
   check("no console errors (share link)", errors.length === 0, errors.join(" | "));
@@ -197,7 +197,7 @@ const hashAfter = (page, n) =>
 
 // --- every scene boots; the gated scene is the gated run --------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=gated");
+  const { ctx, page, errors } = await open("/?s=gated");
   await page.waitForTimeout(2500);
   const g = await T(page, () => ({ scene: globalThis.__physarum.scene.id, gated: globalThis.__physarum.onGatedRun, n: globalThis.__physarum.sim.n, w: globalThis.__physarum.sim.w }));
   check("the gated scene is the gated run (500 agents on 256²)", g.scene === "gated" && g.gated && g.n === 500 && g.w === 256, JSON.stringify(g));
@@ -372,7 +372,7 @@ const hashAfter = (page, n) =>
   check("no console errors (M1 scenes, pad, food, undo)", errors.length === 0, errors.join(" | "));
   await ctx.close();
   {
-    const b = await open(`/v2/${pk.search}`);
+    const b = await open(`/${pk.search}`);
     const q = await T(b.page, () => ({ pad: globalThis.__physarum.pad, params: globalThis.__physarum.sim.params, scene: globalThis.__physarum.scene.id }));
     check("a pad link reproduces the personality", q.scene === "lace" && q.pad && q.pad.i === pk.i && q.pad.j === pk.j && sameParams(q.params, pk.want), `${pk.search} → ${JSON.stringify(q.pad)}`);
     await b.ctx.close();
@@ -383,7 +383,7 @@ const hashAfter = (page, n) =>
 {
   const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
   for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-    const { ctx, page, errors } = await open("/v2/", vp);
+    const { ctx, page, errors } = await open("/", vp);
     await page.waitForTimeout(500);
     await T(page, () => globalThis.__physarum.studio.tune.toggle());
     await page.waitForTimeout(400);
@@ -410,7 +410,7 @@ const hashAfter = (page, n) =>
 
 // --- M1: the light empties the dish under it; a drag moves it -------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=light");
+  const { ctx, page, errors } = await open("/?s=light");
   await page.waitForTimeout(600);
   const r = await T(page, async () => {
     const app = globalThis.__physarum;
@@ -464,7 +464,7 @@ const hashAfter = (page, n) =>
 
 // --- M1: the crumb director acts at its exact step -------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?sp=8");
+  const { ctx, page, errors } = await open("/?sp=8");
   const r = await T(page, async () => {
     const app = globalThis.__physarum;
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -480,7 +480,7 @@ const hashAfter = (page, n) =>
 
 // --- M2: Connect the Cities and The Maze ------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=cities");
+  const { ctx, page, errors } = await open("/?s=cities");
   const c = await T(page, async () => {
     const app = globalThis.__physarum;
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -517,7 +517,7 @@ const hashAfter = (page, n) =>
   await ctx.close();
 }
 {
-  const { ctx, page, errors } = await open("/v2/?s=maze");
+  const { ctx, page, errors } = await open("/?s=maze");
   const m = await T(page, async () => {
     const app = globalThis.__physarum;
     const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
@@ -591,7 +591,7 @@ const hashAfter = (page, n) =>
 {
   const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
   for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-    const { ctx, page, errors } = await open("/v2/?s=cities", vp);
+    const { ctx, page, errors } = await open("/?s=cities", vp);
     await page.waitForTimeout(4000);
     if (vp.width < 640) {
       await page.click(".ph-score-fold");
@@ -619,7 +619,7 @@ const hashAfter = (page, n) =>
 
 // --- review regressions (PR #44) --------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?sp=8");
+  const { ctx, page, errors } = await open("/?sp=8");
   // 1. an edit holds the crumb director past its step; undoing it re-enables
   //    the director with that step in the past — the page must not hang
   const r1 = await T(page, async () => {
@@ -683,7 +683,7 @@ const hashAfter = (page, n) =>
 
 // --- M3: Territories ----------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=territories");
+  const { ctx, page, errors } = await open("/?s=territories");
   await page.waitForTimeout(800);
   const t = await T(page, async () => {
     const app = globalThis.__physarum;
@@ -769,7 +769,7 @@ const hashAfter = (page, n) =>
 {
   // review regression (PR #47): paused, a colony's personality edit rebuilds the card; it must
   // keep the dish's reading (none is taken at the same step), and an undo must read again
-  const { ctx, page, errors } = await open("/v2/?s=territories");
+  const { ctx, page, errors } = await open("/?s=territories");
   await page.waitForTimeout(3000);
   const r = await T(page, async () => {
     const app = globalThis.__physarum;
@@ -790,7 +790,7 @@ const hashAfter = (page, n) =>
 }
 {
   // a share link reproduces the match-up: two colonies, a personality each, rivalry, a mixed start
-  const { ctx, page, errors } = await open("/v2/?s=territories&col=2&riv=0.5&mix=1&cp=24,25,-1,-1&seed=7");
+  const { ctx, page, errors } = await open("/?s=territories&col=2&riv=0.5&mix=1&cp=24,25,-1,-1&seed=7");
   const r = await T(page, () => {
     const app = globalThis.__physarum;
     return { colonies: app.sim.colonies, rivalry: app.sim.rivalry, mixed: app.mixed, pads: app.colonyPads, seed: app.seed, card: document.querySelectorAll(".ph-terr-row").length };
@@ -802,7 +802,7 @@ const hashAfter = (page, n) =>
 {
   const axeSource = await readFile(createRequire(import.meta.url).resolve("axe-core/axe.min.js"), "utf8");
   for (const vp of [{ width: 1440, height: 900 }, { width: 390, height: 844 }]) {
-    const { ctx, page, errors } = await open("/v2/?s=territories", vp);
+    const { ctx, page, errors } = await open("/?s=territories", vp);
     await page.waitForTimeout(3000);
     if (vp.width < 640) {
       await page.click(".ph-terr .ph-score-fold");
@@ -831,7 +831,7 @@ const hashAfter = (page, n) =>
 {
   // the morphology baseline reproduces exactly at the boot tier (seed 1), where it was measured
   const base = JSON.parse(await readFile(new URL("./src/v2/generated/morphology-baseline.json", import.meta.url), "utf8"));
-  const { ctx, page, errors } = await open("/v2/");
+  const { ctx, page, errors } = await open("/");
   const d = await T(page, () => globalThis.__bpDebug());
   const same = base.profiles.full.adapter === d.adapter;
   const full = base.profiles.full.runs;
@@ -850,7 +850,7 @@ const hashAfter = (page, n) =>
 
 // --- frame time at the boot scene -------------------------------------------
 {
-  const { ctx, page } = await open("/v2/?bench=1");
+  const { ctx, page } = await open("/?bench=1");
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
   console.log(`BP_BENCH ${JSON.stringify(b)}`);

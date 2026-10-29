@@ -25,6 +25,7 @@
 import V from "./generated/verification.json";
 import { isCapturing } from "../../../../common/common-web/src/capture-export.js";
 import type { PanelShell } from "../../../../common/common-web/src/panel-shell.js";
+import { simAsset } from "./sim-root.js";
 
 export interface VerifyPanelDeps {
   panel: PanelShell;
@@ -226,7 +227,7 @@ function installProof(d: VerifyPanelDeps): void {
   }
 
   async function fetchCanonicalFields(): Promise<{ U: Float64Array; V: Float64Array }> {
-    const res = await fetch(`${import.meta.env.BASE_URL}${V.canonical_final_fields.asset}`);
+    const res = await fetch(simAsset(V.canonical_final_fields.asset));
     if (!res.ok) throw new Error(`canonical-fields asset fetch failed: ${res.status}`);
     const buf = await res.arrayBuffer();
     if (buf.byteLength !== V.canonical_final_fields.bytes) {

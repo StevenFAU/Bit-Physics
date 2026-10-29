@@ -187,9 +187,11 @@ def test_smoke_results_json_has_required_keys(pipeline: ModuleType) -> None:
 def test_rd2d_v2_page_is_discovered_and_gated(pipeline: ModuleType) -> None:
     sims = {s.name: s for s in pipeline.discover_qualifying_sims()}
     rd = sims["reaction-diffusion-2d"]
-    assert rd.metadata["pages"] == ["", "v2/"]
-    assert sims["physarum"].metadata["pages"] == ["", "v2/"]
+    # swapped (release rule): v2 is the root page, v1 is kept at v1/
+    assert rd.metadata["pages"] == ["", "v1/"]
+    assert sims["physarum"].metadata["pages"] == ["", "v1/"]
     assert sims["neural-ca"].metadata["pages"] == ["", "v2/"]
+    assert sims["boids-2d"].metadata["pages"] == ["", "v2/"]
     # every other sim keeps exactly its root page
     for name, s in sims.items():
         if name not in pipeline.PAGES:
@@ -238,3 +240,24 @@ def test_an_extra_page_must_carry_the_capture_contract(
     assert pipeline._qualifies(good, "fake")[0]
     ok, why = pipeline._qualifies(bad, "fake")
     assert not ok and "capture-export" in why
+
+
+def test_a_swapped_sim_gates_its_v2_root_and_its_v1_page(
+    pipeline: ModuleType, tmp_path, monkeypatch
+) -> None:
+    # After the release swap the root page's entry is src/v2/main.ts and the
+    # v1 page (entry src/main.ts) is the extra page at v1/: both must carry
+    # the capture contract, and a v1/ page needs its own index.html.
+    web = _fake_web(tmp_path / "a", "createSettingsPanel(); exposeCapture();")
+    (web / "src" / "v2").mkdir()
+    (web / "src" / "v2" / "main.ts").write_text("createStudio(); exposeCapture();")
+    monkeypatch.setitem(pipeline.ROOT_ENTRY, "fake", "src/v2/main.ts")
+    monkeypatch.setitem(pipeline.PAGES, "fake", (("v1/", "src/main.ts"),))
+    ok, why = pipeline._qualifies(web, "fake")
+    assert not ok and "v1/index.html" in why
+    (web / "v1").mkdir()
+    (web / "v1" / "index.html").write_text("<!doctype html>")
+    assert pipeline._qualifies(web, "fake")[0]
+    (web / "src" / "v2" / "main.ts").write_text("createStudio();")
+    ok, why = pipeline._qualifies(web, "fake")
+    assert not ok and "src/v2/main.ts" in why

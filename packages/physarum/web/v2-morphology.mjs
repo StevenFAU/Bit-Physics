@@ -109,7 +109,7 @@ const page = await ctx.newPage();
 const errors = [];
 page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
 page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-await page.goto(`${origin}/v2/`, { waitUntil: "load" });
+await page.goto(`${origin}/`, { waitUntil: "load" });
 await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: Number(process.env.BITPHYSICS_READY_TIMEOUT_MS ?? 180000) });
 const adapter = await page.evaluate(() => globalThis.__bpDebug().adapter);
 await page.evaluate(() => { globalThis.__physarum.clock.paused = true; });

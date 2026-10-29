@@ -12,6 +12,7 @@
 
 import gatedWgsl from "../../../../src/gray_scott.wgsl?raw";
 import V from "../../generated/verification.json";
+import { simAsset } from "../../sim-root.js";
 import { agreement, field, sha256hex } from "@bp/verify";
 import type { CaptureBundle, CaptureManifestLike, CaptureStepDescriptor, FieldAgreement } from "@bp/verify";
 
@@ -36,9 +37,9 @@ if (
   throw new Error("verification.json canonical values drifted from compute constants — rerun gen-verification.mjs");
 }
 
-/** Public assets live at the dist root; this page is one level down (…/v2/). */
+/** A public asset (dist root), resolved from the bundle so any page depth works. */
 export function assetUrl(name: string): string {
-  return new URL(`../${name}`, location.href).toString();
+  return simAsset(name);
 }
 
 /** The committed seed-42 IC (numpy PCG64 perturbation, shipped verbatim). */
