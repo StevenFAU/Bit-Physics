@@ -8,13 +8,16 @@ import { h, readout, sparkline } from "@bp/studio";
 import V from "../generated/verification.json";
 import type { HiddenBasis } from "./model/pca.js";
 import type { LiveStats } from "./model/live.js";
+import type { MenagerieManifest, OrganismDef } from "./model/organisms.js";
+import { heals } from "./model/organisms.js";
 import type { SceneDef } from "./scenes.js";
 
 const blob = (path: string, anchor?: string): string => `${V.repo_blob_base}${path}${anchor ? `#${anchor}` : ""}`;
 const DISTILL = "https://distill.pub/2020/growing-ca/";
 
 export interface LearnPane {
-  setScene(scene: SceneDef, canonical: boolean): void;
+  /** `org`: the organism on a one-dish scene (null: the Menagerie). */
+  setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null): void;
   setStats(s: LiveStats, grid: number, tick: number): void;
   setBasis(b: HiddenBasis | null): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
@@ -43,7 +46,9 @@ const DIAGRAM = `<svg viewBox="0 0 340 120" role="img" aria-label="Diagram: each
   </g>
 </svg>`;
 
-export function buildLearn(pane: HTMLElement): LearnPane {
+const pct = (v: number): string => `${Math.round(v * 100)}%`;
+
+export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
   pane.textContent = "";
   const seeing = h("p", { class: "gr-lede" }, "");
   pane.append(h("h2", {}, "What you are seeing"), seeing);
@@ -61,7 +66,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       "p",
       {},
       "Every cell of the dish runs the same tiny neural network on what it can sense of its neighbours, and adds what the network says to its own state. " +
-        `Nobody draws the disk: a network of ${params.toLocaleString()} numbers, trained to make one seed cell grow into this shape and keep it, does it cell by cell.`,
+        `Nobody draws the organism: a network of ${params.toLocaleString()} numbers, trained to make one seed cell grow into this shape and keep it, does it cell by cell.`,
     ),
     h("div", { html: DIAGRAM }),
     h(
@@ -70,7 +75,9 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       "Each cell holds 16 numbers: red, green, blue, opacity and 12 hidden ones the network uses as signals. " +
         "This is the Growing Neural Cellular Automaton of ",
       h("a", { href: DISTILL, target: "_blank", rel: "noopener" }, "Mordvintsev et al. (2020)"),
-      ". The checkpoint here was trained with a pool of grown states so it learned to persist, not to regrow after damage.",
+      ". The committed checkpoint (the disk) was trained with a pool of grown states, so it learned to persist. " +
+        "The Menagerie's other organisms were also trained with damage — a random disc cut out of some of the grown states they practised on — so they learned to regrow (the paper's Regenerating experiment). " +
+        "Every organism runs the same compiled kernel; only the weights differ.",
     ),
     h(
       "details",
@@ -102,31 +109,94 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   pane.append(h("h2", {}, "Performance"), perf.el, passesEl);
 
   // ---- limits --------------------------------------------------------------
-  pane.append(
-    h("h2", {}, "What this model is, and is not"),
-    h(
-      "ul",
-      { class: "gr-limits" },
-      h("li", {}, "Faithful: the committed checkpoint and kernel, unchanged — every frame is real network steps on your GPU."),
+  const limits = h("ul", { class: "gr-limits" });
+  pane.append(h("h2", {}, "What this model is, and is not"), limits);
+  const P = m.regrow_protocol;
+  const limitsFor = (org: OrganismDef | null): HTMLElement[] => {
+    const faithful = h("li", {}, "Faithful: the committed kernel, unchanged, with each organism's weights — every frame is real network steps on your GPU.");
+    const look = h("li", {}, "The look is presentation: soft edges, shadow, gloss, frost and the hidden-channel tint are drawn from the state; the proof reads the numbers, never the pixels.");
+    if (!org) {
+      const healers = m.organisms.filter(heals);
+      return [
+        faithful,
+        h(
+          "li",
+          {},
+          `Same code, different weights: ${m.organisms.length} organisms, each ${params.toLocaleString()} numbers in the committed checkpoint's layout. ` +
+            `${healers.length} of them were trained with damage and measurably heal; the disk was not, and does not. Open an organism's card for how it was trained and what was measured.`,
+        ),
+        h("li", {}, "Each dish is its own world: a graft from one dish into another lands under that dish's rule. Cells do not carry their rule with them (that is the later Chimera scene)."),
+        look,
+      ];
+    }
+    if (org.gated) {
+      return [
+        faithful,
+        h(
+          "li",
+          {},
+          "It persists; it does not heal. Measured on this checkpoint, 1,600 steps after a cut: a bite from the edge comes back to 84% overlap with an uncut twin, " +
+            "half the disk to 77%, but a stroke through the middle leaves a remnant that keeps shrinking (28%). The Menagerie's other organisms were trained with damage, and regrow.",
+        ),
+        h("li", {}, "It knows its dish. Seeds anywhere end as one disk at the centre — the rule senses the dish's edges. On a dish twice as wide, one seed grows a rounded square filling it (measured), so the dish stays 64 × 64."),
+        h("li", {}, "It breathes. Left alone the disk swells and shrinks: sampled every 1,000 steps over 12,000 in the reference it held between 1,081 and 2,334 living cells, and it never died out."),
+        look,
+      ];
+    }
+    const r = org.measured.regrow;
+    const t = org.training;
+    const g = org.measured.growth_iou;
+    const longRun = Object.keys(g)
+      .map(Number)
+      .sort((a, b) => b - a)[0]!;
+    return [
+      faithful,
       h(
         "li",
         {},
-        "It persists; it does not heal. Measured on this checkpoint, 1,600 steps after a cut: a bite from the edge comes back to 84% overlap with an uncut twin, " +
-          "half the disk to 77%, but a stroke through the middle leaves a remnant that keeps shrinking (28%). Networks trained with damage regrow; that is a later milestone.",
+        `${heals(org) ? "It heals — mostly." : "It does not reliably heal."} Measured on the numeric reference of this kernel: cut at step ${P.cut_at_step} (${P.cuts.join(", ")}; ${P.seeds.length} random masks), ` +
+          `it is back to ${pct(r.mean_iou_200)} overlap with its target ${P.measured_after[0]} steps later on average (worst ${pct(r.min_iou_200)}), and ${pct(r.mean_iou_800)} after ${P.measured_after[1]} (worst ${pct(r.min_iou_800)}). An uncut twin holds ${pct(r.mean_twin_200)}.`,
       ),
-      h("li", {}, "It knows its dish. Seeds anywhere end as one disk at the centre — the rule senses the dish's edges. On a dish twice as wide, one seed grows a rounded square filling it (measured), so the dish stays 64 × 64."),
-      h("li", {}, "It breathes. Left alone the disk swells and shrinks: sampled every 1,000 steps over 12,000 in the reference it held between 1,081 and 2,334 living cells, and it never died out."),
-      h("li", {}, "The look is presentation: soft edges, shadow, gloss and the hidden-channel tint are drawn from the state; the proof reads the numbers, never the pixels."),
-    ),
-  );
+      h(
+        "li",
+        {},
+        `Trained for this page, not taken from the paper: ${t.iterations?.toLocaleString()} steps in ${t.train_seconds?.toFixed(0)} s on ${t.adapter}, by this repository's training spike (WebGPU in a headless browser). ` +
+          "Its target is drawn by a script, not an emoji.",
+      ),
+      h(
+        "li",
+        {},
+        `It holds its shape: grown from one cell, ${pct(g["300"] ?? 0)} overlap with its target at step 300 and ${pct(g[String(longRun)] ?? 0)} at step ${longRun.toLocaleString()} (${org.measured.alive_at_long_run.toLocaleString()} living cells). ` +
+          "It was trained only from one seed in the middle of this 64 × 64 dish: several seeds, or a seed near the edge, are outside what it practised.",
+      ),
+      look,
+    ];
+  };
 
   return {
-    setScene(scene: SceneDef, canonical: boolean) {
-      seeing.textContent =
-        scene.kind === "canonical"
+    setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null) {
+      const name = org?.name.toLowerCase() ?? "";
+      if (scene.kind === "menagerie") {
+        seeing.textContent =
+          `${scene.title}: ${m.organisms.length} dishes, one organism each, all on one clock. Every dish runs the same compiled kernel with its own ${params.toLocaleString()} weights — ` +
+          "the disk is the committed checkpoint the release gate re-runs; the others were trained for this page, with damage. Cut them and see which heal.";
+      } else if (scene.kind === "cell") {
+        seeing.textContent =
+          `${scene.title}: one cell of the ${name}, its neighbourhood, and its whole step worked out in the open — the numbers it senses, what the network makes of them, the change it adds, the coin and the alive check. ` +
+          "The page does the same arithmetic as the GPU, and checks it against the GPU's next step.";
+      } else if (scene.kind === "canonical") {
+        seeing.textContent = org?.gated
           ? `${scene.title}: one living cell, planted in the middle of a 64 × 64 dish, grows into a two-tone disk and holds it. ` +
             (canonical ? "Untouched, this is exactly the run the release gate checks." : "You have changed it, so it is no longer the gated run.")
-          : `${scene.title}: a few seed cells scattered by the seed. They grow, run into each other, and end as one disk in the middle of the dish.`;
+          : `${scene.title}: one living cell, planted in the middle of a 64 × 64 dish, grows into a ${name}. Its rule was trained with damage, so a cut grows back. ` +
+            "The release gate checks the committed disk (choose it in the organism menu, or Prove › Show the gated run).";
+      } else {
+        seeing.textContent = org?.gated
+          ? `${scene.title}: a few seed cells scattered by the seed. They grow, run into each other, and end as one disk in the middle of the dish.`
+          : `${scene.title}: a few seed cells scattered by the seed, each growing under the ${name} rule — which only ever practised growing one ${name} from the middle of the dish.`;
+      }
+      limits.textContent = "";
+      limits.append(...limitsFor(scene.kind === "menagerie" ? null : org));
       alive.clear();
       mass.clear();
     },

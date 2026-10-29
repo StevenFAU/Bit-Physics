@@ -458,3 +458,44 @@ fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   x0[n] = vec4<f32>(0.0, 0.0, 0.0, s);
   x0[n + 1u] = vec4<f32>(s); x0[n + 2u] = vec4<f32>(s); x0[n + 3u] = vec4<f32>(s);
 }`;
+
+// ----------------------------------------------------------------- damage
+// Added for the Menagerie (rebuild-v2 M1): the Distill "Regenerating"
+// experiment. Iter.mode bit 2 turns it on; bits 8..15 hold how many samples
+// to damage. Before the rollout the batch's current losses are written to
+// poolLoss (a loss + lossReduce pass on states[0]), SEED_FILL resets the
+// worst sample to the seed, and this kernel cuts a random disc out of the
+// `n` samples with the lowest loss (the reset one excluded): centre in the
+// middle half of the grid, radius 0.05–0.2 of the grid (Distill's
+// make_circle_masks, r ∈ [0.1, 0.4] of the half-width). Circles are drawn
+// from the iteration seed, so a run is reproducible.
+
+export const DAMAGE = /* wgsl */ `${PRELUDE}
+@group(0) @binding(2) var<storage, read> idx : array<u32>;
+@group(0) @binding(3) var<storage, read> poolLoss : array<f32>;
+@group(0) @binding(4) var<storage, read_write> x0 : array<vec4<f32>>;
+@compute @workgroup_size(8, 8, 1)
+fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
+  let x = gid.x; let y = gid.y; let b = gid.z;
+  if (x >= IT.G || y >= IT.G || b >= IT.B) { return; }
+  let nd = (IT.mode >> 8u) & 255u;
+  var worst = 0u; var wl = poolLoss[idx[0]];
+  for (var i = 1u; i < IT.B; i = i + 1u) { let l = poolLoss[idx[i]]; if (l > wl) { wl = l; worst = i; } }
+  if (b == worst) { return; }
+  let lb = poolLoss[idx[b]];
+  var rank = 0u;
+  for (var i = 0u; i < IT.B; i = i + 1u) {
+    if (i == worst || i == b) { continue; }
+    let l = poolLoss[idx[i]];
+    if (l < lb || (l == lb && i < b)) { rank = rank + 1u; }
+  }
+  if (rank >= nd) { return; }
+  let g = f32(IT.G);
+  let cx = g * (0.25 + 0.5 * bp_unit(bp_hash3(IT.seed ^ 0xda3a6e5u, b, 0u)));
+  let cy = g * (0.25 + 0.5 * bp_unit(bp_hash3(IT.seed ^ 0xda3a6e5u, b, 1u)));
+  let r = g * (0.05 + 0.15 * bp_unit(bp_hash3(IT.seed ^ 0xda3a6e5u, b, 2u)));
+  let d = vec2<f32>(f32(x) + 0.5 - cx, f32(y) + 0.5 - cy);
+  if (dot(d, d) >= r * r) { return; }
+  let n = cellIndex(b, x, y) * 4u;
+  x0[n] = vec4<f32>(0.0); x0[n + 1u] = vec4<f32>(0.0); x0[n + 2u] = vec4<f32>(0.0); x0[n + 3u] = vec4<f32>(0.0);
+}`;

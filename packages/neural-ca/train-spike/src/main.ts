@@ -153,6 +153,8 @@ interface TrainConfig {
   evalSteps: number[];
   snapshotEvery: number;
   dense?: boolean;
+  /** Menagerie: damage this many of the batch's best samples each iteration (Distill "Regenerating"). */
+  damage?: number;
   label?: string;
 }
 
@@ -234,7 +236,7 @@ const api = {
     for (let i = 0; i < cfg.iters; i += 1) {
       const s = schedule(cfg.seed, i, cfg.Tmin, cfg.Tmax, cfg.B, cfg.poolSize);
       const lr = cfg.lr * (i < cfg.decayAt ? 1 : 0.1);
-      const { result } = await t.submitIteration(i, s.T, s.seed, s.pool, lr, cfg.dense ?? false);
+      const { result } = await t.submitIteration(i, s.T, s.seed, s.pool, lr, cfg.dense ?? false, cfg.damage ?? 0);
       void result.then((r) => {
         if (r) log.push(r);
       });

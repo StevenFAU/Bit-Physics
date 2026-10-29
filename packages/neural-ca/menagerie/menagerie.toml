@@ -1,0 +1,52 @@
+# The Grow Menagerie (rebuild-v2 04-neural-ca.md, M1): which training run
+# each organism comes from, and the words the page shows. build.py reads it.
+# Only organisms whose training was run are listed; the gallery shows exactly
+# these (plus the committed, gated checkpoint).
+
+[gated]
+id = "disk"
+name = "Disk"
+blurb = "The committed checkpoint: the one the release gate re-runs bit for bit. It learned to persist, not to heal."
+note = "The package's committed checkpoint (neural-ca-emoji-disk), trained by its PyTorch path (neural_ca train) in the Persistent regime — a pool of grown states, no damage — on the two-tone disk target, then converted by convert_checkpoint.py."
+
+[[organism]]
+id = "gecko"
+run = "regen-gecko-s1"
+name = "Gecko"
+blurb = "Thin legs and a curled tail."
+
+[[organism]]
+id = "starfish"
+run = "regen-starfish-s1"
+name = "Starfish"
+blurb = "Five arms around a pale orange heart."
+
+[[organism]]
+id = "butterfly"
+run = "regen-butterfly-s1"
+name = "Butterfly"
+blurb = "Four wings held together by a thin body, with clubbed antennae."
+
+[[organism]]
+id = "ladybug"
+run = "regen-ladybug-s1"
+name = "Ladybug"
+blurb = "A red shell with six spots and a seam, a dark head and six short legs."
+
+[[organism]]
+id = "mushroom"
+run = "regen-mushroom-s1"
+name = "Mushroom"
+blurb = "A spotted cap on a stout stem, seen from the side."
+
+[[organism]]
+id = "fish"
+run = "regen-fish-s1"
+name = "Clownfish"
+blurb = "Orange with white bands, a dorsal fin and a forked tail."
+
+[[organism]]
+id = "turtle"
+run = "regen-turtle-s1"
+name = "Turtle"
+blurb = "A domed shell with lighter scutes, four flippers and a small head."
