@@ -456,6 +456,8 @@ async function boot(): Promise<void> {
       dial.sync();
       regime.clear();
       pop.clear();
+      extraTune();
+      app.writeUrl();
     },
     onCensus: (c, tick) => {
       pop.push(c, tick);
@@ -554,26 +556,32 @@ async function boot(): Promise<void> {
       },
     };
   }
+  // M2 knobs from the link (each −1 = the scene's), built into the first load so the
+  // water's starting vorticity comes from the linked push, exactly as a restart rebuilds it
+  let water: SceneOptions["water"];
+  if (scene.water) {
+    const [dr, ma, pu, nu, mu] = parsed.wp;
+    const p = scene.water.params;
+    water = {
+      params: { ...p, drag: pick(dr!, p.drag), massRatio: pick(ma!, p.massRatio), nu: pick(nu!, p.nu), mu: pick(mu!, p.mu) },
+      tide: pu! >= 0 ? pu! * rule.maxSpeed : scene.water.tide,
+    };
+  }
+  let eco: SceneOptions["eco"];
+  if (scene.ecology) {
+    const [gr, ef, sc, ss] = parsed.ep;
+    const p = scene.ecology.params;
+    eco = { ...p, growth: pick(gr!, p.growth), efficiency: pick(ef!, p.efficiency), sharkCost: pick(sc!, p.sharkCost), sharkSpeed: pick(ss!, p.sharkSpeed) };
+  }
   const opts: SceneOptions = {
+    water,
+    eco,
     seed: parsed.seed,
     rule: scene.brain ? scene.rule : rule,
     brain,
     camera: parsed.cam[2]! > 0 ? { cx: parsed.cam[0]!, cy: parsed.cam[1]!, zoom: parsed.cam[2]! } : undefined,
   };
   await app.loadScene(scene.id, opts);
-  // M2 knobs from the link (each −1 = the scene's)
-  if (app.current) {
-    const [dr, ma, pu, nu, mu] = parsed.wp;
-    const f = app.current.fluid;
-    f.params = { ...f.params, drag: pick(dr!, f.params.drag), massRatio: pick(ma!, f.params.massRatio), nu: pick(nu!, f.params.nu), mu: pick(mu!, f.params.mu) };
-    app.current.setTide(pu! >= 0 ? pu! * app.flock.rule.maxSpeed : app.current.tideSpeed);
-  }
-  if (app.ecology) {
-    const [gr, ef, sc, ss] = parsed.ep;
-    const p = app.ecology.params;
-    app.ecology.params = { ...p, growth: pick(gr!, p.growth), efficiency: pick(ef!, p.efficiency), sharkCost: pick(sc!, p.sharkCost), sharkSpeed: pick(ss!, p.sharkSpeed) };
-  }
-  extraTune();
   app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
   syncTune();
   studio.veil.done();

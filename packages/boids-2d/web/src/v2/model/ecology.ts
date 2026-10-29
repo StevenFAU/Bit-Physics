@@ -266,7 +266,8 @@ fn forage(@builtin(global_invocation_id) gid: vec3<u32>) {
   let c0 = cellOf(g.x, g.y);
   let n0 = f32(max(cellStart[c0 + 1u] - cellStart[c0], 1u));
   let P = plankton[c0];
-  en = en + E.eff * P * (1.0 - exp(-E.graze * n0)) / n0 - E.fishCost;
+  // a fish stores at most 1.5 (more only waits for an empty slot to split into)
+  en = min(en + E.eff * P * (1.0 - exp(-E.graze * n0)) / n0 - E.fishCost, 1.5);
   if (en <= 0.0) {
     outB[i] = Boid(np, vec2<f32>(0.0), 0.0, -1.0);
     life[i] = vec2<f32>(0.0, 0.0);
@@ -329,10 +330,15 @@ fn flags(@builtin(global_invocation_id) gid: vec3<u32>) {
   deadScan[i] = select(0u, 1u, boids[i].dens < 0.0);
   bornScan[i] = select(0u, 1u, wantsBirth(i));
 }
+// After the scans, a slot's own flag is the step between adjacent exclusive sums. listDead and
+// spawn decide from these, never from boids / life, which spawn rewrites as it runs (a newborn
+// written into an empty slot must not make that slot's own invocation a parent).
+fn wasDead(i: u32) -> bool { return deadScan[i + 1u] != deadScan[i]; }
+fn isParent(i: u32) -> bool { return bornScan[i + 1u] != bornScan[i]; }
 @compute @workgroup_size(256)
 fn listDead(@builtin(global_invocation_id) gid: vec3<u32>) {
   let j = gid.x; if (j >= E.n) { return; }
-  if (boids[j].dens < 0.0) { deadList[deadScan[j]] = j; }
+  if (wasDead(j)) { deadList[deadScan[j]] = j; }
 }
 fn place(slot: u32, pos: vec2<f32>, vel: vec2<f32>, en: f32) {
   boids[slot] = Boid(wrapP(pos), vel, en, 0.0);
@@ -341,7 +347,7 @@ fn place(slot: u32, pos: vec2<f32>, vel: vec2<f32>, en: f32) {
 @compute @workgroup_size(256)
 fn spawn(@builtin(global_invocation_id) gid: vec3<u32>) {
   let i = gid.x; if (i >= E.n) { return; }
-  if (!wantsBirth(i)) { return; }
+  if (!isParent(i)) { return; }
   let r = bornScan[i];
   if (r >= deadScan[E.n]) { return; }   // the ocean is full: the birth waits
   let slot = deadList[r];
@@ -389,14 +395,29 @@ ${SHARK_A}
 var<workgroup> want: array<u32, 128>;
 // every shark's place before anyone moves (so no shark reads another's new position)
 var<workgroup> was: array<vec4<f32>, 128>;
+// every shark's catch this step, so two sharks that bit the same fish can settle who ate it
+var<workgroup> bit: array<u32, 128>;
 @compute @workgroup_size(128)
 fn hunt(@builtin(local_invocation_id) lid: vec3<u32>) {
   let s = lid.x;
   want[s] = 0u;
-  if (s < E.sharkSlots) { was[s] = vec4<f32>(sharks[s].pos, sharks[s].alive, 0.0); } else { was[s] = vec4<f32>(0.0); }
+  if (s < E.sharkSlots) {
+    was[s] = vec4<f32>(sharks[s].pos, sharks[s].alive, 0.0);
+    bit[s] = select(NONE, atomicLoad(&sharks[s].catchKey), sharks[s].alive > 0.5);
+  } else {
+    was[s] = vec4<f32>(0.0);
+    bit[s] = NONE;
+  }
   workgroupBarrier();
   if (s < E.sharkSlots && sharks[s].alive > 0.5) {
-    let key = atomicLoad(&sharks[s].catchKey);
+    // a fish two sharks bit goes to the nearer (equal: the lower slot); the other goes hungry
+    var key = bit[s];
+    if (key != NONE) {
+      for (var o = 0u; o < E.sharkSlots; o = o + 1u) {
+        let ko = bit[o];
+        if (o != s && ko != NONE && (ko & 0xfffffu) == (key & 0xfffffu) && (ko < key || (ko == key && o < s))) { key = NONE; break; }
+      }
+    }
     var energy = sharks[s].energy;
     var cool = max(sharks[s].cool - 1.0, 0.0);
     var last = NONE;
@@ -878,19 +899,22 @@ export class EcologyExt implements FlockExt {
     return EcologyExt.readCensus(new Float32Array(await readBuffer(this.device, this.census, 32)));
   }
 
+  /** The buffers and the rates that made them (a restore brings back the experiment, not only the state). */
   checkpoint(): unknown {
     const enc = this.device.createCommandEncoder({ label: "swarm-eco-checkpoint" });
-    const out = [this.life, this.plankton[this.pCur]!, this.sharks, this.counters].map((b) => {
+    const bufs = [this.life, this.plankton[this.pCur]!, this.sharks, this.counters].map((b) => {
       const c = this.device.createBuffer({ size: b.size, usage: STORAGE(), label: "swarm-eco-save" });
       enc.copyBufferToBuffer(b, 0, c, 0, b.size);
       return c;
     });
     this.device.queue.submit([enc.finish()]);
-    return out;
+    return { bufs, params: { ...this.params } };
   }
 
   restore(c: unknown): void {
-    const b = c as GPUBuffer[];
+    const saved = c as { bufs: GPUBuffer[]; params: EcoParams };
+    const b = saved.bufs;
+    this.params = { ...saved.params };
     const enc = this.device.createCommandEncoder({ label: "swarm-eco-restore" });
     enc.copyBufferToBuffer(b[0]!, 0, this.life, 0, this.life.size);
     enc.copyBufferToBuffer(b[1]!, 0, this.plankton[0], 0, this.plankton[0].size);
@@ -901,7 +925,7 @@ export class EcologyExt implements FlockExt {
   }
 
   release(c: unknown): void {
-    for (const b of c as GPUBuffer[]) b.destroy();
+    for (const b of (c as { bufs: GPUBuffer[] }).bufs) b.destroy();
   }
 
   destroy(): void {

@@ -101,16 +101,20 @@ export class CurrentExt implements FlockExt {
     if (this.cfg.tide > 0) f.loadOmega(kolmogorovOmega(f.gw, f.gh, f.halfW, f.halfH, this.cfg.tide, seed));
   }
 
+  /** The water's buffers and the knobs that drive it (a restore brings back both). */
   checkpoint(): unknown {
-    return this.fluid.checkpoint();
+    return { bufs: this.fluid.checkpoint(), params: { ...this.fluid.params }, tide: this.tideSpeed };
   }
 
   restore(c: unknown): void {
-    this.fluid.restore(c as GPUBuffer[]);
+    const saved = c as { bufs: GPUBuffer[]; params: FluidParams; tide: number };
+    this.fluid.restore(saved.bufs);
+    this.fluid.params = { ...saved.params };
+    this.setTide(saved.tide);
   }
 
   release(c: unknown): void {
-    for (const b of c as GPUBuffer[]) b.destroy();
+    for (const b of (c as { bufs: GPUBuffer[] }).bufs) b.destroy();
   }
 
   destroy(): void {

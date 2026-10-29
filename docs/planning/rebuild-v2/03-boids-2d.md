@@ -58,9 +58,9 @@
 >     shark upkeep 0.0042 against 0.25 per fish puts break-even at one catch per 60 steps, and
 >     fish efficiency 0.11 keeps their surplus below what 128 sharks can eat. Faster-breeding fish
 >     pinned the sharks at their slot ceiling in a steady state; costlier sharks died out.
->   - **Measured (seed 1, 32,768 fish slots, 50,235 steps ≈ 14 simulated minutes):** fish
->     803–7,707, sharks 3–128, mean plankton 0.60–0.95 of its ceiling; three predator–prey cycles,
->     shark booms near steps 8–12k, 27–31k and 44–48k (period ≈ 18,000 steps, 5 min at 1×); no
+>   - **Measured (seed 1, 32,768 fish slots, 49,423 steps ≈ 14 simulated minutes):** fish
+>     914–7,210, sharks 6–128, mean plankton 0.61–0.94 of its ceiling; three predator–prey cycles,
+>     shark booms at steps 6,447, 23,576 and 42,843 (period ≈ 18,200 steps, 5 min at 1×); no
 >     extinction. Sharks reach their 128 slots at each peak — the ceiling binds for a few thousand
 >     steps per cycle, which Learn states.
 >   - **Replays byte for byte:** two runs of 600 steps (2,096 births, 151 fish eaten) give one
@@ -78,6 +78,15 @@
 > - **Bug found on the way:** the renderer's `Shark` struct was 32 bytes against the ecology's 48,
 >   so every shark after the first was drawn from the wrong bytes; `test/m2.test.ts` now pins
 >   the three WGSL copies of the struct to one layout.
+> - **Review fixes (PR #51):** `spawn` now decides parents and empty slots from the scanned flags
+>   (adjacent exclusive sums), not from the fish buffers it rewrites — a newborn written into an
+>   empty slot could otherwise make that slot's own invocation a parent, a scheduling-dependent
+>   race (fish energy is also capped at 1.5); two sharks that bite the same fish settle it in the
+>   serial pass (the nearer, then the lower slot, eats; the other goes hungry), where before both
+>   were fed; save points carry the M2 knobs (fluid parameters and push; ecology rates) so a restore
+>   brings back the experiment as well as its state; and a linked push now builds the first water
+>   (its starting vorticity) instead of being patched in after the load. The long run above is
+>   measured after these fixes; the 600-step replay hash did not change (neither race occurred in it).
 > - **Benches** (`?bench=1`, 1280×720): Current 262,144 fish at 58.3–59.3 fps, frame p50 / p90
 >   16.7 / 16.7 ms, 60 steps/s, render scale 100% (sim pass 3.9 ms with the water, render
 >   2.3 ms); Food Chain 32,768 slots at 58.6 fps, 16.7 / 16.7 ms, 60 steps/s (sim 2.6 ms, render
@@ -89,8 +98,8 @@
 > - **Checks:** `v2-acceptance.mjs` passes 88/88 (M2 adds Current's live divergence, the push,
 >   the brush, the three water cards, save / restore and a seed across loads with the water;
 >   Food Chain's census, Feed, Release, replay, save / restore, a seed across loads, ten simulated
->   minutes — fish 786–7,714, sharks 5–128, booms at steps 7,778 and 26,562 — and the M2 knobs on
->   the link). `check-studio` passes on `v2/`, `v2/?s=current` and `v2/?s=food-chain` at
+>   minutes — fish 901–7,216, sharks 6–128, booms at steps 6,275 and 23,705 — the M2 knobs on
+>   the link, and a restore bringing back the knobs with the state). `check-studio` passes on `v2/`, `v2/?s=current` and `v2/?s=food-chain` at
 >   390 / 820 / 1440 px and 200% zoom with zero axe violations. The workspace has 198 unit tests
 >   (15 new in `test/m2.test.ts`: the Stockham passes against a direct DFT, ψ = ω/λ against the
 >   grid Laplacian, the bilinear curl's zero divergence and edge continuity, the Kolmogorov start,
