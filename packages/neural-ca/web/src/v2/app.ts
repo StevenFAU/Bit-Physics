@@ -1507,7 +1507,8 @@ export class App {
       this.cellCheck = { maxAbs: m, tick };
     }
     const ck = this.organism.ck;
-    const step = stepCell(block, { w: ck.weights, b1Off: ck.b1Off, w1Off: ck.w1Off, w2Off: ck.w2Off }, x, y, tick, this.seed, this.sim.fireRate);
+    const frozen = this.sim.freeze[y * GRID + x] === 1;
+    const step = stepCell(block, { w: ck.weights, b1Off: ck.b1Off, w1Off: ck.w1Off, w2Off: ck.w2Off }, x, y, tick, this.seed, this.sim.fireRate, frozen);
     this.cellPrediction = { tick, x, y, next: step.next, org: this.organism.def.id };
     return { step, organism: this.organism.def.name, block, check: this.cellCheck };
   }
@@ -1529,7 +1530,7 @@ export class App {
     const w = { w: ck.weights, b1Off: ck.b1Off, w1Off: ck.w1Off, w2Off: ck.w2Off };
     const [x, y] = this.cellSel;
     const b0 = await read();
-    const step = stepCell(b0, w, x, y, this.sim.tick, this.seed, this.sim.fireRate);
+    const step = stepCell(b0, w, x, y, this.sim.tick, this.seed, this.sim.fireRate, this.sim.freeze[y * GRID + x] === 1);
     await this.advance(1);
     const b1 = await read();
     let m = 0;

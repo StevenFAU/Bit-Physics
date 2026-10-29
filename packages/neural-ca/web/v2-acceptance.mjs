@@ -721,6 +721,27 @@ const IOU_HELPERS = `
   const worst = Math.max(...r.map((x) => x.maxAbs));
   const mix = { lives: r.filter((x) => x.lives).length, dies: r.filter((x) => !x.lives).length, fires: r.filter((x) => x.fires).length };
   check("Inside the Cell: the page's arithmetic predicts the GPU's next step for the cell (18 cells, 3 organisms)", worst < 1e-5 && mix.lives > 3 && mix.fires > 3, `max |Δ| ${worst === 0 ? "0 (identical)" : worst.toExponential(2)}; ${mix.lives} live, ${mix.dies} empty/dying, ${mix.fires} fired`);
+  // a frozen inspected cell: the GPU copies its old values back, and so must the prediction
+  const fz = await T(page, async () => {
+    const app = globalThis.__grow;
+    await app.loadScene("cell", { organism: "gecko", cell: [32, 30] });
+    app.clock.paused = true;
+    await app.advance(20);
+    app.freezeAt([32.5, 30.5], 0.5, true);
+    let worst = 0, changing = 0, tries = 0;
+    for (; tries < 40 && changing < 3; tries += 1) {
+      const k = await app.checkCell();
+      worst = Math.max(worst, k.maxAbs);
+      if (!k.step.frozen) return { error: "not frozen" };
+      if (k.step.fires && k.step.lives && Math.max(...Array.from(k.step.think.dx, Math.abs)) > 1e-4) changing += 1;
+    }
+    return { worst, changing, tries, frozenCells: app.sim.frozenCount };
+  });
+  check(
+    "Inside the Cell on a frozen cell: the prediction keeps its values, as the GPU does",
+    !fz.error && fz.frozenCells === 1 && fz.changing >= 3 && fz.worst < 1e-5,
+    fz.error ?? `max |Δ| ${fz.worst === 0 ? "0" : fz.worst.toExponential(2)} over ${fz.tries} steps, ${fz.changing} of them steps the rule would have changed it`,
+  );
   // the panel's own check line, after Step once
   await T(page, async () => {
     const app = globalThis.__grow;

@@ -64,4 +64,23 @@ describe("stepCell", () => {
     expect(living).toBeGreaterThan(10);
     expect(maxAbs).toBeLessThan(1e-5);
   });
+
+  it("keeps a frozen cell's values: the GPU's Freeze pass copies them back after the step", () => {
+    const block: Block = { x0: fixture.x0, y0: fixture.y0, size: fixture.size, grid: fixture.grid, data: f32(fixture.block) };
+    let tested = 0;
+    for (let j = 0; j < fixture.inner; j += 1) {
+      for (let i = 0; i < fixture.inner; i += 1) {
+        const x = fixture.x0 + 2 + i;
+        const y = fixture.y0 + 2 + j;
+        const free = stepCell(block, W, x, y, fixture.step, fixture.seed, fixture.rate);
+        if (Array.from(free.next).every((v, c) => v === free.state[c])) continue; // only cells the step would change
+        const held = stepCell(block, W, x, y, fixture.step, fixture.seed, fixture.rate, true);
+        expect(held.frozen).toBe(true);
+        expect(Array.from(held.next)).toEqual(Array.from(held.state));
+        expect(held.lives).toBe(free.lives);
+        tested += 1;
+      }
+    }
+    expect(tested).toBeGreaterThan(10);
+  });
 });

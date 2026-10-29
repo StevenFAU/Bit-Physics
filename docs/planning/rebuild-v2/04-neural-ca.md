@@ -40,14 +40,14 @@
 >   dish's rule. Cells do not carry their rule: Chimera (M3) still needs per-cell rule ids.
 > - **Inside the Cell** works one cell's step on the CPU (48 perception values, 128 units, 16 changes,
 >   the coin, the two alive checks) and checks it against the GPU's next step: max |Δ| 3.8e-6 over 18
->   cells of three organisms (often 0). Against the NumPy reference (unit test): < 1e-5, no disagreement
+>   cells of three organisms (often 0). A frozen cell keeps its values on both sides (0 difference). Against the NumPy reference (unit test): < 1e-5, no disagreement
 >   about which cells die.
 > - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0 over
 >   21 frames, two driver runs each; all four captures are identical.
 > - **Frame.** 60 fps at 1280 × 720 on both scenes. The Dish: GPU 0.58 ms per frame (p50), 0.50 ms
 >   per step. The Menagerie: GPU 0.62 / 2.7 ms per frame (p50 / p90); a step of all eight dishes is
 >   3.8 ms, so 30 steps/s leaves most of the frame.
-> - **Checks.** `v2-acceptance.mjs` 62/62 (M0's checks pinned to `?o=disk`, plus M1's);
+> - **Checks.** `v2-acceptance.mjs` 63/63 (M0's checks pinned to `?o=disk`, plus M1's);
 >   `web/tools/check-studio.mjs` clean for the Dish, the Menagerie and Inside the Cell at 390, 820 and
 >   1440 px and 200% zoom, no axe violations; `npm test` 164/164; integrity 0 HARD_FAIL.
 > - **Still unverified:** "first in-browser NCA training". No copy claims it; the cards say only that

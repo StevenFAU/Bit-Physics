@@ -130,6 +130,8 @@ export interface CellStep {
   maxAlphaBefore: number;
   maxAlphaAfter: number;
   lives: boolean;
+  /** Frozen (Freeze): the step's result is discarded and the cell keeps its values. */
+  frozen: boolean;
   /** The cell's 16 values after the step. */
   next: Float32Array;
 }
@@ -138,8 +140,14 @@ export interface CellStep {
  * One step of cell (x, y) from a block that holds at least its 5 × 5
  * neighbourhood (the post-update alive check needs its neighbours' updated
  * opacity, and each of those needs its own 3 × 3).
+ *
+ * `frozen`: the cell lies in a Freeze region. The GPU still runs the kernel
+ * over it (its neighbours' alive checks see its updated opacity, as here),
+ * then copies its old values back, so its next state is its current one.
+ * Only the cell's own freeze matters: a frozen neighbour changes what the
+ * neighbour becomes, not what the kernel computed for this cell.
  */
-export function stepCell(b: Block, wt: Weights, x: number, y: number, step: number, seed: number, rate: number): CellStep {
+export function stepCell(b: Block, wt: Weights, x: number, y: number, step: number, seed: number, rate: number, frozen = false): CellStep {
   const read = (xx: number, yy: number, c: number): number => at(b, xx, yy, c);
   const state = new Float32Array(CN);
   for (let c = 0; c < CN; c += 1) state[c] = read(x, y, c);
@@ -173,6 +181,6 @@ export function stepCell(b: Block, wt: Weights, x: number, y: number, step: numb
   }
   const lives = before > ALIVE && after > ALIVE;
   const next = new Float32Array(CN);
-  for (let c = 0; c < CN; c += 1) next[c] = lives ? mid[c]! : 0;
-  return { x, y, step, state, perception, think: t, coin, fires, maxAlphaBefore: before, maxAlphaAfter: after, lives, next };
+  for (let c = 0; c < CN; c += 1) next[c] = frozen ? state[c]! : lives ? mid[c]! : 0;
+  return { x, y, step, state, perception, think: t, coin, fires, maxAlphaBefore: before, maxAlphaAfter: after, lives, frozen, next };
 }

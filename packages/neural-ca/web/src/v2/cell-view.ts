@@ -160,14 +160,19 @@ export function buildCellPanel(stage: HTMLElement, act: { step: () => void; play
 
       // change: dx, applied only on the coin
       bars(change, [t.dx], 25);
-      changeNote.textContent = s.fires ? `coin ${s.coin.toFixed(2)} ≤ ${rate}: applied` : `coin ${s.coin.toFixed(2)} > ${rate}: skipped this step`;
+      changeNote.textContent = s.frozen
+        ? `coin ${s.coin.toFixed(2)}: frozen, not applied`
+        : s.fires
+          ? `coin ${s.coin.toFixed(2)} ≤ ${rate}: applied`
+          : `coin ${s.coin.toFixed(2)} > ${rate}: skipped this step`;
 
       // live: the alive check, before and after
       const lives = s.lives;
-      liveNote.textContent = lives ? "it lives" : s.state[3]! > ALIVE || s.maxAlphaBefore > ALIVE ? "it dies" : "nothing here";
+      liveNote.textContent = s.frozen ? "frozen" : lives ? "it lives" : s.state[3]! > ALIVE || s.maxAlphaBefore > ALIVE ? "it dies" : "nothing here";
       liveText.textContent =
         `Highest opacity in the 3 × 3 cells around it: ${Math.max(0, s.maxAlphaBefore).toFixed(2)} before, ${Math.max(0, s.maxAlphaAfter).toFixed(2)} after. ` +
-        `A cell lives only if both are above ${ALIVE}; otherwise all 16 values become 0.`;
+        `A cell lives only if both are above ${ALIVE}; otherwise all 16 values become 0.` +
+        (s.frozen ? " This cell is frozen: the rule still runs, but its result is thrown away and it keeps its 16 values. Its neighbours go on sensing it." : "");
 
       if (r.check) {
         const ok = r.check.maxAbs < 1e-4;
