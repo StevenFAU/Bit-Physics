@@ -47,7 +47,15 @@
 > - **Frame.** 60 fps at 1280 × 720 on both scenes. The Dish: GPU 0.58 ms per frame (p50), 0.50 ms
 >   per step. The Menagerie: GPU 0.62 / 2.7 ms per frame (p50 / p90); a step of all eight dishes is
 >   3.8 ms, so 30 steps/s leaves most of the frame.
-> - **Checks.** `v2-acceptance.mjs` 63/63 (M0's checks pinned to `?o=disk`, plus M1's);
+> - **Boot.** The page signals ready as soon as the gate path works (the committed weights fetched,
+>   the gate's own two pipelines compiled, the capture button wired) and compiles the renderer, the
+>   live solver and the rest afterwards, behind the loading veil. Deferred steps that write to the GPU
+>   queue wait for a running capture, and a capture waits for one in flight. On a software GPU
+>   (Playwright's Chromium on SwiftShader, locally) v2's time-to-ready fell from 100 s to 50 s, the
+>   same as v1's 50 s: the gate's two compiles are the whole wait. A capture clicked at ready finished
+>   in 63 s while the live dish compiled alongside, byte-identical to one taken later; the dish was
+>   live at 113 s. On the RX 6800 XT: ready at 83 ms, live at 336 ms.
+> - **Checks.** `v2-acceptance.mjs` 67/67 (M0's checks pinned to `?o=disk`, plus M1's);
 >   `web/tools/check-studio.mjs` clean for the Dish, the Menagerie and Inside the Cell at 390, 820 and
 >   1440 px and 200% zoom, no axe violations; `npm test` 164/164; integrity 0 HARD_FAIL.
 > - **Still unverified:** "first in-browser NCA training". No copy claims it; the cards say only that

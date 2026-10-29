@@ -8,7 +8,14 @@
 //     display:none, never disabled at boot) so the driver can click() it at
 //     1280×720; it runs proof/gate.ts captureCanonical() — the v1 capture path
 //     ported unchanged on dedicated buffers — and exposeCapture() publishes it;
-//   * window.__bitPhysicsReady flips once the first frame is scheduled.
+//   * window.__bitPhysicsReady flips as soon as the gate path is usable: the
+//     committed weights fetched and the gate's own two pipelines compiled,
+//     and the capture button wired. Everything else (the renderer, the live
+//     solver, the Menagerie, the instruments) compiles and loads afterwards,
+//     behind the loading veil — on a software GPU those compiles cost more
+//     than the gate's own. Deferred steps that touch the GPU queue wait for
+//     a running capture, and a capture waits for a deferred step in flight,
+//     so they never interleave. window.__growLive flips when the live dish runs.
 // verify.py then applies the established capture_roundtrip gate, unchanged
 // (bit-exact against the WGSL canonical; CI's lavapipe runs its declared
 // observable fallback).
@@ -18,6 +25,7 @@ import type { GpuContext } from "@bp/gpu";
 import { GpuProfiler, WebGPUUnavailableError, acquireGpu, pickTier, readTierEnvironment } from "@bp/gpu";
 import { HdrPipeline } from "@bp/render";
 import { QualityGovernor, UrlState, percentile } from "@bp/runtime";
+import type { Studio } from "@bp/studio";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
 import { App, STEP_PASS, TICKS_PER_SECOND, TOOLS } from "./app.js";
@@ -26,7 +34,9 @@ import { buildCellPanel } from "./cell-view.js";
 import { buildLearn } from "./learn.js";
 import { buildMenagerieUi } from "./menagerie-ui.js";
 import { LiveKernels } from "./model/live.js";
+import type { MenagerieManifest } from "./model/organisms.js";
 import { OrganismLibrary, fetchMenagerie } from "./model/organisms.js";
+import type { Checkpoint, GateRunner } from "./proof/gate.js";
 import { CANONICAL_SEED, CANONICAL_STEPS, FIRE_RATE, GRID, createGateRunner, fetchCheckpoint } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
 import { DishRenderer } from "./render/dish-view.js";
@@ -55,6 +65,13 @@ function urlSchema(organisms: string[]) {
     },
     2,
   );
+}
+
+/** Boot phases, ms since navigation start (read by the boot-time measurements). */
+const bootMarks: Record<string, number> = {};
+(globalThis as { __growBoot?: Record<string, number> }).__growBoot = bootMarks;
+function mark(name: string): void {
+  bootMarks[name] = Math.round(performance.now());
 }
 
 function download(blob: Blob, name: string): void {
@@ -100,30 +117,127 @@ async function boot(): Promise<void> {
     if (info.reason !== "destroyed") fail(`the GPU device was lost (${info.message})`);
   });
 
+  // ------------------------------------------- the gate path, first --
+  mark("gpu");
+  studio.veil.step("Fetching the committed network");
+  const ck = await fetchCheckpoint();
+  mark("weights");
+  const manifestP = fetchMenagerie(); // network only; awaited once the gate is up
+  manifestP.catch(() => {}); // a failure surfaces where it is awaited
+  studio.veil.step("Compiling the gate");
+  const gate = await createGateRunner(device, ck);
+  mark("gate");
+
+  // Deferred boot steps that write to the GPU queue run one at a time and
+  // never while a capture runs; a capture waits for one in flight.
+  let bootGpuBusy = false;
+  const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+  const bootGpu = async <T>(fn: () => T | Promise<T>): Promise<T> => {
+    while (isCapturing()) await wait(50);
+    bootGpuBusy = true;
+    try {
+      return await fn();
+    } finally {
+      bootGpuBusy = false;
+    }
+  };
+  const held: { governor: QualityGovernor | null } = { governor: null };
+
+  // The developer capture control — the headless gate's entry point.
+  const captureStatus = h("p", {}, "Re-emits the canonical capture for the release gate (window.__bitPhysicsCapture).");
+  const captureBtn = h("button", { type: "button", class: "bp-btn", "data-bp": "capture" }, "Export proof capture");
+  const captureLink = h("a", { href: "#", hidden: true }, "Download the capture JSON");
+  captureBtn.addEventListener("click", () => {
+    if (isCapturing()) return;
+    void runCaptureExclusive(async () => {
+      resetCapture();
+      captureBtn.disabled = true;
+      captureLink.hidden = true;
+      if (held.governor) held.governor.suspended = true;
+      captureStatus.textContent = `Capturing the canonical run (${CANONICAL_STEPS.toLocaleString()} steps)…`;
+      try {
+        while (bootGpuBusy) await wait(20);
+        const bundle = await gate.captureCanonical();
+        exposeCapture(bundle, { download: false });
+        captureStatus.textContent = `Capture ready: window.__bitPhysicsCapture (${bundle.steps.length} frames).`;
+        captureLink.hidden = false;
+        captureLink.onclick = (e) => {
+          e.preventDefault();
+          download(new Blob([JSON.stringify(bundle)], { type: "application/json" }), "neural-ca-capture.json");
+        };
+      } catch (e) {
+        captureStatus.textContent = `Capture failed: ${(e as Error).message}`;
+      } finally {
+        captureBtn.disabled = false;
+        if (held.governor) held.governor.suspended = false;
+      }
+    });
+  });
+  studio.drawer.footer.append(captureStatus, h("div", { class: "gr-capture-row" }, captureBtn, captureLink));
+  (globalThis as { __growGate?: typeof gate }).__growGate = gate;
+  // until the live dish is up, the drawers say so (Learn and Prove replace this)
+  for (const pane of [studio.drawer.learn, studio.drawer.prove]) {
+    pane.textContent = "";
+    pane.append(h("p", { class: "gr-note", role: "status" }, "Compiling the live dish. The release gate's capture control below is ready now."));
+  }
+  markReady();
+  mark("ready");
+
+  // ------------------------------------------- the live dish, after --
+  try {
+    await startLive({ studio, gpu, query, ck, gate, manifestP, bootGpu, held });
+  } catch (e) {
+    fail(`the live dish could not start (${(e as Error).message}). The release gate's capture still works.`);
+  }
+}
+
+interface LiveBoot {
+  studio: Studio;
+  gpu: GpuContext;
+  query: URLSearchParams;
+  ck: Checkpoint;
+  gate: GateRunner;
+  manifestP: Promise<MenagerieManifest>;
+  bootGpu: <T>(fn: () => T | Promise<T>) => Promise<T>;
+  held: { governor: QualityGovernor | null };
+}
+
+/** Everything but the gate path: compiled and loaded once the page is ready for the gate. */
+async function startLive(b: LiveBoot): Promise<void> {
+  const { studio, gpu, query, ck, gate, bootGpu } = b;
+  const { device } = gpu;
   const tier = pickTier(gpu, readTierEnvironment(), query.get("tier"));
-  studio.veil.step("Fetching the trained networks");
-  const [ck, manifest] = await Promise.all([fetchCheckpoint(), fetchMenagerie()]);
+  studio.veil.step("Fetching the menagerie");
+  const manifest = await b.manifestP;
   const lib = new OrganismLibrary(manifest, ck);
   const url = urlSchema(manifest.organisms.map((o) => o.id));
-  studio.veil.step("Compiling the renderer");
-  const hdr = new HdrPipeline(gpu, studio.canvas, {
-    toneMap: "neutral",
-    // the organism's colours are what the network learned: hold exposure at 1
-    exposure: { mode: "pinned", value: 1 },
-  });
+  studio.veil.step("Compiling the live dish");
+  // the live solver's compiles start first (async); the renderer's run alongside
+  const kernelsP = LiveKernels.create(device);
+  kernelsP.catch(() => {}); // awaited below
+  const hdr = await bootGpu(
+    () =>
+      new HdrPipeline(gpu, studio.canvas, {
+        toneMap: "neutral",
+        // the organism's colours are what the network learned: hold exposure at 1
+        exposure: { mode: "pinned", value: 1 },
+      }),
+  );
   const profiler = new GpuProfiler(device, gpu.timestamps);
   const governor = new QualityGovernor({
     budgetMs: gpu.timestamps ? 12 : tier === "T1" ? 36 : 22,
     effectLevels: 0,
     allowSimStepDown: false,
   });
+  b.held.governor = governor;
   // GPU ms per frame for compute (the dish's steps + background jobs). The
   // render takes ~1–3 ms on a desktop GPU; T1 leaves more of the frame alone.
   const scheduler = new FrameScheduler({ budgetMs: tier === "T1" ? 3 : 6, defaultUnitMs: 0.25, minUnits: 1, maxUnits: 64 });
-  studio.veil.step("Compiling the network and the gate");
-  const [kernels, gate] = await Promise.all([LiveKernels.create(device), createGateRunner(device, ck)]);
-  const renderer = new DishRenderer(device);
-  const app = new App(gpu, studio, hdr, renderer, kernels, lib, scheduler, tier);
+  const renderer = await bootGpu(() => new DishRenderer(device));
+  mark("renderer");
+  const kernels = await kernelsP;
+  mark("kernels");
+  const app = await bootGpu(() => new App(gpu, studio, hdr, renderer, kernels, lib, scheduler, tier));
   if (gpu.timestamps) {
     profiler.onFrame = () => {
       const at1x = app.adaptToTimings(profiler.timings());
@@ -205,37 +319,6 @@ async function boot(): Promise<void> {
     lastOnScreen = key;
     prove.setOnScreen(s);
   };
-
-  // The developer capture control — the headless gate's entry point.
-  const captureStatus = h("p", {}, "Re-emits the canonical capture for the release gate (window.__bitPhysicsCapture).");
-  const captureBtn = h("button", { type: "button", class: "bp-btn", "data-bp": "capture" }, "Export proof capture");
-  const captureLink = h("a", { href: "#", hidden: true }, "Download the capture JSON");
-  captureBtn.addEventListener("click", () => {
-    if (isCapturing()) return;
-    void runCaptureExclusive(async () => {
-      resetCapture();
-      captureBtn.disabled = true;
-      captureLink.hidden = true;
-      governor.suspended = true;
-      captureStatus.textContent = `Capturing the canonical run (${CANONICAL_STEPS.toLocaleString()} steps)…`;
-      try {
-        const bundle = await gate.captureCanonical();
-        exposeCapture(bundle, { download: false });
-        captureStatus.textContent = `Capture ready: window.__bitPhysicsCapture (${bundle.steps.length} frames).`;
-        captureLink.hidden = false;
-        captureLink.onclick = (e) => {
-          e.preventDefault();
-          download(new Blob([JSON.stringify(bundle)], { type: "application/json" }), "neural-ca-capture.json");
-        };
-      } catch (e) {
-        captureStatus.textContent = `Capture failed: ${(e as Error).message}`;
-      } finally {
-        captureBtn.disabled = false;
-        governor.suspended = false;
-      }
-    });
-  });
-  studio.drawer.footer.append(captureStatus, h("div", { class: "gr-capture-row" }, captureBtn, captureLink));
 
   // ---------------------------------------------------- shell wiring --
   studio.heading.setScenes(
@@ -406,7 +489,8 @@ async function boot(): Promise<void> {
     organism: parsed.o === "today" ? lib.today() : parsed.o,
     cell: [parsed.cell[0]!, parsed.cell[1]!],
   };
-  await app.loadScene(scene.id, opts);
+  await bootGpu(() => app.loadScene(scene.id, opts));
+  mark("scene");
   app.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
   syncTune();
   studio.veil.done();
@@ -437,8 +521,8 @@ async function boot(): Promise<void> {
   });
   (globalThis as { __grow?: App }).__grow = app;
   (globalThis as { __growProve?: typeof prove }).__growProve = prove;
-  (globalThis as { __growGate?: typeof gate }).__growGate = gate;
-  markReady();
+  (globalThis as { __growLive?: boolean }).__growLive = true;
+  mark("live");
 
   if (query.get("bench") === "1") void bench(app, profiler, scheduler, rafTimes);
 }

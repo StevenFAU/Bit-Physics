@@ -78,6 +78,8 @@ async function open(path = "/v2/", viewport = { width: 1280, height: 720 }) {
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
   await page.goto(origin + path, { waitUntil: "load" });
   await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
+  // ready means the gate path is up; the live dish compiles and loads after it
+  await page.waitForFunction(() => globalThis.__growLive === true, undefined, { timeout: 60000 });
   return { ctx, page, errors };
 }
 const shot = async (page, name) => { if (out) await page.screenshot({ path: join(out, `${name}.png`) }); };
@@ -94,6 +96,42 @@ const hashAfter = (page, n) =>
     await app.advance(steps);
     return app.stateHash();
   }, n);
+
+// --- boot order: ready once the gate path is up, the live dish after ------------
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 720 }, deviceScaleFactor: 1 });
+  const page = await ctx.newPage();
+  const errors = [];
+  page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
+  page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
+  await page.goto(origin + "/v2/", { waitUntil: "load" });
+  await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
+  // the driver's move, at once: a native click on the capture control while the rest boots
+  const hash = () =>
+    T(page, async () => {
+      window.__bitPhysicsCaptureReady = false;
+      document.querySelector('[data-bp="capture"]').click();
+      while (window.__bitPhysicsCaptureReady !== true) await new Promise((r) => setTimeout(r, 50));
+      const bytes = new TextEncoder().encode(JSON.stringify(window.__bitPhysicsCapture.steps));
+      const d = await crypto.subtle.digest("SHA-256", bytes);
+      return Array.from(new Uint8Array(d), (x) => x.toString(16).padStart(2, "0")).join("");
+    });
+  const atReady = await hash();
+  await page.waitForFunction(() => globalThis.__growLive === true, undefined, { timeout: 60000 });
+  const boot = await T(page, () => globalThis.__growBoot);
+  await page.waitForTimeout(1500);
+  const later = await hash();
+  const live = await T(page, () => ({ tick: globalThis.__grow.sim.tick, alive: globalThis.__grow.lastStats?.alive ?? 0 }));
+  check(
+    "ready comes once the gate path is up, before the live dish is compiled",
+    boot.ready <= boot.renderer && boot.ready <= boot.kernels && boot.ready < boot.live,
+    `ms after navigation: gate ${boot.gate}, ready ${boot.ready}, renderer ${boot.renderer}, live solver ${boot.kernels}, live ${boot.live}`,
+  );
+  check("a capture clicked at ready, while the rest boots, is byte-identical to one taken later", atReady === later, `${atReady.slice(0, 16)}… vs ${later.slice(0, 16)}…`);
+  check("the live dish then runs", live.tick > 10 && live.alive > 100, JSON.stringify(live));
+  check("no console errors (boot order)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
 
 // --- boot: the day's organism ---------------------------------------------------
 {
