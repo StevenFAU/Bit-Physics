@@ -22,18 +22,26 @@ export function simAsset(path: string): string {
 
 /**
  * The shared v1 chrome (common-web's panel nav and no-WebGPU card) writes its
- * site links for a page at the sim root, where "../../" is the site root. On
- * the v1/ page, resolve them from the sim root instead. Does nothing on a page
- * at the root. Both elements are appended to <body>, so watching its children
- * catches the no-WebGPU card, which appears after an async check.
+ * site URLs for a page at the sim root, where "../../" is the site root: the
+ * nav and card links, and the card's preview (img/video src, video poster).
+ * On the v1/ page, resolve them from the sim root instead. Does nothing on a
+ * page at the root. Both elements are appended to <body>, so watching its
+ * children catches the no-WebGPU card, which appears after an async check;
+ * the rebase runs in that append's microtask, before the preview's request
+ * for the wrong URL can fail and remove it.
  */
 export function rebaseSharedChrome(): void {
   if (new URL("./", location.href).href === SIM_ROOT) return;
+  const card = '[data-bp2="webgpu-fallback"]';
   const fix = (): void => {
-    for (const a of document.querySelectorAll<HTMLAnchorElement>(
-      '.bps-nav a[href^="../"], [data-bp2="webgpu-fallback"] a[href^="../"]',
-    )) {
-      a.href = new URL(a.getAttribute("href") ?? "", SIM_ROOT).href;
+    for (const [selector, attr] of [
+      [`.bps-nav a[href^="../"], ${card} a[href^="../"]`, "href"],
+      [`${card} img[src^="../"], ${card} video[src^="../"]`, "src"],
+      [`${card} video[poster^="../"]`, "poster"],
+    ] as const) {
+      for (const el of document.querySelectorAll(selector)) {
+        el.setAttribute(attr, new URL(el.getAttribute(attr) ?? "", SIM_ROOT).href);
+      }
     }
   };
   fix();
