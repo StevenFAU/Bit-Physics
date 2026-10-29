@@ -315,6 +315,11 @@ export class LiveNca {
     this.graftBG = [graftBG(a), graftBG(b)];
   }
 
+  /** The state was written from outside (Teach's still dishes): count it as a change. */
+  touch(): void {
+    this.version += 1;
+  }
+
   /** The buffer holding the current state (16 channels per cell, cell-major). */
   get state(): GPUBuffer {
     return this.bufs[this.parity]!;

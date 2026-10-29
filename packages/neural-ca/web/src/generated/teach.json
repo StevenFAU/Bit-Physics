@@ -1,0 +1,44 @@
+{
+  "_generated_by": "packages/neural-ca/web/gen-verification.mjs — do not edit",
+  "gradcheck": {
+    "budget_rel_l2": 0.000001,
+    "tolerance_row": "golden_tolerance.continuous-ca.neural-ca-gradcheck",
+    "tolerance": {
+      "grad_rel_l2_max": 0.000001,
+      "measured_worst_radv": 1.14e-7,
+      "measured_worst_swiftshader": 1.11e-7,
+      "f32_autograd_floor": 1.8133e-7
+    },
+    "tolerance_table": "tools/testkit/equivalence/tolerance.toml",
+    "fixture": "packages/neural-ca/web/public/teach/gradcheck.json",
+    "fixture_sha256": "0157b62a885818e359eafa86aa321296aac44dfd61bc7d190862d989a6ae47ff",
+    "generator": "packages/neural-ca/python/neural_ca/gradcheck.py",
+    "torch": "2.12.0+cu130",
+    "cases": [
+      {
+        "name": "disk-T24",
+        "steps": 24,
+        "batch": 2,
+        "start": "seed",
+        "weights": "disk",
+        "f32_autograd_rel_l2": 1.0608041516973605e-7
+      },
+      {
+        "name": "gecko-T64",
+        "steps": 64,
+        "batch": 4,
+        "start": "seed",
+        "weights": "gecko",
+        "f32_autograd_rel_l2": 1.813257386643248e-7
+      },
+      {
+        "name": "random-T16",
+        "steps": 16,
+        "batch": 2,
+        "start": "blob",
+        "weights": "random",
+        "f32_autograd_rel_l2": 5.0715750920586074e-8
+      }
+    ]
+  }
+}

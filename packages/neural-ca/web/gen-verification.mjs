@@ -365,3 +365,44 @@ const outDir = join(here, "src", "generated");
 mkdirSync(outDir, { recursive: true });
 writeFileSync(join(outDir, "verification.json"), JSON.stringify(out, null, 2) + "\n");
 console.log("gen-verification: OK — src/generated/verification.json");
+
+// --- 6. Teach (v2 M2): the gradient-check budget, verbatim from tolerance.toml --
+//
+// Written to its own file (src/generated/teach.json) so the v1 page's bundle,
+// which imports verification.json, is unchanged by the v2 page's Teach.
+
+const GC_PATH = "packages/neural-ca/web/public/teach/gradcheck.json";
+const GC_BIN = "packages/neural-ca/web/public/teach/gradcheck.bin";
+const gc = JSON.parse(read(GC_PATH));
+const gcSha = createHash("sha256").update(readBytes(GC_BIN)).digest("hex");
+if (gcSha !== gc.sha256) fail(`${GC_BIN}: sha256 ${gcSha} does not match ${GC_PATH} (${gc.sha256}) — rerun neural_ca.gradcheck`);
+const GC_ROW = "golden_tolerance.continuous-ca.neural-ca-gradcheck";
+const gcBlock = tolToml.match(/\[golden_tolerance\.continuous-ca\.neural-ca-gradcheck\]\s*\n((?:[a-z0-9_]+ = [^\n]+\n)+)/);
+if (!gcBlock) fail(`${TOL_PATH}: no [${GC_ROW}] row (the Teach gradient-check budget)`);
+const gcVals = {};
+{
+  for (const line of gcBlock[1].trim().split("\n")) {
+    const m = line.match(/^([a-z0-9_]+) = (.+)$/);
+    if (!m) fail(`${TOL_PATH}: [${GC_ROW}]: cannot parse "${line}"`);
+    const v = m[2].trim();
+    gcVals[m[1]] = /^".*"$/.test(v) ? v.slice(1, -1) : Number(v);
+  }
+}
+const gcBudget = gcVals.grad_rel_l2_max;
+if (!(typeof gcBudget === "number" && gcBudget > 0)) fail(`${TOL_PATH}: [${GC_ROW}] grad_rel_l2_max missing or not a positive number`);
+const teach = {
+  _generated_by: "packages/neural-ca/web/gen-verification.mjs — do not edit",
+  gradcheck: {
+    budget_rel_l2: gcBudget,
+    tolerance_row: GC_ROW,
+    tolerance: gcVals,
+    tolerance_table: TOL_PATH,
+    fixture: GC_PATH,
+    fixture_sha256: gc.sha256,
+    generator: gc.generator,
+    torch: gc.torch,
+    cases: gc.cases.map((c) => ({ name: c.name, steps: c.steps, batch: c.batch, start: c.start, weights: c.weights, f32_autograd_rel_l2: c.f32_autograd_rel_l2 })),
+  },
+};
+writeFileSync(join(outDir, "teach.json"), JSON.stringify(teach, null, 2) + "\n");
+console.log("gen-verification: OK — src/generated/teach.json");

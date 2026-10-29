@@ -44,6 +44,7 @@ const PATHS = {
   shark: '<path d="M7 15.5C8.4 10.6 11.6 6.5 17 4.5c-1.2 3.6-1 7.4.8 11"/><path d="M3 17.5c2.2-1.2 4.4-1.2 6 0s3.8 1.2 6 0 4.4-1.2 6 0"/>',
   graft: '<circle cx="7" cy="17" r="3.5" stroke-dasharray="2 2.2"/><circle cx="17" cy="7" r="3.5"/><path d="M10 14l4-4"/><path d="M10.5 10H14v3.5"/>',
   freeze: '<path d="M12 2.5v19M3.8 7.25l16.4 9.5M3.8 16.75l16.4-9.5"/><path d="M9.5 4l2.5 2.5L14.5 4M9.5 20l2.5-2.5 2.5 2.5"/>',
+  brush: '<path d="M20.5 3.5l-9.2 9.2"/><path d="M11.3 12.7l-1.6-1.6c-2.4.2-4 1.8-4.1 4.2-.1 1.9-1 3.2-2.6 3.9 3.6 1.4 7.6.6 9.4-1.6.9-1.2 1.1-2.4.5-3.3z"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;
