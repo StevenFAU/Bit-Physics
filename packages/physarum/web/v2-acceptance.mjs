@@ -767,6 +767,28 @@ const hashAfter = (page, n) =>
   await ctx.close();
 }
 {
+  // review regression (PR #47): paused, a colony's personality edit rebuilds the card; it must
+  // keep the dish's reading (none is taken at the same step), and an undo must read again
+  const { ctx, page, errors } = await open("/v2/?s=territories");
+  await page.waitForTimeout(3000);
+  const r = await T(page, async () => {
+    const app = globalThis.__physarum;
+    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
+    if (!app.clock.paused) app.togglePlay();
+    await sleep(1500);
+    const nums = () => [...document.querySelectorAll(".ph-terr-num")].map((e) => e.textContent);
+    app.setColonyPad(1, { i: 2, j: 0 });
+    await sleep(1000);
+    const afterEdit = nums();
+    await app.undo();
+    await sleep(1500);
+    return { afterEdit, afterUndo: nums(), read: app.territory?.tick, tick: app.sim.tick };
+  });
+  check("paused: a colony edit keeps the card's reading, and undo reads the dish again", r.afterEdit.every((t) => t !== "—") && r.afterUndo.every((t) => t !== "—") && r.read === r.tick, JSON.stringify(r));
+  check("no console errors (paused colony edit)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
   // a share link reproduces the match-up: two colonies, a personality each, rivalry, a mixed start
   const { ctx, page, errors } = await open("/v2/?s=territories&col=2&riv=0.5&mix=1&cp=24,25,-1,-1&seed=7");
   const r = await T(page, () => {

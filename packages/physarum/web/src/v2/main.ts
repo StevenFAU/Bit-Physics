@@ -276,7 +276,11 @@ async function boot(): Promise<void> {
   terrCard.onMixed = (m) => void app.setMixed(m);
   const syncColonies = (): void => {
     terrCard.setShown(app.sim.colonies > 1);
-    if (app.sim.colonies > 1) terrCard.sync(app.colonyPads, app.rivalry, app.tier, app.mixed, sharedName());
+    if (app.sim.colonies > 1) {
+      terrCard.sync(app.colonyPads, app.rivalry, app.tier, app.mixed, sharedName());
+      // a rebuilt card starts blank: give it the reading the dish already has (paused edits take none)
+      terrCard.set(app.territory);
+    }
   };
   // the shared personality's short name, for colonies that follow Tune
   const sharedName = (): string => {

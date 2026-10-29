@@ -78,7 +78,7 @@
 >   - `physarum-v2.png` and `physarum-v2.webm`: Territories on a mixed start with the chrome
 >     off (frame 420 at 512 × 512, 555 KB; loop: 300 frames at 30 fps from frame 90, crf 46, 609 KB). Committed plain, not LFS.
 >   - The landing card and URLs are unchanged; swapping these in is the release step.
-> - **Checks.** `v2-acceptance.mjs` 87/87. New for M3: Territories boots, fair sites, the
+> - **Checks.** `v2-acceptance.mjs` 89/89. New for M3 (plus one review regression from #47: a paused colony edit keeps the card's reading): Territories boots, fair sites, the
 >   contest's winner, mass per colony (apart and mixed), rivalry against overlap, colony
 >   personality undo replaying to the same bytes, a share link, the card's fit and axe at
 >   1440 and 390 px, and the morphology baseline at the boot tier. `check-studio` clean;

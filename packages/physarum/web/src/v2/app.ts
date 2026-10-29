@@ -192,6 +192,8 @@ export class App {
   territory: TerritoryReading | null = null;
   private territoryDue = 0;
   private territoryBusy = false;
+  /** Bumped when the dish changes under a reading (restore, undo): a reading begun before is dropped. */
+  private territoryGen = 0;
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: GlowView, kernels: LiveKernels, tier: Tier) {
     this.gpu = gpu;
@@ -213,6 +215,7 @@ export class App {
         this.strokes = c.strokes.slice();
         this.colonyPads = c.colonyPads.slice();
         this.rivalry = c.cp.rivalry;
+        this.forgetTerritory();
         this.hooks.onColonies?.();
         this.view.invalidate();
         this.hooks.onParams?.(this.sim.params, this.pad);
@@ -701,6 +704,7 @@ export class App {
       this.strokes = snap.strokes.slice();
       this.colonyPads = snap.colonyPads.slice();
       this.rivalry = snap.cp.rivalry;
+      this.forgetTerritory();
       this.log.load(kept);
       this.applied = snap.logIndex;
       const span = target - snap.cp.tick;
@@ -1300,12 +1304,20 @@ export class App {
     const sim = this.sim;
     if (sim.colonies < 2) return null;
     const tick = sim.tick;
+    const gen = this.territoryGen;
     const [shares, agents] = await Promise.all([sim.shares(), sim.colonyCounts()]);
-    if (sim !== this.sim) return null;
+    if (sim !== this.sim || gen !== this.territoryGen) return null;
     const t = { tick, shares, agents };
     this.territory = t;
     this.hooks.onTerritory?.(t);
     return t;
+  }
+
+  /** Territories: the dish changed without its step moving (restore, undo): read it again, even paused. */
+  private forgetTerritory(): void {
+    this.territory = null;
+    this.territoryDue = 0;
+    this.territoryGen += 1;
   }
 
   /** Territories: read the shares about twice a second while the dish changes. */
