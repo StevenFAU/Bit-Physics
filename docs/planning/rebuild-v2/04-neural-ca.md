@@ -8,6 +8,38 @@
 > **M3 done 2026-10-29** (Chimera, Textures, staged posters and loops): the sim is complete to this
 > spec; the release swap (v2 to the sim's root URL) is a separate step.
 >
+> **Released (2026-10-30):** the v2 page replaced v1 at `/sims/neural-ca/`. v1 is kept at
+> `/sims/neural-ca/v1/` for one release, and the old `/v2/` address forwards to the root with its
+> query and hash. Both pages read their committed files (checkpoint, Menagerie, Textures, Teach's
+> gradient-check fixture) through `src/sim-root.ts`. `pipeline.py validate` gates both pages:
+> bit-exact, max_abs 0.0 over 21 frames, and all four captures (two per page) byte-identical. The
+> staged `neural-ca-v2` poster and loop are now the landing card's `neural-ca.png` / `.webm`, under
+> the new name Grow. The splash reel, which had cut v1 (its white dish strobed the dark reel),
+> gets the Menagerie: eight organisms unfurling on dark dishes at quarter speed (250 shots,
+> 92 KB). The CI shell check now runs Grow's root page, with the 180 s ready limit validate uses
+> (lavapipe takes about a minute to compile the gate's pipelines).
+> - **Teach's "Grow it" check, made deterministic.** The check grew whatever network training
+>   had reached when a once-a-second poll saw it 100 iterations past recognisable, so the overlap
+>   at step 300 varied with the stopping point: 0.59–0.90 over eight runs (0.592, 0.759, 0.899,
+>   0.770, 0.752 on c7453d2; 0.75–0.88 at M2), against a bar of 0.7. Training is a function of the
+>   run seed, so the check now retrains with the same seed at the faster pace, stops at exactly
+>   the iteration the trainer called recognisable, evaluates there again (it must match the first
+>   run's evaluation bit for bit, a new check), and grows that network on the live kernel with
+>   the dish's mask seed 42. The bar is unchanged. (Growing on the live kernel with the trainer's
+>   evaluation seed would not reproduce its masks: the trainer hashes `(seed, step, cell)` with
+>   `bp_hash3`, the gated kernel with its own `pcg_fire`.) Measured (RX 6800 XT, RADV): 0.881
+>   in both acceptance runs (run seed 1, recognisable at iteration 1,350; the replayed evaluation
+>   0.8603 / 0.8808 at 96 / 300 steps, equal to the first run's). As a stand-in for other GPUs'
+>   trajectories, run seeds 2 and 3 (recognisable at 1,300 and 1,250, replays equal too) grew to
+>   0.885 and 0.825 at mask seed 42; over mask seeds 1, 2, 3 and 42 the three networks gave
+>   0.743–0.902.
+> - **Checks.** `v2-acceptance.mjs` 117/117 twice on the root page (the 116, plus the replay
+>   check); `web/tools/check-studio.mjs` clean on the root page and on each scene (Menagerie,
+>   Inside the Cell, Teach, Chimera, Textures, Many seeds). A static serve under `/Bit-Physics/`
+>   (the Pages layout) in WebGPU Chromium: no response ≥ 400 out of 163 across the root page's
+>   scenes and Prove's gradient check, `v1/` (its nav and favicon), `/v2/` and `/v2` (forwarded
+>   to the root with query and hash), and the landing card.
+>
 > **M3, Chimera, Textures, posters and loops (2026-10-29): done.** On the `v2/` page only; the v1
 > page, the gated kernel, the capture path and the committed checkpoint (sha256 `c98a4678…`) are
 > untouched. Measured on the RX 6800 XT (RADV, headless snap Chromium) unless marked:
