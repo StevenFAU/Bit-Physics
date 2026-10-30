@@ -174,8 +174,15 @@ export class App {
   private busy = false;
   /** Frames submitted and not yet done; at most `maxInFlight`. */
   private inFlight = 0;
-  /** Frames allowed in flight (see the bench: one leaves the GPU idle half the time). */
-  maxInFlight = 2;
+  /**
+   * Frames allowed in flight. One leaves the GPU idle half the time and it
+   * clocks down (see the bench). Firefox reports each frame done about one
+   * display frame later than Chrome, so two there act like one here: at a
+   * million fish the GPU clocked down and Firefox drew ~70 fps against
+   * Chrome's ~140. Three keep both at ~140; Chrome's own back-pressure binds
+   * first, so it queues no deeper than it did with two.
+   */
+  maxInFlight = 3;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
@@ -845,9 +852,18 @@ export class App {
   }
 
   private tick(now: number): void {
-    // the capture lock: the live loop yields entirely while a capture runs, and
-    // a callback the GPU is too busy for (frames in flight) is skipped
-    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight) return;
+    // the capture lock: the live loop yields entirely while a capture runs
+    if (isCapturing() || this.busy) return;
+    if (this.inFlight >= this.maxInFlight) {
+      // A callback the GPU is too busy for (frames in flight) is skipped. Firefox
+      // (wgpu) resolves onSubmittedWorkDone only when it next checks for
+      // finished work: at the next queue submit, or on a ~100 ms timer. A loop
+      // that waits without submitting waits for the timer (with two in flight,
+      // ~20 fps at any fish count). An empty submit makes it check now; Chrome
+      // shows no change.
+      this.device.queue.submit([]);
+      return;
+    }
     // time since the last frame actually submitted, so skipped callbacks count:
     // the governor sees the real frame interval and the clock keeps its speed
     const dt = Math.min((now - this.last) / 1000, 0.1);
@@ -860,7 +876,7 @@ export class App {
       const st = this.governor?.status();
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
-    // The governor watches the frame interval, what the visitor sees. (With two
+    // The governor watches the frame interval, what the visitor sees. (With
     // frames in flight a pass's begin timestamp can land while the previous
     // frame still runs, so per-pass GPU times overlap and read high.) It waits
     // out the first seconds of a scene: shader compiles and the GPU clocking up.
