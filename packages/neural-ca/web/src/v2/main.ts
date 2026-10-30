@@ -99,6 +99,9 @@ async function boot(): Promise<void> {
       "A petri dish where an organism grows from one cell under a learned rule. Choose Cut and drag across it to cut it, Seed to plant new cells, Graft to move a piece of it, Freeze to stop a region updating, Look to pan and zoom, or Probe to read a cell.",
   });
   if (query.get("chrome") === "off") studio.setChrome(false);
+  // the heading names the scene from the start: the live dish, which sets it
+  // (with its prompt), comes up after ready — on a software GPU, a minute later
+  studio.heading.set(sceneById(query.get("s") ?? "").title, "");
   // the canvas takes its box's shape now: ready comes before the renderer
   // sizes it, and a 300 × 150 default would set its aspect for anything that
   // sizes it by width (the poster and loop generators do)

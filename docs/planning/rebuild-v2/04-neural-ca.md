@@ -17,7 +17,15 @@
 > the new name Grow. The splash reel, which had cut v1 (its white dish strobed the dark reel),
 > gets the Menagerie: eight organisms unfurling on dark dishes at quarter speed (250 shots,
 > 92 KB). The CI shell check now runs Grow's root page, with the 180 s ready limit validate uses
-> (lavapipe takes about a minute to compile the gate's pipelines).
+> (lavapipe takes about a minute to compile the gate's pipelines). Its first CI run failed:
+> Grow flips ready when the gate path is up, and the live dish, which lifts the loading veil
+> and fills in the scene heading, comes up long after that on a software GPU. So the check
+> looked at the loading screen: an empty `<h1>` (axe), and screenshots timed out while the live
+> pipelines compiled. `check-studio.mjs` now also waits for the shell's loading veil to lift
+> (no change for the other sims, whose veil lifts at ready), and Grow names the scene in its
+> heading from the start. Reproduced and fixed locally on SwiftShader (Playwright's Chromium
+> with the lavapipe ICD falls back to it): all four sizes timed out before, all four clean after
+> (11 min 20 s).
 > - **Teach's "Grow it" check, made deterministic.** The check grew whatever network training
 >   had reached when a once-a-second poll saw it 100 iterations past recognisable, so the overlap
 >   at step 300 varied with the stopping point: 0.59–0.90 over eight runs (0.592, 0.759, 0.899,

@@ -102,6 +102,13 @@ for (const vp of VIEWPORTS) {
   try {
     await page.goto(base, { waitUntil: "load" });
     await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: READY_TIMEOUT_MS });
+    // A page may flip ready before it has finished booting (Grow: the gate path
+    // comes first, the live dish after it). Check the booted page, not its
+    // loading veil.
+    await page.waitForFunction(() => {
+      const veil = document.querySelector(".bp-veil");
+      return !veil || veil.hidden || veil.classList.contains("is-done");
+    }, undefined, { timeout: READY_TIMEOUT_MS });
     await page.waitForTimeout(1500);
     const geo = await page.evaluate(() => {
       const r = (el) => { const b = el.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
