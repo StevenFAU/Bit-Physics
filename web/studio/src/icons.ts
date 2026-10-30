@@ -48,7 +48,6 @@ const PATHS = {
   wave: '<path d="M3 9c2.5-2 5-2 7.5 0s5 2 7.5 0c1.2-1 2-1.3 3-1.3"/><path d="M3 15.5c2.5-2 5-2 7.5 0s5 2 7.5 0c1.2-1 2-1.3 3-1.3"/>',
   fish: '<path d="M3 12c3-4.6 9-6 14-2l4-3v10l-4-3c-5 4-11 2.6-14-2z"/><path d="M14.4 10.6v.01"/>',
   eye: '<path d="M2.5 12c2.4-4.2 5.6-6.3 9.5-6.3s7.1 2.1 9.5 6.3c-2.4 4.2-5.6 6.3-9.5 6.3S4.9 16.2 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
-  matrix: '<rect x="3.5" y="3.5" width="17" height="17" rx="1.5"/><path d="M3.5 9.2h17M3.5 14.8h17M9.2 3.5v17M14.8 3.5v17"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

@@ -27,7 +27,20 @@
 // seed across loads) and Food Chain (the census, Feed, Release, the replay
 // card, save / restore, a seed across loads, and every population alive and
 // cycling through ten minutes of simulated time).
-// Prints BP_BENCH lines at the end (all five scenes).
+// M3: Eyes Only (the vision brain at its count; the brains' exactness, every
+// fish's field against f64, the paper's ordered motion against the f64
+// reference with its no-edges control, all as Prove runs them; the live
+// scene schools and, with the edge terms off, does not; save / restore; a
+// seed across loads; its link), Species Matrix (the kinds and the matrix
+// panel; a keyboard edit reaching the running brain and the link; a new
+// number of kinds restarting the ocean; the mixing card; save / restore; a
+// seed across loads; an edited matrix on the link), Watch one (it picks the
+// fish under the pointer, keeps the same fish through memory re-sorts, lists
+// its neighbours, the camera follows it, a pan takes the camera back and
+// Follow returns it, Let go; Eyes Only's retina; the species line; no
+// overlap with the scene's own panel at 1280×720; at most six tools in every
+// scene).
+// Prints BP_BENCH lines at the end (all seven scenes).
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -712,8 +725,352 @@ let v4 = null;
   await b.ctx.close();
 }
 
-// --- frame time: the boot scene and the M1 and M2 scenes -----------------------
+// --- M3 helpers -------------------------------------------------------------------------
+/** Pause, and return the screen point (CSS px) of the live fish nearest the view's centre. */
+const fishNearCentre = (page) =>
+  T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    await app.device.queue.onSubmittedWorkDone();
+    const b = await app.flock.readBoids();
+    const W = app.camera.viewW;
+    const H = app.camera.viewH;
+    let best = null;
+    let bd = Infinity;
+    for (let i = 0; i < app.flock.n; i += 1) {
+      if (b[i * 6 + 5] < 0) continue;
+      const [sx, sy] = app.camera.domainToScreen(b[i * 6] + app.flock.halfW, b[i * 6 + 1] + app.flock.halfH);
+      const d = Math.hypot(sx - W / 2, sy - H / 2);
+      if (d < bd) {
+        bd = d;
+        best = [sx, sy];
+      }
+    }
+    return best;
+  });
+
+/** Watch the fish at (x, y), run for `ms`, then pause and check the record against the GPU's own copy of that fish. */
+const watchAndTrack = (page, at, ms) =>
+  T(
+    page,
+    async ([at, ms]) => {
+      const app = globalThis.__swarm;
+      const ok = await app.watchAt(at[0], at[1]);
+      if (!ok) return { ok };
+      const id = app.watch.id;
+      const tick0 = app.flock.tick;
+      const reorders0 = app.flock.reorders;
+      app.clock.paused = false;
+      const slots = new Set();
+      const t0 = performance.now();
+      while (performance.now() - t0 < ms) {
+        await new Promise((r) => setTimeout(r, 50));
+        if (app.watch.rec?.found) slots.add(app.watch.rec.slot);
+      }
+      // while following: the fish where the record, carried forward to this step, puts it — against the view's centre
+      const rec = app.watch.rec;
+      const ahead = app.flock.tick - app.watch.recTick;
+      const [sx, sy] = app.camera.domainToScreen(rec.pos[0] + rec.vel[0] * ahead + app.flock.halfW, rec.pos[1] + rec.vel[1] * ahead + app.flock.halfH);
+      const offRunning = Math.hypot(sx - app.camera.viewW / 2, sy - app.camera.viewH / 2);
+      app.clock.paused = true;
+      await new Promise((r) => setTimeout(r, 600));
+      // paused, the record is of the current step: the camera must sit on the fish itself
+      const [px, py] = app.camera.domainToScreen(app.watch.rec.pos[0] + app.flock.halfW, app.watch.rec.pos[1] + app.flock.halfH);
+      const offCentre = Math.hypot(px - app.camera.viewW / 2, py - app.camera.viewH / 2);
+      // paused: the tracker still runs each frame, so its last record is of the current step
+      const [b, ids] = await Promise.all([app.flock.readBoids(), app.flock.readIds()]);
+      let slot = -1;
+      for (let s = 0; s < app.flock.n; s += 1) if (ids[s] === id) slot = s;
+      const r = app.watch.rec;
+      const same = slot >= 0 && r.found && r.slot === slot && r.pos[0] === b[slot * 6] && r.pos[1] === b[slot * 6 + 1] && app.watch.recTick === app.flock.tick;
+      // its neighbours: every fish within the reach, counted on the CPU from the same state
+      const { radius } = app.watchReach();
+      let within = 0;
+      const W = app.flock.halfW * 2;
+      const H = app.flock.halfH * 2;
+      for (let s = 0; s < app.flock.n; s += 1) {
+        if (s === slot || b[s * 6 + 5] < 0) continue;
+        let dx = b[s * 6] - b[slot * 6];
+        let dy = b[s * 6 + 1] - b[slot * 6 + 1];
+        dx -= W * Math.round(dx / W);
+        dy -= H * Math.round(dy / H);
+        if (Math.hypot(dx, dy) < radius) within += 1;
+      }
+      return {
+        ok,
+        id,
+        steps: app.flock.tick - tick0,
+        reorders: app.flock.reorders - reorders0,
+        slots: slots.size,
+        same,
+        total: r.total,
+        within,
+        listed: r.listed,
+        offCentre,
+        offRunning,
+        follow: app.watch.follow,
+        retina: !!app.watch.retina,
+        panel: !!document.querySelector(".sw-watch"),
+        panelText: document.querySelector(".sw-watch")?.textContent ?? "",
+      };
+    },
+    [at, ms],
+  );
+
+/** The watch panel and the scene's own panel at the current viewport: no overlap. */
+const panelsClear = (page) =>
+  T(page, () => {
+    const vis = (el) => el && getComputedStyle(el).display !== "none" && el.getBoundingClientRect().width > 0;
+    const els = [...document.querySelectorAll("[data-bp-chrome], .bp-rail, .bp-transport, .bp-options, .bp-top-actions, .bp-heading .bp-scene-title")].filter(vis);
+    const r = els.map((e) => ({ c: e.className.split(" ")[0], b: e.getBoundingClientRect() }));
+    const bad = [];
+    for (let i = 0; i < r.length; i += 1)
+      for (let j = i + 1; j < r.length; j += 1) {
+        const a = r[i].b;
+        const c = r[j].b;
+        if (a.left < c.right - 1 && c.left < a.right - 1 && a.top < c.bottom - 1 && c.top < a.bottom - 1) bad.push(`${r[i].c} × ${r[j].c}`);
+      }
+    return bad;
+  });
+
+// --- M3: Eyes Only -------------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=eyes-only");
+  const d = await T(page, () => {
+    const g = globalThis.__bpDebug();
+    return { ...g, tools: [...document.querySelectorAll(".bp-rail-tools [data-tool]")].map((b) => b.dataset.tool), colour: globalThis.__swarm.view.look.colour, expMax: globalThis.__swarm.hdr.exposure.max };
+  });
+  check("Eyes Only boots on the vision brain at its count, Watch first", d.scene === "eyes-only" && d.brain?.kind === "vision" && d.agents === (d.tier === "T1" ? 1024 : 2048) && d.tools[0] === "watch" && d.colour === "heading" && d.expMax === 1,
+    `${d.agents.toLocaleString()} fish on ${d.world.map((x) => x.toFixed(0)).join(" × ")} BL, sight ${d.brain?.p.range} BL, tools ${d.tools.join(", ")}`);
+  await shot(page, "m3-eyes-boot");
+
+  // the M3 brains' proofs, as Prove runs them
+  const ex = await T(page, () => globalThis.__swarmProve.m3Exact());
+  for (const r of ex) {
+    check(`${r.brain}: brute force ≡ counting sort, and run twice (${r.n.toLocaleString()} fish, 60 steps)`, r.identical && r.repeatable && r.nan === 0 && !r.saturated, `${r.sort.slice(0, 16)}…`);
+    check(`${r.brain}: re-sorting in memory changes no fish (by id)`, r.reorder.differing === 0 && r.reorder.reorders > 0, `${r.reorder.n.toLocaleString()} fish, ${r.reorder.reorders} re-sorts, ${r.reorder.differing} differ`);
+  }
+  const fc = await T(page, () => globalThis.__swarmProve.field());
+  check("every fish's visual field matches the f64 reference (declared ≤ 5e-5 of bins, |Δψ|, |Δv| ≤ 1e-6)", fc.differ / fc.bins <= 5e-5 && fc.maxDpsi <= 1e-6 && fc.maxDv <= 1e-6,
+    `${fc.differ} of ${fc.bins.toLocaleString()} bins in ${fc.fishDiffering} fish; |Δψ| ${fc.maxDpsi.toExponential(2)}, |Δv| ${fc.maxDv.toExponential(2)}; cover ${(fc.cover * 100).toFixed(0)}%, ${fc.edges.toFixed(1)} edges`);
+  const oc = await T(page, () => globalThis.__swarmProve.order());
+  check("ordered motion emerges with no alignment rule: GPU ≡ f64 reference (z ≤ 4), both φ > 0.5", oc.z <= 4 && oc.gpuMean > 0.5 && oc.cpuMean > 0.5,
+    `⟨φ⟩ GPU ${oc.gpuMean.toFixed(3)} (32 seeds) · CPU ${oc.cpuMean.toFixed(3)} (32 seeds), z ${oc.z.toFixed(2)}; ${(oc.gpuSeconds + oc.cpuSeconds).toFixed(1)} s`);
+  check("…and not without the edge terms (control ⟨φ⟩ ≤ 0.25)", oc.controlMean <= 0.25, `control ⟨φ⟩ ${oc.controlMean.toFixed(3)}, largest ${Math.max(...oc.control).toFixed(3)}`);
+
+  // the live scene schools — and with the edge terms off, does not
+  const live = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const run = async (a1) => {
+      app.clock.paused = true;
+      const p = { ...app.flock.brain.p, a1, b1: a1 };
+      await app.loadScene("eyes-only", { seed: app.seed, brain: { kind: "vision", p } });
+      app.clock.paused = true;
+      await app.advance(3600);
+      app.clock.paused = false;
+      const t0 = performance.now();
+      const tick = app.flock.tick;
+      while (performance.now() - t0 < 6000) {
+        await new Promise((r) => setTimeout(r, 100));
+        const s = globalThis.__bpDebug().schools;
+        if (s && app.flock.tick > tick) return { ...s, phi: globalThis.__bpDebug().order?.phi ?? null, panel: document.querySelector(".sw-eyes")?.textContent ?? "" };
+      }
+      return null;
+    };
+    const on = await run(app.flock.brain.p.a1);
+    const off = await run(0);
+    await app.loadScene("eyes-only", { seed: app.seed });
+    return { on, off };
+  });
+  check("the live ocean schools by step 3,600: each school's own order > 0.8, most fish in schools", live.on && live.on.order > 0.8 && live.on.schooled > 0.8 * d.agents,
+    live.on ? `${live.on.schools} schools, ${live.on.schooled} fish, own order ${live.on.order.toFixed(3)}, whole-ocean φ ${live.on.phi?.toFixed(3)}` : "no sample");
+  check("…with the edge terms off it does not (own order < 0.5)", live.off && (live.off.schools === 0 || live.off.order < 0.5),
+    live.off ? `${live.off.schools} schools, own order ${live.off.order.toFixed(3)}, φ ${live.off.phi?.toFixed(3)}` : "no sample");
+  check("the panel reads the schools", live.on && /schools?/.test(live.on.panel) && /Schooling|Lining up|Gathering/.test(live.on.panel), live.on?.panel.slice(0, 120));
+
+  // Watch: its retina, the same fish through re-sorts, the camera
+  const at = await fishNearCentre(page);
+  const w = await watchAndTrack(page, at, 2500);
+  check("Watch picks the fish under the pointer and keeps the same fish through memory re-sorts", w.ok && w.same && w.reorders >= 2,
+    `fish ${w.id}: ${w.steps} steps, ${w.reorders} re-sorts, seen in ${w.slots} memory slots; record = the GPU's own copy of that fish: ${w.same}`);
+  check("…counts every fish within its sight (the record against the CPU, same step)", w.total === w.within && w.total > 0, `${w.total} on the GPU, ${w.within} on the CPU (${w.listed} listed)`);
+  check("…the camera follows it (within 40 px of the centre while it swims, 2 px once paused)", w.follow && w.offRunning < 40 && w.offCentre < 2, `${w.offRunning.toFixed(1)} px swimming, ${w.offCentre.toFixed(2)} px paused`);
+  check("…and its panel shows its retina", w.retina && w.panel && /What it sees/.test(w.panelText) && /edges?/.test(w.panelText), w.panelText.slice(0, 140));
+  await shot(page, "m3-eyes-watch");
+  const clear = await panelsClear(page);
+  check("Eyes Only: watching, no panel overlaps another at 1280×720", clear.length === 0, clear.join(", "));
+  // a drag with the Watch tool pans the view (a real mouse, through the canvas input)
+  const before = await T(page, () => globalThis.__swarm.watch.follow);
+  await page.mouse.move(600, 300);
+  await page.mouse.down();
+  for (let k = 1; k <= 6; k += 1) await page.mouse.move(600 + k * 20, 300 + k * 6);
+  await page.mouse.up();
+  const pan = await T(page, async (before) => {
+    const app = globalThis.__swarm;
+    await new Promise((r) => setTimeout(r, 200));
+    const panned = app.watch.follow;
+    const followBtn = [...document.querySelectorAll(".sw-watch button")].find((b) => b.textContent === "Follow");
+    const shown = followBtn && getComputedStyle(followBtn).display !== "none";
+    followBtn?.click();
+    const again = app.watch.follow;
+    [...document.querySelectorAll(".sw-watch button")].find((b) => b.textContent === "Let go")?.click();
+    await new Promise((r) => setTimeout(r, 200));
+    return { before, panned, shown, again, after: app.watch.id, panel: !!document.querySelector(".sw-watch") };
+  }, before);
+  check("a pan takes the camera back from the fish; Follow returns it; Let go ends the watch", pan.before && !pan.panned && pan.shown && pan.again && pan.after === null && !pan.panel, JSON.stringify(pan));
+
+  // save → 100 steps → restore: exact, and the same 100 steps again (ψ rides in the boids)
+  const sr = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    const h = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", (await app.flock.readBoids()).buffer))].map((x) => x.toString(16).padStart(2, "0")).join("");
+    await app.advance(50);
+    const h0 = await h();
+    app.savePoint();
+    await app.advance(100);
+    const h1 = await h();
+    app.restoreSave();
+    await app.device.queue.onSubmittedWorkDone();
+    const h2 = await h();
+    await app.advance(100);
+    const h3 = await h();
+    return { restored: h0 === h2, replay: h1 === h3, moved: h0 !== h1 };
+  });
+  check("Eyes Only: restore returns the exact bytes, and replays the same 100 steps", sr.restored && sr.replay && sr.moved, JSON.stringify(sr));
+  check("no console errors (Eyes Only)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const a = await open("/v2/?s=eyes-only&seed=5");
+  const h1 = await hashAfter(a.page, 300);
+  await a.ctx.close();
+  const b = await open("/v2/?s=eyes-only&seed=5");
+  const h2 = await hashAfter(b.page, 300);
+  const v = await T(b.page, () => globalThis.__swarm.flock.brain.p);
+  await b.ctx.close();
+  check("Eyes Only: same seed, same bytes across page loads (300 steps, re-sorts)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
+  const c = await open("/v2/?s=eyes-only&vis=0.2,0.03,0.25,20");
+  const p = await T(c.page, async () => {
+    const app = globalThis.__swarm;
+    const before = { ...app.flock.brain.p };
+    await app.restart();
+    return { before, after: { ...app.flock.brain.p }, url: location.search };
+  });
+  check("an Eyes Only link sets α₀, β₀, the edge pull and the sight, and a restart keeps them",
+    p.before.a0 === 0.2 && p.before.b0 === 0.03 && p.before.a1 === 0.25 && p.before.b1 === 0.25 && p.before.range === 20 && p.after.a1 === 0.25 && p.after.range === 20 && /vis=/.test(p.url) && v.a1 === 0.2,
+    JSON.stringify({ before: p.before, url: p.url }));
+  check("no console errors (Eyes Only links)", c.errors.length === 0, c.errors.join(" | "));
+  await c.ctx.close();
+}
+
+// --- M3: Species Matrix ------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=species");
+  const d = await T(page, async () => {
+    const g = globalThis.__bpDebug();
+    const b = await globalThis.__swarm.flock.readBoids();
+    const kinds = new Set();
+    for (let i = 0; i < g.agents; i += 1) kinds.add(b[i * 6 + 4]);
+    return { ...g, kinds: [...kinds].sort(), cells: document.querySelectorAll(".sw-matrix-cell").length, colour: globalThis.__swarm.view.look.colour };
+  });
+  check("Species Matrix boots with three kinds at its count, coloured by kind, and the matrix on the canvas", d.brain?.kind === "species" && d.kinds.join() === "0,1,2" && d.cells === 9 + 3 && d.colour === "species",
+    `${d.agents.toLocaleString()} fish, kinds ${d.kinds.join(", ")}, ${d.cells} cells`);
+  await shot(page, "m3-species-boot");
+  const k = await T(page, async () => {
+    const cell = [...document.querySelectorAll(".sw-matrix-cell")].find((c) => c.getAttribute("aria-label") === "blue steers towards gold");
+    const before = globalThis.__swarm.flock.brain.p.gc[2];
+    cell.focus();
+    for (let i = 0; i < 5; i += 1) cell.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    // the link is written 250 ms after the last change
+    await new Promise((r) => setTimeout(r, 500));
+    return { before, after: globalThis.__swarm.flock.brain.p.gc[2], now: cell.getAttribute("aria-valuenow"), url: location.search, preset: globalThis.__bpDebug().species.preset };
+  });
+  check("a matrix cell is a slider: five arrow presses raise blue → gold by 0.5, in the running brain and the link",
+    Math.abs(k.after - (k.before + 0.5)) < 1e-9 && k.now === k.after.toFixed(2) && /kinds=custom~3~g/.test(decodeURIComponent(k.url)) && k.preset === "custom", JSON.stringify(k));
+  const five = await T(page, async () => {
+    const seg = [...document.querySelectorAll(".sw-matrix-count .bp-seg")].find((b) => b.textContent === "5");
+    seg.click();
+    await new Promise((r) => setTimeout(r, 600));
+    const app = globalThis.__swarm;
+    const b = await app.flock.readBoids();
+    const kinds = new Set();
+    for (let i = 0; i < app.flock.n; i += 1) kinds.add(b[i * 6 + 4]);
+    return { count: app.flock.brain.p.count, kinds: kinds.size, tick: app.flock.tick, cells: document.querySelectorAll(".sw-matrix-cell").length };
+  });
+  check("five kinds restart the ocean with five kinds (a 5 × 5 matrix)", five.count === 5 && five.kinds === 5 && five.cells === 25 + 5 && five.tick < 200, JSON.stringify(five));
+  const mx = await T(page, () => globalThis.__swarmProve.mixing());
+  check("the matrix does what it says: kept apart, kinds gather (≥ +0.4); all together, a random draw (±0.01)", mx.pass, `apart +${mx.apart.toFixed(3)}, together ${mx.together.toFixed(4)}`);
+  const mixShown = await T(page, async () => {
+    await new Promise((r) => setTimeout(r, 2500));
+    return document.querySelector(".sw-matrix-mix")?.textContent ?? "";
+  });
+  check("the panel reads each kind's own share of its neighbours", /%/.test(mixShown) && /\(\d+%\)/.test(mixShown), mixShown.slice(0, 120));
+  // Watch: the species line
+  const at = await fishNearCentre(page);
+  const w = await watchAndTrack(page, at, 1500);
+  check("Watch in Species Matrix: the same fish through re-sorts, its neighbours, its kind", w.ok && w.same && w.total === w.within && /fish — /.test(w.panelText), `${w.reorders} re-sorts, ${w.total} within r; ${w.panelText.slice(w.panelText.indexOf("A "), w.panelText.indexOf("A ") + 60)}`);
+  const clear = await panelsClear(page);
+  check("Species Matrix: watching, no panel overlaps another at 1280×720 (five kinds)", clear.length === 0, clear.join(", "));
+  await shot(page, "m3-species-watch");
+  const sr = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.letGo();
+    app.clock.paused = true;
+    const h = async () => [...new Uint8Array(await crypto.subtle.digest("SHA-256", (await app.flock.readBoids()).buffer))].map((x) => x.toString(16).padStart(2, "0")).join("");
+    const h0 = await h();
+    const gc0 = app.flock.brain.p.gc.slice();
+    app.savePoint();
+    await app.advance(100);
+    const h1 = await h();
+    // edit the matrix after saving: the restore must bring the matrix back with the fish
+    app.setBrain({ kind: "species", p: { ...app.flock.brain.p, gc: gc0.map((x) => -x) } });
+    app.restoreSave();
+    await app.device.queue.onSubmittedWorkDone();
+    const h2 = await h();
+    const matrix = app.flock.brain.p.gc.every((x, i) => x === gc0[i]);
+    await app.advance(100);
+    const h3 = await h();
+    return { restored: h0 === h2, replay: h1 === h3, moved: h0 !== h1, matrix };
+  });
+  check("Species Matrix: restore returns the fish and the matrix exactly, and replays the same 100 steps", sr.restored && sr.replay && sr.moved && sr.matrix, JSON.stringify(sr));
+  check("no console errors (Species Matrix)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const a = await open("/v2/?s=species&seed=4");
+  const h1 = await hashAfter(a.page, 300);
+  await a.ctx.close();
+  const b = await open("/v2/?s=species&seed=4");
+  const h2 = await hashAfter(b.page, 300);
+  await b.ctx.close();
+  check("Species Matrix: same seed, same bytes across page loads (300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
+  const link = "custom~2~g0.9,-1.2,1.5,0.2~a1.1,0,0,0.3~s1,2";
+  const c = await open(`/v2/?s=species&kinds=${encodeURIComponent(link)}`);
+  const p = await T(c.page, () => ({ p: globalThis.__swarm.flock.brain.p, cells: document.querySelectorAll(".sw-matrix-cell").length, sel: document.querySelector(".sw-matrix-preset").value }));
+  check("an edited matrix rides the link", p.p.count === 2 && p.p.gc[1] === -1.2 && p.p.gc[6] === 1.5 && p.p.ga[7] === 0.3 && p.p.spd[1] === 2 && p.cells === 4 + 2 && p.sel === "custom", JSON.stringify({ gc: p.p.gc.slice(0, 8), spd: p.p.spd.slice(0, 2), sel: p.sel }));
+  check("no console errors (Species Matrix links)", c.errors.length === 0, c.errors.join(" | "));
+  await c.ctx.close();
+}
+
+// --- M3: Watch one in the other scenes, and the rail ------------------------------------------
 for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain"]) {
+  const { ctx, page, errors } = await open(`/v2/?s=${scene}`);
+  const tools = await T(page, () => [...document.querySelectorAll(".bp-rail-tools [data-tool]")].map((b) => b.dataset.tool));
+  const at = await fishNearCentre(page);
+  const w = await watchAndTrack(page, at, 1500);
+  // Food Chain never re-sorts (a slot holds a life); the others do every 16 steps
+  const resorts = scene === "food-chain" ? w.reorders === 0 : w.reorders >= 1;
+  check(`Watch in ${scene}: the same fish (${scene === "food-chain" ? "by slot" : "through re-sorts"}), every neighbour counted, the camera on it`, w.ok && w.same && resorts && w.total === w.within && w.offRunning < 40 && w.offCentre < 2,
+    `${w.steps} steps, ${w.reorders} re-sorts, ${w.total} within reach (CPU ${w.within}), ${w.offRunning.toFixed(1)} px off centre swimming, ${w.offCentre.toFixed(2)} paused; tools ${tools.join(", ")}`);
+  const clear = await panelsClear(page);
+  check(`${scene}: at most six tools, Watch among them; watching, no panel overlaps another at 1280×720`, tools.length <= 6 && tools.includes("watch") && clear.length === 0, `${tools.length} tools; ${clear.join(", ")}`);
+  check(`no console errors (Watch, ${scene})`, errors.length === 0, errors.join(" | "));
+  if (scene === "mill") await shot(page, "m3-mill-watch");
+  await ctx.close();
+}
+
+// --- frame time: the boot scene and the M1, M2 and M3 scenes -----------------------
+for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain", "eyes-only", "species"]) {
 
   const { ctx, page } = await open(`/v2/?s=${scene}&bench=1`);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });

@@ -143,6 +143,10 @@ async function boot(): Promise<void> {
   const profiler = new GpuProfiler(device, gpu.timestamps);
   // frame-interval budget: a 60 Hz frame is 16.7 ms, a missed vsync 33 ms
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
+  // filming (posters, loops, clips: ?chrome=off) pumps frames between screenshots, so the
+  // frame interval says nothing about the GPU: hold full quality
+  const filming = query.get("chrome") === "off";
+  governor.suspended = filming;
   studio.veil.step("Compiling the flock kernel");
   const [kernels, fluidKernels, ecoKernels, watcher] = await Promise.all([
     FlockKernels.create(device),
@@ -390,7 +394,7 @@ async function boot(): Promise<void> {
       void app.loadScene("proof").then(() => app.writeUrl());
     },
     hold: (on) => {
-      governor.suspended = on;
+      governor.suspended = on || filming;
     },
   });
   const syncProve = (): void =>
@@ -431,7 +435,7 @@ async function boot(): Promise<void> {
         captureStatus.textContent = `Capture failed: ${(e as Error).message}`;
       } finally {
         captureBtn.disabled = false;
-        governor.suspended = false;
+        governor.suspended = filming;
       }
     });
   });

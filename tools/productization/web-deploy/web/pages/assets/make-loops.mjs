@@ -172,6 +172,10 @@ const STAGED = {
   // most of the loop. Start 40 skips the boot (the live dish comes up after
   // the gate path); the wrap cuts back to the seed, the sim's own regrowth.
   "neural-ca-v2": { sim: "neural-ca", page: "v2/", query: "?chrome=off&o=butterfly&sp=0.25&cam=0.5,0.5,1.45", canvas: ".bp-canvas", start: 40, shots: 150, gap: 1, fps: 30, px: 512, crf: 46 },
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill turning, at half speed
+  // (three steps a frame); start 300 lets the opening ring settle into the
+  // mill. The wrap cuts back a little over half a turn.
+  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&sp=0.5&cam=0.5,0.5,2.6", canvas: ".bp-canvas", start: 300, shots: 150, gap: 1, fps: 30, px: 512, crf: 58 },
 };
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every

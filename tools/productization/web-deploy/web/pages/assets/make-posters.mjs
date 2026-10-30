@@ -146,6 +146,9 @@ const STAGED = {
   // Grow v2 (rebuild-v2 04-neural-ca.md M3): the Dish with the butterfly, a
   // regeneration-trained organism, grown from one cell on the dark dish.
   "neural-ca-v2": { sim: "neural-ca", page: "v2/", query: "?chrome=off&o=butterfly&cam=0.5,0.5,1.45", canvas: ".bp-canvas", frames: 600, px: 512 },
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill — 8,192 fish on Couzin's
+  // zones circling an empty centre, a little closer than the scene opens.
+  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&cam=0.5,0.5,2.6", canvas: ".bp-canvas", frames: 900, px: 512 },
 };
 
 // Registry guard (2026-10 review): every sim in the single registry

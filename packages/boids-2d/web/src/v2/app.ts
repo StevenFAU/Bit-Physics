@@ -676,20 +676,33 @@ export class App {
   /** A zoom the follow camera eases to (null = keep the visitor's). */
   private zoomTo: number | null = null;
 
-  /** Ease the camera onto the watched fish: its last record, carried forward by its velocity to the current step. */
+  /** The follow camera's last target (domain units), to carry the camera along with the fish. */
+  private followLast: [number, number] | null = null;
+
+  /**
+   * Ease the camera onto the watched fish: its last record, carried forward by
+   * its velocity to the current step. The camera moves with the fish's own
+   * motion each frame and eases out the rest, so a fast fish is not trailed.
+   */
   private followFish(dt: number): void {
     const w = this.watch;
     const rec = w.rec;
-    if (w.id === null || !w.follow || !rec || !rec.found) return;
+    if (w.id === null || !w.follow || !rec || !rec.found) {
+      this.followLast = null;
+      return;
+    }
     const ahead = this.flock.tick - w.recTick;
     const tx = rec.pos[0] + rec.vel[0] * ahead + this.flock.halfW;
     const ty = rec.pos[1] + rec.vel[1] * ahead + this.flock.halfH;
     const W = this.camera.domainW;
     const H = this.camera.domainH;
-    let dx = tx - this.camera.cx;
-    let dy = ty - this.camera.cy;
-    dx -= W * Math.round(dx / W);
-    dy -= H * Math.round(dy / H);
+    const wrap = (v: number, L: number): number => v - L * Math.round(v / L);
+    // the fish's own motion since the last frame (on the torus)
+    const mx = this.followLast ? wrap(tx - this.followLast[0], W) : 0;
+    const my = this.followLast ? wrap(ty - this.followLast[1], H) : 0;
+    this.followLast = [tx, ty];
+    const dx = wrap(tx - (this.camera.cx + mx), W);
+    const dy = wrap(ty - (this.camera.cy + my), H);
     const k = this.camera.reducedMotion ? 1 : 1 - Math.exp(-dt / 0.12);
     let z = this.camera.pxPerUnit;
     if (this.zoomTo !== null) {
@@ -697,7 +710,7 @@ export class App {
       if (Math.abs(Math.log(this.zoomTo / z)) < 0.01) this.zoomTo = null;
     }
     this.camera.stop();
-    this.camera.set({ cx: this.camera.cx + dx * k, cy: this.camera.cy + dy * k, pxPerUnit: z });
+    this.camera.set({ cx: this.camera.cx + mx + dx * k, cy: this.camera.cy + my + dy * k, pxPerUnit: z });
   }
 
   private brushOptions(): HTMLElement {
@@ -1115,7 +1128,15 @@ export class App {
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const scale = this.governor?.renderScale ?? 1;
     this.hdr.resize(rect.width, rect.height, dpr, scale);
+    // a resized canvas keeps its framing: the zoom stays the same multiple of the cover fit
+    const prevW = this.camera.viewW;
+    const prevH = this.camera.viewH;
+    const prevCover = this.camera.coverZoom();
     this.camera.setViewport(rect.width, rect.height);
+    if ((prevW !== rect.width || prevH !== rect.height) && prevW > 1 && prevH > 1) {
+      const k = this.camera.coverZoom() / prevCover;
+      if (Number.isFinite(k) && k > 0 && k !== 1) this.camera.set({ cx: this.camera.cx, cy: this.camera.cy, pxPerUnit: this.camera.pxPerUnit * k });
+    }
     this.camera.update(dt, now);
     this.followFish(dt);
     const effects = this.governor?.effects ?? 1;

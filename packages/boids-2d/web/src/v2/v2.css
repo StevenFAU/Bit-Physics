@@ -647,9 +647,12 @@
     top: 56px;
     bottom: auto;
   }
+  /* as narrow as the dial's panel, and ending above the tool row (which spans the width here) */
   .sw-matrix {
-    max-height: calc(100% - 56px - 76px);
+    width: 252px;
+    max-height: calc(100% - 56px - 132px);
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 6px 10px;
   }
   .sw-matrix-blurb,
@@ -677,7 +680,22 @@
 .bp-studio.is-watching .sw-matrix {
   max-height: calc(100% - 80px - 270px);
   overflow-y: auto;
+  overflow-x: hidden;
 }
 .bp-studio.is-watching .sw-matrix-blurb {
   display: none;
+}
+
+/* watching in The Order Dial: the map steps aside so the fish's panel fits above the dial */
+.bp-studio.is-watching .sw-dial-panel .sw-dial-map,
+.bp-studio.is-watching .sw-dial-panel .sw-dial-axes {
+  display: none;
+}
+.bp-studio.is-watching .sw-dial-panel,
+.bp-studio.is-watching .sw-eyes,
+.bp-studio.is-watching .sw-pop,
+.bp-studio.is-watching .sw-regime {
+  max-height: calc(100% - 80px - 270px);
+  overflow-y: auto;
+  overflow-x: hidden;
 }

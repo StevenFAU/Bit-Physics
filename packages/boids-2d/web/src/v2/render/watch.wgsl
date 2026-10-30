@@ -116,8 +116,8 @@ fn watch_fs(in: WatchOut) -> @location(0) vec4<f32> {
   if (in.kind.x < 0.5) {
     let r = length(in.px - in.a);
     let mark = max(0.9 * V.fish.x / V.cam.z, 7.0);
-    // the watched fish: a bright ring and a faint glow inside it
-    rgb = amber * (1.5 * line(r - mark, 1.5) + 0.12 * (1.0 - smoothstep(0.0, mark, r)));
+    // the watched fish: a bright ring round it (a fill would tone-map to a muddy disc over the fish)
+    rgb = amber * 1.5 * line(r - mark, 1.5);
     if (V.grid.z > 0.5 && retina[13] == watch.rec.slot) {
       // its visual field: the direction from the fish, measured from its heading ψ. World and
       // screen share axes (y down on screen), so the world angle of this pixel is atan2(q.y, q.x).
