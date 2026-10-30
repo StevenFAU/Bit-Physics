@@ -11,7 +11,7 @@ import v4Page from "../index.html?raw";
 import fieldWgsl from "../src/v2/render/field.wgsl?raw";
 import oceanWgsl from "../src/v2/render/ocean.wgsl?raw";
 import watchWgsl from "../src/v2/render/watch.wgsl?raw";
-import { decodeKinds, encodeKinds } from "../src/v2/kinds-link.js";
+import { decodeKinds, encodeKinds, presetOf } from "../src/v2/kinds-link.js";
 import { ownKindShare } from "../src/v2/matrix-panel.js";
 import { BRAIN_FLOATS } from "../src/v2/model/brains.js";
 import {
@@ -301,14 +301,37 @@ describe("Species Matrix", () => {
     expect(m.fraction).toEqual([2 / 6, 3 / 6, 1 / 6]);
   });
 
-  it("rides the share link", () => {
-    expect(encodeKinds(speciesPreset("cycle", 3), "cycle")).toBe("cycle~3");
+  it("knows which preset a brain is from the brain itself", () => {
+    for (const id of ["cycle", "predator", "segregate", "mixed"] as SpeciesPreset[]) for (let n = 2; n <= 6; n += 1) expect(presetOf(speciesPreset(id, n))).toBe(id);
+    const p = speciesPreset("predator", 3);
+    p.gc[2] = 0.5;
+    expect(presetOf(p)).toBe("custom");
+    // Tune's knobs do not change which preset the matrix is
+    expect(presetOf({ ...speciesPreset("mixed", 4), rCoh: 0.12, eta: 0.2 })).toBe("mixed");
+  });
+
+  it("rides the share link: the matrix, the shares and Tune's knobs", () => {
+    expect(encodeKinds(speciesPreset("cycle", 3))).toBe("cycle~3");
     expect(decodeKinds("predator~4")?.p).toEqual(speciesPreset("predator", 4));
+    // a preset with Tune's knobs moved
+    const tuned = { ...speciesPreset("cycle", 3), rCoh: 0.12, speed: 0.008, wSep: 2.05, eta: 0.13 };
+    const tl = encodeKinds(tuned);
+    expect(tl).toBe("cycle~3~p0.12,0.008,2.05,0.13");
+    expect(decodeKinds(tl)).toEqual({ p: tuned, preset: "cycle" });
+    // an edited predator matrix keeps its population shares
+    const pred = speciesPreset("predator", 3);
+    pred.gc[0 * 6 + 2] = 0.3;
+    const pl = encodeKinds(pred);
+    expect(pl).toMatch(/~f0\.425,0\.15,0\.425$/);
+    const pb = decodeKinds(pl)!;
+    expect(pb.preset).toBe("custom");
+    pb.p.frac.forEach((f, k) => expect(f).toBeCloseTo(pred.frac[k]!, 12));
+    expect(pb.p.spd[1]).toBe(1.7);
     const p = speciesPreset("segregate", 3);
     p.gc[0 * 6 + 2] = 1.3;
     p.ga[2 * 6 + 1] = -0.7;
     p.spd[1] = 2.1;
-    const link = encodeKinds(p, "custom");
+    const link = encodeKinds(p);
     expect(link).toMatch(/^custom~3~g[-0-9.,]+~a[-0-9.,]+~s[-0-9.,]+$/);
     const back = decodeKinds(link)!;
     expect(back.preset).toBe("custom");

@@ -65,6 +65,9 @@ export class MatrixPanel {
   private readonly blurb: HTMLElement;
   private preset: SpeciesPreset | "custom" = "cycle";
   private dragging = false;
+  /** The grid on screen (kinds, layer) and each cell's redraw: a value change updates cells in place, so focus stays put. */
+  private built: { count: number; layer: MatrixLayer } | null = null;
+  private shows: (() => void)[] = [];
 
   constructor(private readonly act: MatrixActions) {
     this.countSeg = segmented<string>(
@@ -115,7 +118,9 @@ export class MatrixPanel {
     this.countSeg.set(String(p.count));
     this.presetSel.value = preset;
     this.blurb.textContent = preset === "custom" ? "Your own matrix. Warm: steer towards; cool: steer away." : (SPECIES_PRESETS.find((x) => x.id === preset)?.blurb ?? "");
-    if (!this.dragging) this.build();
+    // the same grid: redraw the values where they are (never replace the cell being edited)
+    if (this.built && this.built.count === p.count && this.built.layer === this.layer) for (const show of this.shows) show();
+    else if (!this.dragging) this.build();
   }
 
   get current(): SpeciesParams | null {
@@ -143,7 +148,10 @@ export class MatrixPanel {
   private build(): void {
     const p = this.p;
     this.grid.textContent = "";
+    this.shows = [];
+    this.built = null;
     if (!p) return;
+    this.built = { count: p.count, layer: this.layer };
     const n = p.count;
     this.grid.style.gridTemplateColumns = `auto repeat(${n}, minmax(0, 1fr))`;
     const swatch = (k: number): HTMLElement => h("span", { class: "sw-swatch", style: `background:${speciesCss(k)}`, title: SPECIES_NAMES[k] });
@@ -203,6 +211,7 @@ export class MatrixPanel {
       el.setAttribute("aria-valuetext", speed ? `${v.toFixed(1)} times` : v > 0.04 ? `towards, ${v.toFixed(1)}` : v < -0.04 ? `away, ${Math.abs(v).toFixed(1)}` : "ignores");
       el.style.background = speed ? "rgba(255,255,255,0.06)" : cellColour(v);
     };
+    this.shows.push(show);
     const commit = (v: number, phase: "start" | "move" | "end"): void => {
       put(Math.round(clamp(v, range) * 10) / 10);
       show();

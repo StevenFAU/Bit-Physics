@@ -65,8 +65,13 @@
 >   kinds playing rock–paper–scissors.
 >   - **The editor** is on the canvas: one ARIA-slider cell per pair (drag, scroll or arrow keys;
 >     warm steer towards, cool away), "Steer" / "Swim with" for the two matrices, a speed row,
->     2–6 kinds and the presets (these restart the ocean; a cell edit does not). An edited matrix
->     rides the link (`kinds=custom~3~g…~a…~s…`) and the save points.
+>     2–6 kinds and the presets (these restart the ocean, keeping Tune's knobs; a cell edit does
+>     not). The link carries the preset, or an edited matrix with its speeds and population shares
+>     (`kinds=custom~3~g…~a…~s…~f…`), plus Tune's reach, top speed, separation and panic (`~p…`);
+>     which preset is running is read from the matrix itself, never remembered. Review fixes (PR
+>     #58): the link had dropped Tune's knobs and an edited predator matrix's shares, the preset
+>     name went stale across a scene round trip or a reset, and a key press rebuilt the matrix and
+>     lost the focused cell (cells now update in place).
 >   - **Measured, not asserted:** each fish's share of its neighbours that are its own kind comes
 >     from the kernel's own counts (written to `dens`); the panel shows it per kind against the
 >     kind's share of the ocean (rock–paper–scissors: 64% against 33%). Prove's "The matrix does
@@ -125,15 +130,17 @@
 >   with Firefox's software vsync at the display's rate (`widget.wayland.vsync.enabled` false,
 >   `layout.frame_rate` 165) and Chromium under XWayland (`--ozone-platform=x11`), both of which
 >   pace at 165 Hz whatever the window's stacking. The probe is the M2 frame-gate probe.
-> - **Checks:** `v2-acceptance.mjs` passes 139/139 (M3 adds 51: the two brains' exactness and
+> - **Checks:** `v2-acceptance.mjs` passes 140/140 (M3 adds 52: the two brains' exactness and
 >   re-sort, the field against f64, ordered motion against the f64 reference and its control, the
 >   live scene schooling — own order 0.946 at step 3,600 — and not with the edge terms off (0.435),
 >   Watch in Eyes Only with its retina and the camera, the pan / Follow / Let go hand-off, save /
->   restore and seeds across loads for both scenes, the Eyes Only and Species links, the matrix by
->   keyboard, a new number of kinds, the mixing card, Watch in all seven live scenes with the same
+>   restore and seeds across loads for both scenes, the Eyes Only and Species links (an edited matrix
+>   with its shares and Tune's knobs, written back unchanged), the matrix by real key presses with
+>   focus kept, the preset named from the running matrix after a scene round trip and a reset, a new
+>   number of kinds, the mixing card, Watch in all seven live scenes with the same
 >   fish through re-sorts and every neighbour counted, no panel overlap at 1280×720, at most six
 >   tools). `check-studio` passes on `v2/` and all six scene links at 390 / 820 / 1440 px and 200%
->   zoom with zero axe violations. The workspace has 239 unit tests (19 new in `test/m3.test.ts`:
+>   zoom with zero axe violations. The workspace has 240 unit tests (20 new in `test/m3.test.ts`:
 >   the binned field against direct integration, L_eq, occlusion, the reference's control, schools
 >   on the torus, the v4 presets and species draw evaluated from the v4 page, both uniform layouts,
 >   the link codec, the tracker record, the shared View struct). Integrity 0 HARD_FAIL.

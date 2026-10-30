@@ -976,17 +976,44 @@ const panelsClear = (page) =>
   check("Species Matrix boots with three kinds at its count, coloured by kind, and the matrix on the canvas", d.brain?.kind === "species" && d.kinds.join() === "0,1,2" && d.cells === 9 + 3 && d.colour === "species",
     `${d.agents.toLocaleString()} fish, kinds ${d.kinds.join(", ")}, ${d.cells} cells`);
   await shot(page, "m3-species-boot");
-  const k = await T(page, async () => {
+  // real key presses on the focused cell: each edit updates the cell in place, so focus stays on it
+  const before = await T(page, () => {
     const cell = [...document.querySelectorAll(".sw-matrix-cell")].find((c) => c.getAttribute("aria-label") === "blue steers towards gold");
-    const before = globalThis.__swarm.flock.brain.p.gc[2];
     cell.focus();
-    for (let i = 0; i < 5; i += 1) cell.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    globalThis.__cell = cell;
+    return globalThis.__swarm.flock.brain.p.gc[2];
+  });
+  for (let i = 0; i < 5; i += 1) await page.keyboard.press("ArrowUp");
+  const k = await T(page, async (before) => {
+    const cell = globalThis.__cell;
     // the link is written 250 ms after the last change
     await new Promise((r) => setTimeout(r, 500));
-    return { before, after: globalThis.__swarm.flock.brain.p.gc[2], now: cell.getAttribute("aria-valuenow"), url: location.search, preset: globalThis.__bpDebug().species.preset };
+    return { before, after: globalThis.__swarm.flock.brain.p.gc[2], now: cell.getAttribute("aria-valuenow"), focused: cell.isConnected && document.activeElement === cell, url: location.search, preset: globalThis.__bpDebug().species.preset };
+  }, before);
+  check("a matrix cell is a slider: five real arrow presses raise blue → gold by 0.5, focus stays on it, in the running brain and the link",
+    Math.abs(k.after - (k.before + 0.5)) < 1e-9 && k.now === k.after.toFixed(2) && k.focused && /kinds=custom~3~g/.test(decodeURIComponent(k.url)) && k.preset === "custom", JSON.stringify(k));
+  // the preset's name comes from the running matrix: a predator ocean, then away and back, then a Tune reset
+  const id = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const sel = document.querySelector(".sw-matrix-preset");
+    sel.value = "predator";
+    sel.dispatchEvent(new Event("change"));
+    await new Promise((r) => setTimeout(r, 600));
+    const pred = { debug: globalThis.__bpDebug().species.preset, panel: document.querySelector(".sw-matrix-preset").value };
+    await app.loadScene("open-water", { seed: app.seed });
+    await app.loadScene("species", { seed: app.seed });
+    app.writeUrl();
+    await new Promise((r) => setTimeout(r, 500));
+    const back = { debug: globalThis.__bpDebug().species.preset, panel: document.querySelector(".sw-matrix-preset").value, url: location.search };
+    app.setBrain({ kind: "species", p: { ...app.flock.brain.p, gc: app.flock.brain.p.gc.map((x) => x + 0.3) } });
+    app.resetRule();
+    await new Promise((r) => setTimeout(r, 500));
+    const reset = { debug: globalThis.__bpDebug().species.preset, panel: document.querySelector(".sw-matrix-preset").value, url: location.search };
+    return { pred, back, reset };
   });
-  check("a matrix cell is a slider: five arrow presses raise blue → gold by 0.5, in the running brain and the link",
-    Math.abs(k.after - (k.before + 0.5)) < 1e-9 && k.now === k.after.toFixed(2) && /kinds=custom~3~g/.test(decodeURIComponent(k.url)) && k.preset === "custom", JSON.stringify(k));
+  check("the preset shown and linked is the running matrix's (after a scene round trip and a reset)",
+    id.pred.debug === "predator" && id.pred.panel === "predator" && id.back.debug === "cycle" && id.back.panel === "cycle" && !/kinds=predator/.test(id.back.url) && id.reset.debug === "cycle" && id.reset.panel === "cycle" && !/custom/.test(id.reset.url),
+    JSON.stringify(id));
   const five = await T(page, async () => {
     const seg = [...document.querySelectorAll(".sw-matrix-count .bp-seg")].find((b) => b.textContent === "5");
     seg.click();
@@ -1044,10 +1071,21 @@ const panelsClear = (page) =>
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
   check("Species Matrix: same seed, same bytes across page loads (300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
-  const link = "custom~2~g0.9,-1.2,1.5,0.2~a1.1,0,0,0.3~s1,2";
+  const link = "custom~2~g0.9,-1.2,1.5,0.2~a1.1,0,0,0.3~s1,2~f0.8,0.2~p0.12,0.008,2,0.1";
   const c = await open(`/v2/?s=species&kinds=${encodeURIComponent(link)}`);
-  const p = await T(c.page, () => ({ p: globalThis.__swarm.flock.brain.p, cells: document.querySelectorAll(".sw-matrix-cell").length, sel: document.querySelector(".sw-matrix-preset").value }));
-  check("an edited matrix rides the link", p.p.count === 2 && p.p.gc[1] === -1.2 && p.p.gc[6] === 1.5 && p.p.ga[7] === 0.3 && p.p.spd[1] === 2 && p.cells === 4 + 2 && p.sel === "custom", JSON.stringify({ gc: p.p.gc.slice(0, 8), spd: p.p.spd.slice(0, 2), sel: p.sel }));
+  const p = await T(c.page, async () => {
+    const app = globalThis.__swarm;
+    const b = await app.flock.readBoids();
+    let k1 = 0;
+    for (let i = 0; i < app.flock.n; i += 1) if (b[i * 6 + 4] === 1) k1 += 1;
+    app.writeUrl();
+    await new Promise((r) => setTimeout(r, 500));
+    return { p: app.flock.brain.p, share1: k1 / app.flock.n, cells: document.querySelectorAll(".sw-matrix-cell").length, sel: document.querySelector(".sw-matrix-preset").value, url: decodeURIComponent(location.search) };
+  });
+  check("an edited matrix rides the link, with its shares and Tune's knobs, and writes the same link back",
+    p.p.count === 2 && p.p.gc[1] === -1.2 && p.p.gc[6] === 1.5 && p.p.ga[7] === 0.3 && p.p.spd[1] === 2 && Math.abs(p.p.frac[1] - 0.2) < 1e-12 && Math.abs(p.share1 - 0.2) < 0.01 &&
+      p.p.rCoh === 0.12 && p.p.speed === 0.008 && p.p.wSep === 2 && p.p.eta === 0.1 && p.cells === 4 + 2 && p.sel === "custom" && p.url.includes(`kinds=${link}`),
+    JSON.stringify({ gc: p.p.gc.slice(0, 8), spd: p.p.spd.slice(0, 2), frac: p.p.frac.slice(0, 2), share1: p.share1.toFixed(3), r: p.p.rCoh, sel: p.sel, url: p.url }));
   check("no console errors (Species Matrix links)", c.errors.length === 0, c.errors.join(" | "));
   await c.ctx.close();
 }

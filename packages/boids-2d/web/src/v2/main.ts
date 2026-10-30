@@ -39,14 +39,14 @@ import { SeaView } from "./render/sea-view.js";
 import { PopulationPanel, WaterPanel } from "./m2-panels.js";
 import { EyesPanel } from "./m3-panels.js";
 import { MatrixPanel, ownKindShare } from "./matrix-panel.js";
-import type { SpeciesParams, SpeciesPreset, VisionBrainParams } from "./model/brains-m3.js";
+import type { SpeciesParams, VisionBrainParams } from "./model/brains-m3.js";
 import { speciesPreset } from "./model/brains-m3.js";
-import { decodeKinds, encodeKinds } from "./kinds-link.js";
+import { decodeKinds, encodeKinds, presetOf } from "./kinds-link.js";
 import { schoolStats } from "./model/vision-cpu.js";
 import { WatchPanel } from "./watch-panel.js";
 import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
-import { DIAL_ETA, DIAL_RHO, EYES_LEQ, RHO_RANGE, SCENES, SPECIES_START, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho, visionFor } from "./scenes.js";
+import { DIAL_ETA, DIAL_RHO, EYES_LEQ, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho, visionFor } from "./scenes.js";
 import { buildTune } from "./tune.js";
 
 const SIM_NAME = "Swarm";
@@ -83,7 +83,7 @@ const url = new UrlState(
     // Eyes Only: speed response α₀, turn response β₀, edge pull α₁ = β₁, sight (BL) (−1 = the scene's)
     vis: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 4 },
     // Species Matrix: preset~kinds, then (an edited matrix) ~g<steer gains>~a<swim gains>~s<speeds>
-    kinds: { kind: "str", def: "", pattern: /^(|[a-z]+~[2-6](~[gas][-0-9.,]*)*)$/ },
+    kinds: { kind: "str", def: "", pattern: /^(|[a-z]+~[2-6](~[gasfp][-0-9.,]*)*)$/ },
   },
   2,
 );
@@ -182,7 +182,7 @@ async function boot(): Promise<void> {
     } else if (b?.kind === "vision" && bd?.kind === "vision") {
       brainKeys.vis = [or(b.p.a0, bd.p.a0), or(b.p.b0, bd.p.b0), or(b.p.a1, bd.p.a1), or(b.p.range, bd.p.range)];
     } else if (b?.kind === "species") {
-      brainKeys.kinds = encodeKinds(b.p, speciesPresetId);
+      brainKeys.kinds = encodeKinds(b.p);
     } else if (b?.kind === "couzin" && bd?.kind === "couzin") {
       brainKeys.dro = or(Number((b.p.ro - b.p.rr).toFixed(2)), Number((bd.p.ro - bd.p.rr).toFixed(2)));
       brainKeys.fov = or(b.p.fovDeg, bd.p.fovDeg);
@@ -225,8 +225,6 @@ async function boot(): Promise<void> {
 
   // -------------------------------------------------------------- Tune --
   const setColour = (c: FishColour): void => app.setColour(c);
-  // where the running species came from (a preset, or edited)
-  let speciesPresetId: SpeciesPreset | "custom" = SPECIES_START.preset;
   const tune = buildTune(
     studio.tune.body,
     {
@@ -277,13 +275,13 @@ async function boot(): Promise<void> {
   watchPanel.onLetGo = () => app.letGo();
   watchPanel.onFollow = () => app.followAgain();
   const matrix = new MatrixPanel({
-    edit: (p, phase) => {
-      speciesPresetId = "custom";
-      app.setBrain({ kind: "species", p }, phase);
-    },
+    edit: (p, phase) => app.setBrain({ kind: "species", p }, phase),
     restart: (preset, count) => {
-      speciesPresetId = preset;
-      void app.loadScene("species", { seed: app.seed, brain: { kind: "species", p: speciesPreset(preset, count) } }).then(() => app.writeUrl());
+      // a new matrix and new kinds; Tune's reach, speed, separation and panic carry over
+      const now = app.flock.brain?.kind === "species" ? app.flock.brain.p : null;
+      const p = speciesPreset(preset, count);
+      const brain = { kind: "species" as const, p: now ? { ...p, rCoh: now.rCoh, speed: now.speed, wSep: now.wSep, eta: now.eta } : p };
+      void app.loadScene("species", { seed: app.seed, brain }).then(() => app.writeUrl());
     },
   });
 
@@ -534,7 +532,7 @@ async function boot(): Promise<void> {
       if (scene.id === "species") {
         if (!matrix.el.isConnected) studio.stage.append(matrix.el);
         matrix.clearMix();
-        if (app.flock.brain?.kind === "species") matrix.set(app.flock.brain.p, speciesPresetId);
+        if (app.flock.brain?.kind === "species") matrix.set(app.flock.brain.p, presetOf(app.flock.brain.p));
       } else matrix.el.remove();
       dial.sync();
       syncTune();
@@ -547,7 +545,7 @@ async function boot(): Promise<void> {
     },
     onBrain: (b) => {
       learn.setBrain(b);
-      if (b?.kind === "species") matrix.set(b.p, speciesPresetId);
+      if (b?.kind === "species") matrix.set(b.p, presetOf(b.p));
       syncTune();
       // Tune's reset (or any change not made by the dial) moves the dial and restarts its measurement
       dial.brainChanged();
@@ -697,10 +695,7 @@ async function boot(): Promise<void> {
     brain = { kind: "vision", p: { ...d0, a0: pick(a0!, d0.a0), b0: pick(b0!, d0.b0), a1: pick(a1!, d0.a1), b1: pick(a1!, d0.b1), range: Math.max(MIN_VISION_RANGE, pick(range!, d0.range)) } };
   } else if (scene.id === "species") {
     const k = decodeKinds(parsed.kinds);
-    if (k) {
-      speciesPresetId = k.preset;
-      brain = { kind: "species", p: k.p };
-    }
+    if (k) brain = { kind: "species", p: k.p };
   }
   // M2 knobs from the link (each −1 = the scene's), built into the first load so the
   // water's starting vorticity comes from the linked push, exactly as a restart rebuilds it
@@ -758,7 +753,7 @@ async function boot(): Promise<void> {
     census: app.census,
     schools: app.scene.id === "eyes-only" ? eyes.schools : null,
     watch: app.watch.id !== null ? { id: app.watch.id, follow: app.watch.follow, found: !!app.watch.rec?.found, lost: app.watch.lost, total: app.watch.rec?.total ?? 0, retina: !!app.watch.retina } : null,
-    species: app.flock.brain?.kind === "species" ? { count: app.flock.brain.p.count, preset: speciesPresetId } : null,
+    species: app.flock.brain?.kind === "species" ? { count: app.flock.brain.p.count, preset: presetOf(app.flock.brain.p) } : null,
     fluid: app.current ? { grid: [app.current.fluid.gw, app.current.fluid.gh], motes: app.current.fluid.nMotes, fb: app.current.fluid.fb, stats: app.fluidStats } : null,
   });
   (globalThis as { __swarmDial?: DialController }).__swarmDial = dial;
