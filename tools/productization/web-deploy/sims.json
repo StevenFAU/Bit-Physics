@@ -29,7 +29,7 @@
     { "name": "fdtd-optics" },
     { "name": "signal-workbench" },
     { "name": "ising-classical", "splash": false, "splash_note": "not yet filmed for the reel" },
-    { "name": "neural-ca", "splash": false, "splash_note": "cut: the organism renders on a white field that strobes the dark reel" },
+    { "name": "neural-ca" },
     { "name": "mandelbulb-explorer", "splash": false, "splash_note": "not yet filmed for the reel" }
   ]
 }

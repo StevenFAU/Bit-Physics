@@ -14,8 +14,8 @@
 // a sim earns a loop iff the motion IS the physics (flock dynamics, network
 // growth, front propagation, trajectory trace-in). P3 re-classified the
 // three remaining stills: ising (critical flicker + domain coarsening IS
-// the physics), neural-ca (the live view's 400-step restart cycle makes the
-// growth a perfect period — the loop wraps seamlessly), mandelbulb (the
+// the physics), neural-ca (the live view's 400-step restart cycle made the
+// growth a perfect period — the v1 loop wrapped seamlessly), mandelbulb (the
 // trace-in precedent extends to the auto-orbit: one full revolution wraps
 // seamlessly, and card motion is what sells a 3-D surface).
 //
@@ -128,17 +128,13 @@ const SIMS = {
   // (vs the family's 46): critical flicker is high-entropy like the
   // boids-2d comet field — 46 measured 2.2 MB, past the 1.5 MB budget.
   "ising-classical": { start: 30, shots: 300, gap: 2, fps: 30, px: 512, crf: 52 },
-  // UX-P3: the live NCA restarts on `liveStep > 400` at 2 steps/frame →
-  // the growth cycle is 201 RAF frames (strict inequality), and the
-  // boot-to-ready frame offset shifts the phase by a few frames — so the
-  // restart alignment CANNOT be tuned arithmetically; it is VERIFIED on
-  // the encoded output (ffmpeg frame extraction: frame 0 must be the
-  // seed, the last frame the mature organism). gap 1 = effective stride
-  // 2 at 30 fps = the live 60 fps cadence, true speed; 200 shots cover
-  // ~two cycles, and the ±few-frame drift only trims tail frames of the
-  // STATIC mature organism, so the wrap still reads as the sim's own
-  // restart cut: seed → burst → organism → restart.
-  "neural-ca": { start: 200, shots: 200, gap: 1, fps: 30, px: 512, crf: 46 },
+  // Grow (rebuild-v2 04-neural-ca.md M3, the root page since the release
+  // swap): the butterfly unfurling from one cell on the Dish, at quarter
+  // speed and a little closer so the growth fills most of the loop. Start 40
+  // skips the boot (the live dish comes up after the gate path); the wrap
+  // cuts back to the seed, the sim's own regrowth. (The v1 loop filmed the
+  // white-field page's 400-step restart cycle.)
+  "neural-ca": { query: "?chrome=off&o=butterfly&sp=0.25&cam=0.5,0.5,1.45", canvas: ".bp-canvas", start: 40, shots: 150, gap: 1, fps: 30, px: 512, crf: 46 },
   // UX-P3: one full auto-orbit revolution (0.004 rad/RAF-frame → 2π in
   // ~1570.8 frames). gap 4 = effective stride 5, so 314 shots cover 1570
   // frames — the 0.8-frame wrap error is 0.18° of azimuth, invisible
@@ -166,13 +162,7 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {
-  // Grow v2 (rebuild-v2 04-neural-ca.md M3): the butterfly unfurling from one
-  // cell on the Dish, at quarter speed and a little closer so the growth fills
-  // most of the loop. Start 40 skips the boot (the live dish comes up after
-  // the gate path); the wrap cuts back to the seed, the sim's own regrowth.
-  "neural-ca-v2": { sim: "neural-ca", page: "v2/", query: "?chrome=off&o=butterfly&sp=0.25&cam=0.5,0.5,1.45", canvas: ".bp-canvas", start: 40, shots: 150, gap: 1, fps: 30, px: 512, crf: 46 },
-};
+const STAGED = {};
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
 // config must be a registered sim — fail loud instead of silently skipping a

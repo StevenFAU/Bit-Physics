@@ -22,6 +22,7 @@
 //      residual, still-open backend-conditional axis.
 
 import V from "./generated/verification.json";
+import { simAsset } from "./sim-root.js";
 import { isCapturing } from "../../../../common/common-web/src/capture-export.js";
 import type { PanelShell } from "../../../../common/common-web/src/panel-shell.js";
 
@@ -306,7 +307,7 @@ function installProof(d: NcaVerifyDeps): void {
   }
 
   async function fetchCanonFrames(): Promise<Float32Array[]> {
-    const res = await fetch(`${import.meta.env.BASE_URL}${V.canonical_frames.asset}`);
+    const res = await fetch(simAsset(V.canonical_frames.asset));
     if (!res.ok) throw new Error(`canonical-frames asset fetch failed: ${res.status}`);
     const buf = await res.arrayBuffer();
     if (buf.byteLength !== V.canonical_frames.bytes) throw new Error(`canonical-frames asset is ${buf.byteLength} bytes, want ${V.canonical_frames.bytes}`);
