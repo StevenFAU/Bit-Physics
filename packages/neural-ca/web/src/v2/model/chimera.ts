@@ -12,6 +12,7 @@
 
 import type { Checkpoint } from "../proof/gate.js";
 import rulesSrc from "./chimera-rules.wgsl?raw";
+import { chimeraKernelSource } from "./live-kernel.js";
 import chimeraSrc from "./chimera.wgsl?raw";
 import type { LiveCheckpoint, LiveConfig } from "./live.js";
 import { LiveKernels, LiveNca, MAX_SEGS } from "./live.js";
@@ -73,7 +74,7 @@ export class ChimeraKernels {
         { binding: 9, visibility: C, buffer: rw },
       ],
     });
-    const stepModule = device.createShaderModule({ code: chimeraSrc, label: "nca-chimera" });
+    const stepModule = device.createShaderModule({ code: chimeraKernelSource(chimeraSrc), label: "nca-chimera" });
     const rulesModule = device.createShaderModule({ code: rulesSrc, label: "nca-chimera-rules" });
     const pl = (l: GPUBindGroupLayout): GPUPipelineLayout => device.createPipelineLayout({ bindGroupLayouts: [l] });
     const [update, graft, paint, view] = await Promise.all([

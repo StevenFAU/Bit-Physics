@@ -272,11 +272,45 @@
 >   the simulation at a restart. Without timestamp queries the governor still sees the whole frame
 >   interval, which it cannot split.
 > - **Noticed, not changed.** The scheduler's per-step cost at 1× is still learned only at ≥ 0.5 steps
->   per frame. PR #52's Chimera (`chimera.wgsl`) and Textures (`texture.wgsl`) kernels carry the same
->   two loops, so they will be as slow in Firefox until they are written out the same way (Textures
->   steps a 256² plane, sixteen dishes' worth of cells).
+>   per frame. PR #52's Chimera (`chimera.wgsl`) and Textures (`texture.wgsl`) kernels carried the same
+>   two loops; they are now written out the same way (the follow-up below). Textures still steps about
+>   1.6× slower in Firefox than in Chromium (0.67 against 0.43 ms); the cause of that gap is not measured.
 > - RX 6800 XT, Mesa 26.0.8 RADV, snap Firefox 158.0.1 and Chromium 156.0.8078.47. The bench page and
 >   the frame probe are scratch tools, not committed (recipe in the session notes).
+> - **Chimera and Textures follow-up (2026-10-30).** The same exact-match rewrite now covers
+>   both scene kernels: 48 perception terms, then 16 output terms with Chimera's `wb` offset or
+>   12 output terms for Textures. Other loops and committed WGSL sources are unchanged. Measured
+>   on the same RX 6800 XT / RADV, headed Firefox 158.0.1 and Chromium 156.0.8078.47, T3,
+>   requested 1440 × 900 (Firefox window / Chromium viewport), 165 Hz display, one browser at a time.
+>   At 1×, the page's timestamp profiler measured
+>   the following median GPU milliseconds per scene step (both 64² Chimera dishes / one 256²
+>   spots plane); frame counts are non-empty `queue.submit` calls during six seconds:
+>
+>   | scene | browser | step ms before → after | submitted frames/s before → after |
+>   |---|---|---|---|
+>   | Chimera | Firefox | 7.242 → **3.203** | 158.6 → 163.1 |
+>   | Chimera | Chromium | 3.209 → 3.207 | 164.2 → 164.2 |
+>   | Textures | Firefox | 4.770 → **0.669** | 164.1 → 163.7 |
+>   | Textures | Chromium | 0.428 → 0.427 | 165.0 → 165.2 |
+>
+>   These are in-page timings at the desktop's changing GPU clocks, not the saturated standalone
+>   pass benchmark above. At 4×, Firefox's Chimera p90 step cost fell 7.255 → 3.263 ms and throughput
+>   rose 110.3 → 116.8 steps/s, while submissions fell 157.2 → 144.6/s; this does not establish a
+>   uniform frame-rate improvement. Textures reached 120 steps/s in both browsers after the change.
+>   [Measurements and protocol](../../_audits/neural-ca/firefox-loops-2026-10-30.json) retain
+>   the 1× and 4× samples, clock observations, and full hashes.
+> - **Scene byte identity.** Before and after, in both browsers, seed 42 produces identical SHA-256
+>   hashes for both Chimera dishes and their rule maps at step 600 (gecko + butterfly, opening graft
+>   at step 240), and each of spots, maze, giraffe and weave at step 1,024 (all 16 state channels).
+>   Chimera with one rule matches the gate over all 21 frames in both browsers, zero differing values.
+>   Measuring this exposed an existing scheduler race: another frame could retire a job before its
+>   final readback resolved, reporting only 20 frames with zero numerical differences. The scheduler
+>   now leaves a waiting job alone until its follow-up completes; the regression test yields to the
+>   promise microtask before asserting that it has not finished. Cost learning is unchanged.
+>   Validation: 205/205 unit tests, app and test typechecks, production build, and 116/116 full
+>   acceptance checks pass (including the existing texture colour-statistics bounds). Both published
+>   pages pass the capture gate: 21 frames, max_abs 0.0. The gated kernel, `proof/gate.ts`, capture
+>   entry points, and all tolerance declarations are unchanged from the merged baseline.
 >
 > **M1, the Menagerie, the tools and Inside the Cell (2026-10-28): done.** On the `v2/` page only;
 > the v1 page, the gated kernel, the capture path and the committed checkpoint are untouched.

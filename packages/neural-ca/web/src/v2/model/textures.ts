@@ -13,6 +13,7 @@ import type { Checkpoint } from "../proof/gate.js";
 import { assetUrl } from "../proof/gate.js";
 import type { LiveConfig } from "./live.js";
 import { LiveKernels, LiveNca } from "./live.js";
+import { textureKernelSource } from "./live-kernel.js";
 import textureSrc from "./texture.wgsl?raw";
 
 export interface TextureMeasured {
@@ -123,7 +124,7 @@ export class TextureKernels {
     const update = await device.createComputePipelineAsync({
       label: "nca-texture-update",
       layout: device.createPipelineLayout({ bindGroupLayouts: [layout] }),
-      compute: { module: device.createShaderModule({ code: textureSrc, label: "nca-texture" }), entryPoint: "update" },
+      compute: { module: device.createShaderModule({ code: textureKernelSource(textureSrc), label: "nca-texture" }), entryPoint: "update" },
     });
     return new TextureKernels(layout, update);
   }
