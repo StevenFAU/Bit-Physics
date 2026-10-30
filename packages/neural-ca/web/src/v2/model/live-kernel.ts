@@ -1,5 +1,6 @@
-// The live dish's kernel: the gated kernel (the committed nca_inference.wgsl,
-// proof/gate.ts KERNEL_WGSL) with its two innermost loops written out.
+// The live dish, Chimera and Textures kernels with their two innermost
+// loops written out. The live dish starts from the committed gated kernel
+// (nca_inference.wgsl, proof/gate.ts KERNEL_WGSL); the scenes use their own WGSL.
 //
 // Why: Firefox's WebGPU (wgpu/naga) gives every loop a hidden 64-bit
 // iteration counter, so that no shader can loop forever. The driver's
@@ -13,7 +14,7 @@
 //
 // The rewrite is exact and mechanical: each loop is matched verbatim and
 // replaced by its iterations, in order, with the same expressions; every
-// other byte is the gated kernel's. If the gated kernel ever changes so a loop
+// other byte is the source kernel's. If a source kernel ever changes so a loop
 // no longer matches, this throws and the page refuses to boot, rather than
 // run something unmeasured. Bit identity with the gate path is measured, not
 // assumed: Prove's "The live dish is the gated kernel" (21 frames, on the
@@ -26,26 +27,38 @@ const PERC_LOOP = `    for (var j : u32 = 0u; j < PERC; j = j + 1u) {
 `;
 const PERC = 48;
 
-/** dx += w2[:, o] · h: one term per channel (c = 0 … 15). */
-const DX_LOOP = `      for (var c : u32 = 0u; c < CN; c = c + 1u) {
-        dx[c] = dx[c] + weights[P.w2_off + c * HID + o] * h;
-      }
-`;
-const CN = 16;
-
-function writeOut(src: string, loop: string, body: string): string {
+function writeOut(src: string, loop: string, body: string, kernel: string): string {
   const at = src.indexOf(loop);
   if (at < 0 || src.indexOf(loop, at + 1) >= 0) {
-    throw new Error("nca_inference.wgsl changed: the live kernel's loop rewrite no longer matches it exactly once");
+    throw new Error(`${kernel} changed: the live kernel's loop rewrite no longer matches it exactly once`);
   }
   return src.slice(0, at) + body + src.slice(at + loop.length);
 }
 
-/** The gated kernel's source with its two inner loops written out (see the header). */
-export function liveKernelSource(gated: string): string {
+/** Preserve each scalar operation and its order, including the rule's weight offset. */
+function kernelSource(src: string, kernel: string, channels: number, bound: "CN" | "CH", offset: string): string {
+  const dxLoop = `      for (var c : u32 = 0u; c < ${bound}; c = c + 1u) {
+        dx[c] = dx[c] + weights[${offset}P.w2_off + c * HID + o] * h;
+      }
+`;
   let perc = "";
   for (let j = 0; j < PERC; j += 1) perc += `    acc = acc + weights[row + ${j}u] * perc[${j}];\n`;
   let dx = "";
-  for (let c = 0; c < CN; c += 1) dx += `      dx[${c}] = dx[${c}] + weights[P.w2_off + ${c}u * HID + o] * h;\n`;
-  return writeOut(writeOut(gated, PERC_LOOP, perc), DX_LOOP, dx);
+  for (let c = 0; c < channels; c += 1) dx += `      dx[${c}] = dx[${c}] + weights[${offset}P.w2_off + ${c}u * HID + o] * h;\n`;
+  return writeOut(writeOut(src, PERC_LOOP, perc, kernel), dxLoop, dx, kernel);
+}
+
+/** The gated kernel's source with its two inner loops written out (see the header). */
+export function liveKernelSource(gated: string): string {
+  return kernelSource(gated, "nca_inference.wgsl", 16, "CN", "");
+}
+
+/** Chimera keeps its per-cell rule's weight-bank offset in all 16 output terms. */
+export function chimeraKernelSource(src: string): string {
+  return kernelSource(src, "chimera.wgsl", 16, "CN", "wb + ");
+}
+
+/** Textures has 12 output channels; its perception still has 48 terms. */
+export function textureKernelSource(src: string): string {
+  return kernelSource(src, "texture.wgsl", 12, "CH", "");
 }
