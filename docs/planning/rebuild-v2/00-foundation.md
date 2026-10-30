@@ -18,6 +18,9 @@
 > RX 6800 XT idles at 500 MHz between frames; Swarm keeps two in flight and governs on the frame
 > interval (see 03-boids-2d.md).
 >
+> **Swarm M2 (2026-10-29):** `wave` and `fish` icons join the set (Current's brush, Food Chain's
+> Release). Nothing else shared changed.
+>
 > **Firefox frame gate (2026-10-29, found in Swarm, fixed in all four):** Firefox (wgpu) resolves
 > `onSubmittedWorkDone` and `mapAsync` only at the next `queue.submit` or on a ~100 ms timer. A
 > frame loop that skips frames while N are in flight, and submits nothing while it waits, draws about
@@ -29,8 +32,9 @@
 > against 161–164; Grow's training: 40 iterations/s against 53); Chromium is the same at two and
 > three. Measured in headed Firefox 158 on a 165 Hz display, frames submitted per second: Turing
 > Patterns, Slime Mould and Grow 10–11 → 165, with their sims back at full speed (they had taken
-> their time step before the gate and ran at ~6%). Left: Grow's Menagerie draws ~105 there, because
-> Firefox runs the NCA step ~10× slower than Chromium (04-neural-ca.md).
+> their time step before the gate and ran at ~6%). Grow's Menagerie then drew ~105, because Firefox
+> ran the NCA step ~10× slower than Chromium; the live kernel now writes out its two inner loops and
+> the two browsers run level (PR #55; 04-neural-ca.md, "Firefox step cost").
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

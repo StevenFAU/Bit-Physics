@@ -14,6 +14,10 @@ import { REPO_BLOB } from "../learn.js";
 import { OPEN_WATER_RULE, PROOF, couzinFor, sceneById, vicsekFor } from "../scenes.js";
 import type { GateCheck } from "./gate.js";
 import { GATE_N, GATE_RULES, GATE_STEPS, runGateTwice } from "./gate.js";
+import type { EcoKernels } from "../model/ecology.js";
+import type { FluidKernels } from "../model/fluid.js";
+import type { ExchangeCheck, MotesCheck, ReplayCheck, RideCheck } from "./m2-proofs.js";
+import { M2_CHECK, exchangeCheck, motesCheck, replayCheck, rideCheck } from "./m2-proofs.js";
 import type { VicsekCheck } from "./vicsek-check.js";
 import { VICSEK_CHECK, runVicsekCheck } from "./vicsek-check.js";
 
@@ -23,6 +27,9 @@ export interface ProveDeps {
   adapter: string;
   device: GPUDevice;
   kernels: FlockKernels;
+  /** M2: the water's and the ecology's pipelines. */
+  fluidKernels: FluidKernels;
+  ecoKernels: EcoKernels;
   /** The rule on screen (the GPU proofs run it). */
   rule: () => RuleParams;
   /** The live flock's size and world, and its sort snapshot. */
@@ -40,6 +47,8 @@ export interface OnScreen {
   proofRun: boolean;
   /** The on-screen scene runs an M1 brain. */
   brain: "vicsek" | "couzin" | null;
+  /** M2: the on-screen scene's water or ecology. */
+  m2?: "current" | "food-chain" | null;
   scene: string;
   fish: number;
   world: [number, number];
@@ -119,6 +128,14 @@ export interface ProvePane {
   brainReorder(): Promise<Reorder>;
   /** φ(η) on the GPU against the f64 CPU reference. */
   vicsek(): Promise<VicsekCheck>;
+  /** M2: motes stay spread in the solved water (and pile up in the compressible control). */
+  motes(): Promise<MotesCheck>;
+  /** M2: the fish ↔ water exchange conserves momentum. */
+  exchange(): Promise<ExchangeCheck>;
+  /** M2: with the coupling the school swims with the water. */
+  ride(): Promise<RideCheck>;
+  /** M2: Food Chain replays byte for byte. */
+  replay(): Promise<ReplayCheck>;
   /** One trajectory hash on a scratch flock (v4 hashRun), for cross-page checks. */
   hashRun(o?: HashOptions): Promise<{ hash: string; nan: number; n: number; broadphase: Broadphase }>;
 }
@@ -294,6 +311,63 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   vicsekCard.set({ status: "idle", measured: "run it on this GPU (a few seconds)", budget: `z ≤ ${VICSEK_CHECK.zMax}`, adapter: "not yet run here" });
   pane.append(vicsekCard.el);
 
+  // ---- M2: Current and Food Chain ----
+  pane.append(h("h3", {}, "Current and Food Chain"));
+  const M = M2_CHECK;
+  const motesCard = proofCard(
+    {
+      title: "The water does not compress",
+      sentence:
+        `${M.motes.n.toLocaleString()} motes ride Current's water for ${M.motes.steps.toLocaleString()} steps, stirred into eddies. In an incompressible flow they stay as evenly spread as they started: ` +
+        `the index of dispersion Var(n)/⟨n⟩ over a ${M.motes.cells[0]} × ${M.motes.cells[1]} grid stays near 1, the value for random points. The control moves the same motes along the gradient of the stream function instead of its curl — the same speeds, but compressible — and must pile them up.`,
+      label: "measured spread",
+      action: "Run on this GPU",
+      links: [{ label: "the water", href: blob("packages/boids-2d/web/src/v2/model/fluid.ts") }, { label: "check", href: blob("packages/boids-2d/web/src/v2/proof/m2-proofs.ts") }],
+    },
+    () => void runM2("motes"),
+  );
+  motesCard.set({ status: "idle", measured: "run it on this GPU", budget: `index ≤ ${M.motes.maxIndex}; control ≥ ${M.motes.controlMin}`, adapter: "not yet run here" });
+  const exchangeCard = proofCard(
+    {
+      title: "Fish and water trade momentum exactly",
+      sentence:
+        `${M.exchange.n.toLocaleString()} fish frozen in a moving current (their swimming switched off), ${M.exchange.steps} coupled steps with no friction and no push. ` +
+        "Every unit of momentum the fish gain, the water must lose: fb·ΣΔv of the fish against the ocean's change in mean flow, N·ΔU₀.",
+      label: "momentum balance",
+      action: "Run on this GPU",
+      links: [{ label: "the coupling", href: blob("packages/boids-2d/web/src/v2/model/fluid.ts") }],
+    },
+    () => void runM2("exchange"),
+  );
+  exchangeCard.set({ status: "idle", measured: "run it on this GPU", budget: `imbalance ≤ ${M.exchange.maxImbalance.toExponential(0)} of the exchange`, adapter: "not yet run here" });
+  const rideCard = proofCard(
+    {
+      title: "The school rides the current",
+      sentence:
+        `Current's ${M.ride.n.toLocaleString()} fish from one seed for ${M.ride.steps} steps, with the coupling and without it. Measured: how well each fish's heading matches the water's at its position (mean cosine), ` +
+        "and how much energy the water ends with. Coupled, the fish must swim with the water.",
+      label: "measured",
+      action: "Run on this GPU",
+      links: [{ label: "check", href: blob("packages/boids-2d/web/src/v2/proof/m2-proofs.ts") }],
+    },
+    () => void runM2("ride"),
+  );
+  rideCard.set({ status: "idle", measured: "run it on this GPU", budget: `alignment gain ≥ ${M.ride.minGain}`, adapter: "not yet run here" });
+  const replayCard = proofCard(
+    {
+      title: "Food Chain replays byte for byte",
+      sentence:
+        `${M.replay.n.toLocaleString()} fish slots, ${M.replay.steps} steps of grazing, hunting, births and deaths from seed ${M.replay.seed}, twice (the fish turn food into fish at ε ${M.replay.efficiency}, so births happen within the run). ` +
+        "The fish, the sharks and the plankton must match bit for bit — births fill empty slots in a fixed order, catches are integer keys. Another seed must differ.",
+      label: "identical SHA-256",
+      action: "Run on this GPU",
+      links: [{ label: "the ecology", href: blob("packages/boids-2d/web/src/v2/model/ecology.ts") }],
+    },
+    () => void runM2("replay"),
+  );
+  replayCard.set({ status: "idle", measured: "run it on this GPU", budget: "identical SHA-256", adapter: "not yet run here" });
+  pane.append(motesCard.el, exchangeCard.el, rideCard.el, replayCard.el);
+
   pane.append(
     h(
       "p",
@@ -314,6 +388,73 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       busy = false;
     }
   };
+
+  async function runM2(which: "motes" | "exchange" | "ride" | "replay"): Promise<unknown> {
+    return lock(async () => {
+      const card = { motes: motesCard, exchange: exchangeCard, ride: rideCard, replay: replayCard }[which];
+      card.set({ status: "running", measured: "running…", adapter: d.adapter });
+      try {
+        if (which === "motes") {
+          const r = await motesCheck(d.device, d.fluidKernels);
+          card.set({
+            status: r.pass ? "pass" : "fail",
+            measured: `index ${r.index.toFixed(3)} (control ${r.control.toFixed(1)})`,
+            budget: `≤ ${M2_CHECK.motes.maxIndex}; control ≥ ${M2_CHECK.motes.controlMin}`,
+            ratio: r.index / M2_CHECK.motes.maxIndex,
+            adapter: d.adapter,
+            notes: [
+              `at the start ${r.start.toFixed(3)}; fastest water ${r.maxSpeed.toExponential(2)} per step`,
+              `grid |∇·u| ${r.divRatio.toExponential(1)} of |∇u|; Poisson residual ${r.poisson.toExponential(1)}`,
+              `${r.seconds.toFixed(1)} s`,
+            ],
+          });
+          return r;
+        }
+        if (which === "exchange") {
+          const r = await exchangeCheck(d.device, d.kernels, d.fluidKernels);
+          card.set({
+            status: r.pass ? "pass" : "fail",
+            measured: `imbalance ${r.imbalance.toExponential(1)}`,
+            budget: `≤ ${M2_CHECK.exchange.maxImbalance.toExponential(0)}`,
+            ratio: r.imbalance / M2_CHECK.exchange.maxImbalance,
+            adapter: d.adapter,
+            notes: [`fish gained ${r.fishMomentum.toExponential(3)}, water ${r.waterMomentum.toExponential(3)} (node masses × units/step)`, `mean |Δv| per fish ${r.exchanged.toExponential(2)}`],
+          });
+          return r;
+        }
+        if (which === "ride") {
+          const r = await rideCheck(d.device, d.kernels, d.fluidKernels);
+          card.set({
+            status: r.pass ? "pass" : "fail",
+            measured: `alignment ${r.alignCoupled.toFixed(2)} coupled vs ${r.alignFree.toFixed(2)} free`,
+            budget: `gain ≥ ${M2_CHECK.ride.minGain}`,
+            ratio: M2_CHECK.ride.minGain / Math.max(r.alignCoupled - r.alignFree, 1e-9),
+            adapter: d.adapter,
+            notes: [`the water's mean energy: ${r.energyCoupled.toExponential(2)} coupled, ${r.energyFree.toExponential(2)} free`, `${r.seconds.toFixed(1)} s`],
+          });
+          return r;
+        }
+        const r = await replayCheck(d.device, d.kernels, d.ecoKernels);
+        card.set({
+          status: r.identical && r.differs && r.births > 0 ? "pass" : "fail",
+          measured: r.identical ? "identical" : "differs",
+          budget: "identical SHA-256",
+          ratio: r.identical ? 0 : 2,
+          adapter: d.adapter,
+          notes: [
+            `${r.hashes[0].slice(0, 24)}…`,
+            `another seed ${r.differs ? "differs" : "matches — the check has no teeth"}`,
+            `${r.births} births, ${r.eaten} fish eaten; ${r.fish.toLocaleString()} fish and ${r.sharks} sharks at the end`,
+            `${r.seconds.toFixed(1)} s`,
+          ],
+        });
+        return r;
+      } catch (e) {
+        card.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+        return null;
+      }
+    });
+  }
 
   async function gate(): Promise<GateCheck> {
     return runGateTwice();
@@ -724,6 +865,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       await runBrains();
       await runBrainReorder();
       await runVicsek();
+      await runM2("motes");
+      await runM2("exchange");
+      await runM2("ride");
+      await runM2("replay");
     } finally {
       runAllBtn.disabled = false;
     }
@@ -734,7 +879,11 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       const size = `${s.fish.toLocaleString()} fish on a ${s.world[0].toFixed(1)} × ${s.world[1].toFixed(1)} ocean`;
       onScreen.textContent = s.proofRun
         ? `On screen: the proofs' own run (${size}, seed ${PROOF.seed}, no shark).`
-        : s.brain
+        : s.m2 === "food-chain"
+          ? `On screen: Food Chain — ${size.replace("fish", "fish slots")}: the ecology's own forager kernel, not the gated one. The last card replays it; the gated kernel's proofs above check Open Water.`
+          : s.m2 === "current"
+            ? `On screen: Current — ${size}, the gated kernel coupled to the solved water${s.edited ? ", as you tuned it" : ""}. The Current cards check the water and the coupling on their own runs.`
+            : s.brain
           ? `On screen: ${s.scene} — ${size}, the ${s.brain === "vicsek" ? "Vicsek brain" : "Couzin brain"} with the counting-sort grid, its fish re-sorted in memory every 16 steps for speed. ` +
             `${s.sharkOn ? "The shark's fear term is on while you hunt; no proof runs with it. " : ""}` +
             "The new-brain proofs below run this brain at its on-screen settings; the first six check the gated kernel that runs Open Water."
@@ -753,6 +902,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     hashRun,
     brains,
     brainReorder,
+    motes: async () => (await runM2("motes")) as MotesCheck,
+    exchange: async () => (await runM2("exchange")) as ExchangeCheck,
+    ride: async () => (await runM2("ride")) as RideCheck,
+    replay: async () => (await runM2("replay")) as ReplayCheck,
     vicsek: async () => {
       const r = await runVicsek();
       if (!r) throw new Error("the φ(η) check could not run");

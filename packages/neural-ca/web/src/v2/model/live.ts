@@ -60,6 +60,8 @@ export interface LiveCheckpoint {
   fireRate: number;
   /** The frozen cells (1 = frozen), or null when none were. */
   freeze: Uint8Array | null;
+  /** Chimera: the cells' rule ids (ChimeraNca). */
+  rules?: GPUBuffer;
 }
 
 /** Cells whose centre lies within `radius` of a polyline (a single point when it has one vertex) — the brush's rule. */
@@ -205,31 +207,31 @@ export class LiveNca {
   /** Bumped whenever the frozen region changes. */
   freezeVersion = 0;
 
-  private readonly device: GPUDevice;
-  private readonly kernels: LiveKernels;
-  private readonly ck: Checkpoint;
-  private readonly bufs: [GPUBuffer, GPUBuffer];
-  private readonly mid: GPUBuffer;
-  private readonly weights: GPUBuffer;
-  private readonly params: GPUBuffer;
+  protected readonly device: GPUDevice;
+  protected readonly kernels: LiveKernels;
+  protected readonly ck: Checkpoint;
+  protected readonly bufs: [GPUBuffer, GPUBuffer];
+  protected readonly mid: GPUBuffer;
+  protected readonly weights: GPUBuffer;
+  protected readonly params: GPUBuffer;
   private readonly brushBuf: GPUBuffer;
   private readonly statsParams: GPUBuffer;
   /** Four floats: alive, mass, Σαx, Σαy. */
   readonly statsOut: GPUBuffer;
   private readonly upd: [GPUBindGroup, GPUBindGroup];
-  private readonly msk: [GPUBindGroup, GPUBindGroup];
+  protected readonly msk: [GPUBindGroup, GPUBindGroup];
   private readonly brushBG: [GPUBindGroup, GPUBindGroup];
   private readonly statsBG: [GPUBindGroup, GPUBindGroup];
   private readonly freezeBuf: GPUBuffer;
   private readonly freezeParams: GPUBuffer;
-  private readonly freezeBG: [GPUBindGroup, GPUBindGroup];
+  protected readonly freezeBG: [GPUBindGroup, GPUBindGroup];
   private readonly graftBuf: GPUBuffer;
   private readonly graftBG: [GPUBindGroup, GPUBindGroup];
   private graftSlot = 0;
-  private parity = 0;
+  protected parity = 0;
   private slot = 0;
   private brushSlot = 0;
-  private readonly wg: number;
+  protected readonly wg: number;
 
   constructor(device: GPUDevice, kernels: LiveKernels, ck: Checkpoint, cfg: LiveConfig) {
     this.device = device;
@@ -342,8 +344,8 @@ export class LiveNca {
     this.setFreeze(null);
   }
 
-  /** The gate's 32-byte Params block for `step`, at a fresh ring slot; returns its byte offset. */
-  private writeParams(step: number): number {
+  /** The gate's 32-byte Params block for `step`, at a fresh ring slot; returns its byte offset. (`pad`: the last word, 0 for the gated kernel; Chimera puts its rule stride there.) */
+  protected writeParams(step: number, pad = 0): number {
     const off = this.slot * SLOT;
     this.slot = (this.slot + 1) % RING;
     const ab = new ArrayBuffer(32);
@@ -355,7 +357,7 @@ export class LiveNca {
     dv.setUint32(16, this.ck.b1Off, true);
     dv.setUint32(20, this.ck.w1Off, true);
     dv.setUint32(24, this.ck.w2Off, true);
-    dv.setUint32(28, 0, true);
+    dv.setUint32(28, pad, true);
     this.device.queue.writeBuffer(this.params, off, ab);
     return off;
   }
@@ -375,7 +377,7 @@ export class LiveNca {
     return k;
   }
 
-  private recordSteps(pass: GPUComputePassEncoder, k: number): void {
+  protected recordSteps(pass: GPUComputePassEncoder, k: number): void {
     for (let s = 0; s < k; s += 1) {
       const off = this.writeParams(this.tick);
       pass.setPipeline(this.kernels.update);
@@ -399,10 +401,22 @@ export class LiveNca {
 
   /** Freeze (on) or thaw (off) the cells within `radius` of a stroke. */
   paintFreeze(pts: readonly number[], radius: number, on: boolean): void {
-    rasterStroke(this.grid, pts, radius, (i) => {
-      this.freeze[i] = on ? 1 : 0;
-    });
+    for (const p of this.strokeImages(pts, radius)) {
+      rasterStroke(this.grid, p, radius, (i) => {
+        this.freeze[i] = on ? 1 : 0;
+      });
+    }
     this.uploadFreeze();
+  }
+
+  /** Whether the grid wraps around at its edges (TextureNca's plane); a dish does not. */
+  get periodic(): boolean {
+    return false;
+  }
+
+  /** The copies of a stroke (grid points) that reach this grid: on a dish, the stroke itself. */
+  protected strokeImages(pts: readonly number[], _radius: number): (readonly number[])[] {
+    return [pts];
   }
 
   /** Replace the frozen region (null: thaw everything). */
@@ -436,6 +450,7 @@ export class LiveNca {
     dv.setUint32(0, this.grid, true);
     dv.setUint32(4, move && from === this ? 1 : 0, true);
     dv.setFloat32(8, radius, true);
+    dv.setUint32(12, this.periodic ? 1 : 0, true);
     dv.setInt32(16, src[0], true);
     dv.setInt32(20, src[1], true);
     dv.setInt32(24, dst[0], true);
@@ -452,12 +467,14 @@ export class LiveNca {
   /** Record an edit at the current step boundary. Long strokes are split into several passes. */
   encodeStamp(enc: GPUCommandEncoder, s: Stamp): void {
     const segs: number[][] = [];
-    if (s.mode === "seed") {
-      for (let i = 0; i + 1 < s.pts.length; i += 2) segs.push([s.pts[i]!, s.pts[i + 1]!, s.pts[i]!, s.pts[i + 1]!]);
-    } else if (s.pts.length === 2) {
-      segs.push([s.pts[0]!, s.pts[1]!, s.pts[0]!, s.pts[1]!]);
-    } else {
-      for (let i = 0; i + 3 < s.pts.length; i += 2) segs.push([s.pts[i]!, s.pts[i + 1]!, s.pts[i + 2]!, s.pts[i + 3]!]);
+    for (const pts of this.strokeImages(s.pts, s.mode === "seed" ? 0 : s.radius)) {
+      if (s.mode === "seed") {
+        for (let i = 0; i + 1 < pts.length; i += 2) segs.push([pts[i]!, pts[i + 1]!, pts[i]!, pts[i + 1]!]);
+      } else if (pts.length === 2) {
+        segs.push([pts[0]!, pts[1]!, pts[0]!, pts[1]!]);
+      } else {
+        for (let i = 0; i + 3 < pts.length; i += 2) segs.push([pts[i]!, pts[i + 1]!, pts[i + 2]!, pts[i + 3]!]);
+      }
     }
     for (let i = 0; i < segs.length; i += MAX_SEGS) {
       const chunk = segs.slice(i, i + MAX_SEGS);

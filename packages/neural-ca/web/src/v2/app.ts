@@ -9,6 +9,11 @@
 // edit names the dish it lands on, so the event log, undo, save points and
 // replay cover every dish at once.
 //
+// M3: Chimera's two dishes run ChimeraNca (a rule per cell; grafts carry
+// their rules) and Textures' one dish is a TextureNca plane (its own kernel,
+// the same 16-float cell, drawn as a periodic plane). Both reuse the edit
+// log, undo, save points and the tools; neither touches the gated kernel.
+//
 // The frame loop records ONE command encoder per frame: any edits due at this
 // step boundary, the dishes' steps, background jobs from the FrameScheduler in
 // what is left of the GPU budget, then the render. The gate path
@@ -25,6 +30,8 @@ import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, segmented, slider } from "@bp/studio";
 import { isCapturing, sha256hex } from "@bp/verify";
 import type { Block, CellStep } from "./model/cell-math.js";
+import type { ChimeraKernels } from "./model/chimera.js";
+import { ChimeraNca, MAX_RULES, parseCounts } from "./model/chimera.js";
 import { stepCell } from "./model/cell-math.js";
 import type { LiveCheckpoint, LiveKernels, LiveStats, Stamp } from "./model/live.js";
 import { LiveNca, MAX_STEPS_PER_ENCODE } from "./model/live.js";
@@ -32,6 +39,8 @@ import type { Organism, OrganismLibrary } from "./model/organisms.js";
 import { heals } from "./model/organisms.js";
 import type { HiddenBasis } from "./model/pca.js";
 import { hiddenBasis } from "./model/pca.js";
+import type { Texture, TextureKernels, TextureLibrary } from "./model/textures.js";
+import { TextureNca } from "./model/textures.js";
 import { CANONICAL_SEED, CN, FIRE_RATE, GRID } from "./proof/gate.js";
 import type { DishRenderer, ViewMode } from "./render/dish-view.js";
 import { DEFAULT_LOOK, DishView } from "./render/dish-view.js";
@@ -55,6 +64,22 @@ const MAX_DISHES = 12;
 const CELL_ZOOM = 3;
 
 export const TOOLS = ["pan", "cut", "seed", "graft", "freeze", "probe"] as const;
+/** Chimera's tools: Rewrite (paint a rule onto living cells) in place of Probe, so the rail stays six tall. */
+export const CHIMERA_TOOLS = ["pan", "cut", "seed", "graft", "rewrite", "freeze"] as const;
+/** Textures' tools: no seeds (the seed is the empty plane) and no probe (the 16 numbers are not an organism's). */
+export const TEXTURE_TOOLS = ["pan", "cut", "graft", "freeze"] as const;
+/** Chimera opens with one graft, made for you when the scene is untouched: the donor's centre into the host, at this step. */
+export const CHIMERA_GRAFT = { at: 240, src: [32, 32] as [number, number], dst: [32, 32] as [number, number], r: 9 };
+/** Chimera: each rule's colour in the overlay and the legend (host, donor). */
+export const RULE_COLORS = ["#ffb35c", "#7fd8ff"] as const;
+/** The Textures plane's side, cells, per tier (T3 is the spec's 256²). */
+export const TEXTURE_GRID: Record<Tier, number> = { T1: 128, T2: 192, T3: 256 };
+
+/** Chimera's and Textures' pipelines (compiled after the dish is live, or when first asked for). */
+export interface M3Kernels {
+  chim: ChimeraKernels;
+  tex: TextureKernels;
+}
 
 export interface SceneOptions {
   seed?: number;
@@ -67,6 +92,11 @@ export interface SceneOptions {
   organism?: string;
   /** Inside the Cell: the inspected cell. */
   cell?: [number, number];
+  /** Chimera: the second organism (the donor); Textures: the texture. */
+  partner?: string;
+  texture?: string;
+  /** Chimera: false skips the opening graft (tests, a link to the bare pair). */
+  script?: boolean;
 }
 
 export interface AppHooks {
@@ -115,14 +145,19 @@ export interface CellReport {
 interface AppCheckpoint {
   cps: LiveCheckpoint[];
   logIndex: number;
+  /** Chimera's opening graft still to come, and the edit count, at this moment (undo and save points restore them). */
+  scripted: boolean;
+  edits: number;
 }
 
 type CutPayload = { g: number; d?: number; r: number; pts: number[] };
-type SeedPayload = { g: number; d?: number; pts: number[] };
+type SeedPayload = { g: number; d?: number; pts: number[]; rule?: number };
 type FirePayload = { g: number; p: number };
 /** d = −1: every dish; an empty stroke with on = 0 thaws the whole dish. */
 type FreezePayload = { g: number; d?: number; r: number; pts: number[]; on: 0 | 1 };
 type GraftPayload = { g: number; d?: number; sd: number; src: [number, number]; dst: [number, number]; r: number; mv: 0 | 1 };
+/** Chimera: cells within r of the stroke take rule `rule` (r < 0.5: the cells the points fall in). */
+type RulePayload = { g: number; d?: number; r: number; pts: number[]; rule: number };
 
 /** The Menagerie's lattice of dishes in the camera's domain (cells). */
 interface Lattice {
@@ -170,6 +205,23 @@ export class App {
   cellSel: [number, number] = [GRID / 2, GRID / 2];
   lastCell: CellReport | null = null;
 
+  /** M3: Chimera's and Textures' pipelines, and the textures. */
+  m3: (() => Promise<M3Kernels>) | null = null;
+  textures: TextureLibrary | null = null;
+  /** Textures: the texture on the plane. */
+  texture: Texture | null = null;
+  /** Chimera: the donor organism (the host is `organism`). */
+  partner: Organism | null = null;
+  /** Chimera: the rule Seed and Rewrite paint (0 host, 1 donor). */
+  paintRule = 1;
+  rewriteRadius = 3;
+  /** Chimera: show which cells run the other dish's rule. */
+  showRules = true;
+  /** Chimera: living cells per rule in each dish (from the overlay pass). */
+  ruleCounts: number[][] = [];
+  /** Chimera: the opening graft is still to come. */
+  private scripted = false;
+
   /** Teach's host (set once Teach is built). */
   teach: TeachHost | null = null;
   /** The dishes hold still: no steps (Teach's drawing and its training batch). */
@@ -215,7 +267,7 @@ export class App {
   private hover: [number, number] | null = null;
   /** The stroke in progress: its dish and last grid point. */
   private stroke: { d: number; x: number; y: number } | null = null;
-  private pending: { kind: "cut" | "freeze"; d: number; pts: number[] } | null = null;
+  private pending: { kind: "cut" | "freeze" | "rewrite"; d: number; pts: number[] } | null = null;
   private pendingSeeds: { d: number; pts: number[] } | null = null;
   private pendingGraft: GraftPayload | null = null;
   private graftFrom: { d: number; x: number; y: number } | null = null;
@@ -229,6 +281,8 @@ export class App {
   private statsDue = 0;
   private basisBusy = false;
   private readonly cellBuf: GPUBuffer;
+  private readonly countsAll: GPUBuffer;
+  private readonly countsSlot: ReadbackSlot;
   private cellBusy = false;
   private cellDue = 0;
   private cellVersion = -1;
@@ -274,15 +328,23 @@ export class App {
     this.statsAll = this.device.createBuffer({ size: MAX_DISHES * 16, usage: U.COPY_DST | U.COPY_SRC, label: "grow-stats-all" });
     this.statsSlot = new ReadbackSlot(this.device, MAX_DISHES * 16, "grow-stats");
     this.cellBuf = this.device.createBuffer({ size: 25 * CN * 4, usage: U.COPY_DST | U.MAP_READ, label: "grow-cell" });
+    this.countsAll = this.device.createBuffer({ size: MAX_DISHES * MAX_RULES * 4, usage: U.COPY_DST | U.COPY_SRC, label: "grow-rule-counts" });
+    this.countsSlot = new ReadbackSlot(this.device, MAX_DISHES * MAX_RULES * 4, "grow-rule-counts");
     const cp: Checkpointer<AppCheckpoint> = {
-      capture: () => ({ cps: this.dishes.map((d) => d.sim.checkpoint()), logIndex: this.log.length }),
+      capture: () => ({ cps: this.dishes.map((d) => d.sim.checkpoint()), logIndex: this.log.length, scripted: this.scripted, edits: this.edits }),
       restore: (c) => {
         c.cps.forEach((s, i) => this.dishes[i]?.sim.restore(s));
         this.log.truncate(c.logIndex);
         this.applied = c.logIndex;
+        this.scripted = c.scripted;
+        this.edits = c.edits;
         for (const d of this.dishes) d.view.snap();
       },
-      release: (c) => c.cps.forEach((s) => s.state.destroy()),
+      release: (c) =>
+        c.cps.forEach((s) => {
+          s.state.destroy();
+          s.rules?.destroy();
+        }),
     };
     this.history = new History(cp, 8);
     this.history.onChange = () => this.syncTransport();
@@ -324,6 +386,11 @@ export class App {
 
   get basis(): HiddenBasis | null {
     return this.dishes[0]?.basis ?? null;
+  }
+
+  /** The current scene's grid side, cells (64, or the Textures plane's). */
+  get grid(): number {
+    return this.dishes[0]?.sim.grid ?? GRID;
   }
 
   // ------------------------------------------------------------ framing --
@@ -379,14 +446,22 @@ export class App {
     const a0 = this.anchor();
     const rel: [number, number] = [(this.camera.cx - a0[0]) / GRID, (this.camera.cy - a0[1]) / GRID];
     const n = Math.max(1, this.dishes.length);
-    const pitch = 2 * this.dishRadius + 3;
+    const G = this.grid;
+    let pitch = 2 * this.dishRadius + 3;
     let fit: number;
     let cols = 1;
     let rows = 1;
     let base: [number, number];
     let dw: number;
     let dh: number;
-    if (n === 1 && this.scene.kind !== "teach") {
+    if (this.scene.kind === "texture") {
+      // the plane covers the view: no edges anywhere (it wraps beyond its grid too)
+      pitch = G;
+      fit = Math.max(w, h) / G;
+      dw = w / fit;
+      dh = h / fit;
+      base = [(dw - G) / 2, (dh - G) / 2];
+    } else if (n === 1 && this.scene.kind !== "teach") {
       fit = Math.min(w, h) / pitch;
       dw = w / fit;
       dh = h / fit;
@@ -414,7 +489,7 @@ export class App {
     this.dishes.forEach((d, k) => {
       const c = k % cols;
       const r = Math.floor(k / cols);
-      d.origin = [base[0] + c * pitch + (pitch - GRID) / 2, base[1] + r * pitch + (pitch - GRID) / 2];
+      d.origin = [base[0] + c * pitch + (pitch - G) / 2, base[1] + r * pitch + (pitch - G) / 2];
     });
     this.camera.setViewport(w, h);
     this.camera.setDomain(dw, dh, false);
@@ -453,6 +528,15 @@ export class App {
     const d = dish ?? this.tileAt(dx, dy);
     const o = this.dishes[d]!.origin;
     return { d, gx: dx - o[0], gy: dy - o[1] };
+  }
+
+  /** The whole cell at a grid point; on the Textures plane, around its edges into the grid. */
+  private cellAt(gx: number, gy: number): [number, number] {
+    const x = Math.floor(gx);
+    const y = Math.floor(gy);
+    if (!this.dishes[0]?.sim.periodic) return [x, y];
+    const G = this.grid;
+    return [((x % G) + G) % G, ((y % G) + G) % G];
   }
 
   /** Grid point of dish `d` → screen (CSS px). */
@@ -502,7 +586,17 @@ export class App {
     try {
       const orgId = o.organism ?? this.organism?.def.id ?? this.lib.today();
       const plan = scene.kind === "teach" && this.teach ? this.teach.plan() : null;
-      const orgs = plan ? plan.orgs : scene.kind === "menagerie" ? await this.lib.all() : [await this.lib.get(orgId)];
+      const m3 = scene.kind === "chimera" || scene.kind === "texture" ? await this.loadM3() : null;
+      let orgs: Organism[];
+      if (plan) orgs = plan.orgs;
+      else if (scene.kind === "menagerie") orgs = await this.lib.all();
+      else if (scene.kind === "chimera") {
+        const host = await this.lib.get(orgId);
+        const pid = o.partner && o.partner !== host.def.id ? o.partner : this.partner && this.partner.def.id !== host.def.id ? this.partner.def.id : this.lib.partnerFor(host.def.id);
+        const donor = await this.lib.get(pid);
+        orgs = [host, donor];
+      } else orgs = [await this.lib.get(orgId)];
+      const tex = scene.kind === "texture" ? await this.textures!.get(o.texture ?? this.texture?.def.id ?? this.textures!.defs[0]!.id) : null;
       if (seq !== this.loadSeq) return;
       this.history.clear();
       this.log.clear();
@@ -519,22 +613,33 @@ export class App {
       const old = this.dishes;
       this.seed = o.seed ?? CANONICAL_SEED;
       const rate = o.fireRate ?? FIRE_RATE;
-      const start = plan ? plan.start : scene.start(this.seed);
+      const texGrid = TEXTURE_GRID[this.tier];
+      const start = plan ? plan.start : scene.kind === "texture" ? new Float32Array(texGrid * texGrid * CN) : scene.start(this.seed);
       this.still = plan?.still ?? false;
-      this.dishes = orgs.map((org, i) => {
-        const sim = new LiveNca(this.device, this.kernels, org.ck, { grid: GRID, seed: this.seed, fireRate: rate });
+      if (scene.kind === "chimera") this.partner = orgs[1]!;
+      if (tex) this.texture = tex;
+      this.ruleCounts = [];
+      this.scripted = scene.kind === "chimera" && o.script !== false;
+      const dishOrgs = tex ? [orgs[0]!] : orgs;
+      this.dishes = dishOrgs.map((org, i) => {
+        const cfg = { grid: tex ? texGrid : GRID, seed: this.seed, fireRate: rate };
+        let sim: LiveNca;
+        if (tex) sim = new TextureNca(this.device, this.kernels, m3!.tex, tex.ck, cfg);
+        else if (scene.kind === "chimera") sim = new ChimeraNca(this.device, this.kernels, m3!.chim, orgs.map((x) => x.ck), i, cfg);
+        else sim = new LiveNca(this.device, this.kernels, org.ck, cfg);
         sim.load(start);
         const view = this.viewAt(i);
+        view.plane = !!tex;
         view.forgetBuffers();
         view.snap();
         view.split = null;
-        const basis = this.basisCache.get(org.def.id) ?? null;
+        const basis = tex ? null : (this.basisCache.get(org.def.id) ?? null);
         view.setBasis(basis);
         return { sim, view, org, origin: [0, 0], stats: null, basis };
       });
       for (const d of old) d.sim.destroy();
       // Teach's dishes do not change the organism the other scenes open with
-      if ((scene.kind !== "menagerie" && scene.kind !== "teach") || !this.organism) this.organism = orgs.find((x) => x.def.id === orgId) ?? orgs[0]!;
+      if ((scene.kind !== "menagerie" && scene.kind !== "teach" && scene.kind !== "texture") || !this.organism) this.organism = orgs.find((x) => x.def.id === orgId) ?? orgs[0]!;
       this.focus = 0;
       if (o.view) this.viewMode = o.view;
       else if (scene.view && this.scene.id !== scene.id) this.viewMode = scene.view;
@@ -547,7 +652,7 @@ export class App {
       this.clock.reset();
       this.sceneT0 = performance.now();
       // the chrome first: the Menagerie lays its dishes out in the space it leaves
-      const tools = plan ? plan.tools : [...TOOLS];
+      const tools = plan ? plan.tools : scene.kind === "chimera" ? [...CHIMERA_TOOLS] : scene.kind === "texture" ? [...TEXTURE_TOOLS] : [...TOOLS];
       const tool = plan ? plan.tool : scene.tool;
       this.studio.rail.setTools(
         tools.map((t) => this.toolSpec(t)),
@@ -556,7 +661,7 @@ export class App {
       this.studio.root.dataset["tool"] = tool;
       this.studio.root.dataset["scene"] = scene.id;
       this.studio.heading.setCurrent(scene.id);
-      this.studio.heading.set(scene.title, plan ? plan.prompt : scene.prompt(this.organism.def));
+      this.studio.heading.set(scene.title, plan ? plan.prompt : this.promptFor(scene));
       const rect = this.studio.canvas.getBoundingClientRect();
       this.viewport = [0, 0];
       this.reframe(rect.width, rect.height);
@@ -588,6 +693,23 @@ export class App {
   /** Restart the current scene from its start (same seed, organism, update chance and view). */
   async restart(): Promise<void> {
     await this.loadScene(this.scene.id, { seed: this.seed, fireRate: this.sim.fireRate, view: this.viewMode });
+  }
+
+  /** Chimera's and Textures' pipelines (compiled once, on first use). */
+  private async loadM3(): Promise<M3Kernels> {
+    if (!this.m3) throw new Error("Chimera and Textures are not wired on this page");
+    return this.m3();
+  }
+
+  /** The heading's prompt for a scene with what it shows now. */
+  promptFor(scene: SceneDef): string {
+    if (scene.kind === "chimera" && this.partner) {
+      const a = this.organism.def.name.toLowerCase();
+      const b = this.partner.def.name.toLowerCase();
+      return `What grows when two rules meet? At step ${CHIMERA_GRAFT.at} a disc of ${b} is grafted into the ${a}; each cell keeps its rule.`;
+    }
+    if (scene.kind === "texture" && this.texture) return `No edges, no centre — only pattern: ${this.texture.def.name.toLowerCase()}. Erase some; it grows back.`;
+    return scene.prompt(this.organism.def);
   }
 
   /** The canonical start with the gated organism, mask seed 42, rate 0.5 and no edits: the gated run (up to its 1000 steps). */
@@ -687,7 +809,13 @@ export class App {
       dish(p.d)?.sim.encodeStamp(enc, { mode: "cut", radius: p.r, pts: p.pts });
     } else if (e.kind === "seed") {
       const p = e.payload as SeedPayload;
-      dish(p.d)?.sim.encodeStamp(enc, { mode: "seed", radius: 0, pts: p.pts });
+      const sim = dish(p.d)?.sim;
+      sim?.encodeStamp(enc, { mode: "seed", radius: 0, pts: p.pts });
+      if (sim instanceof ChimeraNca && p.rule !== undefined) sim.encodePaintRules(enc, p.pts, 0, p.rule);
+    } else if (e.kind === "rule") {
+      const p = e.payload as RulePayload;
+      const sim = dish(p.d)?.sim;
+      if (sim instanceof ChimeraNca) sim.encodePaintRules(enc, p.pts, p.r, p.rule);
     } else if (e.kind === "fire") {
       for (const d of this.dishes) d.sim.fireRate = (e.payload as FirePayload).p;
     } else if (e.kind === "freeze") {
@@ -716,13 +844,16 @@ export class App {
       const n = pe.pts.length;
       if (pe.kind === "cut") {
         this.log.push(this.sim.tick, "cut", { g: this.activeGroup, d: pe.d, r: this.cutRadius, pts: pe.pts } satisfies CutPayload as unknown as Json);
+      } else if (pe.kind === "rewrite") {
+        this.log.push(this.sim.tick, "rule", { g: this.activeGroup, d: pe.d, r: this.rewriteRadius, pts: pe.pts, rule: this.paintRule } satisfies RulePayload as unknown as Json);
       } else {
         this.log.push(this.sim.tick, "freeze", { g: this.activeGroup, d: pe.d, r: this.freezeRadius, pts: pe.pts, on: this.freezeOn ? 1 : 0 } satisfies FreezePayload as unknown as Json);
       }
       this.pending = this.stroke ? { kind: pe.kind, d: pe.d, pts: [pe.pts[n - 2]!, pe.pts[n - 1]!] } : null;
     }
     if (this.pendingSeeds && this.pendingSeeds.pts.length >= 2) {
-      this.log.push(this.sim.tick, "seed", { g: this.activeGroup, d: this.pendingSeeds.d, pts: this.pendingSeeds.pts } satisfies SeedPayload as unknown as Json);
+      const rule = this.scene.kind === "chimera" ? { rule: this.paintRule } : {};
+      this.log.push(this.sim.tick, "seed", { g: this.activeGroup, d: this.pendingSeeds.d, pts: this.pendingSeeds.pts, ...rule } satisfies SeedPayload as unknown as Json);
       this.pendingSeeds = null;
     }
     if (this.pendingGraft) {
@@ -743,11 +874,33 @@ export class App {
     this.applyPendingNow();
   }
 
-  seedAt(x: number, y: number, d = 0): void {
+  seedAt(x: number, y: number, d = 0, rule?: number): void {
     if (this.blocked("plant")) return;
     const g = this.beginEdit();
-    this.log.push(this.sim.tick, "seed", { g, d, pts: [x, y] } satisfies SeedPayload as unknown as Json);
+    const r = this.scene.kind === "chimera" ? { rule: rule ?? this.paintRule } : {};
+    this.log.push(this.sim.tick, "seed", { g, d, pts: [x, y], ...r } satisfies SeedPayload as unknown as Json);
     this.applyPendingNow();
+  }
+
+  /** Chimera: cells within `radius` of a stroke through grid points of dish `d` take rule `rule` (0 host, 1 donor). */
+  rewriteAt(pts: number[], rule: number, radius = this.rewriteRadius, d = 0): void {
+    if (this.scene.kind !== "chimera" || this.blocked("rewrite")) return;
+    const g = this.beginEdit();
+    this.log.push(this.sim.tick, "rule", { g, d, r: radius, pts, rule } satisfies RulePayload as unknown as Json);
+    this.applyPendingNow();
+  }
+
+  /** Chimera: the opening graft, made at its step when nothing has been edited (not an edit: it is the scene's). */
+  private scriptGraft(): void {
+    if (!this.scripted || this.scene.kind !== "chimera" || this.dishes.length < 2) return;
+    if (this.edits > 0) {
+      this.scripted = false;
+      return;
+    }
+    if (this.sim.tick < CHIMERA_GRAFT.at) return;
+    this.scripted = false;
+    const p: GraftPayload = { g: 0, d: 0, sd: 1, src: CHIMERA_GRAFT.src, dst: CHIMERA_GRAFT.dst, r: CHIMERA_GRAFT.r, mv: 0 };
+    this.log.push(this.sim.tick, "graft", p as unknown as Json);
   }
 
   /** Freeze (or thaw) programmatically: a stroke through grid points; an empty stroke thaws dish `d` (−1: every dish). */
@@ -798,6 +951,10 @@ export class App {
       snap.cps.forEach((s, i) => this.dishes[i]?.sim.restore(s));
       this.log.load(kept);
       this.applied = snap.logIndex;
+      // back to the moment before the edit: with it gone, Chimera's opening graft may be due again
+      // (the replay below makes it at its step when no other edit remains)
+      this.scripted = snap.scripted;
+      this.edits = snap.edits;
       const span = target - snap.cps[0]!.tick;
       if (span > REPLAY_CAP) {
         this.log.truncate(snap.logIndex);
@@ -807,7 +964,6 @@ export class App {
         await this.replayTo(target);
       }
       this.history.release(snap);
-      this.edits = Math.max(0, this.edits - 1);
       for (const d of this.dishes) d.view.snap();
       this.hooks.onEdited?.();
       this.writeUrl();
@@ -826,8 +982,9 @@ export class App {
     let chunks = 0;
     while (this.sim.tick < target) {
       const enc = this.device.createCommandEncoder({ label: "grow-replay" });
+      this.scriptGraft();
       this.applyDue(enc);
-      const nextEvent = this.log.all()[this.applied]?.tick ?? Infinity;
+      const nextEvent = Math.min(this.log.all()[this.applied]?.tick ?? Infinity, this.scripted ? Math.max(this.sim.tick + 1, CHIMERA_GRAFT.at) : Infinity);
       const k = Math.min(MAX_STEPS_PER_ENCODE, target - this.sim.tick, Math.max(1, nextEvent - this.sim.tick));
       LiveNca.encodeStepsMany(enc, this.sims, k);
       this.device.queue.submit([enc.finish()]);
@@ -835,6 +992,7 @@ export class App {
       if (chunks % 8 === 0) await this.device.queue.onSubmittedWorkDone();
     }
     const enc = this.device.createCommandEncoder({ label: "grow-replay" });
+    this.scriptGraft();
     this.applyDue(enc);
     this.device.queue.submit([enc.finish()]);
     await this.device.queue.onSubmittedWorkDone();
@@ -911,17 +1069,32 @@ export class App {
 
   // -------------------------------------------------------------- tools --
 
+  /** Chimera: which rule Seed and Rewrite paint. */
+  private ruleChoice(): HTMLElement {
+    const names = this.dishes.map((d) => d.org.def.name);
+    return segmented(
+      "Rule",
+      names.map((n, i) => ({ value: String(i), label: n, title: `Cells follow the ${n.toLowerCase()}'s rule` })),
+      String(Math.min(this.paintRule, Math.max(0, names.length - 1))),
+      (v) => {
+        this.paintRule = Number(v);
+      },
+    ).el;
+  }
+
   toolSpec(id: string): ToolSpec {
     const cell = this.scene.kind === "cell";
+    const plane = this.scene.kind === "texture";
+    const chimera = this.scene.kind === "chimera";
     const taught = this.teach?.toolSpec(id);
     if (taught) return taught;
     switch (id) {
       case "cut":
         return {
           id,
-          label: "Cut",
+          label: plane ? "Erase" : "Cut",
           icon: "erase",
-          hint: "Drag across the organism to cut it",
+          hint: plane ? "Drag across the pattern to erase it — it grows back" : "Drag across the organism to cut it",
           paints: true,
           options: () =>
             slider({
@@ -938,16 +1111,51 @@ export class App {
             }).el,
         };
       case "seed":
-        return { id, label: "Seed", icon: "seed", hint: "Tap to plant a seed cell — drag to plant a row of them", paints: true };
+        return chimera
+          ? { id, label: "Seed", icon: "seed", hint: "Tap to plant a seed cell that follows the chosen rule", paints: true, options: () => this.ruleChoice() }
+          : { id, label: "Seed", icon: "seed", hint: "Tap to plant a seed cell — drag to plant a row of them", paints: true };
+      case "rewrite":
+        return {
+          id,
+          label: "Rewrite",
+          icon: "brush",
+          hint: "Paint a rule onto living cells — they keep their state",
+          paints: true,
+          options: () => {
+            const box = h("div", { class: "gr-tool-row" });
+            box.append(
+              this.ruleChoice(),
+              slider({
+                label: "Brush width",
+                min: 1,
+                max: 12,
+                step: 1,
+                value: this.rewriteRadius,
+                unit: " cells",
+                onInput: (v) => {
+                  this.rewriteRadius = v;
+                  this.updateRing();
+                },
+              }).el,
+            );
+            return box;
+          },
+        };
       case "graft":
         return {
           id,
           label: "Graft",
           icon: "graft",
-          hint: this.dishes.length > 1 ? "Drag a piece of an organism somewhere else — into another dish too" : "Drag a piece of the organism somewhere else on the dish",
+          hint: chimera
+            ? "Drag a piece from one dish into the other — it keeps its rule"
+            : plane
+              ? "Drag a patch of the pattern somewhere else — the seams heal"
+              : this.dishes.length > 1
+                ? "Drag a piece of an organism somewhere else — into another dish too"
+                : "Drag a piece of the organism somewhere else on the dish",
           paints: true,
           options: () => {
-            const box = h("div", { class: "gr-tool-opts" });
+            const box = h("div", { class: "gr-tool-row" });
             box.append(
               slider({
                 label: "Piece size",
@@ -1044,10 +1252,11 @@ export class App {
     if (t === "cut") this.cutRadius = step(this.cutRadius, 1);
     else if (t === "freeze") this.freezeRadius = step(this.freezeRadius, 1);
     else if (t === "graft") this.graftRadius = step(this.graftRadius, 2);
+    else if (t === "rewrite") this.rewriteRadius = step(this.rewriteRadius, 1);
     else return;
     this.updateRing();
     this.studio.rail.select(t, false);
-    const r = t === "cut" ? this.cutRadius : t === "freeze" ? this.freezeRadius : this.graftRadius;
+    const r = t === "cut" ? this.cutRadius : t === "freeze" ? this.freezeRadius : t === "rewrite" ? this.rewriteRadius : this.graftRadius;
     this.studio.toast.show(`${t === "graft" ? "Piece size" : t === "cut" ? "Cut width" : "Brush width"} ${r} cells`, 1200);
   }
 
@@ -1056,6 +1265,7 @@ export class App {
     if (id === "cut") return this.cutRadius;
     if (id === "freeze") return this.freezeRadius;
     if (id === "graft") return this.graftRadius;
+    if (id === "rewrite") return this.rewriteRadius;
     return 0.7;
   }
 
@@ -1077,7 +1287,7 @@ export class App {
     const plant = (d: number, gx: number, gy: number): void => {
       const x = Math.floor(gx);
       const y = Math.floor(gy);
-      if (x < 0 || y < 0 || x >= GRID || y >= GRID) return;
+      if (x < 0 || y < 0 || x >= this.grid || y >= this.grid) return;
       if (!this.pendingSeeds || this.pendingSeeds.d !== d) {
         if (this.pendingSeeds) this.flushInput();
         this.pendingSeeds = { d, pts: [] };
@@ -1087,7 +1297,7 @@ export class App {
     return {
       paints: () => {
         const a = this.studio.rail.active;
-        return a === "cut" || a === "seed" || a === "graft" || a === "freeze" || a === "paint" || a === "erase";
+        return a === "cut" || a === "seed" || a === "graft" || a === "freeze" || a === "rewrite" || a === "paint" || a === "erase";
       },
       down: (x, y) => {
         const tool = this.studio.rail.active;
@@ -1098,13 +1308,13 @@ export class App {
           this.teach?.paint("down", gx, gy);
           return;
         }
-        if (this.blocked(tool === "cut" ? "cut" : tool === "graft" ? "graft" : tool === "freeze" ? "freeze" : "plant")) return;
+        if (this.blocked(tool === "cut" ? "cut" : tool === "graft" ? "graft" : tool === "freeze" ? "freeze" : tool === "rewrite" ? "rewrite" : "plant")) return;
         const { d, gx, gy } = this.toGrid(x, y);
         this.focus = d;
         if (tool === "graft") {
-          const sx = Math.floor(gx);
-          const sy = Math.floor(gy);
-          if (sx < 0 || sy < 0 || sx >= GRID || sy >= GRID) return;
+          // on the Textures plane every repeated copy is the same cells
+          const [sx, sy] = this.cellAt(gx, gy);
+          if (sx < 0 || sy < 0 || sx >= this.grid || sy >= this.grid) return;
           this.graftFrom = { d, x: sx, y: sy };
           this.updateRing();
           void this.liftGhost(d, sx, sy, x, y);
@@ -1112,7 +1322,7 @@ export class App {
         }
         this.activeGroup = this.beginEdit();
         this.stroke = { d, x: gx, y: gy };
-        if (tool === "cut" || tool === "freeze") this.pending = { kind: tool, d, pts: [gx, gy, gx, gy] };
+        if (tool === "cut" || tool === "freeze" || tool === "rewrite") this.pending = { kind: tool, d, pts: [gx, gy, gx, gy] };
         else plant(d, gx, gy);
       },
       move: (x, y) => {
@@ -1130,7 +1340,7 @@ export class App {
         if (!this.stroke || this.activeGroup === 0) return;
         const { gx, gy } = this.toGrid(x, y, this.stroke.d);
         const tool = this.studio.rail.active;
-        if (tool === "cut" || tool === "freeze") {
+        if (tool === "cut" || tool === "freeze" || tool === "rewrite") {
           if (!this.pending) this.pending = { kind: tool, d: this.stroke.d, pts: [this.stroke.x, this.stroke.y] };
           if (Math.hypot(gx - this.stroke.x, gy - this.stroke.y) < 0.25) return;
           this.pending.pts.push(gx, gy);
@@ -1151,10 +1361,9 @@ export class App {
           this.graftFrom = null;
           this.ghost.hidden = true;
           const { d, gx, gy } = this.toGrid(x, y);
-          const dx = Math.floor(gx);
-          const dy = Math.floor(gy);
+          const [dx, dy] = this.cellAt(gx, gy);
           const moved = d !== from.d || dx !== from.x || dy !== from.y;
-          if (moved && dx >= 0 && dy >= 0 && dx < GRID && dy < GRID && !this.blocked("graft")) {
+          if (moved && dx >= 0 && dy >= 0 && dx < this.grid && dy < this.grid && !this.blocked("graft")) {
             this.activeGroup = this.beginEdit();
             this.pendingGraft = { g: this.activeGroup, d, sd: from.d, src: [from.x, from.y], dst: [dx, dy], r: this.graftRadius, mv: this.graftMove ? 1 : 0 };
             this.endGroupAfterFlush = true;
@@ -1197,6 +1406,8 @@ export class App {
     const r = this.graftRadius;
     const st = await sim.readState();
     if (!this.graftFrom || this.graftFrom.d !== d || this.graftFrom.x !== sx || this.graftFrom.y !== sy) return;
+    const G = sim.grid;
+    const plane = this.scene.kind === "texture";
     const n = 2 * Math.ceil(r) + 1;
     const g = this.ghost;
     g.width = n;
@@ -1207,13 +1418,14 @@ export class App {
     const c = Math.ceil(r);
     for (let j = 0; j < n; j += 1) {
       for (let i = 0; i < n; i += 1) {
-        const x = sx - c + i;
-        const y = sy - c + j;
+        const x = plane ? (((sx - c + i) % G) + G) % G : sx - c + i;
+        const y = plane ? (((sy - c + j) % G) + G) % G : sy - c + j;
         const o = (j * n + i) * 4;
-        if (x < 0 || y < 0 || x >= GRID || y >= GRID || Math.hypot(i - c, j - c) > r) continue;
-        const b = (y * GRID + x) * CN;
-        const a = Math.min(1, Math.max(0, st[b + 3]!));
-        const un = (v: number): number => Math.round(255 * Math.min(1, Math.max(0, a > 1e-3 ? Math.min(v, a) / a : 0)));
+        if (x < 0 || y < 0 || x >= G || y >= G || Math.hypot(i - c, j - c) > r) continue;
+        const b = (y * G + x) * CN;
+        const a = plane ? 1 : Math.min(1, Math.max(0, st[b + 3]!));
+        const un = (v: number): number =>
+          Math.round(255 * Math.min(1, Math.max(0, plane ? v + 0.5 : a > 1e-3 ? Math.min(v, a) / a : 0)));
         img.data[o] = un(st[b]!);
         img.data[o + 1] = un(st[b + 1]!);
         img.data[o + 2] = un(st[b + 2]!);
@@ -1236,6 +1448,31 @@ export class App {
     const s = this.scene;
     if (s.kind === "menagerie" || s.kind === "cell" || s.kind === "teach") {
       this.studio.callouts.set([]);
+      return;
+    }
+    if (s.kind === "chimera") {
+      const at = CHIMERA_GRAFT.at;
+      this.studio.callouts.set([
+        {
+          id: "chimera-graft",
+          text: `${this.partner?.def.name ?? "Donor"} cells, grafted — they keep their rule`,
+          style: "pin",
+          anchor: () => this.toScreen(0, CHIMERA_GRAFT.dst[0] + 0.5, CHIMERA_GRAFT.dst[1] - CHIMERA_GRAFT.r - 1),
+          when: () => this.edits === 0 && this.sim.tick >= at && this.sim.tick < at + 150,
+        },
+      ]);
+      return;
+    }
+    if (s.kind === "texture") {
+      this.studio.callouts.set([
+        {
+          id: "texture-erase",
+          text: "Drag to erase — then watch it fill in",
+          style: "pin",
+          anchor: () => [this.camera.viewW / 2, this.camera.viewH * 0.42],
+          when: () => this.edits === 0 && performance.now() - this.sceneT0 > 5000 && performance.now() - this.sceneT0 < 10500,
+        },
+      ]);
       return;
     }
     const text = s.kind === "canonical" ? "One living cell — the seed" : "Seed cells, scattered";
@@ -1308,7 +1545,8 @@ export class App {
 
     this.profiler?.begin();
     const enc = this.device.createCommandEncoder({ label: "grow-frame" });
-    // edits due at this boundary
+    // edits due at this boundary (Chimera's opening graft lands at its own step)
+    this.scriptGraft();
     this.flushInput();
     const before = this.dishes.map((d) => d.sim.version);
     this.applyDue(enc);
@@ -1324,7 +1562,7 @@ export class App {
     const cap = this.scheduler.unitsFor(STEP_PASS, this.scheduler.budgetMs, Math.min(due, 1), 16);
     const n = Math.min(due, cap);
     // steps stop at the next logged event so it lands on its own boundary
-    const nextEvent = this.log.all()[this.applied]?.tick ?? Infinity;
+    const nextEvent = Math.min(this.log.all()[this.applied]?.tick ?? Infinity, this.scripted ? Math.max(this.sim.tick, CHIMERA_GRAFT.at) : Infinity);
     const k = Math.min(n, Math.max(0, nextEvent - this.sim.tick));
     if (k > 0) {
       LiveNca.encodeStepsMany(enc, this.sims, k, this.profiler?.pass(STEP_PASS));
@@ -1348,14 +1586,27 @@ export class App {
       statsRecorded = this.statsSlot.record(enc, this.statsAll);
       this.statsDue = now + STATS_EVERY_MS;
     }
+    // Chimera: the overlay (every frame the state changed) and the living cells per rule (with the stats)
+    let countsRecorded = false;
+    if (this.scene.kind === "chimera") {
+      this.dishes.forEach((d) => {
+        if (d.sim instanceof ChimeraNca) d.sim.encodeView(enc);
+      });
+      if (statsRecorded && !this.countsSlot.pending) {
+        this.dishes.forEach((d, i) => {
+          if (d.sim instanceof ChimeraNca && i < MAX_DISHES) enc.copyBufferToBuffer(d.sim.counts, 0, this.countsAll, i * MAX_RULES * 4, MAX_RULES * 4);
+        });
+        countsRecorded = this.countsSlot.record(enc, this.countsAll);
+      }
+    }
     // probe: one cell's 16 values
     let probe: { d: number; idx: number } | null = null;
     if (this.hover && this.studio.rail.active === "probe" && this.scene.kind !== "cell" && now > this.probeDue && !this.probeBusy) {
       const { d, gx, gy } = this.toGrid(this.hover[0], this.hover[1]);
       const x = Math.floor(gx);
       const y = Math.floor(gy);
-      if (x >= 0 && y >= 0 && x < GRID && y < GRID) {
-        probe = { d, idx: y * GRID + x };
+      if (x >= 0 && y >= 0 && x < this.grid && y < this.grid) {
+        probe = { d, idx: y * this.grid + x };
         enc.copyBufferToBuffer(this.dishes[d]!.sim.state, probe.idx * CN * 4, this.probeBuf, 0, CN * 4);
         this.probeBusy = true;
         this.probeDue = now + 80;
@@ -1393,7 +1644,13 @@ export class App {
         this.hdr.height,
         this.camera,
         dpr * scale,
-        { buffer: d.sim.state, grid: GRID, version: d.sim.version, freeze: { mask: d.sim.freeze, count: d.sim.frozenCount, version: d.sim.freezeVersion } },
+        {
+          buffer: d.sim.state,
+          grid: d.sim.grid,
+          version: d.sim.version,
+          freeze: { mask: d.sim.freeze, count: d.sim.frozenCount, version: d.sim.freezeVersion },
+          rules: d.sim instanceof ChimeraNca ? { tex: d.sim.viewTex, color: RULE_COLORS[i === 0 ? 1 : 0]!, show: this.showRules } : undefined,
+        },
         { origin: d.origin, radius: this.dishRadius, blend, fade: this.fade, time: now / 1000 },
         save?.cps[i] ? { buffer: save.cps[i]!.state, key: `cp-${this.compareKey}` } : null,
         this.profiler ?? undefined,
@@ -1415,10 +1672,11 @@ export class App {
       this.inFlight -= 1;
     });
     if (statsRecorded) void this.collectStats();
+    if (countsRecorded) void this.collectCounts();
     if (probe) void this.readProbe(probe.d, probe.idx);
     else if (!this.hover) this.studio.probe.hidden = true;
     if (cellRead) void this.readCell(cellRead);
-    if (!this.basisBusy) {
+    if (!this.basisBusy && this.scene.kind !== "texture") {
       const need = this.dishes.findIndex((d) => !d.basis && d.sim.tick >= 160);
       if (need >= 0) void this.measureBasis(need);
     }
@@ -1464,7 +1722,7 @@ export class App {
     const FADE_S = 0.8;
     if (this.still) return;
     if (this.directing === 0) {
-      const dead = this.dishes.every((d) => d.stats !== null && d.stats.alive === 0) && this.sim.tick > 40;
+      const dead = this.scene.kind !== "texture" && this.dishes.every((d) => d.stats !== null && d.stats.alive === 0) && this.sim.tick > 40;
       if (dead) {
         if (this.deadSince === 0) this.deadSince = performance.now();
       } else {
@@ -1481,7 +1739,14 @@ export class App {
       if (this.fade === 0) {
         const keepCamera = this.camera.state();
         this.directing = 2;
-        void this.loadScene(this.scene.id, { seed: this.seed, fireRate: this.sim.fireRate, view: this.viewMode, fadeIn: true }).then(() => {
+        void this.loadScene(this.scene.id, {
+          seed: this.seed,
+          fireRate: this.sim.fireRate,
+          view: this.viewMode,
+          fadeIn: true,
+          partner: this.partner?.def.id,
+          texture: this.texture?.def.id,
+        }).then(() => {
           this.camera.set(keepCamera);
           this.writeUrl();
         });
@@ -1499,6 +1764,12 @@ export class App {
       if (i < MAX_DISHES) d.stats = LiveNca.parseStats(ab.slice(i * 16, i * 16 + 16));
     });
     if (this.lastStats) this.hooks.onStats?.(this.lastStats);
+  }
+
+  private async collectCounts(): Promise<void> {
+    const ab = await this.countsSlot.collect();
+    if (!ab || this.scene.kind !== "chimera") return;
+    this.ruleCounts = this.dishes.map((d, i) => (i < MAX_DISHES && d.sim instanceof ChimeraNca ? parseCounts(ab.slice(i * MAX_RULES * 4, (i + 1) * MAX_RULES * 4), d.sim.ruleCount) : []));
   }
 
   private async measureBasis(i: number): Promise<void> {
@@ -1525,8 +1796,8 @@ export class App {
       const v = new Float32Array(this.probeBuf.getMappedRange().slice(0));
       this.probeBuf.unmap();
       if (!this.hover) return;
-      const x = idx % GRID;
-      const y = Math.floor(idx / GRID);
+      const x = idx % this.grid;
+      const y = Math.floor(idx / this.grid);
       const p = this.studio.probe;
       p.hidden = false;
       p.innerHTML = "";

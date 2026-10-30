@@ -25,11 +25,15 @@ import { DialController } from "./dial-controller.js";
 import { buildLearn } from "./learn.js";
 import type { BrainParams } from "./model/brains.js";
 import { FlockKernels } from "./model/flock.js";
+import { EcoKernels } from "./model/ecology.js";
+import { FluidKernels } from "./model/fluid.js";
 import type { RuleParams } from "./model/params.js";
 import { buildCanonicalCapture } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
 import type { FishColour } from "./render/ocean-view.js";
 import { DEFAULT_LOOK, OceanView } from "./render/ocean-view.js";
+import { SeaView } from "./render/sea-view.js";
+import { PopulationPanel, WaterPanel } from "./m2-panels.js";
 import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
 import { DIAL_ETA, DIAL_RHO, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho } from "./scenes.js";
@@ -61,6 +65,10 @@ const url = new UrlState(
     shark: { kind: "num", def: SHARK_RADIUS_R, min: 4, max: 40, digits: 0 },
     col: { kind: "enum", def: "silver", values: ["silver", "heading"] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
+    // Current's water: drag, fish weight, push (× fish speed), ν, μ (−1 = the scene's)
+    wp: { kind: "nums", def: [-1, -1, -1, -1, -1], n: 5, digits: 5 },
+    // Food Chain: plankton growth, fish efficiency, shark upkeep, shark speed (−1 = the scene's)
+    ep: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 5 },
   },
   2,
 );
@@ -121,9 +129,12 @@ async function boot(): Promise<void> {
   // frame-interval budget: a 60 Hz frame is 16.7 ms, a missed vsync 33 ms
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   studio.veil.step("Compiling the flock kernel");
-  const kernels = await FlockKernels.create(device);
+  const [kernels, fluidKernels, ecoKernels] = await Promise.all([FlockKernels.create(device), FluidKernels.create(device), EcoKernels.create(device)]);
   const view = new OceanView(device, DEFAULT_LOOK);
   const app = new App(gpu, studio, hdr, view, kernels, tier);
+  app.fluidKernels = fluidKernels;
+  app.ecoKernels = ecoKernels;
+  app.sea = new SeaView(device);
   // GPU timings set how many steps a frame may take at high speed (16.7 ms frames)
   if (gpu.timestamps) profiler.onFrame = () => void app.adaptToTimings(profiler.timings(), 14, profiler.frameTag);
   app.profiler = profiler;
@@ -149,7 +160,21 @@ async function boot(): Promise<void> {
       brainKeys.turn = or(Number(((b.p.maxTurn * 180) / Math.PI).toFixed(1)), Number(((bd.p.maxTurn * 180) / Math.PI).toFixed(1)));
       brainKeys.sig = or(Number(b.p.sigma.toFixed(2)), Number(bd.p.sigma.toFixed(2)));
     }
+    const m2: Partial<typeof parsed> = {};
+    const cw = app.current;
+    const sw = app.scene.water;
+    if (cw && sw) {
+      const p = cw.fluid.params;
+      m2.wp = [or(p.drag, sw.params.drag), or(p.massRatio, sw.params.massRatio), or(Number((cw.tideSpeed / app.flock.rule.maxSpeed).toFixed(4)), Number((sw.tide / app.flock.rule.maxSpeed).toFixed(4))), or(p.nu, sw.params.nu), or(p.mu, sw.params.mu)];
+    }
+    const ec = app.ecology;
+    const se = app.scene.ecology;
+    if (ec && se) {
+      const p = ec.params;
+      m2.ep = [or(p.growth, se.params.growth), or(p.efficiency, se.params.efficiency), or(p.sharkCost, se.params.sharkCost), or(p.sharkSpeed, se.params.sharkSpeed)];
+    }
     return {
+      ...m2,
       s: app.scene.id,
       seed: app.seed,
       ws: or(r.wSep, d.wSep),
@@ -191,7 +216,11 @@ async function boot(): Promise<void> {
     tune.sync(app.flock.rule, app.flock.brain, view.look.colour);
     const b = app.flock.brain;
     studio.tune.setNote(
-      !b
+      app.ecology
+        ? "Food Chain's rates. The fish school by Open Water's weights; the ecology replays bit for bit from the same seed on the same GPU."
+        : app.current
+          ? "The fish are Open Water's flock (the v4 lab's kernel); the water is solved each step. Same seed, same GPU, same bytes."
+          : !b
         ? "The rule is the v4 lab's Reynolds flock. Every value keeps the kernel's exactness: same seed, same GPU, same bytes."
         : b.kind === "couzin"
           ? "Couzin et al. 2002's zones: repel inside r_r, align out to r_o, gather across the school. Same seed, same GPU, same bytes."
@@ -209,12 +238,64 @@ async function boot(): Promise<void> {
     app.writeUrl();
   };
   const regime = new RegimePanel();
+  const pop = new PopulationPanel();
+  const waterPanel = new WaterPanel();
+
+  // M2 scenes' own knobs in Tune: the water (Current), the ecology (Food Chain)
+  const extraTune = (): void => {
+    const c = app.current;
+    const e = app.ecology;
+    if (c) {
+      const f = c.fluid;
+      tune.setExtra(
+        "The water",
+        [
+          { label: "Drag", symbol: "fraction per step", min: 0, max: 0.3, step: 0.01, digits: 2, hint: "How fast a fish's velocity moves towards the water's. At 0 the fish ignore the water and the water ignores them.", get: () => f.params.drag, set: (v) => ((f.params = { ...f.params, drag: v }), app.writeUrl()) },
+          { label: "Fish weight", symbol: "of the water", min: 0.05, max: 2, step: 0.05, digits: 2, hint: "The fish's total mass against the water's. Heavier fish drag the water more and are carried less.", get: () => f.params.massRatio, set: (v) => ((f.params = { ...f.params, massRatio: v }), app.writeUrl()) },
+          {
+            label: "Steady push",
+            symbol: "× fish speed",
+            min: 0,
+            max: 2,
+            step: 0.05,
+            digits: 2,
+            hint: "The current the steady push would keep without the fish (Kolmogorov forcing), as a multiple of a fish's top speed.",
+            get: () => c.tideSpeed / app.flock.rule.maxSpeed,
+            set: (v) => {
+              c.setTide(v * app.flock.rule.maxSpeed);
+              app.writeUrl();
+            },
+          },
+          { label: "Viscosity", symbol: "ν", min: 0, max: 0.002, step: 0.0001, digits: 4, hint: "How quickly the water's eddies smooth out (world units² per step).", get: () => f.params.nu, set: (v) => ((f.params = { ...f.params, nu: v }), c.setTide(), app.writeUrl()) },
+          { label: "Floor friction", symbol: "μ", min: 0, max: 0.004, step: 0.0001, digits: 4, hint: "How quickly the sea floor slows the whole flow (per step).", get: () => f.params.mu, set: (v) => ((f.params = { ...f.params, mu: v }), c.setTide(), app.writeUrl()) },
+        ],
+        false,
+      );
+    } else if (e) {
+      const set = (k: "growth" | "efficiency" | "sharkCost" | "sharkSpeed") => (v: number) => {
+        e.params = { ...e.params, [k]: v };
+        app.writeUrl();
+      };
+      tune.setExtra(
+        "The food chain",
+        [
+          { label: "Plankton growth", symbol: "r", min: 0.002, max: 0.05, step: 0.001, digits: 3, hint: "How fast plankton grows back where it has been grazed (per step).", get: () => e.params.growth, set: set("growth") },
+          { label: "Fish efficiency", symbol: "ε", min: 0.03, max: 0.4, step: 0.01, digits: 2, hint: "How much of what a fish eats becomes fish. Higher, and the fish boom faster.", get: () => e.params.efficiency, set: set("efficiency") },
+          { label: "Shark upkeep", symbol: "per step", min: 0.001, max: 0.01, step: 0.0002, digits: 4, hint: "The energy a shark burns each step. Higher, and sharks need more fish to live.", get: () => e.params.sharkCost, set: set("sharkCost") },
+          { label: "Shark speed", symbol: "× fish", min: 1, max: 2.5, step: 0.05, digits: 2, hint: "How much faster than a fish a hunting shark swims.", get: () => e.params.sharkSpeed, set: set("sharkSpeed") },
+        ],
+        true,
+      );
+    } else tune.setExtra(null, [], false);
+  };
 
   // ------------------------------------------------------------- Prove --
   const prove = buildProve(studio.drawer.prove, {
     adapter: gpu.adapterId,
     device,
     kernels,
+    fluidKernels,
+    ecoKernels,
     rule: () => app.flock.rule,
     brain: () => app.flock.brain,
     live: () => ({ n: app.flock.n, halfW: app.flock.halfW, halfH: app.flock.halfH, seed: app.seed }),
@@ -230,6 +311,7 @@ async function boot(): Promise<void> {
     prove.setOnScreen({
       proofRun: app.onProofRun,
       brain: app.flock.brain?.kind ?? null,
+      m2: app.scene.ecology ? "food-chain" : app.scene.water ? "current" : null,
       scene: app.scene.title,
       fish: app.flock.n,
       world: [app.flock.halfW * 2, app.flock.halfH * 2],
@@ -340,6 +422,16 @@ async function boot(): Promise<void> {
   app.hooks = {
     onSceneChange: (scene) => {
       learn.setScene(scene, app.onProofRun);
+      extraTune();
+      if (scene.ecology) {
+        if (!pop.el.isConnected) studio.stage.append(pop.el);
+        pop.setSlots(app.flock.n, app.ecology?.sharkSlots ?? 1);
+        pop.clear();
+      } else pop.el.remove();
+      if (scene.water) {
+        if (!waterPanel.el.isConnected) studio.stage.append(waterPanel.el);
+        waterPanel.clear();
+      } else waterPanel.el.remove();
       dial.attach(scene.id === "order-dial");
       if (scene.id === "mill") {
         if (!regime.el.isConnected) studio.stage.append(regime.el);
@@ -363,6 +455,17 @@ async function boot(): Promise<void> {
     onRestore: () => {
       dial.sync();
       regime.clear();
+      pop.clear();
+      extraTune();
+      app.writeUrl();
+    },
+    onCensus: (c, tick) => {
+      pop.push(c, tick);
+      if (app.learnOpen) learn.pushCensus(c);
+    },
+    onFluid: (st) => {
+      waterPanel.set(st, app.flock.rule.maxSpeed);
+      if (app.learnOpen && app.current) learn.pushFluid(st, app.flock.rule.maxSpeed, app.current.fluid.fb);
     },
     onEdited: () => syncProve(),
     onOrder: (o, tick) => {
@@ -453,7 +556,26 @@ async function boot(): Promise<void> {
       },
     };
   }
+  // M2 knobs from the link (each −1 = the scene's), built into the first load so the
+  // water's starting vorticity comes from the linked push, exactly as a restart rebuilds it
+  let water: SceneOptions["water"];
+  if (scene.water) {
+    const [dr, ma, pu, nu, mu] = parsed.wp;
+    const p = scene.water.params;
+    water = {
+      params: { ...p, drag: pick(dr!, p.drag), massRatio: pick(ma!, p.massRatio), nu: pick(nu!, p.nu), mu: pick(mu!, p.mu) },
+      tide: pu! >= 0 ? pu! * rule.maxSpeed : scene.water.tide,
+    };
+  }
+  let eco: SceneOptions["eco"];
+  if (scene.ecology) {
+    const [gr, ef, sc, ss] = parsed.ep;
+    const p = scene.ecology.params;
+    eco = { ...p, growth: pick(gr!, p.growth), efficiency: pick(ef!, p.efficiency), sharkCost: pick(sc!, p.sharkCost), sharkSpeed: pick(ss!, p.sharkSpeed) };
+  }
   const opts: SceneOptions = {
+    water,
+    eco,
     seed: parsed.seed,
     rule: scene.brain ? scene.rule : rule,
     brain,
@@ -487,6 +609,8 @@ async function boot(): Promise<void> {
     brain: app.flock.brain,
     regime: app.scene.id === "mill" ? regime.regime : null,
     dial: app.scene.id === "order-dial" ? { eta: dial.eta, rho: dial.rho, last: dial.last, sweeping: dial.sweeping, points: dial.panel.measurements.length } : null,
+    census: app.census,
+    fluid: app.current ? { grid: [app.current.fluid.gw, app.current.fluid.gh], motes: app.current.fluid.nMotes, fb: app.current.fluid.fb, stats: app.fluidStats } : null,
   });
   (globalThis as { __swarmDial?: DialController }).__swarmDial = dial;
   (globalThis as { __swarm?: App }).__swarm = app;

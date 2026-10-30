@@ -14,6 +14,10 @@ import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { BrainParams } from "./model/brains.js";
+import { CurrentExt } from "./model/current.js";
+import type { Census, EcoKernels, EcoParams } from "./model/ecology.js";
+import { EcologyExt } from "./model/ecology.js";
+import type { FluidKernels, FluidParams, FluidStats } from "./model/fluid.js";
 import type { Checkpoint, OrderParams } from "./model/flock.js";
 import { Flock, FlockKernels, MAX_STEPS_PER_PASS, orderParams, sumPartials } from "./model/flock.js";
 import type { RuleParams } from "./model/params.js";
@@ -21,6 +25,7 @@ import { sameRule } from "./model/params.js";
 import { AGENTS } from "./model/world.js";
 import type { OceanView, SharkView } from "./render/ocean-view.js";
 import { DEFAULT_LOOK } from "./render/ocean-view.js";
+import type { SeaSource, SeaView } from "./render/sea-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { PROOF, RHO_RANGE, SCENES, sceneById, sceneCount, sceneWorld, vicsekRadius } from "./scenes.js";
 
@@ -41,6 +46,9 @@ export interface SceneOptions {
   /** The scene's brain with changed parameters (M1 scenes). */
   brain?: BrainParams;
   camera?: { cx: number; cy: number; zoom: number };
+  /** M2 knobs carried across a restart (the scene's own when absent). */
+  water?: { params: FluidParams; tide: number };
+  eco?: EcoParams;
 }
 
 export interface AppHooks {
@@ -52,8 +60,30 @@ export interface AppHooks {
   /** A save point was restored (the flock's state jumped). */
   onRestore?: () => void;
   onOrder?: (o: OrderParams, tick: number) => void;
+  /** Current: the water's live statistics (every few frames). */
+  onFluid?: (s: FluidStats, tick: number) => void;
+  /** Food Chain: the census (every few frames). */
+  onCensus?: (c: Census, tick: number) => void;
   onFrame?: (now: number) => void;
 }
+
+/** The visitor's brush in the water (Current): it follows the pointer while the button is held. */
+interface BrushState {
+  /** Pointer (world), or null when away. */
+  at: [number, number] | null;
+  down: boolean;
+  /** Smoothed pointer velocity, world units per second. */
+  vx: number;
+  vy: number;
+  last: [number, number] | null;
+  /** Seconds painted (for the callouts). */
+  painted: number;
+}
+
+/** Current's brush: the impulse per step moves the water under it towards the brush's speed at this rate. */
+export const BRUSH_RATE = 0.08;
+/** Default brush radius in world units per Size unit. */
+export const BRUSH_RADIUS = 1.2;
 
 /** The shark the visitor steers: it chases the pointer, its size is its fear radius. */
 interface SharkState {
@@ -127,12 +157,32 @@ export class App {
   sharkSize = SHARK_RADIUS_R;
   /** Memory reorder cadence for live scenes (0 = never). */
   sortEvery = SORT_EVERY;
+  /** M2: the fluid's pipelines (Current), the sea renderer, this scene's water. */
+  fluidKernels: FluidKernels | null = null;
+  sea: SeaView | null = null;
+  current: CurrentExt | null = null;
+  fluidStats: FluidStats | null = null;
+  ecoKernels: EcoKernels | null = null;
+  ecology: EcologyExt | null = null;
+  census: Census | null = null;
+  /** Feed: plankton per step at the brush's centre (units of K). */
+  feedRate = 0.03;
+  readonly brush: BrushState = { at: null, down: false, vx: 0, vy: 0, last: null, painted: 0 };
+  /** Brush radius (world units). */
+  brushRadius = BRUSH_RADIUS;
 
   private busy = false;
   /** Frames submitted and not yet done; at most `maxInFlight`. */
   private inFlight = 0;
-  /** Frames allowed in flight (see the bench: one leaves the GPU idle half the time). */
-  maxInFlight = 2;
+  /**
+   * Frames allowed in flight. One leaves the GPU idle half the time and it
+   * clocks down (see the bench). Firefox reports each frame done about one
+   * display frame later than Chrome, so two there act like one here: at a
+   * million fish the GPU clocked down and Firefox drew ~70 fps against
+   * Chrome's ~140. Three keep both at ~140; Chrome's own back-pressure binds
+   * first, so it queues no deeper than it did with two.
+   */
+  maxInFlight = 3;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
@@ -147,6 +197,10 @@ export class App {
   private loadSeq = 0;
   private orderSlot: ReadbackSlot | null = null;
   private orderFrame = 0;
+  private fluidSlot: ReadbackSlot | null = null;
+  private frameNo = 0;
+  private stateSlot: ReadbackSlot | null = null;
+  private censusSlot: ReadbackSlot | null = null;
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: OceanView, kernels: FlockKernels, tier: Tier) {
     this.gpu = gpu;
@@ -201,6 +255,12 @@ export class App {
       const brain = proof || !scene.brain ? null : o.brain && o.brain.kind === scene.brain(n).kind ? o.brain : scene.brain(n);
       // the counting sort is sized for the smallest reach the scene offers
       const minReach = !brain ? MIN_RCOH : brain.kind === "vicsek" ? vicsekRadius(RHO_RANGE[0]) : brain.p.ra;
+      const water = !proof ? scene.water : undefined;
+      if (water && !this.fluidKernels) throw new Error("Current needs the fluid kernels");
+      let current: CurrentExt | null = null;
+      const eco = !proof ? scene.ecology : undefined;
+      if (eco && !this.ecoKernels) throw new Error("Food Chain needs the ecology kernels");
+      let ecology: EcologyExt | null = null;
       const flock = new Flock(this.device, this.kernels, {
         n,
         ...world,
@@ -212,12 +272,40 @@ export class App {
         broadphase: "sort",
         minRCoh: minReach,
         // the proof scene is the proofs' run exactly: no memory reorder
-        sortEvery: proof ? 0 : this.sortEvery,
+        sortEvery: proof ? 0 : (scene.sortEvery ?? this.sortEvery),
+        ext: eco
+          ? (f) =>
+              (ecology = new EcologyExt(this.device, this.ecoKernels!, f, {
+                fish0: Math.round(eco.fish0 * n),
+                sharkSlots: eco.sharkSlots[this.tier],
+                sharks0: eco.sharks0,
+                params: o.eco ?? eco.params,
+              }))
+          : water
+          ? (f) =>
+              (current = new CurrentExt(this.device, this.fluidKernels!, f, {
+                rows: water.rows[this.tier],
+                motes: water.motes[this.tier],
+                params: o.water?.params ?? water.params,
+                tide: o.water?.tide ?? water.tide,
+                seed: this.seed,
+              }))
+          : undefined,
       });
+      this.current = current;
+      this.fluidStats = null;
+      this.ecology = ecology;
+      this.census = null;
       this.flock = flock;
       old?.destroy();
       this.orderSlot?.destroy();
       this.orderSlot = new ReadbackSlot(this.device, flock.groups * 40, "swarm-order");
+      this.fluidSlot?.destroy();
+      this.stateSlot?.destroy();
+      this.fluidSlot = current ? new ReadbackSlot(this.device, (current as CurrentExt).fluid.statsBytes, "swarm-fluid-stats") : null;
+      this.stateSlot = current ? new ReadbackSlot(this.device, 16, "swarm-fluid-state") : null;
+      this.censusSlot?.destroy();
+      this.censusSlot = ecology ? new ReadbackSlot(this.device, 32, "swarm-census") : null;
       this.order = null;
       this.view.forgetBuffers();
       this.scene = scene;
@@ -241,7 +329,15 @@ export class App {
       this.shark.presence = 0;
       this.shark.target = null;
       this.hdr.resetExposure();
-      const tools = scene.shark ? [this.toolSpec("shark"), this.toolSpec("pan")] : [this.toolSpec("pan")];
+      const tools = [
+        ...(scene.water ? [this.toolSpec("current")] : []),
+        ...(scene.ecology ? [this.toolSpec("feed"), this.toolSpec("release")] : []),
+        ...(scene.shark ? [this.toolSpec("shark")] : []),
+        this.toolSpec("pan"),
+      ];
+      this.brush.at = null;
+      this.brush.down = false;
+      this.brush.painted = 0;
       this.studio.rail.setTools(tools, tools[0]!.id);
       this.studio.root.dataset["tool"] = tools[0]!.id;
       this.studio.heading.setCurrent(scene.listed ? scene.id : "");
@@ -265,7 +361,13 @@ export class App {
       this.clock.ticksPerSecond = TICK_RATE[this.tier];
       this.studio.toast.show(`Restarted with fewer fish (${AGENTS[this.tier].toLocaleString()}) to hold the frame rate`);
     }
-    await this.loadScene(this.scene.id, { seed: this.seed, rule: this.flock.rule, brain: this.flock.brain ?? undefined });
+    await this.loadScene(this.scene.id, {
+      seed: this.seed,
+      rule: this.flock.rule,
+      brain: this.flock.brain ?? undefined,
+      water: this.current ? { params: { ...this.current.fluid.params }, tide: this.current.tideSpeed } : undefined,
+      eco: this.ecology ? { ...this.ecology.params } : undefined,
+    });
   }
 
   /** World units of the Shark tool's Size unit ("r"). */
@@ -390,7 +492,48 @@ export class App {
         options: () => this.sharkOptions(),
       };
     }
+    if (id === "feed") {
+      return {
+        id,
+        label: "Feed",
+        icon: "food",
+        hint: "Hold to make plankton bloom under the pointer · right-drag or two fingers to pan",
+        paints: true,
+        options: () => this.brushOptions(),
+      };
+    }
+    if (id === "release") {
+      return { id, label: "Release", icon: "fish", hint: "Click to release a school of 300 fish", paints: true };
+    }
+    if (id === "current") {
+      return {
+        id,
+        label: "Current",
+        icon: "wave",
+        hint: "Drag through the water to push it · right-drag or two fingers to pan",
+        paints: true,
+        options: () => this.brushOptions(),
+      };
+    }
     return { id: "pan", label: "Look", icon: "hand", hint: "Drag to pan · scroll or pinch to zoom · double-click to fit" };
+  }
+
+  private brushOptions(): HTMLElement {
+    const s = slider({
+      label: "Size",
+      symbol: "brush radius",
+      min: 0.4,
+      max: 4,
+      step: 0.1,
+      value: this.brushRadius,
+      format: (v) => v.toFixed(1),
+      unit: " units",
+      hint: this.ecology ? "How wide a bloom you feed (the ocean's own units)." : "How wide a stroke of water you push (the ocean's own units).",
+      onInput: (v) => {
+        this.brushRadius = v;
+      },
+    });
+    return h("div", { class: "sw-options" }, s.el);
   }
 
   private sharkOptions(): HTMLElement {
@@ -412,6 +555,10 @@ export class App {
   selectTool(id: string): void {
     this.studio.root.dataset["tool"] = id;
     if (id !== "shark") this.shark.target = null;
+    if (id !== "current") {
+      this.brush.at = null;
+      this.brush.down = false;
+    }
   }
 
   private toWorld(x: number, y: number): [number, number] {
@@ -425,17 +572,31 @@ export class App {
 
   private toolHandlers(): ToolHandlers {
     const sharkTool = (): boolean => this.studio.rail.active === "shark" && this.scene.shark;
+    const brushTool = (): boolean => (this.studio.rail.active === "current" && !!this.current) || (this.studio.rail.active === "feed" && !!this.ecology);
+    const releaseTool = (): boolean => this.studio.rail.active === "release" && !!this.ecology;
     return {
-      paints: () => sharkTool(),
+      paints: () => sharkTool() || brushTool() || releaseTool(),
       down: (x, y) => {
+        if (releaseTool()) {
+          this.releaseAt(this.toWorld(x, y));
+          return;
+        }
+        if (brushTool()) {
+          this.brush.at = this.toWorld(x, y);
+          this.brush.last = null;
+          this.brush.down = true;
+          return;
+        }
         if (!sharkTool()) return;
         this.shark.target = this.toWorld(x, y);
         this.shark.lunging = true;
       },
       move: (x, y) => {
+        if (brushTool()) this.brush.at = this.toWorld(x, y);
         if (sharkTool()) this.shark.target = this.toWorld(x, y);
       },
       up: (_x, _y, e) => {
+        this.brush.down = false;
         this.shark.lunging = false;
         // a touch lifts the shark out of the water; a mouse keeps hovering
         if (e.pointerType === "touch") this.shark.target = null;
@@ -495,6 +656,60 @@ export class App {
         : null;
   }
 
+  /**
+   * The brush: while held, a Gaussian impulse per step that moves the water
+   * under it towards the brush's own speed (capped at twice a fish's top
+   * speed). The impulse goes through the same integer sums as the fish's.
+   */
+  /** Release: 300 fish around a point, at the next step (into empty slots, as births are). */
+  releaseAt(at: [number, number], count = 300): void {
+    if (!this.ecology || this.blocked("release fish")) return;
+    this.ecology.brush = { ...this.ecology.brush, release: { x: at[0], y: at[1], radius: 0.35, count } };
+    this.edits += 1;
+  }
+
+  private updateBrush(dt: number): void {
+    const b = this.brush;
+    const e = this.ecology;
+    if (e) {
+      e.brush = { ...e.brush, feed: b.down && b.at ? { x: b.at[0], y: b.at[1], radius: this.brushRadius, amount: this.feedRate } : undefined };
+      if (b.down && b.at) b.painted += dt;
+      return;
+    }
+    const c = this.current;
+    if (!c) return;
+    const W = this.flock.halfW * 2;
+    const H = this.flock.halfH * 2;
+    if (b.at && b.last) {
+      let dx = b.at[0] - b.last[0];
+      let dy = b.at[1] - b.last[1];
+      dx -= W * Math.round(dx / W);
+      dy -= H * Math.round(dy / H);
+      const k = Math.min(1, dt * 12);
+      b.vx += (dx / Math.max(dt, 1e-3) - b.vx) * k;
+      b.vy += (dy / Math.max(dt, 1e-3) - b.vy) * k;
+    } else {
+      b.vx = 0;
+      b.vy = 0;
+    }
+    b.last = b.at ? [b.at[0], b.at[1]] : null;
+    if (!b.down || !b.at) {
+      c.fluid.brush = null;
+      return;
+    }
+    // world units per step at 1× (the clock's tick rate)
+    let vx = b.vx / this.clock.ticksPerSecond;
+    let vy = b.vy / this.clock.ticksPerSecond;
+    const cap = 2 * this.flock.rule.maxSpeed;
+    const sp = Math.hypot(vx, vy);
+    if (sp > cap) {
+      vx *= cap / sp;
+      vy *= cap / sp;
+    }
+    b.painted += dt;
+    c.fluid.brush = { x: b.at[0], y: b.at[1], ix: vx * BRUSH_RATE, iy: vy * BRUSH_RATE, radius: this.brushRadius };
+  }
+
   sharkView(): SharkView | null {
     const s = this.shark;
     if (s.presence <= 0 || !this.scene.shark) return null;
@@ -532,6 +747,36 @@ export class App {
       ]);
       return;
     }
+    if (s.id === "food-chain") {
+      const slots = (): number => this.ecology?.sharkSlots ?? 128;
+      this.studio.callouts.set([
+        {
+          id: "food-start",
+          text: "Fish graze the glowing plankton; sharks hunt the fish",
+          detail: "Hold Feed to make a bloom · Release drops a school",
+          style: "label",
+          anchor: freeSpot,
+          when: () => t() > 600 && t() < 7000,
+        },
+        {
+          id: "shark-boom",
+          text: "A shark boom",
+          detail: "Plenty of fish, so the sharks multiply — the fish will crash",
+          style: "label",
+          anchor: freeSpot,
+          when: () => !!this.census && this.census.sharks >= 0.8 * slots() && t() > 7000,
+        },
+        {
+          id: "fish-crash",
+          text: "The fish have crashed",
+          detail: "The sharks will starve; then the fish come back",
+          style: "label",
+          anchor: freeSpot,
+          when: () => !!this.census && this.census.fish < 0.06 * this.flock.n && t() > 7000,
+        },
+      ]);
+      return;
+    }
     const near = (): [number, number] | null => {
       const v = this.sharkView();
       if (!v) return null;
@@ -557,6 +802,18 @@ export class App {
               anchor: near,
               when: () => this.shark.lunged > 0.15 && this.shark.lunged < 3.5,
             },
+            ...(s.id === "current"
+              ? [
+                  {
+                    id: "current-start",
+                    text: "The water is moving",
+                    detail: "Drag through it to push a current — the schools ride it",
+                    style: "label" as const,
+                    anchor: freeSpot,
+                    when: () => t() > 600 && t() < 7000 && this.shark.seen === 0 && this.brush.painted === 0,
+                  },
+                ]
+              : []),
             ...(s.id === "mill"
               ? [
                   {
@@ -595,9 +852,18 @@ export class App {
   }
 
   private tick(now: number): void {
-    // the capture lock: the live loop yields entirely while a capture runs, and
-    // a callback the GPU is too busy for (frames in flight) is skipped
-    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight) return;
+    // the capture lock: the live loop yields entirely while a capture runs
+    if (isCapturing() || this.busy) return;
+    if (this.inFlight >= this.maxInFlight) {
+      // A callback the GPU is too busy for (frames in flight) is skipped. Firefox
+      // (wgpu) resolves onSubmittedWorkDone only when it next checks for
+      // finished work: at the next queue submit, or on a ~100 ms timer. A loop
+      // that waits without submitting waits for the timer (with two in flight,
+      // ~20 fps at any fish count). An empty submit makes it check now; Chrome
+      // shows no change.
+      this.device.queue.submit([]);
+      return;
+    }
     // time since the last frame actually submitted, so skipped callbacks count:
     // the governor sees the real frame interval and the clock keeps its speed
     const dt = Math.min((now - this.last) / 1000, 0.1);
@@ -610,7 +876,7 @@ export class App {
       const st = this.governor?.status();
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
-    // The governor watches the frame interval, what the visitor sees. (With two
+    // The governor watches the frame interval, what the visitor sees. (With
     // frames in flight a pass's begin timestamp can land while the previous
     // frame still runs, so per-pass GPU times overlap and read high.) It waits
     // out the first seconds of a scene: shader compiles and the GPU clocking up.
@@ -624,6 +890,8 @@ export class App {
     const effects = this.governor?.effects ?? 1;
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
     this.updateShark(dt);
+    this.updateBrush(dt);
+    this.frameNo += 1;
 
     const n = this.history.comparing ? 0 : this.clock.due(dt);
     this.profiler?.begin(n);
@@ -640,7 +908,25 @@ export class App {
       orderTick = this.flock.tick;
     }
 
+    // the water's statistics, every few frames
+    let fluidTick = -1;
+    if (this.current && this.fluidSlot && this.stateSlot && !this.fluidSlot.pending && !this.stateSlot.pending && this.frameNo % 10 === 0) {
+      this.current.fluid.encodeStats(enc);
+      this.fluidSlot.record(enc, this.current.fluid.statsBuffer);
+      this.stateSlot.record(enc, this.current.fluid.state);
+      fluidTick = this.flock.tick;
+    }
+
+    let censusTick = -1;
+    if (this.ecology && this.censusSlot && !this.censusSlot.pending && this.frameNo % 10 === 5) {
+      this.ecology.encodeCensus(enc);
+      this.censusSlot.record(enc, this.ecology.census);
+      censusTick = this.flock.tick;
+    }
+
     const save = this.history.comparing ? this.history.savePoint : null;
+    const sea = this.sea;
+    if (sea) sea.prepare(this.seaSource(), this.camera, dpr * scale, this.hdr.width, this.hdr.height);
     this.view.encode(
       enc,
       this.hdr.sceneView,
@@ -652,6 +938,7 @@ export class App {
       save ? save.boids : null,
       this.sharkView(),
       this.profiler ?? undefined,
+      sea ? { under: (rp) => sea.under(rp), over: (rp) => sea.over(rp) } : undefined,
     );
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     this.profiler?.end(enc);
@@ -666,6 +953,8 @@ export class App {
       this.inFlight -= 1;
     });
     if (orderTick >= 0) void this.collectOrder(orderTick);
+    if (fluidTick >= 0) void this.collectFluid(fluidTick);
+    if (censusTick >= 0) void this.collectCensus(censusTick);
 
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
     if (now - this.rateT0 > 1000) {
@@ -678,6 +967,54 @@ export class App {
       this.clock.paused ? `step ${steps.toLocaleString()}` : `step ${steps.toLocaleString()} · ${Math.round(this.stepsPerSecond).toLocaleString()}/s`,
     );
     this.hooks.onFrame?.(now);
+  }
+
+  /** What the sea renderer draws for this scene (null: nothing). */
+  seaSource(): SeaSource | null {
+    const e = this.ecology;
+    if (e) {
+      return {
+        halfW: this.flock.halfW,
+        halfH: this.flock.halfH,
+        life: {
+          cols: e.grid.cols,
+          rows: e.grid.rows,
+          cellX: e.grid.cellX,
+          cellY: e.grid.cellY,
+          plankton: e.plankton[e.pCur]!,
+          K: e.params.K,
+          sharks: e.sharks,
+          sharkSlots: e.sharkSlots,
+        },
+      };
+    }
+    const c = this.current;
+    if (!c) return null;
+    const f = c.fluid;
+    return {
+      halfW: this.flock.halfW,
+      halfH: this.flock.halfH,
+      fluid: { gw: f.gw, gh: f.gh, hx: f.hx, hy: f.hy, psi: f.psi, omega: f.omega, state: f.state, motes: f.motes, nMotes: f.nMotes },
+    };
+  }
+
+  private async collectCensus(tick: number): Promise<void> {
+    const e = this.ecology;
+    if (!e || !this.censusSlot) return;
+    const a = await this.censusSlot.collect();
+    if (!a || e !== this.ecology) return;
+    this.census = EcologyExt.readCensus(new Float32Array(a));
+    this.hooks.onCensus?.(this.census, tick);
+  }
+
+  private async collectFluid(tick: number): Promise<void> {
+    const c = this.current;
+    if (!c || !this.fluidSlot || !this.stateSlot) return;
+    const [a, b] = await Promise.all([this.fluidSlot.collect(), this.stateSlot.collect()]);
+    if (!a || !b || c !== this.current) return;
+    const st = c.fluid.reduceStats(new Float32Array(a), new Float32Array(b));
+    this.fluidStats = st;
+    this.hooks.onFluid?.(st, tick);
   }
 
   private async collectOrder(tick: number): Promise<void> {

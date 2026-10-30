@@ -253,6 +253,7 @@ export class OceanView {
     saved: GPUBuffer | null,
     shark: SharkView | null,
     profiler?: GpuProfiler,
+    extras?: { under?(rp: GPURenderPassEncoder): void; over?(rp: GPURenderPassEncoder): void },
   ): void {
     const L = this.look;
     const cam = camera.uniform(pixelScale);
@@ -307,6 +308,10 @@ export class OceanView {
     rp.setBindGroup(0, this.viewBG);
     rp.setPipeline(this.waterPipe);
     rp.draw(3);
+    if (extras?.under) {
+      extras.under(rp);
+      rp.setBindGroup(0, this.viewBG);
+    }
     if (grid) {
       rp.setPipeline(this.fieldPipe);
       rp.setBindGroup(1, this.boidBG(flock.boids));
@@ -333,6 +338,10 @@ export class OceanView {
     } else {
       rp.setBindGroup(1, this.boidBG(flock.boids));
       rp.draw(6, instances);
+    }
+    if (extras?.over) {
+      extras.over(rp);
+      rp.setBindGroup(0, this.viewBG);
     }
     if (shark || split >= 0) {
       rp.setPipeline(this.overlayPipe);

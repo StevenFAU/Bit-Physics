@@ -53,6 +53,10 @@ fn field_splat(@builtin(global_invocation_id) gid: vec3<u32>) {
     return;
   }
   let b = boids[i];
+  // Food Chain's empty slots carry dens < 0
+  if (b.dens < 0.0) {
+    return;
+  }
   let W = V.dims.zw;
   var d = b.pos + V.half.xy - V.cam.xy;
   d = d - W * round(d / W);

@@ -5,6 +5,9 @@
 // DishRenderer shared by every dish; the Menagerie draws one DishView per
 // dish, each into its own scissored tile of the same target, and a frozen
 // region (Freeze) is drawn as frost from a small per-dish mask texture.
+// M3: a "plane" mode for Textures (no glass: the periodic grid wraps across
+// the whole view, RGB = channels 0..2 + 0.5 as sRGB) and, for Chimera, an
+// overlay that outlines and tints the cells running another dish's rule.
 
 import type { GpuProfiler } from "@bp/gpu";
 import { wgsl } from "@bp/gpu";
@@ -56,6 +59,8 @@ export interface DishSource {
   version: number;
   /** The frozen region (Freeze), drawn as frost. */
   freeze?: { mask: Uint8Array; count: number; version: number };
+  /** Chimera: the overlay texture (r = 1 where a cell runs another dish's rule) and its colour (sRGB hex). */
+  rules?: { tex: GPUTexture; color: string; show: boolean };
 }
 
 export interface DishFrame {
@@ -71,7 +76,7 @@ export interface DishFrame {
 }
 
 const PREP_BYTES = 224;
-const VIEW_BYTES = 160;
+const VIEW_BYTES = 176;
 
 /** Pipelines, sampler and grain shared by every dish on the device. */
 export class DishRenderer {
@@ -79,6 +84,8 @@ export class DishRenderer {
   readonly viewPipe: GPURenderPipeline;
   readonly sampler: GPUSampler;
   readonly grain: GPUTexture;
+  /** Bound in place of a Chimera overlay on every other dish. */
+  readonly noRules: GPUTexture;
 
   constructor(readonly device: GPUDevice) {
     this.prepPipe = device.createComputePipeline({
@@ -96,10 +103,12 @@ export class DishRenderer {
     });
     this.sampler = device.createSampler({ magFilter: "linear", minFilter: "linear", label: "grow-clamp" });
     this.grain = createBlueNoiseTexture(device);
+    this.noRules = device.createTexture({ size: [1, 1], format: "rgba8unorm", usage: GPUTextureUsage.TEXTURE_BINDING, label: "grow-no-rules" });
   }
 
   destroy(): void {
     this.grain.destroy();
+    this.noRules.destroy();
   }
 }
 
@@ -118,6 +127,7 @@ export class DishView {
   split: number | null = null;
   /** Hidden-channel tint strength (null: the look's). */
   tintOverride: number | null = null;
+  private planeMode = false;
 
   private readonly device: GPUDevice;
   private readonly prepPipe: GPUComputePipeline;
@@ -127,6 +137,10 @@ export class DishView {
   private readonly viewUniform: GPUBuffer;
   private readonly sampler: GPUSampler;
   private readonly grain: GPUTexture;
+  private readonly noRules: GPUTexture;
+  private rulesTex: GPUTexture | null = null;
+  private rulesColor: [number, number, number] = [1, 1, 1];
+  private rulesShow = false;
   private freezeTex: GPUTexture | null = null;
   private freezeVersion = -1;
   private hasFreeze = false;
@@ -145,7 +159,7 @@ export class DishView {
   private readonly viewBGs = new Map<string, GPUBindGroup>();
   private basisDirty = true;
   private basis: HiddenBasis | null = null;
-  private readonly bufIds = new WeakMap<GPUBuffer, number>();
+  private readonly bufIds = new WeakMap<object, number>();
   private nextBufId = 1;
 
   constructor(renderer: DishRenderer, look: DishLook) {
@@ -156,10 +170,24 @@ export class DishView {
     this.viewPipe = renderer.viewPipe;
     this.sampler = renderer.sampler;
     this.grain = renderer.grain;
+    this.noRules = renderer.noRules;
     const U = GPUBufferUsage;
     this.prepUniform = device.createBuffer({ size: PREP_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-prep" });
     this.prepCmpUniform = device.createBuffer({ size: PREP_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-prep-cmp" });
     this.viewUniform = device.createBuffer({ size: VIEW_BYTES, usage: U.UNIFORM | U.COPY_DST, label: "grow-dish" });
+  }
+
+  /** Textures: draw the grid as a periodic plane (no glass), RGB = channels 0..2 + 0.5. */
+  get plane(): boolean {
+    return this.planeMode;
+  }
+
+  set plane(on: boolean) {
+    if (on === this.planeMode) return;
+    this.planeMode = on;
+    this.basisDirty = true;
+    this.preparedVersion = -1;
+    this.cmpKey = "";
   }
 
   /** The frozen cells (1 = frozen) to draw as frost; re-uploaded when `version` changes. */
@@ -172,7 +200,7 @@ export class DishView {
     this.device.queue.writeTexture({ texture: this.freezeTex }, bytes, { bytesPerRow: this.grid }, [this.grid, this.grid]);
   }
 
-  private bufId(b: GPUBuffer): number {
+  private bufId(b: object): number {
     let id = this.bufIds.get(b);
     if (id === undefined) {
       id = this.nextBufId++;
@@ -238,6 +266,7 @@ export class DishView {
     const u = new Uint32Array(ab, 0, 4);
     u[0] = this.grid;
     u[1] = this.basis ? 1 : 0;
+    u[2] = this.planeMode ? 1 : 0;
     const f = new Float32Array(ab);
     if (this.basis) {
       f.set(this.basis.mean, 4);
@@ -266,7 +295,8 @@ export class DishView {
   }
 
   private viewBG(): GPUBindGroup {
-    const key = `${this.prev}-${this.cur}`;
+    const rules = this.rulesTex ?? this.noRules;
+    const key = `${this.prev}-${this.cur}-${this.bufId(rules)}`;
     let bg = this.viewBGs.get(key);
     if (!bg) {
       bg = this.device.createBindGroup({
@@ -281,6 +311,7 @@ export class DishView {
           { binding: 6, resource: this.grain.createView() },
           { binding: 7, resource: this.cmpTint!.createView() },
           { binding: 8, resource: this.freezeTex!.createView() },
+          { binding: 9, resource: rules.createView() },
         ],
         label: `grow-dish-${key}`,
       });
@@ -306,7 +337,8 @@ export class DishView {
     v.set([...rim, L.rimWidth], 24);
     v.set([L.light[0] / ln, L.light[1] / ln, L.light[2] / ln, this.split === null || !hasCmp ? -1 : this.split], 28);
     v.set([f.fade, 1 / Math.max(cam.unitsPerPx, 1e-6), L.gloss, hasCmp ? 1 : 0], 32);
-    v.set([this.hasFreeze ? 1 : 0, f.time, 0, 0], 36);
+    v.set([this.hasFreeze ? 1 : 0, f.time, this.planeMode ? 1 : 0, 0], 36);
+    v.set([this.rulesTex && this.rulesShow ? 1 : 0, ...this.rulesColor], 40);
     this.device.queue.writeBuffer(this.viewUniform, 0, v);
   }
 
@@ -326,6 +358,9 @@ export class DishView {
   ): void {
     this.ensure(src.grid);
     if (src.freeze) this.setFreeze(src.freeze.mask, src.freeze.count, src.freeze.version);
+    this.rulesTex = src.rules?.tex ?? null;
+    this.rulesShow = src.rules?.show ?? false;
+    if (src.rules) this.rulesColor = toLinear(src.rules.color);
     const wg = Math.ceil(this.grid / 8);
     const changed = src.version !== this.preparedVersion || src.buffer !== this.preparedBuffer || this.basisDirty;
     const cmpChanged = compare !== null && (compare.key !== this.cmpKey || this.basisDirty);
