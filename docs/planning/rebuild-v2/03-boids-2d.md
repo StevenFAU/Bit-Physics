@@ -105,20 +105,52 @@
 >   (15 new in `test/m2.test.ts`: the Stockham passes against a direct DFT, ψ = ω/λ against the
 >   grid Laplacian, the bilinear curl's zero divergence and edge continuity, the Kolmogorov start,
 >   the dispersion index, the shark layout, the ecology's rates).
-> - **Firefox at ~20 fps (the observation from M1): not explained yet; Swarm-specific.** A first
->   reading in this milestone blamed the shell's backdrop blur. It was taken in headless Firefox
->   (which composites on the CPU) while another session's training run held most of the CPU, and
->   a follow-up session on a quiet machine refuted it. With and without the blur, headed Firefox
->   158 draws Swarm at ~20 fps at both 60,000 and 1,000,000 fish, while Turing Patterns and Slime
->   Mould draw at the display's 165 and Chrome draws Swarm at 140–165. Because the rate is the
->   same at both counts, it is a fixed cost inside Swarm, not GPU load (the earlier "~45 ms of GPU
->   per frame at a million fish" reading does not hold either), and not the shell. The page does no
->   per-frame readback (order readbacks every sixth frame, never awaited); its one sync point gates
->   submission on `onSubmittedWorkDone`. The cause is under investigation in a separate session.
->   Measure Firefox headed, on a quiet machine, with the sim's own fps readout.
+> - **Firefox at ~20 fps (the observation from M1): found and fixed. The cause was the frame
+>   gate, not the shell's blur and not GPU load.**
+>   - **The cause.** The live loop skips an animation frame while too many earlier frames are
+>     unfinished, and learns that a frame is finished from `queue.onSubmittedWorkDone`. Firefox
+>     158 (wgpu) resolves that promise, and every `mapAsync`, only when it next checks for
+>     finished GPU work: at the next `queue.submit`, or on a ~100 ms timer. A loop that stops
+>     submitting while it waits therefore waits for the timer. Measured in headed Firefox, the
+>     callbacks arrived 94 ms after the submit (p50), so two frames in flight gave 20 frames/s
+>     at 60,000 fish and at a million.
+>   - **The fix** (`src/v2/app.ts`, `tick`). A skipped frame now makes an empty
+>     `queue.submit([])`, which makes Firefox check at once: callbacks arrive in 7 ms. The loop
+>     also keeps three frames in flight instead of two. Firefox reports each frame done about one
+>     display frame later than Chrome, so with two in flight its GPU idled between frames and
+>     clocked down: the M0 clock trap, with the step reading 14–17 ms against 8 ms, and ~70 fps
+>     at a million fish. Chrome's own back-pressure binds before a third frame, so it queues no
+>     deeper there. The physics, the gate path and the capture are untouched.
+>   - **Measured.** RX 6800 XT, 165 Hz display, a 1440 × 900 window. The figures are frames
+>     submitted per second, before → after, quiet machine, interleaved runs:
+>
+>     | | 60,000 fish (T1) | 1,000,000 fish (T3) |
+>     |---|---|---|
+>     | Firefox 158 headed | 20 → 164–165 | 20 → 134–139 |
+>     | Firefox 158 headed, software WebRender | 4–5 → 115–119 | 4.7–5 → 112–113 |
+>     | Firefox 158 headless | 60 → 60 | 20 → 20 |
+>     | Chromium 156 headed | 165 → 165 | 139–143 → 145–150 |
+>     | Chromium 156 headless | 60 → 60 | 60 → 60 |
+>
+>     At 20 fps the governor had also stepped Firefox down to a 55% render scale; it now stays
+>     at 100%.
+>   - **What is left.** Software WebRender holds animation frames at ~118/s on its own (its
+>     compositing cost at this window size); a timer that submits empty batches changes nothing
+>     there. Headless Firefox composites on the CPU and holds animation frames until its readback
+>     of the canvas lands, and that readback waits on the same lazy check. A page-side 4 ms timer
+>     of empty submits lifts the million-fish case from 20 to 60, but headless Firefox is not a
+>     visitor's browser, so no timer ships.
+>   - **The earlier readings.** The blur reading was taken in headless Firefox while another
+>     session's training run held most of the CPU; on a quiet machine the blur costs nothing.
+>     Nor is a million fish ~45 ms of GPU per frame in Firefox: with the fix, the frame's timed
+>     passes average about 4 ms there, as in Chrome.
+>     The claim that Turing Patterns and Slime Mould draw at 165 in Firefox came from their fps
+>     readouts. Those count animation-frame callbacks before their in-flight gate, so they show
+>     the display rate. Counted at `queue.submit`, they draw 10 and 11 frames/s in headed Firefox,
+>     because they gate the same way with one frame in flight. Grow does as well. They are not
+>     changed here (`web/README.md` has the pattern). Swarm's readout counts frames after the gate.
 > - **Not in M2:** motion trails from a float accumulation buffer; a precomputed backdrop for the
->   phase map; the cause of Swarm's ~20 fps in Firefox; Eyes Only, Species Matrix,
->   Watch one, posters and loops (M3).
+>   phase map; Eyes Only, Species Matrix, Watch one, posters and loops (M3).
 >
 > **M1 — The Order Dial, The Mill, three levels of detail.** Measured on the RX 6800 XT (snap
 > Chromium, RADV, T3) unless a line says otherwise.

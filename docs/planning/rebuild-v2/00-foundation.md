@@ -20,6 +20,15 @@
 >
 > **Swarm M2 (2026-10-29):** `wave` and `fish` icons join the set (Current's brush, Food Chain's
 > Release). Nothing else shared changed.
+>
+> **Firefox frame gate (2026-10-29, found in Swarm):** Firefox (wgpu) resolves
+> `onSubmittedWorkDone` and `mapAsync` only at the next `queue.submit` or on a ~100 ms timer.
+> A frame loop that skips frames while N are in flight, and submits nothing while it waits,
+> draws about 10·N frames/s there. Swarm now makes an empty `queue.submit([])` on a skipped frame
+> and keeps three in flight (`web/README.md`, 03-boids-2d.md). Turing Patterns, Slime Mould and
+> Grow have the same gate with one in flight and are not changed yet. Measured in headed
+> Firefox 158, Turing and Slime Mould submit 10–11 frames/s. Their readouts show 165 because
+> they count animation-frame callbacks before the gate (as Grow's does).
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

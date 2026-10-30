@@ -32,6 +32,15 @@ A v2 page is a second Vite input in the sim's own package (`v2/index.html` →
 Public assets live at the dist root. Resolve them from the bundle, not the page (a sim-local
 `src/sim-root.ts`, as in Turing Patterns and Slime Mould), so the page works at either depth.
 
+A frame loop that skips frames while earlier ones are unfinished (frames in flight, released
+by `queue.onSubmittedWorkDone`) must not just return when it skips. Firefox (wgpu) resolves
+`onSubmittedWorkDone` and `mapAsync` only when it next checks for finished GPU work: at the
+next `queue.submit`, or on a ~100 ms timer. A loop that stops submitting while it waits gets
+about 10 frames/s per frame in flight. Make an empty `queue.submit([])` on a skipped frame,
+and count the fps readout after the gate, so it counts frames drawn rather than callbacks.
+Swarm (`packages/boids-2d/web/src/v2/app.ts`, `tick`) does both and keeps three in flight;
+see [03-boids-2d.md](../docs/planning/rebuild-v2/03-boids-2d.md).
+
 ### The release swap
 
 When a v2 page passes its gate and its spec's acceptance, it replaces v1 at `/sims/<sim>/`
