@@ -67,7 +67,12 @@
 >   `textures.json` does not arrive drops the Textures scene and runs the rest. Locally (RADV) ready
 >   comes 66–120 ms after navigation and the Dish is live 26–43 ms later; the M3 pipelines compile
 >   in 7–13 ms, after Teach's (about 30 ms after the Dish is live). A link straight into Chimera or
->   Textures compiles them before its scene (live 123–187 ms after navigation). CI's time-to-ready is added once the PR's validate job has run.
+>   Textures compiles them before its scene (live 123–187 ms after navigation).
+>   CI (GitHub runner, lavapipe, so the job's observable fallback gate, run-twice identical; two
+>   runs per page): time to ready 56.7–60.9 s (v1) and 57.1–58.6 s (v2) on PR #52 at ae1ad7b0,
+>   81.1–81.7 s on both pages at 48031eb2; the limit is 180 s. The same job measured 44–82 s on
+>   `main` and on other PRs that week, with v1 and v2 within 1.5 s of each other in every run:
+>   the spread is the runner's, and M3 adds nothing measurable.
 > - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0
 >   over 21 frames, two driver runs each; local time-to-ready 36–44 ms (v1) and 26–45 ms (v2).
 > - **Checks.** `v2-acceptance.mjs` 116/116: M0–M2's, plus 24 for M3 (Chimera: boot, one rule ≡ the
