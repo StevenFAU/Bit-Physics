@@ -40,7 +40,7 @@
 >   power manager held it at 20–900 MHz: 7.8 iterations/s at 43 fps on an otherwise idle machine
 >   (earlier runs had measured 27–28 it/s while something else kept the clocks up). Training now
 >   keeps two frames in flight (the rest of the page keeps one): 1.7–2.2 GHz. Swarm M0 found the
->   same.
+>   same. (Since 2026-10-29 the whole page keeps three: Firefox needs them; see below.)
 > - **Slicing does not change the result.** Runs at 10, 12, 13, 24 and 30 ms per frame, with one
 >   or two frames in flight, gave identical evaluations at every shared iteration; the acceptance
 >   script checks equal weights SHA at 120 iterations at both paces.
@@ -79,6 +79,37 @@
 >   violations (on phones the Teach panel folds to its header and sits above the tool options).
 >   `npm test` 183/183; neural-ca pytest 19/19; integrity 0 HARD_FAIL.
 > - **Still unverified:** "first in-browser NCA training" — no copy claims it.
+>
+> **Firefox frame rate (2026-10-29, after M2):** in headed Firefox 158 the `v2/` page drew 10 frames/s
+> and the dish ran at 1.7 of its 30 steps/s, while the readout said 165; Teach trained at 4.3
+> iterations/s at 20 fps (Chromium: 51 at 79 fps). Firefox (wgpu) resolves `onSubmittedWorkDone` only
+> at the next `queue.submit` or on a ~100 ms timer, and the frame loop waited for its frames in flight
+> without submitting, so it waited for the timer. The readout counted animation-frame callbacks before
+> that gate, and the clock took its time step there too. `tick` in
+> `packages/neural-ca/web/src/v2/app.ts` now does what Swarm's does: a skipped frame makes an empty
+> `queue.submit([])`, the time step and the readout are taken after the gate (frames drawn), and the
+> whole page keeps three frames in flight; Teach no longer switches between one and two. Measured on
+> the RX 6800 XT, 165 Hz display:
+> - **Frames submitted per second** (counted at `queue.submit`, not the readout), before → after: the
+>   Dish, Firefox headed 10 → 165, headless 10 → 60; Chromium 156 headed 165 → 164, headless 60 → 60.
+>   30 steps/s in each. Teach in Firefox: 4.3 → 51.6 iterations/s at 75 fps (Chromium 51.4 at 78).
+> - **Frames in flight.** Firefox reports each frame done about one display frame later than
+>   Chromium. The Dish draws 85 / 165 / 165 there with one / two / three in flight. Teach (Smooth,
+>   12 ms per frame) trains at 7.4 / 40 / 53 iterations/s in Firefox and 33 / 53 / 53 in Chromium:
+>   two in Firefox act like one in Chromium, and leave the GPU waiting between frames. Three.
+> - **The Menagerie in Firefox: ~105 fps, measured, not fixed.** Firefox runs the NCA step about ten
+>   times slower than Chromium on this GPU (the scheduler's timed cost at 4× speed: 3.5 ms per step
+>   for one dish and 6.7 ms for eight, against Chromium's 0.37 and 2.7 with its GPU at 500 MHz). At
+>   1× the GPU idles between step frames and sits at 500 MHz 35–50% of the time, so an eight-dish
+>   step frame holds the queue (each frame done 18 ms after its submit) and Firefox's animation frames
+>   slow to ~105. At 4× the clocks stay up and it draws 162. The governor reads ~15 ms p90 at 1×
+>   against its 12 ms budget and steps the render scale down to 55%, which cannot help a frame bound
+>   by the step. Before the fix the dish ran at 1.7 steps/s, which hid this. The cause of the slower
+>   kernel is not measured; Firefox's shader translation (naga, against Chromium's Tint) is the
+>   suspect.
+> - Physics, the gated kernel, the capture path and the checkpoint are untouched: `pipeline.py
+>   validate --sim neural-ca` passes on both pages (bit-exact, max_abs 0.0) and `v2-acceptance.mjs`
+>   passes 90/90 (Teach at 60.0 fps mean and minimum, headless).
 >
 > **M1, the Menagerie, the tools and Inside the Cell (2026-10-28): done.** On the `v2/` page only;
 > the v1 page, the gated kernel, the capture path and the committed checkpoint are untouched.

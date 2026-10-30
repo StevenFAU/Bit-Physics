@@ -11,6 +11,25 @@
 > in the dark nocturne palette (the other palettes are paper-light and would strobe the dark
 > reel); Spirals was tried and cut (too busy to fit the 2 MB clip budget cleanly).
 >
+> **Firefox frame rate (2026-10-29, after the release):** in headed Firefox 158 the page drew
+> 10 frames/s and the sim ran at 14 of its 240 ticks/s, while the readout said 165. Firefox (wgpu)
+> resolves `onSubmittedWorkDone` only at the next `queue.submit` or on a ~100 ms timer, and the
+> frame loop waited for its one frame in flight without submitting, so it waited for the timer. The
+> readout counted animation-frame callbacks before that gate, and the clock took its time step there
+> too, so skipped callbacks lost their time. `tick` in
+> `packages/reaction-diffusion-2d/web/src/v2/app.ts` now does what Swarm's does: a skipped frame
+> makes an empty `queue.submit([])`, the time step and the readout are taken after the gate (frames
+> drawn), and three frames may be in flight. Measured on the RX 6800 XT, 165 Hz display:
+> - **Frames submitted per second** (counted at `queue.submit`, not the readout), before → after:
+>   Firefox headed 10 → 165 (the Map; On a Shape 10 → 165), headless 10 → 60; Chromium 156 headed
+>   165 → 164, headless 60 → 60. The sim keeps its 240 ticks/s in each.
+> - **Frames in flight.** Firefox reports each frame done about one display frame late: with one it
+>   drew 85 (57 at 8× speed, the GPU clocked down); two and three both draw 165, at 1× and 8×.
+>   Chromium draws 165 at two or three, and 103 at one at 8×. Three, as in Swarm, Slime Mould and
+>   Grow, where two left Firefox's GPU waiting under load.
+> - Physics, the gated kernel and the capture are untouched: `pipeline.py validate` passes on both
+>   pages (max abs error 2.64e-5 on each, as before) and `v2-acceptance.mjs` passes 47/47.
+>
 > **Implementation status (2026-10-17):** M0–M2 built as the `v2/` page of
 > `packages/reaction-diffusion-2d/web` (served at `/sims/reaction-diffusion-2d/v2/`, v1 unchanged).
 > The `capture_roundtrip` gate passes from the v2 page with the v1 page's exact bytes. Scenes

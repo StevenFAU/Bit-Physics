@@ -193,12 +193,16 @@ export class App {
   /** Frames submitted and not yet done on the GPU. */
   private inFlight = 0;
   /**
-   * Frames allowed in flight. One, except while Teach trains: with one frame
-   * in flight the GPU idles between frames and the RX 6800 XT's power manager
-   * keeps it near 500 MHz (measured: 7.8 iterations/s at 43 fps, against 28
-   * at 60 fps when the clocks were up) — Swarm M0 found the same.
+   * Frames allowed in flight. With one the GPU idles between frames and the
+   * RX 6800 XT's power manager keeps it near 500 MHz (Teach measured 7.8
+   * iterations/s at 43 fps, against 28 at 60 fps when the clocks were up).
+   * Firefox reports each frame done about one display frame later than
+   * Chrome, so two there act like one here: Teach trained at 40 iterations/s
+   * in Firefox against Chrome's 53, and the Dish drew 85 fps at one. Three
+   * match Chrome in both (53 iterations/s; the display rate); Chrome is the
+   * same at two and three, its own back-pressure binding first.
    */
-  maxInFlight = 1;
+  maxInFlight = 3;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
@@ -1265,6 +1269,24 @@ export class App {
   }
 
   private tick(now: number): void {
+    // the capture lock: the live loop yields entirely while a capture runs (and
+    // its time does not reach the clock)
+    if (isCapturing() || this.busy || this.dishes.length === 0) {
+      this.last = now;
+      return;
+    }
+    if (this.inFlight >= this.maxInFlight) {
+      // A callback the GPU is too busy for (frames in flight) is skipped. Firefox
+      // (wgpu) resolves onSubmittedWorkDone only when it next checks for
+      // finished work: at the next queue submit, or on a ~100 ms timer. A loop
+      // that waits without submitting waits for the timer (10 frames/s per
+      // frame in flight). An empty submit makes it check now; Chrome shows no
+      // change.
+      this.device.queue.submit([]);
+      return;
+    }
+    // time since the last frame actually submitted, so skipped callbacks count:
+    // the clock keeps its speed and the readout counts frames drawn
     const dt = Math.min((now - this.last) / 1000, 0.1);
     this.last = now;
     this.frames += 1;
@@ -1275,8 +1297,6 @@ export class App {
       const st = this.governor?.status();
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
-    // the capture lock: the live loop yields entirely while a capture runs
-    if (isCapturing() || this.busy || this.inFlight >= this.maxInFlight || this.dishes.length === 0) return;
     if (this.profiler?.source === "submit-latency" && this.governor) this.governor.sample(dt * 1000, now);
     const rect = this.studio.canvas.getBoundingClientRect();
     if (rect.width !== this.viewport[0] || rect.height !== this.viewport[1]) this.reframe(rect.width, rect.height);
