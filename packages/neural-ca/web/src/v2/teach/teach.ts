@@ -632,8 +632,8 @@ export class Teach implements TeachHost {
     r.since = performance.now();
     r.job.runUntil(this.stopAfter);
     this.d.scheduler.budgetMs = this.budget();
-    // two frames in flight keep the GPU busy (and its clocks up) between frames
-    this.d.app.maxInFlight = 2;
+    // the page's frames in flight (three) keep the GPU busy, and its clocks up,
+    // between frames; with one it idled at 500 MHz (7.8 iterations/s)
     if (this.d.app.governor) this.d.app.governor.suspended = true;
     r.done = this.d.scheduler.add(r.job).catch(() => {});
     this.pauseBtn.textContent = "Pause";
@@ -650,7 +650,6 @@ export class Teach implements TeachHost {
     r.since = null;
     r.running = false;
     this.d.scheduler.budgetMs = this.baseBudget;
-    this.d.app.maxInFlight = 1;
     if (this.d.app.governor) this.d.app.governor.suspended = false;
     this.pauseBtn.textContent = "Resume";
     this.say("Paused.");

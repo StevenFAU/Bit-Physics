@@ -93,7 +93,11 @@ describe("FrameScheduler", () => {
     expect(a.slices).toEqual([30]);
     frame(s); // waiting on the readback: no new slice
     expect(a.slices).toEqual([30]);
+    // Let a premature resolution run its microtask before asserting. The final
+    // slice has no units left, but its readback still owns the job's buffers.
+    await Promise.resolve();
     expect(finished).toBe(false);
+    expect(s.busy).toBe(true);
     a.release();
     await p;
     expect(finished).toBe(true);

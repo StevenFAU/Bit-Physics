@@ -140,7 +140,17 @@ export class App {
   writeUrl: () => void = () => {};
 
   private busy = false;
-  private inFlight = false;
+  /** Frames submitted and not yet done; at most `maxInFlight`. */
+  private inFlight = 0;
+  /**
+   * Frames allowed in flight. Firefox reports each frame done about one
+   * display frame late, so with one it drew 85 fps on a 165 Hz display (60 in
+   * Territories, the GPU clocked down at 500 MHz). With two it draws ~165 at
+   * 1×, but at 8× it keeps the GPU waiting between frames: 120–128 fps
+   * (Territories 78–82) against 161–164 (150–156) with three. Chrome draws
+   * 165 at two or three, and with one only 83 (62) at 8×. Three, as in Swarm.
+   */
+  maxInFlight = 3;
   private disposed = false;
   private last = performance.now();
   private frames = 0;
@@ -964,6 +974,23 @@ export class App {
   }
 
   private tick(now: number): void {
+    // the capture lock: the live loop yields entirely while a capture runs (and
+    // its time does not reach the clock)
+    if (isCapturing() || this.busy) {
+      this.last = now;
+      return;
+    }
+    if (this.inFlight >= this.maxInFlight) {
+      // A callback the GPU is too busy for (frames in flight) is skipped. Firefox
+      // (wgpu) resolves onSubmittedWorkDone only when it next checks for
+      // finished work: at the next queue submit, or on a ~100 ms timer. A loop
+      // that waits without submitting waits for the timer (11 frames/s with one
+      // in flight). An empty submit makes it check now; Chrome shows no change.
+      this.device.queue.submit([]);
+      return;
+    }
+    // time since the last frame actually submitted, so skipped callbacks count:
+    // the clock keeps its speed and the readout counts frames drawn
     const dt = Math.min((now - this.last) / 1000, 0.1);
     this.last = now;
     this.frames += 1;
@@ -974,8 +1001,6 @@ export class App {
       const st = this.governor?.status();
       this.studio.transport.setStatus(`${Math.round(this.fps)} fps`, !!st?.degraded, st?.message ?? "");
     }
-    // the capture lock: the live loop yields entirely while a capture runs
-    if (isCapturing() || this.busy || this.inFlight) return;
     if (this.profiler?.source === "submit-latency" && this.governor) this.governor.sample(dt * 1000, now);
     const rect = this.studio.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1053,9 +1078,9 @@ export class App {
       this.snapshotWanted = false;
       this.studio.canvas.toBlob((b) => b && this.onSnapshot?.(b), "image/png");
     }
-    this.inFlight = true;
+    this.inFlight += 1;
     void this.device.queue.onSubmittedWorkDone().then(() => {
-      this.inFlight = false;
+      this.inFlight -= 1;
     });
     if (probeIdx >= 0) void this.readProbe(probeIdx);
     else if (!this.hover) this.studio.probe.hidden = true;

@@ -10,6 +10,27 @@
 > `.webm`, under the new name Slime Mould, and the splash reel's Network clip is filmed from the
 > v2 Network scene.
 >
+> **Firefox frame rate (2026-10-29, after the release):** in headed Firefox 158 the page drew
+> 11 frames/s and the colony ran at 7 of its 120 steps/s, while the readout said 165. Firefox (wgpu)
+> resolves `onSubmittedWorkDone` only at the next `queue.submit` or on a ~100 ms timer, and the
+> frame loop waited for its one frame in flight without submitting, so it waited for the timer. The
+> readout counted animation-frame callbacks before that gate, and the clock took its time step there
+> too, so skipped callbacks lost their time. `tick` in `packages/physarum/web/src/v2/app.ts` now
+> does what Swarm's does: a skipped frame makes an empty `queue.submit([])`, the time step and the
+> readout are taken after the gate (frames drawn), and three frames may be in flight. Measured on the
+> RX 6800 XT, 165 Hz display, 2M agents:
+> - **Frames submitted per second** (counted at `queue.submit`, not the readout; a few are not
+>   frames — mass folds, scoring — so the count can sit just above the display rate), before → after:
+>   Firefox headed 11 → 165 (Territories 14 → 169), headless 11 → 61; Chromium 156 headed
+>   166 → 165, headless 61 → 61. The colony keeps its 120 steps/s in each.
+> - **Frames in flight.** Firefox reports each frame done about one display frame late: with one it
+>   drew 85 (Territories 60, the GPU clocked down to 500 MHz). With two it draws ~165 at 1×, but at
+>   8× speed it leaves the GPU waiting between frames: 120–128 fps (Territories 78–82) against
+>   161–164 (150–156) with three. Chromium draws 166–170 at two or three, and 83 (62) at one at 8×.
+>   Three, as in Swarm.
+> - Physics, the gate path and the capture are untouched: `pipeline.py validate` passes on both
+>   pages, run twice (byte-identical; mass 22499.9962 on each), and `v2-acceptance.mjs` passes 89/89.
+>
 > **Implementation status (2026-10-25): M3 built** on the same `v2/` page. Measured on the RX 6800 XT
 > (Chromium + Dawn/Vulkan). `pipeline.py validate` passes on both pages, run twice
 > (byte-identical; mass 22499.9962, rel 1.7e-7). The live ≡ gated Prove card still finds 0

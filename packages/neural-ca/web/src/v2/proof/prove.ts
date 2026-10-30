@@ -143,7 +143,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     {
       title: "The live dish is the gated kernel",
       sentence:
-        "The dish you see runs the same compiled network, restructured only in how steps are submitted (a frame's steps in one pass). " +
+        "The dish you see runs the same network, restructured only in how steps are submitted (a frame's steps in one pass) and in two inner loops written out term by term, in the same order (Firefox ran it ten times slower otherwise). " +
         "Stepped through the gated run, it must match the gate's own frames on this GPU bit for bit. It runs a slice per frame while the dish keeps moving.",
       label: "byte-identical to the gated kernel",
       action: "Run on this GPU",

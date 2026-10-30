@@ -1,0 +1,698 @@
+{
+  "date": "2026-10-30",
+  "baseline_commit": "86a0910ce8c5eb1ca53b13f14166d7238cc236f3",
+  "final_code_commit": "df2a03f0867c525fb86fe03be79f0fd22d2b2ae0",
+  "environment": {
+    "gpu": "AMD Radeon RX 6800 XT",
+    "driver": "Mesa 26.0.8 RADV",
+    "firefox": "158.0.1 (snap)",
+    "chromium": "156.0.8078.47 (snap)",
+    "mode": "headed",
+    "requested_size": [
+      1440,
+      900
+    ],
+    "size_meaning": "Firefox window rect; Chromium content viewport",
+    "display_hz": 165,
+    "tier": "T3"
+  },
+  "protocol": [
+    "Baseline is the clean merge of PR 52 into PR 55 (which includes PR 54); its built dist was copied before editing the loop builders.",
+    "One browser runs at a time. Page query: /v2/?s=chimera&o=gecko&tier=T3 or /v2/?s=textures&o=gecko&tier=T3; Textures starts on spots.",
+    "After __growLive: 4 s initial warmup. For each speed: set speed, settle 3 s, measure a discarded 6 s warm sample, clear collected pass timings, measure 6 s.",
+    "Frames/s counts non-empty device.queue.submit calls. GPU time comes from the page GpuProfiler timestamp source, nca pass (all dishes together).",
+    "The probe copies scheduler.noteUnits(nca,k) into profiler.tag so each asynchronous timestamp carries its own step count as profiler.frameTag; step ms is pass ms / k. It does not change the scheduler costs or the shaders.",
+    "p50/p90 are order statistics at floor(p*N), capped at N-1. GPU busy percentage and the 500 MHz clock fraction are polled every 50 ms. Desktop clock variation prevents treating these as saturated pass benchmarks.",
+    "Hash runs pause and reload with seed 42. Chimera: gecko + butterfly, scripted graft at step 240, advance to 600, hash each entire Float32 state and Uint32 rule map. Textures: reload each shipped texture, advance 1024, hash all 16 state channels on the 256x256 plane.",
+    "Timing and identity before/after isolate the loop rewrite, without the scheduler completion guard. Initial one-rule results are retained below, including incomplete 20-frame results. Final proof runs use the shipped code with the guard and require all 21 frames."
+  ],
+  "measurements_before_after": [
+    {
+      "browser": "firefox",
+      "scene": "chimera",
+      "speed": "1x",
+      "step_ms_p50": [
+        7.24156,
+        3.203
+      ],
+      "step_ms_p90": [
+        7.26808,
+        3.2308
+      ],
+      "nonempty_submits_per_second": [
+        158.6,
+        163.1
+      ],
+      "steps_per_second": [
+        30.2,
+        30
+      ],
+      "timed_samples": [
+        180,
+        180
+      ],
+      "timed_steps": [
+        180,
+        180
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 59,
+          "lowClockFrac": 0.68
+        },
+        {
+          "busyAvg": 57,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "firefox",
+      "scene": "chimera",
+      "speed": "4x",
+      "step_ms_p50": [
+        3.17628,
+        3.21164
+      ],
+      "step_ms_p90": [
+        7.25532,
+        3.26304
+      ],
+      "nonempty_submits_per_second": [
+        157.2,
+        144.6
+      ],
+      "steps_per_second": [
+        110.3,
+        116.8
+      ],
+      "timed_samples": [
+        689,
+        715
+      ],
+      "timed_steps": [
+        689,
+        715
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 64,
+          "lowClockFrac": 0.38
+        },
+        {
+          "busyAvg": 64,
+          "lowClockFrac": 0.52
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "firefox",
+      "scene": "textures",
+      "speed": "1x",
+      "step_ms_p50": [
+        4.77036,
+        0.66896
+      ],
+      "step_ms_p90": [
+        4.79824,
+        0.68008
+      ],
+      "nonempty_submits_per_second": [
+        164.1,
+        163.7
+      ],
+      "steps_per_second": [
+        30,
+        30
+      ],
+      "timed_samples": [
+        180,
+        180
+      ],
+      "timed_steps": [
+        180,
+        180
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 54,
+          "lowClockFrac": 1
+        },
+        {
+          "busyAvg": 42,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "firefox",
+      "scene": "textures",
+      "speed": "4x",
+      "step_ms_p50": [
+        3.31104,
+        0.65012
+      ],
+      "step_ms_p90": [
+        4.73764,
+        0.6816
+      ],
+      "nonempty_submits_per_second": [
+        163.2,
+        162.5
+      ],
+      "steps_per_second": [
+        118.4,
+        120
+      ],
+      "timed_samples": [
+        712,
+        719
+      ],
+      "timed_steps": [
+        712,
+        730
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 66,
+          "lowClockFrac": 0.4
+        },
+        {
+          "busyAvg": 40,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "chrome",
+      "scene": "chimera",
+      "speed": "1x",
+      "step_ms_p50": [
+        3.20892,
+        3.20716
+      ],
+      "step_ms_p90": [
+        3.23956,
+        3.23268
+      ],
+      "nonempty_submits_per_second": [
+        164.2,
+        164.2
+      ],
+      "steps_per_second": [
+        30,
+        29.8
+      ],
+      "timed_samples": [
+        180,
+        179
+      ],
+      "timed_steps": [
+        180,
+        179
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 40,
+          "lowClockFrac": 1
+        },
+        {
+          "busyAvg": 48,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "chrome",
+      "scene": "chimera",
+      "speed": "4x",
+      "step_ms_p50": [
+        3.23592,
+        3.23224
+      ],
+      "step_ms_p90": [
+        3.27596,
+        3.2698
+      ],
+      "nonempty_submits_per_second": [
+        164.2,
+        165
+      ],
+      "steps_per_second": [
+        119.5,
+        120
+      ],
+      "timed_samples": [
+        718,
+        720
+      ],
+      "timed_steps": [
+        718,
+        720
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 67,
+          "lowClockFrac": 0.41
+        },
+        {
+          "busyAvg": 63,
+          "lowClockFrac": 0.67
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "chrome",
+      "scene": "textures",
+      "speed": "1x",
+      "step_ms_p50": [
+        0.428,
+        0.42724
+      ],
+      "step_ms_p90": [
+        0.4372,
+        0.43744
+      ],
+      "nonempty_submits_per_second": [
+        165,
+        165.2
+      ],
+      "steps_per_second": [
+        30,
+        30
+      ],
+      "timed_samples": [
+        181,
+        180
+      ],
+      "timed_steps": [
+        181,
+        180
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 31,
+          "lowClockFrac": 1
+        },
+        {
+          "busyAvg": 32,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    },
+    {
+      "browser": "chrome",
+      "scene": "textures",
+      "speed": "4x",
+      "step_ms_p50": [
+        0.432,
+        0.43128
+      ],
+      "step_ms_p90": [
+        0.44128,
+        0.44112
+      ],
+      "nonempty_submits_per_second": [
+        165,
+        164.2
+      ],
+      "steps_per_second": [
+        120,
+        120
+      ],
+      "timed_samples": [
+        720,
+        716
+      ],
+      "timed_steps": [
+        720,
+        720
+      ],
+      "gpu_observations": [
+        {
+          "busyAvg": 39,
+          "lowClockFrac": 1
+        },
+        {
+          "busyAvg": 34,
+          "lowClockFrac": 1
+        }
+      ],
+      "render_scale": [
+        1,
+        1
+      ]
+    }
+  ],
+  "initial_identity_runs": {
+    "before-firefox-chimera": {
+      "grid": 64,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "gecko",
+          "tick": 600,
+          "state": "3bea562d9d33013c2fd2c2ccf5bc3add35400d5933b2d20a65d16f5aca508c6f",
+          "rules": "7909de570cb2b1717c487bf8c5292e6e878e147d63b4bad1534351d7c8fb5777",
+          "finite": true,
+          "donorCells": 3163
+        },
+        {
+          "id": "butterfly",
+          "tick": 600,
+          "state": "927a35cccabd204e562d678c00a5b97fa6193be5b3d2fa519f31dd3125eb9755",
+          "rules": "ea6bed229e52e1b8a6b4529a458abc8ad644c1502bd2389b2b99278bf1b22134",
+          "finite": true,
+          "donorCells": 4096
+        }
+      ],
+      "oneRule": {
+        "identical": false,
+        "frames": 20,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 1.134,
+        "slices": 144
+      }
+    },
+    "before-firefox-textures": {
+      "grid": 256,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "spots",
+          "tick": 1024,
+          "state": "cfaec15892648382e40998f0183bb918cb9c67d106bceacdb1bf4af3fa3cdc65",
+          "finite": true
+        },
+        {
+          "id": "maze",
+          "tick": 1024,
+          "state": "f225c251ef6598d30421adffa381b777a51992a60f6cfc4710c277c736765c81",
+          "finite": true
+        },
+        {
+          "id": "giraffe",
+          "tick": 1024,
+          "state": "df4b1e9dcb833a1d3aa05d849d7895f5398fef03cd7919c377eac3a537f0d5d1",
+          "finite": true
+        },
+        {
+          "id": "weave",
+          "tick": 1024,
+          "state": "ebab7e4256e599db594464df2c5d86d18b75f8c6d6cbf03202fa30371afebea3",
+          "finite": true
+        }
+      ]
+    },
+    "before-chrome-chimera": {
+      "grid": 64,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "gecko",
+          "tick": 600,
+          "state": "3bea562d9d33013c2fd2c2ccf5bc3add35400d5933b2d20a65d16f5aca508c6f",
+          "rules": "7909de570cb2b1717c487bf8c5292e6e878e147d63b4bad1534351d7c8fb5777",
+          "finite": true,
+          "donorCells": 3163
+        },
+        {
+          "id": "butterfly",
+          "tick": 600,
+          "state": "927a35cccabd204e562d678c00a5b97fa6193be5b3d2fa519f31dd3125eb9755",
+          "rules": "ea6bed229e52e1b8a6b4529a458abc8ad644c1502bd2389b2b99278bf1b22134",
+          "finite": true,
+          "donorCells": 4096
+        }
+      ],
+      "oneRule": {
+        "identical": true,
+        "frames": 21,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 0.5257999999523163,
+        "slices": 75
+      }
+    },
+    "before-chrome-textures": {
+      "grid": 256,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "spots",
+          "tick": 1024,
+          "state": "cfaec15892648382e40998f0183bb918cb9c67d106bceacdb1bf4af3fa3cdc65",
+          "finite": true
+        },
+        {
+          "id": "maze",
+          "tick": 1024,
+          "state": "f225c251ef6598d30421adffa381b777a51992a60f6cfc4710c277c736765c81",
+          "finite": true
+        },
+        {
+          "id": "giraffe",
+          "tick": 1024,
+          "state": "df4b1e9dcb833a1d3aa05d849d7895f5398fef03cd7919c377eac3a537f0d5d1",
+          "finite": true
+        },
+        {
+          "id": "weave",
+          "tick": 1024,
+          "state": "ebab7e4256e599db594464df2c5d86d18b75f8c6d6cbf03202fa30371afebea3",
+          "finite": true
+        }
+      ]
+    },
+    "after-firefox-chimera": {
+      "grid": 64,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "gecko",
+          "tick": 600,
+          "state": "3bea562d9d33013c2fd2c2ccf5bc3add35400d5933b2d20a65d16f5aca508c6f",
+          "rules": "7909de570cb2b1717c487bf8c5292e6e878e147d63b4bad1534351d7c8fb5777",
+          "finite": true,
+          "donorCells": 3163
+        },
+        {
+          "id": "butterfly",
+          "tick": 600,
+          "state": "927a35cccabd204e562d678c00a5b97fa6193be5b3d2fa519f31dd3125eb9755",
+          "rules": "ea6bed229e52e1b8a6b4529a458abc8ad644c1502bd2389b2b99278bf1b22134",
+          "finite": true,
+          "donorCells": 4096
+        }
+      ],
+      "oneRule": {
+        "identical": false,
+        "frames": 20,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 0.706,
+        "slices": 82
+      }
+    },
+    "after-firefox-textures": {
+      "grid": 256,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "spots",
+          "tick": 1024,
+          "state": "cfaec15892648382e40998f0183bb918cb9c67d106bceacdb1bf4af3fa3cdc65",
+          "finite": true
+        },
+        {
+          "id": "maze",
+          "tick": 1024,
+          "state": "f225c251ef6598d30421adffa381b777a51992a60f6cfc4710c277c736765c81",
+          "finite": true
+        },
+        {
+          "id": "giraffe",
+          "tick": 1024,
+          "state": "df4b1e9dcb833a1d3aa05d849d7895f5398fef03cd7919c377eac3a537f0d5d1",
+          "finite": true
+        },
+        {
+          "id": "weave",
+          "tick": 1024,
+          "state": "ebab7e4256e599db594464df2c5d86d18b75f8c6d6cbf03202fa30371afebea3",
+          "finite": true
+        }
+      ]
+    },
+    "after-chrome-chimera": {
+      "grid": 64,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "gecko",
+          "tick": 600,
+          "state": "3bea562d9d33013c2fd2c2ccf5bc3add35400d5933b2d20a65d16f5aca508c6f",
+          "rules": "7909de570cb2b1717c487bf8c5292e6e878e147d63b4bad1534351d7c8fb5777",
+          "finite": true,
+          "donorCells": 3163
+        },
+        {
+          "id": "butterfly",
+          "tick": 600,
+          "state": "927a35cccabd204e562d678c00a5b97fa6193be5b3d2fa519f31dd3125eb9755",
+          "rules": "ea6bed229e52e1b8a6b4529a458abc8ad644c1502bd2389b2b99278bf1b22134",
+          "finite": true,
+          "donorCells": 4096
+        }
+      ],
+      "oneRule": {
+        "identical": false,
+        "frames": 20,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 0.45289999997615815,
+        "slices": 67
+      }
+    },
+    "after-chrome-textures": {
+      "grid": 256,
+      "seed": 42,
+      "hashes": [
+        {
+          "id": "spots",
+          "tick": 1024,
+          "state": "cfaec15892648382e40998f0183bb918cb9c67d106bceacdb1bf4af3fa3cdc65",
+          "finite": true
+        },
+        {
+          "id": "maze",
+          "tick": 1024,
+          "state": "f225c251ef6598d30421adffa381b777a51992a60f6cfc4710c277c736765c81",
+          "finite": true
+        },
+        {
+          "id": "giraffe",
+          "tick": 1024,
+          "state": "df4b1e9dcb833a1d3aa05d849d7895f5398fef03cd7919c377eac3a537f0d5d1",
+          "finite": true
+        },
+        {
+          "id": "weave",
+          "tick": 1024,
+          "state": "ebab7e4256e599db594464df2c5d86d18b75f8c6d6cbf03202fa30371afebea3",
+          "finite": true
+        }
+      ]
+    }
+  },
+  "all_state_and_rule_hashes_identical_before_after_and_across_browsers": true,
+  "final_one_rule_proofs": [
+    {
+      "browser": "firefox 158.0.1 headed",
+      "page": "grow/v2/?s=chimera&o=gecko&tier=T3",
+      "step": "final-one-rule",
+      "result": {
+        "identical": true,
+        "frames": 21,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 0.703,
+        "slices": 76
+      }
+    },
+    {
+      "browser": "chromium 156.0.8078.47 headed",
+      "page": "grow/v2/?s=chimera&o=gecko&tier=T3",
+      "step": "final-one-rule",
+      "result": {
+        "identical": true,
+        "frames": 21,
+        "differing": 0,
+        "maxAbs": 0,
+        "seconds": 0.47730000007152557,
+        "slices": 60
+      }
+    }
+  ],
+  "unchanged_source_sha256": {
+    "packages/neural-ca/typescript/src/nca_inference.wgsl": "9021fd3d6c16efc9eb9b8dad0a86a2469159e2b66d3b976297d61a10f59a530d",
+    "packages/neural-ca/web/src/v2/proof/gate.ts": "8492fe66f50d8d9893e7274935276276e1b3e74494875c3f103dc6f2c4fb3c6d",
+    "packages/neural-ca/web/src/main.ts": "2e2fa1f6a371639e80062b98dd6a50377030d71cfe57a4d3918148956d061224",
+    "packages/neural-ca/web/src/v2/main.ts": "6b70a851ebf046bcf508eca83bad4b2b03d31855699f202b491c029d87a16243",
+    "packages/neural-ca/web/src/v2/model/chimera.wgsl": "d831a1ae787534af7d8c7c37115646a6be0882f2f38276a050ea0260c5c5a103",
+    "packages/neural-ca/web/src/v2/model/texture.wgsl": "d511be723fed0094b337b41e984402fdb4d78d6a88f5547ee20940cc01886bdb"
+  },
+  "deployment_gate": {
+    "sub_phase": "web-deploy",
+    "commit_sha": "094aaf77381792c7c08fc6790b95e775a92a20f0",
+    "qualifying_sims": [
+      "neural-ca"
+    ],
+    "non_qualifying": [],
+    "sim_results": {
+      "neural-ca": {
+        "status": "pass",
+        "duration_seconds": 7.15,
+        "artifact_path": "/home/clipbird/.codex/worktrees/firefox-nca-loops/Bit-Physics/packages/neural-ca/web/dist",
+        "capture_validated": true,
+        "notes": "[root] capture_roundtrip: passed=True run_twice=None time_to_ready_ms=[40, 25] {\"bit_exact\": true, \"vs_wgsl_canonical_max_abs\": 0.0, \"n_frames\": 21, \"field\": \"rgba\", \"tolerance\": \"[defaults.continuous-ca] 0.0/0.0 (bit-exact, no row added)\"} | [v2/] capture_roundtrip: passed=True run_twice=None time_to_ready_ms=[21, 48] {\"bit_exact\": true, \"vs_wgsl_canonical_max_abs\": 0.0, \"n_frames\": 21, \"field\": \"rgba\", \"tolerance\": \"[defaults.continuous-ca] 0.0/0.0 (bit-exact, no row added)\"}"
+      }
+    },
+    "overall_status": "pass",
+    "deferred_count": 0,
+    "fail_count": 0,
+    "pass_count": 1
+  },
+  "acceptance": {
+    "passed": 116,
+    "total": 116,
+    "selected_results": [
+      {
+        "name": "Chimera with one rule is the gated kernel, bit for bit over the 21 gated frames (Prove)",
+        "ok": true,
+        "detail": "0 values differ, max |\u0394| 0"
+      },
+      {
+        "name": "each texture's plane (step 1,024) has the reference's colour statistics: |\u0394 mean| \u2264 0.02 and |\u0394 std| \u2264 0.02 per channel",
+        "ok": true,
+        "detail": "spots 0.000/0.001, maze 0.001/0.002, giraffe 0.004/0.001, weave 0.005/0.002"
+      }
+    ]
+  },
+  "unit_tests": {
+    "passed": 205,
+    "files": 35
+  },
+  "typecheck_app": "pass",
+  "typecheck_tests": "pass",
+  "build": "pass"
+}
