@@ -1133,6 +1133,47 @@ async function m3Checks() {
     check("a graft from the donor carries its cells' rule into the host (every cell of the disc)", g.carried === g.cells && g.cells > 100, `${g.carried}/${g.cells}`);
     check("Rewrite sets the rule of the cells along its stroke", g.rewritten === g.line && g.line > 50, `${g.rewritten}/${g.line}`);
     check("undoing both edits replays to the never-edited bytes and rules (step 500)", g.undone === g.never && g.home && g.edited !== g.never, `${g.undone.slice(0, 16)}… vs ${g.never.slice(0, 16)}…`);
+    // an edit before step 240 cancels the opening graft; undoing it, or restoring a save point from
+    // before the graft, brings the graft back (review on PR #52)
+    const early = await T(page, async () => {
+      const app = globalThis.__grow;
+      const snap = async () => {
+        const r = await app.dishes[0].sim.readRules();
+        return { h: (await app.stateHash(0)) + (await app.stateHash(1)), donor: r.reduce((n, v) => n + (v === 1 ? 1 : 0), 0), rules: Array.from(r).join("") };
+      };
+      const fresh = async (n) => {
+        await app.loadScene("chimera", { organism: "gecko", partner: "butterfly" });
+        app.clock.paused = true;
+        await app.advance(n);
+      };
+      await fresh(100);
+      app.cutAt([8, 8, 16, 8], 2, 0);
+      await app.advance(300);
+      const edited = await snap();
+      await app.undo();
+      const undone = await snap();
+      await fresh(400);
+      const never = await snap();
+      // a save point at step 100, the graft at 240, back to the save point, on to 400
+      await fresh(100);
+      app.savePoint();
+      await app.advance(300);
+      app.restoreSave();
+      const tick = app.sim.tick;
+      await app.advance(400 - tick);
+      const restored = await snap();
+      return { edited, undone, never, restored, tick };
+    });
+    check(
+      "undoing an edit made before step 240 brings back the opening graft: the never-edited bytes and rules (step 400)",
+      early.edited.donor === 0 && early.never.donor > 0 && early.undone.h === early.never.h && early.undone.rules === early.never.rules,
+      `donor cells: edited ${early.edited.donor}, undone ${early.undone.donor}, never edited ${early.never.donor}`,
+    );
+    check(
+      "restoring a save point from before step 240 brings back the opening graft (step 400)",
+      early.tick === 100 && early.restored.h === early.never.h && early.restored.rules === early.never.rules,
+      `restored to step ${early.tick}; donor cells ${early.restored.donor} vs ${early.never.donor}`,
+    );
     // the pair picker and the link
     await T(page, () => {
       globalThis.__grow.clock.paused = false;
@@ -1293,6 +1334,51 @@ async function m3Checks() {
       `luminance std inside/outside: ${e.at0.map((v) => v.toFixed(3)).join("/")} → ${e.at64.map((v) => v.toFixed(3)).join("/")} (64) → ${e.at256.map((v) => v.toFixed(3)).join("/")} (256)`,
     );
     check("undoing the erase replays to the never-erased bytes (step 768)", e.undone === e.clean, `${e.undone.slice(0, 16)}… vs ${e.clean.slice(0, 16)}…`);
+    // the plane wraps around: the tools act on the cells the renderer shows (review on PR #52)
+    const w = await T(page, async () => {
+      const app = globalThis.__grow;
+      const G = app.grid;
+      await app.loadScene("textures", { texture: app.textures.defs[0].id });
+      app.clock.paused = true;
+      await app.advance(256);
+      const base = await app.stateHash();
+      app.cutAt([40, 40, 60, 40], 4);
+      const here = await app.stateHash();
+      await app.undo();
+      app.cutAt([40 + G, 40 - G, 60 + G, 40 - G], 4); // the same stroke on a repeated copy
+      const copy = await app.stateHash();
+      await app.undo();
+      app.cutAt([G - 6, 80, G + 6, 80], 3); // across the right edge
+      const st = await app.sim.readState();
+      const zero = (x, y) => st[(y * G + x) * 16] === 0 && st[(y * G + x) * 16 + 5] === 0;
+      const across = [G - 6, G - 2, 1, 5].every((x) => zero(x, 80));
+      await app.undo();
+      app.freezeAt([-4, 100, 4, 100], 2); // a freeze across the left edge
+      const fz = app.sim.freeze;
+      const frozen = [G - 3, G - 1, 0, 3].every((x) => fz[100 * G + x] === 1);
+      await app.undo();
+      const before = await app.sim.readState();
+      app.graftAt([100, G - 2], [1, 120], 6, false); // lifted across the bottom edge, set down across the left
+      const after = await app.sim.readState();
+      let ok = 0, n = 0;
+      const m = (v) => ((v % G) + G) % G;
+      for (let dy = -6; dy <= 6; dy += 1) for (let dx = -6; dx <= 6; dx += 1) {
+        if (Math.hypot(dx, dy) > 6) continue;
+        n += 1;
+        const s = (m(G - 2 + dy) * G + m(100 + dx)) * 16;
+        const t = (m(120 + dy) * G + m(1 + dx)) * 16;
+        let same = true;
+        for (let c = 0; c < 16; c += 1) if (after[t + c] !== before[s + c]) same = false;
+        ok += same ? 1 : 0;
+      }
+      await app.undo();
+      return { base, here, copy, across, frozen, ok, n, back: await app.stateHash() };
+    });
+    check(
+      "on the wrap-around plane, Erase on a repeated copy erases the same cells, and strokes, freezes and grafts carry on across the edges",
+      w.here !== w.base && w.copy === w.here && w.across && w.frozen && w.ok === w.n && w.n > 100 && w.back === w.base,
+      `copy ${w.copy === w.here ? "=" : "≠"} original; across the edge ${w.across}; freeze ${w.frozen}; graft ${w.ok}/${w.n}; undo ${w.back === w.base ? "back" : "differs"}`,
+    );
     // the picker and the link
     const second = await T(page, () => globalThis.__grow.textures.defs[1].id);
     await page.selectOption('select[aria-label="Texture"]', second);

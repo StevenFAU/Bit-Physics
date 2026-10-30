@@ -145,6 +145,9 @@ export interface CellReport {
 interface AppCheckpoint {
   cps: LiveCheckpoint[];
   logIndex: number;
+  /** Chimera's opening graft still to come, and the edit count, at this moment (undo and save points restore them). */
+  scripted: boolean;
+  edits: number;
 }
 
 type CutPayload = { g: number; d?: number; r: number; pts: number[] };
@@ -324,11 +327,13 @@ export class App {
     this.countsAll = this.device.createBuffer({ size: MAX_DISHES * MAX_RULES * 4, usage: U.COPY_DST | U.COPY_SRC, label: "grow-rule-counts" });
     this.countsSlot = new ReadbackSlot(this.device, MAX_DISHES * MAX_RULES * 4, "grow-rule-counts");
     const cp: Checkpointer<AppCheckpoint> = {
-      capture: () => ({ cps: this.dishes.map((d) => d.sim.checkpoint()), logIndex: this.log.length }),
+      capture: () => ({ cps: this.dishes.map((d) => d.sim.checkpoint()), logIndex: this.log.length, scripted: this.scripted, edits: this.edits }),
       restore: (c) => {
         c.cps.forEach((s, i) => this.dishes[i]?.sim.restore(s));
         this.log.truncate(c.logIndex);
         this.applied = c.logIndex;
+        this.scripted = c.scripted;
+        this.edits = c.edits;
         for (const d of this.dishes) d.view.snap();
       },
       release: (c) =>
@@ -519,6 +524,15 @@ export class App {
     const d = dish ?? this.tileAt(dx, dy);
     const o = this.dishes[d]!.origin;
     return { d, gx: dx - o[0], gy: dy - o[1] };
+  }
+
+  /** The whole cell at a grid point; on the Textures plane, around its edges into the grid. */
+  private cellAt(gx: number, gy: number): [number, number] {
+    const x = Math.floor(gx);
+    const y = Math.floor(gy);
+    if (!this.dishes[0]?.sim.periodic) return [x, y];
+    const G = this.grid;
+    return [((x % G) + G) % G, ((y % G) + G) % G];
   }
 
   /** Grid point of dish `d` → screen (CSS px). */
@@ -933,6 +947,10 @@ export class App {
       snap.cps.forEach((s, i) => this.dishes[i]?.sim.restore(s));
       this.log.load(kept);
       this.applied = snap.logIndex;
+      // back to the moment before the edit: with it gone, Chimera's opening graft may be due again
+      // (the replay below makes it at its step when no other edit remains)
+      this.scripted = snap.scripted;
+      this.edits = snap.edits;
       const span = target - snap.cps[0]!.tick;
       if (span > REPLAY_CAP) {
         this.log.truncate(snap.logIndex);
@@ -942,7 +960,6 @@ export class App {
         await this.replayTo(target);
       }
       this.history.release(snap);
-      this.edits = Math.max(0, this.edits - 1);
       for (const d of this.dishes) d.view.snap();
       this.hooks.onEdited?.();
       this.writeUrl();
@@ -1291,8 +1308,8 @@ export class App {
         const { d, gx, gy } = this.toGrid(x, y);
         this.focus = d;
         if (tool === "graft") {
-          const sx = Math.floor(gx);
-          const sy = Math.floor(gy);
+          // on the Textures plane every repeated copy is the same cells
+          const [sx, sy] = this.cellAt(gx, gy);
           if (sx < 0 || sy < 0 || sx >= this.grid || sy >= this.grid) return;
           this.graftFrom = { d, x: sx, y: sy };
           this.updateRing();
@@ -1340,8 +1357,7 @@ export class App {
           this.graftFrom = null;
           this.ghost.hidden = true;
           const { d, gx, gy } = this.toGrid(x, y);
-          const dx = Math.floor(gx);
-          const dy = Math.floor(gy);
+          const [dx, dy] = this.cellAt(gx, gy);
           const moved = d !== from.d || dx !== from.x || dy !== from.y;
           if (moved && dx >= 0 && dy >= 0 && dx < this.grid && dy < this.grid && !this.blocked("graft")) {
             this.activeGroup = this.beginEdit();
@@ -1398,8 +1414,8 @@ export class App {
     const c = Math.ceil(r);
     for (let j = 0; j < n; j += 1) {
       for (let i = 0; i < n; i += 1) {
-        const x = sx - c + i;
-        const y = sy - c + j;
+        const x = plane ? (((sx - c + i) % G) + G) % G : sx - c + i;
+        const y = plane ? (((sy - c + j) % G) + G) % G : sy - c + j;
         const o = (j * n + i) * 4;
         if (x < 0 || y < 0 || x >= G || y >= G || Math.hypot(i - c, j - c) > r) continue;
         const b = (y * G + x) * CN;

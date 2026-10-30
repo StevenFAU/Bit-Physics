@@ -397,10 +397,22 @@ export class LiveNca {
 
   /** Freeze (on) or thaw (off) the cells within `radius` of a stroke. */
   paintFreeze(pts: readonly number[], radius: number, on: boolean): void {
-    rasterStroke(this.grid, pts, radius, (i) => {
-      this.freeze[i] = on ? 1 : 0;
-    });
+    for (const p of this.strokeImages(pts, radius)) {
+      rasterStroke(this.grid, p, radius, (i) => {
+        this.freeze[i] = on ? 1 : 0;
+      });
+    }
     this.uploadFreeze();
+  }
+
+  /** Whether the grid wraps around at its edges (TextureNca's plane); a dish does not. */
+  get periodic(): boolean {
+    return false;
+  }
+
+  /** The copies of a stroke (grid points) that reach this grid: on a dish, the stroke itself. */
+  protected strokeImages(pts: readonly number[], _radius: number): (readonly number[])[] {
+    return [pts];
   }
 
   /** Replace the frozen region (null: thaw everything). */
@@ -434,6 +446,7 @@ export class LiveNca {
     dv.setUint32(0, this.grid, true);
     dv.setUint32(4, move && from === this ? 1 : 0, true);
     dv.setFloat32(8, radius, true);
+    dv.setUint32(12, this.periodic ? 1 : 0, true);
     dv.setInt32(16, src[0], true);
     dv.setInt32(20, src[1], true);
     dv.setInt32(24, dst[0], true);
@@ -450,12 +463,14 @@ export class LiveNca {
   /** Record an edit at the current step boundary. Long strokes are split into several passes. */
   encodeStamp(enc: GPUCommandEncoder, s: Stamp): void {
     const segs: number[][] = [];
-    if (s.mode === "seed") {
-      for (let i = 0; i + 1 < s.pts.length; i += 2) segs.push([s.pts[i]!, s.pts[i + 1]!, s.pts[i]!, s.pts[i + 1]!]);
-    } else if (s.pts.length === 2) {
-      segs.push([s.pts[0]!, s.pts[1]!, s.pts[0]!, s.pts[1]!]);
-    } else {
-      for (let i = 0; i + 3 < s.pts.length; i += 2) segs.push([s.pts[i]!, s.pts[i + 1]!, s.pts[i + 2]!, s.pts[i + 3]!]);
+    for (const pts of this.strokeImages(s.pts, s.mode === "seed" ? 0 : s.radius)) {
+      if (s.mode === "seed") {
+        for (let i = 0; i + 1 < pts.length; i += 2) segs.push([pts[i]!, pts[i + 1]!, pts[i]!, pts[i + 1]!]);
+      } else if (pts.length === 2) {
+        segs.push([pts[0]!, pts[1]!, pts[0]!, pts[1]!]);
+      } else {
+        for (let i = 0; i + 3 < pts.length; i += 2) segs.push([pts[i]!, pts[i + 1]!, pts[i + 2]!, pts[i + 3]!]);
+      }
     }
     for (let i = 0; i < segs.length; i += MAX_SEGS) {
       const chunk = segs.slice(i, i + MAX_SEGS);

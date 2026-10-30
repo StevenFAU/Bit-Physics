@@ -19,6 +19,8 @@
 >   onto living cells, *Seed* plants on a chosen rule. Untouched, the scene grafts a radius-9 disc of
 >   the donor into the host at step 240 by itself (not an edit; links reproduce it). An outline marks
 >   tissue on the other dish's rule; a label under each dish counts its living cells per rule.
+>   Undo checkpoints and save points carry whether the opening graft is still to come, so undoing
+>   an edit made before step 240 brings it back (found in review).
 > - **One rule is the gated kernel.** Chimera's dish with every cell on the committed checkpoint's
 >   rule, stepped through the gated run, equals the gate's own frames bit for bit (21 frames; Prove ›
 >   *Chimera with one rule*, and the acceptance script).
@@ -48,7 +50,9 @@
 >   real run's logged losses; a whole 3,000-iteration rerun was not made. The page runs them on
 >   `src/v2/model/texture.wgsl` (its own kernel, with the gated kernel's hashed coin) on a
 >   256 × 256 plane on T3 (192 on T2, 128 on T1), drawn edge to edge as a wrap-around plane, with
->   Erase, Graft, Freeze and undo as on the dish. The plane matches the reference statistically,
+>   Erase, Graft, Freeze and undo as on the dish; the tools act on whichever repeated copy is under
+>   the pointer, and strokes, freezes and grafts carry on across the edges (found in review).
+>   The plane matches the reference statistically,
 >   not cell for cell: each texture's colour mean and spread at step 1,024 lie within 0.005 of
 >   PyTorch's (declared 0.02). Prove › *The Textures' networks* checks each download's SHA-256.
 > - **Posters and loops**, staged as `neural-ca-v2.png` / `.webm` from the v2 page (`STAGED` in
@@ -66,14 +70,16 @@
 >   Textures compiles them before its scene (live 123–187 ms after navigation). CI's time-to-ready is added once the PR's validate job has run.
 > - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0
 >   over 21 frames, two driver runs each; local time-to-ready 36–44 ms (v1) and 26–45 ms (v2).
-> - **Checks.** `v2-acceptance.mjs` 113/113: M0–M2's, plus 21 for M3 (Chimera: boot, one rule ≡ the
+> - **Checks.** `v2-acceptance.mjs` 116/116: M0–M2's, plus 24 for M3 (Chimera: boot, one rule ≡ the
 >   gated kernel, the opening graft at 240, same bytes and rules twice, a graft carries its rules,
->   Rewrite, undo to the never-edited bytes and rules, the partner picker and its link, the
+>   Rewrite, undo to the never-edited bytes and rules, the opening graft back after undoing an
+>   edit made before step 240 or restoring a save point from before it, the partner picker and its link, the
 >   per-rule labels, all 42 pairs measured, no console errors; Textures: boot at 256² as a plane
 >   with Erase/Graft/Freeze, steps advance, each download's SHA-256, each texture's colour mean and
 >   spread within 0.02 of the reference's (measured worst 0.005 / 0.002, weave), Erase zeroes the
 >   cells, the erased region's contrast back within 10% of the rest's after 256 steps (measured
->   1.2%, spots), undo to the never-erased bytes, the picker and its link, the card, no console
+>   1.2%, spots), undo to the never-erased bytes, Erase on a repeated copy and strokes, freezes
+>   and grafts across the plane's edges, the picker and its link, the card, no console
 >   errors) and frame-time benches for both scenes. `web/tools/check-studio.mjs` clean for every
 >   scene (Chimera, Textures with spots and with giraffe, the Dish, the Menagerie, Inside the Cell,
 >   Teach) at 390, 820 and 1440 px and 200% zoom, no axe violations. `npm test` 187/187; neural-ca

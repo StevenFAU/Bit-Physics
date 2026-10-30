@@ -151,6 +151,41 @@ export class TextureNca extends LiveNca {
     this.texBG = [bg(a, b), bg(b, a)];
   }
 
+  override get periodic(): boolean {
+    return true;
+  }
+
+  /**
+   * A stroke on the plane, wherever on the repeated copies it was drawn: shifted so it starts in the
+   * grid, then once per copy of the grid its brush (radius `r`) reaches, so a stroke crossing an
+   * edge carries on at the opposite one.
+   */
+  protected override strokeImages(pts: readonly number[], r: number): (readonly number[])[] {
+    const G = this.grid;
+    if (pts.length < 2) return [pts];
+    const ox = Math.floor(pts[0]! / G) * G;
+    const oy = Math.floor(pts[1]! / G) * G;
+    let x0 = Infinity;
+    let x1 = -Infinity;
+    let y0 = Infinity;
+    let y1 = -Infinity;
+    for (let i = 0; i + 1 < pts.length; i += 2) {
+      const x = pts[i]! - ox;
+      const y = pts[i + 1]! - oy;
+      x0 = Math.min(x0, x);
+      x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y);
+      y1 = Math.max(y1, y);
+    }
+    const out: number[][] = [];
+    for (let ky = Math.floor((y0 - r - 1) / G); ky <= Math.floor((y1 + r + 1) / G); ky += 1) {
+      for (let kx = Math.floor((x0 - r - 1) / G); kx <= Math.floor((x1 + r + 1) / G); kx += 1) {
+        out.push(pts.map((v, i) => (i % 2 === 0 ? v - ox - kx * G : v - oy - ky * G)));
+      }
+    }
+    return out;
+  }
+
   protected override recordSteps(pass: GPUComputePassEncoder, k: number): void {
     for (let s = 0; s < k; s += 1) {
       const off = this.writeParams(this.tick);
