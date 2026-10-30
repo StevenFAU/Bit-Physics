@@ -612,6 +612,7 @@
 .gr-card-texture {
   image-rendering: pixelated;
 }
-.bp-studio[data-scene="textures"] .bp-heading::before {
-  background: radial-gradient(closest-side, rgba(6, 9, 12, 0.8), rgba(6, 9, 12, 0));
+/* a texture fills the window edge to edge, often pale: a darker scrim than the dish needs */
+.bp-studio.gr-plane .bp-heading::before {
+  background: radial-gradient(closest-side, rgba(6, 9, 12, 0.88), rgba(6, 9, 12, 0.35) 70%, rgba(6, 9, 12, 0));
 }

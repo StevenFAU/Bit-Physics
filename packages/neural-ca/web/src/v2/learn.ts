@@ -193,6 +193,12 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
         limits.textContent = "";
         limits.append(
           h("li", {}, "Neither organism practised this. Each was trained alone, from one seed in the middle of its dish; what grows where two rules meet was not designed — it is what these weights do."),
+          h(
+            "li",
+            {},
+            "Measured on this page's kernel for every ordered pair of the seven healers, 1,000 steps after the opening graft: each rule alone holds 456–736 living cells, but in 31 of the 42 pairs the host's dish passes 3,000 of its 4,096 — " +
+              "two rules that each stop at their own shape do not stop each other. The donor's rule then holds a median of 32% of the living cells (none in one pair, 99% in another).",
+          ),
           h("li", {}, "Checked: with only one rule, Chimera's step is the gated kernel's, bit for bit on this GPU (Prove › Chimera with one rule). The rule lookup is the only change."),
           h("li", {}, "Rule ids live with the state: undo, save points and grafts carry them. Share links reproduce the scene's start and its opening graft, not your edits."),
         );
@@ -223,7 +229,7 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
             h(
               "li",
               {},
-              `Its own kernel, not the gated one: 12 channels, a fourth filter (the Laplacian), wrap-around edges, no alive mask. Measured on the reference (PyTorch float32), the style loss went from ${t.measured.style_by_step[String(steps[0])]!.toFixed(0)} at step ${steps[0]} to ${t.measured.style_by_step[String(steps[steps.length - 1])]!.toFixed(0)} at step ${steps[steps.length - 1]!.toLocaleString()}. The page runs the same weights with its own random coin, so it matches the reference statistically, not cell for cell.`,
+              `Its own kernel, not the gated one: 12 channels, a fourth filter (the Laplacian), wrap-around edges, no alive mask. Training brought the style loss from ${Math.round(t.training.curve[0]?.[1] ?? 0).toLocaleString()} to ${Math.round(t.training.final_style_loss).toLocaleString()}; grown from zeros on the reference (PyTorch float32), the plane measures ${t.measured.style_by_step[String(steps[1] ?? steps[0])]!.toFixed(0)} at step ${steps[1] ?? steps[0]} and ${t.measured.style_by_step[String(steps[steps.length - 1])]!.toFixed(0)} at step ${steps[steps.length - 1]!.toLocaleString()}. The page runs the same weights with its own random coin, so it matches the reference statistically (its colours, checked), not cell for cell.`,
             ),
             h("li", {}, "The targets are drawn by a script in this repository (reaction–diffusion spots and stripes, a Voronoi giraffe, a basket weave) — no photographs."),
           );

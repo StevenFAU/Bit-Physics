@@ -54,9 +54,18 @@ WORDS = {
     ),
     "weave": (
         "Weave",
-        "A basket weave: a regular texture, the hardest kind for a rule that sees only its neighbours to keep in step.",
+        "A basket weave. The network learned the threads and their crossings but not the grid: blocks drift out of line, because a rule that sees only its neighbours has nothing to keep far-apart blocks in step.",
     ),
 }
+
+
+# What was checked of the training's reproducibility (2026-10-29, torch 2.12.0 CPU, x86-64, 5 threads).
+REPRODUCIBILITY = (
+    "train.py --id spots --seed 1 --threads 5, run twice for 101 iterations: byte-identical weights, and "
+    "the logged losses at iterations 0 and 50 equal the 3,000-iteration run's to six decimals. Not checked: "
+    "a whole 3,000-iteration rerun, other thread counts, other CPUs or PyTorch versions. build.py's "
+    "measurements were run twice and came out identical."
+)
 
 
 @torch.no_grad()
@@ -170,6 +179,7 @@ def main() -> None:
     order = [t for t in TEXTURES if t in by_id]
     manifest = {
         "_what": "Grow v2 Textures (rebuild-v2 04-neural-ca.md M3): texture NCAs trained by packages/neural-ca/textures/train.py, measured by build.py",
+        "reproducibility": REPRODUCIBILITY,
         "layout": {
             "channels": CHN,
             "hidden": HIDDEN,

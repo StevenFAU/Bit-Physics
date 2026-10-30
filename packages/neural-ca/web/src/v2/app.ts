@@ -1073,7 +1073,7 @@ export class App {
           id,
           label: plane ? "Erase" : "Cut",
           icon: "erase",
-          hint: plane ? "Drag across the pattern to erase it — it grows back in" : "Drag across the organism to cut it",
+          hint: plane ? "Drag across the pattern to erase it — it grows back" : "Drag across the organism to cut it",
           paints: true,
           options: () =>
             slider({

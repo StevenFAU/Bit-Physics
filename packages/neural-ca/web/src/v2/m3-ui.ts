@@ -31,13 +31,13 @@ export function buildM3Ui(
   act: { partner: (id: string) => void; texture: (id: string) => void },
 ): M3Ui {
   // ---- Chimera's second organism -----------------------------------------
-  const partner = h("select", { class: "bp-scene-picker gr-organism-picker", "aria-label": "Second organism (the donor)" });
+  const partner = h("select", { class: "bp-scene-picker gr-partner-picker", "aria-label": "Second organism (the donor)" });
   for (const d of organisms) partner.append(h("option", { value: d.id }, `with ${d.name}`));
   partner.addEventListener("change", () => act.partner(partner.value));
   partner.hidden = true;
 
   // ---- Textures' picker and card --------------------------------------------
-  const pick = h("select", { class: "bp-scene-picker gr-organism-picker", "aria-label": "Texture" });
+  const pick = h("select", { class: "bp-scene-picker gr-texture-picker", "aria-label": "Texture" });
   for (const t of textures.textures) pick.append(h("option", { value: t.id }, t.name));
   pick.addEventListener("change", () => act.texture(pick.value));
   pick.hidden = true;

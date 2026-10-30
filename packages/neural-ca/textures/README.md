@@ -50,4 +50,4 @@ python packages/neural-ca/textures/build.py --runs $OUT/runs --targets $OUT
 Use the workspace venv (`uv run --no-sync python …`); it needs `torch`, `torchvision` (with the VGG16
 ImageNet weights in the torch hub cache), `numpy` and `Pillow`. Runs are seeded (model, fire masks, pool
 sampling); whether a rerun reproduces the weights bit for bit depends on PyTorch's CPU kernels and thread
-count — see the note in `textures.json` for what was checked.
+count — see `reproducibility` in `textures.json` for what was checked.

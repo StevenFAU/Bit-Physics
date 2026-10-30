@@ -536,6 +536,7 @@ async function startLive(b: LiveBoot): Promise<void> {
       cellPanel.el.hidden = scene.kind !== "cell";
       cellPanel.set(null, app.sim.fireRate, app.clock.paused);
       studio.root.classList.toggle("gr-has-panel", scene.kind === "cell");
+      studio.root.classList.toggle("gr-plane", scene.kind === "texture");
       syncTune();
       syncProve();
     },
@@ -695,7 +696,7 @@ async function bench(app: App, profiler: GpuProfiler, scheduler: FrameScheduler,
   const result = {
     adapter: app.gpu.adapterId,
     tier: app.tier,
-    grid: GRID,
+    grid: app.grid,
     scene: app.scene.id,
     viewport: [app.camera.viewW, app.camera.viewH],
     timing: profiler.source,

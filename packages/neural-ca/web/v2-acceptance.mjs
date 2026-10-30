@@ -1232,9 +1232,12 @@ async function m3Checks() {
       return rows;
     });
     console.log(`BP_TEXTURE_STATS ${JSON.stringify(stats)}`);
+    // Statistical, not cell for cell: the page's plane is 256² with the gated kernel's hashed coin, the
+    // reference's 128² with PyTorch's generator. Measured 2026-10-29 (RADV): worst |Δ mean| 0.0050 (weave),
+    // worst |Δ std| 0.0020 (weave); declared 0.02, four times the worst.
     check(
-      "each texture's plane (step 1,024) has the reference's colour statistics: |Δ mean| ≤ 0.04 and |Δ std| ≤ 0.04 per channel",
-      stats.every((r) => r.finite && r.dMean <= 0.04 && r.dStd <= 0.04),
+      "each texture's plane (step 1,024) has the reference's colour statistics: |Δ mean| ≤ 0.02 and |Δ std| ≤ 0.02 per channel",
+      stats.every((r) => r.finite && r.dMean <= 0.02 && r.dStd <= 0.02),
       stats.map((r) => `${r.id} ${r.dMean.toFixed(3)}/${r.dStd.toFixed(3)}`).join(", "),
     );
     // erase → it grows back; undo
@@ -1283,9 +1286,10 @@ async function m3Checks() {
       return { n, zeroed, at0, at64, at256, clean, undone };
     });
     check("Erase zeroes the cells under the stroke (the plane's seed state)", e.zeroed === e.n && e.n > 500, `${e.zeroed}/${e.n}`);
+    // Measured 2026-10-29 (RADV, spots): 0.243 inside vs 0.246 outside at 64 and at 256 steps (1.2%); declared 10%.
     check(
-      "the erased region grows the pattern back: 256 steps later its contrast is within 25% of the rest's",
-      e.at0[0] < 0.01 && Math.abs(e.at256[0] - e.at256[1]) <= 0.25 * e.at256[1],
+      "the erased region grows the pattern back: 256 steps later its contrast is within 10% of the rest's",
+      e.at0[0] < 0.01 && Math.abs(e.at256[0] - e.at256[1]) <= 0.1 * e.at256[1],
       `luminance std inside/outside: ${e.at0.map((v) => v.toFixed(3)).join("/")} → ${e.at64.map((v) => v.toFixed(3)).join("/")} (64) → ${e.at256.map((v) => v.toFixed(3)).join("/")} (256)`,
     );
     check("undoing the erase replays to the never-erased bytes (step 768)", e.undone === e.clean, `${e.undone.slice(0, 16)}… vs ${e.clean.slice(0, 16)}…`);
