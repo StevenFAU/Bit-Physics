@@ -272,9 +272,9 @@
 >   the simulation at a restart. Without timestamp queries the governor still sees the whole frame
 >   interval, which it cannot split.
 > - **Noticed, not changed.** The scheduler's per-step cost at 1× is still learned only at ≥ 0.5 steps
->   per frame. PR #52's Chimera (`chimera.wgsl`) and Textures (`texture.wgsl`) kernels carry the same
->   two loops, so they will be as slow in Firefox until they are written out the same way (Textures
->   steps a 256² plane, sixteen dishes' worth of cells).
+>   per frame. PR #52's Chimera (`chimera.wgsl`) and Textures (`texture.wgsl`) kernels carried the same
+>   two loops; they are now written out the same way (the follow-up below). Textures still steps about
+>   1.6× slower in Firefox than in Chromium (0.67 against 0.43 ms); the cause of that gap is not measured.
 > - RX 6800 XT, Mesa 26.0.8 RADV, snap Firefox 158.0.1 and Chromium 156.0.8078.47. The bench page and
 >   the frame probe are scratch tools, not committed (recipe in the session notes).
 > - **Chimera and Textures follow-up (2026-10-30).** The same exact-match rewrite now covers
