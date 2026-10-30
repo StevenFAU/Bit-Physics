@@ -160,6 +160,9 @@ export class FrameScheduler<E extends EncoderLike = GPUCommandEncoder> {
         this.retire(e);
         continue;
       }
+      // A later frame must not retire a finished job until the final slice's
+      // follow-up (e.g. the last proof readback) has resolved.
+      if (e.waiting) continue;
       if (e.ranThisFrame === 0 && e.job.remaining() > 0) continue;
       const done = (): void => {
         e.waiting = false;
