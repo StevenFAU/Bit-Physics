@@ -375,3 +375,309 @@
     bottom: auto;
   }
 }
+
+/* ---- M3: Eyes Only's order, the Species Matrix editor, Watch one (on the canvas) ---- */
+
+.sw-eyes,
+.sw-matrix {
+  position: absolute;
+  right: var(--bp-gutter);
+  bottom: 80px;
+  z-index: 3;
+  padding: 10px 12px;
+  border-radius: var(--bp-radius);
+  box-sizing: border-box;
+}
+.sw-eyes {
+  width: 256px;
+}
+.sw-eyes-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin: 4px 0 2px;
+}
+.sw-eyes-trace {
+  display: block;
+  border-radius: 4px;
+}
+.sw-matrix {
+  width: 300px;
+}
+.sw-matrix-head,
+.sw-matrix-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sw-matrix-row {
+  margin-top: 8px;
+}
+.sw-matrix-row select {
+  flex: 1 1 120px;
+  min-width: 0;
+  font-size: 12.5px;
+}
+.sw-matrix-count .bp-seg,
+.sw-matrix-layer .bp-seg {
+  padding: 2px 7px;
+  font-size: 12px;
+}
+.sw-matrix-grid {
+  display: grid;
+  gap: 3px;
+  margin-top: 8px;
+  align-items: center;
+}
+.sw-matrix-corner {
+  font-size: 9.5px;
+  color: var(--bp-text-dim);
+  white-space: nowrap;
+}
+.sw-matrix-colhead,
+.sw-matrix-rowhead {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.sw-matrix-speedhead {
+  font-size: 10.5px;
+  color: var(--bp-text-dim);
+}
+.sw-matrix-cell {
+  height: 26px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--bp-mono);
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  cursor: ns-resize;
+  user-select: none;
+  touch-action: none;
+  border: 1px solid transparent;
+}
+.sw-matrix-cell.is-diagonal {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+.sw-matrix-cell.is-speed {
+  height: 22px;
+  font-size: 11px;
+}
+.sw-matrix-cell:focus-visible {
+  outline: 2px solid var(--sim-accent);
+  outline-offset: 1px;
+}
+.sw-matrix-blurb {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--bp-text-dim);
+}
+.sw-matrix-mix {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+.sw-matrix-mixitem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 8px;
+}
+.sw-matrix-dim {
+  color: var(--bp-text-dim);
+}
+.sw-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+
+.sw-watch {
+  position: absolute;
+  right: var(--bp-gutter);
+  top: 64px;
+  z-index: 3;
+  width: 288px;
+  padding: 8px 12px 10px;
+  border-radius: var(--bp-radius);
+  box-sizing: border-box;
+}
+.sw-watch-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.sw-watch-icon {
+  display: inline-flex;
+  color: #ffb852;
+}
+.sw-watch-title {
+  flex: 1;
+  min-width: 0;
+}
+.sw-watch-actions {
+  display: flex;
+  gap: 4px;
+}
+.sw-watch-btn {
+  padding: 2px 8px;
+  font-size: 12px;
+}
+.sw-watch-rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1px 10px;
+  margin: 6px 0 0;
+  font-size: 12px;
+}
+.sw-watch-rows dt {
+  color: var(--bp-text-dim);
+}
+.sw-watch-rows dd {
+  margin: 0;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.sw-watch-kind {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+.sw-watch-status {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  color: var(--bp-text-dim);
+}
+.sw-watch-status:empty {
+  display: none;
+}
+.sw-retina-box {
+  margin-top: 8px;
+}
+.sw-retina {
+  display: block;
+  margin-top: 4px;
+  border-radius: 3px;
+}
+.sw-retina-axis {
+  display: flex;
+  justify-content: space-between;
+  width: 256px;
+  font-size: 10px;
+  color: var(--bp-text-dim);
+}
+.sw-retina-text {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.bp-studio.is-drawer-open .sw-eyes,
+.bp-studio.is-drawer-open .sw-matrix,
+.bp-studio.is-drawer-open .sw-watch {
+  right: calc(var(--bp-drawer-w) + 2 * var(--bp-gutter));
+}
+
+@media (max-width: 1099px) {
+  .bp-studio.is-drawer-open .sw-eyes,
+  .bp-studio.is-drawer-open .sw-matrix,
+  .bp-studio.is-drawer-open .sw-watch {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
+  /* the Eyes panel goes to the top, under the title; the matrix is a sheet above the tool row */
+  .sw-eyes {
+    top: 104px;
+    bottom: auto;
+    width: 220px;
+    padding: 6px 8px;
+  }
+  .sw-eyes-trace {
+    width: 196px !important;
+    height: 30px !important;
+  }
+  .sw-eyes .sw-pop-state {
+    display: none;
+  }
+  .sw-matrix {
+    left: var(--bp-gutter);
+    right: var(--bp-gutter);
+    bottom: 184px;
+    width: auto;
+    max-height: calc(100% - 184px - 112px);
+    overflow-y: auto;
+    padding: 8px 10px;
+  }
+  .sw-matrix-blurb {
+    display: none;
+  }
+  /* watching: the fish's panel takes the top; the scene's own panels step aside */
+  .sw-watch {
+    top: 104px;
+    left: var(--bp-gutter);
+    right: var(--bp-gutter);
+    width: auto;
+    padding: 6px 10px;
+  }
+  .bp-studio.is-watching .sw-eyes,
+  .bp-studio.is-watching .sw-matrix,
+  .bp-studio.is-watching .sw-pop,
+  .bp-studio.is-watching .sw-regime,
+  .bp-studio.is-watching .sw-dial-panel {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) and (max-height: 620px) {
+  .sw-eyes,
+  .sw-matrix {
+    top: 56px;
+    bottom: auto;
+  }
+  .sw-matrix {
+    max-height: calc(100% - 56px - 76px);
+    overflow-y: auto;
+    padding: 6px 10px;
+  }
+  .sw-matrix-blurb,
+  .sw-eyes .sw-pop-state {
+    display: none;
+  }
+  .sw-watch {
+    top: 56px;
+  }
+  .bp-studio.is-watching .sw-eyes,
+  .bp-studio.is-watching .sw-matrix,
+  .bp-studio.is-watching .sw-pop,
+  .bp-studio.is-watching .sw-regime,
+  .bp-studio.is-watching .sw-dial-panel {
+    display: none;
+  }
+}
+
+/* the shared button and flex rules would otherwise beat [hidden] */
+.sw-watch [hidden],
+.sw-matrix [hidden] {
+  display: none !important;
+}
+/* watching in Species Matrix: the matrix keeps the space under the fish's panel */
+.bp-studio.is-watching .sw-matrix {
+  max-height: calc(100% - 80px - 270px);
+  overflow-y: auto;
+}
+.bp-studio.is-watching .sw-matrix-blurb {
+  display: none;
+}

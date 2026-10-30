@@ -14,6 +14,9 @@ import type { CameraLike, Studio, ToolHandlers, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { BrainParams } from "./model/brains.js";
+import { NO_WATCH, RETINA_HEADER } from "./model/brains-m3.js";
+import type { WatchRecord, WatchTracker } from "./model/watch.js";
+import { WATCH_BYTES, readWatchRecord } from "./model/watch.js";
 import { CurrentExt } from "./model/current.js";
 import type { Census, EcoKernels, EcoParams } from "./model/ecology.js";
 import { EcologyExt } from "./model/ecology.js";
@@ -23,11 +26,36 @@ import { Flock, FlockKernels, MAX_STEPS_PER_PASS, orderParams, sumPartials } fro
 import type { RuleParams } from "./model/params.js";
 import { sameRule } from "./model/params.js";
 import { AGENTS } from "./model/world.js";
-import type { OceanView, SharkView } from "./render/ocean-view.js";
+import type { FishColour, OceanView, SharkView } from "./render/ocean-view.js";
 import { DEFAULT_LOOK } from "./render/ocean-view.js";
 import type { SeaSource, SeaView } from "./render/sea-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { PROOF, RHO_RANGE, SCENES, sceneById, sceneCount, sceneWorld, vicsekRadius } from "./scenes.js";
+
+/** Smallest vision range Tune offers (body lengths): the sort is sized for it. */
+export const MIN_VISION_RANGE = 5;
+
+/** The fish the visitor is watching, and what the GPU last reported about it. */
+export interface WatchState {
+  /** The watched fish's id (null = none). */
+  id: number | null;
+  /** The camera follows it. */
+  follow: boolean;
+  /** The last record read back, and the step it was taken at. */
+  rec: WatchRecord | null;
+  recTick: number;
+  /** It was found once and has since gone (Food Chain: eaten or starved). */
+  lost: boolean;
+  /** Eyes Only: the watched fish's visual field and its integrals at `retinaTick`. */
+  retina: Uint32Array | null;
+  retinaTick: number;
+}
+
+/** A periodic copy of every fish (the M3 panels' instruments), with the step it shows. */
+export interface FishSample {
+  boids: Float32Array;
+  tick: number;
+}
 
 /** Solver steps per second at 1× (spec: T3 one step per frame at 60 fps). */
 const TICK_RATE: Record<Tier, number> = { T3: 60, T2: 60, T1: 60 };
@@ -64,6 +92,10 @@ export interface AppHooks {
   onFluid?: (s: FluidStats, tick: number) => void;
   /** Food Chain: the census (every few frames). */
   onCensus?: (c: Census, tick: number) => void;
+  /** Watch one: a fresh record of the watched fish (or null when let go). */
+  onWatch?: (w: WatchState) => void;
+  /** M3 scenes: every fish, about once a second. */
+  onSample?: (s: FishSample) => void;
   onFrame?: (now: number) => void;
 }
 
@@ -170,6 +202,13 @@ export class App {
   readonly brush: BrushState = { at: null, down: false, vx: 0, vy: 0, last: null, painted: 0 };
   /** Brush radius (world units). */
   brushRadius = BRUSH_RADIUS;
+  /** Watch one: the GPU tracker and the watched fish. */
+  watcher: WatchTracker | null = null;
+  readonly watch: WatchState = { id: null, follow: true, rec: null, recTick: 0, lost: false, retina: null, retinaTick: 0 };
+  /** The fish colour the visitor chose (null = the scene's own). */
+  colourChoice: FishColour | null = null;
+  /** Eyes Only: the schools' own polarization from the last sample (null until one). */
+  schoolOrder: number | null = null;
 
   private busy = false;
   /** Frames submitted and not yet done; at most `maxInFlight`. */
@@ -201,6 +240,13 @@ export class App {
   private frameNo = 0;
   private stateSlot: ReadbackSlot | null = null;
   private censusSlot: ReadbackSlot | null = null;
+  private watchSlot: ReadbackSlot | null = null;
+  private retinaSlot: ReadbackSlot | null = null;
+  private sampleSlot: ReadbackSlot | null = null;
+  /** The tracker's record is drawn (cleared once after letting go). */
+  private watchDrawn = false;
+  /** The page's exposure settings (scenes may cap them). */
+  private readonly baseExposure: HdrPipeline["exposure"];
 
   constructor(gpu: GpuContext, studio: Studio, hdr: HdrPipeline, view: OceanView, kernels: FlockKernels, tier: Tier) {
     this.gpu = gpu;
@@ -211,6 +257,7 @@ export class App {
     this.kernels = kernels;
     this.tier = tier;
     this.clock = new SimClock(TICK_RATE[tier], MAX_STEPS_PER_PASS);
+    this.baseExposure = { ...hdr.exposure };
     this.camera.reducedMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const cp: Checkpointer<Checkpoint> = {
       capture: () => this.flock.checkpoint(),
@@ -225,7 +272,14 @@ export class App {
     this.history = new History(cp, 1);
     this.history.onChange = () => this.syncTransport();
     const cam: CameraLike = {
-      panBy: (dx, dy) => this.camera.panBy(dx, dy),
+      panBy: (dx, dy) => {
+        // dragging the view takes the camera back from the watched fish
+        if (this.watch.id !== null && this.watch.follow && (dx !== 0 || dy !== 0)) {
+          this.watch.follow = false;
+          this.hooks.onWatch?.(this.watch);
+        }
+        this.camera.panBy(dx, dy);
+      },
       zoomAt: (f, x, y) => this.camera.zoomAt(f, x, y),
       fling: (vx, vy) => this.camera.fling(vx, vy),
       stop: () => this.camera.stop(),
@@ -254,7 +308,15 @@ export class App {
       const rule = proof ? scene.rule : (o.rule ?? scene.rule);
       const brain = proof || !scene.brain ? null : o.brain && o.brain.kind === scene.brain(n).kind ? o.brain : scene.brain(n);
       // the counting sort is sized for the smallest reach the scene offers
-      const minReach = !brain ? MIN_RCOH : brain.kind === "vicsek" ? vicsekRadius(RHO_RANGE[0]) : brain.p.ra;
+      const minReach = !brain
+        ? MIN_RCOH
+        : brain.kind === "vicsek"
+          ? vicsekRadius(RHO_RANGE[0])
+          : brain.kind === "couzin"
+            ? brain.p.ra
+            : brain.kind === "species"
+              ? Math.min(MIN_RCOH, brain.p.rCoh)
+              : Math.min(MIN_VISION_RANGE, brain.p.range);
       const water = !proof ? scene.water : undefined;
       if (water && !this.fluidKernels) throw new Error("Current needs the fluid kernels");
       let current: CurrentExt | null = null;
@@ -306,18 +368,35 @@ export class App {
       this.stateSlot = current ? new ReadbackSlot(this.device, 16, "swarm-fluid-state") : null;
       this.censusSlot?.destroy();
       this.censusSlot = ecology ? new ReadbackSlot(this.device, 32, "swarm-census") : null;
+      this.watchSlot?.destroy();
+      this.watchSlot = this.watcher ? new ReadbackSlot(this.device, WATCH_BYTES, "swarm-watch") : null;
+      this.retinaSlot?.destroy();
+      this.retinaSlot = flock.retina ? new ReadbackSlot(this.device, RETINA_HEADER * 4, "swarm-retina") : null;
+      this.sampleSlot?.destroy();
+      this.sampleSlot = brain && (brain.kind === "vision" || brain.kind === "species") ? new ReadbackSlot(this.device, flock.bytes, "swarm-sample") : null;
+      // a new ocean has new fish: let go of the old one
+      Object.assign(this.watch, { id: null, follow: true, rec: null, recTick: 0, lost: false, retina: null, retinaTick: 0 });
       this.order = null;
       this.view.forgetBuffers();
       this.scene = scene;
+      this.schoolOrder = null;
       this.edits = 0;
       this.clock.reset();
       this.sceneT0 = performance.now();
       this.camera.setViewport(rect.width, rect.height);
       this.camera.setDomain(world.halfW * 2, world.halfH * 2, true);
-      const near = !brain ? rule.rCoh : brain.kind === "vicsek" ? brain.p.r : brain.p.rr * 2;
+      const near = !brain
+        ? rule.rCoh
+        : brain.kind === "vicsek"
+          ? brain.p.r
+          : brain.kind === "couzin"
+            ? brain.p.rr * 2
+            : brain.kind === "species"
+              ? brain.p.rCoh
+              : brain.p.R * 6;
       this.camera.maxPxPerUnit = Math.max(400, rect.height / (near * 3));
       const sc = scene.scale ?? { fishLength: DEFAULT_LOOK.fishLength, causticCell: DEFAULT_LOOK.causticCell };
-      this.view.look = { ...this.view.look, fishLength: sc.fishLength, causticCell: sc.causticCell };
+      this.view.look = { ...this.view.look, fishLength: sc.fishLength, causticCell: sc.causticCell, colour: this.colourFor(scene) };
       if (o.camera) {
         this.camera.set({ cx: o.camera.cx * world.halfW * 2, cy: o.camera.cy * world.halfH * 2, pxPerUnit: this.camera.coverZoom() * o.camera.zoom });
       } else if (scene.zoom && scene.zoom !== 1) {
@@ -328,13 +407,17 @@ export class App {
       this.shark.radius = this.sharkSize * this.sharkUnit;
       this.shark.presence = 0;
       this.shark.target = null;
+      this.hdr.exposure = { ...this.baseExposure, max: Math.min(this.baseExposure.max, scene.exposureMax ?? Infinity) };
       this.hdr.resetExposure();
       const tools = [
         ...(scene.water ? [this.toolSpec("current")] : []),
         ...(scene.ecology ? [this.toolSpec("feed"), this.toolSpec("release")] : []),
         ...(scene.shark ? [this.toolSpec("shark")] : []),
+        // Watch one is every live scene's (first in the scenes it was made for)
+        ...(scene.kind === "live" ? [this.toolSpec("watch")] : []),
         this.toolSpec("pan"),
       ];
+      if (scene.id === "eyes-only") tools.unshift(tools.splice(tools.findIndex((t) => t.id === "watch"), 1)[0]!);
       this.brush.at = null;
       this.brush.down = false;
       this.brush.painted = 0;
@@ -348,9 +431,23 @@ export class App {
       this.hooks.onSceneChange?.(scene);
       this.hooks.onRule?.(flock.rule);
       this.hooks.onBrain?.(flock.brain);
+      this.hooks.onWatch?.(this.watch);
     } finally {
       this.busy = false;
     }
+  }
+
+  /** The colour a scene opens in: the visitor's choice, else the scene's own (species colours only where there are species). */
+  colourFor(scene: SceneDef): FishColour {
+    const c = this.colourChoice ?? scene.colour ?? "silver";
+    return c === "species" && scene.id !== "species" ? "silver" : c;
+  }
+
+  /** The visitor picked a fish colour. */
+  setColour(c: FishColour): void {
+    this.colourChoice = c;
+    this.view.look = { ...this.view.look, colour: this.colourFor(this.scene) };
+    this.writeUrl();
   }
 
   /** Restart the current scene from its starting state (same seed, current rule). */
@@ -515,7 +612,92 @@ export class App {
         options: () => this.brushOptions(),
       };
     }
+    if (id === "watch") {
+      return {
+        id,
+        label: "Watch",
+        icon: "eye",
+        hint: this.scene.id === "eyes-only" ? "Click a fish to see the world through its eyes · drag to look around" : "Click a fish to follow it and see its neighbours · drag to look around",
+      };
+    }
     return { id: "pan", label: "Look", icon: "hand", hint: "Drag to pan · scroll or pinch to zoom · double-click to fit" };
+  }
+
+  // -------------------------------------------------------------- watch --
+
+  /** World units of the watched fish's reach, and its inner zones, for the scene's brain. */
+  watchReach(): { radius: number; rings: [number, number, number, number] } {
+    const b = this.flock.brain;
+    if (!b) return { radius: this.flock.rule.rCoh, rings: [this.flock.rule.rCoh * 0.3, this.flock.rule.rCoh * 0.72, 0, 0] };
+    if (b.kind === "vicsek") return { radius: b.p.r, rings: [0, 0, 0, 0] };
+    if (b.kind === "couzin") return { radius: b.p.ro, rings: [b.p.rr, 0, 0, 0] };
+    if (b.kind === "species") return { radius: b.p.rCoh, rings: [b.p.rCoh * 0.3, b.p.rCoh * 0.72, 0, 0] };
+    return { radius: b.p.range, rings: [0, 0, 0, 0] };
+  }
+
+  /** Watch the fish nearest a screen point (CSS px); false if there is none near. */
+  async watchAt(x: number, y: number): Promise<boolean> {
+    if (!this.watcher || this.busy || isCapturing()) return false;
+    const flock = this.flock;
+    const [wx, wy] = this.toWorld(x, y);
+    // within 18 px, or a fish length, of the pointer
+    const r = Math.max(18 / this.camera.pxPerUnit, this.view.look.fishLength);
+    const hit = await this.watcher.pick({ boids: flock.boids, ids: flock.ids, n: flock.n, halfW: flock.halfW, halfH: flock.halfH }, wx, wy, r);
+    if (flock !== this.flock) return false;
+    if (!hit) return false;
+    this.watchFish(hit.id);
+    return true;
+  }
+
+  /** Watch the fish with this id (and zoom in to see its neighbourhood if the view is far out). */
+  watchFish(id: number): void {
+    Object.assign(this.watch, { id, follow: true, rec: null, recTick: 0, lost: false, retina: null, retinaTick: 0 });
+    // close enough that the fish's reach fills about a third of the view's height
+    const { radius } = this.watchReach();
+    const want = Math.min(this.camera.maxPxPerUnit, (this.camera.viewH * 0.33) / (2 * radius));
+    if (this.camera.pxPerUnit < want * 0.7) this.zoomTo = want;
+    this.hooks.onWatch?.(this.watch);
+  }
+
+  /** Stop watching. */
+  letGo(): void {
+    Object.assign(this.watch, { id: null, follow: true, rec: null, recTick: 0, lost: false, retina: null, retinaTick: 0 });
+    this.zoomTo = null;
+    this.hooks.onWatch?.(this.watch);
+  }
+
+  /** Follow the watched fish again after a pan. */
+  followAgain(): void {
+    if (this.watch.id === null) return;
+    this.watch.follow = true;
+    this.hooks.onWatch?.(this.watch);
+  }
+
+  /** A zoom the follow camera eases to (null = keep the visitor's). */
+  private zoomTo: number | null = null;
+
+  /** Ease the camera onto the watched fish: its last record, carried forward by its velocity to the current step. */
+  private followFish(dt: number): void {
+    const w = this.watch;
+    const rec = w.rec;
+    if (w.id === null || !w.follow || !rec || !rec.found) return;
+    const ahead = this.flock.tick - w.recTick;
+    const tx = rec.pos[0] + rec.vel[0] * ahead + this.flock.halfW;
+    const ty = rec.pos[1] + rec.vel[1] * ahead + this.flock.halfH;
+    const W = this.camera.domainW;
+    const H = this.camera.domainH;
+    let dx = tx - this.camera.cx;
+    let dy = ty - this.camera.cy;
+    dx -= W * Math.round(dx / W);
+    dy -= H * Math.round(dy / H);
+    const k = this.camera.reducedMotion ? 1 : 1 - Math.exp(-dt / 0.12);
+    let z = this.camera.pxPerUnit;
+    if (this.zoomTo !== null) {
+      z *= (this.zoomTo / z) ** (this.camera.reducedMotion ? 1 : 1 - Math.exp(-dt / 0.35));
+      if (Math.abs(Math.log(this.zoomTo / z)) < 0.01) this.zoomTo = null;
+    }
+    this.camera.stop();
+    this.camera.set({ cx: this.camera.cx + dx * k, cy: this.camera.cy + dy * k, pxPerUnit: z });
   }
 
   private brushOptions(): HTMLElement {
@@ -574,8 +756,17 @@ export class App {
     const sharkTool = (): boolean => this.studio.rail.active === "shark" && this.scene.shark;
     const brushTool = (): boolean => (this.studio.rail.active === "current" && !!this.current) || (this.studio.rail.active === "feed" && !!this.ecology);
     const releaseTool = (): boolean => this.studio.rail.active === "release" && !!this.ecology;
+    const watchTool = (): boolean => this.studio.rail.active === "watch" && this.scene.kind === "live";
     return {
       paints: () => sharkTool() || brushTool() || releaseTool(),
+      // Watch: a click picks a fish (a drag pans the view)
+      tap: (x, y) => {
+        if (!watchTool()) return;
+        void this.watchAt(x, y).then((ok) => {
+          if (!ok && this.watch.id === null) this.studio.toast.show("No fish there — click right on one");
+          else if (!ok) this.letGo();
+        });
+      },
       down: (x, y) => {
         if (releaseTool()) {
           this.releaseAt(this.toWorld(x, y));
@@ -747,6 +938,45 @@ export class App {
       ]);
       return;
     }
+    if (s.id === "eyes-only") {
+      let wasLoose = false;
+      this.studio.callouts.set([
+        {
+          id: "eyes-start",
+          text: `${this.flock.n.toLocaleString()} fish that only see`,
+          detail: "Each sees where the others are, never which way they swim. Give them half a minute.",
+          style: "label",
+          anchor: freeSpot,
+          when: () => t() > 600 && t() < 8000,
+        },
+        {
+          id: "eyes-schooling",
+          text: "They school",
+          detail: "Each school swims one way — and no fish ever read another's heading",
+          style: "label",
+          anchor: freeSpot,
+          when: () => {
+            const o = this.schoolOrder;
+            if (o !== null && o < 0.5) wasLoose = true;
+            return wasLoose && o !== null && o > 0.8 && t() > 8000;
+          },
+        },
+      ]);
+      return;
+    }
+    if (s.id === "species") {
+      this.studio.callouts.set([
+        {
+          id: "species-start",
+          text: "Who chases whom is a matrix",
+          detail: "Warm cells steer towards, cool cells away — change one and watch the ocean answer",
+          style: "label",
+          anchor: freeSpot,
+          when: () => t() > 600 && t() < 7000,
+        },
+      ]);
+      return;
+    }
     if (s.id === "food-chain") {
       const slots = (): number => this.ecology?.sharkSlots ?? 128;
       this.studio.callouts.set([
@@ -887,6 +1117,7 @@ export class App {
     this.hdr.resize(rect.width, rect.height, dpr, scale);
     this.camera.setViewport(rect.width, rect.height);
     this.camera.update(dt, now);
+    this.followFish(dt);
     const effects = this.governor?.effects ?? 1;
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
     this.updateShark(dt);
@@ -894,6 +1125,8 @@ export class App {
     this.frameNo += 1;
 
     const n = this.history.comparing ? 0 : this.clock.due(dt);
+    // Eyes Only: the kernel records the watched fish's visual field
+    this.flock.watchId = this.watch.id ?? NO_WATCH;
     this.profiler?.begin(n);
     const enc = this.device.createCommandEncoder({ label: "swarm-frame" });
     this.flock.encodeSteps(enc, n, { timestampWrites: n > 0 ? this.profiler?.pass("sim") : undefined });
@@ -924,6 +1157,35 @@ export class App {
       censusTick = this.flock.tick;
     }
 
+    // Watch one: the watched fish and its neighbours, recorded on the GPU after this frame's steps
+    let watchTick = -1;
+    let retinaTick = -1;
+    const flock = this.flock;
+    if (this.watcher) {
+      if (this.watch.id !== null) {
+        const { radius, rings } = this.watchReach();
+        this.watcher.encode(enc, { boids: flock.boids, ids: flock.ids, n: flock.n, halfW: flock.halfW, halfH: flock.halfH }, this.watch.id, radius, rings);
+        this.watchDrawn = true;
+        if (this.watchSlot && !this.watchSlot.pending) {
+          this.watchSlot.record(enc, this.watcher.buffer);
+          watchTick = flock.tick;
+        }
+        if (flock.retina && this.retinaSlot && !this.retinaSlot.pending) {
+          this.retinaSlot.record(enc, flock.retina);
+          retinaTick = flock.tick;
+        }
+      } else if (this.watchDrawn) {
+        this.watcher.clear(enc);
+        this.watchDrawn = false;
+      }
+    }
+    // M3 panels: every fish, about once a second
+    let sampleTick = -1;
+    if (this.sampleSlot && !this.sampleSlot.pending && this.frameNo % 45 === 20) {
+      this.sampleSlot.record(enc, flock.boids);
+      sampleTick = flock.tick;
+    }
+
     const save = this.history.comparing ? this.history.savePoint : null;
     const sea = this.sea;
     if (sea) sea.prepare(this.seaSource(), this.camera, dpr * scale, this.hdr.width, this.hdr.height);
@@ -939,6 +1201,7 @@ export class App {
       this.sharkView(),
       this.profiler ?? undefined,
       sea ? { under: (rp) => sea.under(rp), over: (rp) => sea.over(rp) } : undefined,
+      this.watchDrawn && this.watcher ? { record: this.watcher.buffer, retina: this.flock.retina } : null,
     );
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     this.profiler?.end(enc);
@@ -955,6 +1218,9 @@ export class App {
     if (orderTick >= 0) void this.collectOrder(orderTick);
     if (fluidTick >= 0) void this.collectFluid(fluidTick);
     if (censusTick >= 0) void this.collectCensus(censusTick);
+    if (watchTick >= 0) void this.collectWatch(watchTick);
+    if (retinaTick >= 0) void this.collectRetina(retinaTick);
+    if (sampleTick >= 0) void this.collectSample(sampleTick);
 
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
     if (now - this.rateT0 > 1000) {
@@ -996,6 +1262,41 @@ export class App {
       halfH: this.flock.halfH,
       fluid: { gw: f.gw, gh: f.gh, hx: f.hx, hy: f.hy, psi: f.psi, omega: f.omega, state: f.state, motes: f.motes, nMotes: f.nMotes },
     };
+  }
+
+  private async collectWatch(tick: number): Promise<void> {
+    const slot = this.watchSlot;
+    if (!slot) return;
+    const ab = await slot.collect();
+    const id = this.watch.id;
+    if (!ab || slot !== this.watchSlot || id === null) return;
+    const rec = readWatchRecord(ab);
+    // a record of a fish watched before this one
+    if (rec.found && rec.id !== id) return;
+    if (!rec.found && this.watch.rec?.found) this.watch.lost = true;
+    this.watch.rec = rec;
+    this.watch.recTick = tick;
+    this.hooks.onWatch?.(this.watch);
+  }
+
+  private async collectRetina(tick: number): Promise<void> {
+    const slot = this.retinaSlot;
+    if (!slot) return;
+    const ab = await slot.collect();
+    if (!ab || slot !== this.retinaSlot || this.watch.id === null) return;
+    const u = new Uint32Array(ab);
+    // written by a step since this fish was picked (the slot matches the tracker's)
+    if (!this.watch.rec?.found || u[13] !== this.watch.rec.slot) return;
+    this.watch.retina = u;
+    this.watch.retinaTick = tick;
+  }
+
+  private async collectSample(tick: number): Promise<void> {
+    const slot = this.sampleSlot;
+    if (!slot) return;
+    const ab = await slot.collect();
+    if (!ab || slot !== this.sampleSlot) return;
+    this.hooks.onSample?.({ boids: new Float32Array(ab), tick });
   }
 
   private async collectCensus(tick: number): Promise<void> {

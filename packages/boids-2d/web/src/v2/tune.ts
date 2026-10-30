@@ -180,6 +180,17 @@ export function buildTune(body: HTMLElement, act: TuneActions, initial: RulePara
     "silver",
     (v) => act.colour(v),
   );
+  // Species Matrix also colours each fish by its kind
+  const colour3 = segmented<FishColour>(
+    "Fish colour",
+    [
+      { value: "species", label: "Kind" },
+      { value: "silver", label: "Silver" },
+      { value: "heading", label: "Heading" },
+    ],
+    "species",
+    (v) => act.colour(v),
+  );
   const extraBox = h("div", {});
   let hideRuleBox = false;
   body.append(
@@ -188,7 +199,7 @@ export function buildTune(body: HTMLElement, act: TuneActions, initial: RulePara
     vicsekBox,
     extraBox,
     h("div", { class: "sw-tune-row" }, reset),
-    h("div", { class: "sw-tune-row" }, h("span", { class: "sw-tune-label" }, "Fish colour"), colour.el),
+    h("div", { class: "sw-tune-row" }, h("span", { class: "sw-tune-label" }, "Fish colour"), colour.el, colour3.el),
   );
   return {
     sync(r, b, c) {
@@ -199,7 +210,11 @@ export function buildTune(body: HTMLElement, act: TuneActions, initial: RulePara
       vicsekBox.hidden = b?.kind !== "vicsek";
       for (const s of REYNOLDS) rSliders.get(s.key)!.set(r[s.key]);
       if (b?.kind === "couzin") for (const s of COUZIN) cSliders.get(s.key)!.set(s.show ? s.show(b.p[s.key], b.p) : b.p[s.key]);
-      colour.set(c);
+      const kinds = b?.kind === "species";
+      colour.el.hidden = kinds;
+      colour3.el.hidden = !kinds;
+      colour.set(c === "species" ? "silver" : c);
+      colour3.set(c);
     },
     setExtra(title, specs, hideRule) {
       hideRuleBox = hideRule;
