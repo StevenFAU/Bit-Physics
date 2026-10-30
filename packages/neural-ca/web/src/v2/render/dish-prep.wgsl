@@ -10,7 +10,7 @@ const CN : u32 = 16u;
 struct Prep {
   grid : u32,
   has_basis : u32,
-  _p0 : u32,
+  plane : u32,      // Textures (M3): RGB = channels 0..2 + 0.5, opaque; tint = channels 3..5 raw
   _p1 : u32,
   mean : array<vec4<f32>, 3>,   // 12 hidden means
   axes : array<vec4<f32>, 9>,   // 3 × 12 principal axes
@@ -35,6 +35,12 @@ fn axis_at(r : u32, k : u32) -> f32 {
 fn main(@builtin(global_invocation_id) gid : vec3<u32>) {
   if (gid.x >= P.grid || gid.y >= P.grid) { return; }
   let base = (gid.y * P.grid + gid.x) * CN;
+  if (P.plane == 1u) {
+    let rgb = clamp(vec3<f32>(state[base], state[base + 1u], state[base + 2u]) + 0.5, vec3<f32>(0.0), vec3<f32>(1.0));
+    textureStore(look_out, vec2<i32>(gid.xy), vec4<f32>(rgb, 1.0));
+    textureStore(tint_out, vec2<i32>(gid.xy), vec4<f32>(state[base + 3u], state[base + 4u], state[base + 5u], 1.0));
+    return;
+  }
   let rgba = clamp(
     vec4<f32>(state[base], state[base + 1u], state[base + 2u], state[base + 3u]),
     vec4<f32>(0.0),

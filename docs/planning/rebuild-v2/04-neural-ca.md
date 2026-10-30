@@ -5,6 +5,103 @@
 > ported; training spike below). **M1 done 2026-10-28** (Menagerie, Cut / Seed / Graft / Freeze,
 > Inside the Cell). **M2 done 2026-10-29** (Teach, the gradient check, the local library).
 > Teach measured on T3 and, forced, the T2 recipe on T3 hardware; no integrated GPU measured.
+> **M3 done 2026-10-29** (Chimera, Textures, staged posters and loops): the sim is complete to this
+> spec; the release swap (v2 to the sim's root URL) is a separate step.
+>
+> **M3, Chimera, Textures, posters and loops (2026-10-29): done.** On the `v2/` page only; the v1
+> page, the gated kernel, the capture path and the committed checkpoint (sha256 `c98a4678…`) are
+> untouched. Measured on the RX 6800 XT (RADV, headless snap Chromium) unless marked:
+> - **Chimera.** Two 64 × 64 dishes (host, donor) whose cells carry their rule.
+>   `src/v2/model/chimera.wgsl` is the gated update reading its weights at rule × 8,320 and choosing
+>   each cell's rule from the step's input first (a cell with opacity above 0.1 keeps its own; any
+>   other takes its most opaque neighbour's, so tissue growing into agar brings its rule); the mask
+>   pass is the gated kernel's own pipeline. Grafts carry their cells' rules, *Rewrite* paints a rule
+>   onto living cells, *Seed* plants on a chosen rule. Untouched, the scene grafts a radius-9 disc of
+>   the donor into the host at step 240 by itself (not an edit; links reproduce it). An outline marks
+>   tissue on the other dish's rule; a label under each dish counts its living cells per rule.
+>   Undo checkpoints and save points carry whether the opening graft is still to come, so undoing
+>   an edit made before step 240 brings it back (found in review).
+> - **One rule is the gated kernel.** Chimera's dish with every cell on the committed checkpoint's
+>   rule, stepped through the gated run, equals the gate's own frames bit for bit (21 frames; Prove ›
+>   *Chimera with one rule*, and the acceptance script).
+> - **What grows when two rules meet** (live kernel, every ordered pair of the seven healers, 1,000
+>   steps after the opening graft): each rule alone holds 456–736 living cells, but in 31 of the 42
+>   pairs the host's dish passes 3,000 of its 4,096 — two rules that each stop at their own shape do
+>   not stop each other. The donor's rule then holds a median 32% of the living cells (none in one
+>   pair, ladybug host with gecko donor; 99% in another). The ladybug is the strongest donor (mean
+>   share 0.65) and the hardest host to take over (0.09); the gecko the weakest donor (0.11) and the
+>   easiest host (0.83). Gecko host with butterfly donor: the butterfly's rule holds 86–92% of the
+>   gecko's dish from step 600 to step 4,000. Same scene, same bytes and rules (checked at step 600).
+> - **Textures.** Self-Organising Textures (Niklasson et al. 2021), trained offline as this spec
+>   says, in `packages/neural-ca/textures/`: `targets.py` draws four periodic 64 × 64 targets
+>   (Gray–Scott spots and a maze, a periodic Voronoi giraffe, a basket weave; no images vendored);
+>   `train.py` trains the paper's model (12 channels; identity, Sobel and Laplacian perception;
+>   48 → 96 → 12; wrap-around; no alive mask; the seed is the zero plane) against VGG16 Gram
+>   matrices, on a CPU with PyTorch; `build.py` measures each run with the trainer's own model and
+>   writes `public/textures/` — four 23,424-byte weights files, the targets, and `textures.json`
+>   with each run's provenance (target recipe, seed, 3,000 iterations, 100–101 min each with four
+>   running at once, the loss curve, the environment) and the measurements. Style loss went from
+>   18,093 / 1,481 / 894 / 4,688 at iteration 0 to 394 / 167 / 96 / 301 at 3,000 (spots / maze /
+>   giraffe / weave). Spots, maze and giraffe match their targets by eye; the weave learned the
+>   threads and their crossings but not the grid, and its blurb says so. All four stay bounded
+>   (largest |state| 0.83–0.96 at step 4,096). After a radius-16 disc is erased, the window's style
+>   loss is back at or below its level before within 256 steps (0.76–0.90 of it), except the
+>   weave's (1.25). Reproducibility: two 101-iteration reruns gave byte-identical weights and the
+>   real run's logged losses; a whole 3,000-iteration rerun was not made. The page runs them on
+>   `src/v2/model/texture.wgsl` (its own kernel, with the gated kernel's hashed coin) on a
+>   256 × 256 plane on T3 (192 on T2, 128 on T1), drawn edge to edge as a wrap-around plane, with
+>   Erase, Graft, Freeze and undo as on the dish; the tools act on whichever repeated copy is under
+>   the pointer, and strokes, freezes and grafts carry on across the edges (found in review).
+>   The plane matches the reference statistically,
+>   not cell for cell: each texture's colour mean and spread at step 1,024 lie within 0.005 of
+>   PyTorch's (declared 0.02). Prove › *The Textures' networks* checks each download's SHA-256.
+> - **Posters and loops**, staged as `neural-ca-v2.png` / `.webm` from the v2 page (`STAGED` in
+>   `make-posters.mjs` / `make-loops.mjs`, `?chrome=off&o=butterfly`), committed plain; the landing
+>   card is not switched. The loop is the butterfly growing from one cell at quarter speed, a little
+>   closer (512 × 512, 150 shots, 21 KB); the poster is the grown butterfly (181 KB). The v2 page now
+>   gives its canvas its box's shape before ready: the loop generator sizes the canvas by width, and
+>   at ready (before the renderer) it still had the default 300 × 150, so the first loop came out
+>   512 × 256.
+> - **Boot.** Unchanged: ready once the gate path is up; Chimera's and Textures' pipelines compile
+>   after Teach's, once the dish is live (or when a scene first needs them). A page whose
+>   `textures.json` does not arrive drops the Textures scene and runs the rest. Locally (RADV) ready
+>   comes 66–120 ms after navigation and the Dish is live 26–43 ms later; the M3 pipelines compile
+>   in 7–13 ms, after Teach's (about 30 ms after the Dish is live). A link straight into Chimera or
+>   Textures compiles them before its scene (live 123–187 ms after navigation).
+>   CI (GitHub runner, lavapipe, so the job's observable fallback gate, run-twice identical; two
+>   runs per page): time to ready 56.7–60.9 s (v1) and 57.1–58.6 s (v2) on PR #52 at ae1ad7b0,
+>   81.1–81.7 s on both pages at 48031eb2; the limit is 180 s. The same job measured 44–82 s on
+>   `main` and on other PRs that week, with v1 and v2 within 1.5 s of each other in every run:
+>   the spread is the runner's, and M3 adds nothing measurable.
+> - **Gate.** `pipeline.py validate --sim neural-ca` passes on both pages: bit-exact, max_abs 0.0
+>   over 21 frames, two driver runs each; local time-to-ready 36–44 ms (v1) and 26–45 ms (v2).
+> - **Checks.** `v2-acceptance.mjs` 116/116: M0–M2's, plus 24 for M3 (Chimera: boot, one rule ≡ the
+>   gated kernel, the opening graft at 240, same bytes and rules twice, a graft carries its rules,
+>   Rewrite, undo to the never-edited bytes and rules, the opening graft back after undoing an
+>   edit made before step 240 or restoring a save point from before it, the partner picker and its link, the
+>   per-rule labels, all 42 pairs measured, no console errors; Textures: boot at 256² as a plane
+>   with Erase/Graft/Freeze, steps advance, each download's SHA-256, each texture's colour mean and
+>   spread within 0.02 of the reference's (measured worst 0.005 / 0.002, weave), Erase zeroes the
+>   cells, the erased region's contrast back within 10% of the rest's after 256 steps (measured
+>   1.2%, spots), undo to the never-erased bytes, Erase on a repeated copy and strokes, freezes
+>   and grafts across the plane's edges, the picker and its link, the card, no console
+>   errors) and frame-time benches for both scenes. `web/tools/check-studio.mjs` clean for every
+>   scene (Chimera, Textures with spots and with giraffe, the Dish, the Menagerie, Inside the Cell,
+>   Teach) at 390, 820 and 1440 px and 200% zoom, no axe violations. `npm test` 187/187; neural-ca
+>   pytest 19/19; `check_registry.py` OK; integrity 0 HARD_FAIL.
+> - **Acceptance items.** Met: the M3 row (Textures, Chimera, posters and loops); *Scenes* — Chimera
+>   asks "What grows when two rules meet?" and Textures tiles a 256² plane that regrows after
+>   erasing; *The model* — the Niklasson texture NCA, trained offline, shipped pretrained, Teach
+>   trains shapes only; the foundation's asset budgets (poster 181 kB ≤ 200 kB, loop 21 kB ≤
+>   1.5 MB). *Performance targets*, T3: 60.0 fps with Textures at 256² (GPU 0.40 ms median per
+>   frame; 59.3 fps at 8× speed, 237 steps/s) and Chimera's two dishes at 59.5–59.6 fps; median and
+>   90th-percentile frames 16.7 ms in every run, with occasional single missed frames (52–60 fps
+>   over repeated runs) while another session shared the GPU. T2 (192²) and T1 (128²) measured
+>   only by forcing the tier on this GPU (52–60 fps, the same missed-frame noise); no integrated
+>   GPU measured. Not met or not checked: the Dish is 64² (the gated grid), not the spec's 72²;
+>   *first in-browser GPU NCA training* is still not claimed (verify before claiming); the weave
+>   does not keep its grid; a whole training rerun was not made. Out of scope here: the release
+>   swap and the landing card.
 >
 > **M2, Teach (2026-10-29): done.** On the `v2/` page only; the v1 page, the gated kernel, the
 > capture path and the committed checkpoint are untouched. Measured on the RX 6800 XT (RADV,

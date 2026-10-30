@@ -112,6 +112,15 @@ export class OrganismLibrary {
     return this.defs.filter(heals);
   }
 
+  /** Chimera's default second organism for `id`: the next healer in the manifest (never `id` itself). */
+  partnerFor(id: string): string {
+    const list = this.healers.map((d) => d.id).filter((x) => x !== id);
+    if (list.length === 0) return this.defs.find((d) => d.id !== id)?.id ?? id;
+    const all = this.healers.map((d) => d.id);
+    const i = all.indexOf(id);
+    return i >= 0 ? all[(i + 1) % all.length]! : list[0]!;
+  }
+
   /** The Dish's organism for a calendar day: the healers in turn (the spec's "rotating daily"). */
   today(now = new Date()): string {
     const list = this.healers;
