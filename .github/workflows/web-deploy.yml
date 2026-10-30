@@ -203,10 +203,15 @@ jobs:
         # letterboxing), no chrome overflow/overlap, the capture control live at
         # boot, and zero axe violations in the boot, Learn and Prove states.
         if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d' || matrix.sim == 'neural-ca'
+        timeout-minutes: 60
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
-          # lavapipe compiles Grow's gate pipelines in about a minute (validate's time to ready)
+          # lavapipe compiles Grow's gate pipelines in 1-1.5 min (validate's time to
+          # ready), then its live dish's after ready: about as long again on
+          # SwiftShader, and past 3 min on a slow runner (PR #57). The checks run on
+          # the booted page, after the loading veil lifts.
           BITPHYSICS_READY_TIMEOUT_MS: "180000"
+          BITPHYSICS_BOOT_TIMEOUT_MS: "600000"
         run: |
           npm ci --no-audit --no-fund
           # A swapped sim (pipeline.py ROOT_ENTRY) serves its v2 page at the root.

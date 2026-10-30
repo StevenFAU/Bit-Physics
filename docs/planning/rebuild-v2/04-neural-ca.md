@@ -25,7 +25,15 @@
 > (no change for the other sims, whose veil lifts at ready), and Grow names the scene in its
 > heading from the start. Reproduced and fixed locally on SwiftShader (Playwright's Chromium
 > with the lavapipe ICD falls back to it): all four sizes timed out before, all four clean after
-> (11 min 20 s).
+> (11 min 20 s). The second CI run passed two sizes and timed out on two waiting for the veil:
+> the live dish's pipelines (its kernel's loops are written out) compile after ready for about
+> as long again as the gate's (SwiftShader: ready at 50 s, live at 99–100 s, at every size), and
+> past 3 min after ready on that runner (ready 90 s). And only the first size booted cleanly:
+> after it, ready took 134–136 s instead of 49 s on SwiftShader, because the pipelines a page
+> compiles in the background after boot (Teach's, Chimera's, Textures') outlive its tab in the
+> shared GPU process. check-studio now launches a fresh browser for each size, gives the veil
+> wait its own limit (`BITPHYSICS_BOOT_TIMEOUT_MS`, 10 min in CI), and reports each size's ready
+> and booted times.
 > - **Teach's "Grow it" check, made deterministic.** The check grew whatever network training
 >   had reached when a once-a-second poll saw it 100 iterations past recognisable, so the overlap
 >   at step 300 varied with the stopping point: 0.59–0.90 over eight runs (0.592, 0.759, 0.899,

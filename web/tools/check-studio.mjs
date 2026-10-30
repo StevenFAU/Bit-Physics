@@ -15,7 +15,9 @@
 // Exit 0 when every check passes; 1 otherwise (a JSON report goes to stdout,
 // screenshots to out-dir when given). The page must expose globalThis.__bpDebug
 // (camera view rect, domain) and flip __bitPhysicsReady, within 60 s or
-// BITPHYSICS_READY_TIMEOUT_MS (CI's software GPU compiles pipelines slowly).
+// BITPHYSICS_READY_TIMEOUT_MS (CI's software GPU compiles pipelines slowly);
+// its loading veil must then lift within BITPHYSICS_BOOT_TIMEOUT_MS (default:
+// the ready limit). Each viewport's report gives both times (ms).
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -35,6 +37,8 @@ const require = createRequire(import.meta.url);
 const axeSource = await readFile(require.resolve("axe-core/axe.min.js"), "utf8");
 
 const READY_TIMEOUT_MS = Number(process.env.BITPHYSICS_READY_TIMEOUT_MS ?? "60000");
+// After ready, the wait for the page's loading veil to lift (its boot to end).
+const BOOT_TIMEOUT_MS = Number(process.env.BITPHYSICS_BOOT_TIMEOUT_MS ?? READY_TIMEOUT_MS);
 
 const VIEWPORTS = [
   { name: "phone-390", width: 390, height: 844, scale: 2, touch: true },
@@ -62,13 +66,17 @@ const server = createServer(async (req, res) => {
 await new Promise((r) => server.listen(0, r));
 const base = `http://localhost:${server.address().port}/${entry}`;
 
-const browser = await chromium.launch({
-  executablePath: process.env.CHROME_BIN,
-  headless: false,
-  chromiumSandbox: false,
-  args: ["--headless=new", "--no-sandbox", "--disable-gpu-sandbox", "--enable-unsafe-webgpu",
-    "--enable-features=Vulkan", "--use-angle=vulkan", "--use-vulkan"],
-});
+// One browser per viewport: a page's GPU work (pipelines it compiles in the
+// background after boot) can outlive its tab in a shared GPU process and slow
+// the next viewport's boot — on a software GPU, past the ready limit.
+const launch = () =>
+  chromium.launch({
+    executablePath: process.env.CHROME_BIN,
+    headless: false,
+    chromiumSandbox: false,
+    args: ["--headless=new", "--no-sandbox", "--disable-gpu-sandbox", "--enable-unsafe-webgpu",
+      "--enable-features=Vulkan", "--use-angle=vulkan", "--use-vulkan"],
+  });
 
 const report = { page: base, viewports: [], pass: true };
 if (outArg) await mkdir(outArg, { recursive: true });
@@ -89,6 +97,7 @@ async function axe(page, label) {
 }
 
 for (const vp of VIEWPORTS) {
+  const browser = await launch();
   const ctx = await browser.newContext({
     viewport: { width: vp.width, height: vp.height },
     deviceScaleFactor: vp.scale,
@@ -98,17 +107,27 @@ for (const vp of VIEWPORTS) {
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-  const res = { name: vp.name, problems: [], axe: [] };
+  const res = { name: vp.name, problems: [], axe: [], ms: {} };
+  // a wait that names what did not happen, and records when it did
+  const until = async (what, fn, timeout) => {
+    try {
+      await page.waitForFunction(fn, undefined, { timeout, polling: 250 });
+    } catch (e) {
+      throw new Error(`${what} not reached within ${timeout} ms (${String(e).split("\n")[0]})`);
+    }
+    res.ms[what] = Date.now() - t0;
+  };
+  const t0 = Date.now();
   try {
     await page.goto(base, { waitUntil: "load" });
-    await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: READY_TIMEOUT_MS });
+    await until("ready", () => globalThis.__bitPhysicsReady === true, READY_TIMEOUT_MS);
     // A page may flip ready before it has finished booting (Grow: the gate path
     // comes first, the live dish after it). Check the booted page, not its
     // loading veil.
-    await page.waitForFunction(() => {
+    await until("booted", () => {
       const veil = document.querySelector(".bp-veil");
       return !veil || veil.hidden || veil.classList.contains("is-done");
-    }, undefined, { timeout: READY_TIMEOUT_MS });
+    }, BOOT_TIMEOUT_MS);
     await page.waitForTimeout(1500);
     const geo = await page.evaluate(() => {
       const r = (el) => { const b = el.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };
@@ -185,9 +204,9 @@ for (const vp of VIEWPORTS) {
   if (res.problems.length || res.axe.length) report.pass = false;
   report.viewports.push(res);
   await ctx.close();
+  await browser.close();
 }
 
-await browser.close();
 server.close();
 const text = JSON.stringify(report, null, 2);
 if (outArg) await writeFile(join(outArg, "report.json"), text);
