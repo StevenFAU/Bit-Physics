@@ -106,10 +106,80 @@
 >   against its 12 ms budget and steps the render scale down to 55%, which cannot help a frame bound
 >   by the step. Before the fix the dish ran at 1.7 steps/s, which hid this. The cause of the slower
 >   kernel is not measured; Firefox's shader translation (naga, against Chromium's Tint) is the
->   suspect.
+>   suspect. *(Measured and fixed 2026-10-30: see "Firefox step cost" below.)*
 > - Physics, the gated kernel, the capture path and the checkpoint are untouched: `pipeline.py
 >   validate --sim neural-ca` passes on both pages (bit-exact, max_abs 0.0) and `v2-acceptance.mjs`
 >   passes 90/90 (Teach at 60.0 fps mean and minimum, headless).
+>
+> **Firefox step cost (2026-10-30): cause measured, fixed in the live kernel.** Firefox 158 ran the
+> NCA step ten times slower than Chromium 156 on the same RX 6800 XT. Timed alone (a standalone page
+> running the live solver's pass: update + mask per step, the Params ring, every step of every dish in
+> one pass, timestamp queries, the GPU kept busy so its clocks stay up), the committed kernel took
+> **0.590 ms per step in Firefox against 0.058 in Chromium** for one 64 × 64 dish, and 4.77 against
+> 0.476 for eight. Same output in both: the state after 400 steps hashed the same.
+> - **Cause.** Firefox's WebGPU (wgpu; naga translates the WGSL) gives every loop a hidden 64-bit
+>   iteration counter and a second exit, so that no shader can loop forever; Chromium's (Dawn, Tint)
+>   does not. For Chromium, Mesa's RADV compiler unrolls the update kernel's innermost loop
+>   (`for j < PERC`: `acc = acc + weights[row + j] * perc[j]`, 48 terms), so `perc` lives in 48
+>   registers: per hidden unit, 48 scalar weight loads and 48 FMAs (the disassembled loop body: 213
+>   instructions, 64 `s_buffer_load_dword`, 63 `v_fmac_f32`). With the counter it cannot tell how many
+>   times the loop runs, so the loop stays a loop and `perc[j]` stays an index into a 48-register array
+>   chosen at run time, compiled to a chain of compares and selects: a 157-instruction body (47
+>   `s_cmp_lt_i32`, 40 `s_cselect_b64`, 40 `v_cndmask_b32`) run 48 × 128 times per cell. Both
+>   compiled kernels use 72 VGPRs and no scratch (`RADV_DEBUG=shaderstats,shaders`); the difference
+>   is what runs inside the loop.
+> - **Shown by putting it into Chromium.** The same counter written into that one loop's WGSL makes
+>   Chromium 8.7× slower (0.503 ms per step, 4.02 for eight dishes). The bounds clamp naga also puts
+>   on the index (`min(j, 47u)`) changes nothing on its own (0.058). Not precision: every variant
+>   below gives the gated kernel's state after 400 steps, bit for bit, in both browsers.
+> - **Fix: the live kernel writes those loops out.** `src/v2/model/live-kernel.ts` builds the live
+>   dish's kernel from the committed `nca_inference.wgsl` when the page loads: the 48-term `j` loop and
+>   the 16-term `dx[c]` loop inside `if (h != 0.0)` become their iterations, in order, with the same
+>   expressions. Every other byte is the gated kernel's, and the page refuses to boot if either loop
+>   stops matching. The gated kernel, the gate path, the capture path and the v1 page are untouched
+>   (v1 still steps its one dish at the slower rate in Firefox). The pass alone, ms per step (one dish /
+>   eight):
+>
+>   | live kernel | Firefox 158 | Chromium 156 |
+>   |---|---|---|
+>   | the gated kernel's bytes (before) | 0.590 / 4.77 | 0.058 / 0.476 |
+>   | `j` loop written out | 0.107 / 0.867 | 0.058 / 0.473 |
+>   | `j` and `dx` loops written out (shipped) | **0.061 / 0.481** | 0.058 / 0.474 |
+>   | … and the perception loop too | 0.061 / 0.456 | 0.056 / 0.454 |
+>
+>   The perception loop (16 channels, `perc[3c + k]` written at run-time indexes) is slow alike in
+>   both browsers; writing it out too saves 4% in each for three times the rewrite, so it is left.
+> - **The Menagerie** (eight dishes, headed, frames counted at `queue.submit`). At 1× an eight-dish
+>   step took 16.6–19.2 ms p90 in Firefox (the GPU at 500 MHz 34–72% of the time, frames done 20–30
+>   ms after their submit) and now 1.93 ms (Chromium 2.02). Firefox now submits a frame on every
+>   animation frame it is given: **163–165 frames/s on the 165 Hz display** (before: 105–106 on a quiet
+>   desktop, 135–141 while another browser kept the clocks up) and **100 on the 100 Hz display**
+>   (before: 84.5). Chromium 164–165 and 100, before and after. At 8× Firefox stepped 163 of 240
+>   steps/s; now 238.5 (Chromium 240). Headed figures move with what else is on the desktop; the step
+>   cost does not.
+> - **Bit identity, measured.** Prove's "The live dish is the gated kernel" passes inside Firefox 158
+>   and Chromium 156 (0 values differ over 21 frames). On SwiftShader the live and gated kernels give
+>   the same state after 400 steps; lavapipe could not be reached from either snap browser here (CI's
+>   lavapipe job runs only the gate path, which is unchanged). `pipeline.py validate --sim neural-ca`
+>   passes on both pages (bit-exact, max_abs 0.0, 21 frames); `v2-acceptance.mjs` 90/90; `npm test`
+>   188/188 (five new for the rewrite).
+> - **The governor now judges the render alone.** It was fed the render plus the step's cost at 1×
+>   (`render + cost per step × 30 / 60`), and its one lever in Grow is render scale (no effect levels,
+>   no simulation step-down), which cannot make a step cheaper. The scheduler also learns the step's
+>   cost only while frames average ≥ 0.5 steps, so at 1× the governor saw whatever cost was learned
+>   last: on 2026-10-29 its three step-downs (to 55%) all read 16.4–16.5 ms, a fixed number rather than
+>   a measured spread (not reproduced here; at 1× it read 0.4–0.8 ms in these runs, 4.0 after a spell
+>   at 4×). Decision: a step-bound frame is the scheduler's to handle (it caps the steps a frame runs),
+>   not the governor's; `adaptToTimings` returns the render passes only (0.1–0.5 ms here). Turing
+>   Patterns and Slime Mould keep the whole frame: their governors can also lighten effects and shrink
+>   the simulation at a restart. Without timestamp queries the governor still sees the whole frame
+>   interval, which it cannot split.
+> - **Noticed, not changed.** The scheduler's per-step cost at 1× is still learned only at ≥ 0.5 steps
+>   per frame. PR #52's Chimera (`chimera.wgsl`) and Textures (`texture.wgsl`) kernels carry the same
+>   two loops, so they will be as slow in Firefox until they are written out the same way (Textures
+>   steps a 256² plane, sixteen dishes' worth of cells).
+> - RX 6800 XT, Mesa 26.0.8 RADV, snap Firefox 158.0.1 and Chromium 156.0.8078.47. The bench page and
+>   the frame probe are scratch tools, not committed (recipe in the session notes).
 >
 > **M1, the Menagerie, the tools and Inside the Cell (2026-10-28): done.** On the `v2/` page only;
 > the v1 page, the gated kernel, the capture path and the committed checkpoint are untouched.

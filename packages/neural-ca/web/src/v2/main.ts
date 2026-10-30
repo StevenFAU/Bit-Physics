@@ -226,6 +226,7 @@ async function startLive(b: LiveBoot): Promise<void> {
       }),
   );
   const profiler = new GpuProfiler(device, gpu.timestamps);
+  // judges the render passes alone (app.adaptToTimings): render scale is its only lever
   const governor = new QualityGovernor({
     budgetMs: gpu.timestamps ? 12 : tier === "T1" ? 36 : 22,
     effectLevels: 0,
@@ -259,8 +260,8 @@ async function startLive(b: LiveBoot): Promise<void> {
   const app = await bootGpu(() => new App(gpu, studio, hdr, renderer, kernels, lib, scheduler, tier));
   if (gpu.timestamps) {
     profiler.onFrame = () => {
-      const at1x = app.adaptToTimings(profiler.timings());
-      if (at1x !== null) governor.sample(at1x);
+      const render = app.adaptToTimings(profiler.timings());
+      if (render !== null) governor.sample(render);
     };
   }
   app.profiler = profiler;
