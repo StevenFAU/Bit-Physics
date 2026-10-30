@@ -16,7 +16,8 @@ import { METER } from "./model/meter.js";
 import type { RuleParams } from "./model/params.js";
 import { TUNSTROM } from "./regime.js";
 import type { SceneDef } from "./scenes.js";
-import { VICSEK_V0, vicsekRho } from "./scenes.js";
+import { EYES_LEQ, VICSEK_V0, vicsekRho } from "./scenes.js";
+import { M3_CHECK } from "./proof/m3-proofs.js";
 
 export const REPO_BLOB = "https://github.com/StevenFAU/Bit-Physics/blob/main/";
 const REYNOLDS = "https://red3d.com/cwr/papers/1987/boids.html";
@@ -28,6 +29,8 @@ const CHATE_URL = "https://doi.org/10.1103/PhysRevE.77.046113";
 const STAM_URL = "https://doi.org/10.1145/311535.311548";
 const HOLLING_URL = "https://doi.org/10.4039/Ent91385-7";
 const ROSENZWEIG_URL = "https://doi.org/10.1086/282272";
+const BASTIEN_URL = "https://doi.org/10.1126/sciadv.aay0792";
+const BASTIEN_CODE = "https://github.com/RnoB/VisualCollective";
 
 export interface LearnPane {
   setScene(scene: SceneDef, proofRun: boolean): void;
@@ -383,6 +386,104 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   const waterBox = h("div", {}, water.el, waterNote);
   popBox.hidden = true;
   waterBox.hidden = true;
+  // ---- M3: Eyes Only (the vision-only model) and Species Matrix ----
+  const eyesHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "Each fish is a small disc with an eye at its centre that sees all the way round. What it sees is a single picture: for every direction, is there a fish there or not? " +
+        "Nothing else — not how far away, not which fish, not which way it is swimming. From that picture alone it slows down for what is ahead, speeds up for what is behind, " +
+        "turns away from what crowds one side, and is drawn towards the edges of what it sees. That is the minimal model of ",
+      link(BASTIEN_URL, "Bastien & Romanczuk 2020"),
+      ". There is no rule that copies a neighbour's heading — and still the fish line up and school.",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "The rule, step by step"),
+      h(
+        "ol",
+        {},
+        h("li", {}, "Every fish within sight (", bv("vrange"), " body lengths) is a disc of one body length. Its angular size and direction are marked on 256 bins all the way round; overlapping discs merge, so a fish hidden behind another adds nothing."),
+        h(
+          "li",
+          {},
+          "Speed: dv/dt = γ(v₀ − v) + α₀ ∫ cos φ (−V + α₁ (∂_φV)²) dφ. The −V term pushes back on everything it sees, weighted by how far ahead it is; the edge term pulls forward towards each edge it sees. α₀ = ",
+          bv("va0"),
+          ", α₁ = ",
+          bv("va1"),
+          ", γ = ",
+          bv("vg"),
+          ".",
+        ),
+        h("li", {}, "Turning: dψ/dt = β₀ ∫ sin φ (−V + β₁ (∂_φV)²) dφ — away from what fills one side, towards the edges on it. β₀ = ", bv("vb0"), "."),
+        h(
+          "li",
+          {},
+          `One disc straight ahead is pushed by its width and pulled by its two edges; the two balance at L_eq = BL / (2α₁), here ${EYES_LEQ} body lengths. ` +
+            "The integrals come straight from the bins' boundaries (each bin's ∫cos and ∫sin are exact), summed in a fixed order.",
+        ),
+        h("li", {}, "Step: v and ψ change by dt × the above (one unit of time per step), then the fish moves v·dt along its new heading, and wraps around the edges."),
+      ),
+      h(
+        "p",
+        { class: "sw-note" },
+        "As in the authors' code (",
+        link(BASTIEN_CODE, "VisualCollective"),
+        "), a disc always covers at least the bin its centre falls in, and speed may go negative. The paper labels its figures by 1/α₁ in body lengths; here α₁ is set from its own " +
+          "equilibrium distance L_eq = BL / (2α₁). The rates are its Fig. 3 pair α₀ 0.1, β₀ 0.02, with γ 0.1 and v₀ 0.5 body lengths per unit of time.",
+      ),
+      h("p", {}, "The kernel: ", src("brains-m3.ts", "packages/boids-2d/web/src/v2/model/brains-m3.ts"), " · the f64 reference: ", src("vision-cpu.ts", "packages/boids-2d/web/src/v2/model/vision-cpu.ts")),
+    ),
+    h("h2", {}, "Seeing through its eyes"),
+    h(
+      "p",
+      {},
+      "Pick Watch and click a fish. The strip in its panel is its whole retina, unrolled: ahead in the middle, behind at both ends. Lit bins are fish it sees; the amber ticks are the edges that pull it. " +
+        "The same picture is drawn as a ring around the fish. It is the field the GPU computed for that fish on the last step, read back — not redrawn.",
+    ),
+  );
+  eyesHow.hidden = true;
+  pane.append(eyesHow);
+
+  const speciesHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "Every kind of fish flocks by Open Water's rule — keep your distance, match your neighbours, stay close — but how much each fish cares about each other kind is a number in the matrix. " +
+        "A warm cell steers the row's fish towards the column's kind (chase, gather); a cool cell steers it away (flee, avoid). The diagonal is each kind's own schooling. " +
+        "“Swim with” sets whether a kind matches another's heading or swims against it, and the last row each kind's top speed. These are the v4 lab's species couplings, for up to six kinds.",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "The rule, step by step"),
+      h(
+        "ol",
+        {},
+        h("li", {}, "Separation, from every fish within 0.3 r whatever its kind (r = ", bv("sr"), ")."),
+        h("li", {}, "For each kind, the centre of its fish within r and their mean heading within 0.72 r — summed as whole numbers of 2⁻²⁰, so the order fish are found in cannot change a bit."),
+        h("li", {}, "Steer towards each kind's centre by its cohesion gain and to its heading by its alignment gain; a negative gain steers away. Each steer is capped, as in Open Water."),
+        h("li", {}, "Clamp to the kind's speed range, add the panic noise (a hash of seed, step and fish id), move, wrap."),
+      ),
+      h(
+        "p",
+        { class: "sw-note" },
+        "Rock–paper–scissors: each kind chases the next and flees the one before, so spirals of chase sweep through the ocean. Predator and prey: a few fast hunters (1.7× top speed) that loosely school and chase; prey flee them. " +
+          "The v4 lab summed the kinds in floating point; here the sums are integers, so brute force and the counting sort agree bit for bit (Prove checks it).",
+      ),
+      h("p", {}, "The kernel: ", src("brains-m3.ts", "packages/boids-2d/web/src/v2/model/brains-m3.ts")),
+    ),
+  );
+  speciesHow.hidden = true;
+  pane.append(speciesHow);
+
   pane.append(h("h2", {}, "Instruments"), phi.el, mill.el, orderNote, popBox, waterBox, stats.el);
 
   const perf = readout("Performance");
@@ -462,9 +563,32 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     h("li", {}, h("strong", {}, "Newcomers "), "trickle in, so neither population stays extinct; nothing is ever reset."),
     h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser; across GPUs only the statistics compare."),
   );
+  const limitsEyes = h(
+    "ul",
+    { class: "sw-limits" },
+    h(
+      "li",
+      {},
+      h("strong", {}, "A reimplementation: "),
+      "the paper's minimal model (no time derivatives of the picture) in 2D. Its result — ordered motion with no alignment rule — is reproduced and checked in Prove: ",
+      `${M3_CHECK.order.n}-fish groups on the GPU against the f64 reference, both clearing the paper's bar of φ > ${M3_CHECK.order.minPhi}, while the same model with its edge terms off does not.`,
+    ),
+    h("li", {}, h("strong", {}, "Changed: "), "the authors' fish see forever on an open plane; here they see 15 body lengths (murky water) on a wrapped ocean, so separate schools can form. One step is one unit of time (the authors take 0.1); groups of 20 polarize the same at either."),
+    h("li", {}, h("strong", {}, "Binned: "), "256 directions, as the authors sample 1,025 points. A distant fish narrower than a bin still covers one bin, as in their code."),
+    h("li", {}, h("strong", {}, "Not shown: "), "the paper's other states (mills, swarms, crystal-like groups) live at other α₀, β₀ and group sizes; Tune reaches some of them. Some groups of 20 are still milling or disordered after 3,000 steps — about one in eight of the seeds measured."),
+  );
+  const limitsSpecies = h(
+    "ul",
+    { class: "sw-limits" },
+    h("li", {}, h("strong", {}, "Illustrative: "), "the v4 lab's species couplings, not a model of particular species. Nothing is eaten; fish only steer."),
+    h("li", {}, h("strong", {}, "Exact: "), "whole-number sums per kind, so a run replays bit for bit on the same GPU and the counting sort agrees with brute force."),
+    h("li", {}, h("strong", {}, "Measured: "), "the mixing readout comes from the kernel's own neighbour counts; Prove checks that “keep apart” sorts the kinds and “all together” mixes them like a random draw."),
+  );
   limitsCurrent.hidden = true;
   limitsFood.hidden = true;
-  pane.append(h("h2", {}, "Model limits"), limitsReynolds, limitsVicsek, limitsCouzin, limitsCurrent, limitsFood);
+  limitsEyes.hidden = true;
+  limitsSpecies.hidden = true;
+  pane.append(h("h2", {}, "Model limits"), limitsReynolds, limitsVicsek, limitsCouzin, limitsCurrent, limitsFood, limitsEyes, limitsSpecies);
 
   return {
     setScene(scene, proofRun) {
@@ -483,12 +607,36 @@ export function buildLearn(pane: HTMLElement): LearnPane {
           "The water is moving. A steady push runs a current east through the middle of the ocean and west along its edges; where they meet, the water shears and rolls into eddies. " +
           "The faint streaks are motes — specks drifting exactly with the water. The fish swim by Open Water's rule, but every fish trades momentum with the water around it: " +
           "the current carries the schools, and the schools drag the water with them. Drag through the water to push a current of your own.",
+        "eyes-only":
+          "Two thousand fish released at random, each seeing only a black-and-white picture of the fish around it — where something is, not which way it is going. " +
+          "Give them half a minute: they gather into groups, the groups line up, and soon every school swims one way. No fish ever reads another's heading. " +
+          "Pick Watch and click a fish to see the world through its eyes.",
+        species:
+          "Three kinds of fish, each chasing the next and fleeing the one before: rock–paper–scissors. Waves of colour sweep after each other. " +
+          "Every cell of the matrix is how one kind steers about another — warm towards, cool away. Change a cell and the ocean answers at once; pick a preset, or two to six kinds, to start again.",
         "food-chain":
           "Plankton glows green where it grows. Fish graze it — dark trails follow the schools — and turn what they eat into more fish. Sharks hunt the fish and turn them into more sharks. " +
           "While fish are plentiful the sharks multiply; when they have eaten the fish down they starve, and the fish boom again. Feed a bloom, or release a school, to keep them alive.",
       };
       seeing.textContent = `${what[scene.id] ?? scene.prompt}${proofRun ? " This is the proofs' run." : ""}`;
-      const kind = scene.id === "order-dial" ? "vicsek" : scene.id === "mill" ? "couzin" : scene.water ? "current" : scene.ecology ? "food" : "reynolds";
+      const kind =
+        scene.id === "order-dial"
+          ? "vicsek"
+          : scene.id === "mill"
+            ? "couzin"
+            : scene.id === "eyes-only"
+              ? "vision"
+              : scene.id === "species"
+                ? "species"
+                : scene.water
+                  ? "current"
+                  : scene.ecology
+                    ? "food"
+                    : "reynolds";
+      eyesHow.hidden = kind !== "vision";
+      speciesHow.hidden = kind !== "species";
+      limitsEyes.hidden = kind !== "vision";
+      limitsSpecies.hidden = kind !== "species";
       reynoldsHow.hidden = kind !== "reynolds" && kind !== "current";
       currentHow.hidden = kind !== "current";
       foodHow.hidden = kind !== "food";
@@ -521,7 +669,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       limitsReynolds.hidden = kind !== "reynolds" && kind !== "current";
       limitsVicsek.hidden = kind !== "vicsek";
       limitsCouzin.hidden = kind !== "couzin";
-      mill.el.hidden = kind === "vicsek" || kind === "food" || kind === "current";
+      mill.el.hidden = kind === "vicsek" || kind === "food" || kind === "current" || kind === "vision" || kind === "species";
       phi.clear();
       mill.clear();
     },
@@ -531,7 +679,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         brainCells["vr"]!.textContent = b.p.r.toFixed(4);
         brainCells["rho"]!.textContent = vicsekRho(b.p.r).toFixed(2);
         brainCells["eta"]!.textContent = b.p.eta.toFixed(2);
-      } else {
+      } else if (b.kind === "couzin") {
         brainCells["rr"]!.textContent = b.p.rr.toFixed(1);
         brainCells["ro"]!.textContent = b.p.ro.toFixed(2);
         brainCells["ra"]!.textContent = b.p.ra.toFixed(0);
@@ -539,6 +687,14 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         brainCells["turn"]!.textContent = `${((b.p.maxTurn * 180) / Math.PI).toFixed(1)}°`;
         brainCells["sig"]!.textContent = b.p.sigma.toFixed(2);
         brainCells["sp"]!.textContent = b.p.speed.toFixed(2);
+      } else if (b.kind === "vision") {
+        brainCells["vrange"]!.textContent = (b.p.range / (2 * b.p.R)).toFixed(0);
+        brainCells["va0"]!.textContent = b.p.a0.toFixed(2);
+        brainCells["va1"]!.textContent = b.p.a1.toFixed(2);
+        brainCells["vg"]!.textContent = b.p.gamma.toFixed(2);
+        brainCells["vb0"]!.textContent = b.p.b0.toFixed(3);
+      } else {
+        brainCells["sr"]!.textContent = b.p.rCoh.toFixed(3);
       }
     },
     setSweep(r) {

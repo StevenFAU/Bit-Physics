@@ -315,7 +315,8 @@ describe("Food Chain", () => {
 
   it("scenes: Current and Food Chain are listed, with their own counts", () => {
     const listed = SCENES.filter((s) => s.listed).map((s) => s.id);
-    expect(listed).toEqual(["open-water", "order-dial", "mill", "current", "food-chain"]);
+    // M3 adds Eyes Only and Species Matrix after them
+    expect(listed).toEqual(["open-water", "order-dial", "mill", "current", "food-chain", "eyes-only", "species"]);
     expect(sceneById("current").counts).toBe(CURRENT_COUNTS);
     expect(sceneById("food-chain").counts).toBe(FOOD_COUNTS);
     expect(sceneById("food-chain").sortEvery).toBe(0);
