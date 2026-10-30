@@ -192,8 +192,14 @@ const CLIPS = [
   { sim: "physarum", id: "network", query: "?chrome=off&s=network", href: "./sims/physarum/?s=network",
     canvas: ".bp-canvas", start: 400, gap: 2, crf: 52 },
 
-  // neural-ca: CUT — the organism renders on a white field, which strobes the
-  // dark ambient reel and washes out the typed line (dark-render follow-up).
+  // ---- neural-ca: Grow's Menagerie (the root page since the rebuild-v2
+  // release swap), chrome off — eight organisms unfurling from one cell each
+  // on dark dishes, at quarter speed (the card loop's pace: start 40 is the
+  // seed). 250 shots: growth is done by about shot 100, and 400 left 9 s of
+  // grown organisms. The card shows the butterfly alone. (The v1 page was
+  // cut: its organism grew on a white field that strobed the dark reel.)
+  { sim: "neural-ca", id: "menagerie", query: "?chrome=off&s=menagerie&sp=0.25", href: "./sims/neural-ca/?s=menagerie",
+    canvas: ".bp-canvas", start: 40, gap: 1, crf: 52, shots: 250 },
 ];
 
 // Registry guard (2026-10 review): the reel films every registered sim except
