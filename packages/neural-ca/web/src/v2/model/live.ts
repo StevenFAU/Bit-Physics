@@ -1,10 +1,13 @@
-// The live solver: the committed kernel (the same WGSL bytes the gate runs,
-// proof/gate.ts KERNEL_WGSL) on the live dish's own buffers, restructured for
-// a frame loop only where it cannot change a bit:
+// The live solver: the committed kernel (the WGSL the gate runs, proof/gate.ts
+// KERNEL_WGSL) on the live dish's own buffers, restructured for a frame loop
+// only where it cannot change a bit:
 //   * every step gets its own 256-byte slot in a ring of Params uniforms
 //     (dynamic offsets), so a frame's steps go into ONE compute pass and ONE
 //     submit instead of the gate path's two submits per step;
-//   * bind groups are cached by ping-pong parity.
+//   * bind groups are cached by ping-pong parity;
+//   * the kernel's two innermost loops are written out (live-kernel.ts), the
+//     same operations in the same order, so Firefox's compiler keeps them in
+//     registers (it ran the step 10× slower otherwise).
 // Each step is still update → mask with the same Params bytes as the gate
 // (grid, step, seed, fire rate, weight offsets), so on the canonical start it
 // gives the gate path's state byte for byte — measured in Prove ("The live
@@ -17,6 +20,7 @@
 
 import type { Checkpoint } from "../proof/gate.js";
 import { CN, KERNEL_WGSL } from "../proof/gate.js";
+import { liveKernelSource } from "./live-kernel.js";
 import brushSrc from "./brush.wgsl?raw";
 import freezeSrc from "./freeze.wgsl?raw";
 import graftSrc from "./graft.wgsl?raw";
@@ -119,7 +123,7 @@ export class LiveKernels {
         { binding: 4, visibility: C, buffer: { type: "read-only-storage" } },
       ],
     });
-    const module = device.createShaderModule({ code: KERNEL_WGSL, label: "nca-live" });
+    const module = device.createShaderModule({ code: liveKernelSource(KERNEL_WGSL), label: "nca-live" });
     const stepPL = device.createPipelineLayout({ bindGroupLayouts: [stepLayout] });
     const brushLayout = device.createBindGroupLayout({
       label: "nca-brush",

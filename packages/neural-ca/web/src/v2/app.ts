@@ -1625,9 +1625,12 @@ export class App {
 
   /**
    * Split the measured GPU frame into the dishes' steps, background jobs and
-   * the render. The step cost teaches the scheduler; the governor sees the
-   * frame at 1× speed with no background job, so speeding up or running a
-   * proof never costs render quality.
+   * the render. The step and job costs teach the scheduler, which caps how
+   * many steps a frame runs; the governor sees the render alone. Its one
+   * lever is render scale, which cannot make a step cheaper: fed the step
+   * cost too (as the scheduler last learned it, which at 1× can be stale), it
+   * cut the Menagerie to 55% render scale in Firefox while the render took
+   * under half a millisecond (04-neural-ca.md, "Firefox step cost").
    */
   adaptToTimings(passes: readonly PassTiming[]): number | null {
     let render = 0;
@@ -1635,8 +1638,7 @@ export class App {
       if (p.name === STEP_PASS || this.scheduler.queued.includes(p.name)) this.scheduler.observe(p.name, p.ms);
       else render += p.ms;
     }
-    const perStep = this.scheduler.costOf(STEP_PASS);
-    return render + perStep * (TICKS_PER_SECOND / 60);
+    return render;
   }
 
   // ---------------------------------------------------- test hooks --
