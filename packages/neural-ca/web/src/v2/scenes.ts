@@ -3,8 +3,9 @@
 // on (the committed checkpoint is tied to that dish — measured: on 128 × 128
 // one seed grows a rounded square that fills the grid — and the Menagerie's
 // organisms were trained on it too). M1 adds the Menagerie and Inside the
-// Cell; M2 adds Teach (trained on the same 64 × 64 dish); Chimera and
-// Textures come later.
+// Cell; M2 adds Teach (trained on the same 64 × 64 dish); M3 adds Chimera
+// (two 64 × 64 dishes whose cells carry their rule) and Textures (a periodic
+// plane of texture cells on its own kernel — the one scene off the dish).
 
 import { hash3 } from "@bp/runtime";
 import type { OrganismDef } from "./model/organisms.js";
@@ -12,7 +13,7 @@ import { heals } from "./model/organisms.js";
 import { CN, GRID, seedState } from "./proof/gate.js";
 import type { ViewMode } from "./render/dish-view.js";
 
-export type SceneId = "dish" | "menagerie" | "cell" | "seeds" | "teach";
+export type SceneId = "dish" | "menagerie" | "chimera" | "cell" | "seeds" | "teach" | "textures";
 
 export interface SceneDef {
   id: SceneId;
@@ -24,7 +25,7 @@ export interface SceneDef {
    * seeds: one dish, seeds placed from the URL seed; menagerie: one dish per organism; cell: one dish, zoomed in on a cell;
    * teach: Teach (M2) decides the dishes — the drawing, the training batch, or the taught organism.
    */
-  kind: "canonical" | "seeds" | "menagerie" | "cell" | "teach";
+  kind: "canonical" | "seeds" | "menagerie" | "cell" | "teach" | "chimera" | "texture";
   /** Starting state for `seed`. */
   start(seed: number): Float32Array<ArrayBuffer>;
   /** Untouched and playing this long (steps), the director grows it again from the start. */
@@ -76,6 +77,15 @@ export const SCENES: readonly SceneDef[] = [
     tool: "cut",
   },
   {
+    id: "chimera",
+    title: "Chimera",
+    prompt: () => "What grows when two rules meet? Graft a piece of one organism into the other — each cell keeps its own rule.",
+    kind: "chimera",
+    start: () => seedState(GRID),
+    regrowEvery: 3600,
+    tool: "graft",
+  },
+  {
     id: "cell",
     title: "Inside the Cell",
     prompt: () => "This is the whole rule. Pick a cell to see what it senses, what the network makes of it, and what changes.",
@@ -93,6 +103,16 @@ export const SCENES: readonly SceneDef[] = [
     start: () => new Float32Array(GRID * GRID * CN),
     regrowEvery: 4000,
     tool: "paint",
+  },
+  {
+    id: "textures",
+    title: "Textures",
+    prompt: () => "No edges, no centre — only pattern. Erase some; it grows back.",
+    kind: "texture",
+    // the plane's start (all zeros) is sized by the App, per tier
+    start: () => new Float32Array(GRID * GRID * CN),
+    regrowEvery: 3000,
+    tool: "cut",
   },
   {
     id: "seeds",

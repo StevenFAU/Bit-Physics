@@ -142,7 +142,11 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {};
+const STAGED = {
+  // Grow v2 (rebuild-v2 04-neural-ca.md M3): the Dish with the butterfly, a
+  // regeneration-trained organism, grown from one cell on the dark dish.
+  "neural-ca-v2": { sim: "neural-ca", page: "v2/", query: "?chrome=off&o=butterfly&cam=0.5,0.5,1.45", canvas: ".bp-canvas", frames: 600, px: 512 },
+};
 
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every

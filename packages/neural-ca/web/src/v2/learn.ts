@@ -9,6 +9,7 @@ import V from "../generated/verification.json";
 import type { HiddenBasis } from "./model/pca.js";
 import type { LiveStats } from "./model/live.js";
 import type { MenagerieManifest, OrganismDef } from "./model/organisms.js";
+import type { TextureDef } from "./model/textures.js";
 import { heals } from "./model/organisms.js";
 import type { SceneDef } from "./scenes.js";
 
@@ -17,8 +18,9 @@ const DISTILL = "https://distill.pub/2020/growing-ca/";
 
 export interface LearnPane {
   /** `org`: the organism on a one-dish scene (null: the Menagerie). */
-  setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null): void;
-  setStats(s: LiveStats, grid: number, tick: number): void;
+  setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null, extra?: SceneExtra): void;
+  /** `rules`: Chimera's living cells per rule, per dish. */
+  setStats(s: LiveStats, grid: number, tick: number, rules?: number[][] | null): void;
   setBasis(b: HiddenBasis | null): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
 }
@@ -47,6 +49,13 @@ const DIAGRAM = `<svg viewBox="0 0 340 120" role="img" aria-label="Diagram: each
 </svg>`;
 
 const pct = (v: number): string => `${Math.round(v * 100)}%`;
+
+/** What the M3 scenes show besides the organism. */
+export interface SceneExtra {
+  partner?: OrganismDef;
+  texture?: TextureDef;
+  grid?: number;
+}
 
 export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
   pane.textContent = "";
@@ -125,7 +134,7 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
           `Same code, different weights: ${m.organisms.length} organisms, each ${params.toLocaleString()} numbers in the committed checkpoint's layout. ` +
             `${healers.length} of them were trained with damage and measurably heal; the disk was not, and does not. Open an organism's card for how it was trained and what was measured.`,
         ),
-        h("li", {}, "Each dish is its own world: a graft from one dish into another lands under that dish's rule. Cells do not carry their rule with them (that is the later Chimera scene)."),
+        h("li", {}, "Each dish is its own world: a graft from one dish into another lands under that dish's rule. Here cells do not carry their rule with them; in the Chimera scene they do."),
         look,
       ];
     }
@@ -174,8 +183,62 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
   };
 
   return {
-    setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null) {
+    setScene(scene: SceneDef, canonical: boolean, org: OrganismDef | null, extra: SceneExtra = {}) {
       const name = org?.name.toLowerCase() ?? "";
+      if (scene.kind === "chimera") {
+        const other = extra.partner?.name.toLowerCase() ?? "";
+        seeing.textContent =
+          `${scene.title}: two dishes, a ${name} and a ${other}, and every cell carries the rule it follows. A graft keeps its rule in the other dish, ` +
+          "and tissue that grows into empty agar brings its rule along: a dead cell takes the rule of its most opaque neighbour. The outline marks cells running the other dish's rule.";
+        limits.textContent = "";
+        limits.append(
+          h("li", {}, "Neither organism practised this. Each was trained alone, from one seed in the middle of its dish; what grows where two rules meet was not designed — it is what these weights do."),
+          h(
+            "li",
+            {},
+            "Measured on this page's kernel for every ordered pair of the seven healers, 1,000 steps after the opening graft: each rule alone holds 456–736 living cells, but in 31 of the 42 pairs the host's dish passes 3,000 of its 4,096 — " +
+              "two rules that each stop at their own shape do not stop each other. The donor's rule then holds a median of 32% of the living cells (none in one pair, 99% in another).",
+          ),
+          h("li", {}, "Checked: with only one rule, Chimera's step is the gated kernel's, bit for bit on this GPU (Prove › Chimera with one rule). The rule lookup is the only change."),
+          h("li", {}, "Rule ids live with the state: undo, save points and grafts carry them. Share links reproduce the scene's start and its opening graft, not your edits."),
+        );
+        alive.clear();
+        mass.clear();
+        return;
+      }
+      if (scene.kind === "texture") {
+        const t = extra.texture;
+        const grid = extra.grid ?? 0;
+        const steps = t
+          ? Object.keys(t.measured.style_by_step)
+              .map(Number)
+              .sort((a, b) => a - b)
+          : [];
+        seeing.textContent =
+          `${scene.title}: a ${grid} × ${grid} plane of cells that wraps around at its edges, every cell running the same network of ${(48 * 96 + 96 + 96 * 12).toLocaleString()} weights. ` +
+          `It was trained to make its neighbourhood look like a texture — ${t?.name.toLowerCase() ?? ""} — not to draw a picture, so there is no centre and no edge, and the pattern settles differently every time. Erase some: the cells around the hole grow it back. ` +
+          "This is the texture model of Niklasson et al. (2021), Self-Organising Textures.";
+        limits.textContent = "";
+        if (t) {
+          limits.append(
+            h(
+              "li",
+              {},
+              `Trained before this page was built, not in your browser: ${t.training.iterations.toLocaleString()} iterations on a CPU with PyTorch, against the Gram matrices of VGG16 features of the target (the paper's style loss) — far too heavy for a page. Teach trains shapes only.`,
+            ),
+            h(
+              "li",
+              {},
+              `Its own kernel, not the gated one: 12 channels, a fourth filter (the Laplacian), wrap-around edges, no alive mask. Training brought the style loss from ${Math.round(t.training.curve[0]?.[1] ?? 0).toLocaleString()} to ${Math.round(t.training.final_style_loss).toLocaleString()}; grown from zeros on the reference (PyTorch float32), the plane measures ${t.measured.style_by_step[String(steps[1] ?? steps[0])]!.toFixed(0)} at step ${steps[1] ?? steps[0]} and ${t.measured.style_by_step[String(steps[steps.length - 1])]!.toFixed(0)} at step ${steps[steps.length - 1]!.toLocaleString()}. The page runs the same weights with its own random coin, so it matches the reference statistically (its colours, checked), not cell for cell.`,
+            ),
+            h("li", {}, "The targets are drawn by a script in this repository (reaction–diffusion spots and stripes, a Voronoi giraffe, a basket weave) — no photographs."),
+          );
+        }
+        stats.set([["Plane", `${grid} × ${grid} cells, 12 channels, wraps around at its edges`]]);
+        alive.clear();
+        mass.clear();
+        return;
+      }
       if (scene.kind === "menagerie") {
         seeing.textContent =
           `${scene.title}: ${m.organisms.length} dishes, one organism each, all on one clock. Every dish runs the same compiled kernel with its own ${params.toLocaleString()} weights — ` +
@@ -215,7 +278,14 @@ export function buildLearn(pane: HTMLElement, m: MenagerieManifest): LearnPane {
       alive.clear();
       mass.clear();
     },
-    setStats(s: LiveStats, grid: number, tick: number) {
+    setStats(s: LiveStats, grid: number, tick: number, rules?: number[][] | null) {
+      if (rules) {
+        stats.set([
+          ["Step", tick.toLocaleString()],
+          ...rules.map((c, i): [string, string] => [`Dish ${i + 1}: living cells per rule`, c.map((n) => n.toLocaleString()).join(" · ") || "—"]),
+        ]);
+        return;
+      }
       alive.push(s.alive);
       mass.push(s.mass);
       const off = Number.isFinite(s.cx) ? Math.hypot(s.cx - grid / 2, s.cy - grid / 2) : NaN;
