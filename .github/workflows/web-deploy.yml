@@ -202,14 +202,16 @@ jobs:
         # The rebuilt v2 pages only (pipeline.py PAGES and ROOT_ENTRY). Full-bleed (no
         # letterboxing), no chrome overflow/overlap, the capture control live at
         # boot, and zero axe violations in the boot, Learn and Prove states.
-        if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d'
+        if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d' || matrix.sim == 'neural-ca'
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
+          # lavapipe compiles Grow's gate pipelines in about a minute (validate's time to ready)
+          BITPHYSICS_READY_TIMEOUT_MS: "180000"
         run: |
           npm ci --no-audit --no-fund
           # A swapped sim (pipeline.py ROOT_ENTRY) serves its v2 page at the root.
           case "${{ matrix.sim }}" in
-            reaction-diffusion-2d|physarum) page="" ;;
+            reaction-diffusion-2d|physarum|neural-ca) page="" ;;
             *) page="v2/" ;;
           esac
           node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" "$page" "${{ runner.temp }}/studio-check"

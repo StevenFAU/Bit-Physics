@@ -7,14 +7,15 @@
 //   node web/tools/check-studio.mjs packages/boids-2d/web/dist v2/ [out-dir]
 //
 // The page is "" for a sim whose v2 page has replaced v1 at the dist root
-// (reaction-diffusion-2d, physarum). It may carry a query (e.g. `v2/?s=mill`
-// for one scene). A sim's own
+// (reaction-diffusion-2d, physarum, neural-ca). It may carry a query (e.g.
+// `v2/?s=mill` for one scene). A sim's own
 // floating panels opt in to the overflow and overlap checks with the
 // attribute data-bp-chrome.
 //
 // Exit 0 when every check passes; 1 otherwise (a JSON report goes to stdout,
 // screenshots to out-dir when given). The page must expose globalThis.__bpDebug
-// (camera view rect, domain) and flip __bitPhysicsReady.
+// (camera view rect, domain) and flip __bitPhysicsReady, within 60 s or
+// BITPHYSICS_READY_TIMEOUT_MS (CI's software GPU compiles pipelines slowly).
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -32,6 +33,8 @@ const dist = resolve(distArg);
 const entry = entryArg.replace(/^\/+/, "");
 const require = createRequire(import.meta.url);
 const axeSource = await readFile(require.resolve("axe-core/axe.min.js"), "utf8");
+
+const READY_TIMEOUT_MS = Number(process.env.BITPHYSICS_READY_TIMEOUT_MS ?? "60000");
 
 const VIEWPORTS = [
   { name: "phone-390", width: 390, height: 844, scale: 2, touch: true },
@@ -98,7 +101,7 @@ for (const vp of VIEWPORTS) {
   const res = { name: vp.name, problems: [], axe: [] };
   try {
     await page.goto(base, { waitUntil: "load" });
-    await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
+    await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: READY_TIMEOUT_MS });
     await page.waitForTimeout(1500);
     const geo = await page.evaluate(() => {
       const r = (el) => { const b = el.getBoundingClientRect(); return [b.left, b.top, b.right, b.bottom]; };

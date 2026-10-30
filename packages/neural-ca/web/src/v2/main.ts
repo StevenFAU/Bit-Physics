@@ -1,6 +1,6 @@
 // Grow — the v2 page (docs/planning/rebuild-v2/04-neural-ca.md), Wave A of
-// the Field Studies rebuild. Served at /sims/neural-ca/v2/ while v1 stays
-// live at /sims/neural-ca/.
+// the Field Studies rebuild. Served at /sims/neural-ca/ since it replaced v1,
+// which is kept at /sims/neural-ca/v1/ for one release.
 //
 // Capture contract with the headless gate (tools/productization/web-deploy):
 //   * createStudio mounts the shell; its Prove drawer carries [data-bp-panel];
