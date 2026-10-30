@@ -2,17 +2,38 @@
 // it. Open Water runs the gated v4 kernel at the tier's full fish count; the
 // proof flock is the in-page GPU proofs' own pinned run, on screen. M1 adds
 // The Order Dial (the Vicsek model, ./model/brains.ts) and The Mill (Couzin's
-// zones). (M2 adds Food Chain and Current.)
+// zones). M2 adds Current (the water as a solved incompressible fluid,
+// ./model/fluid.ts, coupled two ways to the v4 flock) and Food Chain.
 
 import type { Tier } from "@bp/gpu";
 import type { BrainParams, CouzinParams, VicsekParams } from "./model/brains.js";
+import type { EcoParams } from "./model/ecology.js";
+import { FOOD_CHAIN } from "./model/ecology.js";
+import type { FluidParams } from "./model/fluid.js";
+import { CURRENT_FLUID } from "./model/fluid.js";
 import type { InitMode } from "./model/init.js";
 import type { M1Init } from "./model/init-m1.js";
 import type { RuleParams } from "./model/params.js";
 import type { World } from "./model/world.js";
 import { AGENTS, V4_DENSITY, worldFor } from "./model/world.js";
 
-export type SceneId = "open-water" | "order-dial" | "mill" | "proof";
+export type SceneId = "open-water" | "order-dial" | "mill" | "current" | "food-chain" | "proof";
+
+/** Current's water: grid rows per tier, motes per tier, the fluid's numbers and the push (laminar peak speed). */
+export interface WaterDef {
+  rows: Record<Tier, number>;
+  motes: Record<Tier, number>;
+  params: FluidParams;
+  tide: number;
+}
+
+/** Food Chain: fish slots are the scene's counts; this many start alive, and the sharks. */
+export interface EcologyDef {
+  fish0: number;
+  sharkSlots: Record<Tier, number>;
+  sharks0: number;
+  params: EcoParams;
+}
 
 export interface SceneDef {
   id: SceneId;
@@ -40,6 +61,12 @@ export interface SceneDef {
   zoom?: number;
   /** World units per fish length / caustic cell (default: the look's own). */
   scale?: { fishLength: number; causticCell: number };
+  /** M2 Current: the water the fish swim in. */
+  water?: WaterDef;
+  /** M2 Food Chain: plankton, fish lives, sharks. */
+  ecology?: EcologyDef;
+  /** Memory reorder cadence override (Food Chain: 0 — a fish's slot holds its life). */
+  sortEvery?: number;
 }
 
 /** v4's "flock" preset (index.html PRESETS.flock), the rule the v4 lab opened with. */
@@ -103,6 +130,33 @@ export function couzinFor(n: number): CouzinParams {
   };
 }
 
+// ---- Current: the water as a solved fluid ------------------------------------------------
+//
+// The fish are Open Water's (the gated v4 kernel, untouched) at Open Water's
+// density; the water is ./model/fluid.ts. The push's laminar peak speed is
+// v4's top speed, so the current is as fast as a fish swims.
+
+export const CURRENT_COUNTS: Record<Tier, number> = { T3: 262144, T2: 131072, T1: 65536 };
+export const CURRENT_WATER: WaterDef = {
+  rows: { T3: 128, T2: 128, T1: 64 },
+  motes: { T3: 65536, T2: 49152, T1: 24576 },
+  params: CURRENT_FLUID,
+  tide: 0.0065,
+};
+
+// ---- Food Chain: plankton → fish → sharks -------------------------------------------------------
+//
+// The fish slots are the ceiling on the fish; the ocean holds them all at
+// Open Water's density. A quarter start alive, with six sharks.
+
+export const FOOD_COUNTS: Record<Tier, number> = { T3: 32768, T2: 16384, T1: 8192 };
+export const FOOD_CHAIN_DEF: EcologyDef = {
+  fish0: 0.15,
+  sharkSlots: { T3: 128, T2: 96, T1: 64 },
+  sharks0: 6,
+  params: FOOD_CHAIN,
+};
+
 export const SCENES: readonly SceneDef[] = [
   {
     id: "open-water",
@@ -147,6 +201,36 @@ export const SCENES: readonly SceneDef[] = [
     sharkUnit: () => 2,
     zoom: 1.8,
     scale: { fishLength: 0.7, causticCell: 24 },
+  },
+  {
+    id: "current",
+    title: "Current",
+    prompt: "Paint a current. The school rides it — and pushes back.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    init: "random",
+    shark: true,
+    counts: CURRENT_COUNTS,
+    water: CURRENT_WATER,
+    // half Open Water's crowding, so open water shows between the schools
+    density: V4_DENSITY / 2,
+    zoom: 2.2,
+  },
+  {
+    id: "food-chain",
+    title: "Food Chain",
+    prompt: "Populations rise and crash. Keep them alive.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    density: V4_DENSITY,
+    init: "random",
+    shark: false,
+    counts: FOOD_COUNTS,
+    ecology: FOOD_CHAIN_DEF,
+    sortEvery: 0,
+    scale: { fishLength: 0.03, causticCell: 0.7 },
   },
   {
     id: "proof",

@@ -9,7 +9,9 @@ import { h, plotPanel, readout, sparkline } from "@bp/studio";
 import type { SweepResult } from "./dial-controller.js";
 import { SWEEP } from "./dial-controller.js";
 import type { BrainParams } from "./model/brains.js";
+import type { Census } from "./model/ecology.js";
 import type { OrderParams } from "./model/flock.js";
+import type { FluidStats } from "./model/fluid.js";
 import { METER } from "./model/meter.js";
 import type { RuleParams } from "./model/params.js";
 import { TUNSTROM } from "./regime.js";
@@ -23,6 +25,9 @@ const TUNSTROM_URL = "https://doi.org/10.1371/journal.pcbi.1002915";
 const COUZIN_URL = "https://doi.org/10.1006/jtbi.2002.3065";
 const BAGLIETTO_URL = "https://doi.org/10.1098/rsfs.2012.0021";
 const CHATE_URL = "https://doi.org/10.1103/PhysRevE.77.046113";
+const STAM_URL = "https://doi.org/10.1145/311535.311548";
+const HOLLING_URL = "https://doi.org/10.4039/Ent91385-7";
+const ROSENZWEIG_URL = "https://doi.org/10.1086/282272";
 
 export interface LearnPane {
   setScene(scene: SceneDef, proofRun: boolean): void;
@@ -30,6 +35,8 @@ export interface LearnPane {
   setBrain(b: BrainParams | null): void;
   setSweep(r: SweepResult): void;
   pushOrder(o: OrderParams): void;
+  pushCensus(c: Census): void;
+  pushFluid(st: FluidStats, fishTopSpeed: number, fb: number): void;
   setStats(rows: [string, string][]): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
 }
@@ -243,6 +250,115 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   couzinHow.hidden = true;
   pane.append(couzinHow);
 
+  // ---- Current: the water as a solved fluid ----
+  const currentHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "The water is a fluid simulation, solved every step — not a drawn pattern. It is the two-dimensional Navier–Stokes equations on a 256 × 128 grid that wraps at its edges. " +
+        "The solver keeps the water's spin (its vorticity ω) and finds the flow from a stream function ψ, with ∇²ψ = −ω solved exactly by a Fourier transform. " +
+        "A steady push (Kolmogorov forcing) keeps a current running east through the middle and west along the edges; friction with the sea floor stops it running away. " +
+        "Where the two streams meet, the water shears and rolls into eddies.",
+    ),
+    h(
+      "p",
+      {},
+      "The fish swim by Open Water's rule, unchanged. Each step, every fish and the water at its position trade momentum: the fish's velocity moves part of the way towards the water's, " +
+        "and the water gains exactly what the fish lost. So a current carries a school, and a school swimming through still water drags the water along. " +
+        "Your brush adds a push of its own. This is the v4 lab's two-way coupling (",
+      src("v4 lab", "packages/boids-2d/web/index.html"),
+      ") on a new solver; its fluid step follows Stam's stable fluids (",
+      link(STAM_URL, "Stam 1999"),
+      ").",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "One step of the water, in order"),
+      h(
+        "ol",
+        {},
+        h("li", {}, "Couple: each fish's velocity moves a fraction ", bv("drag"), " of the way to the water's; the opposite impulse goes to the 4 grid nodes around it, as whole numbers of 2⁻²⁰."),
+        h("li", {}, "Brush: your stroke adds a Gaussian push to the same sums."),
+        h("li", {}, "Carry the spin: ω is traced back along the flow (semi-Lagrangian, two-stage), and gains the curl of the step's pushes and of the steady current."),
+        h("li", {}, "Mean flow: the whole ocean's drift U₀ gains the pushes' exact integer total — the part of a push a wrapped stream function cannot hold."),
+        h("li", {}, "Solve: one Fourier transform of ω; viscosity ", bv("nu"), " and floor friction ", bv("mu"), " act on each wave; ψ = ω / λ with λ the grid Laplacian's own eigenvalue; one transform back gives both ω and ψ."),
+        h("li", {}, "Motes ride the new flow (two-stage), exactly as a fish would if it did not swim."),
+      ),
+      h("h3", {}, "Why the water cannot compress"),
+      h(
+        "p",
+        {},
+        "At the grid's nodes the velocity is the curl of ψ by central differences, and the central-difference divergence of that is ψ₊₊ − ψ₊₋ − ψ₋₊ + ψ₋₋ minus the same sum: zero for any ψ, whether the solve is exact or not. " +
+          "Between nodes a fish feels the exact curl of ψ interpolated bilinearly. Inside a cell that is u = c + d·x, v = −(b + d·y), whose divergence d − d is zero; across a cell's edge the flow through it depends only on the edge's two corners, so no water leaks between cells. " +
+          "The field the fish ride is divergence-free everywhere. What remains, measured below and on the canvas, is f32 rounding.",
+      ),
+      h("h3", {}, "Why the exchange conserves momentum"),
+      h(
+        "p",
+        {},
+        "A fish weighs fb times the water at one node (fb = ",
+        bv("fb"),
+        ": the fish weigh ",
+        bv("mass"),
+        " of the water, spread over the ocean). The water gains Σq·2⁻²⁰ at its nodes and the fish loses Σq·2⁻²⁰ / fb of velocity — the same integers Σq. " +
+          "The solve keeps the water's mean, so its total momentum is the mean drift times the ocean's water, and gains exactly Σq. Prove measures the balance. " +
+          "A fish's own steering and speed limit are not part of the exchange: they are the fish swimming, a force from outside the fish–water pair.",
+      ),
+      h("p", {}, "Source: ", src("model/fluid.ts", "packages/boids-2d/web/src/v2/model/fluid.ts"), " · ", src("model/current.ts", "packages/boids-2d/web/src/v2/model/current.ts")),
+    ),
+  );
+  currentHow.hidden = true;
+  pane.append(currentHow);
+
+  // ---- Food Chain: plankton → fish → sharks ----
+  const foodHow = h(
+    "div",
+    {},
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "Three populations, each living on the one below. Plankton grows in every patch of water towards a ceiling (logistic growth), spreads slowly, and is grazed. " +
+        "Each fish pays a little energy every step to live and gains its share of what its patch loses to grazing; at energy 1 it splits in two, at 0 it starves. " +
+        "Sharks hunt: each swims at the nearest crowd it can sense, takes the nearest fish within its jaws, spends a few steps eating (Holling's handling time, ",
+      link(HOLLING_URL, "Holling 1959"),
+      "), pays a larger upkeep, splits at energy 2 and starves at 0.",
+    ),
+    h(
+      "p",
+      {},
+      "Predators that saturate like this make populations cycle rather than settle — the classic result of ",
+      link(ROSENZWEIG_URL, "Rosenzweig & MacArthur 1963"),
+      ". Fish boom while sharks are few; the sharks multiply on them; the fish crash; the sharks starve; the plankton, grazed bare at the fish's peak, glows back before the next boom.",
+    ),
+    h(
+      "details",
+      { class: "sw-rule" },
+      h("summary", {}, "The numbers, per step"),
+      h(
+        "ul",
+        {},
+        h("li", {}, "Plankton: growth r ", bv("pr"), ", diffusion between neighbouring cells, a faint seeding so no patch stays bare for ever."),
+        h("li", {}, "Fish: a patch with n fish loses P(1 − e^(−a·n)) of its plankton; each fish gains ε ", bv("eff"), " of its share and pays ", bv("fcost"), "."),
+        h("li", {}, "Sharks: ", bv("scost"), " upkeep, 0.25 per fish eaten, 10 steps to eat it, ", bv("sspeed"), "× a fish's top speed."),
+        h("li", {}, "Fish flee any shark within 0.35 and climb the plankton's gradient when hungry; otherwise they school by Open Water's weights (a new kernel, with the same integer neighbour sums)."),
+        h(
+          "li",
+          {},
+          "Births fill empty slots in a fixed order: two prefix scans rank the newborns and the empty slots, and the k-th newborn takes the k-th slot. With integer catch keys the whole ecology replays bit for bit.",
+        ),
+        h("li", {}, "Newcomers: four fish arrive every 120 steps, and a shark every 900 steps while fewer than two remain — so no population stays extinct, and nothing is ever reset."),
+      ),
+      h("p", {}, "Source: ", src("model/ecology.ts", "packages/boids-2d/web/src/v2/model/ecology.ts")),
+    ),
+  );
+  foodHow.hidden = true;
+  pane.append(foodHow);
+
   const phi = sparkline("Polarization φ (O_p)", "", 120, 3);
   const mill = sparkline("Rotation m (O_r)", "", 120, 3);
   const orderNote = h(
@@ -254,7 +370,20 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ". Both are exact integer sums over every fish, computed on the GPU.",
   );
   const stats = readout("The ocean");
-  pane.append(h("h2", {}, "Instruments"), phi.el, mill.el, orderNote, stats.el);
+  const fishSpark = sparkline("Fish (census)", "", 240, 0);
+  const sharkSpark = sparkline("Sharks", "", 240, 0);
+  const planktonSpark = sparkline("Plankton (fraction of its ceiling)", "", 240, 2);
+  const popBox = h("div", {}, fishSpark.el, sharkSpark.el, planktonSpark.el);
+  const water = readout("The water, measured");
+  const waterNote = h(
+    "p",
+    { class: "sw-note" },
+    "|∇·u| is the largest divergence on the grid by central differences, against the largest velocity gradient |∂u/∂x| + |∂v/∂y|. The Poisson residual is max |∇²ψ + ω| / max |ω|: how exactly the transform solved for ψ.",
+  );
+  const waterBox = h("div", {}, water.el, waterNote);
+  popBox.hidden = true;
+  waterBox.hidden = true;
+  pane.append(h("h2", {}, "Instruments"), phi.el, mill.el, orderNote, popBox, waterBox, stats.el);
 
   const perf = readout("Performance");
   const passes = readout("GPU time per pass");
@@ -307,7 +436,35 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser. Across GPUs only the statistics (φ, m) are comparable — the flock is chaotic."),
       h("li", {}, h("strong", {}, "Measured: "), "φ and m from exact integer sums; the in-page proofs in Prove."),
   );
-  pane.append(h("h2", {}, "Model limits"), limitsReynolds, limitsVicsek, limitsCouzin);
+  const limitsCurrent = h(
+    "ul",
+    { class: "sw-limits" },
+    h("li", {}, h("strong", {}, "Solved, and measured: "), "the water is a real fluid solve; its divergence and its Poisson residual are measured live, and Prove measures the momentum balance of the exchange."),
+    h(
+      "li",
+      {},
+      h("strong", {}, "Simplified: "),
+      "the water is two-dimensional. A fish is a point that drags its four nearest nodes — it leaves no wake and pushes no water behind it (a real swimmer's thrust and drag nearly cancel). The drag law is a model of being carried, not hydrodynamics.",
+    ),
+    h(
+      "li",
+      {},
+      h("strong", {}, "Numerical: "),
+      "tracing the spin back along the flow smooths it more than the viscosity alone would, and the steps are split, so the scheme is first order in time. The steady push and the floor friction are there to keep a current running and bounded.",
+    ),
+    h("li", {}, h("strong", {}, "The fish "), "are Open Water's gated kernel, unchanged; only their velocities pass through the coupling."),
+  );
+  const limitsFood = h(
+    "ul",
+    { class: "sw-limits" },
+    h("li", {}, h("strong", {}, "Illustrative ecology: "), "the rates are chosen to make the cycle visible in minutes, not fitted to any sea. The page claims only what it measures: the populations, and that they stay bounded."),
+    h("li", {}, h("strong", {}, "Bounded by design: "), "there are as many fish slots as Open Water's density allows in this ocean, and 128 shark slots; at a shark boom the slots can fill."),
+    h("li", {}, h("strong", {}, "Newcomers "), "trickle in, so neither population stays extinct; nothing is ever reset."),
+    h("li", {}, h("strong", {}, "Same device, same bytes: "), "a run replays bit for bit on the same GPU and browser; across GPUs only the statistics compare."),
+  );
+  limitsCurrent.hidden = true;
+  limitsFood.hidden = true;
+  pane.append(h("h2", {}, "Model limits"), limitsReynolds, limitsVicsek, limitsCouzin, limitsCurrent, limitsFood);
 
   return {
     setScene(scene, proofRun) {
@@ -322,16 +479,49 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         mill:
           "One school, circling an empty centre: every fish follows the fish ahead of it and stays close to the school, but none agrees on a direction — so they go round. " +
           "Push it with the shark and it may break into a polarized school that swims away, or settle back into a mill.",
+        current:
+          "The water is moving. A steady push runs a current east through the middle of the ocean and west along its edges; where they meet, the water shears and rolls into eddies. " +
+          "The faint streaks are motes — specks drifting exactly with the water. The fish swim by Open Water's rule, but every fish trades momentum with the water around it: " +
+          "the current carries the schools, and the schools drag the water with them. Drag through the water to push a current of your own.",
+        "food-chain":
+          "Plankton glows green where it grows. Fish graze it — dark trails follow the schools — and turn what they eat into more fish. Sharks hunt the fish and turn them into more sharks. " +
+          "While fish are plentiful the sharks multiply; when they have eaten the fish down they starve, and the fish boom again. Feed a bloom, or release a school, to keep them alive.",
       };
       seeing.textContent = `${what[scene.id] ?? scene.prompt}${proofRun ? " This is the proofs' run." : ""}`;
-      const kind = scene.id === "order-dial" ? "vicsek" : scene.id === "mill" ? "couzin" : "reynolds";
-      reynoldsHow.hidden = kind !== "reynolds";
+      const kind = scene.id === "order-dial" ? "vicsek" : scene.id === "mill" ? "couzin" : scene.water ? "current" : scene.ecology ? "food" : "reynolds";
+      reynoldsHow.hidden = kind !== "reynolds" && kind !== "current";
+      currentHow.hidden = kind !== "current";
+      foodHow.hidden = kind !== "food";
+      limitsCurrent.hidden = kind !== "current";
+      limitsFood.hidden = kind !== "food";
+      popBox.hidden = kind !== "food";
+      waterBox.hidden = kind !== "current";
+      phi.el.hidden = kind === "food";
+      orderNote.hidden = kind === "food";
+      fishSpark.clear();
+      sharkSpark.clear();
+      planktonSpark.clear();
+      water.set([]);
+      if (scene.water) {
+        brainCells["drag"]!.textContent = String(scene.water.params.drag);
+        brainCells["nu"]!.textContent = scene.water.params.nu.toExponential(0);
+        brainCells["mu"]!.textContent = scene.water.params.mu.toExponential(0);
+        brainCells["mass"]!.textContent = `${Math.round(scene.water.params.massRatio * 100)}%`;
+      }
+      if (scene.ecology) {
+        const p = scene.ecology.params;
+        brainCells["pr"]!.textContent = String(p.growth);
+        brainCells["eff"]!.textContent = String(p.efficiency);
+        brainCells["fcost"]!.textContent = String(p.fishCost);
+        brainCells["scost"]!.textContent = String(p.sharkCost);
+        brainCells["sspeed"]!.textContent = String(p.sharkSpeed);
+      }
       vicsekHow.hidden = kind !== "vicsek";
       couzinHow.hidden = kind !== "couzin";
-      limitsReynolds.hidden = kind !== "reynolds";
+      limitsReynolds.hidden = kind !== "reynolds" && kind !== "current";
       limitsVicsek.hidden = kind !== "vicsek";
       limitsCouzin.hidden = kind !== "couzin";
-      mill.el.hidden = kind === "vicsek";
+      mill.el.hidden = kind === "vicsek" || kind === "food" || kind === "current";
       phi.clear();
       mill.clear();
     },
@@ -376,6 +566,22 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     pushOrder(o) {
       phi.push(o.phi);
       mill.push(o.mill);
+    },
+    pushCensus(c) {
+      fishSpark.push(c.fish);
+      sharkSpark.push(c.sharks);
+      planktonSpark.push(c.plankton);
+    },
+    pushFluid(st, top, fb) {
+      brainCells["fb"]!.textContent = fb.toFixed(3);
+      water.set([
+        ["Largest |∇·u|", `${st.maxDiv.toExponential(2)} per step`],
+        ["…against |∇u|", `${st.maxGrad.toExponential(2)} (ratio ${(st.maxGrad > 0 ? st.maxDiv / st.maxGrad : 0).toExponential(1)})`],
+        ["Poisson residual", st.poisson.toExponential(1)],
+        ["Fastest water", `${(st.maxSpeed / top).toFixed(2)}× a fish's top speed`],
+        ["Mean energy ½|u|²", `${st.energy.toExponential(2)} per node`],
+        ["Mean drift U₀", `(${st.u0[0].toExponential(1)}, ${st.u0[1].toExponential(1)})`],
+      ]);
     },
     setStats(rows) {
       stats.set(rows);

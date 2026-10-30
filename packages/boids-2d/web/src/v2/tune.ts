@@ -21,6 +21,22 @@ export interface TuneActions {
 
 export interface TunePanel {
   sync(r: RuleParams, brain: BrainParams | null, colour: FishColour): void;
+  /** M2 scenes' own knobs (the water, the ecology); `hideRule` hides the fish rule's. */
+  setExtra(title: string | null, specs: ExtraSpec[], hideRule: boolean): void;
+}
+
+/** A knob bound straight to a live value (M2: Current's water, Food Chain's ecology). */
+export interface ExtraSpec {
+  label: string;
+  symbol: string;
+  min: number;
+  max: number;
+  step: number;
+  unit?: string;
+  hint: string;
+  digits?: number;
+  get: () => number;
+  set: (v: number) => void;
 }
 
 interface Spec<T> {
@@ -164,10 +180,13 @@ export function buildTune(body: HTMLElement, act: TuneActions, initial: RulePara
     "silver",
     (v) => act.colour(v),
   );
+  const extraBox = h("div", {});
+  let hideRuleBox = false;
   body.append(
     reynoldsBox,
     couzinBox,
     vicsekBox,
+    extraBox,
     h("div", { class: "sw-tune-row" }, reset),
     h("div", { class: "sw-tune-row" }, h("span", { class: "sw-tune-label" }, "Fish colour"), colour.el),
   );
@@ -175,12 +194,34 @@ export function buildTune(body: HTMLElement, act: TuneActions, initial: RulePara
     sync(r, b, c) {
       rule = { ...r };
       brain = b ? structuredClone(b) : null;
-      reynoldsBox.hidden = b !== null;
+      reynoldsBox.hidden = b !== null || hideRuleBox;
       couzinBox.hidden = b?.kind !== "couzin";
       vicsekBox.hidden = b?.kind !== "vicsek";
       for (const s of REYNOLDS) rSliders.get(s.key)!.set(r[s.key]);
       if (b?.kind === "couzin") for (const s of COUZIN) cSliders.get(s.key)!.set(s.show ? s.show(b.p[s.key], b.p) : b.p[s.key]);
       colour.set(c);
+    },
+    setExtra(title, specs, hideRule) {
+      hideRuleBox = hideRule;
+      reynoldsBox.hidden = brain !== null || hideRule;
+      extraBox.textContent = "";
+      if (title) extraBox.append(h("p", { class: "sw-tune-label" }, title));
+      for (const x of specs) {
+        const sl = slider({
+          label: x.label,
+          symbol: x.symbol,
+          min: x.min,
+          max: x.max,
+          step: x.step,
+          value: x.get(),
+          unit: x.unit,
+          hint: x.hint,
+          format: x.digits !== undefined ? (v) => (x.digits! > 4 ? v.toExponential(1) : v.toFixed(x.digits)) : undefined,
+          onInput: (v) => x.set(v),
+          onCommit: (v) => x.set(v),
+        });
+        extraBox.append(sl.el);
+      }
     },
   };
 }

@@ -198,7 +198,8 @@ fn fish_vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> 
   var p = centre + dir * off.x + perp * off.y;
   // off-screen fish collapse to a degenerate point (no fragments)
   let margin = hl + 2.0;
-  if (centre.x < -margin || centre.y < -margin || centre.x > V.dims.x + margin || centre.y > V.dims.y + margin) {
+  // (and a fish that is not alive — Food Chain's empty slots carry dens < 0)
+  if (b.dens < 0.0 || centre.x < -margin || centre.y < -margin || centre.x > V.dims.x + margin || centre.y > V.dims.y + margin) {
     p = vec2<f32>(-10.0, -10.0);
   }
   o.pos = vec4<f32>(p.x / V.dims.x * 2.0 - 1.0, 1.0 - p.y / V.dims.y * 2.0, 0.0, 1.0);

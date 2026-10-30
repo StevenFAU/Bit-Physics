@@ -21,7 +21,13 @@
 // shark breaks it; the Couzin zones ride the link; save / restore), the new
 // brains' proofs (brute ≡ sort, run twice, re-sort with noise, φ(η) against
 // the f64 CPU reference), the three levels of detail and their frame times.
-// Prints BP_BENCH lines at the end (Open Water, The Order Dial, The Mill).
+// M2: Current (the tier's fish, the solved water incompressible live, the
+// push, a brush stroke moving the water, the water's Prove cards — motes,
+// momentum exchange, the school riding the current — save / restore and a
+// seed across loads) and Food Chain (the census, Feed, Release, the replay
+// card, save / restore, a seed across loads, and every population alive and
+// cycling through ten minutes of simulated time).
+// Prints BP_BENCH lines at the end (all five scenes).
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -518,8 +524,197 @@ let v4 = null;
   await ctx.close();
 }
 
-// --- frame time: the boot scene and the M1 scenes ------------------------------
-for (const scene of ["open-water", "order-dial", "mill"]) {
+// --- M2: Current ------------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=current");
+  await page.waitForTimeout(4000);
+  const d = await T(page, () => globalThis.__bpDebug());
+  const want = { T3: 262144, T2: 131072, T1: 65536 }[d.tier];
+  check("Current boots at its tier count with its water", d.scene === "current" && d.agents === want && d.fluid && d.fluid.grid[0] >= 64,
+    `${d.agents.toLocaleString()} fish on ${d.world.map((v) => v.toFixed(1)).join(" × ")}, water ${d.fluid?.grid.join(" × ")}, ${d.fluid?.motes.toLocaleString()} motes, fb ${d.fluid?.fb.toFixed(3)}`);
+  const st = d.fluid?.stats;
+  check("the live water is incompressible: grid |∇·u| ≤ 1e-5 of |∇u|", st && st.maxGrad > 0 && st.maxDiv / st.maxGrad <= 1e-5,
+    st ? `|∇·u| ${st.maxDiv.toExponential(2)} against |∇u| ${st.maxGrad.toExponential(2)} (${(st.maxDiv / st.maxGrad).toExponential(1)}); Poisson residual ${st.poisson.toExponential(1)}` : "no stats");
+  check("the push keeps a current running near a fish's top speed", st && st.maxSpeed > 0.5 * 0.0065 && st.maxSpeed < 3 * 0.0065, st ? `fastest water ${(st.maxSpeed / 0.0065).toFixed(2)}× a fish's top speed` : "");
+  await shot(page, "30-current");
+  // a wide brush stroke to the right: the ocean's mean drift must move with it
+  const u0a = await T(page, async () => { globalThis.__swarm.brushRadius = 4; return (await globalThis.__swarm.current.fluid.readPsi()).u0; });
+  await page.mouse.move(400, 380);
+  await page.mouse.down();
+  for (let k = 0; k < 30; k += 1) await page.mouse.move(400 + k * 16, 380, { steps: 2 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const u0b = await T(page, async () => (await globalThis.__swarm.current.fluid.readPsi()).u0);
+  check("a brush stroke pushes the water along it (the mean drift moves right)", u0b[0] - u0a[0] > 2e-4, `U₀ x ${u0a[0].toExponential(2)} → ${u0b[0].toExponential(2)}`);
+  for (const [k, name] of [["motes", "the water does not compress: motes stay spread, the compressible control piles them up"], ["exchange", "fish ↔ water conserves momentum"], ["ride", "the school rides the current (coupled vs free, one seed)"]]) {
+    const r = await T(page, (key) => globalThis.__swarmProve[key](), k);
+    const detail = k === "motes" ? `index ${r.index.toFixed(3)} (start ${r.start.toFixed(3)}), control ${r.control.toFixed(1)}; grid |∇·u| ${r.divRatio.toExponential(1)} of |∇u|`
+      : k === "exchange" ? `imbalance ${r.imbalance.toExponential(1)} (fish ${r.fishMomentum.toExponential(4)}, water ${r.waterMomentum.toExponential(4)})`
+      : `alignment ${r.alignCoupled.toFixed(3)} coupled vs ${r.alignFree.toFixed(3)} free; water energy ${r.energyCoupled.toExponential(2)} vs ${r.energyFree.toExponential(2)}`;
+    check(name, r.pass, detail);
+  }
+  // save → 100 steps → restore: the fish and the water come back exactly, and replay the same 100 steps
+  const sr = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    const h = async () => {
+      const b = await app.flock.readBoids();
+      const p = (await app.current.fluid.readPsi()).psi;
+      const all = new Uint8Array(b.byteLength + p.byteLength);
+      all.set(new Uint8Array(b.buffer, b.byteOffset, b.byteLength), 0);
+      all.set(new Uint8Array(p.buffer, p.byteOffset, p.byteLength), b.byteLength);
+      return [...new Uint8Array(await crypto.subtle.digest("SHA-256", all))].map((x) => x.toString(16).padStart(2, "0")).join("");
+    };
+    const h0 = await h();
+    const drag0 = app.current.fluid.params.drag;
+    const tide0 = app.current.tideSpeed;
+    app.savePoint();
+    await app.advance(100);
+    const h1 = await h();
+    // turn the knobs after saving: the restore must bring them back with the water
+    app.current.fluid.params = { ...app.current.fluid.params, drag: 0.2 };
+    app.current.setTide(tide0 * 2);
+    app.restoreSave();
+    await app.device.queue.onSubmittedWorkDone();
+    const h2 = await h();
+    const knobs = app.current.fluid.params.drag === drag0 && app.current.tideSpeed === tide0;
+    await app.advance(100);
+    const h3 = await h();
+    return { restored: h0 === h2, replay: h1 === h3, moved: h0 !== h1, knobs };
+  });
+  check("Current: restore returns the fish, the water and its knobs exactly, and replays the same 100 steps", sr.restored && sr.replay && sr.moved && sr.knobs, JSON.stringify(sr));
+  check("no console errors (Current)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const a = await open("/v2/?s=current&seed=3");
+  const h1 = await hashAfter(a.page, 300);
+  await a.ctx.close();
+  const b = await open("/v2/?s=current&seed=3");
+  const h2 = await hashAfter(b.page, 300);
+  await b.ctx.close();
+  check("Current: same seed, same bytes across page loads (fish and water coupled, 300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
+}
+
+// --- M2: Food Chain ---------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=food-chain");
+  await page.waitForTimeout(4000);
+  const d = await T(page, () => globalThis.__bpDebug());
+  const want = { T3: 32768, T2: 16384, T1: 8192 }[d.tier];
+  const c0 = d.census;
+  check("Food Chain boots with its fish slots, a census and its first sharks", d.scene === "food-chain" && d.agents === want && c0 && c0.fish > 0.1 * want && c0.sharks >= 1,
+    c0 ? `${c0.fish.toLocaleString()} of ${d.agents.toLocaleString()} slots alive, ${c0.sharks} sharks, plankton ${(c0.plankton * 100).toFixed(0)}%` : "no census");
+  await shot(page, "31-food-chain");
+  // Feed: hold a wide brush still for 1.5 s — the plankton rises
+  const p0 = await T(page, async () => { const a = globalThis.__swarm; a.brushRadius = 4; return (await a.ecology.readCensusNow()).plankton; });
+  await page.mouse.move(640, 360);
+  await page.mouse.down();
+  await page.waitForTimeout(1500);
+  await page.mouse.up();
+  const p1 = await T(page, async () => (await globalThis.__swarm.ecology.readCensusNow()).plankton);
+  check("Feed makes plankton bloom", p1 > p0 + 0.05, `plankton ${(p0 * 100).toFixed(1)}% → ${(p1 * 100).toFixed(1)}%`);
+  // Release: one click puts 300 fish in the water at the next step (births and deaths move the count a little)
+  const r = await T(page, async () => {
+    const a = globalThis.__swarm;
+    a.studio.rail.selectIndex(1);
+    return { before: (await a.ecology.readCensusNow()).fish, tool: a.studio.rail.active };
+  });
+  await page.mouse.click(700, 300);
+  await page.waitForTimeout(250);
+  const r2 = await T(page, async () => (await globalThis.__swarm.ecology.readCensusNow()).fish);
+  check("Release puts a school of 300 in the water", r.tool === "release" && r2 - r.before >= 260 && r2 - r.before <= 340, `${r.before} → ${r2} fish`);
+  const rp = await T(page, () => globalThis.__swarmProve.replay());
+  check("Food Chain replays byte for byte (fish, sharks, plankton), and another seed differs", rp.identical && rp.differs && rp.births > 0,
+    `${rp.hashes[0].slice(0, 16)}…; ${rp.births} births, ${rp.eaten} eaten in the run`);
+  const sr = await T(page, async () => {
+    const app = globalThis.__swarm;
+    app.clock.paused = true;
+    const h = async () => {
+      const b = await app.flock.readBoids();
+      const c = await app.ecology.readCensusNow();
+      const all = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+      return [...new Uint8Array(await crypto.subtle.digest("SHA-256", all))].map((x) => x.toString(16).padStart(2, "0")).join("") + `|${c.fish}|${c.sharks}|${c.plankton}`;
+    };
+    const h0 = await h();
+    const eff0 = app.ecology.params.efficiency;
+    app.savePoint();
+    await app.advance(120);
+    const h1 = await h();
+    app.ecology.params = { ...app.ecology.params, efficiency: 0.4 };
+    app.restoreSave();
+    await app.device.queue.onSubmittedWorkDone();
+    const h2 = await h();
+    const knobs = app.ecology.params.efficiency === eff0;
+    await app.advance(120);
+    const h3 = await h();
+    return { restored: h0 === h2, replay: h1 === h3, moved: h0 !== h1, knobs };
+  });
+  check("Food Chain: restore returns the fish, sharks, plankton and rates exactly, and replays the same 120 steps", sr.restored && sr.replay && sr.moved && sr.knobs, JSON.stringify(sr));
+  check("no console errors (Food Chain)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const a = await open("/v2/?s=food-chain&seed=4");
+  const h1 = await hashAfter(a.page, 400);
+  await a.ctx.close();
+  const b = await open("/v2/?s=food-chain&seed=4");
+  const h2 = await hashAfter(b.page, 400);
+  await b.ctx.close();
+  check("Food Chain: same seed, same bytes across page loads (400 steps of births and deaths)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
+}
+{
+  // ten minutes of simulated time (36,000 steps at 60 a second), run at 8×, from the default seed
+  const { ctx, page, errors } = await open("/v2/?s=food-chain&sp=8");
+  const series = await T(page, async () => {
+    const app = globalThis.__swarm;
+    const rows = [];
+    while (app.flock.tick < 36000) {
+      await new Promise((r) => setTimeout(r, 500));
+      const c = app.census;
+      if (c) rows.push([app.flock.tick, c.fish, c.sharks, c.plankton]);
+    }
+    return rows;
+  });
+  const fish = series.map((r) => r[1]);
+  const sharks = series.map((r) => r[2]);
+  const slots = 32768;
+  const peaks = [];
+  for (let i = 0; i < series.length; i += 1) {
+    const win = sharks.slice(Math.max(0, i - 40), i + 41);
+    if (sharks[i] > 30 && sharks[i] >= Math.max(...win) && (peaks.length === 0 || series[i][0] - peaks[peaks.length - 1] > 6000)) peaks.push(series[i][0]);
+  }
+  console.log(`BP_FOODCHAIN ${JSON.stringify(series.filter((_, i) => i % 4 === 0))}`);
+  check("Food Chain: ten simulated minutes, no population lost — fish and sharks always present, within their slots",
+    Math.min(...fish) > 0 && Math.min(...sharks.slice(10)) >= 1 && Math.max(...fish) <= slots,
+    `${series.length} samples to step ${series[series.length - 1][0].toLocaleString()}: fish ${Math.min(...fish)}–${Math.max(...fish)}, sharks ${Math.min(...sharks)}–${Math.max(...sharks)}; shark booms at steps ${peaks.join(", ")}`);
+  check("…and the populations cycle (at least two shark booms)", peaks.length >= 2, `${peaks.length} booms`);
+  check("no console errors (Food Chain, ten minutes)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M2 knobs ride the share link, and survive a restart ---------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=current&wp=0.1,-1,1.5,-1,-1");
+  const w = await T(page, async () => {
+    const a = globalThis.__swarm;
+    // the water was built with the linked push (its starting vorticity comes from it), not patched after
+    const before = { drag: a.current.fluid.params.drag, push: a.current.tideSpeed / a.flock.rule.maxSpeed, built: a.current.cfg.tide / a.flock.rule.maxSpeed };
+    await a.restart();
+    return { before, after: { drag: a.current.fluid.params.drag, push: a.current.tideSpeed / a.flock.rule.maxSpeed }, url: location.search };
+  });
+  check("a Current link builds the water with its knobs, and a restart keeps them", w.before.drag === 0.1 && Math.abs(w.before.push - 1.5) < 1e-9 && Math.abs(w.before.built - 1.5) < 1e-9 && w.after.drag === 0.1 && Math.abs(w.after.push - 1.5) < 1e-9 && /wp=/.test(w.url), JSON.stringify(w));
+  await ctx.close();
+  const b = await open("/v2/?s=food-chain&ep=0.02,0.2,-1,-1");
+  const e = await T(b.page, () => globalThis.__swarm.ecology.params);
+  check("a Food Chain link sets the ecology's knobs", e.growth === 0.02 && e.efficiency === 0.2 && e.sharkCost === 0.0042, `growth ${e.growth}, efficiency ${e.efficiency}, shark upkeep ${e.sharkCost}`);
+  check("no console errors (M2 links)", errors.length === 0 && b.errors.length === 0, [...errors, ...b.errors].join(" | "));
+  await b.ctx.close();
+}
+
+// --- frame time: the boot scene and the M1 and M2 scenes -----------------------
+for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain"]) {
+
   const { ctx, page } = await open(`/v2/?s=${scene}&bench=1`);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
