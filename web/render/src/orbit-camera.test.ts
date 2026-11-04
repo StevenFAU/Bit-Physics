@@ -105,4 +105,20 @@ describe("OrbitCamera", () => {
     settle(r);
     expect(r.yaw).toBeCloseTo(0.4, 12);
   });
+
+  it("rescale scales the view, its goal and home together; follow eases the target", () => {
+    const c = cam();
+    c.rescale(1.5);
+    expect(c.distance).toBeCloseTo(6, 9);
+    expect(c.state().distance).toBeCloseTo(6, 9);
+    c.zoomAt(2);
+    settle(c);
+    c.fit();
+    expect(c.distance).toBeCloseTo(6, 9);
+    c.followTarget = [1, 0.5, -1];
+    settle(c, 6);
+    expect(c.target[0]).toBeCloseTo(1, 3);
+    expect(c.target[1]).toBeCloseTo(0.5, 3);
+    expect(c.target[2]).toBeCloseTo(-1, 3);
+  });
 });

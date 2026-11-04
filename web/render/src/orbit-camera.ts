@@ -110,6 +110,13 @@ export class OrbitCamera {
   reducedMotion = false;
   /** Bumped on every change, so renderers and URL writers can skip unchanged frames. */
   version = 0;
+  /**
+   * Follow: while set, the target eases towards this world point (time
+   * constant `followDamping`, s) — e.g. a particle or a cloud's centre.
+   * Orbiting and dollying still work around it. Snaps under reduced motion.
+   */
+  followTarget: Vec3 | null = null;
+  followDamping = 0.5;
 
   private goal: OrbitState = { yaw: 0.6, pitch: 0.35, distance: 3, target: [0, 0, 0] };
   private home: OrbitState = { yaw: 0.6, pitch: 0.35, distance: 3, target: [0, 0, 0] };
@@ -150,6 +157,22 @@ export class OrbitCamera {
     this.pitch = this.goal.pitch;
     this.distance = this.goal.distance;
     this.target = [...this.goal.target];
+    this.version += 1;
+  }
+
+  /**
+   * Scale every distance — the rendered one, the goal and the home view's —
+   * by k (e.g. to keep a subject fitted when the viewport's aspect changes).
+   */
+  rescale(k: number): void {
+    if (!(k > 0) || k === 1) return;
+    this.home.distance = clamp(this.home.distance * k, this.minDistance, this.maxDistance);
+    this.goal.distance = clamp(this.goal.distance * k, this.minDistance, this.maxDistance);
+    this.distance = clamp(this.distance * k, this.minDistance, this.maxDistance);
+    if (this.flight) {
+      this.flight.from.distance *= k;
+      this.flight.to.distance *= k;
+    }
     this.version += 1;
   }
 
@@ -262,6 +285,13 @@ export class OrbitCamera {
       }
       this.version += 1;
       return true;
+    }
+    if (this.followTarget) {
+      const f = this.followTarget;
+      const k = this.reducedMotion ? 1 : 1 - Math.exp(-dt / Math.max(this.followDamping, 1e-4));
+      const g = this.goal.target;
+      this.goal.target = [g[0] + (f[0] - g[0]) * k, g[1] + (f[1] - g[1]) * k, g[2] + (f[2] - g[2]) * k];
+      this.goal = this.clampState(this.goal);
     }
     if (!this.reducedMotion) {
       if (Math.abs(this.vYaw) + Math.abs(this.vPitch) > 1e-4) {

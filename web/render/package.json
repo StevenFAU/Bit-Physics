@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Field Studies — HDR rgba16float target, measured exposure, tone map, blue-noise dither, Camera2D, colormap LUTs, FieldView2D.",
+  "description": "Field Studies — HDR rgba16float target, measured exposure, tone map, blue-noise dither, Camera2D, OrbitCamera, colormap LUTs, FieldView2D, and the 3D layer (View3D, Environment, Points, Ribbons, Instances).",
   "exports": {
     ".": "./src/index.ts"
   },
