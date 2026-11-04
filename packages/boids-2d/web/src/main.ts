@@ -5,6 +5,10 @@ import { createSettingsPanel } from "../../../../common/common-web/src/panel-she
 import type { CaptureStepDescriptor } from "../../../../common/common-web/src/capture-export.js";
 import type { DiagnosticRow } from "../../../../common/common-web/src/panel-shell.js";
 
+import { rebaseSharedChrome } from "./sim-root.js";
+
+rebaseSharedChrome();
+
 declare global {
   // Set by the ported v4 lab after the WebGPU engine has initialized.
   // eslint-disable-next-line no-var

@@ -94,12 +94,10 @@ const SIMS = {
   // Phase-6 curl-noise: trails developed by ~frame 120; the loop rides the
   // auto-orbit through the wisp field around the sphere.
   "curl-noise": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 46 },
-  // Phase-6 boids-2d: the v4 lab in its seed-42 'flock' regime — the flow never
-  // settles, so the loop is perpetual (flock precedent). crf 58 (vs the family's
-  // 46): the full-detail comet-flock is high-entropy, so 46 blew 3× past the
-  // 1.5 MB budget; 58 lands 1.27 MB at card-legible quality. cfg.hide strips the
-  // embedded lab chrome so only the #view comet-flock films.
-  "boids-2d": { start: 120, shots: 300, gap: 2, fps: 30, px: 512, crf: 58, hide: ["#topbar", "#hint", "#playstats", "#modeflag", "#panel", "#overlay"] },
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill turning, at half speed
+  // (three steps a frame); start 300 lets the opening ring settle into the
+  // mill. The wrap cuts back a little over half a turn.
+  "boids-2d": { query: "?chrome=off&s=mill&sp=0.5&cam=0.5,0.5,2.6", canvas: ".bp-canvas", start: 300, shots: 150, gap: 1, fps: 30, px: 512, crf: 58 },
   // Phase-6 heat-equation: the 'circuit board' scene — a steady chip source
   // conducting through copper traces; gap 4 timelapses the front spreading
   // pad-to-pad (rd2d timelapse precedent). start 150 so shot 0 is already
@@ -163,10 +161,7 @@ const SIMS = {
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
 const STAGED = {
-  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill turning, at half speed
-  // (three steps a frame); start 300 lets the opening ring settle into the
-  // mill. The wrap cuts back a little over half a turn.
-  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&sp=0.5&cam=0.5,0.5,2.6", canvas: ".bp-canvas", start: 300, shots: 150, gap: 1, fps: 30, px: 512, crf: 58 },
+
 };
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every

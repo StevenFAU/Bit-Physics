@@ -70,7 +70,7 @@ and a sim's own floating panels join the overflow / overlap checks by carrying
 `data-bp-chrome`):
 
 ```bash
-CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js node web/tools/check-studio.mjs packages/boids-2d/web/dist v2/
+CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js node web/tools/check-studio.mjs packages/boids-2d/web/dist ""
 ```
 
 The Turing Patterns acceptance run (dive, history, undo-by-replay, share links, the

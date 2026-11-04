@@ -13,7 +13,7 @@
     { "name": "sph-water" },
     { "name": "mpm-multimaterial" },
     { "name": "strange-attractors" },
-    { "name": "boids-2d" },
+    { "name": "boids-2d", "splash_note": "Swarm release: retain the existing v4 lab clips, reproducible from v1/; the landing poster and loop show Swarm's Mill." },
     { "name": "physarum" },
     { "name": "pic-flip" },
     { "name": "sph-multiphase" },

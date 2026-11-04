@@ -99,11 +99,9 @@ const SIMS = {
   // fills the trail buffer to its steady-state wisps around the obstacle
   // wireframe. The trail composite carries its own exposure normalization.
   "curl-noise": { frames: 420, px: 512 },
-  // Phase-6 boids-2d: the v4 lab boots into the seed-42 'flock' regime at 4000
-  // agents — a dense direction-hued comet-flock with GPU motion trails. The
-  // embedded lab draws its own topbar/HUD/hint/controls, so cfg.hide strips
-  // everything but the #view render (the previous poster was a wrong still).
-  "boids-2d": { frames: 320, px: 512, hide: ["#topbar", "#hint", "#playstats", "#modeflag", "#panel", "#overlay"] },
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill — 8,192 fish on Couzin's
+  // zones circling an empty centre, a little closer than the scene opens.
+  "boids-2d": { query: "?chrome=off&s=mill&cam=0.5,0.5,2.6", canvas: ".bp-canvas", frames: 900, px: 512 },
   // Phase-6 heat-equation: boots into the 'circuit board' scene — chip hotspots
   // conducting through copper traces over FR4, inferno palette + blackbody glow
   // + isolines. The EXPLAIN/PROVE <details> bars sit above the canvas; hide them
@@ -146,9 +144,7 @@ const SIMS = {
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
 const STAGED = {
-  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill — 8,192 fish on Couzin's
-  // zones circling an empty centre, a little closer than the scene opens.
-  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&cam=0.5,0.5,2.6", canvas: ".bp-canvas", frames: 900, px: 512 },
+
 };
 
 // Registry guard (2026-10 review): every sim in the single registry

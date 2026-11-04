@@ -78,14 +78,14 @@ const CLIPS = [
   // driven via the lab's own #presets / #colorSeg buttons). crf 62 + 340
   // shots: the full-detail comet flock is high-entropy at 1024 px — crf 60
   // at 400 shots measured 3.1 MB, past the 2 MB clip budget.
-  { sim: "boids-2d", id: "flock", start: 120, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D },
-  { sim: "boids-2d", id: "murmuration-order", start: 150, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
+  { sim: "boids-2d", page: "v1/", id: "flock", start: 120, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D },
+  { sim: "boids-2d", page: "v1/", id: "murmuration-order", start: 150, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
     stage: [{ click: '#presets button[data-p="murmuration"]' }, { click: '#colorSeg button[data-cm="1"]' }] },
-  { sim: "boids-2d", id: "mill-speed", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
+  { sim: "boids-2d", page: "v1/", id: "mill-speed", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
     stage: [{ click: '#presets button[data-p="mill"]' }, { click: '#colorSeg button[data-cm="2"]' }] },
-  { sim: "boids-2d", id: "fluiddrift-curl", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
+  { sim: "boids-2d", page: "v1/", id: "fluiddrift-curl", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
     stage: [{ click: '#presets button[data-p="fluiddrift"]' }, { click: '#colorSeg button[data-cm="5"]' }] },
-  { sim: "boids-2d", id: "swarm-density", start: 150, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D,
+  { sim: "boids-2d", page: "v1/", id: "swarm-density", start: 150, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D,
     stage: [{ click: '#presets button[data-p="swarm"]' }, { click: '#colorSeg button[data-cm="3"]' }] },
 
   // ---- sph-water: scene chips + the view selects (colormap / render mode).
@@ -249,7 +249,7 @@ async function film(browser, clip) {
   const dist = join(REPO, "packages", clip.sim, "web", "dist");
   const server = serve(dist);
   await new Promise((r) => server.listen(0, r));
-  const url = `http://localhost:${server.address().port}/${clip.query ?? ""}`;
+  const url = `http://localhost:${server.address().port}/${clip.page ?? ""}${clip.query ?? ""}`;
   const context = await browser.newContext({ viewport: { width: 1400, height: 1400 } });
   const page = await context.newPage();
   page.on("pageerror", (e) => console.log(`  [${clip.sim}--${clip.id}] pageerror: ${String(e).slice(0, 200)}`));

@@ -166,13 +166,14 @@ WEB_DIR = {s: f"packages/{s}/web" for s in GATE_KIND}
 PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "reaction-diffusion-2d": (("v1/", "src/main.ts"),),
     "physarum": (("v1/", "src/main.ts"),),
-    "boids-2d": (("v2/", "src/v2/main.ts"),),
+    "boids-2d": (("v1/", "src/main.ts"),),
     "neural-ca": (("v1/", "src/main.ts"),),
 }
 
 # The root page's entry module, where it is not src/main.ts: a swapped sim's
 # root page is its rebuilt v2 page.
 ROOT_ENTRY: dict[str, str] = {
+    "boids-2d": "src/v2/main.ts",
     "reaction-diffusion-2d": "src/v2/main.ts",
     "physarum": "src/v2/main.ts",
     "neural-ca": "src/v2/main.ts",

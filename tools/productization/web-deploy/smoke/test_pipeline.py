@@ -192,7 +192,7 @@ def test_rd2d_v2_page_is_discovered_and_gated(pipeline: ModuleType) -> None:
     assert rd.metadata["pages"] == ["", "v1/"]
     assert sims["physarum"].metadata["pages"] == ["", "v1/"]
     assert sims["neural-ca"].metadata["pages"] == ["", "v1/"]
-    assert sims["boids-2d"].metadata["pages"] == ["", "v2/"]
+    assert sims["boids-2d"].metadata["pages"] == ["", "v1/"]
     # every other sim keeps exactly its root page
     for name, s in sims.items():
         if name not in pipeline.PAGES:
