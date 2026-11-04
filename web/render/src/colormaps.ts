@@ -114,7 +114,7 @@ export function oklabToLinear([L, a, b]: Rgb): Rgb {
 const lin = (c: Rgb): Rgb => [srgbToLinear(c[0]), srgbToLinear(c[1]), srgbToLinear(c[2])];
 
 /** Evaluate a colormap at t ∈ [0, 1]; returns sRGB 0–1. */
-export function sampleColormap(def: ColormapDef, t: number): Rgb {
+export function sampleColormap(def: Pick<ColormapDef, "stops">, t: number): Rgb {
   const n = def.stops.length - 1;
   const x = Math.min(Math.max(t, 0), 1) * n;
   const i = Math.min(Math.floor(x), n - 1);
@@ -127,7 +127,7 @@ export function sampleColormap(def: ColormapDef, t: number): Rgb {
 }
 
 /** 256 RGBA8 sRGB texels. */
-export function colormapBytes(def: ColormapDef): Uint8Array<ArrayBuffer> {
+export function colormapBytes(def: Pick<ColormapDef, "stops">): Uint8Array<ArrayBuffer> {
   const out = new Uint8Array(256 * 4);
   for (let i = 0; i < 256; i += 1) {
     const c = sampleColormap(def, i / 255);
@@ -139,7 +139,7 @@ export function colormapBytes(def: ColormapDef): Uint8Array<ArrayBuffer> {
   return out;
 }
 
-export function colormapCss(def: ColormapDef, steps = 12): string {
+export function colormapCss(def: Pick<ColormapDef, "stops">, steps = 12): string {
   const parts: string[] = [];
   for (let i = 0; i <= steps; i += 1) {
     const c = sampleColormap(def, i / steps);

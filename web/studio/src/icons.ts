@@ -48,6 +48,10 @@ const PATHS = {
   wave: '<path d="M3 9c2.5-2 5-2 7.5 0s5 2 7.5 0c1.2-1 2-1.3 3-1.3"/><path d="M3 15.5c2.5-2 5-2 7.5 0s5 2 7.5 0c1.2-1 2-1.3 3-1.3"/>',
   fish: '<path d="M3 12c3-4.6 9-6 14-2l4-3v10l-4-3c-5 4-11 2.6-14-2z"/><path d="M14.4 10.6v.01"/>',
   eye: '<path d="M2.5 12c2.4-4.2 5.6-6.3 9.5-6.3s7.1 2.1 9.5 6.3c-2.4 4.2-5.6 6.3-9.5 6.3S4.9 16.2 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  // Chaos: a ball bursting into a spray of paths; a twin path; an orbit around a point
+  release: '<circle cx="7" cy="17" r="2.2"/><path d="M9 15c3-3 4-7 9-9M9.4 16.4c3.6-1.2 6.6-.6 10.6-3M8.6 14.4c.4-4 2.6-7 5.4-9.9"/>',
+  ghost: '<path d="M3 17c3-6 6-9 9-9s5 3 9 1"/><path d="M3 19c3-5 6.5-7.6 9.5-7.6S17 13.5 21 13" stroke-dasharray="2.2 2.4"/>',
+  orbit: '<ellipse cx="12" cy="12" rx="9" ry="4.2"/><circle cx="12" cy="12" r="2"/><path d="M18.6 9.2l2.2-1.2.4 2.4"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

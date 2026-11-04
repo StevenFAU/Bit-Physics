@@ -3,7 +3,26 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — Lorenz strange attractor (classical RK4). Ships the committed lorenz_rk4.wgsl through a Vite bundle with a settings panel and capture-export hook (Phase-5 web-build track).",
-  "scripts": { "gen": "node gen-verification.mjs", "prebuild": "node gen-verification.mjs", "predev": "node gen-verification.mjs", "build": "vite build", "dev": "vite", "preview": "vite preview", "typecheck": "tsc --noEmit" },
-  "devDependencies": { "@webgpu/types": "0.1.70", "typescript": "6.0.3", "vite": "6.4.3" }
+  "description": "Stack-B WebGPU web build — strange attractors: the v1 page (Lorenz and the chartered family, classical RK4, the committed lorenz_rk4.wgsl) and the v2 Chaos page (Field Studies shell: Lorenz density + ensemble release), each with the capture-export hook.",
+  "scripts": {
+    "gen": "node gen-verification.mjs",
+    "prebuild": "node gen-verification.mjs",
+    "predev": "node gen-verification.mjs",
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
 }
