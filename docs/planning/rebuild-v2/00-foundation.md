@@ -7,7 +7,8 @@
 > `pipeline.py` `PAGES` for gated v2 pages. Not yet built: the rewind ring and `Timeline`,
 > HDR-display (`extended`) output, shader hot-reload, visual-regression baselines,
 > ESLint/Prettier workspace-wide, and the iGPU reference machine for budgets. IBM Plex Sans
-> is not vendored yet (UI text falls back to system-ui); Mono and Sans Condensed are.
+> was vendored 2026-11-03 (one variable latin woff2, weights 100–700, next to Mono and Sans
+> Condensed in `common/common-web/fonts/`); before that UI text fell back to system-ui.
 >
 > **Wave A (2026-10-23, with Slime Mould M0):** bloom (§ 3.1, dual-filter, mixed in by
 > `HdrPipeline`, off unless a sim asks for it) and the GPU counting sort with its prefix scan
