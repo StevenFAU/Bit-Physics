@@ -30,7 +30,7 @@ A v2 page is a second Vite input in the sim's own package (`v2/index.html` →
 `dist/v2/`), so the per-sim build and `dist/` contract are unchanged; register it in
 `pipeline.py` `PAGES` and `validate` drives it through the sim's same established gate.
 Public assets live at the dist root. Resolve them from the bundle, not the page (a sim-local
-`src/sim-root.ts`, as in Turing Patterns and Slime Mould), so the page works at either depth.
+`src/sim-root.ts`, as in Turing Patterns, Slime Mould and Grow), so the page works at either depth.
 
 A frame loop that skips frames while earlier ones are unfinished (frames in flight, released
 by `queue.onSubmittedWorkDone`) must not just return when it skips. Firefox (wgpu) resolves

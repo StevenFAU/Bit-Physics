@@ -35,7 +35,10 @@ const SIMS = {
   // 240 frames fills the dusk silhouette while retaining individual wings;
   // zoom-to-content normalizes the 16:9 simulation canvas for the square card.
   "boids-3d": { frames: 240, px: 512, zoom: true, zoomTight: 0.62, boost: "brightness(1.35) saturate(1.5)" },
-  "neural-ca": { frames: 140, px: 512 },
+  // Grow (rebuild-v2 04-neural-ca.md M3, the root page since the release
+  // swap): the Dish with the butterfly, a regeneration-trained organism,
+  // grown from one cell on the dark dish. Chrome off; frame 600.
+  "neural-ca": { query: "?chrome=off&o=butterfly&cam=0.5,0.5,1.45", canvas: ".bp-canvas", frames: 600, px: 512 },
   // Phase-6 verification-demo (sph-water): boots into the dam-break preset —
   // ~150 RAF frames is the crown-splash moment (column collapsed, spray up
   // the far wall) under the SSFR render, which carries its own exposure.
@@ -142,11 +145,7 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {
-  // Grow v2 (rebuild-v2 04-neural-ca.md M3): the Dish with the butterfly, a
-  // regeneration-trained organism, grown from one cell on the dark dish.
-  "neural-ca-v2": { sim: "neural-ca", page: "v2/", query: "?chrome=off&o=butterfly&cam=0.5,0.5,1.45", canvas: ".bp-canvas", frames: 600, px: 512 },
-};
+const STAGED = {};
 
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every

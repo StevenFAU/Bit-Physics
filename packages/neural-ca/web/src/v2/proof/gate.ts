@@ -15,6 +15,7 @@
 
 import inferenceWgsl from "../../../../typescript/src/nca_inference.wgsl?raw";
 import V from "../../generated/verification.json";
+import { simAsset } from "../../sim-root.js";
 import { field, sha256hex } from "@bp/verify";
 import type { CaptureBundle, CaptureStepDescriptor } from "@bp/verify";
 
@@ -42,9 +43,9 @@ if (
 /** The committed kernel's source text (the live solver compiles the same bytes). */
 export const KERNEL_WGSL: string = inferenceWgsl;
 
-/** Public assets live at the dist root; this page is one level down (…/v2/). */
+/** A public asset (dist root), resolved from the bundle so any page depth works. */
 export function assetUrl(name: string): string {
-  return new URL(`../${name}`, location.href).toString();
+  return simAsset(name);
 }
 
 export interface Layout {

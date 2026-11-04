@@ -23,9 +23,10 @@
 // undo by replay); Graft (copy, move, across dishes, undo); Inside the Cell
 // (the CPU arithmetic against the GPU's next step, share link); the organism
 // picker and card. M2: Prove's gradient check against the float64 reference;
-// Teach end to end (draw, train to a recognisable organism at 60 fps, grow it
-// on the gated kernel, its regrowth score, save / reload / grow / import /
-// delete in the local library); same weights at either training pace; T1
+// Teach end to end (draw, train to a recognisable organism at 60 fps, retrain
+// with the same run seed to exactly that iteration and grow it on the gated
+// kernel, its regrowth score, save / reload / grow / import / delete in the
+// local library); same weights at either training pace; T1
 // does not train. M3: Chimera (one rule ≡ the gated kernel bit for bit, the
 // opening graft, grafts and Rewrite carry rules, undo, determinism, the pair
 // picker, what grows over time) and Textures (weights SHA, the plane's colour
@@ -79,7 +80,7 @@ const check = (name, ok, detail = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-async function open(path = "/v2/", viewport = { width: 1280, height: 720 }) {
+async function open(path = "/", viewport = { width: 1280, height: 720 }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
@@ -126,7 +127,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(`pageerror: ${e.message}`));
-  await page.goto(origin + "/v2/", { waitUntil: "load" });
+  await page.goto(origin + "/", { waitUntil: "load" });
   await page.waitForFunction(() => globalThis.__bitPhysicsReady === true, undefined, { timeout: 60000 });
   // the driver's move, at once: a native click on the capture control while the rest boots
   const hash = () =>
@@ -172,7 +173,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- boot: the gated disk -------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=disk");
+  const { ctx, page, errors } = await open("/?o=disk");
   await page.waitForTimeout(3000);
   const d = await T(page, () => globalThis.__bpDebug());
   check("?o=disk boots into The Dish with the gated run on screen", d.scene === "dish" && d.organism === "disk" && d.gated === true, `${d.scene}, ${d.organism}, gated ${d.gated}, adapter ${d.adapter}`);
@@ -243,7 +244,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- edits, undo by replay, history ------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=disk");
+  const { ctx, page, errors } = await open("/?o=disk");
   const r = await T(page, async () => {
     const app = globalThis.__grow;
     app.clock.paused = true;
@@ -327,7 +328,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- Tune: a keyboard change to the update chance sticks ----------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=disk");
+  const { ctx, page, errors } = await open("/?o=disk");
   await page.waitForTimeout(800);
   await T(page, () => globalThis.__grow.studio.tune.show());
   await page.waitForTimeout(200);
@@ -343,7 +344,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- compare shows the save point's own hidden channels -----------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=disk&show=hidden&chrome=off");
+  const { ctx, page, errors } = await open("/?o=disk&show=hidden&chrome=off");
   await page.waitForTimeout(800);
   await T(page, async () => {
     const app = globalThis.__grow;
@@ -393,13 +394,13 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- a seed reproduces the same bytes across page loads ---------------------
 {
-  const a = await open("/v2/?s=seeds&seed=7&o=disk");
+  const a = await open("/?s=seeds&seed=7&o=disk");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?s=seeds&seed=7&o=disk");
+  const b = await open("/?s=seeds&seed=7&o=disk");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
-  const c = await open("/v2/?s=seeds&seed=8&o=disk");
+  const c = await open("/?s=seeds&seed=8&o=disk");
   const h3 = await hashAfter(c.page, 300);
   await c.ctx.close();
   check("same seed, same bytes across page loads (Many seeds, 300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -408,7 +409,7 @@ if (process.env.ACCEPT_ONLY === "m3") {
 
 // --- share link; Many seeds settles in the middle ----------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=seeds&o=disk&seed=11&p=0.35&show=cells&sp=2");
+  const { ctx, page, errors } = await open("/?s=seeds&o=disk&seed=11&p=0.35&show=cells&sp=2");
   const p = await T(page, () => ({ scene: globalThis.__grow.scene.id, o: globalThis.__grow.organism.def.id, p: globalThis.__grow.sim.fireRate, show: globalThis.__grow.view.mode, sp: globalThis.__grow.clock.speed, gated: globalThis.__grow.onGatedRun }));
   check("a share link sets scene, organism, update chance, view and speed", p.scene === "seeds" && p.o === "disk" && p.p === 0.35 && p.show === "cells" && p.sp === 2 && !p.gated, JSON.stringify(p));
   await shot(page, "03-cells");
@@ -472,7 +473,7 @@ const IOU_HELPERS = `
 
 // --- the Menagerie --------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=menagerie");
+  const { ctx, page, errors } = await open("/?s=menagerie");
   await page.waitForTimeout(2500);
   await shot(page, "10-menagerie");
   const r = await T(page, async () => {
@@ -579,7 +580,7 @@ const IOU_HELPERS = `
 
 // --- regrowth on the live kernel, against the manifest's reference ----------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=gecko");
+  const { ctx, page, errors } = await open("/?o=gecko");
   await page.evaluate(IOU_HELPERS);
   const rows = await T(page, async () => {
     const app = globalThis.__grow;
@@ -627,7 +628,7 @@ const IOU_HELPERS = `
 
 // --- Freeze ----------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=gecko");
+  const { ctx, page, errors } = await open("/?o=gecko");
   const r = await T(page, async () => {
     const app = globalThis.__grow;
     app.clock.paused = true;
@@ -679,7 +680,7 @@ const IOU_HELPERS = `
 
 // --- Graft -----------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=starfish");
+  const { ctx, page, errors } = await open("/?o=starfish");
   const r = await T(page, async () => {
     const app = globalThis.__grow;
     app.clock.paused = true;
@@ -759,7 +760,7 @@ const IOU_HELPERS = `
 
 // --- Inside the Cell -------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=cell&o=turtle&cell=30,20");
+  const { ctx, page, errors } = await open("/?s=cell&o=turtle&cell=30,20");
   await page.waitForTimeout(2000);
   const link = await T(page, () => ({ scene: globalThis.__grow.scene.id, o: globalThis.__grow.organism.def.id, cell: globalThis.__grow.cellSel, view: globalThis.__grow.viewMode, panel: !document.querySelector(".gr-cell-panel").hidden }));
   check("a share link opens Inside the Cell on its organism and cell, in the Cells view", link.scene === "cell" && link.o === "turtle" && link.cell.join() === "30,20" && link.view === "cells" && link.panel, JSON.stringify(link));
@@ -833,7 +834,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
 
 // --- the gradient check (Prove) and the boot order --------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?o=disk");
+  const { ctx, page, errors } = await open("/?o=disk");
   const boot = await T(page, () => globalThis.__growBoot);
   await page.waitForFunction(() => globalThis.__growBoot.trainKernels !== undefined, undefined, { timeout: 120000 });
   const boot2 = await T(page, () => globalThis.__growBoot);
@@ -863,7 +864,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
 
 // --- Teach end to end: draw, train, grow it, save it --------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=teach");
+  const { ctx, page, errors } = await open("/?s=teach");
   await T(page, () => globalThis.__growTeach.loadPreset("gecko"));
   await page.waitForTimeout(500);
   const drawn = await T(page, () => ({ s: globalThis.__growTeach.state(), btn: document.querySelector(".gr-teach-panel .bp-btn-primary")?.disabled, tools: globalThis.__grow.studio.rail.active }));
@@ -894,7 +895,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
       const s = t.state();
       if (s.run.iter > 50) fps.push(s.fps);
       if (!shot && s.run.iter > 500) { shot = true; console.log("teach-shot"); }
-      if (s.run.recognisable && s.run.iter >= s.run.recognisable.iter + 100) break;
+      if (s.run.recognisable) break;
     }
     const s = t.state();
     const lattice = (() => {
@@ -916,6 +917,44 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
   check("a recognisable organism, grown from one cell (overlap ≥ 0.85 at 96 and 300 steps), within 90 s of training on this GPU", !!rr.recognisable && rr.recognisable.seconds < 90, rr.recognisable ? `iteration ${rr.recognisable.iter}, ${rr.recognisable.seconds.toFixed(1)} s of training (${rr.itPerS.toFixed(1)} it/s, recipe batch ${rr.recipe.B}, pool ${rr.recipe.pool})` : "not reached");
   check("the page keeps its frame rate while it trains (smooth pace)", run.fpsMin >= 50, `${run.fpsMean.toFixed(1)} fps mean, ${run.fpsMin.toFixed(1)} min, ${rr.budgetMs} ms of training per frame; ${rr.memoryMiB.toFixed(0)} MiB of GPU memory`);
   await shot(page, "16-teach-train");
+  // Grow it, from a deterministic stop. Where training stops decides the network that
+  // grows: stopped by a once-a-second poll 100 iterations past recognisable, the overlap
+  // at step 300 measured 0.59–0.90 over eight runs. The run seed fixes every iteration's
+  // plan, so a second run with the same seed, stopped at exactly the iteration the
+  // trainer called recognisable, holds the weights that evaluation grew; evaluated
+  // again there, it must give the first run's numbers to the last bit.
+  const recogIter = rr.recognisable ? rr.recognisable.iter : null;
+  const firstEval = run.s.run.evals.find((e) => e.iter === recogIter) ?? null;
+  const replay = recogIter === null ? null : await T(page, async (R) => {
+    const t = globalThis.__growTeach;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    await t.backToDraw();
+    await t.loadPreset("gecko");
+    await sleep(300);
+    t.pace = "fast";
+    t.stopAfter = R;
+    const t0 = performance.now();
+    await t.startTraining();
+    await t.run.done;
+    const iter = t.run.job.iter;
+    // the scheduled evaluation at R runs before iteration R, so it was not reached: run it now
+    await t.pauseTraining();
+    t.run.job.evaluateNow();
+    t.resumeTraining();
+    await t.run.done;
+    for (let i = 0; i < 200 && !t.state().run.evals.some((e) => e.iter === R); i += 1) await sleep(50);
+    const ev = t.state().run.evals.find((e) => e.iter === R) ?? null;
+    t.pace = "smooth";
+    t.stopAfter = null;
+    return { iter, ev, seconds: (performance.now() - t0) / 1000 };
+  }, recogIter);
+  const same = !!replay && !!firstEval && !!replay.ev && replay.iter === recogIter &&
+    replay.ev.iou96 === firstEval.iou96 && replay.ev.iou300 === firstEval.iou300 && replay.ev.rgb96 === firstEval.rgb96;
+  check(
+    "the same run seed, retrained at the faster pace and stopped at the recognisable iteration, evaluates exactly as the first run did there",
+    same,
+    replay ? `iteration ${replay.iter} (of ${recogIter}), retrained in ${replay.seconds.toFixed(1)} s; overlap at 96 / 300 steps ${firstEval?.iou96?.toFixed(4)} / ${firstEval?.iou300?.toFixed(4)} first run, ${replay.ev?.iou96?.toFixed(4)} / ${replay.ev?.iou300?.toFixed(4)} again` : "not recognisable, nothing to replay",
+  );
   // grow it: the weights move to the committed layout and grow in the dish through the gated kernel
   const live = await T(page, async () => {
     const t = globalThis.__growTeach;
@@ -936,12 +975,19 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
       if (a || b) uni += 1;
     }
     app.clock.paused = false;
-    return { s: t.state(), iou: inter / uni, still: app.still, tools: app.studio.rail.active, kernelIsGated: app.dishes[0].sim !== undefined };
+    return { s: t.state(), iou: inter / uni, seed: app.seed, still: app.still, tools: app.studio.rail.active, kernelIsGated: app.dishes[0].sim !== undefined };
   });
   await page.waitForTimeout(1500);
   await shot(page, "17-teach-live");
-  // overlap measured 0.75–0.88 over three runs: it depends on where training stopped
-  check("“Grow it” grows the taught organism in the dish on the live (gated) kernel: overlap with the drawing at step 300", live.s.phase === "live" && !live.still && live.tools === "cut" && live.iou > 0.7, `IoU ${live.iou.toFixed(3)}`);
+  // the network of the recognisable iteration, grown from one cell with the dish's mask seed (42):
+  // 0.881 every run (run seed 1, iteration 1350, RX 6800 XT); run seeds 1–3 gave 0.825–0.885 at
+  // mask seed 42 and 0.743–0.902 over mask seeds 1, 2, 3 and 42
+  const grownIters = live.s.taught?.card?.iterations;
+  check(
+    "“Grow it” grows the taught organism in the dish on the live (gated) kernel: overlap with the drawing at step 300",
+    live.s.phase === "live" && !live.still && live.tools === "cut" && grownIters === recogIter && live.iou > 0.7,
+    `IoU ${live.iou.toFixed(3)} (mask seed ${live.seed}), the network of iteration ${grownIters}`,
+  );
   check("its card carries a regrowth score measured on the live kernel", live.s.regrow && Number.isFinite(live.s.regrow.mean) && live.s.taught.card.regrow === live.s.regrow.mean, live.s.regrow ? `mean ${live.s.regrow.mean.toFixed(3)} (${Object.entries(live.s.regrow.after).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(", ")})` : "none");
   // the library: save, survives a reload, grows back with the same bytes, download/import, delete
   const saved = await T(page, async () => {
@@ -977,7 +1023,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
 
 // --- same weights however training falls into frames; T1 does not train ------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=teach");
+  const { ctx, page, errors } = await open("/?s=teach");
   const shas = await T(page, async () => {
     const t = globalThis.__growTeach;
     const out = {};
@@ -1002,7 +1048,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
   check("a different run seed gives different weights", shas.seed2.sha !== shas.smooth.sha);
   check("no console errors (determinism)", errors.length === 0, errors.join(" | "));
   await ctx.close();
-  const t1 = await open("/v2/?s=teach&tier=T1");
+  const t1 = await open("/?s=teach&tier=T1");
   const st = await T(t1.page, () => ({ can: globalThis.__growTeach.canTrain, btn: document.querySelector(".gr-teach-panel .bp-btn-primary")?.disabled, note: document.querySelector(".gr-teach-panel")?.textContent ?? "" }));
   check("T1 does not train: Teach says so and grows saved models only", st.can === false && st.btn === true && /too slow to train/.test(st.note), JSON.stringify({ can: st.can, btn: st.btn }));
   await t1.ctx.close();
@@ -1011,7 +1057,7 @@ const GC_BUDGET = TEACH_GEN.gradcheck.budget_rel_l2;
 await m3Checks();
 
 // --- frame time: the boot scene, the Menagerie's eight dishes, Chimera, Textures ---
-for (const [label, path] of [["the Dish", "/v2/?bench=1"], ["the Menagerie", "/v2/?s=menagerie&bench=1"], ["Chimera", "/v2/?s=chimera&bench=1"], ["Textures", "/v2/?s=textures&bench=1"]]) {
+for (const [label, path] of [["the Dish", "/?bench=1"], ["the Menagerie", "/?s=menagerie&bench=1"], ["Chimera", "/?s=chimera&bench=1"], ["Textures", "/?s=textures&bench=1"]]) {
   const { ctx, page } = await open(path);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
@@ -1026,7 +1072,7 @@ await finish();
 async function m3Checks() {
   // ---- Chimera ----
   {
-    const { ctx, page, errors } = await open("/v2/?s=chimera&o=gecko");
+    const { ctx, page, errors } = await open("/?s=chimera&o=gecko");
     await page.waitForTimeout(800);
     const b = await T(page, () => {
       const app = globalThis.__grow;
@@ -1192,7 +1238,7 @@ async function m3Checks() {
   }
   // ---- Chimera, every healer pair: what grows (measured, printed) ----
   {
-    const { ctx, page } = await open("/v2/?s=chimera&o=gecko");
+    const { ctx, page } = await open("/?s=chimera&o=gecko");
     const rows = await T(page, async () => {
       const app = globalThis.__grow;
       const ids = app.lib.healers.map((d) => d.id);
@@ -1223,7 +1269,7 @@ async function m3Checks() {
   }
   // ---- Textures ----
   {
-    const { ctx, page, errors } = await open("/v2/?s=textures");
+    const { ctx, page, errors } = await open("/?s=textures");
     await page.waitForTimeout(1000);
     const b = await T(page, () => {
       const app = globalThis.__grow;
