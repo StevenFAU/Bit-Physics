@@ -34,6 +34,7 @@ pypi-release / render-passes::
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -481,6 +482,27 @@ def main_discover(argv: list[str] | None = None) -> int:
     return 0 if sims else 2
 
 
+def main_lfs_include(argv: list[str] | None = None) -> int:
+    """Print exact canonical paths before CI has installed verify's dependencies."""
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--sim", required=True, choices=sorted(GATE_KIND))
+    a = ap.parse_args(argv)
+    # CANON remains owned by verify.py. Read its literal declaration without
+    # importing numpy/testkit into this pre-sync, stdlib-only workflow step.
+    tree = ast.parse((TOOL / "verify.py").read_text())
+    canon = next(
+        ast.literal_eval(node.value)
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "CANON" for t in node.targets)
+    )
+    if a.sim in canon:
+        manifest = Path(canon[a.sim])
+        # testkit's load_capture resolves the HDF5 sibling with with_suffix.
+        print(f"{manifest.as_posix()},{manifest.with_suffix('.h5').as_posix()}")
+    return 0
+
+
 def main_build(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sims-json")
@@ -549,13 +571,19 @@ def _select(a) -> list[SimSpec]:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2 or argv[1] not in ("discover", "build", "validate"):
-        print("usage: pipeline.py [discover|build|validate] ...", file=sys.stderr)
+    if len(argv) < 2 or argv[1] not in ("discover", "build", "validate", "lfs-include"):
+        print(
+            "usage: pipeline.py [discover|build|validate|lfs-include] ...",
+            file=sys.stderr,
+        )
         return 2
     verb, rest = argv[1], argv[2:]
-    return {"discover": main_discover, "build": main_build, "validate": main_validate}[
-        verb
-    ](rest)
+    return {
+        "discover": main_discover,
+        "build": main_build,
+        "validate": main_validate,
+        "lfs-include": main_lfs_include,
+    }[verb](rest)
 
 
 if __name__ == "__main__":

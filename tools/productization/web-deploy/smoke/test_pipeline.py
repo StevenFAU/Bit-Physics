@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import subprocess
 import sys
 from pathlib import Path
 from types import ModuleType
@@ -261,3 +262,39 @@ def test_a_swapped_sim_gates_its_v2_root_and_its_v1_page(
     (web / "src" / "v2" / "main.ts").write_text("createStudio();")
     ok, why = pipeline._qualifies(web, "fake")
     assert not ok and "src/v2/main.ts" in why
+
+
+@pytest.mark.parametrize("sim", sorted(EXPECTED_SIMS))
+def test_lfs_include_uses_only_the_sims_canonical(sim, verify):
+    # -S excludes site-packages: this command runs before CI syncs numpy/h5py.
+    result = subprocess.run(
+        [sys.executable, "-S", str(TOOL / "pipeline.py"), "lfs-include", "--sim", sim],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    if sim in verify.CANON:
+        manifest = Path(verify.CANON[sim])
+        assert result.stdout.strip().split(",") == [
+            manifest.as_posix(),
+            manifest.with_suffix(".h5").as_posix(),
+        ]
+    else:
+        assert result.stdout == ""
+
+
+def test_lfs_include_rejects_unknown_sim():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-S",
+            str(TOOL / "pipeline.py"),
+            "lfs-include",
+            "--sim",
+            "typo",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode != 0
+    assert result.stdout == ""
