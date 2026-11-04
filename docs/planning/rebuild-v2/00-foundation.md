@@ -36,6 +36,26 @@
 > their time step before the gate and ran at ~6%). Grow's Menagerie then drew ~105, because Firefox
 > ran the NCA step ~10× slower than Chromium; the live kernel now writes out its two inner loops and
 > the two browsers run level (PR #55; 04-neural-ca.md, "Firefox step cost").
+>
+> **F3 — the 3D layer (2026-11-04, with Chaos M0):** in `@bp/render`. `View3D` is the per-frame
+> uniform every 3D renderer binds (world camera for sky rays and the ground, plus a model transform,
+> so a sim keeps its own coordinates — Chaos draws Lorenz's z-up units). `Environment`: a studio
+> gradient or an analytic daylight sky, with an optional ground plane (fading grid, contact shadows
+> from up to 32 sphere casters, its own depth). `Points`: one additive splat per particle whose
+> footprint integrates to its energy at any size (size attenuation), stretched into a capsule along
+> its screen motion (velocity stretch), positions optionally relative to a floating origin.
+> `Accumulator`: light gathered off the scene target and added in, per frame or as a long exposure.
+> `Ribbons`: a per-strand history ring fed from the CPU or a GPU buffer, screen-space width, age and
+> depth fade. `Instances`: procedural meshes (icosphere LODs) culled against the frustum and sorted
+> into levels of detail in compute, one indirect draw per level. `OrbitCamera` gained a follow target
+> and `rescale` (keep a subject fitted when the aspect changes). Two limits are designed around (from
+> the arithmetic and the WebGPU rules, not from observed failures): thousands of tiny additive
+> splats onto one rgba16float pixel stop adding once each is below half an ulp of the sum
+> (so new light lands on a cleared frame target and the long exposure is one fused write per pixel;
+> overlapping ensembles draw only as many members as fill their footprint, about 400 deep); and a
+> fragment shader that writes `frag_depth` needs a depth attachment (Environment has a colour-only
+> entry point). Not built yet: `FollowCamera` / `DirectorCamera` beyond the follow target, TAA,
+> `Sprites`.
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

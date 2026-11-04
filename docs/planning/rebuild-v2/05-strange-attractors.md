@@ -1,7 +1,67 @@
 # 05 — Chaos (Lorenz and the strange-attractor family)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/strange-attractors/web`. Wave B.
-> Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-04 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-04): M0 built** as the `v2/` page of
+> `packages/strange-attractors/web` (served at `/sims/strange-attractors/v2/`, gated through
+> `pipeline.py` `PAGES`; v1 unchanged). The Butterfly: the Lorenz attractor as a long exposure, an
+> ensemble released automatically and by clicking, the Ghost pair, the F3 orbit camera, Learn and
+> Prove. F3, the shared 3D layer, landed with it in `web/render` (see 00-foundation.md). Measured
+> on the RX 6800 XT (snap Chromium 156, RADV) unless a line says otherwise.
+>
+> - **The gate, ported verbatim** (`src/v2/proof/gate.ts`): the committed `src/lorenz_rk4.wgsl`,
+>   v1's 48-byte parameter block, its own buffers, the same sampling and manifest. `pipeline.py
+>   validate --sim strange-attractors` passes on both pages, run twice; all four captures (v1 and v2,
+>   twice each) and two v1 captures taken on main before the change hash the same (sha256
+>   `dd645f26…`). The page signals ready once the gate kernel is compiled (under 100 ms) and compiles the
+>   renderer and the live kernels after (live under 200 ms).
+> - **The ensemble is integrated as offsets, not positions** — this replaces the risk below
+>   ("f32 … collapses to identical trajectories — use the double-float path"). Near |x| ≈ 20, f32
+>   numbers are ~2 × 10⁻⁶ apart, so a 10⁻⁶ ball stored as positions sits on two or three values per
+>   axis. Instead the ball's centre is integrated in f64 on the CPU and the GPU steps each member's
+>   offset e with the centre's four RK4 stage points. Lorenz is quadratic, so
+>   f(s + e) − f(s) = J(s)·e + Q(e) is written with no large terms cancelling, and RK4 on the offsets
+>   is RK4 on the full positions (to f64 rounding — `test/chaos-model.test.ts`). Each offset keeps
+>   f32's relative precision however small it is. Measured (Prove, "A 10⁻⁹ ball is resolved"):
+>   a 10⁻⁹ ball run to t = 10 (it grows 2.5 × 10⁴-fold), 63 members against the same offsets in f64:
+>   worst relative error 7.2 × 10⁻⁶, median 3.2 × 10⁻⁶. Not gated; shown as measured. No double-float
+>   path is needed for M1's finest digits.
+> - **Predictability, measured.** The horizon is the first time the ball's RMS spread (reduced on the
+>   GPU from every member) reaches half the attractor's own RMS size (14.7 at Lorenz's values). A
+>   10⁻⁶ ball released at the scene's point loses it at t = 16.1 (the "18.3" above was a placeholder).
+>   From that one point: 10⁻³, 10⁻⁶, 10⁻⁹, 10⁻¹² → t = 8.52, 16.12, 23.01, 31.07, so each digit buys
+>   2.53, 2.30, 2.69 time units (ln 10 / λ₁ ≈ 2.54). That is M1's "Buy More Digits" line, measured
+>   ahead of its plot.
+> - **The live kernels** (`src/v2/model/ensemble.wgsl`; no builtin sin/cos/exp). The attractor's
+>   picture is a second population already on it, plain f32 RK4 whose `field` and `rk4` are the gated
+>   kernel's character for character: one particle from the gate's start, 10,000 steps in 1,000-step
+>   batches, gives the gated trajectory's states byte for byte (Prove, and the acceptance run). Each
+>   frame it is splatted into a long exposure (τ 0.2 s, 0.04 s while the view is dragged), coloured
+>   cobalt to magnesium white by speed along the attractor. The ball's members are coloured by where
+>   they started along the direction the ball stretches most (top singular vector of the flow map
+>   over 1.5 time units, f64), so its folds show as bands.
+> - **Sizes and frame rate.** T3 1,048,576 ball members + 524,288 attractor points (T2 262,144 +
+>   131,072; T1 65,536 + 65,536). GPU per frame 2.4–3.4 ms at 1×, 4× and 8× (8× is 32 steps a frame
+>   at 60 fps). Submitted frames per second: headed Firefox 158 164–165 at 1×, 4× and 8× (the 165 Hz
+>   display), sim at full speed; headed Chromium 156 100 (its X11 window's 100 Hz display); headless
+>   Chromium 60. Three frames in flight with the empty-submit gate (web/README.md).
+> - **What differs from the plan above.** ε is a *Precision* slider (digits, 2–12) and `[` `]`, not
+>   the wheel, which dollies the camera. Tools: Release, Ghost, Camera (Slice plane comes with M2's
+>   scene). Callouts: "a million starts, one point", "stretching", "folding", "the cloud has
+>   forgotten where it came from", on the ball's centroid. Tune holds σ, ρ, β (each change an
+>   undoable edit, replayed on undo) above the picture's own controls. The three fixed points are
+>   small spheres (F3 Instances).
+> - **Checks.** `v2-acceptance.mjs` 36/36 (the capture bytes on both pages, ready before compile, the
+>   tier's sizes, 240 steps/s, the horizon window and its order over four precisions, the three Prove
+>   checks, click to release and not off the attractor, Ghost, orbit / dolly / reset, precision by
+>   key and link, ρ as an undoable edit on the link, save / restore / compare, the same seed giving
+>   the same ball bytes across loads, the fixed points through the GPU cull, Environment's sky and
+>   ground, reduced motion, no console errors). `web/tools/check-studio.mjs` clean at 390, 820 and
+>   1440 px and 200% zoom, no axe violations, also on a software GPU (Playwright's Chromium,
+>   SwiftShader). `npm test` 262/262.
+> - **Not yet:** λ₁ and the spectrum checks, the invariant-measure check, the other scenes,
+>   posters and loops, the landing card, the release swap.
 
 ## Verdict on the prototype
 
