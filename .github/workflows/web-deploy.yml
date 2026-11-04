@@ -147,6 +147,12 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
           S3_BUCKET: ${{ secrets.R2_BUCKET_NAME }}
         run: |
+          include=$(python3 tools/productization/web-deploy/pipeline.py lfs-include --sim "${{ matrix.sim }}")
+          if [ -z "$include" ]; then
+            echo "lfs fetch: ${{ matrix.sim }} needs no committed canonical; skipping"
+            exit 0
+          fi
+          echo "lfs fetch: ${{ matrix.sim }} includes $include"
           if [ -n "${R2_ACCOUNT_ID:-}" ] && [ -n "${AWS_ACCESS_KEY_ID:-}" ] && \
              [ -n "${AWS_SECRET_ACCESS_KEY:-}" ] && [ -n "${S3_BUCKET:-}" ]; then
             source tools/lfs/setup-lfs-s3.sh
@@ -154,7 +160,7 @@ jobs:
           else
             echo "lfs fetch route: GitHub LFS"
           fi
-          git lfs pull --include="captures/**" || echo "no LFS captures for this sim"
+          git lfs pull --include="$include" --exclude=""
       - name: Build artifact (Vite production build)
         run: |
           uv run python tools/productization/web-deploy/pipeline.py build \
