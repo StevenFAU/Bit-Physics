@@ -6,7 +6,11 @@ import { describe, expect, it } from "vitest";
 import { createContext } from "../context.js";
 
 describe("createContext", () => {
-  it("throws a clear error when navigator.gpu is undefined", async () => {
+  it.each([
+    ["navigator is absent", undefined],
+    ["navigator.gpu is undefined", { gpu: undefined }],
+    ["navigator.gpu is null", { gpu: null }],
+  ])("throws a clear error when %s", async (_label, navigator) => {
     // In Node `navigator` is a read-only getter; redefine the property
     // via defineProperty for the duration of the test.
     const before = Object.getOwnPropertyDescriptor(globalThis, "navigator");
@@ -14,9 +18,9 @@ describe("createContext", () => {
       Object.defineProperty(globalThis, "navigator", {
         configurable: true,
         writable: true,
-        value: undefined,
+        value: navigator,
       });
-      await expect(createContext()).rejects.toThrow(/navigator\.gpu is undefined/);
+      await expect(createContext()).rejects.toThrow(/navigator\.gpu is unavailable/);
     } finally {
       if (before !== undefined) {
         Object.defineProperty(globalThis, "navigator", before);

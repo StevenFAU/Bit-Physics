@@ -26,12 +26,12 @@ export interface CreateContextOptions {
 export async function createContext(
   options: CreateContextOptions = {},
 ): Promise<DeviceContext> {
-  const gpu = (globalThis as { navigator?: { gpu?: GPU } }).navigator?.gpu;
-  if (gpu === undefined) {
+  const gpu = (globalThis as { navigator?: { gpu?: GPU | null } }).navigator?.gpu;
+  if (gpu == null) {
     // No "WebGPU unavailable:" prefix here — the sim pages add it themselves
     // (`WebGPU unavailable: ${e.message}`), which printed it twice.
     throw new Error(
-      "navigator.gpu is undefined (browser without WebGPU support, " +
+      "navigator.gpu is unavailable (browser without WebGPU support, " +
         "or Node without a WebGPU runtime shim).",
     );
   }
