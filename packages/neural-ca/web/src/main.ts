@@ -37,6 +37,7 @@ import renderWgsl from "./render.wgsl?raw";
 import V from "./generated/verification.json";
 import { installExplainPanel } from "./explain.js";
 import { installVerifyPanel } from "./verify-panel.js";
+import { rebaseSharedChrome, simAsset } from "./sim-root.js";
 
 const GRID = 64;
 const CN = 16;
@@ -146,8 +147,8 @@ async function main(): Promise<void> {
   const { device, queue } = ctx;
 
   const [weightsBuf, layout] = await Promise.all([
-    fetch(`${import.meta.env.BASE_URL}nca-weights.bin`).then((r) => r.arrayBuffer()),
-    fetch(`${import.meta.env.BASE_URL}nca-layout.json`).then((r) => r.json() as Promise<Layout>),
+    fetch(simAsset("nca-weights.bin")).then((r) => r.arrayBuffer()),
+    fetch(simAsset("nca-layout.json")).then((r) => r.json() as Promise<Layout>),
   ]);
   const weights = new Float32Array(weightsBuf);
   const b1Off = layout.tensors["w1.bias"]!.offset;
@@ -813,7 +814,7 @@ async function main(): Promise<void> {
   // ---- load the committed canonical frames asset (for |Δ| render mode) -----
   void (async () => {
     try {
-      const res = await fetch(`${import.meta.env.BASE_URL}${V.canonical_frames.asset}`);
+      const res = await fetch(simAsset(V.canonical_frames.asset));
       if (!res.ok) return;
       const buf = await res.arrayBuffer();
       if (buf.byteLength !== V.canonical_frames.bytes) return;
@@ -857,4 +858,6 @@ async function main(): Promise<void> {
   (globalThis as { __bitPhysicsReady?: boolean }).__bitPhysicsReady = true;
 }
 
+// This page is served from v1/ (the previous version, kept for one release).
+rebaseSharedChrome();
 void main();

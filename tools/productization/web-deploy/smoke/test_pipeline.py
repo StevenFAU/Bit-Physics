@@ -190,7 +190,7 @@ def test_rd2d_v2_page_is_discovered_and_gated(pipeline: ModuleType) -> None:
     # swapped (release rule): v2 is the root page, v1 is kept at v1/
     assert rd.metadata["pages"] == ["", "v1/"]
     assert sims["physarum"].metadata["pages"] == ["", "v1/"]
-    assert sims["neural-ca"].metadata["pages"] == ["", "v2/"]
+    assert sims["neural-ca"].metadata["pages"] == ["", "v1/"]
     assert sims["boids-2d"].metadata["pages"] == ["", "v2/"]
     # every other sim keeps exactly its root page
     for name, s in sims.items():

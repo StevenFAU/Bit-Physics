@@ -5,7 +5,7 @@
 > records what was built and measured. **Release swap (2026-10-29):** Turing Patterns and Slime
 > Mould are the pages at `/sims/<sim>/`; v1 is kept at `/sims/<sim>/v1/` for one release and the
 > old `/v2/` address forwards to the root (how: [web/README.md](../../../web/README.md), "The
-> release swap"). Elsewhere, performance figures, particle counts and
+> release swap"). Grow followed on 2026-10-30. Elsewhere, performance figures, particle counts and
 > timings are **targets to be measured**, not results. Prior-art claims were checked by web search on this date; anything marked
 > *verify before claiming* must be re-checked before it appears on the site.
 >
