@@ -6,10 +6,18 @@
  * underneath (surface over white ≈ #505356; --bp-text-dim #c3cbd2 → 4.7:1).
  * Sims echo themselves through --sim-accent / --sim-key.
  *
- * Type: IBM Plex Sans for UI (falls back to system-ui until the Sans weights
- * are vendored next to Mono and Condensed), Plex Mono for numbers, Plex Sans
- * Condensed for eyebrows.
+ * Type: IBM Plex Sans for UI (one variable file, weights 100–700), Plex Mono
+ * for numbers, Plex Sans Condensed for eyebrows. All self-hosted from
+ * common/common-web/fonts/ (no runtime font fetch from another origin).
  */
+
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("../../../common/common-web/fonts/ibm-plex-sans-latin-wght.woff2") format("woff2");
+}
 
 @font-face {
   font-family: "IBM Plex Mono";
