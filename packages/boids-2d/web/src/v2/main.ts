@@ -19,24 +19,34 @@ import { HdrPipeline } from "@bp/render";
 import { QualityGovernor, UrlState, percentile } from "@bp/runtime";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
-import { App, BLOOM, SHARK_RADIUS_R } from "./app.js";
+import { App, BLOOM, MIN_VISION_RANGE, SHARK_RADIUS_R } from "./app.js";
 import type { SceneOptions } from "./app.js";
 import { DialController } from "./dial-controller.js";
 import { buildLearn } from "./learn.js";
 import type { BrainParams } from "./model/brains.js";
+import { reach } from "./model/brains.js";
 import { FlockKernels } from "./model/flock.js";
 import { EcoKernels } from "./model/ecology.js";
 import { FluidKernels } from "./model/fluid.js";
+import { WatchTracker } from "./model/watch.js";
 import type { RuleParams } from "./model/params.js";
 import { buildCanonicalCapture } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
+import { fieldCheck, mixingCheck, orderCheck } from "./proof/m3-proofs.js";
 import type { FishColour } from "./render/ocean-view.js";
 import { DEFAULT_LOOK, OceanView } from "./render/ocean-view.js";
 import { SeaView } from "./render/sea-view.js";
 import { PopulationPanel, WaterPanel } from "./m2-panels.js";
+import { EyesPanel } from "./m3-panels.js";
+import { MatrixPanel, ownKindShare } from "./matrix-panel.js";
+import type { SpeciesParams, VisionBrainParams } from "./model/brains-m3.js";
+import { speciesPreset } from "./model/brains-m3.js";
+import { decodeKinds, encodeKinds, presetOf } from "./kinds-link.js";
+import { schoolStats } from "./model/vision-cpu.js";
+import { WatchPanel } from "./watch-panel.js";
 import { RegimePanel } from "./regime.js";
 import type { SceneId } from "./scenes.js";
-import { DIAL_ETA, DIAL_RHO, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho } from "./scenes.js";
+import { DIAL_ETA, DIAL_RHO, EYES_LEQ, RHO_RANGE, SCENES, couzinFor, sceneById, sceneCount, vicsekFor, vicsekRho, visionFor } from "./scenes.js";
 import { buildTune } from "./tune.js";
 
 const SIM_NAME = "Swarm";
@@ -63,12 +73,17 @@ const url = new UrlState(
     sig: { kind: "num", def: -1, min: -1, max: 0.4, digits: 2 },
     sp: { kind: "num", def: 1, min: 0.25, max: 8 },
     shark: { kind: "num", def: SHARK_RADIUS_R, min: 4, max: 40, digits: 0 },
-    col: { kind: "enum", def: "silver", values: ["silver", "heading"] },
+    // the fish colour the visitor chose ("scene" = each scene's own)
+    col: { kind: "enum", def: "scene", values: ["scene", "silver", "heading", "species"] },
     cam: { kind: "nums", def: [-1, -1, -1], n: 3, digits: 4 },
     // Current's water: drag, fish weight, push (× fish speed), ν, μ (−1 = the scene's)
     wp: { kind: "nums", def: [-1, -1, -1, -1, -1], n: 5, digits: 5 },
     // Food Chain: plankton growth, fish efficiency, shark upkeep, shark speed (−1 = the scene's)
     ep: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 5 },
+    // Eyes Only: speed response α₀, turn response β₀, edge pull α₁ = β₁, sight (BL) (−1 = the scene's)
+    vis: { kind: "nums", def: [-1, -1, -1, -1], n: 4, digits: 4 },
+    // Species Matrix: preset~kinds, then (an edited matrix) ~g<steer gains>~a<swim gains>~s<speeds>
+    kinds: { kind: "str", def: "", pattern: /^(|[a-z]+~[2-6](~[gasfp][-0-9.,]*)*)$/ },
   },
   2,
 );
@@ -128,13 +143,23 @@ async function boot(): Promise<void> {
   const profiler = new GpuProfiler(device, gpu.timestamps);
   // frame-interval budget: a 60 Hz frame is 16.7 ms, a missed vsync 33 ms
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
+  // filming (posters, loops, clips: ?chrome=off) pumps frames between screenshots, so the
+  // frame interval says nothing about the GPU: hold full quality
+  const filming = query.get("chrome") === "off";
+  governor.suspended = filming;
   studio.veil.step("Compiling the flock kernel");
-  const [kernels, fluidKernels, ecoKernels] = await Promise.all([FlockKernels.create(device), FluidKernels.create(device), EcoKernels.create(device)]);
+  const [kernels, fluidKernels, ecoKernels, watcher] = await Promise.all([
+    FlockKernels.create(device),
+    FluidKernels.create(device),
+    EcoKernels.create(device),
+    WatchTracker.create(device),
+  ]);
   const view = new OceanView(device, DEFAULT_LOOK);
   const app = new App(gpu, studio, hdr, view, kernels, tier);
   app.fluidKernels = fluidKernels;
   app.ecoKernels = ecoKernels;
   app.sea = new SeaView(device);
+  app.watcher = watcher;
   // GPU timings set how many steps a frame may take at high speed (16.7 ms frames)
   if (gpu.timestamps) profiler.onFrame = () => void app.adaptToTimings(profiler.timings(), 14, profiler.frameTag);
   app.profiler = profiler;
@@ -154,6 +179,10 @@ async function boot(): Promise<void> {
     if (b?.kind === "vicsek" && bd?.kind === "vicsek") {
       brainKeys.eta = or(Number(b.p.eta.toFixed(3)), Number(bd.p.eta.toFixed(3)));
       brainKeys.rho = or(Number(vicsekRho(b.p.r).toFixed(3)), Number(vicsekRho(bd.p.r).toFixed(3)));
+    } else if (b?.kind === "vision" && bd?.kind === "vision") {
+      brainKeys.vis = [or(b.p.a0, bd.p.a0), or(b.p.b0, bd.p.b0), or(b.p.a1, bd.p.a1), or(b.p.range, bd.p.range)];
+    } else if (b?.kind === "species") {
+      brainKeys.kinds = encodeKinds(b.p);
     } else if (b?.kind === "couzin" && bd?.kind === "couzin") {
       brainKeys.dro = or(Number((b.p.ro - b.p.rr).toFixed(2)), Number((bd.p.ro - bd.p.rr).toFixed(2)));
       brainKeys.fov = or(b.p.fovDeg, bd.p.fovDeg);
@@ -186,7 +215,7 @@ async function boot(): Promise<void> {
       ...brainKeys,
       sp: app.clock.speed,
       shark: app.sharkSize,
-      col: view.look.colour,
+      col: app.colourChoice ?? "scene",
       cam: [app.camera.cx / app.camera.domainW, app.camera.cy / app.camera.domainH, app.camera.pxPerUnit / app.camera.coverZoom()].map((x) =>
         Number(x.toFixed(4)),
       ),
@@ -195,10 +224,7 @@ async function boot(): Promise<void> {
   app.writeUrl = () => url.write(current());
 
   // -------------------------------------------------------------- Tune --
-  const setColour = (c: FishColour): void => {
-    view.look = { ...view.look, colour: c };
-    app.writeUrl();
-  };
+  const setColour = (c: FishColour): void => app.setColour(c);
   const tune = buildTune(
     studio.tune.body,
     {
@@ -224,7 +250,11 @@ async function boot(): Promise<void> {
         ? "The rule is the v4 lab's Reynolds flock. Every value keeps the kernel's exactness: same seed, same GPU, same bytes."
         : b.kind === "couzin"
           ? "Couzin et al. 2002's zones: repel inside r_r, align out to r_o, gather across the school. Same seed, same GPU, same bytes."
-          : "The Vicsek model (Vicsek et al. 1995). Same seed, same GPU, same bytes.",
+          : b.kind === "vision"
+            ? "Bastien & Romanczuk 2020's vision-only model. Nothing here reads another fish's heading. Same seed, same GPU, same bytes."
+            : b.kind === "species"
+              ? "Open Water's rule for every kind; the matrix (on the canvas) sets who steers towards whom. Same seed, same GPU, same bytes."
+              : "The Vicsek model (Vicsek et al. 1995). Same seed, same GPU, same bytes.",
     );
   };
 
@@ -240,6 +270,20 @@ async function boot(): Promise<void> {
   const regime = new RegimePanel();
   const pop = new PopulationPanel();
   const waterPanel = new WaterPanel();
+  const eyes = new EyesPanel();
+  const watchPanel = new WatchPanel();
+  watchPanel.onLetGo = () => app.letGo();
+  watchPanel.onFollow = () => app.followAgain();
+  const matrix = new MatrixPanel({
+    edit: (p, phase) => app.setBrain({ kind: "species", p }, phase),
+    restart: (preset, count) => {
+      // a new matrix and new kinds; Tune's reach, speed, separation and panic carry over
+      const now = app.flock.brain?.kind === "species" ? app.flock.brain.p : null;
+      const p = speciesPreset(preset, count);
+      const brain = { kind: "species" as const, p: now ? { ...p, rCoh: now.rCoh, speed: now.speed, wSep: now.wSep, eta: now.eta } : p };
+      void app.loadScene("species", { seed: app.seed, brain }).then(() => app.writeUrl());
+    },
+  });
 
   // M2 scenes' own knobs in Tune: the water (Current), the ecology (Food Chain)
   const extraTune = (): void => {
@@ -286,6 +330,50 @@ async function boot(): Promise<void> {
         ],
         true,
       );
+    } else if (app.flock.brain?.kind === "vision") {
+      const vb = (): VisionBrainParams | null => (app.flock.brain?.kind === "vision" ? app.flock.brain.p : null);
+      const setV = (k: keyof VisionBrainParams, both?: keyof VisionBrainParams) => (v: number) => {
+        const p = vb();
+        if (!p) return;
+        app.setBrain({ kind: "vision", p: { ...p, [k]: v, ...(both ? { [both]: v } : {}) } }, "end");
+      };
+      tune.setExtra(
+        "What they do with what they see",
+        [
+          { label: "Speed response", symbol: "α₀", min: 0, max: 0.5, step: 0.01, digits: 2, hint: "How strongly what a fish sees ahead slows it, and what it sees behind speeds it up.", get: () => vb()?.a0 ?? 0, set: setV("a0") },
+          { label: "Turn response", symbol: "β₀", min: 0, max: 0.2, step: 0.005, digits: 3, hint: "How strongly what a fish sees on one side turns it away.", get: () => vb()?.b0 ?? 0, set: setV("b0") },
+          {
+            label: "Pull of edges",
+            symbol: "α₁ = β₁",
+            min: 0,
+            max: 0.5,
+            step: 0.01,
+            digits: 2,
+            hint: `How strongly a fish is drawn to the edges of what it sees. It settles about R/α₁ behind a fish ahead (${EYES_LEQ} body lengths at the start). At 0 the fish are only pushed apart: no schools form.`,
+            get: () => vb()?.a1 ?? 0,
+            set: setV("a1", "b1"),
+          },
+          { label: "Sight", symbol: "range", min: MIN_VISION_RANGE, max: 40, step: 1, unit: " BL", hint: "How far a fish sees through the water, in body lengths. Further, and more fish pull on each one.", get: () => vb()?.range ?? 15, set: setV("range") },
+        ],
+        true,
+      );
+    } else if (app.flock.brain?.kind === "species") {
+      const sb = (): SpeciesParams | null => (app.flock.brain?.kind === "species" ? app.flock.brain.p : null);
+      const setS = (k: "rCoh" | "speed" | "wSep" | "eta") => (v: number) => {
+        const p = sb();
+        if (!p) return;
+        app.setBrain({ kind: "species", p: { ...p, [k]: v } }, "end");
+      };
+      tune.setExtra(
+        "Every kind",
+        [
+          { label: "Reach", symbol: "r", min: 0.05, max: 0.18, step: 0.005, digits: 3, hint: "How far a fish senses the others (alignment 0.72 r, separation 0.3 r).", get: () => sb()?.rCoh ?? 0.105, set: setS("rCoh") },
+          { label: "Top speed", symbol: "v_max", min: 0.003, max: 0.013, step: 0.0005, digits: 4, hint: "Distance per step before each kind's own speed factor (in the matrix's last row).", get: () => sb()?.speed ?? 0.0065, set: setS("speed") },
+          { label: "Separation", symbol: "w_sep", min: 0, max: 3, step: 0.05, digits: 2, hint: "How strongly every fish keeps its distance from every other, whatever its kind.", get: () => sb()?.wSep ?? 1.6, set: setS("wSep") },
+          { label: "Panic", symbol: "η", min: 0, max: 0.6, step: 0.01, digits: 2, hint: "Random turning, up to ±η·180° a step.", get: () => sb()?.eta ?? 0, set: setS("eta") },
+        ],
+        true,
+      );
     } else tune.setExtra(null, [], false);
   };
 
@@ -304,7 +392,7 @@ async function boot(): Promise<void> {
       void app.loadScene("proof").then(() => app.writeUrl());
     },
     hold: (on) => {
-      governor.suspended = on;
+      governor.suspended = on || filming;
     },
   });
   const syncProve = (): void =>
@@ -345,7 +433,7 @@ async function boot(): Promise<void> {
         captureStatus.textContent = `Capture failed: ${(e as Error).message}`;
       } finally {
         captureBtn.disabled = false;
-        governor.suspended = false;
+        governor.suspended = filming;
       }
     });
   });
@@ -437,6 +525,15 @@ async function boot(): Promise<void> {
         if (!regime.el.isConnected) studio.stage.append(regime.el);
         regime.clear();
       } else regime.el.remove();
+      if (scene.id === "eyes-only") {
+        if (!eyes.el.isConnected) studio.stage.append(eyes.el);
+        eyes.clear();
+      } else eyes.el.remove();
+      if (scene.id === "species") {
+        if (!matrix.el.isConnected) studio.stage.append(matrix.el);
+        matrix.clearMix();
+        if (app.flock.brain?.kind === "species") matrix.set(app.flock.brain.p, presetOf(app.flock.brain.p));
+      } else matrix.el.remove();
       dial.sync();
       syncTune();
       syncProve();
@@ -448,6 +545,7 @@ async function boot(): Promise<void> {
     },
     onBrain: (b) => {
       learn.setBrain(b);
+      if (b?.kind === "species") matrix.set(b.p, presetOf(b.p));
       syncTune();
       // Tune's reset (or any change not made by the dial) moves the dial and restarts its measurement
       dial.brainChanged();
@@ -468,8 +566,43 @@ async function boot(): Promise<void> {
       if (app.learnOpen && app.current) learn.pushFluid(st, app.flock.rule.maxSpeed, app.current.fluid.fb);
     },
     onEdited: () => syncProve(),
+    onWatch: (w) => {
+      const on = w.id !== null;
+      studio.root.classList.toggle("is-watching", on);
+      if (on && !watchPanel.el.isConnected) studio.stage.append(watchPanel.el);
+      else if (!on) watchPanel.el.remove();
+      if (on) {
+        const b = app.flock.brain;
+        const top = !b ? app.flock.rule.maxSpeed : b.kind === "vision" ? b.p.speed * b.p.dt : b.kind === "species" ? b.p.speed : b.p.speed;
+        watchPanel.set(w, b, top, app.flock.n);
+      }
+    },
+    onSample: (smp) => {
+      const f = app.flock;
+      const b = f.brain;
+      if (b?.kind === "vision" && eyes.el.isConnected) {
+        const n = f.n;
+        const x = new Float32Array(n);
+        const y = new Float32Array(n);
+        const vx = new Float32Array(n);
+        const vy = new Float32Array(n);
+        for (let i = 0; i < n; i += 1) {
+          x[i] = smp.boids[i * 6]!;
+          y[i] = smp.boids[i * 6 + 1]!;
+          vx[i] = smp.boids[i * 6 + 2]!;
+          vy[i] = smp.boids[i * 6 + 3]!;
+        }
+        const st = schoolStats(x, y, vx, vy, n, f.halfW, f.halfH, 2 * EYES_LEQ * 2 * b.p.R, 5);
+        eyes.setSchools(st, n);
+        app.schoolOrder = st.schools > 0 ? st.order : null;
+      } else if (b?.kind === "species" && matrix.el.isConnected) {
+        const m = ownKindShare(smp.boids, f.n, b.p.count);
+        matrix.setMix(m.share, m.fraction);
+      }
+    },
     onOrder: (o, tick) => {
       if (app.learnOpen) learn.pushOrder(o);
+      if (app.scene.id === "eyes-only") eyes.pushPhi(o.phi);
       if (app.scene.id === "order-dial") dial.onOrder(o, tick);
       else if (app.scene.id === "mill") regime.push(o.phi, o.mill);
     },
@@ -512,7 +645,7 @@ async function boot(): Promise<void> {
       profiler.source,
     );
     const area = f.halfW * f.halfH * 4;
-    const reachR = f.brain ? (f.brain.kind === "vicsek" ? f.brain.p.r : f.brain.p.ra) : f.rule.rCoh;
+    const reachR = f.brain ? reach(f.brain) : f.rule.rCoh;
     learn.setStats([
       ["Ocean", `${(f.halfW * 2).toFixed(1)} × ${(f.halfH * 2).toFixed(1)} (wraps at the edges)`],
       ["Fish per unit²", (f.n / area).toFixed(f.n / area < 10 ? 3 : 0)],
@@ -537,7 +670,7 @@ async function boot(): Promise<void> {
     noise: pick(parsed.eta, d.noise),
   };
   app.sharkSize = parsed.shark;
-  view.look = { ...view.look, colour: parsed.col as FishColour };
+  app.colourChoice = parsed.col === "scene" ? null : (parsed.col as FishColour);
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   // an M1 brain from the link (each value −1 = the scene's)
   let brain: BrainParams | undefined;
@@ -555,6 +688,14 @@ async function boot(): Promise<void> {
         sigma: pick(parsed.sig, p.sigma),
       },
     };
+  }
+  if (scene.id === "eyes-only") {
+    const d0 = visionFor();
+    const [a0, b0, a1, range] = parsed.vis;
+    brain = { kind: "vision", p: { ...d0, a0: pick(a0!, d0.a0), b0: pick(b0!, d0.b0), a1: pick(a1!, d0.a1), b1: pick(a1!, d0.b1), range: Math.max(MIN_VISION_RANGE, pick(range!, d0.range)) } };
+  } else if (scene.id === "species") {
+    const k = decodeKinds(parsed.kinds);
+    if (k) brain = { kind: "species", p: k.p };
   }
   // M2 knobs from the link (each −1 = the scene's), built into the first load so the
   // water's starting vorticity comes from the linked push, exactly as a restart rebuilds it
@@ -610,11 +751,20 @@ async function boot(): Promise<void> {
     regime: app.scene.id === "mill" ? regime.regime : null,
     dial: app.scene.id === "order-dial" ? { eta: dial.eta, rho: dial.rho, last: dial.last, sweeping: dial.sweeping, points: dial.panel.measurements.length } : null,
     census: app.census,
+    schools: app.scene.id === "eyes-only" ? eyes.schools : null,
+    watch: app.watch.id !== null ? { id: app.watch.id, follow: app.watch.follow, found: !!app.watch.rec?.found, lost: app.watch.lost, total: app.watch.rec?.total ?? 0, retina: !!app.watch.retina } : null,
+    species: app.flock.brain?.kind === "species" ? { count: app.flock.brain.p.count, preset: presetOf(app.flock.brain.p) } : null,
     fluid: app.current ? { grid: [app.current.fluid.gw, app.current.fluid.gh], motes: app.current.fluid.nMotes, fb: app.current.fluid.fb, stats: app.fluidStats } : null,
   });
   (globalThis as { __swarmDial?: DialController }).__swarmDial = dial;
   (globalThis as { __swarm?: App }).__swarm = app;
   (globalThis as { __swarmProve?: typeof prove }).__swarmProve = prove;
+  // measurement hooks (acceptance, budgets): the M3 checks with other seeds
+  (globalThis as { __swarmM3?: unknown }).__swarmM3 = {
+    field: (o?: { seed?: number; warm?: number }) => fieldCheck(device, kernels, o),
+    order: (o?: { gpuSeeds?: number[]; cpuSeeds?: number[] }) => orderCheck(device, kernels, o),
+    mixing: (o?: { seed?: number }) => mixingCheck(device, kernels, o),
+  };
   markReady();
 
   if (query.get("bench") === "1") void bench(app, profiler, rafTimes);

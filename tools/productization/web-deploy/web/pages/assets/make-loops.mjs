@@ -162,7 +162,12 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {};
+const STAGED = {
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill turning, at half speed
+  // (three steps a frame); start 300 lets the opening ring settle into the
+  // mill. The wrap cuts back a little over half a turn.
+  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&sp=0.5&cam=0.5,0.5,2.6", canvas: ".bp-canvas", start: 300, shots: 150, gap: 1, fps: 30, px: 512, crf: 58 },
+};
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
 // config must be a registered sim — fail loud instead of silently skipping a
