@@ -3,21 +3,26 @@
 // proof flock is the in-page GPU proofs' own pinned run, on screen. M1 adds
 // The Order Dial (the Vicsek model, ./model/brains.ts) and The Mill (Couzin's
 // zones). M2 adds Current (the water as a solved incompressible fluid,
-// ./model/fluid.ts, coupled two ways to the v4 flock) and Food Chain.
+// ./model/fluid.ts, coupled two ways to the v4 flock) and Food Chain. M3 adds
+// Eyes Only (Bastien & Romanczuk 2020's vision-only model, ./model/brains-m3.ts)
+// and Species Matrix (2–6 species and a signed matrix of who steers towards whom).
 
 import type { Tier } from "@bp/gpu";
 import type { BrainParams, CouzinParams, VicsekParams } from "./model/brains.js";
+import type { SpeciesPreset, VisionBrainParams } from "./model/brains-m3.js";
+import { speciesPreset } from "./model/brains-m3.js";
 import type { EcoParams } from "./model/ecology.js";
 import { FOOD_CHAIN } from "./model/ecology.js";
 import type { FluidParams } from "./model/fluid.js";
 import { CURRENT_FLUID } from "./model/fluid.js";
 import type { InitMode } from "./model/init.js";
 import type { M1Init } from "./model/init-m1.js";
+import type { M3Init } from "./model/init-m3.js";
 import type { RuleParams } from "./model/params.js";
 import type { World } from "./model/world.js";
 import { AGENTS, V4_DENSITY, worldFor } from "./model/world.js";
 
-export type SceneId = "open-water" | "order-dial" | "mill" | "current" | "food-chain" | "proof";
+export type SceneId = "open-water" | "order-dial" | "mill" | "current" | "food-chain" | "eyes-only" | "species" | "proof";
 
 /** Current's water: grid rows per tier, motes per tier, the fluid's numbers and the push (laminar peak speed). */
 export interface WaterDef {
@@ -44,7 +49,7 @@ export interface SceneDef {
   rule: RuleParams;
   /** Fish per world unit² (live scenes; the world is sized from it unless `world` is given). */
   density: number;
-  init: InitMode | M1Init;
+  init: InitMode | M1Init | M3Init;
   /** The shark is the scene's tool. */
   shark: boolean;
   /** Fish per tier (default: Open Water's, AGENTS). */
@@ -67,6 +72,10 @@ export interface SceneDef {
   ecology?: EcologyDef;
   /** Memory reorder cadence override (Food Chain: 0 — a fish's slot holds its life). */
   sortEvery?: number;
+  /** Cap on the measured exposure (sparse scenes, where the meter would otherwise light the water). */
+  exposureMax?: number;
+  /** The fish colour the scene opens with (default silver), unless the visitor chose one. */
+  colour?: "silver" | "heading" | "species";
 }
 
 /** v4's "flock" preset (index.html PRESETS.flock), the rule the v4 lab opened with. */
@@ -157,6 +166,38 @@ export const FOOD_CHAIN_DEF: EcologyDef = {
   params: FOOD_CHAIN,
 };
 
+// ---- Eyes Only: the vision-based model -------------------------------------------------
+//
+// Bastien & Romanczuk 2020's minimal model (./model/vision-cpu.ts). Lengths are
+// in body lengths (BL = 1 world unit: a fish is a disc of radius 0.5). The
+// rates are the paper's Fig. 3C pair (α₀ 0.1, β₀ 0.02) with γ 0.1 and v₀ 0.5 BL
+// per unit time, as the authors' code; the equilibrium distance L_eq =
+// BL / (2α₁) is 2.5 BL. One step is one unit of time (the authors' code takes
+// 0.1; measured: groups of 20 polarize the same at either, φ ≈ 0.95). A fish sees
+// 15 BL (murky water; the paper's fish see forever): measured on the f64
+// reference, 1,024 fish scattered at this density gather and swim one way
+// (φ 0.5 by step ~450, 0.9 by ~800); with the edge terms off they never do.
+
+export const EYES_COUNTS: Record<Tier, number> = { T3: 2048, T2: 2048, T1: 1024 };
+/** Fish per BL² (2,048 fish on a 300 × 300 BL ocean). */
+export const EYES_DENSITY = 2048 / (300 * 300);
+/** The equilibrium distance the edge weights set, BL. */
+export const EYES_LEQ = 2.5;
+
+export function visionFor(): VisionBrainParams {
+  const R = 0.5;
+  return { R, speed: 0.5, gamma: 0.1, a0: 0.1, a1: R / EYES_LEQ, b0: 0.02, b1: R / EYES_LEQ, dt: 1, range: 15 };
+}
+
+// ---- Species Matrix: who steers towards whom ----------------------------------------------
+//
+// Open Water's rule for every species (the v4 lab's multi-species coupling,
+// with whole-number sums), at Open Water's density. It opens on three species
+// playing rock–paper–scissors.
+
+export const SPECIES_COUNTS: Record<Tier, number> = { T3: 65536, T2: 32768, T1: 16384 };
+export const SPECIES_START: { preset: SpeciesPreset; count: number } = { preset: "cycle", count: 3 };
+
 export const SCENES: readonly SceneDef[] = [
   {
     id: "open-water",
@@ -231,6 +272,39 @@ export const SCENES: readonly SceneDef[] = [
     ecology: FOOD_CHAIN_DEF,
     sortEvery: 0,
     scale: { fishLength: 0.03, causticCell: 0.7 },
+  },
+  {
+    id: "eyes-only",
+    title: "Eyes Only",
+    prompt: "No alignment rule at all. They still school.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    density: EYES_DENSITY,
+    init: "sight",
+    shark: false,
+    counts: EYES_COUNTS,
+    brain: () => ({ kind: "vision", p: visionFor() }),
+    zoom: 1.2,
+    scale: { fishLength: 1, causticCell: 20 },
+    colour: "heading",
+    // a few thousand fish leave most of the water dark: don't let the meter brighten the water
+    exposureMax: 1,
+  },
+  {
+    id: "species",
+    title: "Species Matrix",
+    prompt: "Who chases whom? Edit the matrix.",
+    listed: true,
+    kind: "live",
+    rule: OPEN_WATER_RULE,
+    density: V4_DENSITY,
+    init: "species",
+    shark: false,
+    counts: SPECIES_COUNTS,
+    brain: () => ({ kind: "species", p: speciesPreset(SPECIES_START.preset, SPECIES_START.count) }),
+    zoom: 1.6,
+    colour: "species",
   },
   {
     id: "proof",

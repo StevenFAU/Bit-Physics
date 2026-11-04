@@ -9,7 +9,7 @@ struct View {
   cam: vec4<f32>,      // camera centre (domain units), domain units per target px, time (s)
   dims: vec4<f32>,     // target px (w, h), domain (W, H)
   half: vec4<f32>,     // world halfW, halfH, images across, images down
-  fish: vec4<f32>,     // fish length (world), smallest drawn length (px), gain, colour mode (0 silver, 1 heading)
+  fish: vec4<f32>,     // fish length (world), smallest drawn length (px), gain, colour mode (0 silver, 1 heading, 2 species)
   silver: vec4<f32>,   // fish rgb (linear), tail flick
   water: vec4<f32>,    // deep water rgb, caustic gain
   caustic: vec4<f32>,  // lattice cells across, down (octave 1), drift speed, unused
@@ -17,7 +17,8 @@ struct View {
   shark2: vec4<f32>,   // fear radius (world), presence 0–1, lunge 0–1, ring gain
   split: vec4<f32>,    // compare split in target px (< 0 off), divider alpha, unused, unused
   lod: vec4<f32>,      // glyph weight, field weight, far light factor, field cell (target px)
-  grid: vec4<f32>,     // field cells across, down, unused, unused
+  grid: vec4<f32>,     // field cells across, down, watch mode (1 = Eyes Only's retina band), unused
+  species: array<vec4<f32>, 6>, // colour mode 2: each species' rgb (linear); the species rides in the boid's align
 };
 
 struct Boid { pos: vec2<f32>, vel: vec2<f32>, align: f32, dens: f32 };
@@ -63,7 +64,9 @@ fn field_splat(@builtin(global_invocation_id) gid: vec3<u32>) {
   let sp = length(b.vel);
   let dir = select(vec2<f32>(1.0, 0.0), b.vel / max(sp, 1e-12), sp > 1e-12);
   var col = V.silver.rgb;
-  if (V.fish.w > 0.5) {
+  if (V.fish.w > 1.5) {
+    col = V.species[min(u32(max(b.align, 0.0)), 5u)].rgb;
+  } else if (V.fish.w > 0.5) {
     col = heading_colour(dir);
   }
   let q = vec3<u32>(round(col * 1024.0));

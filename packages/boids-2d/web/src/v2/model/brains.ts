@@ -14,9 +14,10 @@
 // Both write the v4 Boid layout (pos, vel, align, dens), so the renderer, the
 // exact order-parameter reduction and the checkpoints work unchanged.
 
+import type { SpeciesParams, VisionBrainParams } from "./brains-m3.js";
 import { WGSL_BOID } from "./kernel.js";
 
-export type Brain = "reynolds" | "vicsek" | "couzin";
+export type Brain = "reynolds" | "vicsek" | "couzin" | "species" | "vision";
 
 /** The Vicsek model (Vicsek et al. 1995), in the page's units. */
 export interface VicsekParams {
@@ -46,10 +47,16 @@ export interface CouzinParams {
   sigma: number;
 }
 
-export type BrainParams = { kind: "vicsek"; p: VicsekParams } | { kind: "couzin"; p: CouzinParams };
+export type BrainParams =
+  | { kind: "vicsek"; p: VicsekParams }
+  | { kind: "couzin"; p: CouzinParams }
+  // M3 (./brains-m3.ts): the species matrix and Eyes Only's vision model
+  | { kind: "species"; p: SpeciesParams }
+  | { kind: "vision"; p: VisionBrainParams };
 
 /** The largest interaction radius: the counting sort's cells must be at least this wide. */
-export const reach = (b: BrainParams): number => (b.kind === "vicsek" ? b.p.r : b.p.ra);
+export const reach = (b: BrainParams): number =>
+  b.kind === "vicsek" ? b.p.r : b.kind === "couzin" ? b.p.ra : b.kind === "species" ? b.p.rCoh : b.p.range;
 
 /** Brain uniform: 24 words (96 bytes). */
 export const BRAIN_FLOATS = 24;
@@ -100,7 +107,7 @@ export function writeBrainParams(buf: ArrayBuffer, byteOffset: number, o: BrainI
     f[6] = p.speed;
     f[7] = p.eta;
     f[8] = p.r * p.r;
-  } else {
+  } else if (o.brain.kind === "couzin") {
     const p = o.brain.p;
     f[6] = p.speed;
     f[7] = p.sigma;
@@ -175,7 +182,7 @@ fn brainKeys(@builtin(global_invocation_id) gid: vec3<u32>) {
  * block of cells (sort) or every fish (brute). ACCUM is the brain's body for
  * one neighbour j ≠ i, with d = the wrapped offset to j and d2 = |d|².
  */
-function walkers(name: string, state: string, accum: string, integrate: string): string {
+export function walkers(name: string, state: string, accum: string, integrate: string): string {
   return `
 @compute @workgroup_size(256)
 fn ${name}Sort(@builtin(global_invocation_id) gid: vec3<u32>) {

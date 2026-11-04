@@ -12,10 +12,13 @@
 import { CountingSort, readBuffer } from "@bp/gpu";
 import type { BrainParams } from "./brains.js";
 import { BRAIN_BYTES, WGSL_BRAINS, WGSL_TORUS_REDUCE, reach, writeBrainParams } from "./brains.js";
+import { NO_WATCH, RETINA_HEADER, SPECIES_BYTES, VISION_BYTES, WGSL_SPECIES, WGSL_VISION, visionTable, writeM3Params } from "./brains-m3.js";
 import type { InitMode } from "./init.js";
 import { BOID_BYTES, makeInitData } from "./init.js";
 import type { M1Init } from "./init-m1.js";
 import { isM1Init, makeInitM1 } from "./init-m1.js";
+import type { M3Init } from "./init-m3.js";
+import { isM3Init, makeInitM3 } from "./init-m3.js";
 import { WGSL_COMPUTE, WGSL_GATHER, WGSL_REDUCE, WGSL_SORT_V2 } from "./kernel.js";
 import type { FearTerm, Grid, RuleParams } from "./params.js";
 import { PARAM_BYTES, PARAM_FLOATS, gridFor, writeParams } from "./params.js";
@@ -58,6 +61,14 @@ export class FlockKernels {
     readonly circleSums: GPUComputePipeline,
     readonly circleCentre: GPUComputePipeline,
     readonly aboutCentre: GPUComputePipeline,
+    readonly speciesLayout: GPUBindGroupLayout,
+    readonly visionLayout: GPUBindGroupLayout,
+    readonly speciesSort: GPUComputePipeline,
+    readonly speciesBrute: GPUComputePipeline,
+    readonly visionSort: GPUComputePipeline,
+    readonly visionBrute: GPUComputePipeline,
+    /** The vision model's bin-boundary sin/cos table (f64-computed), shared by every flock. */
+    readonly visionTable: GPUBuffer,
   ) {}
 
   static async create(device: GPUDevice): Promise<FlockKernels> {
@@ -112,6 +123,21 @@ export class FlockKernels {
       label: "swarm-brain-keys",
       entries: [buf(0, "uniform", true, BRAIN_BYTES), buf(1, "read-only-storage"), buf(7, "storage")],
     });
+    // the M3 brains (./brains-m3.ts): the M1 bindings 0–6 with a longer uniform; vision adds 8 (table) and 9 (retina)
+    const m3Core = (bytes: number): GPUBindGroupLayoutEntry[] => [
+      buf(0, "uniform", true, bytes),
+      buf(1, "read-only-storage"),
+      buf(2, "storage"),
+      buf(3, "read-only-storage"),
+      buf(4, "storage"),
+      buf(5, "read-only-storage"),
+      buf(6, "read-only-storage"),
+    ];
+    const speciesLayout = device.createBindGroupLayout({ label: "swarm-species", entries: m3Core(SPECIES_BYTES) });
+    const visionLayout = device.createBindGroupLayout({
+      label: "swarm-vision",
+      entries: [...m3Core(VISION_BYTES), buf(8, "uniform", false, 2048), buf(9, "storage")],
+    });
     const torusLayout = device.createBindGroupLayout({
       label: "swarm-torus-reduce",
       entries: [buf(0, "uniform", false, 16), buf(1, "read-only-storage"), buf(2, "storage"), buf(3, "storage"), buf(4, "storage")],
@@ -127,6 +153,8 @@ export class FlockKernels {
     const gatherMod = device.createShaderModule({ code: WGSL_GATHER, label: "swarm-gather" });
     const brainMod = device.createShaderModule({ code: WGSL_BRAINS, label: "swarm-brains" });
     const torusMod = device.createShaderModule({ code: WGSL_TORUS_REDUCE, label: "swarm-torus-reduce" });
+    const speciesMod = device.createShaderModule({ code: WGSL_SPECIES, label: "swarm-species" });
+    const visionMod = device.createShaderModule({ code: WGSL_VISION, label: "swarm-vision" });
     await Promise.all([
       check(bruteMod, "brute"),
       check(sortMod, "sort"),
@@ -134,6 +162,8 @@ export class FlockKernels {
       check(gatherMod, "gather"),
       check(brainMod, "brains"),
       check(torusMod, "torus reduce"),
+      check(speciesMod, "species"),
+      check(visionMod, "vision"),
     ]);
     const pl = (l: GPUBindGroupLayout): GPUPipelineLayout => device.createPipelineLayout({ bindGroupLayouts: [l] });
     const mk = (label: string, module: GPUShaderModule, entryPoint: string, l: GPUBindGroupLayout): Promise<GPUComputePipeline> =>
@@ -156,6 +186,15 @@ export class FlockKernels {
       mk("swarm-circle-centre", torusMod, "circleCentre", torusLayout),
       mk("swarm-about-centre", torusMod, "aboutCentre", torusLayout),
     ]);
+    const [speciesSort, speciesBrute, visionSort, visionBrute] = await Promise.all([
+      mk("swarm-species", speciesMod, "speciesSort", speciesLayout),
+      mk("swarm-species-brute", speciesMod, "speciesBrute", speciesLayout),
+      mk("swarm-vision", visionMod, "visionSort", visionLayout),
+      mk("swarm-vision-brute", visionMod, "visionBrute", visionLayout),
+    ]);
+    const table = visionTable();
+    const tableBuf = device.createBuffer({ size: table.byteLength, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "swarm-vision-table" });
+    device.queue.writeBuffer(tableBuf, 0, table);
     return new FlockKernels(
       simLayout,
       bruteLayout,
@@ -180,6 +219,13 @@ export class FlockKernels {
       circleSums,
       circleCentre,
       aboutCentre,
+      speciesLayout,
+      visionLayout,
+      speciesSort,
+      speciesBrute,
+      visionSort,
+      visionBrute,
+      tableBuf,
     );
   }
 }
@@ -218,7 +264,7 @@ export interface FlockConfig {
    * mean, for a single school that may cross the wrapped edge).
    */
   orderReduce?: "v4" | "torus";
-  init?: InitMode | M1Init;
+  init?: InitMode | M1Init | M3Init;
   broadphase?: Broadphase;
   /**
    * Smallest cohesion radius this flock will be tuned to: the counting sort is
@@ -232,6 +278,8 @@ export interface FlockConfig {
   sortEvery?: number;
   /** An M2 extension, built once the flock's buffers exist. */
   ext?: (flock: Flock) => FlockExt;
+  /** Vision brain: keep every fish's visual field of the last step (the in-page field check). */
+  retinaDump?: boolean;
 }
 
 export interface Checkpoint {
@@ -319,7 +367,7 @@ export class Flock {
   brain: BrainParams | null;
   readonly orderReduce: "v4" | "torus";
   broadphase: Broadphase;
-  initMode: InitMode | M1Init;
+  initMode: InitMode | M1Init | M3Init;
   /** Steps run since the flock was seeded (drives the noise hash, as v4 simStep). */
   tick = 0;
   /** The shark (null = no pointer force, v4 "pure" params). */
@@ -368,6 +416,13 @@ export class Flock {
   private readonly torusCirc: GPUBuffer | null = null;
   /** The M2 extension (null for every M0/M1 scene). */
   ext: FlockExt | null = null;
+  /** M3 brains' bind groups, one per (boid buffer, id buffer) pair. */
+  private readonly m3BG: GPUBindGroup[] = [];
+  /** Vision: the watched fish's visual field (and, with retinaDump, every fish's). */
+  readonly retina: GPUBuffer | null = null;
+  readonly retinaDump: boolean;
+  /** Vision: the fish id whose field the kernel records (NO_WATCH = none). */
+  watchId = NO_WATCH;
 
   constructor(device: GPUDevice, kernels: FlockKernels, cfg: FlockConfig) {
     this.device = device;
@@ -381,6 +436,7 @@ export class Flock {
     this.initMode = cfg.init ?? "random";
     this.brain = cfg.brain ? structuredClone(cfg.brain) : null;
     this.orderReduce = cfg.orderReduce ?? "v4";
+    this.retinaDump = !!cfg.retinaDump;
     const r0 = this.brain ? reach(this.brain) : this.rule.rCoh;
     this.grid = gridFor(this.halfW, this.halfH, r0);
     const maxGrid = gridFor(this.halfW, this.halfH, Math.min(cfg.minRCoh ?? r0, r0));
@@ -464,8 +520,32 @@ export class Flock {
           ],
         }),
       );
-      if (this.brain && this.idBufs) {
+      const m3 = this.brain?.kind === "species" || this.brain?.kind === "vision";
+      if (this.brain && this.idBufs && m3) {
+        const vision = this.brain.kind === "vision";
+        if (vision && !this.retina) {
+          (this as { retina: GPUBuffer | null }).retina = device.createBuffer({
+            size: (RETINA_HEADER + (this.retinaDump ? n * 8 : 0)) * 4,
+            usage: STORAGE(),
+            label: "swarm-retina",
+          });
+        }
         for (let k = 0; k < 2; k += 1) {
+          const entries: GPUBindGroupEntry[] = [
+            { binding: 0, resource: { buffer: this.params, offset: 0, size: vision ? VISION_BYTES : SPECIES_BYTES } },
+            { binding: 1, resource: { buffer: inB } },
+            { binding: 2, resource: { buffer: outB } },
+            { binding: 3, resource: { buffer: this.idBufs[k]! } },
+            { binding: 4, resource: { buffer: this.diag } },
+            { binding: 5, resource: { buffer: this.sort.cellStart } },
+            { binding: 6, resource: { buffer: this.sort.order } },
+            ...(vision ? [{ binding: 8, resource: { buffer: kernels.visionTable } }, { binding: 9, resource: { buffer: this.retina! } }] : []),
+          ];
+          this.m3BG.push(device.createBindGroup({ layout: vision ? kernels.visionLayout : kernels.speciesLayout, label: `swarm-m3-${c}${k}`, entries }));
+        }
+      }
+      if (this.brain && this.idBufs) {
+        for (let k = 0; k < 2 && !m3; k += 1) {
           const bcore: GPUBindGroupEntry[] = [
             { binding: 0, resource: B0 },
             { binding: 1, resource: { buffer: inB } },
@@ -556,11 +636,15 @@ export class Flock {
   }
 
   /** Fresh flock from (seed, init mode) — v4 reseed: tick 0, saturation flag cleared. */
-  reseed(seed: number, mode: InitMode | M1Init = this.initMode): void {
+  reseed(seed: number, mode: InitMode | M1Init | M3Init = this.initMode): void {
     this.seed = seed;
     this.initMode = mode;
     const speed = this.brain ? this.brain.p.speed : this.rule.maxSpeed;
-    const data = isM1Init(mode) ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode) : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode);
+    const data = isM3Init(mode)
+      ? makeInitM3(this.n, seed, this.halfW, this.halfH, this.brain!, mode)
+      : isM1Init(mode)
+        ? makeInitM1(this.n, seed, this.halfW, this.halfH, speed, mode)
+        : makeInitData(this.n, seed, this.halfW, this.halfH, speed, mode);
     this.ext?.shapeInit?.(data);
     this.load(data);
     this.ext?.reseed?.(seed);
@@ -598,6 +682,30 @@ export class Flock {
   /** Write the Params slots for the next `steps` steps (step t uses frame seed (seed ^ t)). */
   private writeSlots(steps: number, pure: boolean): void {
     this.ext?.prepare?.(steps, this.tick, pure);
+    const b3 = this.brain?.kind === "species" || this.brain?.kind === "vision" ? this.brain : null;
+    if (b3) {
+      const ab = this.slots.buffer;
+      for (let s = 0; s < steps; s += 1) {
+        writeM3Params(ab, s * SLOT, {
+          brain: b3,
+          halfW: this.halfW,
+          halfH: this.halfH,
+          cols: this.grid.cols,
+          rows: this.grid.rows,
+          cellX: this.grid.cellX,
+          cellY: this.grid.cellY,
+          seed: this.seed,
+          step: this.tick + s,
+          n: this.n,
+          fear: null,
+          watch: this.watchId,
+          dumpAll: this.retinaDump,
+        });
+      }
+      const bytes = b3.kind === "vision" ? VISION_BYTES : SPECIES_BYTES;
+      this.device.queue.writeBuffer(this.params, 0, this.slots, 0, ((steps - 1) * SLOT) / 4 + bytes / 4);
+      return;
+    }
     if (this.brain) {
       const ab = this.slots.buffer;
       const f = this.fear;
@@ -642,6 +750,24 @@ export class Flock {
     if (this.ext?.step?.(pass, s, c)) {
       this.cur = 1 - c;
       this.ext.after?.(pass, s, this.cur);
+      return;
+    }
+    if (this.brain && (this.brain.kind === "species" || this.brain.kind === "vision")) {
+      const vision = this.brain.kind === "vision";
+      const bg = this.m3BG[c * 2 + this.idCur]!;
+      if (this.broadphase === "brute") {
+        if (this.n > BRUTE_MAX) throw new Error(`brute force is limited to ${BRUTE_MAX} agents`);
+        pass.setPipeline(vision ? this.k.visionBrute : this.k.speciesBrute);
+        pass.setBindGroup(0, bg, off);
+        pass.dispatchWorkgroups(Math.ceil(this.n / 64));
+      } else {
+        this.encodeKeys(pass, s);
+        pass.setPipeline(vision ? this.k.visionSort : this.k.speciesSort);
+        pass.setBindGroup(0, bg, off);
+        pass.dispatchWorkgroups(Math.ceil(this.n / 256));
+      }
+      this.cur = 1 - c;
+      this.ext?.after?.(pass, s, this.cur);
       return;
     }
     if (this.brain) {
@@ -898,6 +1024,7 @@ export class Flock {
   destroy(): void {
     for (const b of [...this.boidBufs, ...(this.idBufs ?? []), this.vort, this.spec, this.diag, this.keys, this.params, this.obs, this.partials, this.rg]) b.destroy();
     this.torusParams?.destroy();
+    this.retina?.destroy();
     this.torusCentre?.destroy();
     this.torusCirc?.destroy();
     this.sort.destroy();

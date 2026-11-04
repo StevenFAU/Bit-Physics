@@ -13,8 +13,38 @@ import type { Camera2D } from "@bp/render";
 import { SCENE_FORMAT } from "@bp/render";
 import fieldSrc from "./field.wgsl?raw";
 import oceanSrc from "./ocean.wgsl?raw";
+import watchSrc from "./watch.wgsl?raw";
 
-export type FishColour = "silver" | "heading";
+export type FishColour = "silver" | "heading" | "species";
+
+/** OKLab → linear sRGB (the shaders' oklab_to_linear). */
+export function oklabToLinear(L: number, a: number, b: number): [number, number, number] {
+  const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s = (L - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [
+    Math.max(0, 4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    Math.max(0, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    Math.max(0, -0.0041960863 * l - 0.7034186147 * m + 1.707612701 * s),
+  ];
+}
+
+/**
+ * Species colours: six hues at one OKLab lightness and chroma, so no species
+ * outshines another. Species 0 is a cool silver-blue (prey, or the first
+ * kind), species 1 coral (the predator in Predator and prey).
+ */
+export const SPECIES_HUES: readonly number[] = [235, 30, 85, 150, 295, 345];
+export const SPECIES_NAMES: readonly string[] = ["blue", "coral", "gold", "green", "violet", "pink"];
+export function speciesColours(): [number, number, number][] {
+  return SPECIES_HUES.map((h) => oklabToLinear(0.8, 0.12 * Math.cos((h * Math.PI) / 180), 0.12 * Math.sin((h * Math.PI) / 180)));
+}
+/** The same colours as CSS (sRGB), for swatches in the page. */
+export function speciesCss(k: number): string {
+  const c = speciesColours()[k % 6]!.map((x) => (x <= 0.0031308 ? 12.92 * x : 1.055 * x ** (1 / 2.4) - 0.055));
+  return `rgb(${c.map((x) => Math.round(Math.min(1, Math.max(0, x)) * 255)).join(" ")})`;
+}
+const PALETTE = speciesColours();
 
 export interface OceanLook {
   /** Fish length in world units (the kernel's separation radius is 0.3 r). */
@@ -82,6 +112,12 @@ export function lodFor(lenPx: number): Lod {
   return { glyph, field, name };
 }
 
+/** Neighbour threads drawn (model/watch.ts MAX_LIST). */
+const WATCH_MAX_LIST = 256;
+
+/** The View uniform (ocean.wgsl, field.wgsl, watch.wgsl): 12 vec4 and the six species colours. */
+export const VIEW_BYTES = (12 + 6) * 16;
+
 /** Far-field light per fish, × gain × len² (a soft dot of the fish's true area). */
 export const FAR_LIGHT = 0.498;
 
@@ -111,6 +147,10 @@ export class OceanView {
   private readonly overlayPipe: GPURenderPipeline;
   private readonly fieldPipe: GPURenderPipeline;
   private readonly splatPipe: GPUComputePipeline;
+  private readonly watchPipe: GPURenderPipeline;
+  private readonly watchLayout: GPUBindGroupLayout;
+  private watchBG: { buf: GPUBuffer; retina: GPUBuffer; bg: GPUBindGroup } | null = null;
+  private readonly noRetina: GPUBuffer;
   private readonly gridReadLayout: GPUBindGroupLayout;
   private readonly gridWriteLayout: GPUBindGroupLayout;
   private grid: { buf: GPUBuffer; w: number; h: number; read: GPUBindGroup; write: GPUBindGroup } | null = null;
@@ -139,7 +179,7 @@ export class OceanView {
       label: "ocean-field-write",
       entries: [{ binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "storage" } }],
     });
-    this.viewBuf = device.createBuffer({ size: 192, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "ocean-view" });
+    this.viewBuf = device.createBuffer({ size: VIEW_BYTES, usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST, label: "ocean-view" });
     this.viewBG = device.createBindGroup({ layout: this.viewLayout, label: "ocean-view", entries: [{ binding: 0, resource: { buffer: this.viewBuf } }] });
     const module = device.createShaderModule({ code: wgsl(oceanSrc), label: "ocean" });
     const one = { layout: device.createPipelineLayout({ bindGroupLayouts: [this.viewLayout] }) };
@@ -161,6 +201,22 @@ export class OceanView {
       ...three(this.gridReadLayout),
       vertex: { module, entryPoint: "field_vs" },
       fragment: { module, entryPoint: "field_fs", targets: [additive] },
+      primitive: { topology: "triangle-list" },
+    });
+    this.watchLayout = device.createBindGroupLayout({
+      label: "ocean-watch",
+      entries: [
+        { binding: 0, visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
+        { binding: 1, visibility: GPUShaderStage.FRAGMENT, buffer: { type: "read-only-storage" } },
+      ],
+    });
+    this.noRetina = device.createBuffer({ size: 64, usage: GPUBufferUsage.STORAGE, label: "ocean-no-retina" });
+    const watchModule = device.createShaderModule({ code: watchSrc, label: "ocean-watch" });
+    this.watchPipe = device.createRenderPipeline({
+      label: "ocean-watch",
+      layout: device.createPipelineLayout({ bindGroupLayouts: [this.viewLayout, this.watchLayout] }),
+      vertex: { module: watchModule, entryPoint: "watch_vs" },
+      fragment: { module: watchModule, entryPoint: "watch_fs", targets: [additive] },
       primitive: { topology: "triangle-list" },
     });
     this.waterPipe = device.createRenderPipeline({
@@ -254,6 +310,8 @@ export class OceanView {
     shark: SharkView | null,
     profiler?: GpuProfiler,
     extras?: { under?(rp: GPURenderPassEncoder): void; over?(rp: GPURenderPassEncoder): void },
+    /** Watch one: the tracker's record, and in Eyes Only the vision kernel's retina (null = nothing watched). */
+    watch?: { record: GPUBuffer; retina: GPUBuffer | null } | null,
   ): void {
     const L = this.look;
     const cam = camera.uniform(pixelScale);
@@ -272,11 +330,11 @@ export class OceanView {
     this.lod = lod;
     const cell = Math.max(2, Math.round(2 * pixelScale));
     const grid = lod.field > 0.001 ? this.fieldGrid(targetW, targetH, cell) : null;
-    const f = new Float32Array(48);
+    const f = new Float32Array(VIEW_BYTES / 4);
     f.set([cam.cx, cam.cy, cam.unitsPerPx, t], 0);
     f.set([targetW, targetH, W, H], 4);
     f.set([flock.halfW, flock.halfH, ix, iy], 8);
-    f.set([L.fishLength, L.minPx * pixelScale, L.gain, L.colour === "heading" ? 1 : 0], 12);
+    f.set([L.fishLength, L.minPx * pixelScale, L.gain, L.colour === "species" ? 2 : L.colour === "heading" ? 1 : 0], 12);
     f.set([...L.silver, L.flick], 16);
     f.set([...L.water, L.caustic], 20);
     f.set([Math.max(1, Math.round(W / L.causticCell)), Math.max(1, Math.round(H / L.causticCell)), L.causticDrift, 0], 24);
@@ -286,7 +344,8 @@ export class OceanView {
     }
     f.set([split, 0.8, 0, 0], 36);
     f.set([lod.glyph, lod.field, FAR_LIGHT, cell], 40);
-    f.set([grid ? grid.w : 1, grid ? grid.h : 1, 0, 0], 44);
+    f.set([grid ? grid.w : 1, grid ? grid.h : 1, watch?.retina ? 1 : 0, 0], 44);
+    PALETTE.forEach((c, k) => f.set([...c, 0], 48 + k * 4));
     this.device.queue.writeBuffer(this.viewBuf, 0, f);
 
     if (grid) {
@@ -342,6 +401,26 @@ export class OceanView {
     if (extras?.over) {
       extras.over(rp);
       rp.setBindGroup(0, this.viewBG);
+    }
+    if (watch && split < 0) {
+      const retina = watch.retina ?? this.noRetina;
+      if (!this.watchBG || this.watchBG.buf !== watch.record || this.watchBG.retina !== retina) {
+        this.watchBG = {
+          buf: watch.record,
+          retina,
+          bg: this.device.createBindGroup({
+            layout: this.watchLayout,
+            label: "ocean-watch",
+            entries: [
+              { binding: 0, resource: { buffer: watch.record } },
+              { binding: 1, resource: { buffer: retina } },
+            ],
+          }),
+        };
+      }
+      rp.setPipeline(this.watchPipe);
+      rp.setBindGroup(1, this.watchBG.bg);
+      rp.draw(6, 1 + WATCH_MAX_LIST);
     }
     if (shark || split >= 0) {
       rp.setPipeline(this.overlayPipe);

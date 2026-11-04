@@ -89,7 +89,10 @@ seeds across page loads; M1: the Order Dial by keyboard, measured map points and
 the Mill's measured Tunstrøm regime, the new brains' brute ≡ sort / run-twice / re-sort-with-noise,
 φ(η) against the f64 CPU reference, the three levels of detail; M2: Current's live divergence,
 the brush, motes / momentum exchange / riding cards, save and seeds with the water, Food Chain's
-census, Feed and Release, replay, ten simulated minutes without extinction; bench per scene) is
+census, Feed and Release, replay, ten simulated minutes without extinction; M3: Eyes Only's
+field against f64, ordered motion against the f64 reference and its no-edges control, the live
+schools; the Species Matrix by keyboard, a new number of kinds, the mixing card, an edited matrix
+on the link; Watch one keeping the same fish through re-sorts in every scene; bench per scene) is
 `packages/boids-2d/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`

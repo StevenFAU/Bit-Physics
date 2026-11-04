@@ -1,10 +1,153 @@
 # 03 — Swarm (2D collective motion)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-2d/web` (the embedded v4 lab).
-> Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24, M2 built 2026-10-29 (below).
+> Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24, M2 built 2026-10-29, M3 built 2026-10-30 (below).
 >
-> **Implementation status (2026-10-29): M0, M1 and M2 built** as the `v2/` page of `packages/boids-2d/web`
-> (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged).
+> **Implementation status (2026-10-30): M0, M1, M2 and M3 built** as the `v2/` page of `packages/boids-2d/web`
+> (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged). Every milestone
+> in the table below is done; the release swap (v2 to `/sims/boids-2d/`, the landing card) is next.
+>
+> **M3 — Eyes Only, the Species Matrix editor, Watch one, a staged poster and loop.** Measured on
+> the RX 6800 XT (snap Chromium, RADV) unless a line says otherwise. The gated v4 kernel, the gate
+> path and the capture are untouched: `pipeline.py validate` passes on both pages, run twice
+> byte-identical, and all four captures (v1 and v2, twice each) hash the same — φ calm 0.3553,
+> noisy 0.0609, as in M0–M2.
+>
+> - **Eyes Only: Bastien & Romanczuk 2020's minimal vision model** (`src/v2/model/brains-m3.ts`,
+>   f64 reference `src/v2/model/vision-cpu.ts`). Each fish is a disc one body length (BL) across
+>   with an eye at its centre. Its visual field is 256 bins of one bit: every fish within sight
+>   ORs its disc into the field (a disc covers the bins whose centres it spans, at least its
+>   own, as in the authors' code), so a fish hidden behind a nearer one adds nothing and the
+>   order the neighbours arrive in cannot change a bit. Speed and heading follow the paper's
+>   minimal equations (no time derivatives): dv/dt = γ(v₀ − v) + α₀ ∫ cos φ (−V + α₁(∂_φV)²),
+>   dψ/dt = β₀ ∫ sin φ (−V + β₁(∂_φV)²). Each bin's ∫cos and ∫sin are exact (f64-computed table),
+>   so both terms come from the field's transitions alone, summed in bin order. Nothing reads
+>   another fish's heading or velocity.
+>   - **What we could and could not pin.** The authors' code (RnoB/VisualCollective) settled the
+>     discs (R = 1, binary union), the edge term (a unit weight per edge), Euler steps, no noise,
+>     and that speed may go negative. The paper labels its figures by "α₁⁻¹ = 12.5 BL"; here α₁
+>     comes from its own L_eq = BL/(2α₁) (one disc ahead balances there — `test/m3.test.ts`
+>     checks the zero crossing). The SI PDF was not reachable.
+>   - **Parameters, from measurement on the f64 reference.** α₀ 0.1, β₀ 0.02 (the paper's Fig. 3
+>     pair), γ 0.1, v₀ 0.5 BL per unit time, L_eq 2.5 BL (α₁ = β₁ = 0.2), one unit of time per step
+>     (the authors take 0.1; groups of 20 polarize the same at either), sight 15 BL. 2,048 fish
+>     (T3, T2; 1,024 at T1) on a 400 × 225 BL torus. Measured live: schools form within seconds,
+>     their own polarization passes 0.5 at step ~1,800 and 0.84 at ~2,400 (40 s at 1×), the whole
+>     ocean's φ reaches 0.94 by step 3,000.
+>   - **The paper's result, reproduced as a regression test** (Prove, "No alignment rule, and
+>     still they school"): 20 fish released in a 5 BL box with random headings, 3,000 steps, ⟨φ⟩
+>     after step 1,500 over 32 GPU seeds against 32 other seeds of the f64 reference. Measured:
+>     GPU 0.833 vs CPU 0.940, z 2.85; with the seed sets swapped GPU 0.855 vs CPU 0.836, z 0.34 —
+>     no systematic difference; about one start in eight is still milling or disordered at step
+>     3,000 on both. **Declared:** z ≤ 4 (as The Order Dial's), both above the paper's own bar
+>     φ > 0.5. The control — the same model with α₁ = β₁ = 0 — measured 0.12–0.13; **declared**
+>     ≤ 0.25. In the live scene at step 3,600 the schools' own order is 0.95; with the edge terms
+>     off it is 0.43 (116 fragments).
+>   - **Every fish sees what the model says** (Prove): 2,048 fish after 300 steps, each fish's
+>     GPU field (dumped by the kernel) against the f64 field from the same positions. Measured over
+>     eight runs (seeds, 100–2,000 warm-up steps): 0–5 of 524,288 bins differ (a disc's edge within
+>     rounding of a bin boundary), and where a field matches, the GPU's step against the
+>     reference's: |Δψ| ≤ 2.8e-7 rad, |Δv| ≤ 2.7e-7. **Declared:** ≤ 5e-5 of bins, |Δψ|, |Δv| ≤ 1e-6.
+>     Not measured on drivers with low-accuracy builtin trig (lavapipe's 2⁻¹¹); the kernel uses
+>     builtin atan2, asin, cos and sin for bins and headings.
+>   - **Scene:** heading colours (a school turns one hue), a capped exposure (a few thousand fish
+>     leave most of the water dark), an "Order without alignment" panel — whole-ocean φ from the
+>     exact reduction, and the schools (groups linked within 2 L_eq) with their own order against
+>     the 1/√n of random headings, from a copy of every fish read about once a second. Tune: α₀,
+>     β₀, the edge pull α₁ = β₁ (0 is the control), sight; they ride the link (`vis`).
+> - **Species Matrix** (`brains-m3.ts`, `matrix-panel.ts`): 2–6 kinds on Open Water's rule with a
+>   signed cohesion and alignment gain per pair and a top-speed factor per kind — the v4 lab's
+>   species couplings, but with whole-number per-kind sums (2⁻²⁰), where v4 summed floats. A
+>   fish's kind rides in its boid's `align` slot. The presets are v4's `speciesConfig`, evaluated
+>   from its page in `test/m3.test.ts` for 2–4 kinds (v4's predator preset has one prey kind; with
+>   3+ kinds every kind but the hunters is prey here), and the kinds are drawn by v4's own
+>   `makeSpeciesData` (also checked against the page). 65,536 / 32,768 / 16,384 fish; opens on three
+>   kinds playing rock–paper–scissors.
+>   - **The editor** is on the canvas: one ARIA-slider cell per pair (drag, scroll or arrow keys;
+>     warm steer towards, cool away), "Steer" / "Swim with" for the two matrices, a speed row,
+>     2–6 kinds and the presets (these restart the ocean, keeping Tune's knobs; a cell edit does
+>     not). The link carries the preset, or an edited matrix with its speeds and population shares
+>     (`kinds=custom~3~g…~a…~s…~f…`), plus Tune's reach, top speed, separation and panic (`~p…`);
+>     which preset is running is read from the matrix itself, never remembered. Review fixes (PR
+>     #58): the link had dropped Tune's knobs and an edited predator matrix's shares, the preset
+>     name went stale across a scene round trip or a reset, and a key press rebuilt the matrix and
+>     lost the focused cell (cells now update in place).
+>   - **Measured, not asserted:** each fish's share of its neighbours that are its own kind comes
+>     from the kernel's own counts (written to `dens`); the panel shows it per kind against the
+>     kind's share of the ocean (rock–paper–scissors: 64% against 33%). Prove's "The matrix does
+>     what it says": 16,384 fish, three kinds, 900 steps — "keep apart" +0.651…+0.657 over the
+>     well-mixed share, "all together" within 0.0002 (three seeds). **Declared:** ≥ +0.4 and ±0.01.
+> - **Exactness of both new brains** (Prove): brute force ≡ counting sort and run twice (vision
+>   2,048 fish, species 4,096 with noise, 60 steps each), and 16,384 fish re-sorted in memory every
+>   8 steps for 120 steps match a run that never moves them, fish by fish by id: all identical.
+> - **Watch one** (`model/watch.ts`, `render/watch.wgsl`, `watch-panel.ts`), in every live scene.
+>   A click picks the nearest fish on the GPU (smallest distance as f32 bits by `atomicMin`, then
+>   the lowest slot); each frame `track` finds the slot holding its id (fish ids ride the memory
+>   re-sort; Food Chain, which never re-sorts, uses the slot) and `gather` lists every fish within
+>   its reach. The overlay draws straight from that record — a ring, the reach (and the brain's
+>   inner zones), a thread to each neighbour; in Eyes Only no threads but its visual field as a
+>   band around it, read from the kernel's own record of that fish's field. The panel shows its
+>   speed, heading, neighbours, nearest, agreement — and Eyes Only's retina strip with its forces in
+>   words, the species line in Species Matrix, "gone" when a Food Chain fish dies. The camera eases
+>   onto the fish's record carried forward by its velocity, and moves with the fish each frame (an
+>   ease alone trailed fast fish by 130–160 px at the Mill's and the Dial's watch zoom); a pan hands
+>   the camera back, Follow resumes, Let go ends it.
+>   - **Measured** (acceptance, every live scene): the record is the GPU's own copy of the same fish
+>     after 1–10 re-sorts, the neighbour count equals a CPU count from the same state, the camera
+>     holds the fish within 1.6–22 px of the centre while it swims and 0 px once paused.
+> - **Staged poster and loop** (`boids-2d-v2.png` / `.webm`, landing card not switched): The Mill
+>   at 2.6× its cover zoom, silver; the loop at half speed, 150 frames at 30 fps, crf 58, 1.29 MB.
+>   Two fixes on the way, both page-side: a resized canvas now keeps its framing (the zoom stays
+>   the same multiple of the cover fit — the generators shrink the canvas to 512 px after boot,
+>   which zoomed the view 2.7×), and `?chrome=off` holds the quality governor (the generators pump
+>   frames between screenshots, so the frame interval says nothing about the GPU; the governor had
+>   dropped the render scale mid-loop).
+> - **Rail:** at most four tools in any scene (Open Water: Shark, Watch, Look; Current: Current,
+>   Shark, Watch, Look; Food Chain: Feed, Release, Watch, Look; Eyes Only: Watch, Look).
+> - **Benches** (`?bench=1`, 1280×720, headless Chromium): Eyes Only 2,048 fish and Species Matrix
+>   65,536 fish both at 60.0 fps, frame p50 / p90 16.7 / 16.7 ms, 60 steps/s, render scale 100%;
+>   the vision step averages 0.61 ms, the species step 4.7 ms (render 1.5–1.6 ms). The M0–M2 scenes
+>   bench as before (60 fps each).
+> - **Frame rate in headed Firefox 158 and Chromium 156** (RX 6800 XT, 165 Hz display, 1440 × 900
+>   window, quiet machine; frames submitted per second, counted at non-empty `queue.submit`; T3):
+>
+>   | | Firefox 158 headed | Chromium 156 headed |
+>   |---|---|---|
+>   | Eyes Only (2,048 fish) | 164–165 | 164–165 |
+>   | …watching one fish | 164 | 165 |
+>   | Species Matrix (65,536) | 164 | 165 |
+>   | …watching one fish | 165 | 165 |
+>   | Open Water (1,000,000) | 148 | 142 |
+>   | …watching one fish | 157 | 141 |
+>   | The Mill (8,192) | 164 | 163 |
+>   | …watching one fish | 163 | 153 |
+>
+>   Every run keeps 60 steps/s and a 100% render scale; Firefox needed at most 1.5 empty submits a
+>   second (the M2 frame gate), so watching a fish costs nothing measurable in either browser.
+>   **How:** the headed windows opened behind other windows on this GNOME Wayland desktop, where
+>   Mutter sends no frame callbacks to a hidden surface — Firefox then throttled to ~0.2 frames/s
+>   and Chromium fell back to a ~57/s timer while both reported the page visible. Measured instead
+>   with Firefox's software vsync at the display's rate (`widget.wayland.vsync.enabled` false,
+>   `layout.frame_rate` 165) and Chromium under XWayland (`--ozone-platform=x11`), both of which
+>   pace at 165 Hz whatever the window's stacking. The probe is the M2 frame-gate probe.
+> - **Checks:** `v2-acceptance.mjs` passes 140/140 (M3 adds 52: the two brains' exactness and
+>   re-sort, the field against f64, ordered motion against the f64 reference and its control, the
+>   live scene schooling — own order 0.946 at step 3,600 — and not with the edge terms off (0.435),
+>   Watch in Eyes Only with its retina and the camera, the pan / Follow / Let go hand-off, save /
+>   restore and seeds across loads for both scenes, the Eyes Only and Species links (an edited matrix
+>   with its shares and Tune's knobs, written back unchanged), the matrix by real key presses with
+>   focus kept, the preset named from the running matrix after a scene round trip and a reset, a new
+>   number of kinds, the mixing card, Watch in all seven live scenes with the same
+>   fish through re-sorts and every neighbour counted, no panel overlap at 1280×720, at most six
+>   tools). `check-studio` passes on `v2/` and all six scene links at 390 / 820 / 1440 px and 200%
+>   zoom with zero axe violations. The workspace has 240 unit tests (20 new in `test/m3.test.ts`:
+>   the binned field against direct integration, L_eq, occlusion, the reference's control, schools
+>   on the torus, the v4 presets and species draw evaluated from the v4 page, both uniform layouts,
+>   the link codec, the tracker record, the shared View struct). Integrity 0 HARD_FAIL.
+> - **Bugs found on the way:** the model's "left" (φ > 0) is the fish's right on screen (the world's
+>   y axis points down) — the strip and the turn words follow the screen; the panel buttons' `hidden`
+>   lost to `.bp-btn`'s display rule; a faint fill inside the watch ring tone-mapped to a muddy disc
+>   over the fish (removed).
 >
 > **M2 — Current and Food Chain.** Measured on the RX 6800 XT (snap Chromium, RADV, T3) unless a
 > line says otherwise. The gated v4 kernel and the gate path are untouched; `Flock` gains an
@@ -150,7 +293,7 @@
 >     because they gate the same way with one frame in flight. Grow does as well. They are not
 >     changed here (`web/README.md` has the pattern). Swarm's readout counts frames after the gate.
 > - **Not in M2:** motion trails from a float accumulation buffer; a precomputed backdrop for the
->   phase map; Eyes Only, Species Matrix, Watch one, posters and loops (M3).
+>   phase map; Eyes Only, Species Matrix, Watch one, posters and loops (M3, above).
 >
 > **M1 — The Order Dial, The Mill, three levels of detail.** Measured on the RX 6800 XT (snap
 > Chromium, RADV, T3) unless a line says otherwise.

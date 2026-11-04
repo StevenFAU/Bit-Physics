@@ -18,6 +18,8 @@ import type { EcoKernels } from "../model/ecology.js";
 import type { FluidKernels } from "../model/fluid.js";
 import type { ExchangeCheck, MotesCheck, ReplayCheck, RideCheck } from "./m2-proofs.js";
 import { M2_CHECK, exchangeCheck, motesCheck, replayCheck, rideCheck } from "./m2-proofs.js";
+import type { FieldCheck, M3Exact, MixingCheck, OrderCheck } from "./m3-proofs.js";
+import { M3_CHECK, fieldCheck, fieldPass, m3Exact, mixingCheck, orderCheck } from "./m3-proofs.js";
 import type { VicsekCheck } from "./vicsek-check.js";
 import { VICSEK_CHECK, runVicsekCheck } from "./vicsek-check.js";
 
@@ -45,8 +47,8 @@ export interface ProveDeps {
 
 export interface OnScreen {
   proofRun: boolean;
-  /** The on-screen scene runs an M1 brain. */
-  brain: "vicsek" | "couzin" | null;
+  /** The on-screen scene runs an M1 or M3 brain. */
+  brain: "vicsek" | "couzin" | "species" | "vision" | null;
   /** M2: the on-screen scene's water or ecology. */
   m2?: "current" | "food-chain" | null;
   scene: string;
@@ -136,6 +138,14 @@ export interface ProvePane {
   ride(): Promise<RideCheck>;
   /** M2: Food Chain replays byte for byte. */
   replay(): Promise<ReplayCheck>;
+  /** M3: the vision model and the species matrix — brute ≡ sort, run twice, re-sort. */
+  m3Exact(): Promise<M3Exact[]>;
+  /** M3: every fish's visual field against the f64 reference. */
+  field(): Promise<FieldCheck>;
+  /** M3: ordered motion emerges (GPU vs f64), and not without the edge terms. */
+  order(): Promise<OrderCheck>;
+  /** M3: the matrix sorts kinds apart or mixes them, as it says. */
+  mixing(): Promise<MixingCheck>;
   /** One trajectory hash on a scratch flock (v4 hashRun), for cross-page checks. */
   hashRun(o?: HashOptions): Promise<{ hash: string; nan: number; n: number; broadphase: Broadphase }>;
 }
@@ -368,6 +378,69 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   replayCard.set({ status: "idle", measured: "run it on this GPU", budget: "identical SHA-256", adapter: "not yet run here" });
   pane.append(motesCard.el, exchangeCard.el, rideCard.el, replayCard.el);
 
+  // ---- M3: Eyes Only and Species Matrix ----
+  const K = M3_CHECK;
+  pane.append(
+    h("h3", {}, "Eyes Only and Species Matrix"),
+    h(
+      "p",
+      { class: "sw-note" },
+      "Two more brains: Bastien & Romanczuk's vision-only model, which ORs every fish it sees into a 256-bin picture (order-free by construction), and the species matrix, whose per-kind sums are whole numbers. The release gate does not cover them; these proofs do.",
+    ),
+  );
+  const m3ExactCard = proofCard(
+    {
+      title: "Vision and species: neighbour search is exact",
+      sentence:
+        `The vision model (${K.exact.visionN.toLocaleString()} fish) and the species matrix (${K.exact.speciesN.toLocaleString()} fish, three kinds, noise on), ${K.exact.steps} steps each, by brute force and by the counting sort, the sort twice: every position and velocity of every step must hash the same. ` +
+        `Then ${K.exact.reorderN.toLocaleString()} fish, ${K.exact.reorderSteps} steps, re-sorted in memory every ${K.exact.every}, against a run that never moves them, fish by fish.`,
+      label: "brute ≡ sort, run twice, re-sort",
+      action: "Run on this GPU",
+      links: [{ label: "brains", href: blob("packages/boids-2d/web/src/v2/model/brains-m3.ts") }],
+    },
+    () => void runM3("exact"),
+  );
+  m3ExactCard.set({ status: "idle", measured: "run it to compare on this GPU", budget: "identical SHA-256; 0 fish differ", adapter: "not yet run here" });
+  const fieldCard = proofCard(
+    {
+      title: "Every fish sees what the model says",
+      sentence:
+        `${K.field.n.toLocaleString()} fish after ${K.field.warm} steps of schooling: each one's visual field on the GPU — 256 bins all the way round — against the same field computed in f64 on the CPU from the same positions, bin for bin. ` +
+        "Where a field matches, the turn and the speed change the GPU took must match the reference's step.",
+      label: "measured agreement",
+      action: "Run on this GPU",
+      links: [{ label: "f64 reference", href: blob("packages/boids-2d/web/src/v2/model/vision-cpu.ts") }],
+    },
+    () => void runM3("field"),
+  );
+  fieldCard.set({ status: "idle", measured: "run it on this GPU", budget: `≤ ${K.field.maxDiffer.toExponential(0)} of bins; |Δψ| ≤ ${K.field.maxDpsi.toExponential(0)} rad`, adapter: "not yet run here" });
+  const orderCard = proofCard(
+    {
+      title: "No alignment rule, and still they school",
+      sentence:
+        `The paper's result, reproduced: ${K.order.n} fish released in a ${5}-body-length box with random headings, ${K.order.steps.toLocaleString()} steps. Their polarization φ, averaged after step ${K.order.relax.toLocaleString()}, over ${K.order.gpuSeeds.length} seeds on the GPU and ${K.order.cpuSeeds.length} other seeds of the f64 reference: ` +
+        `the two must agree (z ≤ ${K.order.zMax}) and both clear the paper's own bar for polarized, φ > ${K.order.minPhi}. The control turns the edge terms off — no pull towards what they see — and must stay below ${K.order.controlMax}.`,
+      label: "distributions agree",
+      action: "Run on this GPU",
+      links: [{ label: "check", href: blob("packages/boids-2d/web/src/v2/proof/m3-proofs.ts") }],
+    },
+    () => void runM3("order"),
+  );
+  orderCard.set({ status: "idle", measured: "run it on this GPU (a few seconds)", budget: `z ≤ ${K.order.zMax}; φ ≥ ${K.order.minPhi}; control ≤ ${K.order.controlMax}`, adapter: "not yet run here" });
+  const mixingCard = proofCard(
+    {
+      title: "The matrix does what it says",
+      sentence:
+        `${K.mixing.n.toLocaleString()} fish of ${K.mixing.kinds} kinds, ${K.mixing.steps} steps, twice: "keep apart" and "all together". Measured from the kernel's own neighbour counts: how much more of each kind's neighbours are its own kind than its share of the ocean. ` +
+        `Kept apart, at least ${K.mixing.apartMin} more; all together, within ±${K.mixing.togetherMax} of a random draw.`,
+      label: "measured",
+      action: "Run on this GPU",
+    },
+    () => void runM3("mixing"),
+  );
+  mixingCard.set({ status: "idle", measured: "run it on this GPU", budget: `apart ≥ +${K.mixing.apartMin}; together ±${K.mixing.togetherMax}`, adapter: "not yet run here" });
+  pane.append(m3ExactCard.el, fieldCard.el, orderCard.el, mixingCard.el);
+
   pane.append(
     h(
       "p",
@@ -375,6 +448,79 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       "Same GPU, same browser ⇒ same bytes. A different GPU rounds sin, cos and square roots its own way and the flock is chaotic, so across GPUs only the statistics agree — the release gate checks those on the CPU in f64.",
     ),
   );
+
+  async function runM3(which: "exact" | "field" | "order" | "mixing"): Promise<unknown> {
+    return lock(async () => {
+      const card = { exact: m3ExactCard, field: fieldCard, order: orderCard, mixing: mixingCard }[which];
+      card.set({ status: "running", measured: "running…", adapter: d.adapter });
+      try {
+        if (which === "exact") {
+          const rs = await m3Exact(d.device, d.kernels);
+          const ok = rs.every((r) => r.identical && r.repeatable && r.nan === 0 && r.reorder.differing === 0);
+          card.set({
+            status: ok ? "pass" : "fail",
+            measured: ok ? "identical" : "different",
+            budget: "identical SHA-256; 0 fish differ",
+            ratio: ok ? 0 : 2,
+            adapter: d.adapter,
+            notes: rs.flatMap((r) => [
+              `${r.brain}: brute ${r.brute.slice(0, 16)}… sort ${r.sort.slice(0, 16)}… — ${r.identical ? "identical" : "DIFFERENT"}, twice ${r.repeatable ? "identical" : "DIFFERENT"}`,
+              `${r.brain}: ${r.reorder.reorders} re-sorts in ${r.reorder.steps} steps, ${r.reorder.differing} of ${r.reorder.n.toLocaleString()} fish differ${r.saturated ? "; fixed-point sums near saturation" : ""}`,
+            ]),
+          });
+          return rs;
+        }
+        if (which === "field") {
+          const r = await fieldCheck(d.device, d.kernels);
+          const frac = r.differ / r.bins;
+          card.set({
+            status: fieldPass(r) ? "pass" : "fail",
+            measured: `${r.differ} of ${r.bins.toLocaleString()} bins differ; |Δψ| ≤ ${r.maxDpsi.toExponential(1)} rad`,
+            budget: `≤ ${K.field.maxDiffer.toExponential(0)} of bins; |Δψ| ≤ ${K.field.maxDpsi.toExponential(0)} rad`,
+            ratio: Math.max(frac / K.field.maxDiffer, r.maxDpsi / K.field.maxDpsi),
+            adapter: `${d.adapter} vs CPU (f64)`,
+            notes: [
+              `${r.fishDiffering} of ${r.n.toLocaleString()} fish see a bin differently (a disc's edge within float rounding of a bin's boundary)`,
+              `where the fields match: largest |Δv| ${r.maxDv.toExponential(1)} per unit time`,
+              `a field covers ${(r.cover * 100).toFixed(0)}% of the view on average, with ${r.edges.toFixed(1)} edges`,
+              `${r.seconds.toFixed(1)} s`,
+            ],
+          });
+          return r;
+        }
+        if (which === "order") {
+          const r = await orderCheck(d.device, d.kernels);
+          card.set({
+            status: r.pass ? "pass" : "fail",
+            measured: `⟨φ⟩ GPU ${r.gpuMean.toFixed(3)} · CPU ${r.cpuMean.toFixed(3)} (z ${r.z.toFixed(2)}); control ${r.controlMean.toFixed(3)}`,
+            budget: `z ≤ ${K.order.zMax}; φ ≥ ${K.order.minPhi}; control ≤ ${K.order.controlMax}`,
+            ratio: Math.max(r.z / K.order.zMax, K.order.minPhi / Math.max(Math.min(r.gpuMean, r.cpuMean), 1e-9), r.controlMean / K.order.controlMax),
+            adapter: `${d.adapter} vs CPU (f64)`,
+            notes: [
+              `GPU seeds: ${r.gpu.map((x) => x.toFixed(2)).join(" ")}`,
+              `CPU seeds: ${r.cpu.map((x) => x.toFixed(2)).join(" ")}`,
+              `control (no edges): ${r.control.map((x) => x.toFixed(2)).join(" ")}`,
+              `GPU ${r.gpuSeconds.toFixed(1)} s · CPU ${r.cpuSeconds.toFixed(1)} s`,
+            ],
+          });
+          return r;
+        }
+        const r = await mixingCheck(d.device, d.kernels);
+        card.set({
+          status: r.pass ? "pass" : "fail",
+          measured: `apart +${r.apart.toFixed(3)} · together ${r.together >= 0 ? "+" : ""}${r.together.toFixed(3)}`,
+          budget: `apart ≥ +${K.mixing.apartMin}; together ±${K.mixing.togetherMax}`,
+          ratio: Math.max(K.mixing.apartMin / Math.max(r.apart, 1e-9), Math.abs(r.together) / K.mixing.togetherMax),
+          adapter: d.adapter,
+          notes: [`${r.seconds.toFixed(1)} s`],
+        });
+        return r;
+      } catch (e) {
+        card.set({ status: "fail", measured: `could not run: ${(e as Error).message}`, adapter: d.adapter });
+        return null;
+      }
+    });
+  }
 
   let busy = false;
   const lock = async <T>(fn: () => Promise<T>): Promise<T | null> => {
@@ -869,6 +1015,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       await runM2("exchange");
       await runM2("ride");
       await runM2("replay");
+      await runM3("exact");
+      await runM3("field");
+      await runM3("order");
+      await runM3("mixing");
     } finally {
       runAllBtn.disabled = false;
     }
@@ -884,7 +1034,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
           : s.m2 === "current"
             ? `On screen: Current — ${size}, the gated kernel coupled to the solved water${s.edited ? ", as you tuned it" : ""}. The Current cards check the water and the coupling on their own runs.`
             : s.brain
-          ? `On screen: ${s.scene} — ${size}, the ${s.brain === "vicsek" ? "Vicsek brain" : "Couzin brain"} with the counting-sort grid, its fish re-sorted in memory every 16 steps for speed. ` +
+          ? `On screen: ${s.scene} — ${size}, the ${{ vicsek: "Vicsek brain", couzin: "Couzin brain", vision: "vision-only brain", species: "species matrix" }[s.brain]} with the counting-sort grid, its fish re-sorted in memory every 16 steps for speed. ` +
             `${s.sharkOn ? "The shark's fear term is on while you hunt; no proof runs with it. " : ""}` +
             "The new-brain proofs below run this brain at its on-screen settings; the first six check the gated kernel that runs Open Water."
           : `On screen: ${s.scene} — ${size}, the gated kernel with the counting-sort grid` +
@@ -906,6 +1056,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     exchange: async () => (await runM2("exchange")) as ExchangeCheck,
     ride: async () => (await runM2("ride")) as RideCheck,
     replay: async () => (await runM2("replay")) as ReplayCheck,
+    m3Exact: async () => (await runM3("exact")) as M3Exact[],
+    field: async () => (await runM3("field")) as FieldCheck,
+    order: async () => (await runM3("order")) as OrderCheck,
+    mixing: async () => (await runM3("mixing")) as MixingCheck,
     vicsek: async () => {
       const r = await runVicsek();
       if (!r) throw new Error("the φ(η) check could not run");

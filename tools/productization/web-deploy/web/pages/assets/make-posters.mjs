@@ -145,7 +145,11 @@ const SIMS = {
 // release step (an owner-approved URL swap). cfg.sim names the package whose
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
-const STAGED = {};
+const STAGED = {
+  // Swarm v2 (rebuild-v2 03-boids-2d.md M3): The Mill — 8,192 fish on Couzin's
+  // zones circling an empty centre, a little closer than the scene opens.
+  "boids-2d-v2": { sim: "boids-2d", page: "v2/", query: "?chrome=off&s=mill&cam=0.5,0.5,2.6", canvas: ".bp-canvas", frames: 900, px: 512 },
+};
 
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
