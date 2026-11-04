@@ -216,7 +216,7 @@ jobs:
           npm ci --no-audit --no-fund
           # A swapped sim (pipeline.py ROOT_ENTRY) serves its v2 page at the root.
           case "${{ matrix.sim }}" in
-            reaction-diffusion-2d|physarum|neural-ca) page="" ;;
+            reaction-diffusion-2d|physarum|neural-ca|boids-2d) page="" ;;
             *) page="v2/" ;;
           esac
           node web/tools/check-studio.mjs "packages/${{ matrix.sim }}/web/dist" "$page" "${{ runner.temp }}/studio-check"

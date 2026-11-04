@@ -4,7 +4,7 @@
 // only in where a cell's range and its agents come from.
 
 import { describe, expect, it } from "vitest";
-import v4Page from "../index.html?raw";
+import v4Page from "../v1/index.html?raw";
 import * as K from "../src/v2/model/kernel.js";
 
 /** The text of `const NAME = \`…\`;` in the v4 page (raw, interpolations unexpanded). */

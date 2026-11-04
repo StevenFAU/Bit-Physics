@@ -84,7 +84,7 @@ const check = (name, ok, detail = "") => {
   console.log(`${ok ? "PASS" : "FAIL"}  ${name}${detail ? ` — ${detail}` : ""}`);
 };
 
-async function open(path = "/v2/", viewport = { width: 1280, height: 720 }) {
+async function open(path = "/", viewport = { width: 1280, height: 720 }) {
   const ctx = await browser.newContext({ viewport, deviceScaleFactor: 1 });
   const page = await ctx.newPage();
   const errors = [];
@@ -124,7 +124,7 @@ const hashAfter = (page, n) =>
 let v1Capture = "";
 let v4 = null;
 {
-  const { ctx, page, errors } = await open("/");
+  const { ctx, page, errors } = await open("/v1/");
   v1Capture = await capture(page);
   await page.waitForFunction(() => globalThis.__boids2dReady === true, undefined, { timeout: 60000 });
   v4 = await T(page, async () => {
@@ -281,13 +281,13 @@ let v4 = null;
 // --- a seed reproduces the same bytes across page loads ---------------------
 {
   // with noise: the draws follow memory slots, so this also pins the reorder's layout
-  const a = await open("/v2/?seed=7&eta=0.15");
+  const a = await open("/?seed=7&eta=0.15");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?seed=7&eta=0.15");
+  const b = await open("/?seed=7&eta=0.15");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
-  const c = await open("/v2/?seed=8&eta=0.15");
+  const c = await open("/?seed=8&eta=0.15");
   const h3 = await hashAfter(c.page, 300);
   await c.ctx.close();
   check("same seed, same bytes across page loads (1M fish, η 0.15, 300 steps, with re-sorts)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -296,7 +296,7 @@ let v4 = null;
 
 // --- the rule rides the share link --------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?wa=2&eta=0.15&r=0.12&shark=20&col=heading");
+  const { ctx, page, errors } = await open("/?wa=2&eta=0.15&r=0.12&shark=20&col=heading");
   const p = await T(page, () => ({ ...globalThis.__swarm.flock.rule, shark: globalThis.__swarm.sharkSize, col: globalThis.__swarm.view.look.colour }));
   check("a share link sets the rule, shark size and fish colour", p.wAli === 2 && p.noise === 0.15 && p.rCoh === 0.12 && p.shark === 20 && p.col === "heading", JSON.stringify(p));
   await page.waitForTimeout(1500);
@@ -326,7 +326,7 @@ let v4 = null;
 
 // --- M1: The Order Dial --------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=order-dial");
+  const { ctx, page, errors } = await open("/?s=order-dial");
   await page.waitForTimeout(3000);
   const d = await T(page, () => globalThis.__bpDebug());
   const want = { T3: 1000000, T2: 250000, T1: 60000 }[d.tier];
@@ -402,17 +402,17 @@ let v4 = null;
   await ctx.close();
 }
 {
-  const { ctx, page, errors } = await open("/v2/?s=order-dial&eta=0.4&rho=2");
+  const { ctx, page, errors } = await open("/?s=order-dial&eta=0.4&rho=2");
   const b = await T(page, () => ({ ...globalThis.__swarm.flock.brain.p, dial: [globalThis.__swarmDial.eta, globalThis.__swarmDial.rho] }));
   const rho = b.r * b.r * 562.5;
   check("an Order Dial link sets η and ρ", Math.abs(b.eta - 0.4) < 1e-9 && Math.abs(rho - 2) < 1e-6 && b.dial[0] === 0.4 && b.dial[1] === 2, JSON.stringify(b));
   check("no console errors (Order Dial link)", errors.length === 0, errors.join(" | "));
   await ctx.close();
   // same seed, same bytes with the Vicsek brain (noise keyed by fish id, re-sorts on)
-  const a1 = await open("/v2/?s=order-dial&seed=5&eta=0.3");
+  const a1 = await open("/?s=order-dial&seed=5&eta=0.3");
   const h1 = await hashAfter(a1.page, 300);
   await a1.ctx.close();
-  const a2 = await open("/v2/?s=order-dial&seed=5&eta=0.3");
+  const a2 = await open("/?s=order-dial&seed=5&eta=0.3");
   const h2 = await hashAfter(a2.page, 300);
   await a2.ctx.close();
   check("The Order Dial: same seed, same bytes across page loads (η 0.3, 300 steps, re-sorts)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -420,7 +420,7 @@ let v4 = null;
 
 // --- M1: The Mill ------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=mill");
+  const { ctx, page, errors } = await open("/?s=mill");
   const r = await T(page, async () => {
     const app = globalThis.__swarm;
     app.clock.paused = true;
@@ -496,7 +496,7 @@ let v4 = null;
 }
 {
   // Couzin et al.: widen the orientation zone and the school stops milling
-  const { ctx, page, errors } = await open("/v2/?s=mill&dro=6&fov=300");
+  const { ctx, page, errors } = await open("/?s=mill&dro=6&fov=300");
   const r = await T(page, async () => {
     const app = globalThis.__swarm;
     app.clock.paused = true;
@@ -512,7 +512,7 @@ let v4 = null;
 
 // --- M1: three levels of detail -------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?chrome=off");
+  const { ctx, page, errors } = await open("/?chrome=off");
   await page.waitForTimeout(2000);
   for (const [zoom, want] of [[1, "field"], [6, "streak"], [20, "glyph"]]) {
     const r = await T(page, async (z) => {
@@ -539,7 +539,7 @@ let v4 = null;
 
 // --- M2: Current ------------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=current");
+  const { ctx, page, errors } = await open("/?s=current");
   await page.waitForTimeout(4000);
   const d = await T(page, () => globalThis.__bpDebug());
   const want = { T3: 262144, T2: 131072, T1: 65536 }[d.tier];
@@ -600,10 +600,10 @@ let v4 = null;
   await ctx.close();
 }
 {
-  const a = await open("/v2/?s=current&seed=3");
+  const a = await open("/?s=current&seed=3");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?s=current&seed=3");
+  const b = await open("/?s=current&seed=3");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
   check("Current: same seed, same bytes across page loads (fish and water coupled, 300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
@@ -611,7 +611,7 @@ let v4 = null;
 
 // --- M2: Food Chain ---------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=food-chain");
+  const { ctx, page, errors } = await open("/?s=food-chain");
   await page.waitForTimeout(4000);
   const d = await T(page, () => globalThis.__bpDebug());
   const want = { T3: 32768, T2: 16384, T1: 8192 }[d.tier];
@@ -668,17 +668,17 @@ let v4 = null;
   await ctx.close();
 }
 {
-  const a = await open("/v2/?s=food-chain&seed=4");
+  const a = await open("/?s=food-chain&seed=4");
   const h1 = await hashAfter(a.page, 400);
   await a.ctx.close();
-  const b = await open("/v2/?s=food-chain&seed=4");
+  const b = await open("/?s=food-chain&seed=4");
   const h2 = await hashAfter(b.page, 400);
   await b.ctx.close();
   check("Food Chain: same seed, same bytes across page loads (400 steps of births and deaths)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
 }
 {
   // ten minutes of simulated time (36,000 steps at 60 a second), run at 8×, from the default seed
-  const { ctx, page, errors } = await open("/v2/?s=food-chain&sp=8");
+  const { ctx, page, errors } = await open("/?s=food-chain&sp=8");
   const series = await T(page, async () => {
     const app = globalThis.__swarm;
     const rows = [];
@@ -708,7 +708,7 @@ let v4 = null;
 
 // --- M2 knobs ride the share link, and survive a restart ---------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=current&wp=0.1,-1,1.5,-1,-1");
+  const { ctx, page, errors } = await open("/?s=current&wp=0.1,-1,1.5,-1,-1");
   const w = await T(page, async () => {
     const a = globalThis.__swarm;
     // the water was built with the linked push (its starting vorticity comes from it), not patched after
@@ -718,7 +718,7 @@ let v4 = null;
   });
   check("a Current link builds the water with its knobs, and a restart keeps them", w.before.drag === 0.1 && Math.abs(w.before.push - 1.5) < 1e-9 && Math.abs(w.before.built - 1.5) < 1e-9 && w.after.drag === 0.1 && Math.abs(w.after.push - 1.5) < 1e-9 && /wp=/.test(w.url), JSON.stringify(w));
   await ctx.close();
-  const b = await open("/v2/?s=food-chain&ep=0.02,0.2,-1,-1");
+  const b = await open("/?s=food-chain&ep=0.02,0.2,-1,-1");
   const e = await T(b.page, () => globalThis.__swarm.ecology.params);
   check("a Food Chain link sets the ecology's knobs", e.growth === 0.02 && e.efficiency === 0.2 && e.sharkCost === 0.0042, `growth ${e.growth}, efficiency ${e.efficiency}, shark upkeep ${e.sharkCost}`);
   check("no console errors (M2 links)", errors.length === 0 && b.errors.length === 0, [...errors, ...b.errors].join(" | "));
@@ -835,7 +835,7 @@ const panelsClear = (page) =>
 
 // --- M3: Eyes Only -------------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=eyes-only");
+  const { ctx, page, errors } = await open("/?s=eyes-only");
   const d = await T(page, () => {
     const g = globalThis.__bpDebug();
     return { ...g, tools: [...document.querySelectorAll(".bp-rail-tools [data-tool]")].map((b) => b.dataset.tool), colour: globalThis.__swarm.view.look.colour, expMax: globalThis.__swarm.hdr.exposure.max };
@@ -941,15 +941,15 @@ const panelsClear = (page) =>
   await ctx.close();
 }
 {
-  const a = await open("/v2/?s=eyes-only&seed=5");
+  const a = await open("/?s=eyes-only&seed=5");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?s=eyes-only&seed=5");
+  const b = await open("/?s=eyes-only&seed=5");
   const h2 = await hashAfter(b.page, 300);
   const v = await T(b.page, () => globalThis.__swarm.flock.brain.p);
   await b.ctx.close();
   check("Eyes Only: same seed, same bytes across page loads (300 steps, re-sorts)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
-  const c = await open("/v2/?s=eyes-only&vis=0.2,0.03,0.25,20");
+  const c = await open("/?s=eyes-only&vis=0.2,0.03,0.25,20");
   const p = await T(c.page, async () => {
     const app = globalThis.__swarm;
     const before = { ...app.flock.brain.p };
@@ -965,7 +965,7 @@ const panelsClear = (page) =>
 
 // --- M3: Species Matrix ------------------------------------------------------------------
 {
-  const { ctx, page, errors } = await open("/v2/?s=species");
+  const { ctx, page, errors } = await open("/?s=species");
   const d = await T(page, async () => {
     const g = globalThis.__bpDebug();
     const b = await globalThis.__swarm.flock.readBoids();
@@ -1064,15 +1064,15 @@ const panelsClear = (page) =>
   await ctx.close();
 }
 {
-  const a = await open("/v2/?s=species&seed=4");
+  const a = await open("/?s=species&seed=4");
   const h1 = await hashAfter(a.page, 300);
   await a.ctx.close();
-  const b = await open("/v2/?s=species&seed=4");
+  const b = await open("/?s=species&seed=4");
   const h2 = await hashAfter(b.page, 300);
   await b.ctx.close();
   check("Species Matrix: same seed, same bytes across page loads (300 steps)", h1 === h2, `${h1.slice(0, 16)}… vs ${h2.slice(0, 16)}…`);
   const link = "custom~2~g0.9,-1.2,1.5,0.2~a1.1,0,0,0.3~s1,2~f0.8,0.2~p0.12,0.008,2,0.1";
-  const c = await open(`/v2/?s=species&kinds=${encodeURIComponent(link)}`);
+  const c = await open(`/?s=species&kinds=${encodeURIComponent(link)}`);
   const p = await T(c.page, async () => {
     const app = globalThis.__swarm;
     const b = await app.flock.readBoids();
@@ -1092,7 +1092,7 @@ const panelsClear = (page) =>
 
 // --- M3: Watch one in the other scenes, and the rail ------------------------------------------
 for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain"]) {
-  const { ctx, page, errors } = await open(`/v2/?s=${scene}`);
+  const { ctx, page, errors } = await open(`/?s=${scene}`);
   const tools = await T(page, () => [...document.querySelectorAll(".bp-rail-tools [data-tool]")].map((b) => b.dataset.tool));
   const at = await fishNearCentre(page);
   const w = await watchAndTrack(page, at, 1500);
@@ -1110,7 +1110,7 @@ for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain"
 // --- frame time: the boot scene and the M1, M2 and M3 scenes -----------------------
 for (const scene of ["open-water", "order-dial", "mill", "current", "food-chain", "eyes-only", "species"]) {
 
-  const { ctx, page } = await open(`/v2/?s=${scene}&bench=1`);
+  const { ctx, page } = await open(`/?s=${scene}&bench=1`);
   await page.waitForFunction(() => globalThis.__bpBench, undefined, { timeout: 60000 });
   const b = await T(page, () => globalThis.__bpBench);
   console.log(`BP_BENCH ${JSON.stringify(b)}`);

@@ -1,6 +1,6 @@
 // Swarm — the v2 page (docs/planning/rebuild-v2/03-boids-2d.md), Wave A of
-// the Field Studies rebuild. Served at /sims/boids-2d/v2/ while v1 (the v4
-// lab) stays live at /sims/boids-2d/.
+// the Field Studies rebuild. Served at /sims/boids-2d/; the previous v4
+// lab stays at /sims/boids-2d/v1/ for one release.
 //
 // Capture contract with the headless gate (tools/productization/web-deploy):
 //   * createStudio mounts the shell; its Prove drawer carries [data-bp-panel];

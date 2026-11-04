@@ -1138,7 +1138,6 @@ export class App {
       if (Number.isFinite(k) && k > 0 && k !== 1) this.camera.set({ cx: this.camera.cx, cy: this.camera.cy, pxPerUnit: this.camera.pxPerUnit * k });
     }
     this.camera.update(dt, now);
-    this.followFish(dt);
     const effects = this.governor?.effects ?? 1;
     this.hdr.bloom.intensity = effects > 0 ? BLOOM : 0;
     this.updateShark(dt);
@@ -1153,6 +1152,8 @@ export class App {
     this.flock.encodeSteps(enc, n, { timestampWrites: n > 0 ? this.profiler?.pass("sim") : undefined });
     this.clock.advance(n);
     this.stepsTotal += n;
+    // Follow the state rendered below, after this frame advances the flock.
+    this.followFish(dt);
 
     // the live order parameters, every few frames (exact integer reduction)
     let orderTick = -1;

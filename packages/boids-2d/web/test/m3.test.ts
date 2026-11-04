@@ -7,7 +7,7 @@
 // (v2-acceptance.mjs and the page's Prove cards).
 
 import { describe, expect, it } from "vitest";
-import v4Page from "../index.html?raw";
+import v4Page from "../v1/index.html?raw";
 import fieldWgsl from "../src/v2/render/field.wgsl?raw";
 import oceanWgsl from "../src/v2/render/ocean.wgsl?raw";
 import watchWgsl from "../src/v2/render/watch.wgsl?raw";

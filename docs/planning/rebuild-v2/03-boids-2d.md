@@ -3,9 +3,12 @@
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-2d/web` (the embedded v4 lab).
 > Wave A. Status: planning, v0.1, 2026-10-17; M0 and M1 built 2026-10-24, M2 built 2026-10-29, M3 built 2026-10-30 (below).
 >
-> **Implementation status (2026-10-30): M0, M1, M2 and M3 built** as the `v2/` page of `packages/boids-2d/web`
-> (served at `/sims/boids-2d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged). Every milestone
-> in the table below is done; the release swap (v2 to `/sims/boids-2d/`, the landing card) is next.
+> **Release swap (2026-11-04):** Swarm is the root page at `/sims/boids-2d/` in the built
+> bundle; the previous v4 lab is retained at `/sims/boids-2d/v1/` for one release. The old
+> `/v2/` address forwards the query and hash. Both pages still pass the same gate. The
+> landing card uses the staged Mill poster and 1,356,659-byte loop. The splash reel keeps
+> its existing v4 clips (noted in `sims.json`, reproducible from `v1/`). Owner merge and
+> deployment remain separate steps.
 >
 > **M3 — Eyes Only, the Species Matrix editor, Watch one, a staged poster and loop.** Measured on
 > the RX 6800 XT (snap Chromium, RADV) unless a line says otherwise. The gated v4 kernel, the gate
