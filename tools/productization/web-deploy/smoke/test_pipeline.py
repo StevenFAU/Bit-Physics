@@ -277,7 +277,10 @@ def test_lfs_include_uses_only_the_sims_canonical(sim, verify):
         manifest = Path(verify.CANON[sim])
         assert result.stdout.strip().split(",") == [
             manifest.as_posix(),
-            manifest.with_suffix(".h5").as_posix(),
+            (
+                manifest.parent
+                / json.loads((REPO / manifest).read_text())["payload"]["path"]
+            ).as_posix(),
         ]
     else:
         assert result.stdout == ""

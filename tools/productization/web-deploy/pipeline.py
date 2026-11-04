@@ -498,8 +498,10 @@ def main_lfs_include(argv: list[str] | None = None) -> int:
     )
     if a.sim in canon:
         manifest = Path(canon[a.sim])
-        # testkit's load_capture resolves the HDF5 sibling with with_suffix.
-        print(f"{manifest.as_posix()},{manifest.with_suffix('.h5').as_posix()}")
+        # Match testkit's load_capture: payload paths are relative to the manifest.
+        payload = json.loads((REPO / manifest).read_text())["payload"]["path"]
+        payload_path = (REPO / manifest.parent / payload).resolve().relative_to(REPO)
+        print(f"{manifest.as_posix()},{payload_path.as_posix()}")
     return 0
 
 
