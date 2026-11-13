@@ -4,7 +4,7 @@
 //
 //   CHROME_BIN=/snap/bin/chromium \
 //   PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js \
-//   node web/tools/check-studio.mjs packages/boids-2d/web/dist v2/ [out-dir]
+//   node web/tools/check-studio.mjs packages/strange-attractors/web/dist v2/ [out-dir]
 //
 // The page is "" for a sim whose v2 page has replaced v1 at the dist root
 // (reaction-diffusion-2d, physarum, neural-ca). It may carry a query (e.g.
