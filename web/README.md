@@ -5,13 +5,15 @@ Plain TypeScript source packages — no build step of their own; each sim's Vite
 compiles what it imports. The Wave 0 pilot is Turing Patterns
 (`packages/reaction-diffusion-2d/web`); Wave A adds Slime Mould (`packages/physarum/web`),
 Grow (`packages/neural-ca/web`, page `v2/`) and Swarm (`packages/boids-2d/web`, page `v2/`).
+Wave B starts with Chaos (`packages/strange-attractors/web`, page `v2/`), the first 3D page, which
+brought the 3D layer (F3) into `@bp/render`.
 Turing Patterns and Slime Mould have replaced their v1 pages at the sim root (v1 kept at
 `v1/`); see "The release swap" below.
 
 | Package | What it holds |
 |---|---|
 | `@bp/gpu` (`gpu/`) | `acquireGpu` (adapter info, optional features, software-rasteriser detection), capability tiers T1–T3 (`pickTier`, per-adapter memory), the WGSL `#import` loader (`defineWgsl` / `wgsl`), buffer helpers and a no-stall `ReadbackSlot`, `GpuProfiler` (timestamp queries, else submit→done latency; `begin(tag)` returns a frame's tag, e.g. its solver steps, as `frameTag` when its timings land). `CountingSort` (bucket N items by a u32 key: clear → histogram → scan → scatter, leaving `cellStart` and `order`; order within a key is unspecified, so consumers must be invariant to it) on top of `PrefixScan` (multi-level exclusive scan, up to 1024³ values), with a CPU reference and checker for tests. WGSL modules: `bp/fullscreen`, `bp/hash`. |
-| `@bp/render` (`render/`) | `HdrPipeline`: rgba16float scene target → optional bloom (dual-filter mip chain, 13-tap downsample with a Karis-averaged first level, tent upsample; energy-preserving mix, off unless `bloom.intensity > 0`) → GPU-measured exposure (64-bin log2 histogram, eased towards a percentile) → Khronos PBR Neutral or an AgX-style tone map → sRGB → 64×64 blue-noise dither. `Camera2D` (cover fit, pan/zoom/pinch, inertia, fly-to, bounds or wrap). `OrbitCamera` (orbit/dolly/truck, damping, ground clamp, saved views, reset, turntable off under reduced motion; the same gesture surface as Camera2D, so `CanvasInput` drives either). Colormap LUTs (viridis/magma/inferno/cividis + ice–fire/teal–rust, OKLab-interpolated). `FieldView2D`: scalar buffer → filtered field texture → lit material / colormap + isolines / raw texels, A/B wipe, overlay tint, context continuation outside bounded domains. WGSL: `bp/tonemap`, `bp/color`. |
+| `@bp/render` (`render/`) | `HdrPipeline`: rgba16float scene target → optional bloom (dual-filter mip chain, 13-tap downsample with a Karis-averaged first level, tent upsample; energy-preserving mix, off unless `bloom.intensity > 0`) → GPU-measured exposure (64-bin log2 histogram, eased towards a percentile) → Khronos PBR Neutral or an AgX-style tone map → sRGB → 64×64 blue-noise dither. `Camera2D` (cover fit, pan/zoom/pinch, inertia, fly-to, bounds or wrap). `OrbitCamera` (orbit/dolly/truck, damping, ground clamp, saved views, reset, turntable off under reduced motion; the same gesture surface as Camera2D, so `CanvasInput` drives either). Colormap LUTs (viridis/magma/inferno/cividis + ice–fire/teal–rust, OKLab-interpolated). `FieldView2D`: scalar buffer → filtered field texture → lit material / colormap + isolines / raw texels, A/B wipe, overlay tint, context continuation outside bounded domains. The 3D layer (F3): `View3D` (the per-frame view uniform every 3D renderer binds, with a model transform so a sim keeps its own coordinates; frustum planes, `DepthTarget`), `Environment` (studio gradient or analytic sky, optional ground plane with a grid and sphere contact shadows), `Points` (additive splats from a vec4 buffer: footprint normalised to each point's energy, size attenuation, velocity stretch from a previous-positions buffer, floating origin, uniform or LUT colour), `Accumulator` (light gathered on a cleared rgba16float frame target and added into the scene, per frame or as a long-exposure EMA in one fused write per pixel), `Ribbons` (per-strand history ring fed from the CPU or a GPU buffer with per-row origins; screen-space width, age and depth fade), `Instances` (icosphere LOD meshes, compute frustum cull + LOD pick, one indirect draw per level, lit and depth-tested). `OrbitCamera` also has a follow target and `rescale`. WGSL: `bp/tonemap`, `bp/color`, `bp/view3d`. |
 | `@bp/runtime` (`runtime/`) | `SimClock` (fixed ticks, speed, cap), `EventLog`, `History` (save point / restore / A-B / undo over sim checkpoints), `UrlState` (versioned short keys, only non-defaults written), `QualityGovernor` (p90 over 2 s → render scale → effects → size at next restart; suspended during Prove), counter-based `hash3` mirroring WGSL `bp/hash`. |
 | `@bp/studio` (`studio/`) | `createStudio` — top bar, scene heading, tool rail + options strip, Tune popover, transport, Learn/Prove drawer (right ≥ 640 px, bottom sheet below), share menu, toast, shortcut sheet, loading veil, no-WebGPU card — plus `Slider`, `Segmented`, `Toggle`, `ColorScale`, `Sparkline`, `PlotPanel`, `CalloutLayer`, `ProofCard`, `CanvasInput` (pointer/pinch/wheel/keyboard routing), `PerfOverlay`, `Dial` (a 270° rotary ARIA slider for a sim's signature parameter, e.g. Swarm's calm ↔ panic), the icon set and `studio.css`. |
 | `@bp/verify` (`verify/`) | The capture contract (re-exports `exposeCapture`, `runCaptureExclusive`, … from `common/common-web/src/capture-export.ts`, one implementation for v1 and v2), `markReady`, the `capture_roundtrip` criterion as `agreement()`, `sha256hex`. |
@@ -66,8 +68,9 @@ npx tsc --noEmit -p web/studio   # one shared package (gpu, render, runtime, stu
 Layout + accessibility in a real WebGPU browser (390 / 820 / 1440 px and 200% zoom,
 full-bleed, chrome overflow and overlap, axe-core in the boot, Learn and Prove states; a
 page may carry a query such as `v2/?s=mill`, a swapped sim's page is `""` (its dist root),
-and a sim's own floating panels join the overflow / overlap checks by carrying
-`data-bp-chrome`):
+a sim's own floating panels join the overflow / overlap checks by carrying
+`data-bp-chrome`, and a 3D page whose `__bpDebug()` says `space: "3d"` skips the 2D
+letterbox test — an orbit view has no bounded domain):
 
 ```bash
 CHROME_BIN=/snap/bin/chromium PLAYWRIGHT_MODULE=$PWD/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js node web/tools/check-studio.mjs packages/boids-2d/web/dist ""
@@ -93,7 +96,13 @@ census, Feed and Release, replay, ten simulated minutes without extinction; M3: 
 field against f64, ordered motion against the f64 reference and its no-edges control, the live
 schools; the Species Matrix by keyboard, a new number of kinds, the mixing card, an edited matrix
 on the link; Watch one keeping the same fish through re-sorts in every scene; bench per scene) is
-`packages/boids-2d/web/v2-acceptance.mjs`.
+`packages/boids-2d/web/v2-acceptance.mjs`; Chaos's (the capture byte-identical on v1 and v2, ready
+before the live view compiles, the tier's sizes and step rate, the first ball and its horizon, the
+horizon's order over four precisions, the in-page gate, the live kernel ≡ the gated one byte for
+byte, f32 offsets against f64, click to release, Ghost, the orbit camera, precision and ρ on the
+link, undo by replay, save / restore / compare, seeds across page loads, the fixed points through
+the GPU cull, Environment's sky and ground, reduced motion) is
+`packages/strange-attractors/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.

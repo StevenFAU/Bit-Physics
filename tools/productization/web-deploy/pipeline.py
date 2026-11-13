@@ -168,6 +168,7 @@ PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "physarum": (("v1/", "src/main.ts"),),
     "boids-2d": (("v1/", "src/main.ts"),),
     "neural-ca": (("v1/", "src/main.ts"),),
+    "strange-attractors": (("v2/", "src/v2/main.ts"),),
 }
 
 # The root page's entry module, where it is not src/main.ts: a swapped sim's

@@ -14,7 +14,8 @@
 //
 // Exit 0 when every check passes; 1 otherwise (a JSON report goes to stdout,
 // screenshots to out-dir when given). The page must expose globalThis.__bpDebug
-// (camera view rect, domain) and flip __bitPhysicsReady, within 60 s or
+// (camera view rect, domain; or space: "3d" for an orbit view, which has no
+// bounded domain) and flip __bitPhysicsReady, within 60 s or
 // BITPHYSICS_READY_TIMEOUT_MS (CI's software GPU compiles pipelines slowly);
 // its loading veil must then lift within BITPHYSICS_BOOT_TIMEOUT_MS (default:
 // the ready limit). Each viewport's report gives both times (ms).
@@ -162,8 +163,9 @@ for (const vp of VIEWPORTS) {
     if (Math.abs(cl) > eps || Math.abs(ct) > eps || Math.abs(cr - iw) > eps || Math.abs(cb - ih) > eps) {
       res.problems.push(`canvas is not full-bleed: ${geo.canvas.map((v) => v.toFixed(1))}`);
     }
-    if (geo.dbg && !geo.dbg.periodic) {
-      // the camera's view must lie inside the domain: no letterbox bars
+    if (geo.dbg && !geo.dbg.periodic && geo.dbg.space !== "3d") {
+      // the camera's view must lie inside the domain: no letterbox bars (a 3D
+      // scene, __bpDebug().space === "3d", has no bounded domain to letterbox)
       const [x0, y0, x1, y1] = geo.dbg.view;
       const [w, h] = geo.dbg.domain;
       if (x0 < -1 || y0 < -1 || x1 > w + 1 || y1 > h + 1) res.problems.push(`letterboxed: view ${geo.dbg.view.map((v) => v.toFixed(1))} outside domain ${w}×${h}`);
