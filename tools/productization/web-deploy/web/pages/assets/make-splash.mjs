@@ -64,7 +64,6 @@ const SHOTS = 400;
 const FPS = 30;
 
 // hide lists (verbatim from make-loops.mjs where the sim has one)
-const HIDE_B2D = ["#topbar", "#hint", "#playstats", "#modeflag", "#panel", "#overlay"];
 const HIDE_HEAT = [".he-explain", ".he-verify"];
 const HIDE_SW = [".sw-explain", ".sw-verify"];
 const HIDE_PFF = [".pf-explain", ".pf-verify", "#hud"];
@@ -74,19 +73,15 @@ const HIDE_LM = [".lm-explain", ".lm-verify"];
 const chip = (label) => ({ click: `[data-bp2="preset:${label}"]` });
 
 const CLIPS = [
-  // ---- boids-2d: the v4 lab's regimes × field readouts (user-facing UI,
-  // driven via the lab's own #presets / #colorSeg buttons). crf 62 + 340
-  // shots: the full-detail comet flock is high-entropy at 1024 px — crf 60
-  // at 400 shots measured 3.1 MB, past the 2 MB clip budget.
-  { sim: "boids-2d", page: "v1/", id: "flock", start: 120, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D },
-  { sim: "boids-2d", page: "v1/", id: "murmuration-order", start: 150, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
-    stage: [{ click: '#presets button[data-p="murmuration"]' }, { click: '#colorSeg button[data-cm="1"]' }] },
-  { sim: "boids-2d", page: "v1/", id: "mill-speed", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
-    stage: [{ click: '#presets button[data-p="mill"]' }, { click: '#colorSeg button[data-cm="2"]' }] },
-  { sim: "boids-2d", page: "v1/", id: "fluiddrift-curl", start: 200, gap: 2, crf: 62, shots: 340, hide: HIDE_B2D,
-    stage: [{ click: '#presets button[data-p="fluiddrift"]' }, { click: '#colorSeg button[data-cm="5"]' }] },
-  { sim: "boids-2d", page: "v1/", id: "swarm-density", start: 150, gap: 2, crf: 63, shots: 300, hide: HIDE_B2D,
-    stage: [{ click: '#presets button[data-p="swarm"]' }, { click: '#colorSeg button[data-cm="3"]' }] },
+  // ---- boids-2d: Swarm (the root page since the rebuild-v2 release swap),
+  // chrome off — the card shows The Mill. Open Water closer in (cam 3×): a
+  // million fish forming and splitting schools on dark water. Food Chain
+  // (cam 1.6×): sharks hunting through the schools. gap 2 = real time. (The
+  // five v4-lab clips — flock and four regime × readout looks — were cut.)
+  { sim: "boids-2d", id: "open-water", query: "?chrome=off&cam=0.5,0.5,3", href: "./sims/boids-2d/",
+    canvas: ".bp-canvas", start: 240, gap: 2, crf: 60, shots: 340 },
+  { sim: "boids-2d", id: "food-chain", query: "?chrome=off&s=food-chain&cam=0.5,0.5,1.6", href: "./sims/boids-2d/?s=food-chain",
+    canvas: ".bp-canvas", start: 240, gap: 2, crf: 58, shots: 340 },
 
   // ---- sph-water: scene chips + the view selects (colormap / render mode).
   // crf 56: dense particle spheres at 1024 px measured 3.0 MB at crf 52.

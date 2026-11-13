@@ -6,9 +6,10 @@
 > **Release swap (2026-11-04):** Swarm is the root page at `/sims/boids-2d/` in the built
 > bundle; the previous v4 lab is retained at `/sims/boids-2d/v1/` for one release. The old
 > `/v2/` address forwards the query and hash. Both pages still pass the same gate. The
-> landing card uses the staged Mill poster and 1,356,659-byte loop. The splash reel keeps
-> its existing v4 clips (noted in `sims.json`, reproducible from `v1/`). Owner merge and
-> deployment remain separate steps.
+> landing card uses the staged Mill poster and 1,356,659-byte loop. Released and deployed
+> 2026-11-04 (PR #61). On 2026-11-13 the splash reel's five v4-lab clips were replaced by
+> two Swarm clips filmed on the root page: Open Water at 3× (1.35 MB) and Food Chain at
+> 1.6× (1.55 MB).
 >
 > Release checks: **140/140 acceptance**, 240 workspace unit tests, typecheck/build,
 > registry consistency and integrity (0 HARD_FAIL); four shell viewports with no layout
