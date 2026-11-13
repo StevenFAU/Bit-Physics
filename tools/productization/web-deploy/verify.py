@@ -288,6 +288,9 @@ _FAIL_PENDING_NOTE = (
     "measured observables emitted for round-2 measured-then-declared. Never a silent pass."
 )
 
+# Keep CANON a plain literal `CANON = {...}`: pipeline.py `lfs-include` reads it
+# with ast.literal_eval (CI's LFS step runs before numpy is installed), so an
+# annotated or computed CANON would break every validate job's capture fetch.
 CANON = {
     "reaction-diffusion-2d": "captures/reaction-diffusion-2d-ref/gray-scott-lambda-128sq-seed42-step2000.json",
     "neural-ca": "captures/neural-ca-ref/growing-emoji-64sq-seed42-step1000-wgsl.json",

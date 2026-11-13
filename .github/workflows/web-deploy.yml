@@ -21,6 +21,8 @@ on:
       - '.github/workflows/web-deploy.yml'
       - 'packages/**/web/**'
       - 'common/common-web/**'
+      # createContext() and the WebGPU helpers that 13 v1 pages import
+      - 'common/common-ts/**'
       - 'web/**'
       - 'package.json'
       - 'package-lock.json'
