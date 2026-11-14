@@ -210,7 +210,7 @@ jobs:
         # The rebuilt v2 pages only (pipeline.py PAGES and ROOT_ENTRY). Full-bleed (no
         # letterboxing), no chrome overflow/overlap, the capture control live at
         # boot, and zero axe violations in the boot, Learn and Prove states.
-        if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d' || matrix.sim == 'neural-ca' || matrix.sim == 'strange-attractors'
+        if: matrix.sim == 'reaction-diffusion-2d' || matrix.sim == 'physarum' || matrix.sim == 'boids-2d' || matrix.sim == 'neural-ca' || matrix.sim == 'strange-attractors' || matrix.sim == 'curl-noise'
         timeout-minutes: 60
         env:
           PLAYWRIGHT_MODULE: ${{ github.workspace }}/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js
