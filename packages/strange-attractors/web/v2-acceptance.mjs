@@ -6,7 +6,7 @@
 //   PLAYWRIGHT_MODULE=<repo>/tools/productization/web-deploy/web/headless/node_modules/playwright/index.js \
 //   node v2-acceptance.mjs [out-dir]
 //
-// Checks: the v1 page's capture and the v2 page's are byte-identical; v2
+// M0 checks: the v1 page's capture and the v2 page's are byte-identical; v2
 // signals ready at the gate path, then goes live; the tier's ball and density
 // sizes; the clock's step rate; the first ball released automatically, ε wide;
 // predictability lost in a sane window, and a finer ball (10⁻⁹, 10⁻¹²) loses
@@ -18,7 +18,14 @@
 // rides the share link; save / restore / compare; the same seed gives the
 // same bytes across page loads; the fixed points through the GPU cull;
 // Environment's sky and ground in the browser; reduced motion; at most six
-// tools at 1280×720; no console errors. Prints a BP_BENCH line at the end.
+// tools at 1280×720; no console errors.
+// M1: Prove's Lyapunov cards (λ₁ against Sprott, λ₂ = 0, the spectrum's sum
+// against the exact trace) and the invariant-measure card, each inside its
+// declared budget; Buy More Digits (the first ball at three digits, the live
+// horizon equal to the off-loop measurement, "Buy a digit", "Measure 3–15"
+// drawing a line whose slope gives λ₁ near the f64 value, the link, reduced
+// motion); the live λ₁ instrument in Learn; the ball's captions never two at
+// once. Prints a BP_BENCH line at the end.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -184,6 +191,13 @@ let bench = null;
     prove.offsets && prove.offsets.worstRel < 1e-3 && prove.offsets.growth > 10,
     prove.offsets ? `worst ${prove.offsets.worstRel.toExponential(2)}, median ${prove.offsets.medianRel.toExponential(2)}; the ball grew ${prove.offsets.growth.toExponential(1)}×` : "no result",
   );
+  const lb = { l1Abs: 0.008, l2Abs: 0.0015, sumRel: 1.5e-5, invariantTv: 0.02 }; // proof/budgets.ts (≡ tolerance.toml, unit-tested)
+  const ly = prove.lyapunov;
+  check("Prove: λ₁ (Benettin, f64, 4,000 time units) within its budget of Sprott's 0.9056", ly && ly.l1Err <= lb.l1Abs, ly ? `λ = ${ly.estimate.lambdas.map((v) => v.toFixed(5)).join(", ")}; off by ${ly.l1Err.toFixed(5)} (budget ${lb.l1Abs}); ${ly.ms.toFixed(0)} ms` : "no result");
+  check("Prove: λ₂ is zero within its budget", ly && ly.l2Abs <= lb.l2Abs, ly ? `|λ₂| ${ly.l2Abs.toExponential(2)} (budget ${lb.l2Abs})` : "");
+  check("Prove: the spectrum sums to −(σ + 1 + β) = −41/3 within its budget", ly && ly.sumRel <= lb.sumRel, ly ? `relative ${ly.sumRel.toExponential(3)} (budget ${lb.sumRel}); Kaplan–Yorke ${ly.ky.toFixed(4)}` : "");
+  const im = prove.invariant;
+  check("Prove: the forgotten cloud's histogram matches a long f64 run (total variation)", im && im.tv <= lb.invariantTv, im ? `TV ${im.tv.toFixed(4)} (budget ${lb.invariantTv}; two f64 runs ${im.floor.toFixed(4)}), outside ${im.outside}` : "no result");
   await T(page, () => document.querySelector('.bp-top-actions [aria-label="Prove"]').click());
   await page.waitForTimeout(300);
   await shot(page, "04-prove");
@@ -262,13 +276,25 @@ let bench = null;
     const before = { ...a.chaos.params };
     a.setParams({ ...before, rho: 35 });
     await new Promise((r) => setTimeout(r, 600));
-    const mid = { ...a.chaos.params, search: location.search };
-    a.undo();
+    const mid = { ...a.chaos.params, search: location.search, lyapRho: a.lyap.params.rho };
+    await a.undo();
     await new Promise((r) => setTimeout(r, 300));
-    return { before, mid, after: { ...a.chaos.params } };
+    return { before, mid, after: { ...a.chaos.params }, lyapRho: a.lyap.params.rho };
   });
   check("Tune's ρ lands as an edit and rides the link", rho.mid.rho === 35 && rho.mid.search.includes("rho=35"), rho.mid.search);
   check("undo replays to the same moment without it (ρ back to 28)", rho.after.rho === 28, JSON.stringify(rho.after));
+  check("λ restarts with the parameters an undo brings back", rho.mid.lyapRho === 35 && rho.lyapRho === 28, `estimator ρ ${rho.mid.lyapRho} → ${rho.lyapRho}`);
+  const rs = await T(page, async () => {
+    const a = globalThis.__chaos;
+    a.savePoint();
+    a.setParams({ ...a.chaos.params, rho: 40 });
+    await new Promise((r) => setTimeout(r, 500));
+    const mid = a.lyap.params.rho;
+    a.restoreSave();
+    await new Promise((r) => setTimeout(r, 200));
+    return { mid, rho: a.chaos.params.rho, lyapRho: a.lyap.params.rho };
+  });
+  check("…and with those a save point brings back", rs.mid === 40 && rs.rho === 28 && rs.lyapRho === 28, `estimator ρ ${rs.mid} → ${rs.lyapRho}, system ρ ${rs.rho}`);
 
   // save / restore / compare
   const hist = await T(page, async () => {
@@ -323,6 +349,89 @@ let bench = null;
   await ctx.close();
 }
 
+// --- M1: the ball's captions take turns --------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?sp=2");
+  const seen = await T(page, async () => {
+    const out = { maxShown: 0, texts: new Set(), samples: 0 };
+    const t0 = performance.now();
+    while (performance.now() - t0 < 14000) {
+      const shown = [...document.querySelectorAll(".bp-callout")].filter((el) => Number(getComputedStyle(el).opacity) > 0.08);
+      out.maxShown = Math.max(out.maxShown, shown.length);
+      for (const el of shown) out.texts.add(el.textContent);
+      out.samples += 1;
+      await new Promise((r) => setTimeout(r, 40));
+    }
+    return { maxShown: out.maxShown, texts: [...out.texts], samples: out.samples };
+  });
+  check("the ball's captions take turns: never two visible at once", seen.maxShown <= 1 && seen.texts.length >= 3, `${seen.texts.length} captions seen (${seen.texts.join(" · ")}); at most ${seen.maxShown} at a time over ${seen.samples} samples`);
+  check("no console errors (captions)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M1: Buy More Digits ----------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=digits");
+  const d0 = await dbg(page);
+  check("Buy More Digits boots at 4× with its panel", d0.scene === "digits" && (await T(page, () => globalThis.__chaos.clock.speed)) === 4 && (await T(page, () => !document.querySelector(".cx-digits").hidden)), `speed ${await T(page, () => globalThis.__chaos.clock.speed)}`);
+  await page.waitForFunction(() => globalThis.__bpDebug().horizonT !== null, undefined, { timeout: 30000 });
+  const first = await T(page, () => ({ d: globalThis.__chaos.ballDigits, h: globalThis.__chaos.horizonT, pts: globalThis.__chaosDigits.points() }));
+  check("the first ball is three digits wide and its horizon lands on the plot", first.d === 3 && first.pts.length === 1 && first.pts[0].digits === 3, `t = ${first.h.toFixed(3)}`);
+  const off3 = await T(page, async () => (await globalThis.__chaos.measureHorizon(3, globalThis.__chaos.releasePoint, 80)).horizon);
+  check("the live horizon equals the off-loop measurement (spread sampled every 0.1 time units either way)", Math.abs(off3 - first.h) < 0.05, `live ${first.h.toFixed(3)}, measured ${off3.toFixed(3)}`);
+  await page.click('[data-cx="buy"]');
+  await page.waitForTimeout(300);
+  await page.waitForFunction(() => globalThis.__chaos.ballDigits === 4 && globalThis.__bpDebug().horizonT !== null, undefined, { timeout: 30000 });
+  const two = await T(page, () => globalThis.__chaosDigits.points());
+  check("Buy a digit: a ball 10⁻⁴ wide, and a second point, later", two.length === 2 && two[1].digits === 4 && two[1].horizon > two[0].horizon, two.map((p) => `${p.digits}: ${p.horizon.toFixed(2)}`).join(", "));
+  const un = await T(page, async () => {
+    const a = globalThis.__chaos;
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 200));
+    return { d: a.ballDigits, eps: a.chaos.eps, h: a.horizonT, status: document.querySelector(".cx-digits-status").textContent };
+  });
+  check("undoing a purchase brings back the three-digit ball, its precision and its horizon", un.d === 3 && un.eps === 1e-3 && Math.abs(un.h - off3) < 1e-9 && un.status.includes("10⁻³"), `${un.d} digits, ε ${un.eps}, horizon ${un.h?.toFixed(3)}; panel: ${un.status}`);
+  await page.click('[data-cx="measure"]');
+  await page.waitForFunction(() => !document.querySelector('[data-cx="measure"]').disabled && globalThis.__chaosDigits.points().length >= 13, undefined, { timeout: 180000 });
+  const line = await T(page, () => {
+    const D = globalThis.__chaosDigits;
+    const est = globalThis.__chaos.lyap.estimate();
+    return { pts: D.points(), fit: D.fit(), l1: est.lambdas[0], t: est.t };
+  });
+  const implied = Math.LN10 / line.fit.slope;
+  check(
+    "Measure 3–15: thirteen precisions on a line (r² > 0.95), later for every three digits",
+    line.pts.length === 13 && line.fit.r2 > 0.95 && line.pts.every((p, i) => i < 3 || p.horizon > line.pts[i - 3].horizon),
+    line.pts.map((p) => `${p.digits}:${p.horizon.toFixed(1)}`).join(" "),
+  );
+  check(
+    "the line's slope gives λ₁ within 15% of Sprott's 0.9056 (Prove's f64 Benettin run: 0.908)",
+    Math.abs(implied / 0.9056 - 1) < 0.15,
+    `slope ${line.fit.slope.toFixed(3)} per digit → λ₁ ≈ ${implied.toFixed(3)} (${((implied / 0.9056 - 1) * 100).toFixed(1)}%); ln 10 / 0.9056 = ${(Math.LN10 / 0.9056).toFixed(3)}; the live estimate had averaged ${Math.round(line.t)} time units: ${line.l1.toFixed(3)}`,
+  );
+  await shot(page, "08-digits");
+  check("the scene rides the link (its own speed is not written)", (await T(page, () => location.search)).includes("s=digits") && !(await T(page, () => location.search)).includes("sp="), await T(page, () => location.search));
+
+  // the live λ₁ instrument
+  await T(page, () => document.querySelector('.bp-top-actions [aria-label="Learn"]').click());
+  await page.waitForTimeout(1500);
+  const li = await T(page, () => {
+    const e = globalThis.__chaos.lyap.estimate();
+    const txt = document.querySelector('[aria-label="The Lyapunov spectrum"]')?.textContent ?? "";
+    return { l: e.lambdas, t: e.t, se: e.se, txt };
+  });
+  check("Learn's λ₁, measured as you watch, converges towards 0.906", li.t > 100 && Math.abs(li.l[0] - 0.906) < 0.08 && /Kaplan/.test(li.txt), `λ = ${li.l.map((v) => v.toFixed(3)).join(", ")} after ${Math.round(li.t)} time units (2 SE ${(2 * li.se[0]).toFixed(3)})`);
+  await shot(page, "09-digits-learn");
+  check("no console errors (Buy More Digits)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open("/v2/?s=digits", { reducedMotion: "reduce" });
+  const r = await T(page, () => ({ turn: globalThis.__chaos.camera.autoRotate, speed: globalThis.__chaos.clock.speed }));
+  check("reduced motion in Buy More Digits: no turntable, half its speed", r.turn === 0 && r.speed === 2, JSON.stringify(r));
+  await ctx.close();
+}
+
 // --- determinism: the same seed gives the same bytes across page loads ------------------
 {
   const run = async () => {
@@ -339,13 +448,22 @@ let bench = null;
     });
     void h;
     const hash = await ballHash(page);
+    // after an off-loop advance the live loop still gets its spread samples
+    const live = await T(page, async () => {
+      const a = globalThis.__chaos;
+      const t0 = a.lastSpread?.t ?? -1;
+      a.clock.paused = false;
+      await new Promise((r) => setTimeout(r, 1500));
+      return { before: t0, after: a.lastSpread?.t ?? -1 };
+    });
     await ctx.close();
-    return { hash, errors };
+    return { hash, errors, live };
   };
   const a = await run();
   const b = await run();
   check("the same seed gives the same ball bytes across page loads (800 steps)", a.hash === b.hash, `${a.hash.slice(0, 16)}… ≡ ${b.hash.slice(0, 16)}…`);
   check("no console errors (seed runs)", a.errors.length + b.errors.length === 0);
+  check("after an off-loop advance, live spread samples keep arriving", a.live.after > a.live.before && a.live.after > 0, `last sample at t ${a.live.before.toFixed(2)} → ${a.live.after.toFixed(2)}`);
 }
 
 // --- a shared link boots into its state --------------------------------------------------

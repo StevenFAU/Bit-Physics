@@ -9,6 +9,10 @@ import type { Chaos, ChaosKernels } from "../model/ensemble.js";
 import { Chaos as ChaosModel } from "../model/ensemble.js";
 import type { LorenzParams, V3 } from "../model/lorenz.js";
 import { CLASSIC, deviationStep, rk4Step } from "../model/lorenz.js";
+import type { LyapunovEstimate } from "../model/lyapunov.js";
+import { kaplanYorke, lyapunovSpectrum, traceOf } from "../model/lyapunov.js";
+import { CLASSIC_BOX, histogramXZ, referenceRun, tvDistance } from "../model/measure.js";
+import { BUDGET, LYAP_T, SPROTT } from "./budgets.js";
 import type { GateCheck, GateRunner } from "./gate.js";
 import { CANONICAL_IC, CAPTURE_INTERVAL, N_STEPS, REPO_BLOB, SEED42_OFFSET, T_STRANGE_MEAN_ABS, T_STRANGE_REL, buildCapture, checkGate } from "./gate.js";
 
@@ -24,6 +28,26 @@ export interface ProveDeps {
   hold: (on: boolean) => void;
 }
 
+export interface LyapunovCheck {
+  estimate: LyapunovEstimate;
+  l1Err: number;
+  l2Abs: number;
+  sumRel: number;
+  ky: number;
+  ms: number;
+}
+
+export interface InvariantCheck {
+  tv: number;
+  /** TV between two independent f64 runs of the reference's length: the comparison's own noise floor. */
+  floor: number;
+  members: number;
+  snapshots: number;
+  outside: number;
+  refSamples: number;
+  t: number;
+}
+
 export interface OnScreen {
   params: LorenzParams;
   released: boolean;
@@ -36,6 +60,8 @@ export interface ProvePane {
   /** Results of the last run, for tests. */
   results: Record<string, unknown>;
   runAll(): Promise<void>;
+  /** The invariant-measure run with other settings (measurement, tests). */
+  measureInvariant(o?: { members?: number; t0?: number; snapshots?: number; gap?: number }): Promise<InvariantCheck | null>;
 }
 
 /** The live density kernel, one particle from the gate's start, 10,000 steps: the same bytes as the gated trajectory? */
@@ -128,13 +154,75 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   offsetCard.set({ status: "idle", measured: "run it to measure", budget: "not gated (measured)", adapter: d.adapter });
   pane.append(offsetCard.el);
 
+  // 4–6. the Lyapunov spectrum, in f64 (one run feeds three cards)
   pane.append(
+    h("h2", {}, "How chaotic, measured"),
     h(
       "p",
       { class: "cx-note" },
-      "Coming with the next milestone: the largest Lyapunov exponent against Sprott's 0.906, the spectrum's sum against the exact −(σ + 1 + β), and the ensemble's long-run histogram against a double-precision run.",
+      `Benettin's method in double precision on this machine's CPU: one trajectory from (1, 1, 1) carries three tangent vectors, ` +
+        `re-orthonormalised every 0.1 time units, averaged over ${LYAP_T.toLocaleString()} time units after a 20-unit transient (about a tenth of a second). ` +
+        "These are Prove checks with declared budgets, not release gates.",
     ),
   );
+  const tol = { label: "declared in tolerance.toml", href: blob("tools/testkit/equivalence/tolerance.toml") };
+  const lyapLink = { label: "estimator", href: blob("packages/strange-attractors/web/src/v2/model/lyapunov.ts") };
+  const l1Card = proofCard(
+    {
+      title: "The largest exponent, λ₁",
+      sentence: `λ₁ measures how fast neighbouring trajectories separate. Sprott's reference value for these parameters is ${SPROTT.l1}; this run must land within the declared band.`,
+      label: "reference agreement passed (not gated)",
+      action: "Run",
+      links: [lyapLink, tol],
+    },
+    () => void runLyapunov(),
+  );
+  const l2Card = proofCard(
+    {
+      title: "The middle exponent is zero",
+      sentence: "A flow that neither stops nor blows up has one exponent of exactly zero, along the direction of motion. The measured λ₂ must be within the declared band of 0.",
+      label: "analytic check passed (not gated)",
+      action: "Run",
+      links: [lyapLink, tol],
+    },
+    () => void runLyapunov(),
+  );
+  const sumCard = proofCard(
+    {
+      title: "The exponents sum to the trace",
+      sentence:
+        "Lorenz's flow shrinks every volume at the same rate everywhere: the trace of its Jacobian is −(σ + 1 + β) = −41/3 at every point. " +
+        "So λ₁ + λ₂ + λ₃ must equal −41/3. What is left over is the integrator's own volume error.",
+      label: "analytic check passed (not gated)",
+      action: "Run",
+      links: [lyapLink, tol],
+    },
+    () => void runLyapunov(),
+  );
+  for (const [c, b] of [
+    [l1Card, `|λ₁ − ${SPROTT.l1}| ≤ ${BUDGET.l1Abs}`],
+    [l2Card, `|λ₂| ≤ ${BUDGET.l2Abs}`],
+    [sumCard, `${BUDGET.sumRel.toExponential(1)} relative`],
+  ] as const) {
+    c.set({ status: "idle", measured: "run it to measure", budget: b, adapter: "CPU (f64)" });
+    pane.append(c.el);
+  }
+
+  // 7. the invariant measure
+  const imCard = proofCard(
+    {
+      title: "The forgotten cloud is the attractor's own distribution",
+      sentence:
+        "262,144 starts, released 10⁻⁶ wide on the GPU, are run until long after they have forgotten where they began, then binned on the (x, z) plane at eight moments. " +
+        "Their histogram must match one long double-precision trajectory's: a check on distributions, which divergence cannot spoil.",
+      label: "reference agreement passed (not gated)",
+      action: "Run on this GPU",
+      links: [{ label: "histograms", href: blob("packages/strange-attractors/web/src/v2/model/measure.ts") }, tol],
+    },
+    () => void runInvariant(),
+  );
+  imCard.set({ status: "idle", measured: "run it to measure", budget: `total variation ≤ ${BUDGET.invariantTv}`, adapter: d.adapter });
+  pane.append(imCard.el);
 
   let running = false;
   const guard = async (fn: () => Promise<void>): Promise<void> => {
@@ -207,16 +295,81 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     });
   }
 
+  async function runLyapunov(): Promise<void> {
+    await guard(async () => {
+      for (const c of [l1Card, l2Card, sumCard]) c.set({ status: "running" });
+      await new Promise((r) => setTimeout(r, 0));
+      const r = lyapunovCheck();
+      results["lyapunov"] = r;
+      const e = r.estimate;
+      const sp = e.lambdas.map((v) => v.toFixed(4)).join(", ");
+      const common = [`spectrum (${sp}); Kaplan–Yorke dimension ${r.ky.toFixed(4)} (Sprott ${SPROTT.ky})`, `${e.t.toLocaleString()} time units in ${r.ms.toFixed(0)} ms`];
+      l1Card.set({
+        status: r.l1Err <= BUDGET.l1Abs ? "pass" : "fail",
+        measured: `λ₁ = ${e.lambdas[0].toFixed(4)} (off by ${r.l1Err.toFixed(4)})`,
+        budget: `|λ₁ − ${SPROTT.l1}| ≤ ${BUDGET.l1Abs}`,
+        ratio: r.l1Err / BUDGET.l1Abs,
+        adapter: "CPU (f64)",
+        notes: common,
+      });
+      l2Card.set({
+        status: r.l2Abs <= BUDGET.l2Abs ? "pass" : "fail",
+        measured: `λ₂ = ${e.lambdas[1].toFixed(5)}`,
+        budget: `|λ₂| ≤ ${BUDGET.l2Abs}`,
+        ratio: r.l2Abs / BUDGET.l2Abs,
+        adapter: "CPU (f64)",
+        notes: common,
+      });
+      sumCard.set({
+        status: r.sumRel <= BUDGET.sumRel ? "pass" : "fail",
+        measured: `Σλ = ${(e.lambdas[0] + e.lambdas[1] + e.lambdas[2]).toFixed(6)}; −41/3 = ${(-41 / 3).toFixed(6)}; off by ${sci(r.sumRel)} relative`,
+        budget: `${BUDGET.sumRel.toExponential(1)} relative`,
+        ratio: r.sumRel / BUDGET.sumRel,
+        adapter: "CPU (f64)",
+        notes: ["The leftover is RK4's volume error at Δt = 0.01: it falls 16-fold each time Δt halves (Δt⁴)."],
+      });
+    });
+  }
+
+  async function runInvariant(): Promise<void> {
+    const k = d.kernels();
+    if (!k) {
+      imCard.set({ status: "info", measured: "the live kernels are still compiling" });
+      return;
+    }
+    await guard(async () => {
+      imCard.set({ status: "running" });
+      const r = await invariantMeasure(d.device, k);
+      results["invariant"] = r;
+      imCard.set({
+        status: r.tv <= BUDGET.invariantTv ? "pass" : "fail",
+        measured: `total variation ${r.tv.toFixed(4)} (two f64 runs: ${r.floor.toFixed(4)})`,
+        budget: `total variation ≤ ${BUDGET.invariantTv}`,
+        ratio: r.tv / BUDGET.invariantTv,
+        adapter: d.adapter,
+        notes: [
+          `${r.members.toLocaleString()} members × ${r.snapshots} moments from t = ${r.t} against ${r.refSamples.toLocaleString()} f64 samples, ${CLASSIC_BOX.bins}×${CLASSIC_BOX.bins} bins; outside the box ${r.outside}`,
+        ],
+      });
+    });
+  }
+
   runAllBtn.addEventListener("click", () => void runAll());
   async function runAll(): Promise<void> {
     await runGate();
     await runLive();
     await runOffsets();
+    await runLyapunov();
+    await runInvariant();
   }
 
   return {
     results,
     runAll,
+    async measureInvariant(o) {
+      const k = d.kernels();
+      return k ? invariantMeasure(d.device, k, o) : null;
+    },
     setOnScreen(s) {
       const classic = s.params.sigma === CLASSIC.sigma && s.params.rho === CLASSIC.rho && s.params.beta === CLASSIC.beta;
       onScreen.textContent =
@@ -317,6 +470,83 @@ export async function offsetsVsF64(device: GPUDevice, k: ChaosKernels, eps = 1e-
     }
     rel.sort((a, b) => a - b);
     return { members: members - 1, eps, steps, worstRel: rel[rel.length - 1]!, medianRel: rel[Math.floor(rel.length / 2)]!, growth };
+  } finally {
+    chaos.destroy();
+  }
+}
+
+/** Prove's Lyapunov run: classic parameters, from (1, 1, 1), LYAP_T time units. */
+export function lyapunovCheck(): LyapunovCheck {
+  const t0 = performance.now();
+  const estimate = lyapunovSpectrum(CLASSIC, LYAP_T);
+  const ms = performance.now() - t0;
+  const tr = traceOf(CLASSIC);
+  const sum = estimate.lambdas[0] + estimate.lambdas[1] + estimate.lambdas[2];
+  return {
+    estimate,
+    l1Err: Math.abs(estimate.lambdas[0] - SPROTT.l1),
+    l2Abs: Math.abs(estimate.lambdas[1]),
+    sumRel: Math.abs(sum - tr) / Math.abs(tr),
+    ky: kaplanYorke(estimate.lambdas),
+    ms,
+  };
+}
+
+/** The reference histogram (one long f64 run) and its noise floor, computed once. */
+let reference: { h: ReturnType<typeof histogramXZ>; floor: number; samples: number } | null = null;
+export function invariantReference(): { h: ReturnType<typeof histogramXZ>; floor: number; samples: number } {
+  if (!reference) {
+    const samples = 1_000_000;
+    const a = referenceRun(CLASSIC, samples, 10, 2000, [1, 1, 1]);
+    const b = referenceRun(CLASSIC, samples, 10, 2000, [-7, 3, 30]);
+    const ha = histogramXZ(a, 3, CLASSIC_BOX);
+    reference = { h: ha, floor: tvDistance(ha, histogramXZ(b, 3, CLASSIC_BOX)), samples };
+  }
+  return reference;
+}
+
+/**
+ * The GPU ensemble's (x, z) histogram long after release vs one long f64
+ * run: 262,144 members released 10⁻⁶ wide at a point on the attractor, run
+ * to t = 40, then binned at eight moments 2.5 time units apart.
+ */
+export async function invariantMeasure(device: GPUDevice, k: ChaosKernels, o: { members?: number; t0?: number; snapshots?: number; gap?: number } = {}): Promise<InvariantCheck> {
+  const members = o.members ?? 262_144;
+  const t0 = o.t0 ?? 40;
+  const snapshots = o.snapshots ?? 8;
+  const gap = o.gap ?? 2.5;
+  const p = { ...CLASSIC };
+  let x: V3 = [1, 1, 1];
+  for (let i = 0; i < 2350; i += 1) x = rk4Step(p, x, 0.01).next;
+  const chaos = new ChaosModel(device, k, members, 1, p);
+  try {
+    const enc = device.createCommandEncoder();
+    chaos.release(enc, x, 1e-6, 11);
+    device.queue.submit([enc.finish()]);
+    const run = async (steps: number): Promise<void> => {
+      let left = steps;
+      while (left > 0) {
+        const n = Math.min(left, 32);
+        const e = device.createCommandEncoder({ label: "prove-invariant" });
+        chaos.encodeSteps(e, n);
+        device.queue.submit([e.finish()]);
+        left -= n;
+      }
+      await device.queue.onSubmittedWorkDone();
+    };
+    await run(Math.round(t0 / 0.01));
+    const ref = invariantReference();
+    const acc = new Float64Array(CLASSIC_BOX.bins * CLASSIC_BOX.bins);
+    let outside = 0;
+    for (let s = 0; s < snapshots; s += 1) {
+      if (s > 0) await run(Math.round(gap / 0.01));
+      const offs = await chaos.readEnsemble();
+      const hgpu = histogramXZ(offs, 4, CLASSIC_BOX, chaos.ref.x);
+      for (let i = 0; i < acc.length; i += 1) acc[i] += hgpu.p[i]! / snapshots;
+      outside += hgpu.outside / snapshots;
+    }
+    const tv = tvDistance({ p: acc, outside }, ref.h);
+    return { tv, floor: ref.floor, members, snapshots, outside, refSamples: ref.samples, t: t0 };
   } finally {
     chaos.destroy();
   }

@@ -22,6 +22,8 @@ import type { ChaosCheckpoint, ChaosKernels, SpreadSample } from "./model/ensemb
 import { Chaos, MAX_STEPS, TRACK } from "./model/ensemble.js";
 import type { LorenzParams, V3 } from "./model/lorenz.js";
 import { DT, Reference, field, fixedPoints, pickOnAttractor, sampleAttractor, spreadOf } from "./model/lorenz.js";
+import type { LyapunovEstimate } from "./model/lyapunov.js";
+import { LyapunovEstimator } from "./model/lyapunov.js";
 import type { ChaosView } from "./render/chaos-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { DIGITS_MAX, DIGITS_MIN, epsOf, sceneById } from "./scenes.js";
@@ -55,6 +57,9 @@ interface ChaosEvent {
 
 interface Checkpoint extends ChaosCheckpoint {
   ghost: { a: V3; b: V3; on: boolean };
+  /** The ball's precision and, if reached, its horizon (Buy More Digits files horizons by precision). */
+  ballDigits: number;
+  horizonT: number | null;
 }
 
 export interface AppHooks {
@@ -63,8 +68,16 @@ export interface AppHooks {
   onRelease?: (eps: number, threshold: number) => void;
   onSpread?: (s: SpreadSample) => void;
   onHorizon?: (t: number | null) => void;
+  /** A checkpoint was restored (save point, undo): the ball, its horizon and σ, ρ, β may have jumped. */
+  onRestore?: () => void;
+  /** The live f64 Lyapunov estimate, about twice a second. */
+  onLyapunov?: (e: LyapunovEstimate) => void;
   onFrame?: (now: number) => void;
 }
+
+/** Steps the live Lyapunov estimator takes per frame (half a time unit), and where it stops. */
+const LYAP_STEPS_PER_FRAME = 50;
+const LYAP_MAX_T = 20000;
 
 export class App {
   readonly clock = new SimClock(TICKS_PER_SECOND, MAX_STEPS);
@@ -90,6 +103,14 @@ export class App {
   learnOpen = false;
   /** Where the next "Release again" drops a ball. */
   releasePoint: V3 = [0, 0, 0];
+  /** Precision (digits) of the ball on screen. */
+  ballDigits = 6;
+  /**
+   * λ₁…λ₃ measured as you watch: Benettin's method in f64 on its own
+   * trajectory, half a time unit per frame, restarted when σ, ρ, β change.
+   */
+  lyap: LyapunovEstimator = new LyapunovEstimator({ sigma: 10, rho: 28, beta: 8 / 3 }, [1, 1, 1], DT, 10, 20, 25);
+  private lyapReported = 0;
 
   private readonly history: History<Checkpoint>;
   private readonly events: ChaosEvent[] = [];
@@ -130,12 +151,8 @@ export class App {
     this.chaos = new Chaos(gpu.device, kernels, size.ensemble, size.density, this.scene.params);
     this.history = new History<Checkpoint>(
       {
-        capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState() }),
-        restore: (c) => {
-          this.chaos.restore(c);
-          this.setGhostState(c.ghost);
-          this.afterRestore();
-        },
+        capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState(), ballDigits: this.ballDigits, horizonT: this.horizonT }),
+        restore: (c) => this.restoreEntry(c),
         release: (c) => this.chaos.releaseCheckpoint(c),
       },
       4,
@@ -262,7 +279,7 @@ export class App {
 
   // -------------------------------------------------------------- scene --
 
-  async loadScene(id: SceneId, o: { params?: LorenzParams; digits?: number; seed?: number } = {}): Promise<void> {
+  async loadScene(id: SceneId, o: { params?: LorenzParams; digits?: number; seed?: number; speed?: number } = {}): Promise<void> {
     this.busy = true;
     try {
       const scene = sceneById(id);
@@ -281,6 +298,8 @@ export class App {
       this.clearGhost();
       this.view.tracks.clear();
       this.measureAttractor(true);
+      this.restartLyapunov();
+      this.setSpeed(o.speed ?? scene.speed);
       this.chaos.seedDensity(this.seed);
       this.releasePoint = this.pointAlong(scene.releaseAfter);
       this.autoReleaseAt = performance.now() + scene.releaseDelay * 1000;
@@ -304,7 +323,7 @@ export class App {
   }
 
   async restart(): Promise<void> {
-    await this.loadScene(this.scene.id, { params: this.chaos.params, digits: this.digits, seed: this.seed });
+    await this.loadScene(this.scene.id, { params: this.chaos.params, digits: this.digits, seed: this.seed, speed: this.clock.speed });
   }
 
   /** The attractor sample (picking), its size (framing, horizon) and its speed range (colour). */
@@ -360,6 +379,7 @@ export class App {
     const enc = this.gpu.device.createCommandEncoder({ label: "chaos-event" });
     if (e.kind === "release") {
       this.chaos.release(enc, e.centre!, epsOf(e.digits!), e.seed!);
+      this.ballDigits = e.digits!;
       this.releasePoint = [...e.centre!];
       this.autoReleaseAt = Infinity;
       this.horizonT = null;
@@ -374,18 +394,20 @@ export class App {
     } else if (e.kind === "params") {
       this.chaos.params = { ...e.params! };
       this.measureAttractor(false);
+      this.restartLyapunov();
       if (record) this.hooks.onParams?.(this.chaos.params);
     }
     this.gpu.device.queue.submit([enc.finish()]);
     if (record) this.writeUrl();
   }
 
-  undo(): void {
+  async undo(): Promise<void> {
     const entry = this.history.popUndo();
     if (!entry) {
       this.studio.toast.show("Nothing to undo");
       return;
     }
+    const device = this.gpu.device;
     const target = this.chaos.steps;
     this.busy = true;
     try {
@@ -399,18 +421,24 @@ export class App {
       while (this.chaos.steps < target) {
         while (i < replay.length && replay[i]!.step <= this.chaos.steps) this.applyEvent(replay[i++]!, false);
         const next = Math.min(target - this.chaos.steps, MAX_STEPS, i < replay.length ? replay[i]!.step - this.chaos.steps : MAX_STEPS);
-        const enc = this.gpu.device.createCommandEncoder({ label: "chaos-replay" });
+        const enc = device.createCommandEncoder({ label: "chaos-replay" });
         this.chaos.encodeSteps(enc, Math.max(1, next));
         this.stepGhost(Math.max(1, next));
-        this.gpu.device.queue.submit([enc.finish()]);
+        // the replay reads the spread as it goes, so a horizon crossed during it is found
+        const taken = this.chaos.takeSpreadReadback(enc);
+        device.queue.submit([enc.finish()]);
+        if (taken) for (const smp of await this.chaos.collectSpread()) this.onSpread(smp);
+        else if (this.chaos.spreadReadbackBusy) await device.queue.onSubmittedWorkDone();
       }
       while (i < replay.length) this.applyEvent(replay[i++]!, false);
+      const enc = device.createCommandEncoder({ label: "chaos-replay-drain" });
+      if (this.chaos.takeSpreadReadback(enc)) {
+        device.queue.submit([enc.finish()]);
+        for (const smp of await this.chaos.collectSpread()) this.onSpread(smp);
+      }
       this.history.release(entry.checkpoint);
       this.view.tracks.clear();
-      this.horizonT = null;
-      if (this.chaos.released) this.hooks.onRelease?.(this.chaos.eps, this.horizonThreshold);
-      this.hooks.onHorizon?.(null);
-      this.hooks.onParams?.(this.chaos.params);
+      this.afterRestore();
       this.studio.toast.show("Undone — replayed to the same moment without that edit");
     } finally {
       this.busy = false;
@@ -421,16 +449,23 @@ export class App {
   private restoreEntry(c: Checkpoint): void {
     this.chaos.restore(c);
     this.setGhostState(c.ghost);
+    this.ballDigits = c.ballDigits;
+    this.horizonT = c.horizonT;
+    this.lastSpread = null;
+    this.spreadPrev = null;
     this.afterRestore();
   }
 
+  /** After a checkpoint: re-measure for σ, ρ, β, restart λ if they changed, and resync the readouts. */
   private afterRestore(): void {
     this.measureAttractor(false);
     this.view.clearExposure();
     this.view.tracks.clear();
-    this.lastSpread = null;
-    this.spreadPrev = null;
+    const lp = this.lyap.params;
+    const p = this.chaos.params;
+    if (lp.sigma !== p.sigma || lp.rho !== p.rho || lp.beta !== p.beta) this.restartLyapunov();
     this.hooks.onParams?.(this.chaos.params);
+    this.hooks.onRestore?.();
   }
 
   savePoint(): void {
@@ -615,11 +650,18 @@ export class App {
     this.clock.advance(n);
     this.stepsTotal += n;
     this.stepGhost(n, true);
+    if (this.lyap.averagingT < LYAP_MAX_T && !this.clock.paused) {
+      this.lyap.step(LYAP_STEPS_PER_FRAME);
+      if (now - this.lyapReported > 500) {
+        this.lyapReported = now;
+        this.hooks.onLyapunov?.(this.lyap.estimate());
+      }
+    }
     if (n > 0 && this.chaos.released) {
       this.view.tracks.pushGpu(enc, this.chaos.trail, { rows: n, stride: TRACK, origins: this.chaos.stepOrigins });
     }
     let spreadQueued = false;
-    if (n > 0 && this.frameNo % 3 === 0) spreadQueued = this.chaos.encodeSpread(enc);
+    spreadQueued = this.chaos.takeSpreadReadback(enc);
 
     const save = this.history.comparing ? this.history.savePoint : null;
     const ball = this.chaos.released ? this.ballFootprint(dpr * scale) : { count: 0, area: 1 };
@@ -655,7 +697,7 @@ export class App {
     void device.queue.onSubmittedWorkDone().then(() => {
       this.inFlight -= 1;
     });
-    if (spreadQueued) void this.chaos.collectSpread().then((s) => s && this.onSpread(s));
+    if (spreadQueued) void this.chaos.collectSpread().then((list) => list.forEach((s) => this.onSpread(s)));
     if (exposureQueued) void this.hdr.collectExposure();
 
     if (now - this.rateT0 > 1000) {
@@ -670,6 +712,8 @@ export class App {
   }
 
   private onSpread(s: SpreadSample): void {
+    // a reading of an earlier ball (its readback was in flight at the release) is stale
+    if (s.ball !== this.chaos.ball) return;
     this.lastSpread = s;
     this.hooks.onSpread?.(s);
     const thr = this.horizonThreshold;
@@ -690,31 +734,43 @@ export class App {
 
   /**
    * Advance n steps off the frame loop (tests, measurements): the same
-   * kernels and the same per-step origins, in chunks of MAX_STEPS. With
-   * `everyT`, the spread is measured each `everyT` time units and handed to
-   * `onSample`; returns when done (or when onSample returns true).
+   * kernels, the same per-step origins and the same spread samples (every
+   * SPREAD_STEPS steps after a release), in chunks of MAX_STEPS. Each sample
+   * goes to `onSample`; returns when done, or when onSample returns true.
    */
-  async advance(n: number, o: { everyT?: number; onSample?: (s: SpreadSample) => boolean | void } = {}): Promise<void> {
+  async advance(n: number, o: { onSample?: (s: SpreadSample) => boolean | void } = {}): Promise<void> {
     const device = this.gpu.device;
-    const every = o.everyT ? Math.max(1, Math.round(o.everyT / this.chaos.dt)) : 0;
     let done = 0;
-    while (done < n) {
-      const k = Math.min(n - done, MAX_STEPS, every || MAX_STEPS);
+    let stop = false;
+    const drain = async (): Promise<void> => {
+      for (const sample of await this.chaos.collectSpread()) {
+        if (stop) break;
+        this.onSpread(sample);
+        if (o.onSample?.(sample)) stop = true;
+      }
+    };
+    while (done < n && !stop) {
+      const k = Math.min(n - done, MAX_STEPS);
       const enc = device.createCommandEncoder({ label: "chaos-advance" });
       this.chaos.encodeSteps(enc, k);
       this.stepGhost(k, true);
       if (this.chaos.released) this.view.tracks.pushGpu(enc, this.chaos.trail, { rows: k, stride: TRACK, origins: this.chaos.stepOrigins });
-      const queued = every > 0 && this.chaos.encodeSpread(enc);
+      // only a caller that reads samples takes them (an untaken readback would hold the slot forever)
+      const queued = o.onSample ? this.chaos.takeSpreadReadback(enc) : false;
       device.queue.submit([enc.finish()]);
       done += k;
       this.stepsTotal += k;
       this.clock.advance(k);
-      if (queued) {
-        const sample = await this.chaos.collectSpread();
-        if (sample) {
-          this.onSpread(sample);
-          if (o.onSample?.(sample)) break;
-        }
+      if (queued && o.onSample) await drain();
+      // a readback from the live loop holds the slot: yield so it can land, or no sample ever would
+      else if (o.onSample && this.chaos.spreadReadbackBusy) await device.queue.onSubmittedWorkDone();
+    }
+    // the samples still on the GPU (a live readback held the slot)
+    if (o.onSample && !stop) {
+      const enc = device.createCommandEncoder({ label: "chaos-advance-drain" });
+      if (this.chaos.takeSpreadReadback(enc)) {
+        device.queue.submit([enc.finish()]);
+        await drain();
       }
     }
     await device.queue.onSubmittedWorkDone();
@@ -735,7 +791,6 @@ export class App {
       this.digits = prev;
       const series: [number, number][] = [];
       await this.advance(Math.round(maxT / this.chaos.dt), {
-        everyT: 0.1,
         onSample: (s) => {
           series.push([s.t, s.spread]);
           return this.horizonT !== null;
@@ -745,6 +800,12 @@ export class App {
     } finally {
       this.busy = wasBusy;
     }
+  }
+
+  /** Start the live Lyapunov estimate afresh for the current σ, ρ, β. */
+  restartLyapunov(): void {
+    this.lyap = new LyapunovEstimator({ ...this.chaos.params }, [1, 1, 1], DT, 10, 20, 25);
+    this.lyapReported = 0;
   }
 
   /** Edits so far (release / params events), for tests. */

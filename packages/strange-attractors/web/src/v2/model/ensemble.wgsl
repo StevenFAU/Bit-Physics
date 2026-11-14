@@ -27,6 +27,13 @@ struct Params {
   track: u32,
   // density: 1 / the speed that maps to the top of the palette
   inv_speed: f32,
+  // ensemble: this dispatch's first step within the frame's stage list (a
+  // frame is split at every 10th step since release, where the spread is
+  // sampled); the previous-frame buffer is written by the first dispatch only
+  first: u32,
+  _p0: u32,
+  _p1: u32,
+  _p2: u32,
 };
 
 @group(0) @binding(0) var<uniform> P: Params;
@@ -88,21 +95,24 @@ fn ensemble_step(@builtin(global_invocation_id) id: vec3<u32>) {
     return;
   }
   let q = state[i];
-  prev[i] = q;
+  if (P.first == 0u) {
+    prev[i] = q;
+  }
   var e = q.xyz;
   let h = 0.5 * P.dt;
   for (var k: u32 = 0u; k < P.steps; k = k + 1u) {
-    let s1 = stages[k * 4u].xyz;
-    let s2 = stages[k * 4u + 1u].xyz;
-    let s3 = stages[k * 4u + 2u].xyz;
-    let s4 = stages[k * 4u + 3u].xyz;
+    let g = P.first + k;
+    let s1 = stages[g * 4u].xyz;
+    let s2 = stages[g * 4u + 1u].xyz;
+    let s3 = stages[g * 4u + 2u].xyz;
+    let s4 = stages[g * 4u + 3u].xyz;
     let d1 = deviation(s1, e);
     let d2 = deviation(s2, e + h * d1);
     let d3 = deviation(s3, e + h * d2);
     let d4 = deviation(s4, e + P.dt * d3);
     e = e + (P.dt / 6.0) * (d1 + 2.0 * d2 + 2.0 * d3 + d4);
     if (i < P.track) {
-      trail[k * P.track + i] = vec4<f32>(e, q.w);
+      trail[g * P.track + i] = vec4<f32>(e, q.w);
     }
   }
   state[i] = vec4<f32>(e, q.w);

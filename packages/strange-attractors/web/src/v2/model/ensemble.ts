@@ -25,7 +25,19 @@ import { DT, Reference, stretchDirection } from "./lorenz.js";
 export const MAX_STEPS = 32;
 /** Ensemble members the ribbons follow. */
 export const TRACK = 12;
+/**
+ * The ball's spread is sampled every SPREAD_STEPS steps after its release
+ * (0.1 time units), whatever the frame rate or speed: a frame's ensemble
+ * dispatch is split at those steps and a reduction runs at each. The spread
+ * is not monotonic while the ball folds, so a coarser or frame-dependent
+ * cadence would find a different first crossing.
+ */
+export const SPREAD_STEPS = 10;
 const REDUCE_PER_GROUP = 4096;
+/** Spread samples held on the GPU between readbacks. */
+const RING = 64;
+/** Dispatch slots per frame: MAX_STEPS split at every SPREAD_STEPS, plus one. */
+const POOL = Math.ceil(MAX_STEPS / SPREAD_STEPS) + 2;
 
 export interface Population {
   state: GPUBuffer;
@@ -65,6 +77,8 @@ function population(device: GPUDevice, n: number, label: string): Population {
 }
 
 export interface SpreadSample {
+  /** Which release the sample belongs to (a newer release makes it stale). */
+  ball: number;
   /** Model time of the sample. */
   t: number;
   /** RMS distance of the members from their centroid. */
@@ -104,6 +118,8 @@ export class Chaos {
   releaseStep = 0;
   /** Ball radius at release. */
   eps = 1e-6;
+  /** Counts releases: a spread reading from an earlier ball is discarded. */
+  ball = 0;
   /** Speed at the top of the density palette (model units / time). */
   speedScale = 120;
   /** Colour axis of the current ball (its initial stretching direction). */
@@ -111,16 +127,20 @@ export class Chaos {
   readonly trail: GPUBuffer;
   private readonly stages: GPUBuffer;
   private readonly densityParams: GPUBuffer;
-  private readonly ensembleParams: GPUBuffer;
+  private readonly ensembleParams: GPUBuffer[];
   private readonly releaseParams: GPUBuffer;
-  private readonly reduceParams: GPUBuffer;
+  private readonly reduceParams: GPUBuffer[];
   private readonly partials: GPUBuffer;
   private readonly groups: number;
   private readonly slot: ReadbackSlot;
   private densityBind: GPUBindGroup;
-  private ensembleBind: GPUBindGroup;
+  private readonly ensembleBinds: GPUBindGroup[];
+  private readonly reduceBinds: GPUBindGroup[];
   private readonly stageData = new Float32Array(MAX_STEPS * 16);
-  private reduceT = -1;
+  /** Samples written to the GPU ring and not yet read back; and the batch being read. */
+  private pending: { slot: number; t: number; ball: number; ref: V3 }[] = [];
+  private reading: { slot: number; t: number; ball: number; ref: V3 }[] = [];
+  private nextSlot = 0;
 
   constructor(
     private readonly device: GPUDevice,
@@ -133,18 +153,27 @@ export class Chaos {
     this.density = population(device, nDensity, "density");
     this.ensemble = population(device, nEnsemble, "ensemble");
     const u = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
-    this.densityParams = device.createBuffer({ size: 32, usage: u, label: "density-params" });
-    this.ensembleParams = device.createBuffer({ size: 32, usage: u, label: "ensemble-params" });
+    this.densityParams = device.createBuffer({ size: 48, usage: u, label: "density-params" });
+    this.ensembleParams = Array.from({ length: POOL }, (_, i) => device.createBuffer({ size: 48, usage: u, label: `ensemble-params-${i}` }));
     this.releaseParams = device.createBuffer({ size: 48, usage: u, label: "release-params" });
-    this.reduceParams = device.createBuffer({ size: 16, usage: u, label: "reduce-params" });
+    this.reduceParams = Array.from({ length: POOL }, (_, i) => device.createBuffer({ size: 16, usage: u, label: `reduce-params-${i}` }));
     this.stages = device.createBuffer({ size: MAX_STEPS * 64, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST, label: "stages" });
     this.trail = device.createBuffer({ size: MAX_STEPS * TRACK * 16, usage: GPUBufferUsage.STORAGE, label: "trail" });
     this.groups = Math.ceil(nEnsemble / REDUCE_PER_GROUP);
-    this.partials = device.createBuffer({ size: this.groups * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, label: "spread-partials" });
-    this.slot = new ReadbackSlot(device, this.groups * 16, "spread-readback");
+    this.partials = device.createBuffer({ size: RING * this.groups * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, label: "spread-partials" });
+    this.slot = new ReadbackSlot(device, RING * this.groups * 16, "spread-readback");
     this.densityBind = this.bindStep(k.density, this.density, this.densityParams);
-    this.ensembleBind = this.bindStep(k.ensemble, this.ensemble, this.ensembleParams);
-    device.queue.writeBuffer(this.reduceParams, 0, new Uint32Array([nEnsemble, REDUCE_PER_GROUP, 0, 0]));
+    this.ensembleBinds = this.ensembleParams.map((b) => this.bindStep(k.ensemble, this.ensemble, b));
+    this.reduceBinds = this.reduceParams.map((b) =>
+      device.createBindGroup({
+        layout: k.reduce.getBindGroupLayout(0),
+        entries: [
+          { binding: 0, resource: { buffer: b } },
+          { binding: 1, resource: { buffer: this.ensemble.state } },
+          { binding: 2, resource: { buffer: this.partials } },
+        ],
+      }),
+    );
   }
 
   private bindStep(pipe: GPUComputePipeline, pop: Population, params: GPUBuffer): GPUBindGroup {
@@ -175,11 +204,12 @@ export class Chaos {
     return this.released ? (this.steps - this.releaseStep) * this.dt : 0;
   }
 
-  private writeParams(buf: GPUBuffer, n: number, steps: number, track: number): void {
-    const b = new ArrayBuffer(32);
+  private writeParams(buf: GPUBuffer, n: number, steps: number, track: number, first = 0): void {
+    const b = new ArrayBuffer(48);
     new Float32Array(b, 0, 4).set([this.params.sigma, this.params.rho, this.params.beta, this.dt]);
     new Uint32Array(b, 16, 3).set([n, steps, track]);
     new Float32Array(b, 28, 1)[0] = 1 / Math.max(this.speedScale, 1e-6);
+    new Uint32Array(b, 32, 4).set([first, 0, 0, 0]);
     this.device.queue.writeBuffer(buf, 0, b);
   }
 
@@ -238,10 +268,15 @@ export class Chaos {
     this.encodeRelease(enc, this.ensemble, 0, seed, this.axis, eps, [0, 0, 0, 0]);
     this.released = true;
     this.releaseStep = this.steps;
+    this.ball += 1;
     this.stepOrigins.length = 0;
   }
 
-  /** Advance the reference and both populations by n steps (n ≤ MAX_STEPS). */
+  /**
+   * Advance the reference and both populations by n steps (n ≤ MAX_STEPS).
+   * The ensemble's dispatch is split at every SPREAD_STEPS-th step since its
+   * release, where a reduction writes that moment's spread into the GPU ring.
+   */
   encodeSteps(enc: GPUCommandEncoder, n: number, timestampWrites?: GPUComputePassTimestampWrites): void {
     this.stepOrigins.length = 0;
     if (n <= 0) return;
@@ -255,60 +290,78 @@ export class Chaos {
     }
     this.device.queue.writeBuffer(this.stages, 0, d, 0, n * 16);
     this.writeParams(this.densityParams, this.density.n, n, 0);
-    this.writeParams(this.ensembleParams, this.ensemble.n, n, Math.min(TRACK, this.ensemble.n));
     const pass = enc.beginComputePass({ label: "chaos-steps", timestampWrites });
     pass.setPipeline(this.k.density);
     pass.setBindGroup(0, this.densityBind);
     pass.dispatchWorkgroups(Math.ceil(this.density.n / 256));
-    pass.setPipeline(this.k.ensemble);
-    pass.setBindGroup(0, this.ensembleBind);
-    pass.dispatchWorkgroups(Math.ceil(this.ensemble.n / 256));
+    const track = Math.min(TRACK, this.ensemble.n);
+    let s = 0;
+    let c = 0;
+    let r = 0;
+    while (s < n) {
+      let len = n - s;
+      if (this.released) {
+        const since = this.steps + s - this.releaseStep;
+        len = Math.min(len, SPREAD_STEPS - (since % SPREAD_STEPS));
+      }
+      this.writeParams(this.ensembleParams[c]!, this.ensemble.n, len, track, s);
+      pass.setPipeline(this.k.ensemble);
+      pass.setBindGroup(0, this.ensembleBinds[c]!);
+      pass.dispatchWorkgroups(Math.ceil(this.ensemble.n / 256));
+      c += 1;
+      s += len;
+      const since = this.steps + s - this.releaseStep;
+      if (this.released && since % SPREAD_STEPS === 0 && this.pending.length < RING) {
+        const slot = this.nextSlot++ % RING;
+        this.device.queue.writeBuffer(this.reduceParams[r]!, 0, new Uint32Array([this.ensemble.n, REDUCE_PER_GROUP, slot * this.groups, 0]));
+        pass.setPipeline(this.k.reduce);
+        pass.setBindGroup(0, this.reduceBinds[r]!);
+        pass.dispatchWorkgroups(this.groups);
+        r += 1;
+        this.pending.push({ slot, t: since * this.dt, ball: this.ball, ref: [...this.stepOrigins[s - 1]!] });
+      }
+    }
     pass.end();
     this.steps += n;
   }
 
-  /** Queue the spread reduction + its readback (skips while one is in flight). */
-  encodeSpread(enc: GPUCommandEncoder): boolean {
-    if (this.slot.pending || !this.released) return false;
-    const bind = this.device.createBindGroup({
-      layout: this.k.reduce.getBindGroupLayout(0),
-      entries: [
-        { binding: 0, resource: { buffer: this.reduceParams } },
-        { binding: 1, resource: { buffer: this.ensemble.state } },
-        { binding: 2, resource: { buffer: this.partials } },
-      ],
-    });
-    const pass = enc.beginComputePass({ label: "spread" });
-    pass.setPipeline(this.k.reduce);
-    pass.setBindGroup(0, bind);
-    pass.dispatchWorkgroups(this.groups);
-    pass.end();
+  /** A spread readback is in flight (the next take must wait for it). */
+  get spreadReadbackBusy(): boolean {
+    return this.slot.pending;
+  }
+
+  /** Copy the spread samples taken so far for reading (false while a readback is in flight or none wait). */
+  takeSpreadReadback(enc: GPUCommandEncoder): boolean {
+    if (this.slot.pending || this.pending.length === 0) return false;
     this.slot.record(enc, this.partials);
-    this.reduceT = this.tSinceRelease;
+    this.reading = this.pending;
+    this.pending = [];
     return true;
   }
 
-  /** Finish a queued spread reduction (after the submit). */
-  async collectSpread(): Promise<SpreadSample | null> {
-    const t = this.reduceT;
-    const ref = [...this.ref.x] as V3;
+  /** Finish a readback taken by takeSpreadReadback (after the submit): the samples, oldest first. */
+  async collectSpread(): Promise<SpreadSample[]> {
+    const batch = this.reading;
     const buf = await this.slot.collect();
-    if (!buf) return null;
+    if (!buf) return [];
     const f = new Float32Array(buf);
-    let sx = 0;
-    let sy = 0;
-    let sz = 0;
-    let s2 = 0;
-    for (let g = 0; g < this.groups; g += 1) {
-      sx += f[g * 4]!;
-      sy += f[g * 4 + 1]!;
-      sz += f[g * 4 + 2]!;
-      s2 += f[g * 4 + 3]!;
-    }
     const n = this.ensemble.n;
-    const m: V3 = [sx / n, sy / n, sz / n];
-    const v = Math.max(s2 / n - (m[0] * m[0] + m[1] * m[1] + m[2] * m[2]), 0);
-    return { t, spread: Math.sqrt(v), centre: [ref[0] + m[0], ref[1] + m[1], ref[2] + m[2]] };
+    return batch.map((smp) => {
+      let sx = 0;
+      let sy = 0;
+      let sz = 0;
+      let s2 = 0;
+      const o = smp.slot * this.groups * 4;
+      for (let g = 0; g < this.groups; g += 1) {
+        sx += f[o + g * 4]!;
+        sy += f[o + g * 4 + 1]!;
+        sz += f[o + g * 4 + 2]!;
+        s2 += f[o + g * 4 + 3]!;
+      }
+      const m: V3 = [sx / n, sy / n, sz / n];
+      const v = Math.max(s2 / n - (m[0] * m[0] + m[1] * m[1] + m[2] * m[2]), 0);
+      return { ball: smp.ball, t: smp.t, spread: Math.sqrt(v), centre: [smp.ref[0] + m[0], smp.ref[1] + m[1], smp.ref[2] + m[2]] as V3 };
+    });
   }
 
   /** Read every member's offset back (tests, Prove). */
@@ -362,6 +415,7 @@ export class Chaos {
     this.device.queue.submit([enc.finish()]);
     this.ref = new Reference(c.ref);
     this.ref.steps = c.refSteps;
+    this.ball += 1;
     this.prevRef = [...c.ref];
     this.steps = c.steps;
     this.released = c.released;
@@ -381,7 +435,7 @@ export class Chaos {
       p.state.destroy();
       p.prev.destroy();
     }
-    for (const b of [this.stages, this.trail, this.densityParams, this.ensembleParams, this.releaseParams, this.reduceParams, this.partials]) b.destroy();
+    for (const b of [this.stages, this.trail, this.densityParams, ...this.ensembleParams, this.releaseParams, ...this.reduceParams, this.partials]) b.destroy();
     this.slot.destroy();
   }
 }

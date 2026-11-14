@@ -476,6 +476,46 @@ measured_worst_radv = 1.14e-7
 measured_worst_swiftshader = 1.11e-7
 f32_autograd_floor = 1.8133e-7
 
+# Chaos v2 M1 (rebuild-v2, docs/planning/rebuild-v2/05-strange-attractors.md):
+# the Prove drawer's Lyapunov and invariant-measure checks. Single-stack,
+# visitor-facing Prove cards — NOT release gates (the release gate is the
+# unchanged new_canonical capture gate, _gate_strange in verify.py). The page
+# holds the same numbers in packages/strange-attractors/web/src/v2/proof/budgets.ts;
+# a unit test keeps the two equal. All MEASURED 2026-11-13 (f64 in JS: Node and
+# snap Chromium agree to the printed digits), then declared:
+#   l1_abs = 0.008 — |λ₁ − 0.9056| (Sprott 2003, classic σ 10, ρ 28, β 8/3) for
+#     Benettin's method (RK4 tangent vectors at the state's own stage points,
+#     QR every 10 steps of Δt 0.01) averaged 4,000 time units from (1, 1, 1)
+#     after a 20-unit transient. The page's run: λ₁ 0.90816 (off 0.00256).
+#     Spread of the estimator over 20 independent 4,000-unit blocks of one
+#     80,000-unit run: sd 0.00153, worst 0.0039 (the full run: 0.90570).
+#     Declared ≈ 5 sd, 2× the worst.
+#   l2_abs = 0.0015 — |λ₂| (a flow's zero exponent), same run: −0.00041;
+#     20 blocks: sd 0.00028, worst 0.00053. Declared ≈ 5 sd, 2.8× the worst.
+#   sum_rel = 1.5e-5 — |Σλ − (−(σ + 1 + β))| / (σ + 1 + β), the Jacobian trace
+#     (exact, constant for Lorenz). The leftover is RK4's own volume error: the
+#     page's run 7.49e-6; 46 runs 7.42e-6..7.52e-6; it scales as Δt⁴ (1.30e-4,
+#     7.50e-6, 4.50e-7 at Δt 0.02, 0.01, 0.005). Declared 2× measured.
+#   invariant_tv = 0.02 — total-variation distance between the GPU ensemble's
+#     (x, z) histogram (262,144 members released 1e-6 wide, t = 40, eight
+#     snapshots 2.5 apart, 32×32 bins over x ∈ [−22, 22], z ∈ [0, 52]) and one
+#     f64 run of 1,000,000 samples 0.1 apart. RADV (RX 6800 XT): 0.0113; with
+#     t 60 / 100 / 16 snapshots: 0.0089 / 0.0094 / 0.0088. Two independent f64
+#     runs of the reference's length: 0.0103 (the comparison's own floor). A
+#     wrong ρ shows: f64 at ρ 28.25 / 28.5 vs 28 gives 0.024 / 0.041 (300k
+#     samples, floor 0.015). Declared 1.8× the worst measured, ~2× the floor.
+#     lavapipe / SwiftShader NOT measured (CI does not run this check).
+[golden_tolerance.closed-form.strange-attractors-lyapunov]
+l1_abs = 0.008
+l1_reference = 0.9056
+l2_abs = 0.0015
+sum_rel = 1.5e-5
+invariant_tv = 0.02
+averaging_time = 4000
+measured_l1 = 0.90816
+measured_sum_rel = 7.49e-6
+measured_invariant_tv_radv = 0.0113
+
 # -----------------------------------------------------------------------------
 # Phase-3 pinn-poisson (task-7, sub-phase-phase-3-pinn-poisson) — golden-table
 # tolerances. FIRST `learned-dynamics.*` row. Single-stack sim (Stack E Warp
