@@ -1,7 +1,73 @@
 # 05 — Chaos (Lorenz and the strange-attractor family)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/strange-attractors/web`. Wave B.
-> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-04 (below). Elsewhere, targets are unmeasured.
+> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-04, M1 built 2026-11-13 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-13): M1 built** — Buy More Digits, the Lyapunov instruments
+> and their Prove checks, and the invariant-measure check (not deferred). Measured on the RX 6800 XT
+> (snap Chromium 156, RADV); every f64 number below is the same in Node and in the browser to the
+> printed digits. The gate kernel, its capture path and both pages' captures are unchanged:
+> `pipeline.py validate --sim strange-attractors` passes on both pages, run twice, and all four
+> captures still hash `dd645f26…`.
+>
+> - **Buy More Digits** (`src/v2/digits-panel.ts`, scene `?s=digits`, 4× speed): every "Buy a
+>   digit" releases a ball ten times narrower from the same point, and its horizon joins a plot of
+>   horizon against digits with a least-squares line and the slope ln 10 / λ₁ from the live f64
+>   estimate; "Measure 3–15" runs all thirteen off the frame loop. Measured from the scene's point:
+>   3–15 digits → t = 8.52, 11.56, 13.16, 16.12, 19.07, 20.72, 23.01, 23.24, 29.52, 31.07, 34.72,
+>   37.01, 37.25: 2.50 time units per digit, so λ₁ ≈ ln 10 / 2.50 = 0.923, against Benettin's 0.906
+>   (ln 10 / λ₁ = 2.54). One path's points scatter about the line (each digit's growth happens at a
+>   different stretch of the trajectory), which is why the line, not any one step, is the measure.
+>   The scene stops at 15 digits: offsets keep f32's relative precision far below that, but the
+>   spread's squares would approach f32's smallest normal numbers near 10⁻¹⁹, and 15 is about where
+>   double precision itself ends.
+> - **The horizon is now sampled every 0.1 time units of model time, on the GPU**, whatever the speed
+>   or frame rate: a frame's ensemble dispatch is split at every 10th step since release and a
+>   reduction writes that moment's spread into a ring read back in batches (`src/v2/model/ensemble.ts`).
+>   Found while building the plot: the spread is not monotonic while the ball folds (it rose to 5.9,
+>   fell to 4.0, then crossed the 7.37 threshold), so M0's once-every-few-frames sampling found a
+>   later crossing at 4× (t 9.96 for the 10⁻³ ball, where 0.1-unit sampling finds 8.52). The live
+>   horizon and the off-loop measurement now agree (8.516 and 8.516). Also fixed: a spread readback
+>   still in flight when a new ball was released could set the new ball's horizon from the old one;
+>   samples now carry their ball and stale ones are dropped.
+> - **Lyapunov spectrum, f64** (`src/v2/model/lyapunov.ts`): Benettin's method, three tangent vectors
+>   integrated by RK4 at the state's own stage points, modified Gram–Schmidt every 10 steps. Prove's
+>   run (from (1, 1, 1), 4,000 time units after a 20-unit transient, 51 ms in the browser):
+>   λ = (0.90816, −0.00041, −14.57431), Kaplan–Yorke dimension 2.0623. An 80,000-unit run gives
+>   (0.90570, −0.00001, −14.57226) against Sprott's (0.9056, 0, −14.5723), D_KY 2.0621. Over 20
+>   independent 4,000-unit blocks λ₁ has sd 0.0015 (worst 0.0039 from 0.9056) and λ₂ sd 0.0003
+>   (worst 0.0005). The plan's GPU averaging over hundreds of trajectories was not needed: 1,000 time
+>   units cost ~15 ms in JS.
+> - **The spectrum sums to the trace.** Lorenz's Jacobian trace is −(σ + 1 + β) = −41/3 at every
+>   point, so λ₁ + λ₂ + λ₃ = −41/3 exactly for the flow. Measured: 7.49 × 10⁻⁶ relative (46 runs:
+>   7.42–7.52 × 10⁻⁶), and the leftover is RK4's own volume error: 1.30 × 10⁻⁴, 7.50 × 10⁻⁶,
+>   4.50 × 10⁻⁷ at Δt 0.02, 0.01, 0.005 (Δt⁴).
+> - **Invariant measure** (`src/v2/model/measure.ts`, the Prove card "The forgotten cloud…"): 262,144
+>   members released 10⁻⁶ wide on the GPU, run to t = 40, binned on (x, z) 32 × 32 at eight moments
+>   2.5 apart, against one f64 run of 10⁶ samples 0.1 apart: total variation 0.0113. Two independent
+>   f64 runs of that length differ by 0.0103 (the comparison's floor); t 60 / 100 / 16 snapshots give
+>   0.0089 / 0.0094 / 0.0088; an f64 run at ρ 28.25 or 28.5 is 0.024 / 0.041 from ρ 28.
+> - **Budgets, measured then declared** in `tools/testkit/equivalence/tolerance.toml`
+>   `[golden_tolerance.closed-form.strange-attractors-lyapunov]` and `src/v2/proof/budgets.ts` (a unit
+>   test holds them equal): |λ₁ − 0.9056| ≤ 0.008, |λ₂| ≤ 0.0015, the sum's relative residual
+>   ≤ 1.5 × 10⁻⁵, total variation ≤ 0.02. Measured at 32%, 27%, 50% and 57% of them. These are Prove
+>   cards, labelled "not gated": the capture gate is still the only release gate.
+> - **Learn:** λ₁ measured as you watch (its own f64 trajectory, half a time unit per frame, a
+>   ±2 SE band from 25-unit blocks), the spectrum, the sum against −(σ + 1 + β), the Kaplan–Yorke
+>   dimension; restarted when σ, ρ, β change.
+> - **Captions take turns:** the ball's four captions share one spot; a new one now waits until the
+>   last has faded (650 ms) instead of crossfading over it. The acceptance run samples every
+>   caption's opacity and never sees two at once.
+> - **Frame rate.** Headed, 1440 × 900, at 1×/4×/8× in both scenes, the sim at full speed
+>   (240 / 960 / 1,920 steps/s): Firefox 158 117–142 frames/s, Chromium 156 118–143, GPU 4–6 ms per
+>   frame. Measured under load (another session's PyTorch job on ~3 cores, load average 6), where the
+>   browsers' own animation-frame callbacks also fell below the 165 Hz display; M0's quiet-machine
+>   figure was Firefox 164–165.
+> - **Checks.** `v2-acceptance.mjs` 53/53 (M0's 36 and M1's 17). `web/tools/check-studio.mjs` clean
+>   for `v2/` and `v2/?s=digits` at 390, 820 and 1440 px and 200% zoom, no axe violations.
+>   `npm test` 271/271; integrity 0 HARD_FAIL.
+> - **Not yet:** Road to Chaos, Lorenz's Map, Slice (M2); Listen, The Family, posters and loops (M3);
+>   the landing card and the release swap.
 >
 > **Implementation status (2026-11-04): M0 built** as the `v2/` page of
 > `packages/strange-attractors/web` (served at `/sims/strange-attractors/v2/`, gated through
@@ -60,7 +126,7 @@
 >   ground, reduced motion, no console errors). `web/tools/check-studio.mjs` clean at 390, 820 and
 >   1440 px and 200% zoom, no axe violations, also on a software GPU (Playwright's Chromium,
 >   SwiftShader). `npm test` 262/262.
-> - **Not yet:** λ₁ and the spectrum checks, the invariant-measure check, the other scenes,
+> - **Not yet (at M0; M1 since built, above):** λ₁ and the spectrum checks, the invariant-measure check, the other scenes,
 >   posters and loops, the landing card, the release swap.
 
 ## Verdict on the prototype

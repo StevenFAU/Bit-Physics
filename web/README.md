@@ -101,7 +101,9 @@ before the live view compiles, the tier's sizes and step rate, the first ball an
 horizon's order over four precisions, the in-page gate, the live kernel ≡ the gated one byte for
 byte, f32 offsets against f64, click to release, Ghost, the orbit camera, precision and ρ on the
 link, undo by replay, save / restore / compare, seeds across page loads, the fixed points through
-the GPU cull, Environment's sky and ground, reduced motion) is
+the GPU cull, Environment's sky and ground, reduced motion; M1: the Lyapunov and invariant-measure
+Prove cards inside their declared budgets, Buy More Digits live and measured with λ₁ from the
+line's slope, the live λ₁ instrument, captions that never overlap) is
 `packages/strange-attractors/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
