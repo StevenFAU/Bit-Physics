@@ -57,6 +57,9 @@ interface ChaosEvent {
 
 interface Checkpoint extends ChaosCheckpoint {
   ghost: { a: V3; b: V3; on: boolean };
+  /** The ball's precision and, if reached, its horizon (Buy More Digits files horizons by precision). */
+  ballDigits: number;
+  horizonT: number | null;
 }
 
 export interface AppHooks {
@@ -65,6 +68,8 @@ export interface AppHooks {
   onRelease?: (eps: number, threshold: number) => void;
   onSpread?: (s: SpreadSample) => void;
   onHorizon?: (t: number | null) => void;
+  /** A checkpoint was restored (save point, undo): the ball, its horizon and σ, ρ, β may have jumped. */
+  onRestore?: () => void;
   /** The live f64 Lyapunov estimate, about twice a second. */
   onLyapunov?: (e: LyapunovEstimate) => void;
   onFrame?: (now: number) => void;
@@ -146,12 +151,8 @@ export class App {
     this.chaos = new Chaos(gpu.device, kernels, size.ensemble, size.density, this.scene.params);
     this.history = new History<Checkpoint>(
       {
-        capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState() }),
-        restore: (c) => {
-          this.chaos.restore(c);
-          this.setGhostState(c.ghost);
-          this.afterRestore();
-        },
+        capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState(), ballDigits: this.ballDigits, horizonT: this.horizonT }),
+        restore: (c) => this.restoreEntry(c),
         release: (c) => this.chaos.releaseCheckpoint(c),
       },
       4,
@@ -400,12 +401,13 @@ export class App {
     if (record) this.writeUrl();
   }
 
-  undo(): void {
+  async undo(): Promise<void> {
     const entry = this.history.popUndo();
     if (!entry) {
       this.studio.toast.show("Nothing to undo");
       return;
     }
+    const device = this.gpu.device;
     const target = this.chaos.steps;
     this.busy = true;
     try {
@@ -419,18 +421,24 @@ export class App {
       while (this.chaos.steps < target) {
         while (i < replay.length && replay[i]!.step <= this.chaos.steps) this.applyEvent(replay[i++]!, false);
         const next = Math.min(target - this.chaos.steps, MAX_STEPS, i < replay.length ? replay[i]!.step - this.chaos.steps : MAX_STEPS);
-        const enc = this.gpu.device.createCommandEncoder({ label: "chaos-replay" });
+        const enc = device.createCommandEncoder({ label: "chaos-replay" });
         this.chaos.encodeSteps(enc, Math.max(1, next));
         this.stepGhost(Math.max(1, next));
-        this.gpu.device.queue.submit([enc.finish()]);
+        // the replay reads the spread as it goes, so a horizon crossed during it is found
+        const taken = this.chaos.takeSpreadReadback(enc);
+        device.queue.submit([enc.finish()]);
+        if (taken) for (const smp of await this.chaos.collectSpread()) this.onSpread(smp);
+        else if (this.chaos.spreadReadbackBusy) await device.queue.onSubmittedWorkDone();
       }
       while (i < replay.length) this.applyEvent(replay[i++]!, false);
+      const enc = device.createCommandEncoder({ label: "chaos-replay-drain" });
+      if (this.chaos.takeSpreadReadback(enc)) {
+        device.queue.submit([enc.finish()]);
+        for (const smp of await this.chaos.collectSpread()) this.onSpread(smp);
+      }
       this.history.release(entry.checkpoint);
       this.view.tracks.clear();
-      this.horizonT = null;
-      if (this.chaos.released) this.hooks.onRelease?.(this.chaos.eps, this.horizonThreshold);
-      this.hooks.onHorizon?.(null);
-      this.hooks.onParams?.(this.chaos.params);
+      this.afterRestore();
       this.studio.toast.show("Undone — replayed to the same moment without that edit");
     } finally {
       this.busy = false;
@@ -441,16 +449,23 @@ export class App {
   private restoreEntry(c: Checkpoint): void {
     this.chaos.restore(c);
     this.setGhostState(c.ghost);
+    this.ballDigits = c.ballDigits;
+    this.horizonT = c.horizonT;
+    this.lastSpread = null;
+    this.spreadPrev = null;
     this.afterRestore();
   }
 
+  /** After a checkpoint: re-measure for σ, ρ, β, restart λ if they changed, and resync the readouts. */
   private afterRestore(): void {
     this.measureAttractor(false);
     this.view.clearExposure();
     this.view.tracks.clear();
-    this.lastSpread = null;
-    this.spreadPrev = null;
+    const lp = this.lyap.params;
+    const p = this.chaos.params;
+    if (lp.sigma !== p.sigma || lp.rho !== p.rho || lp.beta !== p.beta) this.restartLyapunov();
     this.hooks.onParams?.(this.chaos.params);
+    this.hooks.onRestore?.();
   }
 
   savePoint(): void {

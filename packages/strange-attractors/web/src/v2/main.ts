@@ -339,7 +339,7 @@ async function boot(): Promise<void> {
     save: () => a.savePoint(),
     restore: () => a.restoreSave(),
     compare: () => a.toggleCompare(),
-    undo: () => a.undo(),
+    undo: () => void a.undo(),
   };
   studio.transport.onStatus = () => studio.drawer.open("learn");
   studio.drawer.onChange = ((orig) => (open: boolean, tab: "learn" | "prove") => {
@@ -388,7 +388,7 @@ async function boot(): Promise<void> {
   studio.key("B", "Release again", () => a.requestRelease(a.releasePoint));
   studio.key("S", "Save point", () => a.savePoint());
   studio.key("C", "Compare with the save point", () => a.toggleCompare());
-  studio.key("Z", "Undo", () => a.undo());
+  studio.key("Z", "Undo", () => void a.undo());
   studio.key("T", "Tune", () => studio.tune.toggle());
 
   a.hooks = {
@@ -412,6 +412,13 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onSpread: (s) => learn.pushSpread(s.t, s.spread),
+    onRestore: () => {
+      // the ball (and its precision) and its horizon are the checkpoint's now
+      if (a.chaos.released) learn.resetSpread(a.chaos.eps, a.horizonThreshold);
+      learn.setHorizon(a.horizonT);
+      if (a.scene.id === "digits") digits.setCurrent(a.ballDigits, a.horizonT);
+      syncProve();
+    },
     onHorizon: (t) => {
       learn.setHorizon(t);
       if (a.scene.id === "digits") {

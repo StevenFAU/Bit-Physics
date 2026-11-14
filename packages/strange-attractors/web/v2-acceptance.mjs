@@ -276,13 +276,25 @@ let bench = null;
     const before = { ...a.chaos.params };
     a.setParams({ ...before, rho: 35 });
     await new Promise((r) => setTimeout(r, 600));
-    const mid = { ...a.chaos.params, search: location.search };
-    a.undo();
+    const mid = { ...a.chaos.params, search: location.search, lyapRho: a.lyap.params.rho };
+    await a.undo();
     await new Promise((r) => setTimeout(r, 300));
-    return { before, mid, after: { ...a.chaos.params } };
+    return { before, mid, after: { ...a.chaos.params }, lyapRho: a.lyap.params.rho };
   });
   check("Tune's ρ lands as an edit and rides the link", rho.mid.rho === 35 && rho.mid.search.includes("rho=35"), rho.mid.search);
   check("undo replays to the same moment without it (ρ back to 28)", rho.after.rho === 28, JSON.stringify(rho.after));
+  check("λ restarts with the parameters an undo brings back", rho.mid.lyapRho === 35 && rho.lyapRho === 28, `estimator ρ ${rho.mid.lyapRho} → ${rho.lyapRho}`);
+  const rs = await T(page, async () => {
+    const a = globalThis.__chaos;
+    a.savePoint();
+    a.setParams({ ...a.chaos.params, rho: 40 });
+    await new Promise((r) => setTimeout(r, 500));
+    const mid = a.lyap.params.rho;
+    a.restoreSave();
+    await new Promise((r) => setTimeout(r, 200));
+    return { mid, rho: a.chaos.params.rho, lyapRho: a.lyap.params.rho };
+  });
+  check("…and with those a save point brings back", rs.mid === 40 && rs.rho === 28 && rs.lyapRho === 28, `estimator ρ ${rs.mid} → ${rs.lyapRho}, system ρ ${rs.rho}`);
 
   // save / restore / compare
   const hist = await T(page, async () => {
@@ -372,6 +384,13 @@ let bench = null;
   await page.waitForFunction(() => globalThis.__chaos.ballDigits === 4 && globalThis.__bpDebug().horizonT !== null, undefined, { timeout: 30000 });
   const two = await T(page, () => globalThis.__chaosDigits.points());
   check("Buy a digit: a ball 10⁻⁴ wide, and a second point, later", two.length === 2 && two[1].digits === 4 && two[1].horizon > two[0].horizon, two.map((p) => `${p.digits}: ${p.horizon.toFixed(2)}`).join(", "));
+  const un = await T(page, async () => {
+    const a = globalThis.__chaos;
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 200));
+    return { d: a.ballDigits, eps: a.chaos.eps, h: a.horizonT, status: document.querySelector(".cx-digits-status").textContent };
+  });
+  check("undoing a purchase brings back the three-digit ball, its precision and its horizon", un.d === 3 && un.eps === 1e-3 && Math.abs(un.h - off3) < 1e-9 && un.status.includes("10⁻³"), `${un.d} digits, ε ${un.eps}, horizon ${un.h?.toFixed(3)}; panel: ${un.status}`);
   await page.click('[data-cx="measure"]');
   await page.waitForFunction(() => !document.querySelector('[data-cx="measure"]').disabled && globalThis.__chaosDigits.points().length >= 13, undefined, { timeout: 180000 });
   const line = await T(page, () => {
