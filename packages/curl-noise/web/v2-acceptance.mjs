@@ -13,7 +13,9 @@
 // the identities (divergence, confinement, Clebsch, tangency) at the f32 floor
 // with helicity as the nonzero control; every Silk particle still on its two
 // surfaces, recomputed here in double precision (src/curlnoise64.mjs) at its
-// single-precision position; the sphere through the GPU cull; dragging the
+// single-precision position, and a restart that misses its sheet is never
+// published (at swirls of 1.2 with one octave too); the sphere through the
+// GPU cull; dragging the
 // sphere moves it (one edit, on the link, still tangent) and a drag elsewhere
 // only turns the view; undo by replay gives the same bytes as never editing;
 // Tune's Evolution as an edit on the link; save / restore; the same seed gives
@@ -115,6 +117,38 @@ const pause = (page) =>
     await a.gpu.device.queue.onSubmittedWorkDone();
   });
 
+/** The gate's own budget: 2e-4 of the iso scale (0.666 in the gate scene). */
+const GATE_BUDGET = 2e-4 * 0.666;
+
+/**
+ * Every live particle against its anchors, ‖(f₁, f₂)(x) − anchors‖ with f
+ * recomputed in f64 (src/curlnoise64.mjs) at its f32 position; how many
+ * are anchored on one of Silk's sheets (the rest are restarts that missed and
+ * wait for the next step). Call with the clock paused.
+ */
+async function sheetCheck(page) {
+  const surf = await T(page, async () => {
+    const a = globalThis.__flow;
+    const [x, f0] = await Promise.all([a.flow.readTracers(), a.flow.readAnchors()]);
+    return { x: Array.from(x), f0: Array.from(f0), field: a.flow.params, time: a.flow.time, sheets: a.flow.sheets };
+  });
+  const o = surf.field.obstacle;
+  const cfg = {
+    octaves: surf.field.octaves, ell0: surf.field.ell0, gain: surf.field.gain, lacunarity: surf.field.lacunarity, amplitude: surf.field.amplitude, seed: 0, time: surf.time * surf.field.evolution,
+    obstacleCenter: o.centre, obstacleRadius: o.radius, obstacleRampWidth: o.ramp, obstacleNoiseAmp: o.noiseAmp,
+  };
+  const sheetF32 = surf.sheets.map((c) => Math.fround(c));
+  let worst = 0;
+  let onSheet = 0;
+  const n = surf.f0.length / 2;
+  for (let i = 0; i < n; i += 1) {
+    const f = isoValues([surf.x[i * 4], surf.x[i * 4 + 1], surf.x[i * 4 + 2]], cfg);
+    worst = Math.max(worst, Math.hypot(f[0] - surf.f0[i * 2], f[1] - surf.f0[i * 2 + 1]));
+    if (sheetF32.includes(surf.f0[i * 2 + 1])) onSheet += 1;
+  }
+  return { n, onSheet, worst };
+}
+
 /** The capture without its wall-clock field. */
 const sansWall = (text) => {
   const b = JSON.parse(text);
@@ -197,32 +231,12 @@ let bench = null;
 
   // Silk: every particle on its two surfaces, recomputed in f64 here
   await pause(page);
-  const surf = await T(page, async () => {
-    const a = globalThis.__flow;
-    const n = 1024;
-    const [x, f0] = await Promise.all([a.flow.readTracers(n), a.flow.readAnchors(n)]);
-    return { x: Array.from(x), f0: Array.from(f0), field: a.flow.params, time: a.flow.time, sheets: a.flow.sheets };
-  });
   {
-    const o = surf.field.obstacle;
-    const cfg = {
-      octaves: surf.field.octaves, ell0: surf.field.ell0, gain: surf.field.gain, lacunarity: surf.field.lacunarity, amplitude: surf.field.amplitude, seed: 0, time: surf.time * surf.field.evolution,
-      obstacleCenter: o.centre, obstacleRadius: o.radius, obstacleRampWidth: o.ramp, obstacleNoiseAmp: o.noiseAmp,
-    };
-    const sheetF32 = surf.sheets.map((c) => Math.fround(c));
-    let worst = 0;
-    let onSheet = 0;
-    const n = surf.f0.length / 2;
-    for (let i = 0; i < n; i += 1) {
-      const f = isoValues([surf.x[i * 4], surf.x[i * 4 + 1], surf.x[i * 4 + 2]], cfg);
-      worst = Math.max(worst, Math.hypot(f[0] - surf.f0[i * 2], f[1] - surf.f0[i * 2 + 1]));
-      if (sheetF32.includes(surf.f0[i * 2 + 1])) onSheet += 1;
-    }
-    // the gate's own budget: 2e-4 of the iso scale (0.666 in the gate scene)
+    const r = await sheetCheck(page);
     check(
-      "every Silk particle is on its sheet: ‖f(x) − anchors‖ in f64 at its f32 position, within the gate's budget",
-      onSheet === n && worst < 2e-4 * 0.666,
-      `${n} particles, ${onSheet} anchored on a sheet; worst ${sci(worst)} (gate budget ${sci(2e-4 * 0.666)})`,
+      "every Silk particle's anchors are its own surfaces (f64 at its f32 position), and nearly all ride a sheet",
+      r.worst < GATE_BUDGET && r.onSheet / r.n > 0.99,
+      `${r.n.toLocaleString()} particles, ${r.onSheet.toLocaleString()} on a sheet, ${r.n - r.onSheet} waiting to restart; worst ${sci(r.worst)} (gate budget ${sci(GATE_BUDGET)})`,
     );
   }
 
@@ -370,6 +384,31 @@ let bench = null;
   const b = await run();
   check("the same seed gives the same tracer bytes across page loads (480 steps, with respawns)", a.hash === b.hash, `${a.hash.slice(0, 16)}… ≡ ${b.hash.slice(0, 16)}…`);
   check("no console errors (seed runs)", a.errors.length + b.errors.length === 0);
+}
+
+// --- where a sheet barely enters the ball (swirls of 1.2, one octave) ----------------------
+{
+  const { ctx, page, errors } = await open("/v2/?ell=1.2&oct=1");
+  await pause(page);
+  await T(page, async () => {
+    const a = globalThis.__flow;
+    await a.loadScene("studio", { field: { ...a.flow.params }, seed: 1 });
+    a.clock.paused = true;
+    await a.gpu.device.queue.onSubmittedWorkDone();
+  });
+  const seeded = await sheetCheck(page);
+  await T(page, async () => globalThis.__flow.advance(60));
+  const later = await sheetCheck(page);
+  check(
+    "a seed that misses its sheet is never published: anchors stay true at seeding and after (swirls 1.2, one octave)",
+    seeded.worst < GATE_BUDGET && later.worst < GATE_BUDGET && later.onSheet / later.n > 0.99,
+    `seeded: ${seeded.n - seeded.onSheet} of ${seeded.n.toLocaleString()} waiting, worst ${sci(seeded.worst)}; after 60 steps: ${later.n - later.onSheet} waiting, worst ${sci(later.worst)}`,
+  );
+  await T(page, () => { globalThis.__flow.clock.paused = false; });
+  await page.waitForTimeout(2500);
+  await shot(page, "06-swirl-1.2");
+  check("no console errors (swirls 1.2)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
 }
 
 // --- a shared link boots into its field --------------------------------------------------

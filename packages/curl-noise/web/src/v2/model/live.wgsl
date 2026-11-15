@@ -31,7 +31,8 @@
 //     the inflow through the ball's surface exactly equal (∮ v·n dA = 0), so
 //     this keeps the density even inside the ball;
 //   * a particle found inside the obstacle (rounding) restarts like the first.
-// On sheets, every restart is a new point of the particle's own sheet.
+// On sheets, every restart is a new point of the particle's own sheet; a
+// restart that finds none waits a step and tries again, undrawn.
 // Every draw is a counter hash of (seed, tracer, epoch): the same seed gives
 // the same bytes.
 
@@ -123,17 +124,31 @@ fn lv_sheet_value(i: u32) -> f32 {
   return select(select(L.sheets.w, L.sheets.z, k == 1u), L.sheets.y, k == 0u);
 }
 
+/** A restart point, and whether it passed its check (a failed one is never published). */
+struct LvSpawn {
+  p: vec3<f32>,
+  ok: bool,
+}
+
 /**
  * A point on particle i's sheet {f₂ = c}: a uniform point of the ball moved
  * onto the surface by Newton steps along ∇f₂ (f₂ is the second noise channel
- * itself, field.wgsl fbm_d2(x, 1)). A few tries; the last one stands.
+ * itself, field.wgsl fbm_d2(x, 1)), up to 8 tries of 12 steps. A candidate
+ * counts only if it is on the sheet (|f₂ − c| < 10⁻⁵, near where the step's
+ * reprojection holds it), inside the ball and outside the obstacle. Where a sheet barely enters the ball every try can miss
+ * (measured with the f64 mirror: 1 seed in 8,192 on the Studio's field, 96 at
+ * swirls of 1.2 with one octave; 6 steps × 4 tries missed 77 and 1,233), so
+ * a miss returns a plain point of the ball, flagged, and the caller defers
+ * that particle to its next step.
  */
-fn lv_spawn_sheet(i: u32, e: u32) -> vec3<f32> {
+fn lv_spawn_sheet(i: u32, e: u32) -> LvSpawn {
   let c = lv_sheet_value(i);
-  var p = L.centre.xyz;
-  for (var t = 0u; t < 4u; t++) {
-    p = lv_spawn_volume(i, e * 4u + t + 0x2000u);
-    for (var k = 0u; k < 6u; k++) {
+  var o: LvSpawn;
+  o.p = L.centre.xyz;
+  o.ok = false;
+  for (var t = 0u; t < 8u; t++) {
+    var p = lv_spawn_volume(i, e * 8u + t + 0x2000u);
+    for (var k = 0u; k < 12u; k++) {
       let n = fbm_d2(p, 1u);
       let g2 = max(dot(n.grad, n.grad), 1e-12);
       var d = (n.val - c) / g2 * n.grad;
@@ -142,15 +157,24 @@ fn lv_spawn_sheet(i: u32, e: u32) -> vec3<f32> {
       p = p - d;
     }
     let f = fbm_d2(p, 1u).val;
-    if (abs(f - c) < 1e-4 && length(p - L.centre.xyz) < L.step.w * 0.98 && !lv_in_obstacle(p)) { break; }
+    if (abs(f - c) < 1e-5 && length(p - L.centre.xyz) < L.step.w * 0.98 && !lv_in_obstacle(p)) {
+      o.p = p;
+      o.ok = true;
+      return o;
+    }
   }
-  return p;
+  // missed: wait at a valid point of the ball (not where the last search ended)
+  o.p = lv_spawn_volume(i, e * 8u + 0x3000u);
+  return o;
 }
 
 /** A restart point: on the particle's sheet, or anywhere in the ball. */
-fn lv_spawn(i: u32, e: u32) -> vec3<f32> {
+fn lv_spawn(i: u32, e: u32) -> LvSpawn {
   if (L.flags.w == 1u) { return lv_spawn_sheet(i, e); }
-  return lv_spawn_volume(i, e);
+  var o: LvSpawn;
+  o.p = lv_spawn_volume(i, e);
+  o.ok = !lv_in_obstacle(o.p);
+  return o;
 }
 
 /** This particle's own lifetime: 60–100 % of the max age. */
@@ -193,12 +217,20 @@ fn live_advect(@builtin(global_invocation_id) g: vec3<u32>) {
         if (left && !bad && L.flags.w == 0u) {
           p = lv_spawn_inflow(i, e);
           age = lv_life(i, e) * lv_u01(lv_pcg(i ^ (e * 0x63D83595u)));
+          f0 = iso_vals(p);
         } else {
-          p = lv_spawn(i, e);
-          age = 0.0;
+          let sp = lv_spawn(i, e);
+          p = sp.p;
+          // anchors are the particle's true surface values, never a sheet it missed
+          f0 = iso_vals(p);
+          if (sp.ok) {
+            age = 0.0;
+            if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
+          } else {
+            // a missed restart waits for the next step (a new epoch, so never drawn)
+            age = lv_life(i, e);
+          }
         }
-        f0 = iso_vals(p);
-        if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
       }
     }
     if (L.dims.w > 0u) {
@@ -216,22 +248,27 @@ fn live_advect(@builtin(global_invocation_id) g: vec3<u32>) {
 fn live_seed(@builtin(global_invocation_id) g: vec3<u32>) {
   let i = g.x;
   if (i >= L.dims.x) { return; }
-  let p = lv_spawn(i, 0u);
+  let sp = lv_spawn(i, 0u);
   let life = lv_life(i, 0u);
-  let age = life * lv_u01(lv_pcg(i ^ 0xA511E9B3u ^ (L.flags.z * 0x63D83595u)));
-  tracers[i] = vec4<f32>(p, age);
+  var age = life * lv_u01(lv_pcg(i ^ 0xA511E9B3u ^ (L.flags.z * 0x63D83595u)));
+  var f0 = iso_vals(sp.p);
+  if (sp.ok) {
+    if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
+  } else {
+    age = life; // a missed seed restarts at the first step
+  }
+  tracers[i] = vec4<f32>(sp.p, age);
   epochs[i] = 0u;
-  var f0 = iso_vals(p);
-  if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
   f0buf[i] = f0;
 }
 
-// re-anchor the iso values (after the field changed); a sheet particle keeps its sheet
+// re-anchor the iso values (after the field changed); a particle on its sheet keeps it
 @compute @workgroup_size(256)
 fn live_anchor(@builtin(global_invocation_id) g: vec3<u32>) {
   let i = g.x;
   if (i >= L.dims.x) { return; }
   var f0 = iso_vals(tracers[i].xyz);
-  if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
+  let c = lv_sheet_value(i);
+  if (L.flags.w == 1u && abs(f0.y - c) < 1e-3) { f0.y = c; }
   f0buf[i] = f0;
 }

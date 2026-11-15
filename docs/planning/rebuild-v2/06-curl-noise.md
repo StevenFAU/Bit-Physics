@@ -33,8 +33,13 @@
 >   folding cloth that parts and closes around the sphere — confinement made visible. A strand's
 >   colour is its sheet. Measured as the gate measures: ‖f(x) − anchors‖ recomputed in f64 at 1,024
 >   live particles' f32 positions, worst 7.2 × 10⁻⁶ (the gate's budget is 1.33 × 10⁻⁴); Learn
->   shows it live. A change to f₂ (Swirl size, Detail, Evolution) re-seeds the sheets; moving the
->   sphere does not (it only enters f₁). While the field evolves, each particle is nudged back onto
+>   shows it live. A particle starts on its sheet by Newton steps along ∇f₂ from a random point of
+>   the ball (8 tries of 12 steps, accepted within 10⁻⁵); where a sheet barely enters the ball a
+>   restart can miss, and a miss is never published — the particle waits a step, undrawn, anchored to
+>   its true values (PR #67 review). Measured at swirls of 1.2 with one octave: 409 of 32,768 seeds
+>   wait at seeding, none after 60 steps; every particle's anchors within 1.0 × 10⁻⁵ of its surfaces
+>   in f64. A change to f₂ (Swirl size, Detail, Evolution) re-seeds the sheets; moving the sphere
+>   does not (it only enters f₁). While the field evolves, each particle is nudged back onto
 >   its moving sheet (display only, said in Learn).
 > - **The hero field is not the gate's.** The Studio runs the gated sphere with smoother noise —
 >   two octaves, swirls of 0.7 — because three octaves at 0.5 crumple the sheets into a sponge.
@@ -51,7 +56,7 @@
 >
 >   | Tier | Ribbons × points | fps | GPU p50 / p90 | Silk pass | Sim |
 >   |---|---|---|---|---|---|
->   | T3 | 32,768 × 96 | 60 | 7.9 / 8.0 ms | 6.9 ms | 0.45 ms |
+>   | T3 | 32,768 × 96 | 60 | 7.9 / 8.0 ms | 6.9 ms | 0.45–0.57 ms |
 >   | T2 | 16,384 × 64 | 60 | 3.2 / 3.2 ms | 2.3 ms | 0.29 ms |
 >   | T1 | 8,192 × 48 | 60 | 1.7 / 1.7 ms | 0.9 ms | 0.25 ms |
 >
@@ -77,9 +82,10 @@
 >   Tools: Move (drag the sphere; one drag is one undoable edit, on the link) and Camera. Tune holds
 >   the four sliders plus "The scene's field" and "The gated field". Compare A/B is off (no second
 >   picture yet).
-> - **Checks.** `v2-acceptance.mjs` 33/33 (the capture bytes on both pages, ready before compile,
+> - **Checks.** `v2-acceptance.mjs` 35/35 (the capture bytes on both pages, ready before compile,
 >   the tier's sizes, 120 steps/s, the Studio's field and sheets, the in-page gate, live ≡ gated, the
->   four identities and the helicity control, every Silk particle on its sheet in f64, the sphere
+>   four identities and the helicity control, every Silk particle's anchors true in f64 and a missed
+>   restart never published (also at swirls of 1.2, one octave), the sphere
 >   through the GPU cull, drag to move / drag to orbit / undo, undo by replay ≡ never editing,
 >   Evolution on the link, save / restore, the same seed across loads, a shared link, the volume
 >   mode's even density, reduced motion, no console errors). `web/tools/check-studio.mjs` clean at
