@@ -8,7 +8,7 @@
 import { h, proofCard } from "@bp/studio";
 import { sci } from "../format.js";
 import type { FieldParams, FlowKernels } from "../model/flow.js";
-import { Flow, isCanonical, measureInstruments } from "../model/flow.js";
+import { Flow, fieldKind, measureInstruments } from "../model/flow.js";
 import type { GateCheck, GateIc, GateRunner } from "./gate.js";
 import { GATE_IC_SHA256, REPO_BLOB, T_CURL_REL, checkGate, loadGateIc } from "./gate.js";
 
@@ -27,7 +27,7 @@ export interface ProveDeps {
 }
 
 export interface ProvePane {
-  setOnScreen(params: FieldParams): void;
+  setOnScreen(params: FieldParams, scene: FieldParams): void;
   /** Results of the last run, for tests. */
   results: Record<string, unknown>;
   runAll(): Promise<void>;
@@ -66,7 +66,9 @@ export async function liveVsGate(device: GPUDevice, k: FlowKernels, gate: GateRu
   const n = ic.params.tracers;
   const flow = new Flow(device, k, n, 0, fieldOfIc(ic));
   try {
+    // the gate's arithmetic: no respawn, no ribbon, anchors on the particles' own surfaces (not Silk's sheets)
     flow.respawn = false;
+    flow.sheets = null;
     flow.dt = ic.params.dt;
     const pos = new Float32Array(n * 4);
     for (let i = 0; i < n; i += 1) pos.set([ic.positions[i * 3]!, ic.positions[i * 3 + 1]!, ic.positions[i * 3 + 2]!, 0], i * 4);
@@ -313,12 +315,16 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   return {
     results,
     runAll,
-    setOnScreen(p) {
-      onScreen.textContent = isCanonical(p)
-        ? "On screen: the gated field — the sphere where the gate puts it, the field held still."
-        : p.evolution > 0
-          ? "On screen: an evolving field, outside the gated scene. It is still exactly divergence-free at every instant (the measurements below run on it); the release gate always runs the gated scene."
-          : "On screen: your edit of the field, outside the gated scene. It is still exactly divergence-free and tangent to the sphere (the measurements below run on it); the release gate always runs the gated scene.";
+    setOnScreen(p, scene) {
+      const kind = fieldKind(p, scene);
+      onScreen.textContent =
+        kind === "gated"
+          ? "On screen: the gated field — the sphere where the gate puts it, three octaves of noise with swirls of 0.5, held still."
+          : kind === "scene"
+            ? "On screen: the Studio's field — the gated sphere with smoother noise (two octaves, swirls of 0.7). The same code and the same exact identities; the release gate runs its own parameters (three octaves, swirls of 0.5). The measurements below run on what is on screen."
+            : kind === "evolving"
+              ? "On screen: an evolving field, outside the gated scene. It is still exactly divergence-free at every instant (the measurements below run on it); the release gate always runs the gated scene."
+              : "On screen: your edit of the field, outside the gated scene. It is still exactly divergence-free and tangent to the sphere (the measurements below run on it); the release gate always runs the gated scene.";
     },
   };
 }

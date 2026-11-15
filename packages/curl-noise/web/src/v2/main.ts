@@ -27,8 +27,7 @@ import { App, SIZES, TICKS_PER_SECOND } from "./app.js";
 import { sci } from "./format.js";
 import { buildLearn } from "./learn.js";
 import type { FieldParams, V3 } from "./model/flow.js";
-import { CANONICAL_FIELD, FlowKernels, cloneField, isCanonical, measureInstruments, shellCounts, shellFractions, surfaceResidual } from "./model/flow.js";
-import { isoValues } from "../curlnoise64.mjs";
+import { CANONICAL_FIELD, FlowKernels, cloneField, fieldKind, isCanonical, measureInstruments, shellCounts, shellFractions, surfaceResidual } from "./model/flow.js";
 import { GateRunner, loadGateIc } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
 import { FlowView } from "./render/flow-view.js";
@@ -245,7 +244,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
-  const syncProve = (): void => prove.setOnScreen(a.flow.params);
+  const syncProve = (): void => prove.setOnScreen(a.flow.params, a.scene.field);
 
   // --------------------------------------------- the guarantee, live --
   const hud = h("div", { class: "fs-hud bp-surface", role: "status", "aria-live": "off", "data-bp-chrome": "", "data-bp2": "studio-chrome" });
@@ -276,7 +275,7 @@ async function boot(): Promise<void> {
             const params = a.flow.params;
             const time = a.flow.time;
             const [xyzw, f0] = await Promise.all([a.flow.readTracers(RESIDUAL_SAMPLE), a.flow.readAnchors(RESIDUAL_SAMPLE)]);
-            learn.setResidual(surfaceResidual(xyzw, f0, params, time, isoValues as (x: number[], c: Record<string, unknown>) => number[]));
+            learn.setResidual(surfaceResidual(xyzw, f0, params, time));
           }
         } else {
           const o = a.flow.params.obstacle;
@@ -365,7 +364,7 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onField: (p, dt) => {
-      learn.setField(p, dt);
+      learn.setField(p, a.scene.field);
       tune.sync(p, dt / a.scene.dt);
       syncProve();
     },
@@ -416,7 +415,7 @@ async function boot(): Promise<void> {
     learn.setStats([
       ["Model time", `t = ${a.flow.time.toFixed(3)} (${a.flow.steps.toLocaleString()} steps of ${a.flow.dt.toPrecision(2)})`],
       ["Largest divergence", lastDiv !== null ? `${sci(lastDiv, 1)} of the swirl` : "—"],
-      ["Field", isCanonical(a.flow.params) ? "the gated field" : "edited"],
+      ["Field", { gated: "the gated field", scene: "the Studio's field", evolving: "evolving", edited: "edited" }[fieldKind(a.flow.params, a.scene.field)]],
     ]);
   };
 
@@ -454,6 +453,9 @@ async function boot(): Promise<void> {
     field: a.flow.params,
     dt: a.flow.dt,
     canonical: isCanonical(a.flow.params),
+    fieldKind: fieldKind(a.flow.params, a.scene.field),
+    sheets: a.flow.sheets,
+    events: a.eventCount,
     divergence: lastDiv,
     camera: { yaw: a.camera.yaw, pitch: a.camera.pitch, distance: a.camera.distance, version: a.camera.version },
     renderScale: governor.renderScale,

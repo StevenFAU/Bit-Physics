@@ -11,6 +11,8 @@
 import fieldWgsl from "../../field.wgsl?raw";
 import instrumentsWgsl from "../../instruments.wgsl?raw";
 import liveWgsl from "./live.wgsl?raw";
+import type { MirrorConfig } from "../../curlnoise64.mjs";
+import { isoValues } from "../../curlnoise64.mjs";
 
 export type V3 = [number, number, number];
 
@@ -73,6 +75,20 @@ export function sameField(a: FieldParams, b: FieldParams): boolean {
     a.amplitude === b.amplitude &&
     a.evolution === b.evolution
   );
+}
+
+/** What is on screen: the gate's own field, the scene's, an evolving one, or an edit. */
+export type FieldKind = "gated" | "scene" | "evolving" | "edited";
+
+export function fieldKind(p: FieldParams, scene: FieldParams): FieldKind {
+  if (isCanonical(p)) return "gated";
+  if (p.evolution > 0) return "evolving";
+  return sameField(p, scene) ? "scene" : "edited";
+}
+
+/** Does f₂ — the noise channel Silk's sheets are surfaces of — differ? (The obstacle only enters f₁.) */
+export function f2Differs(a: FieldParams, b: FieldParams): boolean {
+  return a.ell0 !== b.ell0 || a.octaves !== b.octaves || a.gain !== b.gain || a.lacunarity !== b.lacunarity || a.evolution !== b.evolution;
 }
 
 /** The live field is the gated scene's field, at t = 0? */
@@ -269,6 +285,16 @@ export class Flow {
     this.valid = 0;
   }
 
+  /**
+   * Silk after a change to f₂: its sheets are other surfaces now, so every
+   * particle restarts on its sheet of the new field (the clock runs on).
+   */
+  encodeReseed(enc: GPUCommandEncoder): void {
+    this.writeSlot(0, this.time, this.head);
+    this.dispatch(enc, this.k.seed, 0);
+    this.valid = 0;
+  }
+
   /** Re-anchor the iso values at the tracers' positions (after a field change). */
   encodeAnchor(enc: GPUCommandEncoder): void {
     this.writeSlot(0, this.time, this.head);
@@ -373,7 +399,7 @@ export class Flow {
 }
 
 /** The f64 mirror's config (src/curlnoise64.mjs) for a live field at model time t. */
-export function mirrorConfigOf(p: FieldParams, time: number): Record<string, unknown> {
+export function mirrorConfigOf(p: FieldParams, time: number): MirrorConfig {
   const o = p.obstacle;
   return {
     octaves: p.octaves,
@@ -391,14 +417,14 @@ export function mirrorConfigOf(p: FieldParams, time: number): Record<string, unk
  * The release gate's observable on the live view: how far each particle has
  * left its two surfaces, ‖(f₁, f₂)(x) − anchors‖, with f recomputed in double
  * precision at the particle's single-precision position. Particles that
- * restarted since the anchors were read are skipped by the caller's age test.
+ * src/curlnoise64.mjs is the double-precision mirror (gen-verification.mjs
+ * checks it against the committed Python values at every build).
  */
 export function surfaceResidual(
-  xyzw: Float32Array,
-  anchors: Float32Array,
+  xyzw: ArrayLike<number>,
+  anchors: ArrayLike<number>,
   p: FieldParams,
   time: number,
-  isoValues: (x: number[], cfg: Record<string, unknown>) => number[],
 ): { worst: number; median: number; count: number } {
   const cfg = mirrorConfigOf(p, time);
   const r: number[] = [];

@@ -25,6 +25,7 @@ import type { GateIc } from "../../capture.js";
 import { field, makeBundle, sha256hex } from "../../capture.js";
 import { simAsset } from "../../sim-root.js";
 import type { CaptureBundle, CaptureStepDescriptor } from "@bp/verify";
+import type { MirrorConfig } from "../../curlnoise64.mjs";
 import { isoValues } from "../../curlnoise64.mjs";
 
 export type { GateIc };
@@ -319,7 +320,7 @@ export interface GateCheck {
 }
 
 /** The f64 mirror's config for the committed gate params. */
-export function mirrorConfig(ic: GateIc): Record<string, unknown> {
+export function mirrorConfig(ic: GateIc): MirrorConfig {
   const P = ic.params;
   return {
     octaves: P.octaves,
@@ -364,7 +365,7 @@ export function checkGate(ic: GateIc, a: GateRun, b: GateRun): GateCheck {
   for (const st of a.steps) {
     const p = pos(st);
     for (let i = 0; i < n; i += 1) {
-      const f = isoValues([p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], cfg) as number[];
+      const f = isoValues([p[i * 3]!, p[i * 3 + 1]!, p[i * 3 + 2]!], cfg);
       const d = Math.hypot(f[0]! - a.f0[i * 2]!, f[1]! - a.f0[i * 2 + 1]!);
       if (d > worst) worst = d;
     }

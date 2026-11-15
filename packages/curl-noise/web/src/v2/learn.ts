@@ -7,7 +7,7 @@
 import type { PassTiming } from "@bp/gpu";
 import { h, plotPanel, readout, sparkline } from "@bp/studio";
 import type { FieldParams } from "./model/flow.js";
-import { isCanonical } from "./model/flow.js";
+import { fieldKind } from "./model/flow.js";
 import { REPO_BLOB } from "./proof/gate.js";
 import type { SceneDef } from "./scenes.js";
 
@@ -15,7 +15,7 @@ const BRIDSON_2007 = "https://dblp.uni-trier.de/rec/journals/tog/BridsonHN07.htm
 
 export interface LearnPane {
   setScene(scene: SceneDef, strands: number): void;
-  setField(p: FieldParams, dt: number): void;
+  setField(p: FieldParams, scene: FieldParams): void;
   /** Max |∇·v| / max |∇×v| at the probes, on the field on screen. */
   pushDivergence(rel: number): void;
   /** Tracer counts in equal-volume shells (flat = no bunching, no thinning); null hides it (Silk's sheets). */
@@ -149,7 +149,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         "li",
         {},
         h("strong", {}, "Simplified: "),
-        "particles live in a ball around the sphere and restart at a random point of it when they age out or leave; moving the sphere moves the field with it at once (no wake, no inertia). ",
+        "particles live in a ball around the sphere and restart at a random point of their sheet when they age out or leave it; moving the sphere moves the field with it at once (no wake, no inertia). ",
         "When the field evolves, its noise drifts with time: still exactly divergence-free at every instant, but particles then leave their starting surfaces, so the reprojection is off.",
       ),
       h(
@@ -166,15 +166,19 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       seeing.textContent =
         scene.id === "studio"
           ? `${strands.toLocaleString()} particles stream through a field of smooth noise around a sphere, each trailing a ribbon of its recent path. ` +
-            `Near the sphere the ribbons part and close around it; further out they curl through the noise. Nothing ever bunches up or thins out. Drag the sphere and the whole flow re-routes.`
+            `They start on two sheets, and the flow can only slide each particle along its own sheet, so each sheet holds together as one folding cloth; where a sheet meets the sphere it parts and closes around it. Drag the sphere and the whole flow re-routes.`
           : "";
     },
-    setField(p) {
-      onScreen.textContent = isCanonical(p)
-        ? "On screen: the gated field, exactly as the release gate runs it."
-        : p.evolution > 0
-          ? "On screen: an evolving field — the noise drifts with time."
-          : "On screen: your edit of the gated field.";
+    setField(p, scene) {
+      const kind = fieldKind(p, scene);
+      onScreen.textContent =
+        kind === "gated"
+          ? "On screen: the gated field, exactly as the release gate runs it."
+          : kind === "scene"
+            ? "On screen: the Studio's field — the gated sphere with smoother noise (two octaves; Tune has the gate's own)."
+            : kind === "evolving"
+              ? "On screen: an evolving field — the noise drifts with time."
+              : "On screen: your edit of the field.";
     },
     pushDivergence(rel) {
       div.push(rel);

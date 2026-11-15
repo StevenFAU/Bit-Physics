@@ -100,12 +100,13 @@ fn lv_spawn_volume(i: u32, e: u32) -> vec3<f32> {
 
 /**
  * A point on the ball's surface drawn in proportion to the inflow there
- * (rejection against the bound L.step.z, at most 8 draws — a thread that
- * respawns stalls its whole warp, so the loop is short). Falls back to the volume.
+ * (rejection against the bound L.step.z, at most 64 draws: about 7 % of draws
+ * are accepted, so 8 would miss half the time and starve the boundary; the
+ * whole step costs ~0.3 ms at 32k particles). Falls back to the volume.
  */
 fn lv_spawn_inflow(i: u32, e: u32) -> vec3<f32> {
   var r = lv_rng(i, e, 0xE6546B64u);
-  for (var k = 0u; k < 8u; k++) {
+  for (var k = 0u; k < 64u; k++) {
     let n = lv_dir(&r);
     let p = L.centre.xyz + (L.step.w * 0.9995) * n;
     let vn = -dot(curl_velocity(p), n);
@@ -225,10 +226,12 @@ fn live_seed(@builtin(global_invocation_id) g: vec3<u32>) {
   f0buf[i] = f0;
 }
 
-// re-anchor the iso values (after the field changed)
+// re-anchor the iso values (after the field changed); a sheet particle keeps its sheet
 @compute @workgroup_size(256)
 fn live_anchor(@builtin(global_invocation_id) g: vec3<u32>) {
   let i = g.x;
   if (i >= L.dims.x) { return; }
-  f0buf[i] = iso_vals(tracers[i].xyz);
+  var f0 = iso_vals(tracers[i].xyz);
+  if (L.flags.w == 1u) { f0.y = lv_sheet_value(i); }
+  f0buf[i] = f0;
 }

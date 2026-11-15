@@ -17,7 +17,7 @@ import type { Studio, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, toggle } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { FieldParams, FlowCheckpoint, FlowKernels, Obstacle, V3 } from "./model/flow.js";
-import { BALL_CENTRE, Flow, MAX_STEPS, cloneField, isCanonical, sameField } from "./model/flow.js";
+import { BALL_CENTRE, Flow, MAX_STEPS, cloneField, f2Differs, isCanonical, sameField } from "./model/flow.js";
 import type { FlowView } from "./render/flow-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { sceneById } from "./scenes.js";
@@ -313,9 +313,14 @@ export class App {
       this.events.push(e);
     }
     const fieldChanged = !sameField(this.flow.params, e.params);
+    const resheet = this.flow.sheets !== null && f2Differs(this.flow.params, e.params);
     this.flow.params = cloneField(e.params);
     this.flow.dt = e.dt;
-    if (fieldChanged && this.flow.reproject) {
+    if (resheet) {
+      const enc = this.gpu.device.createCommandEncoder({ label: "flow-reseed" });
+      this.flow.encodeReseed(enc);
+      this.gpu.device.queue.submit([enc.finish()]);
+    } else if (fieldChanged) {
       const enc = this.gpu.device.createCommandEncoder({ label: "flow-anchor" });
       this.flow.encodeAnchor(enc);
       this.gpu.device.queue.submit([enc.finish()]);
