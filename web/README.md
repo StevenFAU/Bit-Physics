@@ -6,7 +6,7 @@ compiles what it imports. The Wave 0 pilot is Turing Patterns
 (`packages/reaction-diffusion-2d/web`); Wave A adds Slime Mould (`packages/physarum/web`),
 Grow (`packages/neural-ca/web`, page `v2/`) and Swarm (`packages/boids-2d/web`, page `v2/`).
 Wave B starts with Chaos (`packages/strange-attractors/web`, page `v2/`), the first 3D page, which
-brought the 3D layer (F3) into `@bp/render`.
+brought the 3D layer (F3) into `@bp/render`, and Flow Sculpture (`packages/curl-noise/web`, page `v2/`).
 Turing Patterns and Slime Mould have replaced their v1 pages at the sim root (v1 kept at
 `v1/`); see "The release swap" below.
 
@@ -102,7 +102,12 @@ horizon's order over four precisions, the in-page gate, the live kernel ≡ the 
 byte, f32 offsets against f64, click to release, Ghost, the orbit camera, precision and ρ on the
 link, undo by replay, save / restore / compare, seeds across page loads, the fixed points through
 the GPU cull, Environment's sky and ground, reduced motion) is
-`packages/strange-attractors/web/v2-acceptance.mjs`.
+`packages/strange-attractors/web/v2-acceptance.mjs`; Flow Sculpture's (the capture's bytes on v1 and v2,
+ready before the live view compiles, the tier's ribbons and step rate, the in-page gate, the live kernel ≡
+the gated one byte for byte, divergence / confinement / Clebsch / tangency with helicity as the nonzero
+control, every Silk particle on its sheet recomputed in f64, the sphere through the GPU cull, drag to move
+and undo, undo by replay ≡ never editing, the same seed across loads, a shared link, the volume mode's even
+density, reduced motion) is `packages/curl-noise/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.
