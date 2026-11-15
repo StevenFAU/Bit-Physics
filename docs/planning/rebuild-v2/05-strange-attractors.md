@@ -58,12 +58,16 @@
 > - **Captions take turns:** the ball's four captions share one spot; a new one now waits until the
 >   last has faded (650 ms) instead of crossfading over it. The acceptance run samples every
 >   caption's opacity and never sees two at once.
+> - **Undo and restore keep the record straight** (review of PR #66): a checkpoint carries the ball's
+>   precision and horizon, so undoing a purchase brings back the three-digit ball and files later
+>   horizons under the right digits; a restore that brings back other σ, ρ, β restarts the live λ
+>   estimate; undo's replay reads the spread as it goes, so a horizon crossed during it is found.
 > - **Frame rate.** Headed, 1440 × 900, at 1×/4×/8× in both scenes, the sim at full speed
->   (240 / 960 / 1,920 steps/s): Firefox 158 117–142 frames/s, Chromium 156 118–143, GPU 4–6 ms per
->   frame. Measured under load (another session's PyTorch job on ~3 cores, load average 6), where the
->   browsers' own animation-frame callbacks also fell below the 165 Hz display; M0's quiet-machine
->   figure was Firefox 164–165.
-> - **Checks.** `v2-acceptance.mjs` 53/53 (M0's 36 and M1's 17). `web/tools/check-studio.mjs` clean
+>   (240 / 960 / 1,920 steps/s), on a quiet machine: Firefox 158 164–165 frames/s, Chromium 156
+>   161–165 (the 165 Hz display), GPU 2.0–3.6 ms per frame. Under load (another session's PyTorch job
+>   on ~3 cores, load average 6) both fell to 117–143, with the browsers' own animation-frame
+>   callbacks below the display rate too.
+> - **Checks.** `v2-acceptance.mjs` 56/56 (M0's 36 and M1's 20). `web/tools/check-studio.mjs` clean
 >   for `v2/` and `v2/?s=digits` at 390, 820 and 1440 px and 200% zoom, no axe violations.
 >   `npm test` 271/271; integrity 0 HARD_FAIL.
 > - **Not yet:** Road to Chaos, Lorenz's Map, Slice (M2); Listen, The Family, posters and loops (M3);
