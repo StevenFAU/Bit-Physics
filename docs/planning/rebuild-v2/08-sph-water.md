@@ -1,7 +1,65 @@
 # 08 — Water in Hand (SPH)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/sph-water/web`. Wave C.
-> Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-18 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-18): M0 built** as the `v2/` page of `packages/sph-water/web`
+> (served at `/sims/sph-water/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged). The Glass and
+> Still Water: the shipped DFSPH in a glass on a kitchen table, drawn by the new shared `LiquidSurface`
+> (F4, 00-foundation.md), the Drop and Camera tools, Tune (render-only), Learn and Prove. Measured on the
+> RX 6800 XT (snap Chromium, RADV) unless a line says otherwise.
+>
+> - **The gate, ported verbatim** (`src/v2/proof/gate.ts`): v1's capture path (CANON, the lazy
+>   `sph-gate-ic.bin` / `sph-gate-refs.bin`, `checkpointErrors`, `computeGateArtifacts`, v1's manifest) on
+>   its own `createSphGpu` instance — the same `sph_core.wgsl` / `dfsph_solver.wgsl` pipelines, the
+>   per-cell id-sort, the CSR `cell_start`, h = 0.026. The live loop stays off the GPU while it runs (v1's
+>   exclusivity guard). `pipeline.py validate --sim sph-water` passes on both pages, run twice: worst
+>   pointwise error 12.3% of the [defaults.sph] rel 1e-4 budget, as on v1, runs byte-identical; v2 ready
+>   in 9–19 ms. The capture's states hash the same on v1 built from main, v1 and v2 on this branch
+>   (sha256 `713611ee…`).
+> - **The live solver is the shipped DFSPH, byte for byte, 4.1× faster.** The shipped passes walk the
+>   3×3×3 stencil (~370 candidates for ~57 neighbours) in each of ~26 gathers a step: 41.9 ms a step at
+>   193k particles. Water in Hand builds each particle's neighbour list once a step in the shipped
+>   visiting order (`src/v2/model/lists.wgsl`, k-major so a wave's loads coalesce — i-major made a step
+>   3.7× slower), runs the shipped expressions over it, reads ρ through a 4-byte array, and every 32 steps
+>   permutes the particles into cell order with the per-cell sort keyed on each particle's original index
+>   (mixing had made the gathers 1.7× slower): 10.2 ms a step at 193k. From the same state the shipped
+>   passes, the lists and the lists with the re-sort give the same bytes (Prove, and the acceptance run).
+>   A per-particle κ/ρ table was faster still but rounds differently (the shipped division is fused into
+>   its sum), so it was dropped.
+> - **The recipe at this scale** (glass 0.6 m across, water 0.38 m deep): h = 1.2 spacing, dt = 0.4 h/5,
+>   8 density / 4 divergence iterations, warm start off, speed cap 0.315·2h/dt = 7.875 m/s, XSPH — as
+>   recorded. **The mass is re-measured:** an interior lattice at h = 1.2 s sums to 1.00081 ρ₀ (computed;
+>   the GPU reads 1000.8 kg/m³), so v1's ρ₀s³ × 1.07 started the glass 7% compressed and its first step
+>   threw particles at 6.2 m/s; the mass is ρ₀s³ / 1.00081, and still water now gains only gravity's
+>   0.014 m/s in each of its first 16 steps. The glass is a cylinder wall and floor projected after the
+>   shipped box walls (boundary particles are M1).
+> - **Particles per tier — measured, then declared; the targets do not hold.** A step costs 1.4 / 3.6 /
+>   5.8 / 10.2 ms at 29k / 76k / 115k / 193k particles (water mixed by drops), and dt shrinks as N^(−1/3),
+>   so 200k at 60 fps runs one step a frame, about 22× slower than real time. Declared: **T3 80,000**
+>   (76,245 in the glass) at 0.18 model seconds per wall second (5.6× slow motion; with the glass 0.6 m
+>   across, slower still than a real glass): 60 fps at 1280×720 and 2560×1440, GPU 11.5 ms a frame at p50
+>   — solver 12.3 ms (2.8 steps) against LiquidSurface 0.22 ms (0.53 ms at 2560×1440). **T2 24,000** and
+>   **T1 10,000** are estimates scaled from T3 by throughput at equal playback speed (cost ∝ N^(4/3)):
+>   there is no iGPU or phone on the bench. On the 6800 XT they hold 60 fps (GPU 10.7 / 5.9 ms; the card
+>   idles its clocks at that load). SwiftShader (Playwright Chromium, T1, 9,198 particles): ready at
+>   404 ms, live at 837 ms, 417 ms a frame (2.4 fps) — solver 133 ms for 3 steps, surface 201 ms.
+> - **The first ten seconds and the director:** a blob of water (r = 7.5 cm) starts 30 cm above the
+>   water and falls in; the fastest particle passes 0.8 m/s within a second. A drop moves the highest
+>   particles (as many as the blob holds) to a blob above the glass at rest, from positions read back at
+>   that step, so drops replay byte for byte; the director drops again every 2.6 model seconds at
+>   seeded spots (three drops by t = 6 s). The Drop tool drops where you click (an edit, undoable by
+>   replay ≡ never dropping, with a 0.45 s cooldown).
+> - **Prove:** the release gate re-run in the page (12.3% of budget, run twice identical); the shipped
+>   solver ≡ the lists ≡ the lists with the re-sort; **hydrostatic pressure (illustrative):** after
+>   2.5 s of Still Water, ρ Σκ / steps over both solves and 200 steps gives dp/dd = 9,044 Pa/m =
+>   0.92 ρ₀g, R² 0.93 over 42,000 interior particles (one step's density-solve κ alone shows no gradient,
+>   R² 0.01 — the weight is carried by both solves); **incompressibility, live (illustrative):** mean
+>   compression 0.09%, max 2.6%, largest neighbour count 68 (lists hold 96), against no declared tolerance
+>   — the recipe runs fixed iterations; Bender & Koschier report < 0.01% iterating to tolerance. The
+>   Archimedes gate is M2.
+> - **Checks:** `v2-acceptance.mjs` 32/32; `web/tools/check-studio.mjs` 0 problems, 0 axe violations at
+>   all four viewports.
 
 ## Verdict on the prototype
 
