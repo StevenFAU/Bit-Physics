@@ -54,6 +54,14 @@ export class PaintKernels {
   }
 }
 
+/** The landscape seed of flat ground (ψ ≡ 0): nothing flows until you paint. */
+export const FLAT_GROUND = -1;
+
+/** The landscape for a seed: flat ground for FLAT_GROUND (or any negative seed), else `landscape(n, seed)`. */
+export function landscapeFor(n: number, seed: number): Float32Array<ArrayBuffer> {
+  return seed < 0 ? new Float32Array(n * n) : landscape(n, seed);
+}
+
 /**
  * The starting landscape: hills and valleys, each a periodic Gaussian
  * Σ_m exp(−(d + mN)² / σ²) per axis (separable), from a seeded LCG. Built on

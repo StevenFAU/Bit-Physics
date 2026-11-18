@@ -27,9 +27,11 @@
 // tools, the 2D Prove cards — divergence at the f32 floor of its terms, v·∇ψ,
 // particles on their contours in f64, patch counts as even as a random
 // scatter — a drag as one stroke that raises ψ only under it, the contour key,
-// undo by replay ≡ never painting, a new landscape as an undoable edit on the
-// link, back to the Studio, and the same seed giving the same bytes across
-// loads). Prints a BP_BENCH line at the end.
+// undo by replay ≡ never painting, two strokes at one step where undoing the
+// second leaves exactly the first, a new landscape as an undoable edit on the
+// link, Tune's Flat ground (ψ ≡ 0, seed=-1 on the link and booting from it),
+// back to the Studio, and the same seed giving the same bytes across loads).
+// Prints a BP_BENCH line at the end.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -324,6 +326,37 @@ let bench = null;
   });
   check("undo replays to the same bytes as never editing", replay.edited === 0.2 && replay.withUndo === replay.plain, `${replay.steps} steps: ${replay.withUndo} ≡ ${replay.plain}`);
 
+  // two edits at one step (paused): undoing the second leaves exactly the first
+  const pair3 = await T(page, async () => {
+    const a = globalThis.__flow;
+    const hash = async () => {
+      const d = await crypto.subtle.digest("SHA-256", (await a.flow.readTracers()).buffer);
+      return [...new Uint8Array(d)].map((v) => v.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    };
+    const settle = () => new Promise((r) => setTimeout(r, 120));
+    const start = async () => {
+      await a.loadScene("studio", { seed: 7 });
+      a.clock.paused = true;
+      await a.advance(48);
+      a.setField({ ...a.flow.params, evolution: 0.2 }, a.flow.dt);
+      await settle();
+    };
+    await start();
+    a.setField({ ...a.flow.params, ell0: 0.9 }, a.flow.dt);
+    await settle();
+    const both = a.flow.params.ell0;
+    a.undo();
+    await settle();
+    const undone = { hash: await hash(), ell: a.flow.params.ell0, evo: a.flow.params.evolution, events: a.eventCount };
+    await start();
+    return { both, undone, alone: await hash() };
+  });
+  check(
+    "paused, edit A then edit B at one step: undoing B leaves A alone, byte for byte",
+    pair3.both === 0.9 && pair3.undone.evo === 0.2 && pair3.undone.ell !== 0.9 && pair3.undone.events === 1 && pair3.undone.hash === pair3.alone,
+    `${pair3.undone.hash} ≡ ${pair3.alone}`,
+  );
+
   // Tune's Evolution: an edit on the link
   const evo = await T(page, async () => {
     const a = globalThis.__flow;
@@ -610,6 +643,52 @@ let bench = null;
   });
   check("2D undo replays to the same bytes as never painting (ψ and particles)", rep.withUndo === rep.plain, `${rep.steps} steps: ${rep.withUndo} ≡ ${rep.plain}`);
 
+  // stroke A then stroke B: undoing B leaves exactly A — paused (both at one
+  // step, B's checkpoint already holds A) and running (≡ never painting B)
+  const pair = await T(page, async () => {
+    const p = globalThis.__flowScene.paint();
+    const hex = async (buf) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((v) => v.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    const state = async () => (await hex((await p.paint.readPsi()).buffer)) + "/" + (await hex((await p.paint.readParticles()).buffer));
+    const settle = () => new Promise((r) => setTimeout(r, 150));
+    const A = { x: 200, y: 260, radius: 60, amount: 2500, mode: "raise" };
+    const B = { x: 330, y: 140, radius: 50, amount: -2000, mode: "raise" };
+    const start = async () => {
+      await p.load({ seed: 3 });
+      p.clock.paused = true;
+      await p.advance(30);
+    };
+    // paused
+    await start();
+    p.dab(A);
+    p.dab(B);
+    p.undo();
+    await settle();
+    const pausedUndo = { state: await state(), events: p.eventCount };
+    await start();
+    p.dab(A);
+    const pausedA = await state();
+    // running
+    await start();
+    p.dab(A);
+    await p.advance(40);
+    p.dab(B);
+    await p.advance(40);
+    p.undo();
+    await settle();
+    const runUndo = await state();
+    const steps = p.paint.steps;
+    await start();
+    p.dab(A);
+    await p.advance(steps - 30);
+    return { pausedUndo, pausedA, runUndo, runA: await state(), steps };
+  });
+  check(
+    "2D paused: stroke A, stroke B, undo B ≡ stroke A alone, byte for byte (ψ and particles)",
+    pair.pausedUndo.state === pair.pausedA && pair.pausedUndo.events === 1,
+    `${pair.pausedUndo.state} ≡ ${pair.pausedA}`,
+  );
+  check("2D running: stroke A, run, stroke B, run, undo B ≡ never painting B", pair.runUndo === pair.runA, `${pair.steps} steps: ${pair.runUndo} ≡ ${pair.runA}`);
+
   // a new landscape is an edit; undo brings the old one back, and the link follows
   const land = await T(page, async () => {
     const p = globalThis.__flowScene.paint();
@@ -626,6 +705,27 @@ let bench = null;
     "a new landscape is an undoable edit, and the link carries its seed",
     land.mid.seed === 424242 && land.mid.search.includes("seed=424242") && land.after === land.before && !land.search.includes("seed=424242"),
     `seed ${land.before} → ${land.mid.seed} → ${land.after}; ${land.mid.search} → ${land.search}`,
+  );
+
+  // Tune's Flat ground: ψ ≡ 0, on the link as seed=-1, and undoable
+  const flat = await T(page, async () => {
+    const p = globalThis.__flowScene.paint();
+    p.clock.paused = false;
+    const before = p.paint.landscapeSeed;
+    const btn = [...document.querySelectorAll(".bp-tune button")].find((b) => b.textContent.trim() === "Flat ground");
+    btn?.click();
+    await new Promise((r) => setTimeout(r, 600));
+    const psi = await p.paint.readPsi();
+    const mid = { seed: p.paint.landscapeSeed, zero: psi.every((v) => v === 0), search: location.search };
+    p.undo();
+    await new Promise((r) => setTimeout(r, 600));
+    const after = await p.paint.readPsi();
+    return { found: !!btn, before, mid, after: p.paint.landscapeSeed, hills: after.some((v) => v !== 0), search: location.search };
+  });
+  check(
+    "Tune's Flat ground levels the map (ψ ≡ 0), the link carries seed=-1, and it undoes",
+    flat.found && flat.mid.seed === -1 && flat.mid.zero && flat.mid.search.includes("seed=-1") && flat.after === flat.before && flat.hills && !flat.search.includes("seed=-1"),
+    `seed ${flat.before} → ${flat.mid.seed} → ${flat.after}; ${flat.mid.search} → ${flat.search}`,
   );
   check("no console errors (Paint the Stream)", errors.length === 0, errors.join(" | "));
 
@@ -661,6 +761,21 @@ let bench = null;
   check("a link with s=paint&seed=7 boots into that landscape", a.land === 7 && b.land === 7, `landscape ${a.land}`);
   check("2D: the same seed gives the same particle bytes across page loads (240 steps, with restarts)", a.hash === b.hash, `${a.hash} ≡ ${b.hash}`);
   check("no console errors (2D seed runs)", a.errors.length + b.errors.length === 0, [...a.errors, ...b.errors].join(" | "));
+}
+
+// --- 2D: a link with seed=-1 boots onto flat ground ---------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=paint&seed=-1");
+  await page.waitForFunction(() => globalThis.__bpDebug().scene === "paint", undefined, { timeout: 60000 });
+  const r = await T(page, async () => {
+    const p = globalThis.__flowScene.paint();
+    await new Promise((res) => setTimeout(res, 600));
+    const psi = await p.paint.readPsi();
+    return { land: globalThis.__bpDebug().landscape, zero: psi.every((v) => v === 0), search: location.search, studioSeed: globalThis.__flow.flow.seed };
+  });
+  check("a link with s=paint&seed=-1 boots onto flat ground (ψ ≡ 0) and keeps seed=-1", r.land === -1 && r.zero && r.search.includes("seed=-1") && r.studioSeed === 0, `landscape ${r.land}, ψ ${r.zero ? "≡ 0" : "not flat"}, ${r.search}; Studio seed ${r.studioSeed}`);
+  check("no console errors (flat link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
 }
 
 // --- reduced motion -----------------------------------------------------------------------

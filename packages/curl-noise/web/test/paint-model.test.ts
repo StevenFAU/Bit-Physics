@@ -2,7 +2,7 @@
 // (packages/curl-noise/web/src/v2/paint/model.ts): the B-spline the kernels
 // and the map share, the starting landscape, and the Prove/Learn reductions.
 import { describe, expect, it } from "vitest";
-import { blockCounts, bsplineWeights, contourResidual, landscape, patchSpread, probeStats, psiAt } from "../src/v2/paint/model.js";
+import { FLAT_GROUND, blockCounts, bsplineWeights, contourResidual, landscape, landscapeFor, patchSpread, probeStats, psiAt } from "../src/v2/paint/model.js";
 
 describe("the cubic B-spline", () => {
   it("weights are a partition of unity, and reproduce linear functions", () => {
@@ -37,6 +37,14 @@ describe("the starting landscape", () => {
       inside = Math.max(inside, Math.abs(a[j * n + 1]! - a[j * n]!));
     }
     expect(seam).toBeLessThan(3 * inside + 1e-9);
+  });
+  it("flat ground (FLAT_GROUND, the link's seed −1) is ψ ≡ 0; seed 0 is an ordinary landscape", () => {
+    const n = 32;
+    expect(FLAT_GROUND).toBe(-1);
+    expect(landscapeFor(n, FLAT_GROUND).every((v) => v === 0)).toBe(true);
+    expect(landscapeFor(n, FLAT_GROUND).length).toBe(n * n);
+    expect(Array.from(landscapeFor(n, 0))).toEqual(Array.from(landscape(n, 0)));
+    expect(landscapeFor(n, 0).some((v) => v !== 0)).toBe(true);
   });
 });
 

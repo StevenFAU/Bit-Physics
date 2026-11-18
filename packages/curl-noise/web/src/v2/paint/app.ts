@@ -17,7 +17,7 @@ import type { Studio, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, segmented, slider, toggle } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { Dab, PaintCheckpoint, PaintKernels } from "./model.js";
-import { LANDSCAPE_AMPLITUDE, MAX_DISPATCHES, Paint, landscape } from "./model.js";
+import { LANDSCAPE_AMPLITUDE, MAX_DISPATCHES, Paint, landscapeFor } from "./model.js";
 import type { PaintView } from "./view.js";
 
 /** Steps per second at 1× (model time runs with the wall clock at 1×). */
@@ -37,7 +37,7 @@ export interface PaintEvent {
   id: number;
   step: number;
   dab?: Dab;
-  /** A new landscape (seed), or a flat one (seed −1). */
+  /** A new landscape (seed), or flat ground (FLAT_GROUND). */
   landscape?: number;
 }
 
@@ -74,6 +74,8 @@ export class PaintApp {
 
   private readonly history: History<PaintCheckpoint>;
   private readonly events: PaintEvent[] = [];
+  /** Where the event log stood when each edit's undo checkpoint was taken. */
+  private readonly loggedAt = new Map<number, number>();
   private nextEventId = 1;
   private strokeId = 0;
   private pendingDabs: Dab[] = [];
@@ -209,7 +211,7 @@ export class PaintApp {
     this.studio.ring.classList.remove("is-shown");
   }
 
-  /** Start the scene: a landscape from `seed` (−1: flat), particles seeded on it. */
+  /** Start the scene: a landscape from `seed` (FLAT_GROUND: flat), particles seeded on it. */
   async load(o: { seed?: number; dt?: number } = {}): Promise<void> {
     this.busy = true;
     try {
@@ -218,6 +220,7 @@ export class PaintApp {
       this.paint.dt = o.dt ?? this.baseDt;
       this.clock.reset();
       this.events.length = 0;
+      this.loggedAt.clear();
       this.history.clear();
       this.pendingDabs = [];
       this.pendingLandscape = null;
@@ -237,10 +240,10 @@ export class PaintApp {
   }
 
   private landscapeOf(seed: number): Float32Array<ArrayBuffer> {
-    return seed < 0 ? new Float32Array(this.paint.n * this.paint.n) : landscape(this.paint.n, seed);
+    return landscapeFor(this.paint.n, seed);
   }
 
-  /** A new landscape (or a flat one, seed −1) — an edit, undoable. */
+  /** A new landscape (or flat ground, FLAT_GROUND) — an edit, undoable. */
   newLandscape(seed: number): void {
     this.pendingLandscape = seed;
   }
@@ -274,7 +277,10 @@ export class PaintApp {
 
   private apply(e: PaintEvent, enc: GPUCommandEncoder, record: boolean): void {
     if (record) {
-      if (!this.events.some((x) => x.id === e.id)) this.history.beforeEdit(e.id, e.step);
+      if (!this.events.some((x) => x.id === e.id)) {
+        this.history.beforeEdit(e.id, e.step);
+        this.loggedAt.set(e.id, this.events.length);
+      }
       this.events.push(e);
     }
     if (e.landscape !== undefined) {
@@ -303,10 +309,14 @@ export class PaintApp {
     this.busy = true;
     try {
       this.paint.restore(entry.checkpoint);
-      const keep = this.events.filter((e) => e.id !== entry.eventId);
-      this.events.length = 0;
-      this.events.push(...keep);
-      const replay = keep.filter((e) => e.step >= entry.tick).sort((a, b) => a.step - b.step);
+      // the checkpoint holds every edit logged before it; replay only those
+      // logged after it (in log order), less the undone one
+      const at = this.loggedAt.get(entry.eventId) ?? this.events.findIndex((e) => e.id === entry.eventId);
+      this.loggedAt.delete(entry.eventId);
+      const from = at < 0 ? this.events.length : at;
+      const replay = this.events.slice(from).filter((e) => e.id !== entry.eventId);
+      this.events.length = from;
+      this.events.push(...replay);
       let i = 0;
       while (this.paint.steps < target || i < replay.length) {
         this.paint.begin();
@@ -342,6 +352,7 @@ export class PaintApp {
   restoreSave(): void {
     if (this.history.restoreSave()) {
       this.events.length = 0;
+      this.loggedAt.clear();
       this.view.clearExposure();
       this.hooks.onMap?.();
       this.writeUrl();

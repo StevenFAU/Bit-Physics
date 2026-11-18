@@ -36,7 +36,7 @@ import { SCENES, sceneById } from "./scenes.js";
 import type { TunePane } from "./tune.js";
 import { buildPaintTune, buildTune } from "./tune.js";
 import { PaintApp } from "./paint/app.js";
-import { PaintKernels, contourResidual, patchSpread } from "./paint/model.js";
+import { FLAT_GROUND, PaintKernels, contourResidual, patchSpread } from "./paint/model.js";
 import { PaintView } from "./paint/view.js";
 
 const SIM_NAME = "Flow Sculpture";
@@ -45,7 +45,8 @@ const SCENE_IDS = SCENES.map((s) => s.id);
 const url = new UrlState(
   {
     s: { kind: "enum", def: "studio", values: SCENE_IDS },
-    seed: { kind: "int", def: 1, min: 0, max: 2 ** 31 - 1 },
+    // the seed; −1 (FLAT_GROUND) is Paint the Stream's flat ground
+    seed: { kind: "int", def: 1, min: FLAT_GROUND, max: 2 ** 31 - 1 },
     // the field, written only where it differs from the scene's
     ell: { kind: "num", def: 0.7, min: 0.2, max: 1.2, digits: 3 },
     oct: { kind: "int", def: 2, min: 1, max: 5 },
@@ -327,7 +328,7 @@ async function boot(): Promise<void> {
         speed: (v) => p.setStep(v),
         contours: (on) => p.setContours(on),
         landscape: () => p.newLandscape(1 + Math.floor(Math.random() * 2147483646)),
-        flat: () => p.newLandscape(0),
+        flat: () => p.newLandscape(FLAT_GROUND),
       },
       p.paint.dt / p.baseDt,
       p.view.look.contours,
@@ -612,7 +613,7 @@ async function boot(): Promise<void> {
   field.evolution = parsed.evo;
   if (field.obstacle) field.obstacle.centre = a.clampCentre(parsed.obs as V3);
   while (isCapturing()) await wait(50);
-  await a.loadScene(scene.id, { field, dt: a.baseDt * parsed.spd, seed: parsed.seed });
+  await a.loadScene(scene.id, { field, dt: a.baseDt * parsed.spd, seed: Math.max(0, parsed.seed) });
   if (parsed.cam[2]! > 0) a.camera.set({ yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]!, target: [0, 0, 0] });
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   a.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);

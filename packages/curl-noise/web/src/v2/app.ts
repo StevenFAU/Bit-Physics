@@ -125,6 +125,8 @@ export class App {
 
   private readonly history: History<Checkpoint>;
   private readonly events: FlowEvent[] = [];
+  /** Where the event log stood when each edit's undo checkpoint was taken. */
+  private readonly loggedAt = new Map<number, number>();
   private nextEventId = 1;
   private pending: { id: number; params: FieldParams; dt: number } | null = null;
   private dragId = 0;
@@ -388,6 +390,7 @@ export class App {
       this.flow.dt = o.dt ?? scene.dt * this.stepScale;
       this.clock.reset();
       this.events.length = 0;
+      this.loggedAt.clear();
       this.history.clear();
       this.pending = null;
       this.view.clearExposure();
@@ -428,7 +431,10 @@ export class App {
 
   private applyEvent(e: FlowEvent, record = true): void {
     if (record) {
-      if (!this.events.some((x) => x.id === e.id)) this.history.beforeEdit(e.id, e.step);
+      if (!this.events.some((x) => x.id === e.id)) {
+        this.history.beforeEdit(e.id, e.step);
+        this.loggedAt.set(e.id, this.events.length);
+      }
       this.events.push(e);
     }
     const fieldChanged = !sameField(this.flow.params, e.params);
@@ -461,10 +467,14 @@ export class App {
     try {
       // restore the state before the undone edit, then replay the rest up to now
       this.restoreCheckpoint(entry.checkpoint);
-      const keep = this.events.filter((e) => e.id !== entry.eventId);
-      this.events.length = 0;
-      this.events.push(...keep);
-      const replay = keep.filter((e) => e.step >= entry.tick).sort((a, b) => a.step - b.step);
+      // the checkpoint holds every edit logged before it; replay only those
+      // logged after it (in log order), less the undone one
+      const at = this.loggedAt.get(entry.eventId) ?? this.events.findIndex((e) => e.id === entry.eventId);
+      this.loggedAt.delete(entry.eventId);
+      const from = at < 0 ? this.events.length : at;
+      const replay = this.events.slice(from).filter((e) => e.id !== entry.eventId);
+      this.events.length = from;
+      this.events.push(...replay);
       let i = 0;
       while (this.flow.steps < target) {
         while (i < replay.length && replay[i]!.step <= this.flow.steps) this.applyEvent(replay[i++]!, false);
@@ -499,6 +509,7 @@ export class App {
   restoreSave(): void {
     if (this.history.restoreSave()) {
       this.events.length = 0;
+      this.loggedAt.clear();
       this.writeUrl();
       this.studio.toast.show(`Back to step ${this.flow.steps.toLocaleString()}`);
     }
