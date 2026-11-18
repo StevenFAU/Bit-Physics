@@ -149,15 +149,30 @@ export class View3D {
 
   /** Upload the camera for a target of `width`×`height` px. */
   update(camera: OrbitCamera, width: number, height: number, timeSec = performance.now() / 1000): void {
+    this.updateMatrices(camera.view(), camera.projection(), camera.eye(), camera.near, camera.far, width, height, timeSec);
+  }
+
+  /**
+   * Upload explicit matrices (a camera that is not an OrbitCamera, e.g. the
+   * six faces of an EnvironmentProbe). `proj` must be a `perspective()`-form
+   * projection: renderers read P[0][0], P[1][1], near and far from it.
+   */
+  updateMatrices(
+    view: Float32Array,
+    proj: Float32Array,
+    eye: Vec3,
+    near: number,
+    far: number,
+    width: number,
+    height: number,
+    timeSec = performance.now() / 1000,
+  ): void {
     this.width = Math.max(1, width);
     this.height = Math.max(1, height);
-    const view = camera.view();
-    const proj = camera.projection();
     this.viewProj = mul4(proj, view);
     this.mvp = mul4(this.viewProj, this.model);
     this.mv = mul4(view, this.model);
     const inv = invert4(this.viewProj) ?? identity4();
-    const eye = camera.eye();
     const invModel = invert4(this.model) ?? identity4();
     const em = transform4(invModel, eye);
     const d = this.data;
@@ -169,7 +184,7 @@ export class View3D {
     d.set([eye[0], eye[1], eye[2], timeSec], 80);
     d.set([em[0], em[1], em[2], this.modelScale], 84);
     d.set([this.width, this.height, 1 / this.width, 1 / this.height], 88);
-    d.set([proj[0]!, proj[5]!, camera.near, camera.far], 92);
+    d.set([proj[0]!, proj[5]!, near, far], 92);
     this.device.queue.writeBuffer(this.buffer, 0, d);
   }
 
