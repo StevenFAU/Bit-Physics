@@ -17,7 +17,7 @@ import type { Studio, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, toggle } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
 import type { FieldParams, FlowCheckpoint, FlowKernels, Look, Obstacle, V3 } from "./model/flow.js";
-import { BALL_CENTRE, Flow, MAX_STEPS, SILK_SHEETS, cloneField, f2Differs, isCanonical, sameField } from "./model/flow.js";
+import { BALL_CENTRE, DUST_SHEETS, Flow, MAX_STEPS, SILK_SHEETS, cloneField, f2Differs, isCanonical, sameField } from "./model/flow.js";
 import type { FlowView } from "./render/flow-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { sceneById } from "./scenes.js";
@@ -54,6 +54,22 @@ export function defaultLook(_tier: Tier, software: boolean): Look {
   return software ? "dust" : "silk";
 }
 
+/**
+ * A software adapter (SwiftShader, lavapipe, WARP) rasterises on the CPU:
+ * measured on SwiftShader at T1 sizes, Silk's ribbons cost ~6 µs a segment
+ * (0.3 fps at 8,192 × 48), Dust's points ~7.6 µs each (2.2 fps at 16,384) and
+ * the fixed passes (studio, bloom, exposure, composite) ~100 ms a frame at
+ * full resolution. Its own profile: few points, half the render scale, no
+ * bloom, and at most two steps a frame (slow motion rather than a frozen view)
+ * — Dust then runs 12.8 fps at 4,096 points (7.6 at 8,192), Silk 2.1 fps.
+ */
+export const SOFTWARE = {
+  silk: { strands: 2048, slots: 32 },
+  dust: 4096,
+  renderScale: 0.5,
+  maxSteps: 2,
+} as const;
+
 /** Lifetime of a tracer, model time (about four seconds at 1×). */
 export const MAX_AGE = 0.6;
 /** How far the sphere may be dragged from the box centre (model units). */
@@ -85,7 +101,11 @@ export class App {
   look: Look = "silk";
   /** Silk's sheets (null: Silk ribbons fill the ball — a measurement mode, ?sh=none). */
   silkSheets: readonly number[] | null = SILK_SHEETS;
+  /** Dust's sheets (null: Dust fills the ball evenly — a measurement mode, ?dsh=none). */
+  dustSheets: readonly number[] | null = DUST_SHEETS;
   private readonly sizeOverride: { strands?: number; slots?: number };
+  /** The software-adapter profile (app.ts SOFTWARE): a software adapter, or ?soft=1 (measurements). */
+  readonly softwareProfile: boolean;
   private cameraMovingUntil = 0;
   scene: SceneDef = sceneById("studio");
   hooks: AppHooks = {};
@@ -128,11 +148,15 @@ export class App {
     readonly view: FlowView,
     readonly kernels: FlowKernels,
     readonly tier: Tier,
-    o: { look?: Look; size?: { strands?: number; slots?: number }; silkSheets?: readonly number[] | null } = {},
+    o: { look?: Look; soft?: boolean; size?: { strands?: number; slots?: number }; silkSheets?: readonly number[] | null; dustSheets?: readonly number[] | null } = {},
   ) {
     this.sizeOverride = o.size ?? {};
+    this.softwareProfile = gpu.info.software || (o.soft ?? false);
     if (o.silkSheets !== undefined) this.silkSheets = o.silkSheets;
-    this.look = o.look ?? defaultLook(tier, gpu.info.software);
+    if (o.dustSheets !== undefined) this.dustSheets = o.dustSheets;
+    this.look = o.look ?? defaultLook(tier, this.softwareProfile);
+    this.clock.ticksPerSecond = TICKS_PER_SECOND / this.stepScale;
+    if (this.softwareProfile) this.clock.maxTicksPerFrame = SOFTWARE.maxSteps;
     this.flow = this.makeFlow(this.look, this.scene.field);
     this.history = new History<Checkpoint>(
       {
@@ -287,8 +311,28 @@ export class App {
   // -------------------------------------------------------------- looks --
 
   /** Particles and ribbon slots for a look on this tier (?n= / ?slots= override them). */
+  /**
+   * Steps per tick of Silk's: Dust takes half as many steps, each twice as
+   * long — the same flow speed for half the solver's cost (its points need no
+   * 120 Hz ribbon rows; its long exposure smooths the motion).
+   */
+  get stepScale(): number {
+    return this.look === "dust" ? 2 : 1;
+  }
+
+  /** The scene's step at 1× in this look (Tune's Speed multiplies it). */
+  get baseDt(): number {
+    return this.scene.dt * this.stepScale;
+  }
+
   sizeFor(look: Look): { strands: number; slots: number } {
-    const base = look === "dust" ? { strands: DUST_SIZES[this.tier], slots: 1 } : SIZES[this.tier];
+    const soft = this.softwareProfile;
+    const base =
+      look === "dust"
+        ? { strands: soft ? SOFTWARE.dust : DUST_SIZES[this.tier], slots: 1 }
+        : soft
+          ? SOFTWARE.silk
+          : SIZES[this.tier];
     return {
       strands: this.sizeOverride.strands ?? base.strands,
       slots: look === "dust" ? 1 : (this.sizeOverride.slots ?? base.slots),
@@ -299,7 +343,7 @@ export class App {
     const size = this.sizeFor(look);
     const f = new Flow(this.gpu.device, this.kernels, size.strands, size.slots, params);
     f.maxAge = MAX_AGE;
-    f.sheets = look === "silk" ? this.silkSheets : null;
+    f.sheets = look === "silk" ? this.silkSheets : this.dustSheets;
     f.dust = look === "dust";
     return f;
   }
@@ -314,9 +358,11 @@ export class App {
     try {
       await this.gpu.device.queue.onSubmittedWorkDone();
       const old = this.flow;
-      const keep = { field: cloneField(old.params), dt: old.dt, seed: old.seed };
+      const oldScale = this.stepScale;
       this.history.clear();
       this.look = look;
+      const keep = { field: cloneField(old.params), dt: (old.dt / oldScale) * this.stepScale, seed: old.seed };
+      this.clock.ticksPerSecond = TICKS_PER_SECOND / this.stepScale;
       this.flow = this.makeFlow(look, keep.field);
       old.destroy();
       this.view.clearExposure();
@@ -335,7 +381,7 @@ export class App {
       const scene = sceneById(id);
       this.scene = scene;
       this.flow.params = cloneField(o.field ?? scene.field);
-      this.flow.dt = o.dt ?? scene.dt;
+      this.flow.dt = o.dt ?? scene.dt * this.stepScale;
       this.clock.reset();
       this.events.length = 0;
       this.history.clear();
@@ -517,7 +563,7 @@ export class App {
 
     const rect = this.studio.canvas.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const scale = this.governor?.renderScale ?? 1;
+    const scale = (this.governor?.renderScale ?? 1) * (this.softwareProfile ? SOFTWARE.renderScale : 1);
     this.hdr.resize(rect.width, rect.height, dpr, scale);
     if (rect.width > 1 && rect.height > 1 && (rect.width !== this.camera.viewW || rect.height !== this.camera.viewH)) {
       const before = this.camera.viewW > 1 ? this.fitFactor(this.camera.viewW, this.camera.viewH) : 1;

@@ -23,7 +23,7 @@ import { HdrPipeline } from "@bp/render";
 import { QualityGovernor, UrlState, percentile } from "@bp/runtime";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
-import { App, DUST_SIZES, SIZES, TICKS_PER_SECOND, defaultLook } from "./app.js";
+import { App, DUST_SIZES, SIZES, defaultLook } from "./app.js";
 import { sci } from "./format.js";
 import { buildLearn } from "./learn.js";
 import type { FieldParams, Look, V3 } from "./model/flow.js";
@@ -180,6 +180,9 @@ async function boot(): Promise<void> {
     exposure: { percentile: 0.995, key: 0.62, min: 0.02, max: 64, tau: 0.8 },
     bloom: { intensity: 0.05, levels: 6 },
   });
+  // a software adapter (or ?soft=1): no bloom; the app also halves its render scale and steps (app.ts SOFTWARE)
+  const soft = gpu.info.software || query.get("soft") === "1";
+  if (soft) hdr.bloom.intensity = 0;
   const profiler = new GpuProfiler(device, gpu.timestamps);
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   held.governor = governor;
@@ -198,8 +201,14 @@ async function boot(): Promise<void> {
     silkSheets = sh === "none" ? null : sh.split(",").filter((x) => x !== "").map(Number).filter((x) => Number.isFinite(x)).slice(0, 3);
   }
   const parsedLook = url.parse(location.search).values.look;
-  const startLook: Look = parsedLook === "silk" || parsedLook === "dust" ? parsedLook : defaultLook(tier, gpu.info.software);
-  const a = new App(gpu, studio, hdr, view, k, tier, { size, look: startLook, silkSheets });
+  const startLook: Look = parsedLook === "silk" || parsedLook === "dust" ? parsedLook : defaultLook(tier, soft);
+  // ?dsh= the same for Dust's sheets; ?dsh=none fills the ball evenly (the density check)
+  let dustSheets: readonly number[] | null | undefined;
+  if (query.has("dsh")) {
+    const sh = query.get("dsh") ?? "";
+    dustSheets = sh === "none" ? null : sh.split(",").filter((x) => x !== "").map(Number).filter((x) => Number.isFinite(x)).slice(0, 3);
+  }
+  const a = new App(gpu, studio, hdr, view, k, tier, { size, look: startLook, soft, silkSheets, dustSheets });
   app = a;
   a.profiler = profiler;
   a.governor = governor;
@@ -217,11 +226,11 @@ async function boot(): Promise<void> {
       ell: p.ell0,
       oct: p.octaves,
       evo: p.evolution,
-      spd: Number((a.flow.dt / a.scene.dt).toFixed(3)),
+      spd: Number((a.flow.dt / a.baseDt).toFixed(3)),
       sp: a.clock.speed,
       obs: o.map((x) => Number(x.toFixed(4))),
       cam: [a.camera.yaw, a.camera.pitch, a.camera.distance].map((x) => Number(x.toFixed(3))),
-      look: a.look === defaultLook(a.tier, gpu.info.software) ? "auto" : a.look,
+      look: a.look === defaultLook(a.tier, a.softwareProfile) ? "auto" : a.look,
     };
   };
   a.writeUrl = () => url.write(current());
@@ -230,16 +239,16 @@ async function boot(): Promise<void> {
   const tune = buildTune(
     studio.tune.body,
     {
-      field: (p, speed) => a.setField(p, a.scene.dt * speed),
+      field: (p, speed) => a.setField(p, a.baseDt * speed),
       reset: () => {
         const p = cloneField(a.scene.field);
-        a.setField(p, a.scene.dt);
+        a.setField(p, a.baseDt);
         tune.sync(p, 1);
       },
       gated: () => {
         const p = cloneField(CANONICAL_FIELD);
         a.setField(p, a.flow.dt);
-        tune.sync(p, a.flow.dt / a.scene.dt);
+        tune.sync(p, a.flow.dt / a.baseDt);
       },
       look: (l) => {
         void a.setLook(l).then(() => {
@@ -377,7 +386,7 @@ async function boot(): Promise<void> {
     },
     onField: (p, dt) => {
       learn.setField(p, a.scene.field);
-      tune.sync(p, dt / a.scene.dt);
+      tune.sync(p, dt / a.baseDt);
       syncProve();
     },
   };
@@ -415,7 +424,7 @@ async function boot(): Promise<void> {
         ["Adapter", gpu.adapterId],
         ["Tier", `${a.tier}${gpu.info.software ? " (software)" : ""}`],
         [a.look === "dust" ? "Dust points" : "Silk ribbons", a.look === "dust" ? a.flow.n.toLocaleString() : `${a.flow.n.toLocaleString()} × ${a.flow.slots} points`],
-        ["Solver steps / second", `${Math.round(TICKS_PER_SECOND * a.clock.speed)}`],
+        ["Solver steps / second", `${Math.round(a.clock.ticksPerSecond * a.clock.speed)}`],
         ["Frame (p50 / p90)", `${percentile(rafTimes, 0.5).toFixed(1)} / ${percentile(rafTimes, 0.9).toFixed(1)} ms`],
         ["GPU per frame", `${profiler.frameAvg.toFixed(2)} ms`],
         ["Render scale", `${Math.round(st.renderScale * 100)}%`],
@@ -440,11 +449,11 @@ async function boot(): Promise<void> {
   field.evolution = parsed.evo;
   if (field.obstacle) field.obstacle.centre = a.clampCentre(parsed.obs as V3);
   while (isCapturing()) await wait(50);
-  await a.loadScene(scene.id, { field, dt: scene.dt * parsed.spd, seed: parsed.seed });
+  await a.loadScene(scene.id, { field, dt: a.baseDt * parsed.spd, seed: parsed.seed });
   if (parsed.cam[2]! > 0) a.camera.set({ yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]!, target: [0, 0, 0] });
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   a.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
-  tune.sync(a.flow.params, a.flow.dt / a.scene.dt);
+  tune.sync(a.flow.params, a.flow.dt / a.baseDt);
   studio.veil.done();
   a.start();
   liveAt.t = performance.now();

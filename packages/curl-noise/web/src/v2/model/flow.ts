@@ -139,6 +139,13 @@ export const HUE: readonly [number, number] = [3.2, 0.5];
 /** Silk's two sheets {f₂ = c}: two cloths folding through the flow. */
 export const SILK_SHEETS: readonly number[] = [-0.08, 0.08];
 
+/**
+ * Dust's three sheets: veils of points. Dust filling the whole ball (null)
+ * reads as an even fog at any count tried (262k–4M) — the honest picture of
+ * an incompressible, evenly filled volume, kept as a measurement mode.
+ */
+export const DUST_SHEETS: readonly number[] = [-0.12, 0, 0.12];
+
 /** The 96-byte live uniform (live.wgsl LiveU). */
 export function packLive(n: number, slot: number, slots: number, o: LiveOptions, amplitude: number): ArrayBuffer {
   const buf = new ArrayBuffer(96);
