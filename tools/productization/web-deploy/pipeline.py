@@ -170,6 +170,7 @@ PAGES: dict[str, tuple[tuple[str, str], ...]] = {
     "neural-ca": (("v1/", "src/main.ts"),),
     "strange-attractors": (("v2/", "src/v2/main.ts"),),
     "curl-noise": (("v2/", "src/v2/main.ts"),),
+    "boids-3d": (("v2/", "src/v2/main.ts"),),
 }
 
 # The root page's entry module, where it is not src/main.ts: a swapped sim's

@@ -147,8 +147,12 @@ export class View3D {
     this.modelScale = scale;
   }
 
-  /** Upload the camera for a target of `width`×`height` px. */
-  update(camera: OrbitCamera, width: number, height: number, timeSec = performance.now() / 1000): void {
+  /**
+   * Upload the camera for a target of `width`×`height` px. Any camera with a
+   * view, a projection, an eye and clip planes will do (an OrbitCamera, or a
+   * sim's own, e.g. Murmuration's camera standing on the ground).
+   */
+  update(camera: Pick<OrbitCamera, "view" | "projection" | "eye" | "near" | "far">, width: number, height: number, timeSec = performance.now() / 1000): void {
     this.width = Math.max(1, width);
     this.height = Math.max(1, height);
     const view = camera.view();

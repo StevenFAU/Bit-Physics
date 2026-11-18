@@ -6,7 +6,8 @@ compiles what it imports. The Wave 0 pilot is Turing Patterns
 (`packages/reaction-diffusion-2d/web`); Wave A adds Slime Mould (`packages/physarum/web`),
 Grow (`packages/neural-ca/web`, page `v2/`) and Swarm (`packages/boids-2d/web`, page `v2/`).
 Wave B starts with Chaos (`packages/strange-attractors/web`, page `v2/`), the first 3D page, which
-brought the 3D layer (F3) into `@bp/render`, and Flow Sculpture (`packages/curl-noise/web`, page `v2/`).
+brought the 3D layer (F3) into `@bp/render`, Flow Sculpture (`packages/curl-noise/web`, page `v2/`) and Murmuration
+(`packages/boids-3d/web`, page `v2/`).
 Turing Patterns and Slime Mould have replaced their v1 pages at the sim root (v1 kept at
 `v1/`); see "The release swap" below.
 
@@ -113,7 +114,11 @@ the gated one byte for byte, divergence / confinement / Clebsch / tangency with 
 control, every Silk particle's anchors recomputed in f64 and a missed restart never published, the sphere
 through the GPU cull, drag to move
 and undo, undo by replay ≡ never editing, the same seed across loads, a shared link, the volume mode's even
-density, reduced motion) is `packages/curl-noise/web/v2-acceptance.mjs`.
+density, reduced motion) is `packages/curl-noise/web/v2-acceptance.mjs`; Murmuration's (the capture's bytes on v1 and
+v2, ready before the live view compiles, the tier's birds and step rate, the flock drawn as optical depth, the in-page
+gate, grid ≡ brute force byte for byte and the scatter as a permutation, steps independent of submit grouping, the
+screen's total optical depth over a slow dolly against a flickering control, Look / Startle / Gust, save and restore,
+Tune on the link, seeds across page loads, reduced motion) is `packages/boids-3d/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.
