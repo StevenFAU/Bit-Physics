@@ -280,7 +280,10 @@ export class PaintApp {
     if (e.landscape !== undefined) {
       this.paint.landscapeSeed = e.landscape;
       this.paint.encodeLandscape(enc, this.landscapeOf(e.landscape));
-      if (record) this.hooks.onMap?.();
+      if (record) {
+        this.hooks.onMap?.();
+        this.writeUrl();
+      }
     } else if (e.dab) {
       this.paint.encodeDabs(enc, [e.dab]);
     }
@@ -323,6 +326,7 @@ export class PaintApp {
       this.history.release(entry.checkpoint);
       this.view.clearExposure();
       this.hooks.onMap?.();
+      this.writeUrl();
       this.studio.toast.show("Undone — replayed to the same moment without that edit");
     } finally {
       this.busy = false;
@@ -340,6 +344,7 @@ export class PaintApp {
       this.events.length = 0;
       this.view.clearExposure();
       this.hooks.onMap?.();
+      this.writeUrl();
       this.studio.toast.show(`Back to ${this.paint.time.toFixed(1)} s`);
     }
   }

@@ -12,8 +12,8 @@ import { Accumulator, FieldView2D, SCENE_FORMAT } from "@bp/render";
 import splatSrc from "./splat.wgsl?raw";
 
 export const MAP_LOOK: FieldLook = {
-  background: "#16303f",
-  ink: "#cdb185",
+  background: "#10222f",
+  ink: "#a88d66",
   accent: "#fff3dc",
   rim: "#f2d7a8",
   rimAmount: 0.05,
@@ -30,7 +30,7 @@ export interface PaintLook {
   contours: boolean;
   /** Contour lines across ±(hill height). */
   lines: number;
-  /** Splat radius, px at 900 px of render height; light per splat before the count normalisation. */
+  /** Splat radius, px at 900 px of render height; light per splat at 0.08 particles per scene pixel. */
   radius: number;
   energy: number;
   /** Long exposure, seconds (shorter while the view is moving). */
@@ -38,7 +38,7 @@ export interface PaintLook {
   tauMoving: number;
 }
 
-export const DEFAULT_PAINT_LOOK: PaintLook = { contours: true, lines: 18, radius: 1.5, energy: 0.9, tau: 0.22, tauMoving: 0.05 };
+export const DEFAULT_PAINT_LOOK: PaintLook = { contours: true, lines: 18, radius: 1.5, energy: 0.45, tau: 0.2, tauMoving: 0.05 };
 
 export class PaintView {
   look: PaintLook = { ...DEFAULT_PAINT_LOOK };
@@ -111,8 +111,13 @@ export class PaintView {
     const cam = f.camera.uniform(f.pixelScale);
     const pxScale = Math.max(0.6, h / 900);
     const L = this.look;
-    // light per splat: about constant total light whatever the count
-    const energy = L.energy * Math.sqrt(65536 / Math.max(f.count, 1));
+    // light per splat: the same light per pixel at any count, map size, zoom or
+    // screen — particles per scene pixel are count · (cells/px)² / N² (0.08 at
+    // 131,072 on a 1024² map across 1280 px), and the contour lines must stay
+    // readable under them
+    const perPx = Math.max((f.count * cam.unitsPerPx * cam.unitsPerPx) / (f.n * f.n), 1e-6);
+    // …and a bigger splat (a taller screen) spreads the same light over more pixels
+    const energy = Math.min((L.energy * (0.08 / perPx)) / (pxScale * pxScale), 4);
     this.device.queue.writeBuffer(this.params, 0, new Float32Array([cam.cx, cam.cy, cam.unitsPerPx, f.n, w, h, L.radius * pxScale, energy, 1.0, 0.94, 0.84, 0]));
     if (!this.bind || this.bindParts !== f.parts) {
       this.bindParts = f.parts;

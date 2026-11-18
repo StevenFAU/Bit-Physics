@@ -231,7 +231,7 @@ async function boot(): Promise<void> {
   const hdrFor = (two: boolean): void => {
     if (two) {
       hdr.toneMap = "neutral";
-      hdr.exposure = { ...hdr.exposure, mode: "pinned", value: 1 };
+      hdr.exposure = { ...hdr.exposure, mode: "pinned", value: 0.85 };
       hdr.bloom.intensity = 0;
     } else {
       hdr.toneMap = studioHdr.toneMap;
@@ -335,7 +335,7 @@ async function boot(): Promise<void> {
   const showScene = async (id: SceneId, o: { seed?: number; spd?: number } = {}): Promise<void> => {
     const s = sceneById(id);
     if (s.dim === "2d") {
-      if (!paintApp) studio.toast.show("Preparing the map…");
+      if (!paintApp && liveAt.t < Infinity) studio.toast.show("Preparing the map…");
       const p = await ensurePaint();
       a.deactivate();
       hdrFor(true);

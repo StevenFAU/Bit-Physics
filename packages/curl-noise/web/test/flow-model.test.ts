@@ -7,6 +7,8 @@ import { isoValues } from "../src/curlnoise64.mjs";
 import {
   BALL_RADIUS,
   CANONICAL_FIELD,
+  DUST_SHEETS,
+  HUE,
   DENSITY_SHELLS,
   cloneField,
   f2Differs,
@@ -54,10 +56,14 @@ describe("the gate port's uniforms", () => {
   });
 
   it("the live uniform carries the step, the ball and Silk's sheets", () => {
-    const buf = packLive(1000, 7, 96, { dt: 0.0012, maxAge: 0.6, respawn: true, reproject: true, seed: 5, sheets: [-0.08, 0.08] }, 1);
+    const buf = packLive(1000, 7, 96, { dt: 0.0012, maxAge: 0.6, respawn: true, reproject: true, seed: 5, sheets: [-0.08, 0.08], dust: false }, 1);
     const f = new Float32Array(buf);
     const u = new Uint32Array(buf);
-    expect(buf.byteLength).toBe(80);
+    expect(buf.byteLength).toBe(96);
+    expect(Array.from(f.subarray(20, 24))).toEqual([0, Math.fround(HUE[0]), Math.fround(HUE[1]), 0]);
+    const dust = new Float32Array(packLive(1000, 0, 1, { dt: 0.0024, maxAge: 0.6, respawn: true, reproject: true, seed: 5, sheets: DUST_SHEETS, dust: true }, 1));
+    expect(dust[20]).toBe(1);
+    expect(Array.from(dust.subarray(16, 20))).toEqual([3, Math.fround(-0.12), 0, Math.fround(0.12)]);
     expect(f[0]).toBe(Math.fround(0.0012));
     expect(f[3]).toBe(Math.fround(BALL_RADIUS));
     expect(Array.from(u.subarray(4, 8))).toEqual([1000, 1, 7, 96]);

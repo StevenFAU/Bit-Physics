@@ -104,6 +104,8 @@ export interface PaintCheckpoint {
   time: number;
   dt: number;
   seed: number;
+  /** The landscape the map was started from (the share link's seed). */
+  landscapeSeed: number;
 }
 
 export class Paint {
@@ -252,6 +254,7 @@ export class Paint {
       time: this.time,
       dt: this.dt,
       seed: this.seed,
+      landscapeSeed: this.landscapeSeed,
     };
     const enc = this.device.createCommandEncoder({ label: "paint-capture" });
     enc.copyBufferToBuffer(this.psi, 0, c.psi, 0, this.n * this.n * 4);
@@ -271,6 +274,7 @@ export class Paint {
     this.time = c.time;
     this.dt = c.dt;
     this.seed = c.seed;
+    this.landscapeSeed = c.landscapeSeed;
   }
 
   releaseCheckpoint(c: PaintCheckpoint): void {

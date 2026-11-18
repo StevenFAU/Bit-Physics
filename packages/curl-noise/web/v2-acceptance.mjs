@@ -21,7 +21,15 @@
 // Tune's Evolution as an edit on the link; save / restore; the same seed gives
 // the same bytes across page loads; a shared link boots into its field; the
 // volume mode keeps an even density; reduced motion; at most six tools at
-// 1280×720; no console errors. Prints a BP_BENCH line at the end.
+// 1280×720; no console errors. M1: Dust (the tier's points on three sheets, 60
+// steps/s, every point on its sheet in f64, the Silk ↔ Dust switch on the link),
+// the software-adapter profile, and Paint the Stream (the scene picker, its
+// tools, the 2D Prove cards — divergence at the f32 floor of its terms, v·∇ψ,
+// particles on their contours in f64, patch counts as even as a random
+// scatter — a drag as one stroke that raises ψ only under it, the contour key,
+// undo by replay ≡ never painting, a new landscape as an undoable edit on the
+// link, back to the Studio, and the same seed giving the same bytes across
+// loads). Prints a BP_BENCH line at the end.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -126,12 +134,12 @@ const GATE_BUDGET = 2e-4 * 0.666;
  * are anchored on one of Silk's sheets (the rest are restarts that missed and
  * wait for the next step). Call with the clock paused.
  */
-async function sheetCheck(page) {
-  const surf = await T(page, async () => {
+async function sheetCheck(page, limit = 1 << 20) {
+  const surf = await T(page, async (lim) => {
     const a = globalThis.__flow;
-    const [x, f0] = await Promise.all([a.flow.readTracers(), a.flow.readAnchors()]);
+    const [x, f0] = await Promise.all([a.flow.readTracers(lim), a.flow.readAnchors(lim)]);
     return { x: Array.from(x), f0: Array.from(f0), field: a.flow.params, time: a.flow.time, sheets: a.flow.sheets };
-  });
+  }, limit);
   const o = surf.field.obstacle;
   const cfg = {
     octaves: surf.field.octaves, ell0: surf.field.ell0, gain: surf.field.gain, lacunarity: surf.field.lacunarity, amplitude: surf.field.amplitude, seed: 0, time: surf.time * surf.field.evolution,
@@ -469,6 +477,190 @@ let bench = null;
   await shot(page, "05-volume");
   check("no console errors (volume mode)", errors.length === 0, errors.join(" | "));
   await ctx.close();
+}
+
+// ============================ M1: Dust ============================================
+{
+  const { ctx, page, errors } = await open("/v2/?look=dust");
+  const d = await dbg(page);
+  const want = { T3: 1 << 20, T2: 1 << 18, T1: 1 << 16 }[d.tier];
+  check(
+    "a link with look=dust boots into Dust: the tier's points on three sheets, one slot each",
+    d.look === "dust" && d.strands === want && d.slots === 1 && JSON.stringify(d.sheets) === "[-0.12,0,0.12]",
+    `${d.strands.toLocaleString()} points, sheets ${JSON.stringify(d.sheets)}`,
+  );
+  const s0 = d.steps;
+  const t0 = Date.now();
+  await page.waitForTimeout(2000);
+  const rate = ((await dbg(page)).steps - s0) / ((Date.now() - t0) / 1000);
+  check("Dust takes 60 steps a second, each twice Silk's (same flow speed, half the solver's cost)", Math.abs(rate / 60 - 1) < 0.1 && Math.abs((await dbg(page)).dt / 0.0024 - 1) < 1e-9, `${rate.toFixed(0)} steps/s, Δt ${(await dbg(page)).dt}`);
+  await pause(page);
+  const r = await sheetCheck(page, 32768);
+  check(
+    "every Dust point's anchors are its own surfaces (f64), and nearly all ride a sheet",
+    r.worst < GATE_BUDGET && r.onSheet / r.n > 0.99,
+    `${r.n.toLocaleString()} points checked, ${r.onSheet.toLocaleString()} on a sheet; worst ${sci(r.worst)}`,
+  );
+  await T(page, () => { globalThis.__flow.clock.paused = false; });
+  await page.waitForTimeout(1500);
+  await shot(page, "07-dust");
+  // the Tune switch, both ways, on the link
+  const sw = await T(page, async () => {
+    const a = globalThis.__flow;
+    const settle = () => new Promise((r) => setTimeout(r, 450)); // the link is written 250 ms after the last change
+    await a.setLook("silk");
+    await settle();
+    const silk = { look: a.look, n: a.flow.n, slots: a.flow.slots, search: location.search };
+    await a.setLook("dust");
+    await settle();
+    return { silk, dust: { look: a.look, n: a.flow.n, search: location.search } };
+  });
+  check("Silk ↔ Dust switches particle sets, and the link carries the look", sw.silk.look === "silk" && sw.silk.slots > 1 && !sw.silk.search.includes("look=") && sw.dust.look === "dust" && sw.dust.search.includes("look=dust"), `${sw.silk.n} ribbons ↔ ${sw.dust.n} points; ${sw.dust.search}`);
+  check("no console errors (Dust)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// ============================ M1: the software-adapter profile =====================
+{
+  const { ctx, page, errors } = await open("/v2/?soft=1");
+  const d = await dbg(page);
+  const p = await T(page, () => ({ soft: globalThis.__flow.softwareProfile, bloom: globalThis.__flow.hdr.bloom.intensity, maxSteps: globalThis.__flow.clock.maxTicksPerFrame }));
+  check(
+    "a software adapter (forced with ?soft=1) starts in Dust at 4,096 points, no bloom, two steps a frame at most",
+    p.soft && d.look === "dust" && d.strands === 4096 && p.bloom === 0 && p.maxSteps === 2,
+    `${d.look}, ${d.strands} points, bloom ${p.bloom}, ≤ ${p.maxSteps} steps a frame`,
+  );
+  check("no console errors (software profile)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// ============================ M1: Paint the Stream ==================================
+{
+  const { ctx, page, errors } = await open("/v2/");
+  // pick the scene in the heading's picker, as a visitor would
+  await page.selectOption(".bp-scene-picker", "paint");
+  await page.waitForFunction(() => globalThis.__bpDebug().scene === "paint", undefined, { timeout: 60000 });
+  await page.waitForTimeout(1500);
+  const d = await dbg(page);
+  const want = { T3: [1024, 131072], T2: [512, 65536], T1: [512, 32768] }[d.tier];
+  check("the scene picker opens Paint the Stream: a wrapping 2D map, the tier's grid and particles", d.space === "2d" && d.periodic === true && d.n === want[0] && d.particles === want[1], `${d.n}×${d.n} map, ${d.particles.toLocaleString()} particles`);
+  const tools = await T(page, () => [...document.querySelectorAll(".bp-rail-tools .bp-tool")].map((b) => b.textContent.trim()));
+  check("its tools: Paint and Pan", tools.join(",") === "Paint,Pan", tools.join(", "));
+  await shot(page, "08-paint");
+
+  // the 2D Prove cards
+  const prove = await T(page, async () => {
+    await globalThis.__flowProve.runAll();
+    return globalThis.__flowProve.results.paint;
+  });
+  check("2D: the divergence is f32 rounding of the terms it sums (< 10⁻⁶), and v·∇ψ vanishes", prove.divRel < 1e-6 && prove.alongRel < 1e-6, `|∇·v| ${sci(prove.divRel)} of its terms; v·∇ψ ${prove.alongMax === 0 ? "exactly 0" : sci(prove.alongRel)}`);
+  check("2D: particles keep to their contours (f64, < 10⁻³ of a line spacing)", prove.residual.worst / prove.contourStep < 1e-3, `worst ${sci(prove.residual.worst / prove.contourStep)}, median ${sci(prove.residual.median / prove.contourStep)} of a spacing`);
+  check("2D: nothing piles up — patch counts as even as a random scatter (within 1.5×)", prove.spread.spread < 1.5 * prove.spread.expected, `±${(prove.spread.spread * 100).toFixed(2)}% vs ±${(prove.spread.expected * 100).toFixed(2)}%`);
+
+  // a drag with the brush: one stroke, ψ raised under it and unchanged far away
+  const psi0 = await T(page, async () => Array.from(await globalThis.__flowScene.paint().paint.readPsi()));
+  const e0 = (await dbg(page)).events;
+  await page.mouse.move(560, 380);
+  await page.mouse.down();
+  await page.mouse.move(700, 400, { steps: 12 });
+  await page.waitForTimeout(250);
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const psi1 = await T(page, async () => Array.from(await globalThis.__flowScene.paint().paint.readPsi()));
+  const n = d.n;
+  let near = 0;
+  let far = 0;
+  const cam = await T(page, () => { const c = globalThis.__flowScene.paint().camera; return { cx: c.cx, cy: c.cy, k: c.pxPerUnit }; });
+  const cx = cam.cx + (630 - 640) / cam.k;
+  const cy = cam.cy + (390 - 360) / cam.k;
+  for (let j = 0; j < n; j += 1) {
+    for (let i = 0; i < n; i += 1) {
+      const dx = Math.abs(((i - cx) % n + n * 1.5) % n - n / 2);
+      const dy = Math.abs(((j - cy) % n + n * 1.5) % n - n / 2);
+      const dd = psi1[j * n + i] - psi0[j * n + i];
+      if (Math.hypot(dx, dy) < 0.05 * n) near = Math.max(near, dd);
+      if (Math.hypot(dx, dy) > 0.4 * n) far = Math.max(far, Math.abs(dd));
+    }
+  }
+  check("a drag paints one stroke: ψ rises under it, and nowhere far away", (await dbg(page)).events === e0 + 1 && near > 0 && far === 0, `one edit; rise ${near.toFixed(0)} under the stroke, ${far} far away`);
+  await page.keyboard.press("c");
+  check("C toggles the contour lines", (await dbg(page)).contours === false);
+  await page.keyboard.press("c");
+
+  // undo by replay ≡ never painting, byte for byte (ψ and particles)
+  const rep = await T(page, async () => {
+    const p = globalThis.__flowScene.paint();
+    const hex = async (buf) => [...new Uint8Array(await crypto.subtle.digest("SHA-256", buf))].map((v) => v.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    const state = async () => (await hex((await p.paint.readPsi()).buffer)) + "/" + (await hex((await p.paint.readParticles()).buffer));
+    p.clock.paused = true;
+    await new Promise((r) => setTimeout(r, 150));
+    await p.load({ seed: 3 });
+    p.clock.paused = true;
+    await p.advance(60);
+    p.dab({ x: 200, y: 260, radius: 60, amount: 2500, mode: "raise" });
+    await p.advance(60);
+    p.undo();
+    await new Promise((r) => setTimeout(r, 150));
+    const withUndo = await state();
+    const steps = p.paint.steps;
+    await p.load({ seed: 3 });
+    p.clock.paused = true;
+    await p.advance(steps);
+    return { withUndo, plain: await state(), steps };
+  });
+  check("2D undo replays to the same bytes as never painting (ψ and particles)", rep.withUndo === rep.plain, `${rep.steps} steps: ${rep.withUndo} ≡ ${rep.plain}`);
+
+  // a new landscape is an edit; undo brings the old one back, and the link follows
+  const land = await T(page, async () => {
+    const p = globalThis.__flowScene.paint();
+    p.clock.paused = false;
+    const before = p.paint.landscapeSeed;
+    p.newLandscape(424242);
+    await new Promise((r) => setTimeout(r, 600));
+    const mid = { seed: p.paint.landscapeSeed, search: location.search, events: p.eventCount };
+    p.undo();
+    await new Promise((r) => setTimeout(r, 600));
+    return { before, mid, after: p.paint.landscapeSeed, search: location.search };
+  });
+  check(
+    "a new landscape is an undoable edit, and the link carries its seed",
+    land.mid.seed === 424242 && land.mid.search.includes("seed=424242") && land.after === land.before && !land.search.includes("seed=424242"),
+    `seed ${land.before} → ${land.mid.seed} → ${land.after}; ${land.mid.search} → ${land.search}`,
+  );
+  check("no console errors (Paint the Stream)", errors.length === 0, errors.join(" | "));
+
+  // back to the Studio
+  await page.selectOption(".bp-scene-picker", "studio");
+  await page.waitForFunction(() => globalThis.__bpDebug().space === "3d", undefined, { timeout: 30000 });
+  const back = await T(page, () => ({ active: globalThis.__flow.active, scene: globalThis.__bpDebug().scene }));
+  check("back to the Studio: the 3D scene is live again", back.active && back.scene === "studio", JSON.stringify(back));
+  await ctx.close();
+}
+
+// --- 2D: the same seed gives the same bytes across page loads; a link boots into its landscape ---
+{
+  const run = async () => {
+    const { ctx, page, errors } = await open("/v2/?s=paint&seed=7");
+    await page.waitForFunction(() => globalThis.__bpDebug().scene === "paint", undefined, { timeout: 60000 });
+    const land = (await dbg(page)).landscape;
+    const hash = await T(page, async () => {
+      const p = globalThis.__flowScene.paint();
+      p.clock.paused = true;
+      await new Promise((r) => setTimeout(r, 150));
+      await p.load({ seed: 7 });
+      p.clock.paused = true;
+      await p.advance(240);
+      const d = await crypto.subtle.digest("SHA-256", (await p.paint.readParticles()).buffer);
+      return [...new Uint8Array(d)].map((v) => v.toString(16).padStart(2, "0")).join("").slice(0, 16);
+    });
+    await ctx.close();
+    return { hash, land, errors };
+  };
+  const a = await run();
+  const b = await run();
+  check("a link with s=paint&seed=7 boots into that landscape", a.land === 7 && b.land === 7, `landscape ${a.land}`);
+  check("2D: the same seed gives the same particle bytes across page loads (240 steps, with restarts)", a.hash === b.hash, `${a.hash} ≡ ${b.hash}`);
+  check("no console errors (2D seed runs)", a.errors.length + b.errors.length === 0, [...a.errors, ...b.errors].join(" | "));
 }
 
 // --- reduced motion -----------------------------------------------------------------------

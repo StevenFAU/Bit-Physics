@@ -110,7 +110,12 @@ the gated one byte for byte, divergence / confinement / Clebsch / tangency with 
 control, every Silk particle's anchors recomputed in f64 and a missed restart never published, the sphere
 through the GPU cull, drag to move
 and undo, undo by replay ≡ never editing, the same seed across loads, a shared link, the volume mode's even
-density, reduced motion) is `packages/curl-noise/web/v2-acceptance.mjs`.
+density, reduced motion; M1: Dust on its sheets and the Silk ↔ Dust switch, the software-adapter profile, and
+Paint the Stream — the scene picker, a stroke that raises ψ only under it, the 2D divergence at the f32 floor of
+its terms, particles on their contours in f64, patch counts as even as a random scatter, 2D undo by replay ≡
+never painting, the same seed across loads) is `packages/curl-noise/web/v2-acceptance.mjs`. A page with a
+periodic 2D scene (Paint the Stream) reports `periodic: true` in `__bpDebug()`, so check-studio skips its
+letterbox test there too.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.
