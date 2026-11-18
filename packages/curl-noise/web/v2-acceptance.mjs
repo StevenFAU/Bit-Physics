@@ -349,7 +349,11 @@ let bench = null;
     await settle();
     const undone = { hash: await hash(), ell: a.flow.params.ell0, evo: a.flow.params.evolution, events: a.eventCount };
     await start();
-    return { both, undone, alone: await hash() };
+    const alone = await hash();
+    // leave the Studio as the next checks expect it: seed 7, the scene's own field, paused
+    await a.loadScene("studio", { seed: 7 });
+    a.clock.paused = true;
+    return { both, undone, alone };
   });
   check(
     "paused, edit A then edit B at one step: undoing B leaves A alone, byte for byte",
