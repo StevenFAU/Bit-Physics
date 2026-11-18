@@ -1,0 +1,68 @@
+/* Murmuration — page styles on top of @bp/studio (mm- namespace). */
+
+:root {
+  --sim-bg: #1a1220;
+  --sim-key: #f4dcc4;
+  --sim-accent: #e8a36a;
+}
+
+.mm-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mm-options .bp-slider {
+  min-width: 180px;
+}
+.mm-lede {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.mm-note,
+.mm-hint {
+  font-size: 12.5px;
+  color: var(--bp-text-dim);
+}
+.mm-hint {
+  margin: 4px 0 10px;
+}
+.mm-detail summary {
+  cursor: pointer;
+}
+.mm-limits {
+  padding-left: 18px;
+  font-size: 13px;
+}
+.mm-capture-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.mm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+.mm-field-label {
+  font-size: 13px;
+  color: var(--bp-text);
+}
+.mm-select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--bp-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--bp-hairline, rgba(255, 255, 255, 0.16));
+  border-radius: 6px;
+  padding: 6px 8px;
+  min-height: 32px;
+}
+.mm-select:focus-visible {
+  outline: 2px solid var(--bp-focus, #9cc3ff);
+  outline-offset: 2px;
+}
+.mm-select option {
+  color: #111;
+}
