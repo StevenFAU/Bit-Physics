@@ -31,8 +31,11 @@
 > - **Slice** (`?s=slice`): the same points' upward crossings of z = h, interpolated within the
 >   step, in a 256 × 256 x–y histogram; the plane is drawn in 3D, lit by its own crossings. The
 >   Slice tool drags the cut up and down (it turns nothing and releases nothing); "Cut at height"
->   does the same from the keyboard; the cut stays within 0.15ρ … 1.75ρ. At z = ρ − 1: 3.40 million
->   crossings in 2 s on 301 cells, two thin lines. **Changed from the plan:** its prompt was "see its
+>   does the same from the keyboard; the cut stays within 0.15ρ … 1.75ρ. The histogram's box is the
+>   attractor's whole x–y footprint, symmetric under (x, y) → (−x, −y), with an 8% margin. It holds
+>   the cut at every height, including a periodic window's mirror orbit, and the axes stay put as
+>   the cut moves. At z = ρ − 1: 3.36 million crossings in 2 s on 287 cells, two thin
+>   lines. **Changed from the plan:** its prompt was "see its
 >   layers", but the layers cannot be drawn. Each turn round a wing squeezes them by
 >   e^(λ₃ × 0.75) ≈ 2 × 10⁻⁵, far below a bin. The prompt now reads "see how thin it is", and the
 >   panel and Learn say why the layers don't show.
@@ -48,25 +51,34 @@
 >   - *Map*: 262,144 GPU points for 20 time units (6.7 million pairs) against one f64 run of
 >     40,000 time units (53,267 pairs), 32 × 32 bins: 0.0131, floor 0.0160. ρ 28.1 / 28.25 against
 >     28: 0.19 / 0.44.
->   - *Section*: 7.0 million GPU crossings against 106,513 f64 ones (80,000 time units): 0.0070,
->     floor 0.0073. ρ 28.1 / 28.25 / 28.5: 0.025 / 0.063 / 0.125.
+>   - *Section*: 7.0 million GPU crossings against 106,513 f64 ones (80,000 time units), on the
+>     footprint box: 0.0072, floor 0.0074. ρ 28.1 / 28.25 / 28.5: 0.026 / 0.056 / 0.112.
 >   - Budgets, measured then declared in `tolerance.toml` (same section as M1) and
 >     `src/v2/proof/budgets.ts`, held equal by a unit test: chaos ≤ 0.06, windows ≤ 0.01,
->     map ≤ 0.045, section ≤ 0.016. Measured at 53%, 20%, 29% and 44% of them. These are Prove
+>     map ≤ 0.045, section ≤ 0.016. Measured at 53%, 20%, 29% and 45% of them. These are Prove
 >     cards only. The capture gate is still the only release gate.
 > - **Fixed while measuring:** some GPUs flush denormals to zero, which broke a counter stored as
 >   bitcast bits (`hist.z` is now an f32 count). A motion that settles on a fixed point (ρ 15, say)
 >   has damped peaks but no attractor, so the map and section now report "no peaks" instead of
 >   boxing a transient. The map's box margin went from 3% to 15% after the first measurement
 >   clipped the cusp.
-> - **Frame rate** (headless, 1280 × 720, T3): Road to Chaos 60 fps (GPU 3.7 ms a frame),
->   Lorenz's Map 60 (3.1 ms), Slice 60 (2.9 ms). One acceptance run saw Slice at 2 fps while another
->   session's WebGPU Chromium shared the GPU. Replaying the same steps alone held 60 fps at every
->   step.
-> - **Checks.** `v2-acceptance.mjs` 90/90 (M0's 36, M1's 20, M2's 34). `web/tools/check-studio.mjs` clean for `v2/`, `v2/?s=digits`, `v2/?s=road`, `v2/?s=map` and `v2/?s=slice`
->   at 390, 820 and 1440 px and 200% zoom, no axe violations. At 200% zoom Road to Chaos's panel at
->   first ran 3 px into the bottom rail; the figures now shrink with the window's height there.. `npm test` 290/290;
->   `check_registry.py` OK; integrity 0 HARD_FAIL.
+> - **Review of PR #68:** links and Tune now reach ρ 250, the diagram's own range (a link at ρ 230
+>   used to reopen at 28). The diagram restarts whenever σ or β differ from those its trajectories
+>   started with, so an undo or a restore can't mix two systems. The section box was first built from
+>   the z = ρ − 1 crossings alone, which lost the cut at other heights: 0.9% at z = 40, 3.8% at 43,
+>   7.5% at 45. A box from each height's own crossings fails too, because a short run sees almost
+>   none near the extremes. Hence the footprint box. The section card was re-measured on it
+>   (first 0.0070, floor 0.0073); its budget is unchanged.
+> - **Frame rate** (headless, 1280 × 720, T3, on an idle GPU): Road to Chaos 60 fps (GPU 3.7 ms a
+>   frame), Lorenz's Map 60 (3.1 ms), Slice 60 (2.9 ms). Four acceptance runs made while other
+>   sessions' browsers (one on SwiftShader at ~870% CPU) and an MPM spike shared this machine
+>   missed 60 in one scene or another: Slice 2, Road 43 / 8 / 6, Map 38. Replaying Road's and Slice's
+>   steps alone held 60 fps throughout, with two or three other GPU processes at 30–86% busy.
+> - **Checks.** `v2-acceptance.mjs` 92/92 on the idle GPU (M0's 36, M1's 20, M2's 36).
+>   `web/tools/check-studio.mjs` is clean for `v2/`, `v2/?s=digits`, `v2/?s=road`, `v2/?s=map`
+>   and `v2/?s=slice` at 390, 820 and 1440 px and 200% zoom, with no axe violations. At 200% zoom
+>   Road to Chaos's panel first ran 3 px into the bottom rail; the figures now shrink with the
+>   window's height there. `npm test` 291/291; `check_registry.py` OK; integrity 0 HARD_FAIL.
 > - **Not yet:** Listen, The Family (with Rössler's road to chaos), posters and loops (M3); the
 >   landing card and the release swap.
 >
