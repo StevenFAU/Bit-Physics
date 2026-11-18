@@ -47,6 +47,8 @@ export class Bifurcation {
   private readonly params: GPUBuffer;
   private readonly bind: GPUBindGroup;
   private needsInit = true;
+  /** σ and β the trajectories were started with: any other σ, β is another system, so the diagram restarts. */
+  private startedWith: { sigma: number; beta: number } | null = null;
 
   private constructor(
     private readonly device: GPUDevice,
@@ -124,6 +126,8 @@ export class Bifurcation {
 
   /** Record `steps` steps of every trajectory (one dispatch; initialises first if needed). */
   encode(enc: GPUCommandEncoder, steps: number, timestampWrites?: GPUComputePassTimestampWrites): void {
+    const now = this.lorenz();
+    if (this.startedWith && (now.sigma !== this.startedWith.sigma || now.beta !== this.startedWith.beta)) this.reset();
     if (this.needsInit) {
       // one encoder holds one parameter write: initialise in its own submission
       enc.clearBuffer(this.counts);
@@ -137,6 +141,7 @@ export class Bifurcation {
       p.end();
       this.device.queue.submit([init.finish()]);
       this.needsInit = false;
+      this.startedWith = { sigma: now.sigma, beta: now.beta };
       return;
     }
     if (steps <= 0) return;

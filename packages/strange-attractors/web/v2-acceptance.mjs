@@ -30,11 +30,13 @@
 // the section), each inside its budget and labelled not gated; Road to Chaos
 // (its panel and tools, every column filled, chaotic columns spread and
 // windows narrow, a click on the diagram sets ρ on the link, "Go to ρ" by
-// keyboard, undo, range presets on the link and booting from one); Lorenz's
+// keyboard, undo, a new σ and its undo restarting the diagram, range presets on
+// the link, a link with a range and ρ 230 booting into both); Lorenz's
 // Map (pairs pile up on a thin curve, the cobweb hops along it, a new ρ
 // re-frames it, undo); Slice (crossings on two thin lines, the Slice tool's
 // drag raises the cut without turning the view, the slider by keyboard, the
-// cut's clamp); each scene at 60 fps. Prints a BP_BENCH_M2 line.
+// cut's clamp, a high cut recorded in the same box); each scene at 60 fps.
+// Prints a BP_BENCH_M2 line.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -560,6 +562,21 @@ const sceneBench = (page) =>
     return [one, two, a.chaos.params.rho];
   });
   check("each pick undoes, back to ρ 28", undone[2] === 28, `ρ ${keyedTo} → ${undone.join(" → ")}`);
+  const sb = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    await w(1000);
+    const ran = a.bif.steps;
+    a.setParams({ ...a.chaos.params, sigma: 12 });
+    await w(300);
+    const edited = a.bif.steps;
+    await w(1200);
+    const beforeUndo = a.bif.steps;
+    await a.undo();
+    await w(150);
+    return { ran, edited, beforeUndo, undone: a.bif.steps, sigma: a.chaos.params.sigma };
+  });
+  check("a new σ starts the diagram over, and so does undoing it", sb.edited < sb.ran && sb.undone < sb.beforeUndo && sb.sigma === 10, `steps ${sb.ran} → σ 12: ${sb.edited} → ${sb.beforeUndo} → undo: ${sb.undone}`);
 
   // the range presets restart the diagram and ride the link
   const ranBefore = await T(page, () => globalThis.__chaos.bif.steps);
@@ -578,9 +595,9 @@ const sceneBench = (page) =>
   await ctx.close();
 }
 {
-  const { ctx, page, errors } = await open("/v2/?s=road&rr=high");
-  const r = await T(page, () => ({ id: globalThis.__chaos.roadRange.id, rho0: globalThis.__chaos.bif.rho0, pressed: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .bp-seg[aria-checked="true"]')?.textContent }));
-  check("a link with a range boots into it", r.id === "high" && r.rho0 === 140, JSON.stringify(r));
+  const { ctx, page, errors } = await open("/v2/?s=road&rr=high&rho=230");
+  const r = await T(page, () => ({ id: globalThis.__chaos.roadRange.id, rho0: globalThis.__chaos.bif.rho0, rho: globalThis.__chaos.chaos.params.rho, pressed: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .bp-seg[aria-checked="true"]')?.textContent }));
+  check("a link with a range and a ρ the diagram reaches (230) boots into both", r.id === "high" && r.rho0 === 140 && r.rho === 230, JSON.stringify(r));
   check("no console errors (range link)", errors.length === 0, errors.join(" | "));
   await ctx.close();
 }
@@ -661,6 +678,21 @@ const sceneBench = (page) =>
   check("“Cut at height” moves the cut by keyboard", Math.abs(k1 - (k0 - 1)) < 1e-6, `slider at ${k0} → z ${k1.toFixed(2)}`);
   const clamp = await T(page, () => { const a = globalThis.__chaos; a.setPlane(1000); const hi = a.plane; a.setPlane(-5); const lo = a.plane; a.setPlane(27); return { hi, lo }; });
   check("the cut stays within the attractor's height (0.15ρ … 1.75ρ)", Math.abs(clamp.hi - 49) < 1e-9 && Math.abs(clamp.lo - 4.2) < 1e-9, JSON.stringify(clamp));
+  const high = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const box27 = [...a.obsBox.box];
+    a.setPlane(45);
+    await new Promise((r) => setTimeout(r, 2000));
+    const { total } = await a.chaos.readObservation("slice");
+    const box45 = [...a.obsBox.box];
+    a.setPlane(27);
+    return { total, box27, box45 };
+  });
+  check(
+    "a high cut (z = 45) is recorded too: one box, the attractor's whole footprint, holds every height",
+    high.total > 1000 && high.box45.every((v, i) => v === high.box27[i]),
+    `${high.total.toLocaleString()} crossings in 2 s; box ${high.box45.map((v) => v.toFixed(2)).join(", ")}`,
+  );
   const rel = await T(page, async () => {
     const a = globalThis.__chaos;
     a.studio.rail.select("release");

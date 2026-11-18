@@ -58,10 +58,31 @@ export function sectionF64(p: LorenzParams, h: number, x0: V3, warm: number, ste
 }
 
 /**
+ * The attractor's (x, y) footprint from an f64 run, as a box symmetric about
+ * the z axis: Lorenz's equations are unchanged by (x, y) → (−x, −y), and in a
+ * periodic window a short run sits on one orbit of a mirror pair.
+ */
+export function footprintF64(p: LorenzParams, x0: V3, warm: number, steps: number): [number, number] {
+  let x = x0;
+  for (let i = 0; i < warm; i += 1) x = rk4Step(p, x, DT).next;
+  let ax = 0;
+  let ay = 0;
+  for (let i = 0; i < steps; i += 1) {
+    x = rk4Step(p, x, DT).next;
+    ax = Math.max(ax, Math.abs(x[0]));
+    ay = Math.max(ay, Math.abs(x[1]));
+  }
+  return [ax, ay];
+}
+
+/**
  * The histograms' boxes for σ, ρ, β: the map's z range from the peaks of a
- * short f64 run (15% margin: a short run misses the rarest extremes), the plane at z = ρ − 1 (the level of C±; the
- * classic Poincaré section), and the section's (x, y) box from its
- * crossings (8% margin). Null where the motion settles on a fixed point.
+ * short f64 run (15% margin: a short run misses the rarest extremes); the plane at z = ρ − 1 (the level of C±; the
+ * classic Poincaré section); and the section's (x, y) box: the attractor's
+ * whole footprint (8% margin), so it holds the cut at every height the Slice
+ * tool can reach — every section is a slice of the attractor, and a box from
+ * one height's crossings loses the cut elsewhere (a z = 27 box drops 7% of the
+ * crossings at z = 45). Null where the motion settles on a fixed point.
  */
 export function observeBoxes(p: LorenzParams): Omit<Observe, "map" | "slice"> | null {
   const x0: V3 = [1, 1, Math.max(p.rho - 1, 1) + 1];
@@ -75,17 +96,10 @@ export function observeBoxes(p: LorenzParams): Omit<Observe, "map" | "slice"> | 
   lo -= m;
   hi += m;
   const plane = p.rho - 1;
-  const cross = sectionF64(p, plane, x0, 3000, 30000);
-  let box: [number, number, number, number] = [-20, 20, -20, 20];
-  if (cross.length >= 8) {
-    const xs = cross.map((c) => c[0]);
-    const ys = cross.map((c) => c[1]);
-    const [x0b, x1b, y0b, y1b] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
-    const mx = Math.max((x1b - x0b) * 0.08, 0.5);
-    const my = Math.max((y1b - y0b) * 0.08, 0.5);
-    box = [x0b - mx, x1b + mx, y0b - my, y1b + my];
-  }
-  return { mapLo: lo, mapHi: hi, plane, box };
+  const [ax, ay] = footprintF64(p, x0, 3000, 30000);
+  const bx = ax + Math.max(2 * ax * 0.08, 0.5);
+  const by = ay + Math.max(2 * ay * 0.08, 0.5);
+  return { mapLo: lo, mapHi: hi, plane, box: [-bx, bx, -by, by] };
 }
 
 /** A normalised 2D histogram on the GPU's bins (OBS_BINS per side), with the mass outside the box. */

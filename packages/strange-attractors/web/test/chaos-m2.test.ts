@@ -67,6 +67,24 @@ describe("the section and the boxes", () => {
     expect(sameSign / c.length).toBeGreaterThan(0.95);
   });
 
+  it("the section box holds the cut at every height the Slice tool reaches, mirror orbits too", () => {
+    // a long run from another start, cut every ρ/10 over the slider's range (0.15ρ … 1.75ρ)
+    for (const rho of [28, 100.5]) {
+      const p = { ...CLASSIC, rho };
+      const [x0, x1, y0, y1] = observeBoxes(p)!.box;
+      expect(x0).toBe(-x1);
+      expect(y0).toBe(-y1);
+      let total = 0;
+      for (let h = 0.15 * rho; h <= 1.75 * rho; h += rho / 10) {
+        const c = sectionF64(p, h, [-7, 3, rho + 2], 2000, 150_000);
+        total += c.length;
+        const out = c.filter(([x, y]) => x < x0 || x > x1 || y < y0 || y > y1).length;
+        expect(out).toBe(0);
+      }
+      expect(total).toBeGreaterThan(5000);
+    }
+  });
+
   it("a motion settling on a fixed point has no boxes", () => {
     expect(observeBoxes({ ...CLASSIC, rho: 15 })).toBeNull();
   });

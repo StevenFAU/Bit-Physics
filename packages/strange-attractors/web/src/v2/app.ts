@@ -100,6 +100,8 @@ export class App {
   roadRange: RoadRange = ROAD_RANGES[0]!;
   /** The histograms' boxes for the current σ, ρ, β (null: no peaks, a fixed point). */
   obsBox: Omit<Observe, "map" | "slice"> | null = null;
+  private obsKey = "";
+  private obsBoxes: Omit<Observe, "map" | "slice"> | null = null;
   /** Slice: the cutting plane's height. */
   plane = 27;
   scene: SceneDef = sceneById("butterfly");
@@ -397,7 +399,14 @@ export class App {
    */
   applyObserve(resetPlane: boolean): void {
     const sc = this.scene.observe;
-    this.obsBox = sc.map || sc.slice ? observeBoxes(this.chaos.params) : null;
+    // the boxes depend on σ, ρ, β only (not the cut's height): one short f64 run per parameter set, not per drag
+    const p = this.chaos.params;
+    const key = `${p.sigma},${p.rho},${p.beta}`;
+    if (key !== this.obsKey) {
+      this.obsKey = key;
+      this.obsBoxes = observeBoxes(p);
+    }
+    this.obsBox = sc.map || sc.slice ? this.obsBoxes : null;
     if (resetPlane && this.obsBox) this.plane = this.obsBox.plane;
     const box = this.obsBox ?? { mapLo: 0, mapHi: 1, plane: this.plane, box: [-1, 1, -1, 1] as [number, number, number, number] };
     const enc = this.gpu.device.createCommandEncoder({ label: "observe" });
@@ -468,13 +477,12 @@ export class App {
         this.hooks.onHorizon?.(null);
       }
     } else if (e.kind === "params") {
-      const before = this.chaos.params;
       this.chaos.params = { ...e.params! };
       this.measureAttractor(false);
       this.restartLyapunov();
       this.applyObserve(true);
-      // the diagram spans ρ itself; σ and β change every column
-      if (before.sigma !== e.params!.sigma || before.beta !== e.params!.beta) this.bif.reset();
+      // the diagram spans ρ itself; a new σ or β restarts it (Bifurcation.encode sees the change, after an
+      // edit, an undo or a restore alike)
       if (record) this.hooks.onParams?.(this.chaos.params);
     }
     this.gpu.device.queue.submit([enc.finish()]);

@@ -534,8 +534,11 @@ measured_invariant_tv_radv = 0.0113
 #     floor 0.0160 (the f64 run's own sampling). ρ 28.1 / 28.25 vs 28: 0.19 / 0.44. Declared
 #     2.8× the floor, 3.4× the measured.
 #   section_tv = 0.016 — upward crossings of z = ρ − 1, same points (7.0M crossings) vs one
-#     f64 run of 80,000 time units (106,513), 32 × 32 bins: 0.0070, floor 0.0073. ρ 28.1 /
-#     28.25 vs 28 (same plane): 0.025 / 0.063. Declared 2.2× the measured.
+#     f64 run of 80,000 time units (106,513), 32 × 32 bins over the attractor's whole (x, y)
+#     footprint (±21.45 × ±29.17, the box that holds the cut at every height): 0.0072, floor
+#     0.0074. ρ 28.1 / 28.25 / 28.5 vs 28 (same plane): 0.026 / 0.056 / 0.112. Declared 2.2×
+#     the measured. (First measured on a box from the z = 27 crossings alone — 0.0070, floor
+#     0.0073 — which lost up to 7% of the cut at other heights; re-measured, budget unchanged.)
 road_chaos_tv = 0.06
 road_orbit_tv = 0.01
 map_tv = 0.045

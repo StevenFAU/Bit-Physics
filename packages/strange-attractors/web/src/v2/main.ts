@@ -52,7 +52,8 @@ const url = new UrlState(
     d: { kind: "int", def: -1, min: -1, max: DIGITS_MAX },
     // the system, written only where it differs from the scene's (−1 = the scene's value)
     sig: { kind: "num", def: -1, min: -1, max: 30, digits: 3 },
-    rho: { kind: "num", def: -1, min: -1, max: 200, digits: 3 },
+    // up to the Road to Chaos diagram's own range (ρ 20–250)
+    rho: { kind: "num", def: -1, min: -1, max: 250, digits: 3 },
     beta: { kind: "num", def: -1, min: -1, max: 5, digits: 4 },
     // clock speed, written only where it differs from the scene's (−1 = the scene's)
     sp: { kind: "num", def: -1, min: -1, max: 8 },
