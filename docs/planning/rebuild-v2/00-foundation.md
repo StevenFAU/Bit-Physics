@@ -56,6 +56,19 @@
 > fragment shader that writes `frag_depth` needs a depth attachment (Environment has a colour-only
 > entry point). Not built yet: `FollowCamera` / `DirectorCamera` beyond the follow target, TAA,
 > `Sprites`.
+>
+> **F4 — the liquid layer (2026-11-18, with Water in Hand M0):** in `@bp/render` (web/README.md, "The
+> liquid layer"). `LiquidSurface` draws a particle liquid from any f32 buffer (stride, offset, model
+> coordinates): the scene behind grabbed, sphere-impostor depth and additive chord thickness at a
+> fraction of the scene's resolution, a narrow-range filter (after Truong & Yuksel 2018: a world-constant
+> kernel, samples clamped into ±μ of the pixel's depth, nearer than δ skipped; separable passes plus a
+> 5×5 clean-up), choose-smaller-difference normals, then one full-resolution composite — Beer–Lambert
+> absorption of the refracted scene, Schlick Fresnel with an `EnvironmentProbe`, a normalised Blinn
+> highlight, a foam texture hook (M3) — that writes its depth so a container's near wall depth-tests
+> against the water. `EnvironmentProbe` renders any backdrop (or an F3 `Environment`) into a cube through
+> its own `View3D`; `View3D.updateMatrices` takes explicit matrices. Measured on the RX 6800 XT at 76k
+> particles: 0.22 ms a frame at 1280×720 (surface at 60% of the scene), 0.53 ms at 2560×1440; on
+> SwiftShader at T1, 201 ms. Not built yet: anisotropic splats, a back-face depth layer for thickness, TAA.
 
 The twelve rebuilt sims share one platform: a UI shell, a render core, a simulation runtime,
 a proof layer and a monorepo setup. The prototypes each solved these on their own, which is

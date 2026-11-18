@@ -8,16 +8,53 @@ Grow (`packages/neural-ca/web`, page `v2/`) and Swarm (`packages/boids-2d/web`, 
 Wave B starts with Chaos (`packages/strange-attractors/web`, page `v2/`), the first 3D page, which
 brought the 3D layer (F3) into `@bp/render`, Flow Sculpture (`packages/curl-noise/web`, page `v2/`) and Murmuration
 (`packages/boids-3d/web`, page `v2/`).
+Wave C starts with Water in Hand (`packages/sph-water/web`, page `v2/`), which brought the liquid layer
+(F4, below).
 Turing Patterns and Slime Mould have replaced their v1 pages at the sim root (v1 kept at
 `v1/`); see "The release swap" below.
 
 | Package | What it holds |
 |---|---|
 | `@bp/gpu` (`gpu/`) | `acquireGpu` (adapter info, optional features, software-rasteriser detection), capability tiers T1–T3 (`pickTier`, per-adapter memory), the WGSL `#import` loader (`defineWgsl` / `wgsl`), buffer helpers and a no-stall `ReadbackSlot`, `GpuProfiler` (timestamp queries, else submit→done latency; `begin(tag)` returns a frame's tag, e.g. its solver steps, as `frameTag` when its timings land). `CountingSort` (bucket N items by a u32 key: clear → histogram → scan → scatter, leaving `cellStart` and `order`; order within a key is unspecified, so consumers must be invariant to it) on top of `PrefixScan` (multi-level exclusive scan, up to 1024³ values), with a CPU reference and checker for tests. WGSL modules: `bp/fullscreen`, `bp/hash`. |
-| `@bp/render` (`render/`) | `HdrPipeline`: rgba16float scene target → optional bloom (dual-filter mip chain, 13-tap downsample with a Karis-averaged first level, tent upsample; energy-preserving mix, off unless `bloom.intensity > 0`) → GPU-measured exposure (64-bin log2 histogram, eased towards a percentile) → Khronos PBR Neutral or an AgX-style tone map → sRGB → 64×64 blue-noise dither. `Camera2D` (cover fit, pan/zoom/pinch, inertia, fly-to, bounds or wrap). `OrbitCamera` (orbit/dolly/truck, damping, ground clamp, saved views, reset, turntable off under reduced motion; the same gesture surface as Camera2D, so `CanvasInput` drives either). Colormap LUTs (viridis/magma/inferno/cividis + ice–fire/teal–rust, OKLab-interpolated). `FieldView2D`: scalar buffer → filtered field texture → lit material / colormap + isolines / raw texels, A/B wipe, overlay tint, context continuation outside bounded domains. The 3D layer (F3): `View3D` (the per-frame view uniform every 3D renderer binds, with a model transform so a sim keeps its own coordinates; frustum planes, `DepthTarget`), `Environment` (studio gradient or analytic sky, optional ground plane with a grid and sphere contact shadows), `Points` (additive splats from a vec4 buffer: footprint normalised to each point's energy, size attenuation, velocity stretch from a previous-positions buffer, floating origin, uniform or LUT colour), `Accumulator` (light gathered on a cleared rgba16float frame target and added into the scene, per frame or as a long-exposure EMA in one fused write per pixel), `Ribbons` (per-strand history ring fed from the CPU or a GPU buffer with per-row origins; screen-space width, age and depth fade), `Instances` (icosphere LOD meshes, compute frustum cull + LOD pick, one indirect draw per level, lit and depth-tested). `OrbitCamera` also has a follow target and `rescale`. WGSL: `bp/tonemap`, `bp/color`, `bp/view3d`. |
+| `@bp/render` (`render/`) | `HdrPipeline`: rgba16float scene target → optional bloom (dual-filter mip chain, 13-tap downsample with a Karis-averaged first level, tent upsample; energy-preserving mix, off unless `bloom.intensity > 0`) → GPU-measured exposure (64-bin log2 histogram, eased towards a percentile) → Khronos PBR Neutral or an AgX-style tone map → sRGB → 64×64 blue-noise dither. `Camera2D` (cover fit, pan/zoom/pinch, inertia, fly-to, bounds or wrap). `OrbitCamera` (orbit/dolly/truck, damping, ground clamp, saved views, reset, turntable off under reduced motion; the same gesture surface as Camera2D, so `CanvasInput` drives either). Colormap LUTs (viridis/magma/inferno/cividis + ice–fire/teal–rust, OKLab-interpolated). `FieldView2D`: scalar buffer → filtered field texture → lit material / colormap + isolines / raw texels, A/B wipe, overlay tint, context continuation outside bounded domains. The 3D layer (F3): `View3D` (the per-frame view uniform every 3D renderer binds, with a model transform so a sim keeps its own coordinates; frustum planes, `DepthTarget`), `Environment` (studio gradient or analytic sky, optional ground plane with a grid and sphere contact shadows), `Points` (additive splats from a vec4 buffer: footprint normalised to each point's energy, size attenuation, velocity stretch from a previous-positions buffer, floating origin, uniform or LUT colour), `Accumulator` (light gathered on a cleared rgba16float frame target and added into the scene, per frame or as a long-exposure EMA in one fused write per pixel), `Ribbons` (per-strand history ring fed from the CPU or a GPU buffer with per-row origins; screen-space width, age and depth fade), `Instances` (icosphere LOD meshes, compute frustum cull + LOD pick, one indirect draw per level, lit and depth-tested). `OrbitCamera` also has a follow target and `rescale`. The liquid layer (F4): `LiquidSurface` (screen-space particle liquid, below) and `EnvironmentProbe` (a cube of the backdrop for reflections); `View3D.updateMatrices` takes explicit matrices. WGSL: `bp/tonemap`, `bp/color`, `bp/view3d`. |
 | `@bp/runtime` (`runtime/`) | `SimClock` (fixed ticks, speed, cap), `EventLog`, `History` (save point / restore / A-B / undo over sim checkpoints), `UrlState` (versioned short keys, only non-defaults written), `QualityGovernor` (p90 over 2 s → render scale → effects → size at next restart; suspended during Prove), counter-based `hash3` mirroring WGSL `bp/hash`. |
 | `@bp/studio` (`studio/`) | `createStudio` — top bar, scene heading, tool rail + options strip, Tune popover, transport, Learn/Prove drawer (right ≥ 640 px, bottom sheet below), share menu, toast, shortcut sheet, loading veil, no-WebGPU card — plus `Slider`, `Segmented`, `Toggle`, `ColorScale`, `Sparkline`, `PlotPanel`, `CalloutLayer`, `ProofCard`, `CanvasInput` (pointer/pinch/wheel/keyboard routing), `PerfOverlay`, `Dial` (a 270° rotary ARIA slider for a sim's signature parameter, e.g. Swarm's calm ↔ panic), the icon set and `studio.css`. |
 | `@bp/verify` (`verify/`) | The capture contract (re-exports `exposeCapture`, `runCaptureExclusive`, … from `common/common-web/src/capture-export.ts`, one implementation for v1 and v2), `markReady`, the `capture_roundtrip` criterion as `agreement()`, `sha256hex`. |
+
+## The liquid layer (F4)
+
+`LiquidSurface` (`render/src/liquid-surface.ts`) draws a particle liquid as a surface, for Water in
+Hand (SPH), Wave Tank (PIC/FLIP) and Materials (MPM). The sim draws its opaque scene (an
+`Environment` or its own backdrop, a container's far side) into the `HdrPipeline` scene target with a
+depth target, then calls `liquid.encode(enc, hdr, { particles, radius, particleVolume, depth })`:
+
+- **grab** — the scene behind is copied aside (the composite refracts it);
+- **splat** — one camera-facing sphere impostor per particle, the nearest surface's eye depth in an
+  `r32float` target at `scale` of the scene (0.5 by default);
+- **filter** — a narrow-range filter after Truong & Yuksel 2018: a world-constant kernel (`radius`
+  particle radii, at most `maxRadiusPx`), each sample clamped into a band of ±`mu` radii around the
+  pixel's depth and skipped when nearer than `delta` radii (another surface); `iterations` × (x, y)
+  passes, then a 5×5 clean-up;
+- **thickness** — additive chord lengths, scaled by `particleVolume` / sphere volume so a packed body
+  sums to its real thickness;
+- **normals** — world normals from the filtered depth, the smaller one-sided difference per axis
+  (Green, GDC 2010);
+- **composite** — the scene behind displaced along the screen-projected normal by
+  `refraction` × thickness and absorbed per channel by Beer–Lambert (`absorption`, per world unit),
+  in-scatter `scatter`, Schlick Fresnel (`f0`) with the reflected `EnvironmentProbe`, a normalised
+  Blinn highlight of one key light, and foam: any texture set as `liquid.foam` blends `foamColor` in by
+  its red channel (the M3 hook for diffuse particles). It writes its depth, so whatever is drawn after
+  (a glass's near wall) depth-tests against the water.
+
+Particles come from any storage buffer read as `f32` with a `stride` and `offset` (SPH's `vec4`
+positions, an MPM particle struct), in model coordinates under `View3D`'s model transform, like the
+F3 renderers. `EnvironmentProbe` renders any backdrop into a 6-face cube through its own `View3D`
+(`capture(centre, draw)`, one submit per face; `captureEnvironment(look)` for an F3 `Environment`);
+the face bases follow WebGPU's cube convention (unit-tested against `textureSample`'s face rule).
+The CPU mirrors (depth mapping, chord scale, the filter's row pass, Schlick, Beer–Lambert, the
+uniform's layout) are tested in `render/src/f4.test.ts`; the GPU path in Water in Hand's acceptance
+run (the water drawn, absorption, refraction, reflection). Not built yet: anisotropic splats, a
+second (back-face) depth layer for thickness, TAA.
 
 ## The contract a v2 page keeps
 
@@ -118,7 +155,13 @@ density, reduced motion) is `packages/curl-noise/web/v2-acceptance.mjs`; Murmura
 v2, ready before the live view compiles, the tier's birds and step rate, the flock drawn as optical depth, the in-page
 gate, grid ≡ brute force byte for byte and the scatter as a permutation, steps independent of submit grouping, the
 screen's total optical depth over a slow dolly against a flickering control, Look / Startle / Gust, save and restore,
-Tune on the link, seeds across page loads, reduced motion) is `packages/boids-3d/web/v2-acceptance.mjs`.
+Tune on the link, seeds across page loads, reduced motion) is `packages/boids-3d/web/v2-acceptance.mjs`; Water in Hand's (the capture's
+bytes on v1, v2 and main, ready before the live view compiles, an orbit view, the tier's particles and
+the live recipe, the water moving within ten seconds and the director dropping again, the in-page gate,
+the live solver ≡ the shipped DFSPH passes byte for byte with and without its memory re-sort, the
+hydrostatic and incompressibility cards, the Drop tool and its cooldown, undo by replay ≡ never
+dropping, save / restore, seeds across page loads, LiquidSurface drawing, absorbing, refracting and
+reflecting, the orbit camera, reduced motion, bench) is `packages/sph-water/web/v2-acceptance.mjs`.
 `?bench=1` on a v2 page prints a `BP_BENCH {…}` line after a 10 s measured run;
 `?debug=perf` shows the frame graph; `?chrome=off` hides all chrome; `?tier=T1|T2|T3`
 overrides the tier.
