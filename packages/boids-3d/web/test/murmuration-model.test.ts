@@ -12,6 +12,15 @@ import { AGENT_BYTES, CELL_COUNT, NO_TOOL, bruteSource, decodeStats, packParams,
 import { GroundCamera } from "../src/v2/render/ground-camera.js";
 import { PARAMS, flockStep64 } from "../src/v2/proof/gate.js";
 
+/** Index of the first differing byte, or -1 (toEqual on large typed arrays is slow). */
+function firstDiff(a: ArrayBuffer, b: ArrayBuffer): number {
+  const x = new Uint8Array(a);
+  const y = new Uint8Array(b);
+  if (x.length !== y.length) return Math.min(x.length, y.length);
+  for (let i = 0; i < x.length; i += 1) if (x[i] !== y[i]) return i;
+  return -1;
+}
+
 /** Run one of v1's engine methods on a stand-in `this` that records writeBuffer. */
 function v1Call(method: "reset" | "writeParams", self: Record<string, unknown>, ...args: unknown[]): ArrayBuffer[] {
   const writes: ArrayBuffer[] = [];
@@ -35,7 +44,7 @@ describe("the live model is v1's", () => {
         const v1 = v1Call("reset", { agentCount: 3000, preset }, seed);
         const v2 = seedFlock(3000, preset, seed);
         expect(v2.byteLength).toBe(3000 * AGENT_BYTES);
-        expect(new Uint8Array(v2)).toEqual(new Uint8Array(v1[0]!));
+        expect(firstDiff(v2, v1[0]!)).toBe(-1);
       }
     }
   });
@@ -46,13 +55,13 @@ describe("the live model is v1's", () => {
       const v1 = v1Call("writeParams", { agentCount: 32768, tool, preset, frameIndex: 777, simulationTime: 6.475 }, 1 / 120);
       const out = new ArrayBuffer(176);
       packParams(out, 0, 32768, preset, { code: 4, position: [3, 4, 5], direction: [0.2, 0.9, 0.1], radius: 21, strength: 2.5 }, 777, 6.475);
-      expect(new Uint8Array(out)).toEqual(new Uint8Array(v1[0]!));
+      expect(firstDiff(out, v1[0]!)).toBe(-1);
     }
     // and with no tool held, v1 writes tool code 0
     const v1 = v1Call("writeParams", { agentCount: 10, tool: { ...tool, active: false }, preset: PRESETS[0], frameIndex: 0, simulationTime: 0 }, 1 / 120);
     const out = new ArrayBuffer(176);
     packParams(out, 0, 10, PRESETS[0]!, { ...NO_TOOL, position: [3, 4, 5], direction: [0.2, 0.9, 0.1], radius: 21, strength: 2.5 }, 0, 0);
-    expect(new Uint8Array(out)).toEqual(new Uint8Array(v1[0]!));
+    expect(firstDiff(out, v1[0]!)).toBe(-1);
   });
 
   it("the grid is v1's: 24 × 12 × 24 cells", () => {
