@@ -108,10 +108,18 @@
 >   even-density check). On sheets it reads as veils, a second look distinct from Silk's ribbons.
 >   Dust takes 60 steps a second, each twice Silk's (the same flow speed for half the solver's cost;
 >   its points need no 120 Hz ribbon rows). Every Dust point's anchors are its own surfaces in f64.
-> - **Dust's sizes, measured (RADV, headless 60 Hz):** T3 1,048,576 points (GPU 7.0 / 13.8 ms p50 / p90),
->   T2 262,144 (4.2 / 4.5), T1 65,536 (1.8 / 1.9), all 60 fps. 2M and 4M also hold 60 fps (4M: 12.4 /
->   12.6 ms) — the spec's 4M target — but a history checkpoint of 4M particles is 112 MB (six of
->   them: 672 MB), and on sheets 1M already looks the same; so T3 is declared at 1M.
+> - **Sizes and frame rate after M1** (RX 6800 XT, RADV, headless Chromium 156, 1280×720, 60 Hz,
+>   `?bench=1&gov=off` — the render scale held at 100%; GPU per frame p50 / p90 from timestamps):
+>
+>   | Tier | Silk ribbons × points | GPU | Dust points | GPU | Paint map, particles | GPU |
+>   |---|---|---|---|---|---|---|
+>   | T3 | 32,768 × 96 | 7.2 / 8.0 ms | 1,048,576 | 4.7 / 14.1 ms | 1024², 131,072 | 1.1 / 1.2 ms |
+>   | T2 | 16,384 × 64 | 2.1–3.2 / 3.3 ms | 262,144 | 4.3 / 4.5 ms | 512², 65,536 | 0.76 / 0.77 ms |
+>   | T1 | 8,192 × 48 | 1.8 / 1.9 ms | 65,536 | 1.8 / 1.9 ms | 512², 32,768 | 0.59 / 0.60 ms |
+>
+>   Every cell held 60 fps. Dust's 2M and 4M also hold 60 fps (4M: 12.4 / 12.6 ms) — the spec's 4M
+>   target — but a history checkpoint of 4M particles is 112 MB (six of them: 672 MB), and on sheets 1M
+>   already looks the same; so T3 is declared at 1M.
 > - **A software adapter gets its own profile**, keyed on the adapter, not the tier (phones are T1 with
 >   real GPUs). Measured on SwiftShader (Playwright's Chromium; lavapipe as the only ICD falls back to
 >   it), 1280×720: at T1 sizes Silk's ribbons cost ~6 µs a segment (0.3 fps at 8,192 × 48), Dust's
@@ -142,12 +150,14 @@
 >   patches they spread ±2.3% against a random scatter's ±2.2% — "flow along contours can never pile
 >   up". 2D undo by replay gives the same bytes as never painting (ψ and particles), and the same seed
 >   the same bytes across page loads.
-> - **Checks.** `v2-acceptance.mjs` 56 checks (M0's 35 plus Dust, the software profile and Paint the
+> - **Paint the Stream on a software adapter** (SwiftShader, its profile: a 256² map, 4,096 particles,
+>   half the render scale): 17–21 fps; the splat pass (31 ms) dominates, ~7.5 µs a particle.
+> - **Checks.** `v2-acceptance.mjs` 56/56 (M0's 35 plus Dust, the software profile and Paint the
 >   Stream); `web/tools/check-studio.mjs` 0 problems and 0 axe violations at 390, 820 and 1440 px and
 >   200% zoom for both `v2/` and `v2/?s=paint`; `npm test` 287/287 (`test/paint-model.test.ts` new).
 > - **Measuring note.** Parallel sessions share this GPU; while another ran browser work it sat at
->   99% busy and this page measured 60 fps on one load and 2 on the next. Frame rates above were taken
->   with the GPU otherwise idle.
+>   99% busy and this page measured 60 fps on one load and 2 on the next (and the governor stepped the
+>   render scale down). The table above was taken in idle windows, each run's 60 fps confirmed.
 
 ## Verdict on the prototype
 
