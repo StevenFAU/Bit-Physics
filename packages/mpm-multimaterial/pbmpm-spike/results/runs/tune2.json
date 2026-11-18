@@ -1,0 +1,81 @@
+[
+ {
+  "label": "t2-snowH-s1.0-xi10",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.1,
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "xi": 10
+   }
+  }
+ },
+ {
+  "label": "t2-snowH-s1.5-xi10",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.1,
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.5,
+    "xi": 10
+   }
+  }
+ },
+ {
+  "label": "t2-snowStiffH",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.1,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 0.3,
+    "lamOverMu": 0
+   }
+  }
+ }
+]

@@ -1,0 +1,67 @@
+[
+ {
+  "label": "probe-dam-tiled-il",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "tiled": true,
+  "order": "interleave",
+  "wallFriction": 0
+ },
+ {
+  "label": "probe-dam-il",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "interleave",
+  "wallFriction": 0
+ },
+ {
+  "label": "probe-pond-tiled-il",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "probe-pond-il",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "interleave"
+ },
+ {
+  "label": "eq-il",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "order": "interleave",
+  "hash": true
+ },
+ {
+  "label": "eq-il-tiled",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "order": "interleave",
+  "tiled": true,
+  "hash": true
+ }
+]

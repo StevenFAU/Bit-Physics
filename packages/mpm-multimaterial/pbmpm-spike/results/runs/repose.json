@@ -1,0 +1,134 @@
+[
+ {
+  "label": "repose-phi25-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.2677650428158532
+   }
+  },
+  "shotsAt": [
+   4.0
+  ]
+ },
+ {
+  "label": "repose-phi25-S2K8",
+  "scene": "sandcol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.2677650428158532
+   }
+  }
+ },
+ {
+  "label": "repose-phi35-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.386019330011002
+   }
+  },
+  "shotsAt": [
+   4.0
+  ]
+ },
+ {
+  "label": "repose-phi35-S2K8",
+  "scene": "sandcol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.386019330011002
+   }
+  }
+ },
+ {
+  "label": "repose-phi45-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.5035997877724094
+   }
+  },
+  "shotsAt": [
+   4.0
+  ]
+ },
+ {
+  "label": "repose-phi45-S2K8",
+  "scene": "sandcol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.5035997877724094
+   }
+  }
+ },
+ {
+  "label": "repose-phi60-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.662713401031621
+   }
+  },
+  "shotsAt": [
+   4.0
+  ]
+ },
+ {
+  "label": "repose-phi60-S2K8",
+  "scene": "sandcol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 4,
+  "metricsAt": [
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.662713401031621
+   }
+  }
+ }
+]

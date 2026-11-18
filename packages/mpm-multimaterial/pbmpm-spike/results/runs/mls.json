@@ -1,0 +1,65 @@
+[
+ {
+  "label": "mls-snow-S57",
+  "scene": "snowball",
+  "mat": "snowmls",
+  "substeps": 57,
+  "iterations": 2,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ]
+ },
+ {
+  "label": "mls-snow-S30",
+  "scene": "snowball",
+  "mat": "snowmls",
+  "substeps": 30,
+  "iterations": 2,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ]
+ },
+ {
+  "label": "mls-snow-S8",
+  "scene": "snowball",
+  "mat": "snowmls",
+  "substeps": 8,
+  "iterations": 2,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ]
+ }
+]

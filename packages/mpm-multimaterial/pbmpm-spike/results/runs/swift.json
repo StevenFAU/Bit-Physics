@@ -1,0 +1,39 @@
+[
+ {
+  "label": "swift-T1-S4K5",
+  "scene": "tablepond",
+  "gridX": 64,
+  "substeps": 4,
+  "iterations": 5,
+  "tiled": true,
+  "order": "interleave",
+  "benchAt": 0.0,
+  "benchFrames": 3
+ },
+ {
+  "label": "swift-T1-S1K8",
+  "scene": "tablepond",
+  "gridX": 64,
+  "substeps": 1,
+  "iterations": 8,
+  "tiled": true,
+  "order": "interleave",
+  "benchAt": 0.0,
+  "benchFrames": 3
+ },
+ {
+  "label": "swift-T1-jelly-run",
+  "scene": "jelly",
+  "gridX": 64,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.5,
+  "statsEvery": 10,
+  "metricsAt": [
+   0.5
+  ],
+  "hash": true,
+  "tiled": true,
+  "order": "interleave"
+ }
+]

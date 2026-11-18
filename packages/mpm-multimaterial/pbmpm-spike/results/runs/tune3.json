@@ -1,0 +1,110 @@
+[
+ {
+  "label": "t3-snow-S4K5-ts0.0075",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaS": 0.0075,
+    "lamOverMu": 1
+   }
+  }
+ },
+ {
+  "label": "t3-snow-S4K5-ts0.02",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaS": 0.02,
+    "lamOverMu": 1
+   }
+  }
+ },
+ {
+  "label": "t3-snow-S2K8-ts0.0075",
+  "scene": "snowball",
+  "substeps": 2,
+  "iterations": 8,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaS": 0.0075,
+    "lamOverMu": 1
+   }
+  }
+ },
+ {
+  "label": "t3-snow-S2K8-ts0.02",
+  "scene": "snowball",
+  "substeps": 2,
+  "iterations": 8,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaS": 0.02,
+    "lamOverMu": 1
+   }
+  }
+ }
+]

@@ -1,0 +1,259 @@
+[
+ {
+  "label": "hc-H0visco07",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {}
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hp-H0visco07",
+  "scene": "honeypour",
+  "scale": 1.6,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   2.0,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {}
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hc-H1visco5",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "ratio": 0.5,
+    "yieldR": 0.05
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hp-H1visco5",
+  "scene": "honeypour",
+  "scale": 1.6,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   2.0,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "ratio": 0.5,
+    "yieldR": 0.05
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hc-H2visco3",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "ratio": 0.3,
+    "yieldR": 0.1
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hp-H2visco3",
+  "scene": "honeypour",
+  "scale": 1.6,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   2.0,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "ratio": 0.3,
+    "yieldR": 0.1
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hc-H3liq07",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "model": 0,
+    "viscosity": 0.7,
+    "relaxVol": 1.5,
+    "ratio": 1
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hp-H3liq07",
+  "scene": "honeypour",
+  "scale": 1.6,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   2.0,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "model": 0,
+    "viscosity": 0.7,
+    "relaxVol": 1.5,
+    "ratio": 1
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hc-H4liq095",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "model": 0,
+    "viscosity": 0.95,
+    "relaxVol": 1.5,
+    "ratio": 1
+   }
+  },
+  "wallFriction": 0.5
+ },
+ {
+  "label": "hp-H4liq095",
+  "scene": "honeypour",
+  "scale": 1.6,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 15,
+  "metricsAt": [
+   2.0,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "mats": {
+   "honey": {
+    "model": 0,
+    "viscosity": 0.95,
+    "relaxVol": 1.5,
+    "ratio": 1
+   }
+  },
+  "wallFriction": 0.5
+ }
+]

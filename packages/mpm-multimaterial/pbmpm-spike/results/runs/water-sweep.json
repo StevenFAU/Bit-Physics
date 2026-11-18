@@ -1,0 +1,178 @@
+[
+ {
+  "label": "dam-S4K5-f0.5-t1",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.5,
+  "mats": {
+   "water": {
+    "ratio": 1
+   }
+  },
+  "shotsAt": [
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "dam-S4K5-f0.5-t0",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.5,
+  "mats": {
+   "water": {
+    "ratio": 0
+   }
+  },
+  "shotsAt": [
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "dam-S4K5-f0.0-t1",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.0,
+  "mats": {
+   "water": {
+    "ratio": 1
+   }
+  },
+  "shotsAt": [
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "dam-S4K5-f0.0-t0",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.0,
+  "mats": {
+   "water": {
+    "ratio": 0
+   }
+  },
+  "shotsAt": [
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "dam-S2K8-f0.5-t1",
+  "scene": "dam",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.5,
+  "mats": {
+   "water": {
+    "ratio": 1
+   }
+  }
+ },
+ {
+  "label": "dam-S2K8-f0.5-t0",
+  "scene": "dam",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.5,
+  "mats": {
+   "water": {
+    "ratio": 0
+   }
+  }
+ },
+ {
+  "label": "dam-S2K8-f0.0-t1",
+  "scene": "dam",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.0,
+  "mats": {
+   "water": {
+    "ratio": 1
+   }
+  }
+ },
+ {
+  "label": "dam-S2K8-f0.0-t0",
+  "scene": "dam",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   1.0,
+   3.0
+  ],
+  "wallFriction": 0.0,
+  "mats": {
+   "water": {
+    "ratio": 0
+   }
+  }
+ }
+]
