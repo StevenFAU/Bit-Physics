@@ -126,14 +126,22 @@ export interface LiveOptions {
   seed: number;
   /** f₂ values of the sheets particles live on (1–3), or null: the whole ball. */
   sheets: readonly number[] | null;
+  /** Dust: the ring row's w is the colour coordinate clamp(f₂ · hue[0] + hue[1], 0, 1). */
+  dust: boolean;
 }
+
+/** The two looks (06-curl-noise.md, "The look"): ribbons on sheets, or points filling the ball. */
+export type Look = "silk" | "dust";
+
+/** Colour from f₂ (the surface a particle rides): palette position f₂ · scale + offset. */
+export const HUE: readonly [number, number] = [3.2, 0.5];
 
 /** Silk's two sheets {f₂ = c}: two cloths folding through the flow. */
 export const SILK_SHEETS: readonly number[] = [-0.08, 0.08];
 
-/** The 80-byte live uniform (live.wgsl LiveU). */
+/** The 96-byte live uniform (live.wgsl LiveU). */
 export function packLive(n: number, slot: number, slots: number, o: LiveOptions, amplitude: number): ArrayBuffer {
-  const buf = new ArrayBuffer(80);
+  const buf = new ArrayBuffer(96);
   const f = new Float32Array(buf);
   const u = new Uint32Array(buf);
   // the rejection bound for inflow sampling: about the fastest inflow speeds (|v| ≲ 4 per unit amplitude)
@@ -143,6 +151,7 @@ export function packLive(n: number, slot: number, slots: number, o: LiveOptions,
   f.set([...BALL_CENTRE, 0.002], 12);
   const sh = o.sheets ?? [];
   f.set([sh.length, sh[0] ?? 0, sh[1] ?? 0, sh[2] ?? 0], 16);
+  f.set([o.dust ? 1 : 0, HUE[0], HUE[1], 0], 20);
   return buf;
 }
 
@@ -167,7 +176,7 @@ export class FlowKernels {
       label: "flow-live",
       entries: [
         { binding: 0, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform", hasDynamicOffset: true, minBindingSize: 144 } },
-        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform", hasDynamicOffset: true, minBindingSize: 80 } },
+        { binding: 1, visibility: GPUShaderStage.COMPUTE, buffer: { type: "uniform", hasDynamicOffset: true, minBindingSize: 96 } },
         storage(2),
         storage(3),
         storage(4),
@@ -217,6 +226,8 @@ export class Flow {
   respawn = true;
   /** Silk's sheets, or null for the whole ball. */
   sheets: readonly number[] | null = SILK_SHEETS;
+  /** Dust writes a colour coordinate into its (one-slot) ring instead of a strand epoch. */
+  dust = false;
   /** Newest ring slot, and how many slots hold history since the last reset. */
   head = 0;
   valid = 0;
@@ -243,7 +254,7 @@ export class Flow {
       layout: k.layout,
       entries: [
         { binding: 0, resource: { buffer: this.fu, size: 144 } },
-        { binding: 1, resource: { buffer: this.lu, size: 80 } },
+        { binding: 1, resource: { buffer: this.lu, size: 96 } },
         { binding: 2, resource: { buffer: this.tracers } },
         { binding: 3, resource: { buffer: this.f0 } },
         { binding: 4, resource: { buffer: this.ring } },
@@ -258,7 +269,7 @@ export class Flow {
   }
 
   private options(): LiveOptions {
-    return { dt: this.dt, maxAge: this.maxAge, respawn: this.respawn, reproject: this.reproject, seed: this.seed, sheets: this.sheets };
+    return { dt: this.dt, maxAge: this.maxAge, respawn: this.respawn, reproject: this.reproject, seed: this.seed, sheets: this.sheets, dust: this.dust };
   }
 
   private writeSlot(s: number, time: number, ringSlot: number): void {

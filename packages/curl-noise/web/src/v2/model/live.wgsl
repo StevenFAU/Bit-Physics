@@ -15,6 +15,8 @@
 // the Silk history ring (slot-major: ring[slot * count + i]); w carries the
 // strand's epoch (an integer, +1 at every respawn, mod 1024) plus its life
 // fraction, so the renderer can break a strand where a particle restarted.
+// Dust keeps one slot — the ring is then the particles' current positions,
+// drawn as points (F3 Points) — and its w is a colour coordinate from f₂.
 //
 // Silk seeds its particles on a few sheets {f₂ = c}: each particle is
 // confined to its sheet (v·∇f₂ = 0), so a sheet's ribbons stay one coherent,
@@ -47,6 +49,8 @@ struct LiveU {
   centre: vec4<f32>,
   // x = number of sheets (1–3), yzw = their f₂ values
   sheets: vec4<f32>,
+  // x = 1: Dust (the ring row's w is a colour coordinate, clamp(f₂ · y + z, 0, 1)), else Silk
+  look: vec4<f32>,
 };
 
 @group(0) @binding(1) var<uniform> L: LiveU;
@@ -235,7 +239,9 @@ fn live_advect(@builtin(global_invocation_id) g: vec3<u32>) {
     }
     if (L.dims.w > 0u) {
       let slot = (L.dims.z + s) % L.dims.w;
-      ring[slot * L.dims.x + i] = vec4<f32>(p, lv_ring_w(e, age, lv_life(i, e)));
+      var w = lv_ring_w(e, age, lv_life(i, e));
+      if (L.look.x > 0.5) { w = clamp(f0.y * L.look.y + L.look.z, 0.0, 1.0); }
+      ring[slot * L.dims.x + i] = vec4<f32>(p, w);
     }
   }
   tracers[i] = vec4<f32>(p, age);

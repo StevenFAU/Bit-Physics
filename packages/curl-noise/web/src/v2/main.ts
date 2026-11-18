@@ -23,10 +23,10 @@ import { HdrPipeline } from "@bp/render";
 import { QualityGovernor, UrlState, percentile } from "@bp/runtime";
 import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
-import { App, SIZES, TICKS_PER_SECOND } from "./app.js";
+import { App, DUST_SIZES, SIZES, TICKS_PER_SECOND, defaultLook } from "./app.js";
 import { sci } from "./format.js";
 import { buildLearn } from "./learn.js";
-import type { FieldParams, V3 } from "./model/flow.js";
+import type { FieldParams, Look, V3 } from "./model/flow.js";
 import { CANONICAL_FIELD, FlowKernels, cloneField, fieldKind, isCanonical, measureInstruments, shellCounts, shellFractions, surfaceResidual } from "./model/flow.js";
 import { GateRunner, loadGateIc } from "./proof/gate.js";
 import { buildProve } from "./proof/prove.js";
@@ -49,6 +49,8 @@ const url = new UrlState(
     // Tune's Speed (step multiplier) and the transport's speed
     spd: { kind: "num", def: 1, min: 0.25, max: 3, digits: 3 },
     sp: { kind: "num", def: 1, min: 0.25, max: 8 },
+    // the look, written only where it differs from the tier's own (Silk on hardware, Dust in software)
+    look: { kind: "enum", def: "auto", values: ["auto", "silk", "dust"] },
     // the sphere's centre (model units)
     obs: { kind: "nums", def: [0.5, 0.5, 0.5], n: 3, digits: 4 },
     cam: { kind: "nums", def: [-99, -99, -1], n: 3, digits: 3 },
@@ -185,17 +187,19 @@ async function boot(): Promise<void> {
   const [k, view] = await Promise.all([FlowKernels.create(device), FlowView.create(device)]);
   kernels = k;
   while (isCapturing()) await wait(50);
-  // ?n= and ?slots= override the tier's ribbon count and length (measurements)
-  const size = { ...SIZES[tier] };
-  if (query.has("n")) size.strands = Math.min(1 << 20, Math.max(256, Number(query.get("n")) | 0));
+  // ?n= and ?slots= override the look's particle count and ribbon length (measurements)
+  const size: { strands?: number; slots?: number } = {};
+  if (query.has("n")) size.strands = Math.min(1 << 22, Math.max(256, Number(query.get("n")) | 0));
   if (query.has("slots")) size.slots = Math.min(256, Math.max(2, Number(query.get("slots")) | 0));
-  const a = new App(gpu, studio, hdr, view, k, tier, size);
-  // ?sh=c1,c2,c3 overrides Silk's sheets (measurements)
-  // ?sh=none fills the whole ball instead (the volume mode, for the density check)
+  // ?sh=c1,c2,c3 overrides Silk's sheets; ?sh=none lets Silk's ribbons fill the ball (measurements)
+  let silkSheets: readonly number[] | null | undefined;
   if (query.has("sh")) {
     const sh = query.get("sh") ?? "";
-    a.flow.sheets = sh === "none" ? null : sh.split(",").filter((x) => x !== "").map(Number).filter((x) => Number.isFinite(x)).slice(0, 3);
+    silkSheets = sh === "none" ? null : sh.split(",").filter((x) => x !== "").map(Number).filter((x) => Number.isFinite(x)).slice(0, 3);
   }
+  const parsedLook = url.parse(location.search).values.look;
+  const startLook: Look = parsedLook === "silk" || parsedLook === "dust" ? parsedLook : defaultLook(tier, gpu.info.software);
+  const a = new App(gpu, studio, hdr, view, k, tier, { size, look: startLook, silkSheets });
   app = a;
   a.profiler = profiler;
   a.governor = governor;
@@ -217,6 +221,7 @@ async function boot(): Promise<void> {
       sp: a.clock.speed,
       obs: o.map((x) => Number(x.toFixed(4))),
       cam: [a.camera.yaw, a.camera.pitch, a.camera.distance].map((x) => Number(x.toFixed(3))),
+      look: a.look === defaultLook(a.tier, gpu.info.software) ? "auto" : a.look,
     };
   };
   a.writeUrl = () => url.write(current());
@@ -236,9 +241,16 @@ async function boot(): Promise<void> {
         a.setField(p, a.flow.dt);
         tune.sync(p, a.flow.dt / a.scene.dt);
       },
+      look: (l) => {
+        void a.setLook(l).then(() => {
+          learn.setScene(a.scene, a.flow.n, a.look);
+          studio.toast.show(l === "dust" ? `Dust: ${a.flow.n.toLocaleString()} points filling the ball` : `Silk: ${a.flow.n.toLocaleString()} ribbons on two sheets`);
+        });
+      },
     },
     a.flow.params,
     1,
+    a.look,
   );
   studio.tune.setNote("Each change lands at a step boundary and can be undone. The release gate always runs the gated field.");
 
@@ -360,7 +372,7 @@ async function boot(): Promise<void> {
 
   a.hooks = {
     onSceneChange: (scene) => {
-      learn.setScene(scene, a.flow.n);
+      learn.setScene(scene, a.flow.n, a.look);
       syncProve();
     },
     onField: (p, dt) => {
@@ -402,7 +414,7 @@ async function boot(): Promise<void> {
       [
         ["Adapter", gpu.adapterId],
         ["Tier", `${a.tier}${gpu.info.software ? " (software)" : ""}`],
-        ["Ribbons", `${a.flow.n.toLocaleString()} × ${a.flow.slots} points`],
+        [a.look === "dust" ? "Dust points" : "Silk ribbons", a.look === "dust" ? a.flow.n.toLocaleString() : `${a.flow.n.toLocaleString()} × ${a.flow.slots} points`],
         ["Solver steps / second", `${Math.round(TICKS_PER_SECOND * a.clock.speed)}`],
         ["Frame (p50 / p90)", `${percentile(rafTimes, 0.5).toFixed(1)} / ${percentile(rafTimes, 0.9).toFixed(1)} ms`],
         ["GPU per frame", `${profiler.frameAvg.toFixed(2)} ms`],
@@ -449,7 +461,8 @@ async function boot(): Promise<void> {
     time: a.flow.time,
     strands: a.flow.n,
     slots: a.flow.slots,
-    sizes: SIZES[a.tier],
+    look: a.look,
+    sizes: { silk: SIZES[a.tier], dust: DUST_SIZES[a.tier] },
     field: a.flow.params,
     dt: a.flow.dt,
     canonical: isCanonical(a.flow.params),

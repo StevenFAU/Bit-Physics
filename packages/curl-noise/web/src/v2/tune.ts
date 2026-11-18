@@ -2,22 +2,23 @@
 // Detail, Speed, Evolution — each change an undoable edit at a step
 // boundary; and a way back to the scene's field or to the gate's own.
 
-import { h, slider } from "@bp/studio";
+import { h, segmented, slider } from "@bp/studio";
 import type { Slider } from "@bp/studio";
-import type { FieldParams } from "./model/flow.js";
+import type { FieldParams, Look } from "./model/flow.js";
 import { cloneField } from "./model/flow.js";
 
 export interface TuneHandlers {
   field: (p: FieldParams, speed: number) => void;
   reset: () => void;
   gated: () => void;
+  look: (l: Look) => void;
 }
 
 export interface TunePane {
-  sync(p: FieldParams, speed: number): void;
+  sync(p: FieldParams, speed: number, look?: Look): void;
 }
 
-export function buildTune(body: HTMLElement, hd: TuneHandlers, p0: FieldParams, speed0: number): TunePane {
+export function buildTune(body: HTMLElement, hd: TuneHandlers, p0: FieldParams, speed0: number, look0: Look): TunePane {
   body.textContent = "";
   let p = cloneField(p0);
   let speed = speed0;
@@ -69,9 +70,28 @@ export function buildTune(body: HTMLElement, hd: TuneHandlers, p0: FieldParams, 
   reset.addEventListener("click", () => hd.reset());
   const gated = h("button", { type: "button", class: "bp-btn bp-btn-quiet", title: "The release gate's own field: three octaves, swirls of 0.5, held still" }, "The gated field");
   gated.addEventListener("click", () => hd.gated());
-  body.append(swirl.el, detail.el, pace.el, evo.el, h("div", { class: "fs-tune-row" }, reset, gated));
+  const look = segmented<Look>(
+    "The picture",
+    [
+      { value: "silk", label: "Silk" },
+      { value: "dust", label: "Dust" },
+    ],
+    look0,
+    (v) => hd.look(v),
+  );
+  body.append(
+    swirl.el,
+    detail.el,
+    pace.el,
+    evo.el,
+    h("div", { class: "fs-tune-row" }, reset, gated),
+    h("h3", { class: "fs-tune-h" }, "The picture"),
+    h("p", { class: "fs-note" }, "Silk: ribbons on two sheets. Dust: points filling the ball — lighter on slow GPUs."),
+    look.el,
+  );
   return {
-    sync(np, sp) {
+    sync(np, sp, l) {
+      if (l) look.set(l);
       p = cloneField(np);
       speed = sp;
       swirl.set(np.ell0);

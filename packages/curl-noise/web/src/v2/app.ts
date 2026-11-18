@@ -16,8 +16,8 @@ import { History, SimClock } from "@bp/runtime";
 import type { Studio, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, toggle } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
-import type { FieldParams, FlowCheckpoint, FlowKernels, Obstacle, V3 } from "./model/flow.js";
-import { BALL_CENTRE, Flow, MAX_STEPS, cloneField, f2Differs, isCanonical, sameField } from "./model/flow.js";
+import type { FieldParams, FlowCheckpoint, FlowKernels, Look, Obstacle, V3 } from "./model/flow.js";
+import { BALL_CENTRE, Flow, MAX_STEPS, SILK_SHEETS, cloneField, f2Differs, isCanonical, sameField } from "./model/flow.js";
 import type { FlowView } from "./render/flow-view.js";
 import type { SceneDef, SceneId } from "./scenes.js";
 import { sceneById } from "./scenes.js";
@@ -36,6 +36,23 @@ export const SIZES: Record<Tier, { strands: number; slots: number }> = {
   T2: { strands: 16384, slots: 64 },
   T1: { strands: 8192, slots: 48 },
 };
+
+/** Dust's points per tier (one ring slot each: their current positions). */
+export const DUST_SIZES: Record<Tier, number> = {
+  T3: 1 << 20,
+  T2: 1 << 18,
+  T1: 1 << 16,
+};
+
+/**
+ * The look a tier starts in. Measured, then declared (06-curl-noise.md,
+ * status): Silk holds 60 fps on every hardware tier; on a software adapter
+ * its ribbons cost ~6 µs a segment on the CPU rasteriser, and Dust's points
+ * are the fix.
+ */
+export function defaultLook(_tier: Tier, software: boolean): Look {
+  return software ? "dust" : "silk";
+}
 
 /** Lifetime of a tracer, model time (about four seconds at 1×). */
 export const MAX_AGE = 0.6;
@@ -63,7 +80,13 @@ export interface AppHooks {
 export class App {
   readonly clock = new SimClock(TICKS_PER_SECOND, MAX_STEPS);
   readonly camera = new OrbitCamera();
-  readonly flow: Flow;
+  flow: Flow;
+  /** Silk (ribbons on sheets) or Dust (points filling the ball). */
+  look: Look = "silk";
+  /** Silk's sheets (null: Silk ribbons fill the ball — a measurement mode, ?sh=none). */
+  silkSheets: readonly number[] | null = SILK_SHEETS;
+  private readonly sizeOverride: { strands?: number; slots?: number };
+  private cameraMovingUntil = 0;
   scene: SceneDef = sceneById("studio");
   hooks: AppHooks = {};
   profiler: GpuProfiler | null = null;
@@ -105,10 +128,12 @@ export class App {
     readonly view: FlowView,
     readonly kernels: FlowKernels,
     readonly tier: Tier,
-    size: { strands: number; slots: number } = SIZES[tier],
+    o: { look?: Look; size?: { strands?: number; slots?: number }; silkSheets?: readonly number[] | null } = {},
   ) {
-    this.flow = new Flow(gpu.device, kernels, size.strands, size.slots, this.scene.field);
-    this.flow.maxAge = MAX_AGE;
+    this.sizeOverride = o.size ?? {};
+    if (o.silkSheets !== undefined) this.silkSheets = o.silkSheets;
+    this.look = o.look ?? defaultLook(tier, gpu.info.software);
+    this.flow = this.makeFlow(this.look, this.scene.field);
     this.history = new History<Checkpoint>(
       {
         capture: () => ({ ...this.flow.capture(), kind: "flow" }),
@@ -259,6 +284,49 @@ export class App {
     this.pending = { id: this.nextEventId++, params: cloneField(params), dt };
   }
 
+  // -------------------------------------------------------------- looks --
+
+  /** Particles and ribbon slots for a look on this tier (?n= / ?slots= override them). */
+  sizeFor(look: Look): { strands: number; slots: number } {
+    const base = look === "dust" ? { strands: DUST_SIZES[this.tier], slots: 1 } : SIZES[this.tier];
+    return {
+      strands: this.sizeOverride.strands ?? base.strands,
+      slots: look === "dust" ? 1 : (this.sizeOverride.slots ?? base.slots),
+    };
+  }
+
+  private makeFlow(look: Look, params: FieldParams): Flow {
+    const size = this.sizeFor(look);
+    const f = new Flow(this.gpu.device, this.kernels, size.strands, size.slots, params);
+    f.maxAge = MAX_AGE;
+    f.sheets = look === "silk" ? this.silkSheets : null;
+    f.dust = look === "dust";
+    return f;
+  }
+
+  /**
+   * Switch Silk ↔ Dust: a new particle set at the look's own size, seeded
+   * afresh on the same field, step and seed (history starts over).
+   */
+  async setLook(look: Look): Promise<void> {
+    if (look === this.look) return;
+    this.busy = true;
+    try {
+      await this.gpu.device.queue.onSubmittedWorkDone();
+      const old = this.flow;
+      const keep = { field: cloneField(old.params), dt: old.dt, seed: old.seed };
+      this.history.clear();
+      this.look = look;
+      this.flow = this.makeFlow(look, keep.field);
+      old.destroy();
+      this.view.clearExposure();
+      await this.loadScene(this.scene.id, keep);
+    } finally {
+      this.busy = false;
+    }
+    this.writeUrl();
+  }
+
   // -------------------------------------------------------------- scene --
 
   async loadScene(id: SceneId, o: { field?: FieldParams; dt?: number; seed?: number } = {}): Promise<void> {
@@ -272,6 +340,7 @@ export class App {
       this.events.length = 0;
       this.history.clear();
       this.pending = null;
+      this.view.clearExposure();
       const enc = this.gpu.device.createCommandEncoder({ label: "flow-seed" });
       this.flow.encodeSeed(enc, o.seed ?? this.flow.seed);
       this.gpu.device.queue.submit([enc.finish()]);
@@ -455,8 +524,12 @@ export class App {
       this.camera.rescale(this.fitFactor(rect.width, rect.height) / before);
     }
     this.camera.setViewport(rect.width, rect.height);
-    this.camera.update(dt, now);
-    if (this.camera.version !== this.lastCamVersion) this.lastCamVersion = this.camera.version;
+    const moving = this.camera.update(dt, now);
+    if (this.camera.version !== this.lastCamVersion) {
+      // the turntable alone is slow enough for Dust's long exposure; gestures are not
+      if (moving && this.camera.autoRotate === 0) this.cameraMovingUntil = now + 120;
+      this.lastCamVersion = this.camera.version;
+    }
 
     // edits land at the step boundary
     if (this.pending) {
@@ -479,6 +552,9 @@ export class App {
       this.hdr,
       {
         camera: this.camera,
+        look: this.look,
+        dtSec: dt,
+        cameraMoving: now < this.cameraMovingUntil,
         ring: { buffer: f.ring, anchors: f.f0, strands: f.n, slots: f.slots, head: f.head, valid: f.valid },
         refStep: 2.2 * f.dt,
         obstacle: f.params.obstacle,

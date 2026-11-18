@@ -7,6 +7,7 @@
 import type { PassTiming } from "@bp/gpu";
 import { h, plotPanel, readout, sparkline } from "@bp/studio";
 import type { FieldParams } from "./model/flow.js";
+import type { Look } from "./model/flow.js";
 import { fieldKind } from "./model/flow.js";
 import { REPO_BLOB } from "./proof/gate.js";
 import type { SceneDef } from "./scenes.js";
@@ -14,7 +15,7 @@ import type { SceneDef } from "./scenes.js";
 const BRIDSON_2007 = "https://dblp.uni-trier.de/rec/journals/tog/BridsonHN07.html";
 
 export interface LearnPane {
-  setScene(scene: SceneDef, strands: number): void;
+  setScene(scene: SceneDef, strands: number, look: Look): void;
   setField(p: FieldParams, scene: FieldParams): void;
   /** Max |∇·v| / max |∇×v| at the probes, on the field on screen. */
   pushDivergence(rel: number): void;
@@ -162,9 +163,12 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   );
 
   return {
-    setScene(scene, strands) {
+    setScene(scene, strands, look) {
       seeing.textContent =
-        scene.id === "studio"
+        scene.id === "studio" && look === "dust"
+          ? `${strands.toLocaleString()} points of dust fill a ball around a sphere and stream through a field of smooth noise. ` +
+            `Each is coloured by the surface it rides — a value of f₂ the flow can never change — so the colours show those surfaces as layers. Nothing bunches up or thins out: Learn counts them below. Drag the sphere and the whole flow re-routes.`
+          : scene.id === "studio"
           ? `${strands.toLocaleString()} particles stream through a field of smooth noise around a sphere, each trailing a ribbon of its recent path. ` +
             `They start on two sheets, and the flow can only slide each particle along its own sheet, so each sheet holds together as one folding cloth; where a sheet meets the sphere it parts and closes around it. Drag the sphere and the whole flow re-routes.`
           : "";
