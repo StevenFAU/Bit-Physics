@@ -103,7 +103,10 @@ byte, f32 offsets against f64, click to release, Ghost, the orbit camera, precis
 link, undo by replay, save / restore / compare, seeds across page loads, the fixed points through
 the GPU cull, Environment's sky and ground, reduced motion; M1: the Lyapunov and invariant-measure
 Prove cards inside their declared budgets, Buy More Digits live and measured with λ₁ from the
-line's slope, the live λ₁ instrument, captions that never overlap) is
+line's slope, the live λ₁ instrument, captions that never overlap; M2: Road to Chaos filled column
+by column with chaos and windows told apart, ρ picked on the diagram and by keyboard, range presets on
+the link, Lorenz's map and its cobweb, the Slice tool's drag and slider, the three new Prove cards
+inside their budgets, each scene's frame rate) is
 `packages/strange-attractors/web/v2-acceptance.mjs`; Flow Sculpture's (the capture's bytes on v1 and v2,
 ready before the live view compiles, the tier's ribbons and step rate, the in-page gate, the live kernel ≡
 the gated one byte for byte, divergence / confinement / Clebsch / tangency with helicity as the nonzero
