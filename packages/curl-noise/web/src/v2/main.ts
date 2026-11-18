@@ -193,6 +193,8 @@ async function boot(): Promise<void> {
   const profiler = new GpuProfiler(device, gpu.timestamps);
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   held.governor = governor;
+  // ?gov=off holds the render scale at 100% (measurements: GPU time at full scale)
+  if (query.get("gov") === "off") governor.suspended = true;
   studio.veil.step("Compiling the flow");
   const [k, view] = await Promise.all([FlowKernels.create(device), FlowView.create(device)]);
   kernels = k;
@@ -252,6 +254,8 @@ async function boot(): Promise<void> {
       p.governor = governor;
       p.writeUrl = () => url.write(current());
       p.onSnapshot = (b) => download(b, "flow-sculpture-paint.png");
+      // reduced motion: start slowed, as the Studio does
+      if (matchMedia("(prefers-reduced-motion: reduce)").matches) p.clock.speed = 0.5;
       p.hooks = { onMap: () => syncProve(), onFrame: (now) => frameHook(now) };
       p.start();
       paintApp = p;
@@ -367,7 +371,7 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
-  const syncProve = (): void => prove.setOnScreen(a.flow.params, a.scene.field);
+  const syncProve = (): void => (scene2d ? prove.setOnScreenPaint() : prove.setOnScreen(a.flow.params, a.scene.field));
 
   // --------------------------------------------- the guarantee, live --
   const hud = h("div", { class: "fs-hud bp-surface", role: "status", "aria-live": "off", "data-bp-chrome": "", "data-bp2": "studio-chrome" });

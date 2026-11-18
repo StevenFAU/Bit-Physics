@@ -32,6 +32,8 @@ export interface ProveDeps {
 
 export interface ProvePane {
   setOnScreen(params: FieldParams, scene: FieldParams): void;
+  /** Paint the Stream is on screen (the 3D cards still measure the Studio's field). */
+  setOnScreenPaint(): void;
   /** Results of the last run, for tests. */
   results: Record<string, unknown>;
   runAll(): Promise<void>;
@@ -380,6 +382,10 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   return {
     results,
     runAll,
+    setOnScreenPaint() {
+      onScreen.textContent =
+        "On screen: Paint the Stream. Every painting is an incompressible flow (the two cards at the end measure the map on screen); the release gate and the cards above it check the 3D field.";
+    },
     setOnScreen(p, scene) {
       const kind = fieldKind(p, scene);
       onScreen.textContent =
