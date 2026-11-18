@@ -675,7 +675,47 @@ async function boot(): Promise<void> {
   (globalThis as { __flowScene?: unknown }).__flowScene = { show: showScene, paint: () => paintApp };
   (globalThis as { __flowProve?: typeof prove }).__flowProve = prove;
 
-  if (query.get("bench") === "1") void bench(a, profiler, rafTimes);
+  if (query.get("bench") === "1") {
+    if (scene2d && paintApp) void benchPaint(paintApp, profiler, rafTimes);
+    else void bench(a, profiler, rafTimes);
+  }
+}
+
+async function benchPaint(app: PaintApp, profiler: GpuProfiler, rafTimes: number[]): Promise<void> {
+  const wait = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+  await wait(2500);
+  rafTimes.length = 0;
+  const gpuMs: number[] = [];
+  const prev = profiler.onFrame;
+  profiler.onFrame = (ms) => {
+    gpuMs.push(ms);
+    prev?.(ms);
+  };
+  const t0 = performance.now();
+  const steps0 = app.stepsTotal;
+  await wait(10000);
+  profiler.onFrame = prev;
+  const seconds = (performance.now() - t0) / 1000;
+  const result = {
+    adapter: app.gpu.adapterId,
+    tier: app.tier,
+    scene: "paint",
+    strands: app.paint.count,
+    n: app.paint.n,
+    viewport: [app.camera.viewW, app.camera.viewH],
+    timing: profiler.source,
+    frames: rafTimes.length,
+    fps: rafTimes.length / seconds,
+    frameP50: percentile(rafTimes, 0.5),
+    frameP90: percentile(rafTimes, 0.9),
+    gpuP50: percentile(gpuMs, 0.5),
+    gpuP90: percentile(gpuMs, 0.9),
+    stepsPerSecond: (app.stepsTotal - steps0) / seconds,
+    passes: profiler.timings().map((p) => ({ name: p.name, avgMs: p.avg })),
+    renderScale: app.governor?.renderScale ?? 1,
+  };
+  (globalThis as { __bpBench?: unknown }).__bpBench = result;
+  console.info(`BP_BENCH ${JSON.stringify(result)}`);
 }
 
 async function bench(app: App, profiler: GpuProfiler, rafTimes: number[]): Promise<void> {
