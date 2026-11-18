@@ -172,7 +172,10 @@ export function buildProve(pane: HTMLElement, deps: ProveDeps): ProvePane {
       budget: `ρ₀ g = ${f.expected.toFixed(0)} Pa/m`,
       ratio: off,
       adapter: deps.adapter,
-      notes: [`R² ${f.r2.toFixed(4)} over ${f.count.toLocaleString()} interior particles; intercept ${f.intercept.toFixed(0)} Pa`],
+      notes: [
+        `profile straightness (R² of the depth-bin means) ${f.binnedR2.toFixed(4)}`,
+        `per-particle R² ${f.r2.toFixed(3)} over ${f.count.toLocaleString()} interior particles; intercept ${f.intercept.toFixed(0)} Pa`,
+      ],
     });
     hydroPlot.set([
       { x: f.bins.map((b) => b.depth), y: f.bins.map((b) => b.depth * f.expected), label: "ρ₀ g d" },

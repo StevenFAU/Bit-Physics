@@ -19,10 +19,13 @@ export interface HydrostaticFit {
   /** slope / expected. */
   ratio: number;
   intercept: number;
+  /** R² of the per-particle fit (includes particle-to-particle noise). */
   r2: number;
+  /** R² of the bin means against depth: how straight the profile is. */
+  binnedR2: number;
   /** Particles used. */
   count: number;
-  /** Mean pressure per depth bin (bin centres in m). */
+  /** Mean pressure per depth bin, at the bin's mean depth (m). */
   bins: { depth: number; pressure: number; count: number }[];
 }
 
@@ -45,6 +48,7 @@ export function hydrostaticFit(
   const nb = o.bins ?? 12;
   const depthMax = o.level - o.floor;
   const binSum = new Float64Array(nb);
+  const binDepth = new Float64Array(nb);
   const binN = new Float64Array(nb);
   for (let i = 0; i < n; i += 1) {
     const x = s.pos[i * 4]!;
@@ -64,6 +68,7 @@ export function hydrostaticFit(
     c += 1;
     const b = Math.min(nb - 1, Math.max(0, Math.floor((d / depthMax) * nb)));
     binSum[b] += p;
+    binDepth[b] += d;
     binN[b] += 1;
   }
   const den = c * sxx - sx * sx;
@@ -77,7 +82,25 @@ export function hydrostaticFit(
   const expected = o.rho0 * o.g;
   const bins = [];
   for (let b = 0; b < nb; b += 1) {
-    if (binN[b]! > 0) bins.push({ depth: ((b + 0.5) / nb) * depthMax, pressure: binSum[b]! / binN[b]!, count: binN[b]! });
+    if (binN[b]! > 0) bins.push({ depth: binDepth[b]! / binN[b]!, pressure: binSum[b]! / binN[b]!, count: binN[b]! });
   }
-  return { slope, expected, ratio: slope / expected, intercept, r2, count: c, bins };
+  // straightness of the profile: R² of the bin means (particle noise averages out within a bin)
+  let bx = 0;
+  let by = 0;
+  for (const b of bins) {
+    bx += b.depth;
+    by += b.pressure;
+  }
+  bx /= Math.max(bins.length, 1);
+  by /= Math.max(bins.length, 1);
+  let bxy = 0;
+  let bxx = 0;
+  let byy = 0;
+  for (const b of bins) {
+    bxy += (b.depth - bx) * (b.pressure - by);
+    bxx += (b.depth - bx) ** 2;
+    byy += (b.pressure - by) ** 2;
+  }
+  const binnedR2 = bxx > 0 && byy > 0 ? (bxy * bxy) / (bxx * byy) : 0;
+  return { slope, expected, ratio: slope / expected, intercept, r2, binnedR2, count: c, bins };
 }

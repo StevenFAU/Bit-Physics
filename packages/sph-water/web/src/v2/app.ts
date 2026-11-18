@@ -103,6 +103,8 @@ export class App {
   private readonly events: DropEvent[] = [];
   private pending: DropEvent | null = null;
   private dropping = false;
+  /** Bumped whenever the water's state is replaced; a drop read back under an older one is discarded. */
+  private generation = 0;
   private nextEventId = 1;
   private inFlight = 0;
   private last = performance.now();
@@ -248,8 +250,11 @@ export class App {
   /** Move the highest particles into a blob above `at`: the drop itself (reads positions at this step). */
   private async applyDrop(at: [number, number]): Promise<void> {
     const w = this.water;
+    const generation = this.generation;
     const blob = blobPositions(w.recipe.spacing, [at[0], restingLevel() + DROP_HEIGHT, at[1]]);
     const { pos, orig } = await w.readPositions();
+    // the state was replaced (a scene load, a restore) while the positions were read: drop nothing
+    if (generation !== this.generation) return;
     const idx = highest(pos, w.n, blob.length / 3, orig);
     const enc = this.gpu.device.createCommandEncoder({ label: "water-drop" });
     w.encodeDrop(enc, idx, blob);
@@ -268,7 +273,9 @@ export class App {
 
   async loadScene(id: SceneId, o: { seed?: number } = {}): Promise<void> {
     this.busy = true;
+    this.generation += 1;
     try {
+      while (this.dropping) await new Promise((r) => setTimeout(r, 10));
       const scene = sceneById(id);
       this.scene = scene;
       if (o.seed !== undefined) this.seed = o.seed;
@@ -323,6 +330,7 @@ export class App {
   // ------------------------------------------------------------- history --
 
   private restoreCheckpoint(c: Checkpoint): void {
+    this.generation += 1;
     this.water.restore(c.water);
     this.dropCount = c.dropCount;
     this.lastDropStep = c.lastDropStep;

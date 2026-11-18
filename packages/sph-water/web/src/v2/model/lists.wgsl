@@ -28,7 +28,8 @@
 // Memory order: as the water mixes, particles that are neighbours in space
 // drift apart in memory and every gather slows (measured ×1.7 after 2.5 s of
 // splashing). Every 32 steps the particle arrays are permuted into the grid's
-// cell order (resort_gather / resort_commit). Each particle carries its
+// cell order (resort_gather / resort_commit; the pressure accumulator
+// kappa_sum, which spans steps, travels with them). Each particle carries its
 // original index (orig), and cell_sort_orig orders a cell's members by it —
 // the shipped cell_sort orders them by array index, which is the original
 // index while nothing has been permuted — so the neighbours of every particle
@@ -158,7 +159,10 @@ fn cell_sort_orig(@builtin(global_invocation_id) gid: vec3<u32>) {
 fn resort_gather(@builtin(global_invocation_id) gid: vec3<u32>) {
   let s = gid.x;
   if (s >= L.n) { return; }
-  orig_tmp[s] = orig[sorted_idx[s]];
+  let i = sorted_idx[s];
+  orig_tmp[s] = orig[i];
+  // the pressure accumulator spans steps, so it travels with its particle
+  kappa_sum_tmp[s] = kappa_sum[i];
 }
 
 @compute @workgroup_size(64)
@@ -168,8 +172,10 @@ fn resort_commit(@builtin(global_invocation_id) gid: vec3<u32>) {
   pos[s] = pos_sorted[s];
   vel[s] = vel_sorted[s];
   orig[s] = orig_tmp[s];
+  kappa_sum[s] = kappa_sum_tmp[s];
 }
 @group(0) @binding(21) var<storage, read_write> vel_sorted: array<vec4<f32>>;
+@group(0) @binding(24) var<storage, read_write> kappa_sum_tmp: array<f32>;
 
 fn kernel_f(q: f32) -> f32 {
   if (q < 1.0) { return 1.0 - 1.5 * q * q + 0.75 * q * q * q; }

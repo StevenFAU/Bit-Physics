@@ -52,9 +52,10 @@
 >   replay ≡ never dropping, with a 0.45 s cooldown).
 > - **Prove:** the release gate re-run in the page (12.3% of budget, run twice identical); the shipped
 >   solver ≡ the lists ≡ the lists with the re-sort; **hydrostatic pressure (illustrative):** after
->   2.5 s of Still Water, ρ Σκ / steps over both solves and 200 steps gives dp/dd = 9,044 Pa/m =
->   0.92 ρ₀g, R² 0.93 over 42,000 interior particles (one step's density-solve κ alone shows no gradient,
->   R² 0.01 — the weight is carried by both solves); **incompressibility, live (illustrative):** mean
+>   2.5 s of Still Water, ρ Σκ / steps over both solves and 200 steps gives dp/dd = 8,777 Pa/m =
+>   0.89 ρ₀g over 42,000 interior particles; the depth-bin means lie on a line (R² 0.9993), each
+>   particle's 200-step mean keeps its own noise (per-particle R² 0.88). One step's density-solve κ alone
+>   shows no gradient (R² 0.01 — the weight is carried by both solves); **incompressibility, live (illustrative):** mean
 >   compression 0.09%, max 2.6%, largest neighbour count 68 (lists hold 96), against no declared tolerance
 >   — the recipe runs fixed iterations; Bender & Koschier report < 0.01% iterating to tolerance. The
 >   Archimedes gate is M2.

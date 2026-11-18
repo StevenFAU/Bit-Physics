@@ -103,6 +103,7 @@ describe("hydrostatics", () => {
     expect(f.ratio).toBeCloseTo(1, 4);
     expect(f.intercept).toBeCloseTo(12, 1);
     expect(f.r2).toBeGreaterThan(0.999999);
+    expect(f.binnedR2).toBeGreaterThan(0.999999);
     expect(f.bins.length).toBeGreaterThan(8);
     // particles without a full neighbourhood are left out
     for (let i = 2000; i < 2100; i += 1) aux[i * 4 + 2] = 10;

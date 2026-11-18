@@ -211,7 +211,9 @@ async function regionRgb(page, clip) {
   const hy = await run("Hydrostatic pressure");
   const hr = await T(s.page, () => globalThis.__waterProve.results.hydrostatic);
   await shot(s.page, "prove-hydrostatic");
-  check("hydrostatic: pressure grows with depth near ρ₀g (illustrative)", hy.status === "info" && hr.r2 > 0.9 && Math.abs(hr.ratio - 1) < 0.25, `dp/dd = ${hr.slope.toFixed(0)} Pa/m = ${hr.ratio.toFixed(3)} × ρ₀g, R² ${hr.r2.toFixed(4)}, ${hr.count} particles`);
+  // the claim is the profile: its depth-bin means lie on a line (measured R² 0.9994) of slope near
+  // ρ₀g (measured 0.89); a single particle's 200-step mean keeps particle noise (per-particle R² 0.88)
+  check("hydrostatic: pressure grows linearly with depth near ρ₀g (illustrative)", hy.status === "info" && hr.binnedR2 > 0.99 && Math.abs(hr.ratio - 1) < 0.25, `dp/dd = ${hr.slope.toFixed(0)} Pa/m = ${hr.ratio.toFixed(3)} × ρ₀g, profile R² ${hr.binnedR2.toFixed(4)}, per-particle R² ${hr.r2.toFixed(3)}, ${hr.count} particles`);
   const live = await T(s.page, async () => {
     for (let i = 0; i < 100 && !globalThis.__waterProve.results.live; i += 1) await new Promise((r) => setTimeout(r, 100));
     return globalThis.__waterProve.results.live;

@@ -290,8 +290,10 @@ export interface GateCapture {
 
 /** The gate path: v1's capture on its own createSphGpu instance. */
 export class GateRunner {
-  /** A run is in flight: the live loop stays off the GPU (v1's withExclusive). */
+  /** Runs in flight or queued: the live loop stays off the GPU (v1's withExclusive). */
   busy = 0;
+  /** Gate runs share one createSphGpu's buffers: each waits for the one before it. */
+  private queue: Promise<unknown> = Promise.resolve();
 
   private constructor(readonly gpu: SphGpu) {}
 
@@ -299,10 +301,13 @@ export class GateRunner {
     return new GateRunner(await createSphGpu(device));
   }
 
+  /** Run `fn` alone on the gate's buffers, after any run already in flight. */
   async exclusive<T>(fn: () => Promise<T>): Promise<T> {
     this.busy += 1;
+    const run = this.queue.then(fn, fn);
+    this.queue = run.catch(() => undefined);
     try {
-      return await fn();
+      return await run;
     } finally {
       this.busy -= 1;
     }

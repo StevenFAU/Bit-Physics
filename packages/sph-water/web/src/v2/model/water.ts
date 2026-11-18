@@ -203,8 +203,8 @@ const LIST_BINDINGS: Record<string, number[]> = {
   l_apply_kappa: [0, 1, 3, 5, 10, 11, 12, 22],
   glass_constrain: [1, 3, 14],
   cell_sort_orig: [0, 8, 9, 13, 19],
-  resort_gather: [0, 8, 19, 20],
-  resort_commit: [0, 1, 2, 7, 19, 20, 21],
+  resort_gather: [0, 8, 19, 20, 23, 24],
+  resort_commit: [0, 1, 2, 7, 19, 20, 21, 23, 24],
   commit_vel: [0, 2, 3],
   drop_scatter: [1, 2, 6, 15, 16, 17],
 };
@@ -313,6 +313,7 @@ export class Water {
       orig: mk("orig", maxN * 4),
       rho: mk("rho", maxN * 4),
       kappaSum: mk("kappaSum", maxN * 4),
+      kappaSumTmp: mk("kappaSumTmp", maxN * 4),
       origTmp: mk("origTmp", maxN * 4),
       cellCount: mk("cellCount", this.maxCells * 4),
       cellStart: mk("cellStart", (this.maxCells + 1) * 4),
@@ -337,7 +338,7 @@ export class Water {
     const live: Record<number, GPUBuffer> = {
       0: b.liveParams!, 1: b.pos!, 2: b.vel!, 3: b.velOut!, 4: b.partAux!, 5: b.kappa!, 6: b.kappaTotal!, 7: b.posSorted!,
       8: b.sortedIdx!, 9: b.cellStart!, 10: b.nbr!, 11: b.nbrCount!, 12: b.listParams!, 13: b.lflags!, 14: b.glassParams!,
-      15: b.dropParams!, 16: b.dropIdx!, 17: b.dropPos!, 19: b.orig!, 20: b.origTmp!, 21: b.velSorted!, 22: b.rho!, 23: b.kappaSum!,
+      15: b.dropParams!, 16: b.dropIdx!, 17: b.dropPos!, 19: b.orig!, 20: b.origTmp!, 21: b.velSorted!, 22: b.rho!, 23: b.kappaSum!, 24: b.kappaSumTmp!,
     };
     const bind = (bindings: Record<string, number[]>, byBinding: Record<number, GPUBuffer>): void => {
       for (const [entry, list] of Object.entries(bindings)) {
