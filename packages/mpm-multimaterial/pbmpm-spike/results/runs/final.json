@@ -1,0 +1,646 @@
+[
+ {
+  "label": "std-water-S4K5",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ],
+  "shotsAt": [
+   0.25,
+   0.5,
+   1.0,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.0,
+  "duration": 3.0
+ },
+ {
+  "label": "std-sand-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.3,
+   1.0,
+   4.0
+  ],
+  "shotsAt": [
+   0.3,
+   1.0,
+   4.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "duration": 4.0
+ },
+ {
+  "label": "std-jelly-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.45,
+   1.0,
+   3.0
+  ],
+  "shotsAt": [
+   0.3,
+   0.45,
+   1.0,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "duration": 3.0
+ },
+ {
+  "label": "std-snow-S4K5",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "duration": 2.0
+ },
+ {
+  "label": "std-snowmls-S57K2",
+  "scene": "snowball",
+  "substeps": 57,
+  "iterations": 2,
+  "metricsAt": [
+   0.0,
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.25,
+   0.4,
+   2.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "mat": "snowmls",
+  "duration": 2.0
+ },
+ {
+  "label": "std-clay-S4K5",
+  "scene": "press",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "mat": "clay"
+ },
+ {
+  "label": "std-jellypress-S4K5",
+  "scene": "press",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "mat": "jelly"
+ },
+ {
+  "label": "std-honey-S4K5",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   0.5,
+   1.5,
+   4.0
+  ],
+  "shotsAt": [
+   0.5,
+   1.5,
+   4.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.5,
+  "duration": 4.0
+ },
+ {
+  "label": "std-honeypour-S4K5",
+  "scene": "honeypour",
+  "substeps": 4,
+  "iterations": 5,
+  "metricsAt": [
+   0.0,
+   1.5,
+   2.5,
+   4.0
+  ],
+  "shotsAt": [
+   1.5,
+   2.5,
+   4.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.5,
+  "scale": 1.6,
+  "duration": 4.0
+ },
+ {
+  "label": "ham-water-S4K5",
+  "scene": "dam",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.0,
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-sand-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-jelly-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-snow-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "snow",
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-clay-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "clay",
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-honey-S4K5",
+  "scene": "honeycol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.5,
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ]
+ },
+ {
+  "label": "ham-water-S2K8",
+  "scene": "dam",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.0
+ },
+ {
+  "label": "ham-sand-S2K8",
+  "scene": "sandcol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3
+ },
+ {
+  "label": "ham-jelly-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0
+ },
+ {
+  "label": "ham-snow-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "snow"
+ },
+ {
+  "label": "ham-clay-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "clay"
+ },
+ {
+  "label": "ham-honey-S2K8",
+  "scene": "honeycol",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.5
+ },
+ {
+  "label": "ham-water-S1K8",
+  "scene": "dam",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.0
+ },
+ {
+  "label": "ham-sand-S1K8",
+  "scene": "sandcol",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3
+ },
+ {
+  "label": "ham-jelly-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0
+ },
+ {
+  "label": "ham-snow-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "snow"
+ },
+ {
+  "label": "ham-clay-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "y0": 0.0,
+  "mat": "clay"
+ },
+ {
+  "label": "ham-honey-S1K8",
+  "scene": "honeycol",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3,
+  "wallFriction": 0.5
+ },
+ {
+  "label": "ham-snowmls-S57K2",
+  "scene": "jelly",
+  "y0": 0.0,
+  "mat": "snowmls",
+  "substeps": 57,
+  "iterations": 2,
+  "duration": 3.0,
+  "hammer": true,
+  "hammerSpeed": 8,
+  "hammerAt": 0.5,
+  "metricsAt": [
+   0.45,
+   3.0
+  ],
+  "shotsAt": [
+   0.62,
+   0.95,
+   3.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3
+ },
+ {
+  "label": "table-T3-S4K5",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "hammer": true,
+  "hammerAt": 1.5,
+  "metricsAt": [
+   0,
+   4.0
+  ],
+  "occupancyAt": [
+   0,
+   0.5,
+   1.0,
+   2.0,
+   3.0,
+   4.0
+  ],
+  "shotsAt": [
+   0,
+   0.35,
+   1.0,
+   1.75,
+   2.2,
+   4.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3
+ },
+ {
+  "label": "tablepond-T3-S4K5",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 2,
+  "metricsAt": [
+   0,
+   2.0
+  ],
+  "occupancyAt": [
+   0,
+   1.0,
+   2.0
+  ],
+  "shotsAt": [
+   0,
+   2.0
+  ],
+  "tiled": true,
+  "order": "interleave",
+  "statsEvery": 3
+ }
+]

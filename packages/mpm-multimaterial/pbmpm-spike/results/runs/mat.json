@@ -1,0 +1,90 @@
+[
+ {
+  "label": "mat-dam-water",
+  "scene": "dam",
+  "mat": "water",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-dam-jelly",
+  "scene": "dam",
+  "mat": "jelly",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-dam-sand",
+  "scene": "dam",
+  "mat": "sand",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-col-water",
+  "scene": "sandcol",
+  "scale": 1.4,
+  "mat": "water",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-col-sand",
+  "scene": "sandcol",
+  "scale": 1.4,
+  "mat": "sand",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-col-snow",
+  "scene": "sandcol",
+  "scale": 1.4,
+  "mat": "snow",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "mat-col-honey",
+  "scene": "sandcol",
+  "scale": 1.4,
+  "mat": "honey",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.0,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ }
+]

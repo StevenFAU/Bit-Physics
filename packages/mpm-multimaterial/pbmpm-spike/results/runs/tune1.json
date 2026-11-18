@@ -1,0 +1,198 @@
+[
+ {
+  "label": "t1-jellypress",
+  "scene": "press",
+  "mat": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.75,
+   2.6
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  }
+ },
+ {
+  "label": "t1-claypress-y0.03",
+  "scene": "press",
+  "mat": "clay",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.75,
+   2.6
+  ],
+  "mats": {
+   "clay": {
+    "yieldR": 0.03
+   }
+  }
+ },
+ {
+  "label": "t1-claypress-y0.1",
+  "scene": "press",
+  "mat": "clay",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.75,
+   2.6
+  ],
+  "mats": {
+   "clay": {
+    "yieldR": 0.1
+   }
+  }
+ },
+ {
+  "label": "t1-claypress-y0.2",
+  "scene": "press",
+  "mat": "clay",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.3,
+   0.75,
+   1.1,
+   2.6
+  ],
+  "shotsAt": [
+   0.75,
+   2.6
+  ],
+  "mats": {
+   "clay": {
+    "yieldR": 0.2
+   }
+  }
+ },
+ {
+  "label": "t1-snow-s1.0-tc0.025",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaC": 0.025
+   }
+  }
+ },
+ {
+  "label": "t1-snow-s1.0-tc0.05",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.0,
+    "thetaC": 0.05
+   }
+  }
+ },
+ {
+  "label": "t1-snow-s1.5-tc0.025",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.5,
+    "thetaC": 0.025
+   }
+  }
+ },
+ {
+  "label": "t1-snow-s1.5-tc0.05",
+  "scene": "snowball",
+  "substeps": 4,
+  "iterations": 5,
+  "statsEvery": 6,
+  "metricsAt": [
+   0.0,
+   0.1,
+   0.2,
+   0.4,
+   2.0
+  ],
+  "shotsAt": [
+   0.15,
+   0.4,
+   2.0
+  ],
+  "mats": {
+   "snow": {
+    "stiffness": 1.5,
+    "thetaC": 0.05
+   }
+  }
+ }
+]

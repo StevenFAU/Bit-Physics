@@ -1,0 +1,98 @@
+[
+ {
+  "label": "probe-pond-lattice",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "lattice"
+ },
+ {
+  "label": "probe-dam-lattice",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "lattice",
+  "wallFriction": 0
+ },
+ {
+  "label": "probe-jelly-lattice",
+  "scene": "jelly",
+  "y0": 0.0,
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "lattice"
+ },
+ {
+  "label": "probe-pond-shuffle",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "shuffle"
+ },
+ {
+  "label": "probe-dam-shuffle",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "shuffle",
+  "wallFriction": 0
+ },
+ {
+  "label": "probe-jelly-shuffle",
+  "scene": "jelly",
+  "y0": 0.0,
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "shuffle"
+ },
+ {
+  "label": "probe-pond-morton",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "morton"
+ },
+ {
+  "label": "probe-dam-morton",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "morton",
+  "wallFriction": 0
+ },
+ {
+  "label": "probe-jelly-morton",
+  "scene": "jelly",
+  "y0": 0.0,
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "morton"
+ }
+]

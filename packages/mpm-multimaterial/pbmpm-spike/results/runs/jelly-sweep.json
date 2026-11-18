@@ -1,0 +1,287 @@
+[
+ {
+  "label": "jelly-s0.5-S1K4",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 0.5
+   }
+  }
+ },
+ {
+  "label": "jelly-s0.5-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 0.5
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s0.5-S2K4",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 0.5
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s0.5-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 0.5
+   }
+  }
+ },
+ {
+  "label": "jelly-s0.5-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 0.5
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.0-S1K4",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.0-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s1.0-S2K4",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s1.0-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.0-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.0
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.5-S1K4",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.5
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.5-S1K8",
+  "scene": "jelly",
+  "substeps": 1,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.5
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s1.5-S2K4",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 4,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.5
+   }
+  },
+  "shotsAt": [
+   0.5,
+   1.0,
+   3.0
+  ]
+ },
+ {
+  "label": "jelly-s1.5-S2K8",
+  "scene": "jelly",
+  "substeps": 2,
+  "iterations": 8,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.5
+   }
+  }
+ },
+ {
+  "label": "jelly-s1.5-S4K5",
+  "scene": "jelly",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 3,
+  "statsEvery": 15,
+  "metricsAt": [
+   0.5,
+   3.0
+  ],
+  "mats": {
+   "jelly": {
+    "stiffness": 1.5
+   }
+  }
+ }
+]
