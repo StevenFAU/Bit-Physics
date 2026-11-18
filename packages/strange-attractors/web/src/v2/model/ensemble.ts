@@ -36,6 +36,21 @@ export const SPREAD_STEPS = 10;
 const REDUCE_PER_GROUP = 4096;
 /** Spread samples held on the GPU between readbacks. */
 const RING = 64;
+/** Bins per side of the return-map and section histograms. */
+export const OBS_BINS = 256;
+
+/** What the attractor population observes as it runs (Lorenz's Map, Slice). */
+export interface Observe {
+  map: boolean;
+  slice: boolean;
+  /** The map's z range [lo, hi). */
+  mapLo: number;
+  mapHi: number;
+  /** The slice plane z = h, and its (x, y) box. */
+  plane: number;
+  box: [number, number, number, number];
+}
+
 /** Dispatch slots per frame: MAX_STEPS split at every SPREAD_STEPS, plus one. */
 const POOL = Math.ceil(MAX_STEPS / SPREAD_STEPS) + 2;
 
@@ -51,19 +66,22 @@ export class ChaosKernels {
     readonly ensemble: GPUComputePipeline,
     readonly release: GPUComputePipeline,
     readonly reduce: GPUComputePipeline,
+    /** density_step with the return-map and section observers (Lorenz's Map, Slice). */
+    readonly observe: GPUComputePipeline,
   ) {}
 
   static async create(device: GPUDevice): Promise<ChaosKernels> {
     const main = device.createShaderModule({ code: ensembleSrc, label: "chaos-ensemble" });
     const rel = device.createShaderModule({ code: wgsl(releaseSrc), label: "chaos-release" });
     const red = device.createShaderModule({ code: reduceSrc, label: "chaos-reduce" });
-    const [d, e, r, s] = await Promise.all([
+    const [d, e, r, s, o] = await Promise.all([
       device.createComputePipelineAsync({ label: "density_step", layout: "auto", compute: { module: main, entryPoint: "density_step" } }),
       device.createComputePipelineAsync({ label: "ensemble_step", layout: "auto", compute: { module: main, entryPoint: "ensemble_step" } }),
       device.createComputePipelineAsync({ label: "release", layout: "auto", compute: { module: rel, entryPoint: "release" } }),
       device.createComputePipelineAsync({ label: "reduce", layout: "auto", compute: { module: red, entryPoint: "reduce" } }),
+      device.createComputePipelineAsync({ label: "density_observe", layout: "auto", compute: { module: main, entryPoint: "density_observe" } }),
     ]);
-    return new ChaosKernels(d, e, r, s);
+    return new ChaosKernels(d, e, r, s, o);
   }
 }
 
@@ -134,6 +152,16 @@ export class Chaos {
   private readonly groups: number;
   private readonly slot: ReadbackSlot;
   private densityBind: GPUBindGroup;
+  private readonly observeBind: GPUBindGroup;
+  private readonly obsParams: GPUBuffer;
+  private readonly aux: GPUBuffer;
+  /** Return-map counts [bin(z_{n+1}) · OBS_BINS + bin(z_n)] and its total. */
+  readonly mapCounts: GPUBuffer;
+  readonly mapTotal: GPUBuffer;
+  /** Section counts [bin(y) · OBS_BINS + bin(x)] and its total. */
+  readonly sliceCounts: GPUBuffer;
+  readonly sliceTotal: GPUBuffer;
+  observe: Observe = { map: false, slice: false, mapLo: 29, mapHi: 48, plane: 27, box: [-20, 20, -20, 20] };
   private readonly ensembleBinds: GPUBindGroup[];
   private readonly reduceBinds: GPUBindGroup[];
   private readonly stageData = new Float32Array(MAX_STEPS * 16);
@@ -163,6 +191,27 @@ export class Chaos {
     this.partials = device.createBuffer({ size: RING * this.groups * 16, usage: GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_SRC, label: "spread-partials" });
     this.slot = new ReadbackSlot(device, RING * this.groups * 16, "spread-readback");
     this.densityBind = this.bindStep(k.density, this.density, this.densityParams);
+    const st = GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC;
+    this.obsParams = device.createBuffer({ size: 48, usage: u, label: "observe-params" });
+    this.aux = device.createBuffer({ size: nDensity * 16, usage: st, label: "observe-aux" });
+    this.mapCounts = device.createBuffer({ size: OBS_BINS * OBS_BINS * 4, usage: st, label: "map-counts" });
+    this.sliceCounts = device.createBuffer({ size: OBS_BINS * OBS_BINS * 4, usage: st, label: "slice-counts" });
+    this.mapTotal = device.createBuffer({ size: 16, usage: st, label: "map-total" });
+    this.sliceTotal = device.createBuffer({ size: 16, usage: st, label: "slice-total" });
+    this.observeBind = device.createBindGroup({
+      layout: k.observe.getBindGroupLayout(0),
+      entries: [
+        { binding: 0, resource: { buffer: this.densityParams } },
+        { binding: 1, resource: { buffer: this.density.state } },
+        { binding: 2, resource: { buffer: this.density.prev } },
+        { binding: 5, resource: { buffer: this.obsParams } },
+        { binding: 6, resource: { buffer: this.aux } },
+        { binding: 7, resource: { buffer: this.mapCounts } },
+        { binding: 8, resource: { buffer: this.sliceCounts } },
+        { binding: 9, resource: { buffer: this.mapTotal } },
+        { binding: 10, resource: { buffer: this.sliceTotal } },
+      ],
+    });
     this.ensembleBinds = this.ensembleParams.map((b) => this.bindStep(k.ensemble, this.ensemble, b));
     this.reduceBinds = this.reduceParams.map((b) =>
       device.createBindGroup({
@@ -291,8 +340,9 @@ export class Chaos {
     this.device.queue.writeBuffer(this.stages, 0, d, 0, n * 16);
     this.writeParams(this.densityParams, this.density.n, n, 0);
     const pass = enc.beginComputePass({ label: "chaos-steps", timestampWrites });
-    pass.setPipeline(this.k.density);
-    pass.setBindGroup(0, this.densityBind);
+    const observing = this.observe.map || this.observe.slice;
+    pass.setPipeline(observing ? this.k.observe : this.k.density);
+    pass.setBindGroup(0, observing ? this.observeBind : this.densityBind);
     pass.dispatchWorkgroups(Math.ceil(this.density.n / 256));
     const track = Math.min(TRACK, this.ensemble.n);
     let s = 0;
@@ -323,6 +373,40 @@ export class Chaos {
     }
     pass.end();
     this.steps += n;
+  }
+
+  /**
+   * What the attractor population observes. A change of what or where
+   * starts the histograms afresh (and forgets each point's last peak).
+   */
+  setObserve(enc: GPUCommandEncoder, o: Observe): void {
+    this.observe = { ...o, box: [...o.box] };
+    const b = new ArrayBuffer(48);
+    new Float32Array(b, 0, 8).set([o.mapLo, o.mapHi, o.plane, 0, ...o.box]);
+    new Uint32Array(b, 32, 4).set([OBS_BINS, OBS_BINS, (o.map ? 1 : 0) | (o.slice ? 2 : 0), 0]);
+    this.device.queue.writeBuffer(this.obsParams, 0, b);
+    this.clearObservation(enc);
+  }
+
+  /** Forget the histograms and each point's last peak (σ, ρ, β changed; a new plane). */
+  clearObservation(enc: GPUCommandEncoder): void {
+    for (const buf of [this.aux, this.mapCounts, this.sliceCounts, this.mapTotal, this.sliceTotal]) enc.clearBuffer(buf);
+  }
+
+  /** Read a histogram back (tests, Prove): counts and total. */
+  async readObservation(which: "map" | "slice"): Promise<{ counts: Uint32Array; total: number }> {
+    const counts = which === "map" ? this.mapCounts : this.sliceCounts;
+    const total = which === "map" ? this.mapTotal : this.sliceTotal;
+    const size = OBS_BINS * OBS_BINS * 4;
+    const staging = this.device.createBuffer({ size: size + 16, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ, label: "observe-read" });
+    const enc = this.device.createCommandEncoder();
+    enc.copyBufferToBuffer(counts, 0, staging, 0, size);
+    enc.copyBufferToBuffer(total, 0, staging, size, 16);
+    this.device.queue.submit([enc.finish()]);
+    await staging.mapAsync(GPUMapMode.READ);
+    const all = new Uint32Array(staging.getMappedRange().slice(0));
+    staging.destroy();
+    return { counts: all.slice(0, OBS_BINS * OBS_BINS), total: all[OBS_BINS * OBS_BINS]! };
   }
 
   /** A spread readback is in flight (the next take must wait for it). */
@@ -436,6 +520,7 @@ export class Chaos {
       p.prev.destroy();
     }
     for (const b of [this.stages, this.trail, this.densityParams, ...this.ensembleParams, this.releaseParams, ...this.reduceParams, this.partials]) b.destroy();
+    for (const b of [this.obsParams, this.aux, this.mapCounts, this.sliceCounts, this.mapTotal, this.sliceTotal]) b.destroy();
     this.slot.destroy();
   }
 }

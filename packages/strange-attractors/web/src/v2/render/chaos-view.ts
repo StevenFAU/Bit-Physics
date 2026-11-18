@@ -38,6 +38,8 @@ import {
   transform4,
 } from "@bp/render";
 import type { V3 } from "../model/lorenz.js";
+import type { SliceDraw } from "./slice-plane.js";
+import { SlicePlane } from "./slice-plane.js";
 import { TRACK } from "../model/ensemble.js";
 
 /** Density palette: cobalt (slow) to magnesium white (fast), sRGB stops. */
@@ -69,6 +71,9 @@ export interface ChaosLook {
   stretch: number;
   showFixedPoints: boolean;
   showTracks: boolean;
+  /** Slice: the plane's own faint sheet, and its layers' brightness (radiance). */
+  sliceSheet: number;
+  sliceLayers: number;
 }
 
 export const DEFAULT_LOOK: ChaosLook = {
@@ -79,6 +84,8 @@ export const DEFAULT_LOOK: ChaosLook = {
   stretch: 0.85,
   showFixedPoints: true,
   showTracks: true,
+  sliceSheet: 0.04,
+  sliceLayers: 2.5,
 };
 
 export interface FrameState {
@@ -96,6 +103,8 @@ export interface FrameState {
   /** Steps taken this frame (0: no motion to stretch along). */
   steps: number;
   compare: { state: GPUBuffer; n: number; origin: V3 } | null;
+  /** Slice: the cutting plane and its section, drawn in place. */
+  slice?: SliceDraw | null;
 }
 
 const lin = (c: Rgb): [number, number, number] => [srgbToLinear(c[0]), srgbToLinear(c[1]), srgbToLinear(c[2])];
@@ -123,6 +132,7 @@ export class ChaosView {
     readonly markers: Instances,
     private readonly densityLut: GPUTextureView,
     private readonly ballLut: GPUTextureView,
+    private readonly slicePlane: SlicePlane,
   ) {
     this.view3d = view3d;
     this.depth = new DepthTarget(device, DEPTH_FORMAT);
@@ -131,7 +141,7 @@ export class ChaosView {
 
   static async create(device: GPUDevice): Promise<ChaosView> {
     const view3d = new View3D(device);
-    const [env, exposure, ballLight, densityPts, ballPts, tracks, ghost, markers] = await Promise.all([
+    const [env, exposure, ballLight, densityPts, ballPts, tracks, ghost, markers, slicePlane] = await Promise.all([
       Environment.create(device, view3d, { ...STUDIO_DARK, glow: 0.5, glowRadius: 0.5 }, { depthFormat: DEPTH_FORMAT }),
       Accumulator.create(device, { mode: "ema", depthFormat: DEPTH_FORMAT }),
       Accumulator.create(device, { mode: "frame", depthFormat: DEPTH_FORMAT }),
@@ -146,6 +156,7 @@ export class ChaosView {
         label: "fixed-points",
         depthFormat: DEPTH_FORMAT,
       }),
+      SlicePlane.create(device, view3d),
     ]);
     const densityLut = paletteTexture(device, DENSITY_STOPS, "density-palette").createView();
     const ballLut = paletteTexture(device, BALL_STOPS, "ball-palette").createView();
@@ -163,6 +174,7 @@ export class ChaosView {
       markers,
       densityLut,
       ballLut,
+      slicePlane,
     );
   }
 
@@ -335,6 +347,7 @@ export class ChaosView {
     this.ghost.look = { ...this.ghost.look, width: 1.8 * pxScale, fade: 0.8, depthNear: 2, depthFar: 5, depthMin: 0.5, energy: 1 };
     if (L.showTracks && f.ensemble) this.tracks.draw(b);
     this.ghost.draw(b);
+    if (f.slice) this.slicePlane.draw(b, f.slice, L.sliceSheet, L.sliceLayers);
     b.end();
   }
 

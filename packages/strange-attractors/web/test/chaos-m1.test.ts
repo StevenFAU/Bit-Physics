@@ -94,7 +94,8 @@ describe("Buy More Digits line", () => {
 
 describe("Prove budgets ≡ tolerance.toml", () => {
   it("budgets.ts declares exactly what tolerance.toml declares", () => {
-    const sec = /\[golden_tolerance\.closed-form\.strange-attractors-lyapunov\]\n([\s\S]*?)(?:\n\n|\n#|$)/.exec(tolerance);
+    // the section runs to the next table header; its comment lines are skipped below
+    const sec = /\[golden_tolerance\.closed-form\.strange-attractors-lyapunov\]\n([\s\S]*?)(?=\n\[|$)/.exec(tolerance);
     expect(sec).not.toBeNull();
     const kv = Object.fromEntries(
       sec![1]!
@@ -109,5 +110,9 @@ describe("Prove budgets ≡ tolerance.toml", () => {
     expect(kv["sum_rel"]).toBe(BUDGET.sumRel);
     expect(kv["invariant_tv"]).toBe(BUDGET.invariantTv);
     expect(kv["averaging_time"]).toBe(LYAP_T);
+    expect(kv["road_chaos_tv"]).toBe(BUDGET.roadTv);
+    expect(kv["road_orbit_tv"]).toBe(BUDGET.roadOrbitTv);
+    expect(kv["map_tv"]).toBe(BUDGET.mapTv);
+    expect(kv["section_tv"]).toBe(BUDGET.sectionTv);
   });
 });

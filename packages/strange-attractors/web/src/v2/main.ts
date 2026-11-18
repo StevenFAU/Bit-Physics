@@ -26,6 +26,10 @@ import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusiv
 import { App, SIZES } from "./app.js";
 import { sci } from "./format.js";
 import { buildDigitsPanel } from "./digits-panel.js";
+import { Bifurcation, BIF_WARM_STEPS } from "./model/bifurcation.js";
+import { ROAD_RANGES, buildMapPanel, buildRoadPanel, buildSlicePanel } from "./obs-panels.js";
+import { HistView } from "./render/hist-view.js";
+import { OBS_BINS } from "./model/ensemble.js";
 import { buildLearn } from "./learn.js";
 import { ChaosKernels } from "./model/ensemble.js";
 import type { LorenzParams } from "./model/lorenz.js";
@@ -48,11 +52,14 @@ const url = new UrlState(
     d: { kind: "int", def: -1, min: -1, max: DIGITS_MAX },
     // the system, written only where it differs from the scene's (−1 = the scene's value)
     sig: { kind: "num", def: -1, min: -1, max: 30, digits: 3 },
-    rho: { kind: "num", def: -1, min: -1, max: 200, digits: 3 },
+    // up to the Road to Chaos diagram's own range (ρ 20–250)
+    rho: { kind: "num", def: -1, min: -1, max: 250, digits: 3 },
     beta: { kind: "num", def: -1, min: -1, max: 5, digits: 4 },
     // clock speed, written only where it differs from the scene's (−1 = the scene's)
     sp: { kind: "num", def: -1, min: -1, max: 8 },
     fol: { kind: "int", def: 0, min: 0, max: 1 },
+    // Road to Chaos's range of ρ
+    rr: { kind: "enum", def: "all", values: ROAD_RANGES.map((r) => r.id) },
     cam: { kind: "nums", def: [-99, -99, -1], n: 3, digits: 3 },
   },
   1,
@@ -153,12 +160,14 @@ async function boot(): Promise<void> {
 
   // Prove works from the gate alone; the live checks wait for the kernels.
   let kernels: ChaosKernels | null = null;
+  let bifPipeline: GPUComputePipeline | null = null;
   let app: App | null = null;
   const prove = buildProve(studio.drawer.prove, {
     adapter: gpu.adapterId,
     device,
     gate,
     kernels: () => kernels,
+    bifPipe: () => bifPipeline,
     hold: (on) => {
       if (held.governor) held.governor.suspended = on;
       if (app) app.busy = on;
@@ -182,10 +191,18 @@ async function boot(): Promise<void> {
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   held.governor = governor;
   studio.veil.step("Compiling the ensemble");
-  const [k, view] = await Promise.all([ChaosKernels.create(device), ChaosView.create(device)]);
+  const [k, view, bifPipe, roadView, mapView, sliceView] = await Promise.all([
+    ChaosKernels.create(device),
+    ChaosView.create(device),
+    Bifurcation.pipeline(device),
+    HistView.create(device, "inferno", "road"),
+    HistView.create(device, "magma", "map"),
+    HistView.create(device, "magma", "slice"),
+  ]);
   kernels = k;
+  bifPipeline = bifPipe;
   while (isCapturing()) await wait(50);
-  const a = new App(gpu, studio, hdr, view, k, tier);
+  const a = new App(gpu, studio, hdr, view, k, tier, bifPipe);
   app = a;
   a.profiler = profiler;
   a.governor = governor;
@@ -207,6 +224,7 @@ async function boot(): Promise<void> {
       beta: or(p.beta, d.beta),
       sp: a.clock.speed === a.scene.speed ? -1 : a.clock.speed,
       fol: a.follow ? 1 : 0,
+      rr: a.roadRange.id,
       cam: [a.camera.yaw, a.camera.pitch, a.camera.distance].map((x) => Number(x.toFixed(3))),
     };
   };
@@ -319,6 +337,63 @@ async function boot(): Promise<void> {
   });
   digits.el.hidden = true;
   studio.stage.append(digits.el);
+
+  // ------------------------------------- Road to Chaos, Lorenz's Map, Slice --
+  roadView.setSource({ counts: a.bif.counts, totals: a.bif.totals, w: a.bif.cols, h: a.bif.bins, perColumn: true });
+  roadView.look = { scale: 0.08, gamma: 0.85, floor: 0.28 };
+  mapView.setSource({ counts: a.chaos.mapCounts, totals: a.chaos.mapTotal, w: OBS_BINS, h: OBS_BINS, perColumn: false });
+  sliceView.setSource({ counts: a.chaos.sliceCounts, totals: a.chaos.sliceTotal, w: OBS_BINS, h: OBS_BINS, perColumn: false });
+  const road = buildRoadPanel(roadView, {
+    pick: (rho) => a.setParams({ ...a.chaos.params, rho }),
+    range: (r) => {
+      a.setRoadRange(r);
+      road.setRange(r);
+      a.writeUrl();
+    },
+  });
+  const map = buildMapPanel(mapView);
+  const slice = buildSlicePanel(sliceView, { plane: (z) => a.setPlane(z) });
+  for (const p of [road, map, slice]) {
+    p.el.hidden = true;
+    studio.stage.append(p.el);
+  }
+  const panelFor = { road, map, slice } as const;
+  let obsT0 = 0;
+  let lastOverlay = 0;
+  const encodePanels = (enc: GPUCommandEncoder, n: number): void => {
+    const id = a.scene.panel;
+    if (id === "road") roadView.encode(enc);
+    if (id === "map") {
+      mapView.encode(enc);
+      map.advance(a.chaos.params, n);
+    }
+    if (id === "slice") sliceView.encode(enc);
+    const now = performance.now();
+    if (now - lastOverlay < 66 || (id !== "road" && id !== "map" && id !== "slice")) return;
+    lastOverlay = now;
+    const tObs = Math.max(0, (a.chaos.steps - obsT0) * a.chaos.dt);
+    if (id === "road") {
+      const t = a.bif.steps * a.chaos.dt;
+      road.setStatus(
+        a.bif.warming
+          ? `Letting ${a.bif.n.toLocaleString()} trajectories settle: ${t.toFixed(0)} of ${(BIF_WARM_STEPS * a.chaos.dt).toFixed(0)} time units`
+          : `${a.bif.cols.toLocaleString()} values of ρ × ${a.bif.per} trajectories, ${(t - BIF_WARM_STEPS * a.chaos.dt).toFixed(0)} time units of peaks`,
+      );
+      road.draw();
+    } else if (id === "map") {
+      map.setStatus(a.obsBox ? `${a.chaos.density.n.toLocaleString()} points on the attractor, ${tObs.toFixed(0)} time units of peaks` : "No peaks: at this ρ the motion settles on a fixed point.");
+      map.draw();
+    } else {
+      slice.setStatus(a.obsBox ? `Crossings of z = ${a.plane.toFixed(1)} going up, ${tObs.toFixed(0)} time units` : "No crossings: at this ρ the motion settles on a fixed point.");
+      slice.draw();
+    }
+  };
+  const observePanels = (box: { mapLo: number; mapHi: number; plane: number; box: [number, number, number, number] } | null): void => {
+    obsT0 = a.chaos.steps;
+    if (!box) return;
+    map.setBox(box.mapLo, box.mapHi);
+    slice.setBox(box.box, box.plane, [Math.max(a.chaos.params.rho * 0.15, 1), a.chaos.params.rho * 1.75]);
+  };
   // ------------------------------------------------- shell wiring --
   studio.heading.setScenes(
     SCENES.map((s) => ({ id: s.id, title: s.title })),
@@ -392,7 +467,13 @@ async function boot(): Promise<void> {
   studio.key("T", "Tune", () => studio.tune.toggle());
 
   a.hooks = {
+    onEncode: encodePanels,
+    onObserve: observePanels,
     onSceneChange: (scene) => {
+      for (const [id, p] of Object.entries(panelFor)) p.el.hidden = scene.panel !== id;
+      road.setRange(a.roadRange);
+      road.setRho(a.chaos.params.rho);
+      map.restartTracer();
       studio.root.dataset["scene"] = scene.id;
       digits.el.hidden = scene.id !== "digits";
       digits.clear();
@@ -401,6 +482,8 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onParams: (p) => {
+      road.setRho(p.rho);
+      map.restartTracer();
       learn.setParams(p);
       tune.sync(p, view.look);
       syncProve();
@@ -487,6 +570,7 @@ async function boot(): Promise<void> {
     beta: pick(parsed.beta, scene.params.beta),
   };
   while (isCapturing()) await wait(50);
+  a.roadRange = ROAD_RANGES.find((r) => r.id === parsed.rr) ?? ROAD_RANGES[0]!;
   await a.loadScene(scene.id, { params, digits: parsed.d >= 0 ? Math.max(DIGITS_MIN, parsed.d) : undefined, seed: parsed.seed });
   if (parsed.cam[2]! > 0) a.camera.set({ yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]!, target: [0, 0, 0] });
   a.follow = parsed.fol === 1;
@@ -524,6 +608,7 @@ async function boot(): Promise<void> {
   (globalThis as { __chaos?: App }).__chaos = a;
   (globalThis as { __chaosProve?: typeof prove }).__chaosProve = prove;
   (globalThis as { __chaosDigits?: typeof digits }).__chaosDigits = digits;
+  (globalThis as { __chaosPanels?: unknown }).__chaosPanels = { road, map, slice };
 
   if (query.get("bench") === "1") void bench(a, profiler, rafTimes);
 }

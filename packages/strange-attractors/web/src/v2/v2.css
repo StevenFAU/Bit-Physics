@@ -147,7 +147,88 @@
   margin-top: 6px;
 }
 
+/* Road to Chaos, Lorenz's Map, Slice: a heat map with its overlay, top right */
+.cx-panel {
+  position: absolute;
+  right: var(--bp-gutter);
+  top: 72px;
+  z-index: 3;
+  width: 340px;
+  max-width: calc(100vw - 2 * var(--bp-gutter));
+  padding: 10px 12px;
+  border-radius: var(--bp-radius);
+  box-sizing: border-box;
+}
+.cx-panel-wide {
+  width: min(560px, 46vw);
+}
+.cx-panel[hidden] {
+  display: none !important;
+}
+.bp-studio.is-drawer-open .cx-panel {
+  right: calc(var(--bp-drawer-w) + 2 * var(--bp-gutter));
+}
+.bp-studio.is-chromeless .cx-panel {
+  display: none;
+}
+/* these scenes have no ball until one is released: the clock gives the corner back */
+.bp-studio[data-scene="road"] .cx-hud,
+.bp-studio[data-scene="map"] .cx-hud,
+.bp-studio[data-scene="slice"] .cx-hud {
+  display: none;
+}
+.cx-panel-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cx-panel p {
+  margin: 4px 0;
+}
+.cx-panel-status {
+  font-family: var(--bp-mono);
+  font-size: 11.5px;
+  color: var(--bp-text-dim);
+}
+.cx-panel-note {
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+.cx-panel-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 2px;
+}
+.cx-fig {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  margin: 6px 0;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+}
+.cx-panel-wide .cx-fig {
+  aspect-ratio: 2 / 1;
+}
+.cx-hist-canvas,
+.cx-hist-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cx-hist-overlay {
+  cursor: crosshair;
+  touch-action: none;
+}
+
 @media (max-width: 1099px) {
+  .bp-studio.is-drawer-open .cx-panel {
+    display: none;
+  }
   .bp-studio.is-drawer-open .cx-digits {
     display: none;
   }
@@ -161,6 +242,23 @@
   }
 }
 @media (max-width: 639px) {
+  /* phones: the scene panels go full width under the title, compact */
+  .cx-panel,
+  .cx-panel-wide {
+    top: 104px;
+    left: var(--bp-gutter);
+    width: auto;
+    padding: 8px 10px;
+  }
+  .cx-fig,
+  .cx-panel-wide .cx-fig {
+    aspect-ratio: auto;
+    height: 150px;
+  }
+  .cx-panel-title,
+  .cx-panel-note {
+    display: none;
+  }
   /* phones: the digits panel takes the clock's place, compact */
   .bp-studio[data-scene="digits"] .cx-hud {
     display: none;
@@ -222,5 +320,23 @@
   .cx-digits .bp-btn {
     font-size: 12px;
     padding: 3px 8px;
+  }
+  .cx-panel,
+  .cx-panel-wide {
+    top: 56px;
+    width: min(248px, calc(100vw - 472px));
+    padding: 6px 10px;
+  }
+  .cx-fig,
+  .cx-panel-wide .cx-fig {
+    aspect-ratio: auto;
+    /* the panel must end above the bottom rail (its top is ~128 px above the window's bottom):
+       Road to Chaos's panel is ~165 px plus its figure, from 56 px down */
+    height: clamp(48px, calc(100vh - 356px), 104px);
+  }
+  .cx-panel-title,
+  .cx-panel-note,
+  .cx-panel-status {
+    display: none;
   }
 }

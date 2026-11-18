@@ -52,6 +52,8 @@ const PATHS = {
   release: '<circle cx="7" cy="17" r="2.2"/><path d="M9 15c3-3 4-7 9-9M9.4 16.4c3.6-1.2 6.6-.6 10.6-3M8.6 14.4c.4-4 2.6-7 5.4-9.9"/>',
   ghost: '<path d="M3 17c3-6 6-9 9-9s5 3 9 1"/><path d="M3 19c3-5 6.5-7.6 9.5-7.6S17 13.5 21 13" stroke-dasharray="2.2 2.4"/>',
   orbit: '<ellipse cx="12" cy="12" rx="9" ry="4.2"/><circle cx="12" cy="12" r="2"/><path d="M18.6 9.2l2.2-1.2.4 2.4"/>',
+  // Chaos: a plane cutting through a loop
+  slice: '<path d="M3 14l6-4h12l-6 4z"/><path d="M12 3.5c3.6 0 5.5 2.6 5.5 5.6M12 20.5c-3.6 0-5.5-2.6-5.5-5.6"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;
