@@ -100,7 +100,57 @@
   margin-top: 6px;
 }
 
+/* Buy More Digits: the horizon-vs-digits panel, top right (the clock keeps the bottom right) */
+.cx-digits {
+  position: absolute;
+  right: var(--bp-gutter);
+  top: 72px;
+  z-index: 3;
+  width: 340px;
+  max-width: calc(100vw - 2 * var(--bp-gutter));
+  padding: 10px 12px;
+  border-radius: var(--bp-radius);
+  box-sizing: border-box;
+}
+.cx-digits[hidden] {
+  display: none !important;
+}
+.bp-studio.is-drawer-open .cx-digits {
+  right: calc(var(--bp-drawer-w) + 2 * var(--bp-gutter));
+}
+.bp-studio.is-chromeless .cx-digits {
+  display: none;
+}
+.cx-digits-title {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.cx-digits p {
+  margin: 4px 0;
+}
+.cx-digits-status {
+  font-family: var(--bp-mono);
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+.cx-digits-result {
+  font-size: 12.5px;
+}
+.cx-digits .bp-plot {
+  margin: 4px 0;
+}
+.cx-digits-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
 @media (max-width: 1099px) {
+  .bp-studio.is-drawer-open .cx-digits {
+    display: none;
+  }
   .bp-studio.is-drawer-open .cx-hud {
     display: none;
   }
@@ -111,6 +161,23 @@
   }
 }
 @media (max-width: 639px) {
+  /* phones: the digits panel takes the clock's place, compact */
+  .bp-studio[data-scene="digits"] .cx-hud {
+    display: none;
+  }
+  .cx-digits {
+    top: 104px;
+    width: auto;
+    left: var(--bp-gutter);
+    padding: 8px 10px;
+  }
+  .cx-digits .bp-plot-canvas {
+    height: 84px !important;
+  }
+  .cx-digits-title,
+  .cx-digits-result {
+    display: none;
+  }
   /* phones: the clock goes to the top right, under the title row */
   .cx-hud {
     top: 104px;
@@ -129,5 +196,31 @@
   .cx-hud {
     top: 56px;
     bottom: auto;
+  }
+  .bp-studio[data-scene="digits"] .cx-hud {
+    display: none;
+  }
+  /* short windows (200% zoom): the rail is a bottom row with the options strip above it, so the
+     panel goes compact, top right, narrow enough to clear the options strip */
+  .cx-digits {
+    top: 56px;
+    /* clear of the options strip and the rail (up to ~455 px from the left at 720 px wide) */
+    width: min(248px, calc(100vw - 472px));
+    padding: 6px 10px;
+  }
+  .cx-digits .bp-plot-canvas {
+    height: 64px !important;
+  }
+  .cx-digits-title,
+  .cx-digits-status,
+  .cx-digits .bp-plot-title {
+    display: none;
+  }
+  .cx-digits-result {
+    font-size: 11.5px;
+  }
+  .cx-digits .bp-btn {
+    font-size: 12px;
+    padding: 3px 8px;
   }
 }

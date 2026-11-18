@@ -7,6 +7,8 @@
 import type { PassTiming } from "@bp/gpu";
 import { h, plotPanel, readout } from "@bp/studio";
 import type { LorenzParams } from "./model/lorenz.js";
+import type { LyapunovEstimate } from "./model/lyapunov.js";
+import { kaplanYorke, traceOf } from "./model/lyapunov.js";
 import { sci } from "./format.js";
 import { REPO_BLOB } from "./proof/gate.js";
 import type { SceneDef } from "./scenes.js";
@@ -22,6 +24,8 @@ export interface LearnPane {
   resetSpread(eps: number, threshold: number): void;
   pushSpread(t: number, spread: number): void;
   setHorizon(t: number | null): void;
+  /** The live f64 Lyapunov estimate. */
+  pushLyapunov(e: LyapunovEstimate, p: LorenzParams): void;
   setStats(rows: [string, string][]): void;
   setPerf(rows: [string, string][], passes: PassTiming[], source: string): void;
 }
@@ -61,6 +65,28 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       "On a log scale, steady exponential growth is a straight line. Its slope is the largest Lyapunov exponent, λ₁ ≈ 0.906 for these parameters: " +
         "every 2.5 time units the ball is ten times wider. It stops growing when it covers the attractor.",
     ),
+  );
+
+  // λ₁, measured as you watch
+  const lyapPlot = plotPanel({
+    title: "λ₁, measured as you watch (Benettin, f64)",
+    xLabel: "time averaged",
+    yLabel: "λ₁",
+    height: 130,
+    formatX: (v) => v.toFixed(0),
+    formatY: (v) => v.toFixed(2),
+  });
+  const spectrum = readout("The Lyapunov spectrum");
+  pane.append(
+    h("h2", {}, "How chaotic"),
+    h(
+      "p",
+      {},
+      "Three tangent vectors ride along one trajectory and are pulled apart by the flow; every tenth of a time unit they are straightened out again and their growth logged. " +
+        "The average growth rates are the Lyapunov exponents: λ₁ > 0 is chaos, λ₂ = 0 is the direction of motion, λ₃ < 0 squeezes everything onto the attractor. The band is two standard errors.",
+    ),
+    lyapPlot.el,
+    spectrum.el,
   );
 
   // how it works, three depths
@@ -154,6 +180,8 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ),
   );
 
+  const lyap: { t: number[]; l: number[]; lo: number[]; hi: number[] } = { t: [], l: [], lo: [], hi: [] };
+  let lyapDrawn = 0;
   let series: { x: number[]; y: number[] } = { x: [], y: [] };
   let threshold = 1;
   let lastDraw = 0;
@@ -165,7 +193,10 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   return {
     setScene(scene) {
       seeing.textContent =
-        scene.id === "butterfly"
+        scene.id === "digits"
+          ? "Each ball starts at the same point; each extra digit of precision makes it ten times smaller. Watch how long each one stays a single point, then plot that time against the digits: " +
+            "the points fall on a straight line. Its slope — time bought per digit — is ln 10 divided by the largest Lyapunov exponent, so you can measure the exponent by clicking."
+          : scene.id === "butterfly"
           ? "The Lorenz attractor as a long exposure — half a million points already on it, brighter where the flow is fast. " +
             "Then a ball of a million starting points, a millionth wide, is released onto it. It moves as one bright point, stretches into a thread, folds, " +
             "and spreads over both wings: after that, where it started tells you nothing. Click anywhere on the attractor to release another."
@@ -201,6 +232,40 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       horizonT = t;
       if (t !== null) horizon.textContent = `Predictability lost at t = ${t.toFixed(1)}: the ball has spread over half the attractor.`;
       draw();
+    },
+    pushLyapunov(e, p) {
+      if (e.t <= 0) {
+        lyap.t.length = lyap.l.length = lyap.lo.length = lyap.hi.length = 0;
+        return;
+      }
+      if (lyap.t.length && e.t < lyap.t[lyap.t.length - 1]!) lyap.t.length = lyap.l.length = lyap.lo.length = lyap.hi.length = 0;
+      const band = Number.isFinite(e.se[0]) ? 2 * e.se[0] : 0;
+      lyap.t.push(e.t);
+      lyap.l.push(e.lambdas[0]);
+      lyap.lo.push(e.lambdas[0] - band);
+      lyap.hi.push(e.lambdas[0] + band);
+      if (lyap.t.length > 600) for (const a of [lyap.t, lyap.l, lyap.lo, lyap.hi]) a.splice(0, a.length - 600);
+      const now = performance.now();
+      if (now - lyapDrawn > 1000) {
+        lyapDrawn = now;
+        const dim = "rgba(160,170,190,0.55)";
+        lyapPlot.set([
+          { x: lyap.t, y: lyap.lo, color: dim },
+          { x: lyap.t, y: lyap.hi, color: dim },
+          { x: lyap.t, y: lyap.l, label: "λ₁" },
+        ]);
+      }
+      const tr = traceOf(p);
+      const sum = e.lambdas[0] + e.lambdas[1] + e.lambdas[2];
+      const pm = (i: 0 | 1 | 2, d: number): string => `${e.lambdas[i].toFixed(d)}${Number.isFinite(e.se[i]) ? ` ± ${(2 * e.se[i]).toFixed(d)}` : ""}`;
+      spectrum.set([
+        ["λ₁ (stretching)", pm(0, 3)],
+        ["λ₂ (along the flow)", pm(1, 3)],
+        ["λ₃ (squeezing)", pm(2, 2)],
+        ["λ₁ + λ₂ + λ₃", `${sum.toFixed(4)} (exact: −(σ + 1 + β) = ${tr.toFixed(4)})`],
+        ["Kaplan–Yorke dimension", `${kaplanYorke(e.lambdas).toFixed(3)} — a little more than a surface`],
+        ["Time averaged", `${Math.round(e.t).toLocaleString()} time units`],
+      ]);
     },
     setStats(rows) {
       stats.set(rows);

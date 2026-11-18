@@ -25,6 +25,7 @@ import { PerfOverlay, createStudio, h, showNoWebGPU } from "@bp/studio";
 import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusive } from "@bp/verify";
 import { App, SIZES } from "./app.js";
 import { sci } from "./format.js";
+import { buildDigitsPanel } from "./digits-panel.js";
 import { buildLearn } from "./learn.js";
 import { ChaosKernels } from "./model/ensemble.js";
 import type { LorenzParams } from "./model/lorenz.js";
@@ -49,7 +50,8 @@ const url = new UrlState(
     sig: { kind: "num", def: -1, min: -1, max: 30, digits: 3 },
     rho: { kind: "num", def: -1, min: -1, max: 200, digits: 3 },
     beta: { kind: "num", def: -1, min: -1, max: 5, digits: 4 },
-    sp: { kind: "num", def: 1, min: 0.25, max: 8 },
+    // clock speed, written only where it differs from the scene's (−1 = the scene's)
+    sp: { kind: "num", def: -1, min: -1, max: 8 },
     fol: { kind: "int", def: 0, min: 0, max: 1 },
     cam: { kind: "nums", def: [-99, -99, -1], n: 3, digits: 3 },
   },
@@ -203,7 +205,7 @@ async function boot(): Promise<void> {
       sig: or(p.sigma, d.sigma),
       rho: or(p.rho, d.rho),
       beta: or(p.beta, d.beta),
-      sp: a.clock.speed,
+      sp: a.clock.speed === a.scene.speed ? -1 : a.clock.speed,
       fol: a.follow ? 1 : 0,
       cam: [a.camera.yaw, a.camera.pitch, a.camera.distance].map((x) => Number(x.toFixed(3))),
     };
@@ -262,21 +264,61 @@ async function boot(): Promise<void> {
   };
 
   // ------------------------------------------------------- callouts --
+  // The ball's captions follow its centroid through four stages. They share
+  // one spot, so a stage's caption waits until the last one has faded out
+  // (the shell fades callouts over 600 ms) instead of crossfading over it.
   const centre = (): [number, number] | null => (a.chaos.released ? a.screenOf(a.lastSpread?.centre ?? a.chaos.ref.x) : null);
   const spreadRatio = (): number => (a.lastSpread?.spread ?? 0) / a.attractorSize;
+  const stageNow = (): number => {
+    if (!a.chaos.released) return -1;
+    if (a.horizonT !== null) return a.chaos.tSinceRelease < a.horizonT + 6 ? 3 : -1;
+    const r = spreadRatio();
+    if (r < 2e-4) return a.chaos.tSinceRelease > 0.3 ? 0 : -1;
+    return r < 0.03 ? 1 : 2;
+  };
+  const CAPTION_FADE_MS = 650;
+  let shownStage = -1;
+  let stageSince = 0;
+  let lastStage = -1;
+  const captionShown = (k: number): boolean => {
+    const now = performance.now();
+    const st = stageNow();
+    if (st !== lastStage) {
+      lastStage = st;
+      stageSince = now;
+    }
+    // a new stage takes the spot only once the old caption has had time to fade
+    if (st !== shownStage && now - stageSince >= (shownStage < 0 ? 0 : CAPTION_FADE_MS)) shownStage = st;
+    return shownStage === k && st === k;
+  };
   studio.callouts.set([
-    { id: "one-point", text: "a million starts, one point", style: "label", anchor: centre, when: () => a.chaos.released && spreadRatio() < 2e-4 && a.chaos.tSinceRelease > 0.3 },
-    { id: "stretching", text: "stretching", style: "label", anchor: centre, when: () => spreadRatio() >= 2e-4 && spreadRatio() < 0.03 },
-    { id: "folding", text: "folding", style: "label", anchor: centre, when: () => spreadRatio() >= 0.03 && a.horizonT === null },
-    {
-      id: "forgotten",
-      text: "the cloud has forgotten where it came from",
-      style: "label",
-      anchor: centre,
-      when: () => a.horizonT !== null && a.chaos.tSinceRelease < a.horizonT + 6,
-    },
+    { id: "one-point", text: "a million starts, one point", style: "label", anchor: centre, when: () => captionShown(0) },
+    { id: "stretching", text: "stretching", style: "label", anchor: centre, when: () => captionShown(1) },
+    { id: "folding", text: "folding", style: "label", anchor: centre, when: () => captionShown(2) },
+    { id: "forgotten", text: "the cloud has forgotten where it came from", style: "label", anchor: centre, when: () => captionShown(3) },
   ]);
 
+  // ------------------------------------------------- Buy More Digits --
+  const digits = buildDigitsPanel({
+    buy: (d) => {
+      a.digits = d;
+      a.requestRelease(a.releasePoint);
+    },
+    measureAll: async (from, to, onPoint) => {
+      const p = [...a.releasePoint] as [number, number, number];
+      for (let d = from; d <= to; d += 1) {
+        const r = await a.measureHorizon(d, p, 80);
+        if (r.horizon !== null) onPoint({ digits: d, horizon: r.horizon });
+      }
+      a.digits = to;
+    },
+    restart: () => {
+      digits.clear();
+      void a.loadScene("digits").then(() => a.writeUrl());
+    },
+  });
+  digits.el.hidden = true;
+  studio.stage.append(digits.el);
   // ------------------------------------------------- shell wiring --
   studio.heading.setScenes(
     SCENES.map((s) => ({ id: s.id, title: s.title })),
@@ -297,7 +339,7 @@ async function boot(): Promise<void> {
     save: () => a.savePoint(),
     restore: () => a.restoreSave(),
     compare: () => a.toggleCompare(),
-    undo: () => a.undo(),
+    undo: () => void a.undo(),
   };
   studio.transport.onStatus = () => studio.drawer.open("learn");
   studio.drawer.onChange = ((orig) => (open: boolean, tab: "learn" | "prove") => {
@@ -346,11 +388,15 @@ async function boot(): Promise<void> {
   studio.key("B", "Release again", () => a.requestRelease(a.releasePoint));
   studio.key("S", "Save point", () => a.savePoint());
   studio.key("C", "Compare with the save point", () => a.toggleCompare());
-  studio.key("Z", "Undo", () => a.undo());
+  studio.key("Z", "Undo", () => void a.undo());
   studio.key("T", "Tune", () => studio.tune.toggle());
 
   a.hooks = {
     onSceneChange: (scene) => {
+      studio.root.dataset["scene"] = scene.id;
+      digits.el.hidden = scene.id !== "digits";
+      digits.clear();
+      digits.setCurrent(scene.digits, null);
       learn.setScene(scene);
       syncProve();
     },
@@ -362,10 +408,28 @@ async function boot(): Promise<void> {
     },
     onRelease: (eps, thr) => {
       learn.resetSpread(eps, thr);
+      if (a.scene.id === "digits") digits.setCurrent(a.ballDigits, null);
       syncProve();
     },
     onSpread: (s) => learn.pushSpread(s.t, s.spread),
-    onHorizon: (t) => learn.setHorizon(t),
+    onRestore: () => {
+      // the ball (and its precision) and its horizon are the checkpoint's now
+      if (a.chaos.released) learn.resetSpread(a.chaos.eps, a.horizonThreshold);
+      learn.setHorizon(a.horizonT);
+      if (a.scene.id === "digits") digits.setCurrent(a.ballDigits, a.horizonT);
+      syncProve();
+    },
+    onHorizon: (t) => {
+      learn.setHorizon(t);
+      if (a.scene.id === "digits") {
+        digits.setCurrent(a.ballDigits, t);
+        if (t !== null) digits.add({ digits: a.ballDigits, horizon: t });
+      }
+    },
+    onLyapunov: (e) => {
+      learn.pushLyapunov(e, a.chaos.params);
+      if (e.t >= 200) digits.setLambda(e.lambdas[0]);
+    },
   };
 
   // Learn: stats and performance, about once a second while it is open
@@ -427,7 +491,7 @@ async function boot(): Promise<void> {
   if (parsed.cam[2]! > 0) a.camera.set({ yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]!, target: [0, 0, 0] });
   a.follow = parsed.fol === 1;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  a.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
+  a.setSpeed(parsed.sp > 0 ? parsed.sp : reduced ? scene.speed * 0.5 : scene.speed);
   tune.sync(a.chaos.params, view.look);
   studio.veil.done();
   a.start();
@@ -459,6 +523,7 @@ async function boot(): Promise<void> {
   });
   (globalThis as { __chaos?: App }).__chaos = a;
   (globalThis as { __chaosProve?: typeof prove }).__chaosProve = prove;
+  (globalThis as { __chaosDigits?: typeof digits }).__chaosDigits = digits;
 
   if (query.get("bench") === "1") void bench(a, profiler, rafTimes);
 }

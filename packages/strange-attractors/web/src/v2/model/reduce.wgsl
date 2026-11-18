@@ -2,7 +2,7 @@
 // finished in f64 on the CPU.
 
 struct Reduce {
-  // x = particles, y = particles per workgroup
+  // x = particles, y = particles per workgroup, z = where this sample's partials start
   n: vec4<u32>,
 };
 
@@ -33,6 +33,6 @@ fn reduce(@builtin(local_invocation_id) lid: vec3<u32>, @builtin(workgroup_id) w
     workgroupBarrier();
   }
   if (lid.x == 0u) {
-    partial[wid.x] = acc[0];
+    partial[D.n.z + wid.x] = acc[0];
   }
 }
