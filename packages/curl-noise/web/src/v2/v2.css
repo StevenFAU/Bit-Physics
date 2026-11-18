@@ -1,0 +1,122 @@
+/* Flow Sculpture — page styles on top of @bp/studio (fs- namespace). */
+
+:root {
+  --sim-bg: #0c0a09;
+  --sim-key: #f3e7d3;
+  --sim-accent: #e9b98a;
+}
+
+.fs-options {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.fs-opt-label {
+  font-size: 12px;
+  color: var(--bp-text-dim);
+}
+
+/* the guarantee, in the corner */
+.fs-hud {
+  position: absolute;
+  right: var(--bp-gutter);
+  bottom: 80px;
+  z-index: 3;
+  max-width: 340px;
+  padding: 10px 14px;
+  border-radius: var(--bp-radius);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.bp-studio.is-drawer-open .fs-hud {
+  right: calc(var(--bp-drawer-w) + 2 * var(--bp-gutter));
+}
+.fs-hud p {
+  margin: 0;
+}
+.fs-hud-main {
+  font-family: var(--bp-mono);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  color: var(--bp-text);
+}
+.fs-hud-sub {
+  margin-top: 3px !important;
+  font-size: 11.5px;
+  color: var(--bp-text-dim);
+}
+.bp-studio.is-chromeless .fs-hud {
+  display: none;
+}
+
+.fs-lede {
+  font-size: 15px;
+  line-height: 1.5;
+}
+.fs-note {
+  font-size: 12.5px;
+  color: var(--bp-text-dim);
+}
+.fs-math {
+  font-size: 16px;
+  margin: 8px 0;
+}
+.fs-detail summary {
+  cursor: pointer;
+}
+.fs-limits {
+  padding-left: 18px;
+  font-size: 13px;
+}
+.fs-residual {
+  font-family: var(--bp-mono);
+  font-size: 12.5px;
+}
+.fs-onscreen {
+  font-size: 12.5px;
+  color: var(--bp-text-dim);
+}
+.fs-tune-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 6px;
+}
+.fs-capture-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+@media (max-width: 1099px) {
+  .bp-studio.is-drawer-open .fs-hud {
+    display: none;
+  }
+}
+@media (max-width: 899px) {
+  .fs-hud {
+    max-width: 236px;
+  }
+}
+@media (max-width: 639px) {
+  /* phones: the readout goes to the top right, under the title row */
+  .fs-hud {
+    top: 104px;
+    bottom: auto;
+    max-width: calc(100vw - 2 * var(--bp-gutter));
+    padding: 6px 10px;
+  }
+  .fs-hud-main {
+    font-size: 12.5px;
+  }
+  .fs-hud-sub {
+    display: none;
+  }
+}
+@media (min-width: 640px) and (max-height: 620px) {
+  .fs-hud {
+    top: 56px;
+    bottom: auto;
+  }
+}

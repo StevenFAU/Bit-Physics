@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — curl-noise (Bridson 2007 + the divergence-free-noise frontier). Grid-free analytic per-tracer field with exact-integer-hash simplex noise, persistence-trail render stack, 13 templates incl. a break-the-certificate anti-demo, and a verification-visible PROVE layer (Phase-6 verification-demo track).",
+  "description": "Stack-B WebGPU web build — curl-noise: the v1 page (Bridson 2007 + the divergence-free-noise frontier, exact-integer-hash simplex noise, persistence trails, 13 templates, PROVE layer) and the v2 Flow Sculpture page (Field Studies shell: the gated sphere field in Silk, F3 3D layer), each with the capture-export hook.",
   "scripts": {
     "gen": "node gen-verification.mjs",
     "prebuild": "node gen-verification.mjs",
@@ -12,6 +12,13 @@
     "dev": "vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
   },
   "devDependencies": {
     "@webgpu/types": "0.1.70",
