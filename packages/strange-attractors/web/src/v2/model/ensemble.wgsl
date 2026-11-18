@@ -117,3 +117,89 @@ fn ensemble_step(@builtin(global_invocation_id) id: vec3<u32>) {
   }
   state[i] = vec4<f32>(e, q.w);
 }
+
+// ---- observing the attractor (Lorenz's Map, Slice) ----------------------
+// density_step with eyes: the same steps (the same `rk4`, so the same
+// position bytes), and along the way each point records
+//   * Lorenz's map: successive z peaks (z_n, z_{n+1}) — a peak is a sample
+//     above both neighbours, refined by the parabola through the three;
+//   * the slice: where it crosses the plane z = h going up (linear in the step).
+// Each goes into a histogram with atomic counts, and a total.
+
+struct Obs {
+  // x, y = the map's z range [lo, hi); z = the plane's height h
+  map: vec4<f32>,
+  // the slice's (x, y) box: x0, x1, y0, y1
+  slice: vec4<f32>,
+  // map bins per side, slice bins per side, flags (1 = map, 2 = slice), unused
+  dims: vec4<u32>,
+};
+
+@group(0) @binding(5) var<uniform> O: Obs;
+// per point: the last two z samples, the last peak (0 = none yet), samples seen
+@group(0) @binding(6) var<storage, read_write> aux: array<vec4<f32>>;
+@group(0) @binding(7) var<storage, read_write> map_counts: array<atomic<u32>>;
+@group(0) @binding(8) var<storage, read_write> slice_counts: array<atomic<u32>>;
+@group(0) @binding(9) var<storage, read_write> map_total: array<atomic<u32>>;
+@group(0) @binding(10) var<storage, read_write> slice_total: array<atomic<u32>>;
+
+fn bin_of(v: f32, lo: f32, hi: f32, n: u32) -> i32 {
+  return i32(floor((v - lo) / (hi - lo) * f32(n)));
+}
+
+@compute @workgroup_size(256)
+fn density_observe(@builtin(global_invocation_id) id: vec3<u32>) {
+  let i = id.x;
+  if (i >= P.n) {
+    return;
+  }
+  let q = state[i];
+  prev[i] = q;
+  var s = q.xyz;
+  let a = aux[i];
+  var z0 = a.x;
+  var z1 = a.y;
+  var last = a.z;
+  var seen = a.w;
+  let mapOn = (O.dims.z & 1u) != 0u;
+  let sliceOn = (O.dims.z & 2u) != 0u;
+  let h = O.map.z;
+  let mb = O.dims.x;
+  let sb = O.dims.y;
+  for (var k: u32 = 0u; k < P.steps; k = k + 1u) {
+    let sp = s;
+    s = rk4(s);
+    if (sliceOn && sp.z < h && s.z >= h) {
+      let t = (h - sp.z) / (s.z - sp.z);
+      let c = sp.xy + (s.xy - sp.xy) * t;
+      let bx = bin_of(c.x, O.slice.x, O.slice.y, sb);
+      let by = bin_of(c.y, O.slice.z, O.slice.w, sb);
+      if (bx >= 0 && by >= 0 && bx < i32(sb) && by < i32(sb)) {
+        atomicAdd(&slice_counts[u32(by) * sb + u32(bx)], 1u);
+        atomicAdd(&slice_total[0], 1u);
+      }
+    }
+    let z2 = s.z;
+    if (mapOn && seen >= 2.0 && z1 > z0 && z1 >= z2) {
+      let d = z0 - 2.0 * z1 + z2;
+      var zp = z1;
+      if (d < 0.0) {
+        zp = z1 - (z2 - z0) * (z2 - z0) / (8.0 * d);
+      }
+      if (last > 0.0) {
+        let bx = bin_of(last, O.map.x, O.map.y, mb);
+        let by = bin_of(zp, O.map.x, O.map.y, mb);
+        if (bx >= 0 && by >= 0 && bx < i32(mb) && by < i32(mb)) {
+          atomicAdd(&map_counts[u32(by) * mb + u32(bx)], 1u);
+          atomicAdd(&map_total[0], 1u);
+        }
+      }
+      last = zp;
+    }
+    z0 = z1;
+    z1 = z2;
+    seen = min(seen + 1.0, 3.0);
+  }
+  state[i] = vec4<f32>(s, clamp(length(field(s)) * P.inv_speed, 0.0, 1.0));
+  aux[i] = vec4<f32>(z0, z1, last, seen);
+}

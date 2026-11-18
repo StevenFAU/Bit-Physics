@@ -13,6 +13,8 @@ import type { LyapunovEstimate } from "../model/lyapunov.js";
 import { kaplanYorke, lyapunovSpectrum, traceOf } from "../model/lyapunov.js";
 import { CLASSIC_BOX, histogramXZ, referenceRun, tvDistance } from "../model/measure.js";
 import { BUDGET, LYAP_T, SPROTT } from "./budgets.js";
+import type { PictureCheck, RoadCheck } from "./m2-proofs.js";
+import { ROAD_TEST_RHOS, mapCheck, roadCheck, sectionCheck } from "./m2-proofs.js";
 import type { GateCheck, GateRunner } from "./gate.js";
 import { CANONICAL_IC, CAPTURE_INTERVAL, N_STEPS, REPO_BLOB, SEED42_OFFSET, T_STRANGE_MEAN_ABS, T_STRANGE_REL, buildCapture, checkGate } from "./gate.js";
 
@@ -24,6 +26,8 @@ export interface ProveDeps {
   gate: GateRunner;
   /** The live kernels, once compiled (null while the page is still loading). */
   kernels: () => ChaosKernels | null;
+  /** Road to Chaos's pipeline, once compiled. */
+  bifPipe: () => GPUComputePipeline | null;
   /** Suspend/resume the governor and the live loop around in-page runs. */
   hold: (on: boolean) => void;
 }
@@ -62,6 +66,8 @@ export interface ProvePane {
   runAll(): Promise<void>;
   /** The invariant-measure run with other settings (measurement, tests). */
   measureInvariant(o?: { members?: number; t0?: number; snapshots?: number; gap?: number }): Promise<InvariantCheck | null>;
+  /** M2's checks, run directly (measurement, tests). */
+  measureM2(): Promise<{ road: RoadCheck | null; map: PictureCheck | null; section: PictureCheck | null }>;
 }
 
 /** The live density kernel, one particle from the gate's start, 10,000 steps: the same bytes as the gated trajectory? */
@@ -354,6 +360,103 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     });
   }
 
+  // 8–10. the M2 pictures, against f64
+  pane.append(
+    h("h2", {}, "The pictures, checked"),
+    h(
+      "p",
+      { class: "cx-note" },
+      "Road to Chaos, Lorenz's Map and Slice are each made on this GPU in single precision, and each is made again in double precision on this machine's CPU. " +
+        "Trajectories part ways, so the comparison is of distributions: the total-variation distance between the two pictures' histograms (0 = the same, 1 = nothing in common), " +
+        "next to the distance between two double-precision pictures from different starts — the comparison's own noise.",
+    ),
+  );
+  const m2Link = { label: "checks", href: blob("packages/strange-attractors/web/src/v2/proof/m2-proofs.ts") };
+  const roadCard = proofCard(
+    {
+      title: "The road, column by column",
+      sentence:
+        `Six columns of the diagram (ρ ${ROAD_TEST_RHOS.join(", ")}): chaos, and the periodic windows near 100, 150 and above 214. ` +
+        "32 trajectories each, 60 time units to settle, then 200 of peaks — on the GPU and in f64 from the same starts. Chaotic columns are compared as distributions; a window's column is one orbit's few peaks, compared on the diagram's own fine bins.",
+      label: "reference agreement passed (not gated)",
+      action: "Run on this GPU",
+      links: [m2Link, tol],
+    },
+    () => void runRoad(),
+  );
+  const mapCard = proofCard(
+    {
+      title: "Lorenz's map, against f64",
+      sentence: "262,144 points on the attractor for 20 time units, every pair of successive z peaks binned 32 × 32, against one f64 trajectory of 40,000 time units.",
+      label: "reference agreement passed (not gated)",
+      action: "Run on this GPU",
+      links: [m2Link, tol],
+    },
+    () => void runMap(),
+  );
+  const sectionCard = proofCard(
+    {
+      title: "The section, against f64",
+      sentence: "The same points' upward crossings of z = ρ − 1 for 20 time units, binned 32 × 32, against one f64 trajectory of 80,000 time units.",
+      label: "reference agreement passed (not gated)",
+      action: "Run on this GPU",
+      links: [m2Link, tol],
+    },
+    () => void runSection(),
+  );
+  for (const [c, b] of [
+    [roadCard, `chaos ≤ ${BUDGET.roadTv} on 64 bins; windows ≤ ${BUDGET.roadOrbitTv} on 1,024`],
+    [mapCard, `total variation ≤ ${BUDGET.mapTv}`],
+    [sectionCard, `total variation ≤ ${BUDGET.sectionTv}`],
+  ] as const) {
+    c.set({ status: "idle", measured: "run it to measure", budget: b, adapter: d.adapter });
+    pane.append(c.el);
+  }
+
+  async function runRoad(): Promise<void> {
+    const pipe = d.bifPipe();
+    if (!pipe) {
+      roadCard.set({ status: "info", measured: "the diagram's kernel is still compiling" });
+      return;
+    }
+    await guard(async () => {
+      roadCard.set({ status: "running" });
+      const r = await roadCheck(d.device, pipe);
+      results["road"] = r;
+      const ok = r.worstChaos <= BUDGET.roadTv && r.worstOrbit <= BUDGET.roadOrbitTv;
+      roadCard.set({
+        status: ok ? "pass" : "fail",
+        measured: `chaos ${r.worstChaos.toFixed(4)}, windows ${r.worstOrbit.toFixed(4)} (worst columns)`,
+        budget: `chaos ≤ ${BUDGET.roadTv} on 64 bins; windows ≤ ${BUDGET.roadOrbitTv} on 1,024`,
+        ratio: Math.max(r.worstChaos / BUDGET.roadTv, r.worstOrbit / BUDGET.roadOrbitTv),
+        adapter: d.adapter,
+        notes: r.rhos.map((rho, i) => `ρ ${rho}: ${r.tv[i]!.toFixed(4)} on ${r.bins[i]} bins (two f64: ${r.floor[i]!.toFixed(4)}), ${r.peaks[i]!.toLocaleString()} peaks`),
+      });
+    });
+  }
+  const runPicture = async (card: typeof mapCard, key: "map" | "section", budget: number): Promise<void> => {
+    const k = d.kernels();
+    if (!k) {
+      card.set({ status: "info", measured: "the live kernels are still compiling" });
+      return;
+    }
+    await guard(async () => {
+      card.set({ status: "running" });
+      const r = key === "map" ? await mapCheck(d.device, k) : await sectionCheck(d.device, k);
+      results[key] = r;
+      card.set({
+        status: r.tv <= budget ? "pass" : "fail",
+        measured: `total variation ${r.tv.toFixed(4)} (two f64: ${r.floor.toFixed(4)})`,
+        budget: `total variation ≤ ${budget}`,
+        ratio: r.tv / budget,
+        adapter: d.adapter,
+        notes: [`${r.gpu.toLocaleString()} GPU samples against ${r.ref.toLocaleString()} f64 samples`],
+      });
+    });
+  };
+  const runMap = (): Promise<void> => runPicture(mapCard, "map", BUDGET.mapTv);
+  const runSection = (): Promise<void> => runPicture(sectionCard, "section", BUDGET.sectionTv);
+
   runAllBtn.addEventListener("click", () => void runAll());
   async function runAll(): Promise<void> {
     await runGate();
@@ -361,6 +464,9 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     await runOffsets();
     await runLyapunov();
     await runInvariant();
+    await runRoad();
+    await runMap();
+    await runSection();
   }
 
   return {
@@ -369,6 +475,15 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     async measureInvariant(o) {
       const k = d.kernels();
       return k ? invariantMeasure(d.device, k, o) : null;
+    },
+    async measureM2() {
+      const k = d.kernels();
+      const pipe = d.bifPipe();
+      return {
+        road: pipe ? await roadCheck(d.device, pipe) : null,
+        map: k ? await mapCheck(d.device, k) : null,
+        section: k ? await sectionCheck(d.device, k) : null,
+      };
     },
     setOnScreen(s) {
       const classic = s.params.sigma === CLASSIC.sigma && s.params.rho === CLASSIC.rho && s.params.beta === CLASSIC.beta;
