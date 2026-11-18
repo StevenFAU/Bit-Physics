@@ -2,7 +2,7 @@
 // Detail, Speed, Evolution — each change an undoable edit at a step
 // boundary; and a way back to the scene's field or to the gate's own.
 
-import { h, segmented, slider } from "@bp/studio";
+import { h, segmented, slider, toggle } from "@bp/studio";
 import type { Slider } from "@bp/studio";
 import type { FieldParams, Look } from "./model/flow.js";
 import { cloneField } from "./model/flow.js";
@@ -98,6 +98,47 @@ export function buildTune(body: HTMLElement, hd: TuneHandlers, p0: FieldParams, 
       detail.set(np.octaves);
       pace.set(sp);
       evo.set(np.evolution);
+    },
+  };
+}
+
+// ---- Paint the Stream (2D) ------------------------------------------------------
+
+export interface PaintTuneHandlers {
+  speed: (multiplier: number) => void;
+  contours: (on: boolean) => void;
+  landscape: () => void;
+  flat: () => void;
+}
+
+export interface PaintTunePane {
+  sync(speed: number, contours: boolean): void;
+}
+
+/** Paint the Stream's Tune: the step, the contour lines, a new or a flat landscape. */
+export function buildPaintTune(body: HTMLElement, hd: PaintTuneHandlers, speed0: number, contours0: boolean): PaintTunePane {
+  body.textContent = "";
+  const pace: Slider = slider({
+    label: "Speed",
+    min: 0.25,
+    max: 3,
+    step: 0.05,
+    value: speed0,
+    unit: "×",
+    format: (v) => v.toFixed(2),
+    hint: "A longer step each tick: the flow runs faster along the same contours.",
+    onInput: (v) => hd.speed(v),
+  });
+  const lines = toggle("Contour lines", contours0, (on) => hd.contours(on), "The paths the flow takes: lines of equal height");
+  const fresh = h("button", { type: "button", class: "bp-btn bp-btn-quiet" }, "New landscape");
+  fresh.addEventListener("click", () => hd.landscape());
+  const flat = h("button", { type: "button", class: "bp-btn bp-btn-quiet", title: "Level ground: nothing flows until you paint" }, "Flat ground");
+  flat.addEventListener("click", () => hd.flat());
+  body.append(pace.el, h("div", { class: "fs-tune-row" }, lines.el), h("div", { class: "fs-tune-row" }, fresh, flat));
+  return {
+    sync(speed, contours) {
+      pace.set(speed);
+      lines.set(contours);
     },
   };
 }

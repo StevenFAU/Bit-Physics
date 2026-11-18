@@ -21,6 +21,8 @@ export interface LearnPane {
   pushDivergence(rel: number): void;
   /** Tracer counts in equal-volume shells (flat = no bunching, no thinning); null hides it (Silk's sheets). */
   setDensity(counts: number[] | null): void;
+  /** Paint the Stream: contour residual (f64 at f32 positions) and patch counts, or null before a reading. */
+  setPaint(r: { worst: number; median: number; count: number; step: number; spread: number; expected: number; perPatch: number } | null): void;
   /** Silk: how far particles have left their surfaces (f64 at f32 positions), or null while the field moves. */
   setResidual(r: { worst: number; median: number; count: number } | null): void;
   setStats(rows: [string, string][]): void;
@@ -32,6 +34,13 @@ const MATH = `<math display="block" class="fs-math" aria-label="v equals grad f1
     <mtr><mtd><mi mathvariant="bold">v</mi><mo>=</mo><mo>∇</mo><msub><mi>f</mi><mn>1</mn></msub><mo>×</mo><mo>∇</mo><msub><mi>f</mi><mn>2</mn></msub></mtd></mtr>
     <mtr><mtd><mo>∇</mo><mo>·</mo><mi mathvariant="bold">v</mi><mo>=</mo><mo>∇</mo><msub><mi>f</mi><mn>2</mn></msub><mo>·</mo><mo>(</mo><mo>∇</mo><mo>×</mo><mo>∇</mo><msub><mi>f</mi><mn>1</mn></msub><mo>)</mo><mo>−</mo><mo>∇</mo><msub><mi>f</mi><mn>1</mn></msub><mo>·</mo><mo>(</mo><mo>∇</mo><mo>×</mo><mo>∇</mo><msub><mi>f</mi><mn>2</mn></msub><mo>)</mo><mo>=</mo><mn>0</mn></mtd></mtr>
     <mtr><mtd><msub><mi>f</mi><mn>1</mn></msub><mo>=</mo><mi>d</mi><mo>(</mo><mi mathvariant="bold">x</mi><mo>)</mo><mo>+</mo><mi>A</mi><mspace width="0.2em"/><mi>r</mi><mo>(</mo><mi>d</mi><mo>/</mo><msub><mi>d</mi><mn>0</mn></msub><mo>)</mo><mspace width="0.2em"/><msub><mi>n</mi><mn>1</mn></msub><mo>(</mo><mi mathvariant="bold">x</mi><mo>)</mo></mtd></mtr>
+  </mtable>
+</math>`;
+
+const MATH_2D = `<math display="block" class="fs-math" aria-label="v equals the partial of psi with respect to y, minus the partial of psi with respect to x; the divergence of v is the mixed second partials of psi, which cancel">
+  <mtable columnalign="left">
+    <mtr><mtd><mi mathvariant="bold">v</mi><mo>=</mo><mo>(</mo><mfrac><mrow><mo>∂</mo><mi>ψ</mi></mrow><mrow><mo>∂</mo><mi>y</mi></mrow></mfrac><mo>,</mo><mo>−</mo><mfrac><mrow><mo>∂</mo><mi>ψ</mi></mrow><mrow><mo>∂</mo><mi>x</mi></mrow></mfrac><mo>)</mo></mtd></mtr>
+    <mtr><mtd><mo>∇</mo><mo>·</mo><mi mathvariant="bold">v</mi><mo>=</mo><mfrac><mrow><msup><mo>∂</mo><mn>2</mn></msup><mi>ψ</mi></mrow><mrow><mo>∂</mo><mi>x</mi><mo>∂</mo><mi>y</mi></mrow></mfrac><mo>−</mo><mfrac><mrow><msup><mo>∂</mo><mn>2</mn></msup><mi>ψ</mi></mrow><mrow><mo>∂</mo><mi>y</mi><mo>∂</mo><mi>x</mi></mrow></mfrac><mo>=</mo><mn>0</mn></mtd></mtr>
   </mtable>
 </math>`;
 
@@ -65,7 +74,9 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ),
     density.el,
   );
-  pane.append(
+  const block3d = h(
+    "div",
+    {},
     h("h2", {}, "The guarantee, measured"),
     h(
       "p",
@@ -81,10 +92,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ),
     residual,
     densityBlock,
-  );
-
-  // how it works, three depths
-  pane.append(
+    // how it works, three depths
     h("h2", {}, "How it works"),
     h(
       "p",
@@ -121,6 +129,53 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     ),
   );
 
+  // Paint the Stream (2D): its own guarantee and its own "how"
+  const paintResidual = h("p", { class: "fs-residual", role: "status" }, "—");
+  const paintDensity = h("p", { class: "fs-residual", role: "status" }, "—");
+  const block2d = h(
+    "div",
+    { hidden: true },
+    h("h2", {}, "The guarantee, measured"),
+    h(
+      "p",
+      { class: "fs-lede" },
+      "Flow along contours can never pile up — that is what incompressible means.",
+    ),
+    h(
+      "p",
+      {},
+      "Each particle rides one contour line of the height you paint. Equal steps of height between neighbouring lines carry equal flow, so where the lines crowd the flow is fast, and where they spread it is slow. " +
+        "Every second the page reads the map and a thousand particles, recomputes the height in double precision at each particle's position, and compares it with the line the particle started on:",
+    ),
+    paintResidual,
+    h(
+      "p",
+      {},
+      "It also counts the particles in a grid of 8 × 8 patches. A flow that compressed would pile them up somewhere; this one keeps them as even as a random scatter:",
+    ),
+    paintDensity,
+    h("h2", {}, "How it works"),
+    h(
+      "p",
+      {},
+      "The height is the stream function ψ, and the velocity is its slope turned a quarter turn: v = (∂ψ/∂y, −∂ψ/∂x). That points along the contour (v·∇ψ = 0), and its divergence is ∂²ψ/∂x∂y − ∂²ψ/∂y∂x, which is zero for any smooth ψ — so any picture you paint is an incompressible flow.",
+    ),
+    h("div", { html: MATH_2D }),
+    h(
+      "details",
+      { class: "fs-detail" },
+      h("summary", {}, "The grid and the brush"),
+      h(
+        "p",
+        {},
+        "ψ lives on a square grid that wraps around (the map has no edges) and is smoothed into a cubic B-spline; the map draws that same spline, so the contour lines on screen are exactly the paths the particles take. " +
+          "The brush adds a smooth bump (or a dip, or smooths the ground under it); every particle then rides the contour through where it stands. Particles take fourth-order Runge–Kutta steps, then one Newton step back onto their contour.",
+      ),
+      h("p", {}, src("The kernels", "packages/curl-noise/web/src/v2/paint/paint.wgsl")),
+    ),
+  );
+  pane.append(block3d, block2d);
+
   // the honest line
   pane.append(
     h("h2", {}, "Fluid-like, not fluid"),
@@ -128,7 +183,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
       "p",
       {},
       "This looks like fluid without being fluid. Nothing here solves the equations of a real fluid: there is no pressure, no momentum, no viscosity, and the sphere does not push the flow — the flow is told to go around it. " +
-        "Curl noise is a tool for making beautiful motion with a guarantee: what is guaranteed is incompressibility and the boundary, nothing more. For real smoke, see Plume.",
+        "Curl noise is a tool for making beautiful motion with a guarantee: what is guaranteed is incompressibility and the boundary, nothing more.",
     ),
   );
 
@@ -164,10 +219,16 @@ export function buildLearn(pane: HTMLElement): LearnPane {
 
   return {
     setScene(scene, strands, look) {
+      block3d.hidden = scene.dim === "2d";
+      block2d.hidden = scene.dim !== "2d";
+      onScreen.hidden = scene.dim === "2d";
       seeing.textContent =
-        scene.id === "studio" && look === "dust"
-          ? `${strands.toLocaleString()} points of dust fill a ball around a sphere and stream through a field of smooth noise. ` +
-            `Each is coloured by the surface it rides — a value of f₂ the flow can never change — so the colours show those surfaces as layers. Nothing bunches up or thins out: Learn counts them below. Drag the sphere and the whole flow re-routes.`
+        scene.id === "paint"
+          ? `${strands.toLocaleString()} particles ride the contour lines of a landscape of hills and valleys — the height is the stream function. ` +
+            "Paint with the brush: raise a hill and the flow wraps around it, dig a valley and it circles the other way; where the contour lines crowd, the flow speeds up. Toggle the lines under Paint."
+          : scene.id === "studio" && look === "dust"
+          ? `${strands.toLocaleString()} points of dust stream through a field of smooth noise around a sphere, on three sheets — three surfaces where f₂ takes one value. ` +
+            `The flow can only slide each point along its own sheet, so each holds together as a veil, coloured by its sheet. Drag the sphere and the whole flow re-routes.`
           : scene.id === "studio"
           ? `${strands.toLocaleString()} particles stream through a field of smooth noise around a sphere, each trailing a ribbon of its recent path. ` +
             `They start on two sheets, and the flow can only slide each particle along its own sheet, so each sheet holds together as one folding cloth; where a sheet meets the sphere it parts and closes around it. Drag the sphere and the whole flow re-routes.`
@@ -186,6 +247,15 @@ export function buildLearn(pane: HTMLElement): LearnPane {
     },
     pushDivergence(rel) {
       div.push(rel);
+    },
+    setPaint(r) {
+      if (r === null) {
+        paintResidual.textContent = "—";
+        paintDensity.textContent = "—";
+        return;
+      }
+      paintResidual.textContent = `Off its contour, worst of ${r.count.toLocaleString()}: ${(r.worst / r.step).toExponential(1)} of the spacing between two lines (median ${(r.median / r.step).toExponential(1)}).`;
+      paintDensity.textContent = `About ${Math.round(r.perPatch).toLocaleString()} particles a patch, spread ±${(r.spread * 100).toFixed(1)}% — a random scatter gives ±${(r.expected * 100).toFixed(1)}%.`;
     },
     setResidual(r) {
       residual.textContent =

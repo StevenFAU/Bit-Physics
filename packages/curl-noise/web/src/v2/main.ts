@@ -33,7 +33,11 @@ import { buildProve } from "./proof/prove.js";
 import { FlowView } from "./render/flow-view.js";
 import type { SceneId } from "./scenes.js";
 import { SCENES, sceneById } from "./scenes.js";
-import { buildTune } from "./tune.js";
+import type { TunePane } from "./tune.js";
+import { buildPaintTune, buildTune } from "./tune.js";
+import { PaintApp } from "./paint/app.js";
+import { PaintKernels, contourResidual, patchSpread } from "./paint/model.js";
+import { PaintView } from "./paint/view.js";
 
 const SIM_NAME = "Flow Sculpture";
 const SCENE_IDS = SCENES.map((s) => s.id);
@@ -155,7 +159,9 @@ async function boot(): Promise<void> {
   // Prove works from the gate alone; the live checks wait for the kernels.
   let kernels: FlowKernels | null = null;
   let app: App | null = null;
+  let paintApp: PaintApp | null = null;
   const prove = buildProve(studio.drawer.prove, {
+    paint: () => (paintApp ? { paint: paintApp.paint, contourStep: paintApp.view.contourStep } : null),
     adapter: gpu.adapterId,
     device,
     gate,
@@ -164,6 +170,7 @@ async function boot(): Promise<void> {
     hold: (on) => {
       if (held.governor) held.governor.suspended = on;
       if (app) app.busy = on;
+      if (paintApp) paintApp.busy = on;
     },
   });
   studio.drawer.learn.append(h("p", { class: "fs-note" }, "The page is still loading its live view."));
@@ -215,9 +222,53 @@ async function boot(): Promise<void> {
   if (query.has("inflight")) a.maxInFlight = Math.min(3, Math.max(1, Number(query.get("inflight")) | 0));
   mark("compiled");
 
+  // ------------------------------------------------- Paint the Stream (2D) --
+  // Built the first time it is shown; it shares the shell, the HDR pipeline,
+  // the profiler and the governor, and pins the exposure (a map's colours are
+  // a scale, not a light level) where the Studio meters it.
+  let scene2d = false;
+  const studioHdr = { toneMap: hdr.toneMap, exposure: { ...hdr.exposure }, bloom: hdr.bloom.intensity };
+  const hdrFor = (two: boolean): void => {
+    if (two) {
+      hdr.toneMap = "neutral";
+      hdr.exposure = { ...hdr.exposure, mode: "pinned", value: 1 };
+      hdr.bloom.intensity = 0;
+    } else {
+      hdr.toneMap = studioHdr.toneMap;
+      hdr.exposure = { ...studioHdr.exposure };
+      hdr.bloom.intensity = studioHdr.bloom;
+    }
+  };
+  // ?pn= grid size and ?pc= particle count for Paint the Stream (measurements)
+  const paintSize: { n?: number; count?: number } = {};
+  if (query.has("pn")) paintSize.n = Math.min(2048, Math.max(64, Number(query.get("pn")) | 0));
+  if (query.has("pc")) paintSize.count = Math.min(1 << 21, Math.max(256, Number(query.get("pc")) | 0));
+  let paintLoading: Promise<PaintApp> | null = null;
+  const ensurePaint = (): Promise<PaintApp> => {
+    paintLoading ??= (async () => {
+      const [pk, pv] = await Promise.all([PaintKernels.create(device), PaintView.create(device)]);
+      const p = new PaintApp(gpu, studio, hdr, pv, pk, tier, soft, paintSize);
+      p.profiler = profiler;
+      p.governor = governor;
+      p.writeUrl = () => url.write(current());
+      p.onSnapshot = (b) => download(b, "flow-sculpture-paint.png");
+      p.hooks = { onMap: () => syncProve(), onFrame: (now) => frameHook(now) };
+      p.start();
+      paintApp = p;
+      return p;
+    })();
+    return paintLoading;
+  };
+  /** The scene on screen. */
+  const cur = (): App | PaintApp => (scene2d && paintApp ? paintApp : a);
+
   // ---------------------------------------------------------------- URL --
   const parsed = url.parse(location.search).values;
   const current = (): Partial<typeof parsed> => {
+    if (scene2d && paintApp) {
+      const pp = paintApp;
+      return { s: "paint", seed: pp.paint.landscapeSeed, spd: Number((pp.paint.dt / pp.baseDt).toFixed(3)), sp: pp.clock.speed };
+    }
     const p = a.flow.params;
     const o = p.obstacle?.centre ?? [0.5, 0.5, 0.5];
     return {
@@ -236,7 +287,8 @@ async function boot(): Promise<void> {
   a.writeUrl = () => url.write(current());
 
   // -------------------------------------------------------------- Tune --
-  const tune = buildTune(
+  const buildTune3d = (): TunePane =>
+    buildTune(
     studio.tune.body,
     {
       field: (p, speed) => a.setField(p, a.baseDt * speed),
@@ -261,7 +313,57 @@ async function boot(): Promise<void> {
     1,
     a.look,
   );
-  studio.tune.setNote("Each change lands at a step boundary and can be undone. The release gate always runs the gated field.");
+  const tuneNote3d = "Each change lands at a step boundary and can be undone. The release gate always runs the gated field.";
+  let tune = buildTune3d();
+  studio.tune.setNote(tuneNote3d);
+  const buildTune2d = (p: PaintApp): void => {
+    buildPaintTune(
+      studio.tune.body,
+      {
+        speed: (v) => p.setStep(v),
+        contours: (on) => p.setContours(on),
+        landscape: () => p.newLandscape(1 + Math.floor(Math.random() * 2147483646)),
+        flat: () => p.newLandscape(0),
+      },
+      p.paint.dt / p.baseDt,
+      p.view.look.contours,
+    );
+    studio.tune.setNote("A new or a flat landscape is an edit you can undo.");
+  };
+
+  // --------------------------------------------------- switching scenes --
+  const showScene = async (id: SceneId, o: { seed?: number; spd?: number } = {}): Promise<void> => {
+    const s = sceneById(id);
+    if (s.dim === "2d") {
+      if (!paintApp) studio.toast.show("Preparing the map…");
+      const p = await ensurePaint();
+      a.deactivate();
+      hdrFor(true);
+      scene2d = true;
+      p.activate();
+      studio.heading.set(s.title, s.prompt, s.eyebrow);
+      studio.heading.setCurrent(s.id);
+      await p.load({ seed: o.seed ?? p.paint.landscapeSeed, dt: p.baseDt * (o.spd ?? p.paint.dt / p.baseDt) });
+      buildTune2d(p);
+      learn.setScene(s, p.paint.count, a.look);
+      learn.setPaint(null);
+    } else {
+      paintApp?.deactivate();
+      hdrFor(false);
+      scene2d = false;
+      a.activate();
+      tune = buildTune3d();
+      tune.sync(a.flow.params, a.flow.dt / a.baseDt, a.look);
+      studio.tune.setNote(tuneNote3d);
+      learn.setScene(a.scene, a.flow.n, a.look);
+      learn.setField(a.flow.params, a.scene.field);
+    }
+    const c = cur();
+    studio.transport.setSpeed(c.clock.speed);
+    studio.transport.setPlaying(!c.clock.paused);
+    syncProve();
+    url.write(current());
+  };
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
@@ -278,10 +380,25 @@ async function boot(): Promise<void> {
   let fractions = { key: "", f: [] as number[] };
   const DENSITY_SAMPLE = 32768;
   const RESIDUAL_SAMPLE = 384;
+  const PAINT_SAMPLE = 1024;
+  const measurePaint = async (pp: PaintApp): Promise<void> => {
+    const [psi, parts] = await Promise.all([pp.paint.readPsi(), pp.paint.readParticles()]);
+    const r = contourResidual(psi, pp.paint.n, parts.subarray(0, Math.min(parts.length, PAINT_SAMPLE * 4)));
+    const sp = patchSpread(parts, pp.paint.n);
+    lastPaint = { ...r, step: pp.view.contourStep, ...sp };
+    hudMain.textContent = "Incompressible — nothing piles up";
+    hudSub.textContent = `particles per patch even to ±${(sp.spread * 100).toFixed(1)}% (a random scatter: ±${(sp.expected * 100).toFixed(1)}%)`;
+    learn.setPaint(lastPaint);
+  };
+  let lastPaint: { worst: number; median: number; count: number; step: number; spread: number; expected: number; perPatch: number } | null = null;
   const measure = async (): Promise<void> => {
-    if (measuring || isCapturing() || a.busy) return;
+    if (measuring || isCapturing() || cur().busy) return;
     measuring = true;
     try {
+      if (scene2d && paintApp) {
+        await measurePaint(paintApp);
+        return;
+      }
       const m = await measureInstruments(device, k, a.flow.params, a.flow.time);
       const rel = m.divMax / Math.max(m.jacScale, 1e-30);
       lastDiv = rel;
@@ -321,26 +438,30 @@ async function boot(): Promise<void> {
     "studio",
   );
   studio.heading.onPick = (id) => {
-    void a.loadScene(id as SceneId).then(() => a.writeUrl());
+    void showScene(id as SceneId);
   };
-  studio.rail.onSelect = (id) => a.selectTool(id);
+  studio.rail.onSelect = (id) => {
+    if (!scene2d) a.selectTool(id);
+  };
   studio.transport.handlers = {
-    play: () => a.togglePlay(),
+    play: () => cur().togglePlay(),
     step: () => {
-      if (!a.clock.paused) a.togglePlay();
-      a.clock.stepOnce();
+      const c = cur();
+      if (!c.clock.paused) c.togglePlay();
+      c.clock.stepOnce();
     },
-    restart: () => void a.restart(),
-    speed: (v) => a.setSpeed(v),
-    save: () => a.savePoint(),
-    restore: () => a.restoreSave(),
+    restart: () => void cur().restart(),
+    speed: (v) => cur().setSpeed(v),
+    save: () => cur().savePoint(),
+    restore: () => cur().restoreSave(),
     compare: () => {},
-    undo: () => a.undo(),
+    undo: () => cur().undo(),
   };
   studio.transport.onStatus = () => studio.drawer.open("learn");
   studio.drawer.onChange = ((orig) => (open: boolean, tab: "learn" | "prove") => {
     orig?.(open, tab);
     a.learnOpen = open && tab === "learn";
+    if (paintApp) paintApp.learnOpen = open && tab === "learn";
     if (open && tab === "prove") syncProve();
   })(studio.drawer.onChange);
   studio.share.handlers = {
@@ -351,7 +472,7 @@ async function boot(): Promise<void> {
         () => studio.toast.show(link, 8000),
       );
     },
-    snapshot: () => a.requestSnapshot(),
+    snapshot: () => cur().requestSnapshot(),
     clip: () => recordClip(),
   };
   a.onSnapshot = (b) => download(b, `flow-sculpture-${a.scene.id}.png`);
@@ -365,18 +486,29 @@ async function boot(): Promise<void> {
     const rec = new MediaRecorder(stream, { mimeType: type, videoBitsPerSecond: 8_000_000 });
     const chunks: Blob[] = [];
     rec.ondataavailable = (e) => e.data.size > 0 && chunks.push(e.data);
-    rec.onstop = () => download(new Blob(chunks, { type: "video/webm" }), `flow-sculpture-${a.scene.id}.webm`);
+    rec.onstop = () => download(new Blob(chunks, { type: "video/webm" }), `flow-sculpture-${scene2d ? "paint" : a.scene.id}.webm`);
     rec.start();
     studio.toast.show("Recording 8 seconds…", 8000);
     setTimeout(() => rec.stop(), 8000);
   }
 
-  studio.key("Space", "Play / pause", () => a.togglePlay());
+  studio.key("Space", "Play / pause", () => cur().togglePlay());
   studio.key(".", "Step once", () => studio.transport.handlers?.step());
-  studio.key("R", "Restart the scene", () => void a.restart());
+  studio.key("R", "Restart the scene", () => void cur().restart());
   studio.key("1 2", "Choose a tool", (e) => studio.rail.selectIndex(Number(e.key) - 1));
-  studio.key("S", "Save point", () => a.savePoint());
-  studio.key("Z", "Undo", () => a.undo());
+  studio.key("S", "Save point", () => cur().savePoint());
+  studio.key("Z", "Undo", () => cur().undo());
+  studio.key("C", "Contour lines (Paint the Stream)", () => {
+    if (!scene2d || !paintApp) return;
+    paintApp.setContours(!paintApp.view.look.contours);
+    if (studio.rail.active === "paint") studio.rail.select("paint", false);
+    studio.toast.show(paintApp.view.look.contours ? "Contour lines on — the paths the flow takes" : "Contour lines off");
+  });
+  studio.key("[ ]", "Brush size (Paint the Stream)", (e) => {
+    if (!scene2d || !paintApp) return;
+    paintApp.brushSize = Math.min(0.2, Math.max(0.02, paintApp.brushSize * (e.key === "]" ? 1.2 : 1 / 1.2)));
+    if (studio.rail.active === "paint") studio.rail.select("paint", false);
+  });
   studio.key("T", "Tune", () => studio.tune.toggle());
 
   a.hooks = {
@@ -401,7 +533,7 @@ async function boot(): Promise<void> {
   const overlay = query.get("debug") === "perf" ? new PerfOverlay() : null;
   if (overlay) studio.root.append(overlay.el);
   const liveAt = { t: Infinity };
-  a.hooks.onFrame = (now) => {
+  const frameHook = (now: number): void => {
     overlay?.push({ frameMs: now - lastFrame, gpuMs: profiler.frameMs, passes: profiler.timings() });
     rafTimes.push(now - lastFrame);
     if (rafTimes.length > 600) rafTimes.shift();
@@ -411,14 +543,38 @@ async function boot(): Promise<void> {
       lastMeasure = now;
       void measure();
     }
-    if (a.camera.version !== lastCam && !a.camera.flying && now - lastUrl > 600) {
+    if (!scene2d && a.camera.version !== lastCam && !a.camera.flying && now - lastUrl > 600) {
       lastCam = a.camera.version;
       lastUrl = now;
       a.writeUrl();
     }
-    if (!a.learnOpen || now - lastPerf < 1000) return;
+    const c = cur();
+    if (!c.learnOpen || now - lastPerf < 1000) return;
     lastPerf = now;
     const st = governor.status();
+    if (scene2d && paintApp) {
+      const pp = paintApp;
+      learn.setPerf(
+        [
+          ["Adapter", gpu.adapterId],
+          ["Tier", `${a.tier}${gpu.info.software ? " (software)" : ""}`],
+          ["Map", `${pp.paint.n} × ${pp.paint.n}, wrapping`],
+          ["Particles", pp.paint.count.toLocaleString()],
+          ["Solver steps / second", `${Math.round(pp.clock.ticksPerSecond * pp.clock.speed)}`],
+          ["Frame (p50 / p90)", `${percentile(rafTimes, 0.5).toFixed(1)} / ${percentile(rafTimes, 0.9).toFixed(1)} ms`],
+          ["GPU per frame", `${profiler.frameAvg.toFixed(2)} ms`],
+          ["Render scale", `${Math.round(st.renderScale * 100)}%`],
+        ],
+        profiler.timings(),
+        profiler.source,
+      );
+      learn.setStats([
+        ["Model time", `${pp.paint.time.toFixed(1)} s (${pp.paint.steps.toLocaleString()} steps of ${pp.paint.dt.toPrecision(2)} s)`],
+        ["Contour spacing", `${pp.view.contourStep.toPrecision(3)} cells²/s of flow between two lines`],
+        ["Edits", `${pp.eventCount}`],
+      ]);
+      return;
+    }
     learn.setPerf(
       [
         ["Adapter", gpu.adapterId],
@@ -440,9 +596,12 @@ async function boot(): Promise<void> {
     ]);
   };
 
+  a.hooks.onFrame = frameHook;
+
   // ------------------------------------------------------------- start --
   studio.veil.step("Seeding the flow");
-  const scene = sceneById(parsed.s);
+  // the 3D app always holds the Studio; ?s=paint then shows the 2D scene
+  const scene = sceneById("studio");
   const field: FieldParams = cloneField(scene.field);
   field.ell0 = parsed.ell;
   field.octaves = parsed.oct;
@@ -454,14 +613,42 @@ async function boot(): Promise<void> {
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   a.setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
   tune.sync(a.flow.params, a.flow.dt / a.baseDt);
-  studio.veil.done();
   a.start();
+  if (sceneById(parsed.s).dim === "2d") {
+    studio.veil.step("Painting the landscape");
+    await showScene(parsed.s as SceneId, { seed: parsed.seed, spd: parsed.spd });
+    cur().setSpeed(reduced && parsed.sp === 1 ? 0.5 : parsed.sp);
+  }
+  studio.veil.done();
   liveAt.t = performance.now();
   mark("live");
   (globalThis as { __flowLive?: boolean }).__flowLive = true;
 
   // test / inspection hooks (layout checks, acceptance runs): read-only summaries
-  (globalThis as { __bpDebug?: () => unknown }).__bpDebug = () => ({
+  const debug2d = (pp: PaintApp): unknown => ({
+    // a torus: the map wraps, so the shell check's letterbox test does not apply
+    space: "2d",
+    periodic: true,
+    view: pp.camera.viewRect(),
+    domain: [pp.paint.n, pp.paint.n],
+    scene: "paint",
+    tier: a.tier,
+    n: pp.paint.n,
+    particles: pp.paint.count,
+    steps: pp.paint.steps,
+    time: pp.paint.time,
+    dt: pp.paint.dt,
+    landscape: pp.paint.landscapeSeed,
+    events: pp.eventCount,
+    contours: pp.view.look.contours,
+    brush: pp.brush,
+    paint: lastPaint,
+    renderScale: governor.renderScale,
+    adapter: gpu.adapterId,
+    fps: pp.fps,
+  });
+  (globalThis as { __bpDebug?: () => unknown }).__bpDebug = () => (scene2d && paintApp ? debug2d(paintApp) : debug3d());
+  const debug3d = (): unknown => ({
     // an orbit view: no bounded 2D domain for the shell check's letterbox test
     space: "3d",
     scene: a.scene.id,
@@ -485,6 +672,7 @@ async function boot(): Promise<void> {
     fps: a.fps,
   });
   (globalThis as { __flow?: App }).__flow = a;
+  (globalThis as { __flowScene?: unknown }).__flowScene = { show: showScene, paint: () => paintApp };
   (globalThis as { __flowProve?: typeof prove }).__flowProve = prove;
 
   if (query.get("bench") === "1") void bench(a, profiler, rafTimes);

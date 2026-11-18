@@ -107,6 +107,10 @@ export class App {
   /** The software-adapter profile (app.ts SOFTWARE): a software adapter, or ?soft=1 (measurements). */
   readonly softwareProfile: boolean;
   private cameraMovingUntil = 0;
+  /** The canvas input (disabled while the 2D scene is shown). */
+  readonly input: CanvasInput;
+  /** The 3D Studio is the scene on screen (the 2D Paint the Stream has its own app). */
+  active = true;
   scene: SceneDef = sceneById("studio");
   hooks: AppHooks = {};
   profiler: GpuProfiler | null = null;
@@ -179,7 +183,7 @@ export class App {
       const r = studio.canvas.getBoundingClientRect();
       this.downAt = { x: e.clientX - r.left, y: e.clientY - r.top };
     });
-    new CanvasInput(
+    this.input = new CanvasInput(
       studio.canvas,
       this.camera,
       {
@@ -500,7 +504,26 @@ export class App {
     }
   }
 
+  /** Show this scene: its tools, its input, its heading and history. */
+  activate(): void {
+    this.active = true;
+    this.input.enabled = true;
+    this.studio.rail.setTools(this.tools(), "move");
+    this.studio.heading.set(this.scene.title, this.scene.prompt, this.scene.eyebrow);
+    this.studio.heading.setCurrent(this.scene.id);
+    this.last = performance.now();
+    this.fpsT0 = this.last;
+    this.syncHistory();
+  }
+
+  deactivate(): void {
+    this.active = false;
+    this.input.enabled = false;
+    this.studio.canvas.style.cursor = "";
+  }
+
   private syncHistory(): void {
+    if (!this.active) return;
     this.studio.transport.setHistory({
       canRestore: this.history.hasSave,
       canCompare: false,
@@ -543,7 +566,7 @@ export class App {
   }
 
   private tick(now: number): void {
-    if (isCapturing() || this.busy) return;
+    if (!this.active || isCapturing() || this.busy) return;
     const device = this.gpu.device;
     if (this.inFlight >= this.maxInFlight) {
       device.queue.submit([]);

@@ -9,6 +9,8 @@ import { h, proofCard } from "@bp/studio";
 import { sci } from "../format.js";
 import type { FieldParams, FlowKernels } from "../model/flow.js";
 import { Flow, fieldKind, measureInstruments } from "../model/flow.js";
+import type { Paint } from "../paint/model.js";
+import { contourResidual, patchSpread, probeStats } from "../paint/model.js";
 import type { GateCheck, GateIc, GateRunner } from "./gate.js";
 import { GATE_IC_SHA256, REPO_BLOB, T_CURL_REL, checkGate, loadGateIc } from "./gate.js";
 
@@ -24,6 +26,8 @@ export interface ProveDeps {
   field: () => { params: FieldParams; time: number } | null;
   /** Suspend/resume the governor and the live loop around in-page runs. */
   hold: (on: boolean) => void;
+  /** Paint the Stream, once it has been opened (null before). */
+  paint: () => { paint: Paint; contourStep: number } | null;
 }
 
 export interface ProvePane {
@@ -200,6 +204,34 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
   tanCard.set({ status: "idle", measured: "run it to measure", budget: "not gated (measured)", adapter: d.adapter });
   pane.append(divCard.el, confCard.el, tanCard.el);
 
+  // Paint the Stream (2D)
+  const paintHead = h("h2", {}, "Paint the Stream");
+  const div2Card = proofCard(
+    {
+      title: "Any painting is incompressible",
+      sentence:
+        "The velocity is the painted height's slope turned a quarter turn, v = (∂ψ/∂y, −∂ψ/∂x), so its divergence is ∂²ψ/∂x∂y − ∂²ψ/∂y∂x: for the smoothed map (a cubic B-spline) the two are the same sum. " +
+          "Measured at 2,048 points of the map on screen, each in its own order of summation, against the size of the sixteen terms summed (the height is large, its slope is not, so the rounding scales with the height); and v·∇ψ, which is zero when the flow runs along the contours.",
+      label: "illustrative (not gated)",
+      action: "Measure on this GPU",
+      links: [{ label: "kernels", href: blob("packages/curl-noise/web/src/v2/paint/paint.wgsl") }],
+    },
+    () => void runPaint(),
+  );
+  div2Card.set({ status: "idle", measured: "open Paint the Stream, then measure", budget: "not gated (measured)", adapter: d.adapter });
+  const contourCard = proofCard(
+    {
+      title: "Particles keep to their contours, and spread evenly",
+      sentence:
+        "Each particle's height ψ is recomputed in double precision at its single-precision position and compared with the contour it started on; and the particles are counted in 8 × 8 patches — a flow that compressed would pile them up.",
+      label: "illustrative (not gated)",
+      action: "Measure on this GPU",
+    },
+    () => void runPaint(),
+  );
+  contourCard.set({ status: "idle", measured: "open Paint the Stream, then measure", budget: "not gated (measured)", adapter: d.adapter });
+  pane.append(paintHead, div2Card.el, contourCard.el);
+
   pane.append(
     h(
       "p",
@@ -305,11 +337,44 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     });
   }
 
+  async function runPaint(): Promise<void> {
+    const pp = d.paint();
+    if (!pp) {
+      for (const c of [div2Card, contourCard]) c.set({ status: "info", measured: "open Paint the Stream first (the scene picker)" });
+      return;
+    }
+    await guard(async () => {
+      for (const c of [div2Card, contourCard]) c.set({ status: "running" });
+      const p = pp.paint;
+      const s = probeStats(await p.measureProbes());
+      const [psi, parts] = await Promise.all([p.readPsi(), p.readParticles()]);
+      const sample = parts.subarray(0, Math.min(parts.length, 2048 * 4));
+      const r = contourResidual(psi, p.n, sample);
+      const spread = patchSpread(parts, p.n);
+      results["paint"] = { ...s, residual: r, contourStep: pp.contourStep, spread };
+      div2Card.set({
+        status: "info",
+        measured: `|∇·v| at most ${sci(s.divRel, 1)} of the terms it sums (f32 rounding); v·∇ψ ${s.alongMax === 0 ? "exactly 0" : `${sci(s.alongRel, 1)} of |v|²`}`,
+        budget: "not gated (measured)",
+        adapter: d.adapter,
+        notes: [`a ${p.n} × ${p.n} map; speeds up to ${s.speedMax.toFixed(1)} cells/s`],
+      });
+      contourCard.set({
+        status: "info",
+        measured: `off its contour: worst ${sci(r.worst / pp.contourStep, 1)} of a line spacing (median ${sci(r.median / pp.contourStep, 1)}); patches ±${(spread.spread * 100).toFixed(1)}%`,
+        budget: "not gated (measured)",
+        adapter: d.adapter,
+        notes: [`${r.count.toLocaleString()} particles checked in f64; ${p.count.toLocaleString()} counted, about ${Math.round(spread.perPatch)} a patch — a random scatter gives ±${(spread.expected * 100).toFixed(1)}%`],
+      });
+    });
+  }
+
   runAllBtn.addEventListener("click", () => void runAll());
   async function runAll(): Promise<void> {
     await runGate();
     await runLive();
     await runIdentities();
+    if (d.paint()) await runPaint();
   }
 
   return {
