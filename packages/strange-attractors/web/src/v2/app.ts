@@ -19,7 +19,12 @@ import { isCapturing } from "@bp/verify";
 import { pow10 } from "./format.js";
 import { memberAttr } from "./model/ball.js";
 import type { ChaosCheckpoint, ChaosKernels, SpreadSample } from "./model/ensemble.js";
-import { Chaos, MAX_STEPS, TRACK } from "./model/ensemble.js";
+import { Chaos, MAX_STEPS, OBS_BINS, TRACK } from "./model/ensemble.js";
+import type { Observe } from "./model/ensemble.js";
+import { BIF_SIZES, Bifurcation } from "./model/bifurcation.js";
+import { observeBoxes } from "./model/observe-f64.js";
+import type { RoadRange } from "./obs-panels.js";
+import { ROAD_RANGES } from "./obs-panels.js";
 import type { LorenzParams, V3 } from "./model/lorenz.js";
 import { DT, Reference, field, fixedPoints, pickOnAttractor, sampleAttractor, spreadOf } from "./model/lorenz.js";
 import type { LyapunovEstimate } from "./model/lyapunov.js";
@@ -72,8 +77,15 @@ export interface AppHooks {
   onRestore?: () => void;
   /** The live f64 Lyapunov estimate, about twice a second. */
   onLyapunov?: (e: LyapunovEstimate) => void;
+  /** Record more into the frame's encoder (the panels' heat maps), before the composite. */
+  onEncode?: (enc: GPUCommandEncoder, steps: number) => void;
+  /** The histograms' boxes changed (σ, ρ, β, the plane). */
+  onObserve?: (box: Omit<Observe, "map" | "slice"> | null) => void;
   onFrame?: (now: number) => void;
 }
+
+/** Bifurcation steps per frame (every trajectory), per tier: a T3 diagram is warm in ~25 frames. */
+const BIF_STEPS = { T3: 240, T2: 160, T1: 80 } as const;
 
 /** Steps the live Lyapunov estimator takes per frame (half a time unit), and where it stops. */
 const LYAP_STEPS_PER_FRAME = 50;
@@ -83,6 +95,15 @@ export class App {
   readonly clock = new SimClock(TICKS_PER_SECOND, MAX_STEPS);
   readonly camera = new OrbitCamera();
   readonly chaos: Chaos;
+  /** Road to Chaos's columns of trajectories. */
+  readonly bif: Bifurcation;
+  roadRange: RoadRange = ROAD_RANGES[0]!;
+  /** The histograms' boxes for the current σ, ρ, β (null: no peaks, a fixed point). */
+  obsBox: Omit<Observe, "map" | "slice"> | null = null;
+  private obsKey = "";
+  private obsBoxes: Omit<Observe, "map" | "slice"> | null = null;
+  /** Slice: the cutting plane's height. */
+  plane = 27;
   scene: SceneDef = sceneById("butterfly");
   hooks: AppHooks = {};
   profiler: GpuProfiler | null = null;
@@ -133,6 +154,7 @@ export class App {
   private ghostA: Reference | null = null;
   private ghostB: Reference | null = null;
   private lastCamVersion = -1;
+  private dragY: number | null = null;
   private cameraMovingUntil = 0;
   private snapshotWanted = false;
   onSnapshot: ((b: Blob) => void) | null = null;
@@ -146,9 +168,11 @@ export class App {
     readonly view: ChaosView,
     kernels: ChaosKernels,
     readonly tier: Tier,
+    bifPipe: GPUComputePipeline,
   ) {
     const size = SIZES[tier];
     this.chaos = new Chaos(gpu.device, kernels, size.ensemble, size.density, this.scene.params);
+    this.bif = Bifurcation.create(gpu.device, bifPipe, BIF_SIZES[tier], () => this.chaos.params);
     this.history = new History<Checkpoint>(
       {
         capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState(), ballDigits: this.ballDigits, horizonT: this.horizonT }),
@@ -168,10 +192,20 @@ export class App {
       studio.canvas,
       this.camera,
       {
-        paints: () => false,
-        down: () => {},
-        move: () => {},
-        up: () => {},
+        // the Slice tool drags the cut up and down; every other tool clicks
+        paints: () => this.studio.rail.active === "slice",
+        down: (_x, y) => {
+          this.dragY = y;
+        },
+        move: (_x, y) => {
+          if (this.dragY === null) return;
+          const dz = -(y - this.dragY) * this.view.unitsPerPx(this.camera);
+          this.dragY = y;
+          this.setPlane(this.plane + dz);
+        },
+        up: () => {
+          this.dragY = null;
+        },
         hover: () => {},
         tap: (x, y) => this.tap(x, y),
       },
@@ -198,6 +232,17 @@ export class App {
         hint: "Click on the attractor: two paths start there, a hair apart.",
         options: () => this.ghostOptions(),
       },
+      ...(this.scene.observe.slice
+        ? [
+            {
+              id: "slice",
+              label: "Slice",
+              icon: "slice" as const,
+              hint: "Drag up or down to move the cut through the attractor.",
+              paints: true,
+            },
+          ]
+        : []),
       {
         id: "camera",
         label: "Camera",
@@ -265,7 +310,7 @@ export class App {
 
   private tap(sx: number, sy: number): void {
     const tool = this.studio.rail.active;
-    if (tool === "camera") return;
+    if (tool === "camera" || tool === "slice") return;
     const ray = this.view.modelRay(this.camera, sx, sy);
     const tol = this.view.unitsPerPx(this.camera) * 14;
     const p = pickOnAttractor(this.attractorSample, ray.origin, ray.dir, tol);
@@ -301,8 +346,11 @@ export class App {
       this.restartLyapunov();
       this.setSpeed(o.speed ?? scene.speed);
       this.chaos.seedDensity(this.seed);
+      this.applyObserve(true);
+      if (scene.panel === "road") this.bif.setRange(this.roadRange.rho0, this.roadRange.rho1);
+      this.studio.rail.setTools(this.tools(), scene.tool);
       this.releasePoint = this.pointAlong(scene.releaseAfter);
-      this.autoReleaseAt = performance.now() + scene.releaseDelay * 1000;
+      this.autoReleaseAt = scene.autoRelease ? performance.now() + scene.releaseDelay * 1000 : Infinity;
       this.view.clearExposure();
       const cw = this.studio.canvas.clientWidth || 1;
       const ch = this.studio.canvas.clientHeight || 1;
@@ -342,6 +390,43 @@ export class App {
     speeds.sort((a, b) => a - b);
     this.chaos.speedScale = Math.max(speeds[Math.floor(speeds.length * 0.95)] ?? 1, 1e-3);
     this.view.setFixedPoints(fixedPoints(p));
+  }
+
+  /**
+   * Point the attractor's observers at the current σ, ρ, β (Lorenz's Map,
+   * Slice): their boxes from a short f64 run, the plane back at ρ − 1 when
+   * `resetPlane`. Starts their histograms afresh.
+   */
+  applyObserve(resetPlane: boolean): void {
+    const sc = this.scene.observe;
+    // the boxes depend on σ, ρ, β only (not the cut's height): one short f64 run per parameter set, not per drag
+    const p = this.chaos.params;
+    const key = `${p.sigma},${p.rho},${p.beta}`;
+    if (key !== this.obsKey) {
+      this.obsKey = key;
+      this.obsBoxes = observeBoxes(p);
+    }
+    this.obsBox = sc.map || sc.slice ? this.obsBoxes : null;
+    if (resetPlane && this.obsBox) this.plane = this.obsBox.plane;
+    const box = this.obsBox ?? { mapLo: 0, mapHi: 1, plane: this.plane, box: [-1, 1, -1, 1] as [number, number, number, number] };
+    const enc = this.gpu.device.createCommandEncoder({ label: "observe" });
+    this.chaos.setObserve(enc, { ...box, plane: this.plane, map: sc.map && !!this.obsBox, slice: sc.slice && !!this.obsBox });
+    this.gpu.device.queue.submit([enc.finish()]);
+    this.hooks.onObserve?.(this.obsBox ? { ...this.obsBox, plane: this.plane } : null);
+  }
+
+  /** Slice: move the cut (z = h), within the attractor's height. */
+  setPlane(h: number): void {
+    const lo = Math.max(this.chaos.params.rho * 0.15, 1);
+    const hi = this.chaos.params.rho * 1.75;
+    this.plane = Math.min(Math.max(h, lo), hi);
+    this.applyObserve(false);
+  }
+
+  /** Road to Chaos: a new range of ρ (the diagram starts over). */
+  setRoadRange(r: RoadRange): void {
+    this.roadRange = r;
+    this.bif.setRange(r.rho0, r.rho1);
   }
 
   /** A point `steps` RK4 steps along the attractor from (1, 1, 1). */
@@ -395,6 +480,9 @@ export class App {
       this.chaos.params = { ...e.params! };
       this.measureAttractor(false);
       this.restartLyapunov();
+      this.applyObserve(true);
+      // the diagram spans ρ itself; a new σ or β restarts it (Bifurcation.encode sees the change, after an
+      // edit, an undo or a restore alike)
       if (record) this.hooks.onParams?.(this.chaos.params);
     }
     this.gpu.device.queue.submit([enc.finish()]);
@@ -459,6 +547,7 @@ export class App {
   /** After a checkpoint: re-measure for σ, ρ, β, restart λ if they changed, and resync the readouts. */
   private afterRestore(): void {
     this.measureAttractor(false);
+    this.applyObserve(true);
     this.view.clearExposure();
     this.view.tracks.clear();
     const lp = this.lyap.params;
@@ -681,9 +770,15 @@ export class App {
         prevOrigin: n > 0 ? this.chaos.prevRef : this.chaos.ref.x,
         steps: n,
         compare: save && save.released ? { state: save.ensemble.state, n: save.ensemble.n, origin: save.ref } : null,
+        slice:
+          this.scene.observe.slice && this.obsBox
+            ? { counts: this.chaos.sliceCounts, total: this.chaos.sliceTotal, plane: this.plane, box: this.obsBox.box, bins: OBS_BINS }
+            : null,
       },
       this.profiler,
     );
+    if (this.scene.panel === "road" && !this.clock.paused) this.bif.encode(enc, BIF_STEPS[this.tier], this.profiler?.pass("bifurcation"));
+    this.hooks.onEncode?.(enc, n);
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     const exposureQueued = sampleExposure && this.hdr.sampleExposure(enc);
     this.profiler?.end(enc);

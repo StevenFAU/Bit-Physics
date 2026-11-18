@@ -1,0 +1,70 @@
+[
+ {
+  "label": "curve-T2pond-again",
+  "scene": "tablepond",
+  "gridX": 96,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "curve-T3-table332k",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "curve-T3-sandcol146k",
+  "scene": "sandcol",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "curve-T3-press74k",
+  "scene": "press",
+  "mat": "clay",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "curve-T3-jelly33k",
+  "scene": "jelly",
+  "y0": 0.0,
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ },
+ {
+  "label": "curve-T3pond-again",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.1,
+  "benchFrames": 15,
+  "tiled": true,
+  "order": "interleave"
+ }
+]

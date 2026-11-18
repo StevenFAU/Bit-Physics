@@ -1,0 +1,53 @@
+[
+ {
+  "label": "eq-morton",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "order": "morton",
+  "hash": true
+ },
+ {
+  "label": "eq-tiled",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "tiled": true,
+  "hash": true
+ },
+ {
+  "label": "eq-tiled2",
+  "scene": "table",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "tiled": true,
+  "hash": true
+ },
+ {
+  "label": "probe-pond-tiled",
+  "scene": "tablepond",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "tiled": true
+ },
+ {
+  "label": "probe-dam-tiled",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "tiled": true,
+  "wallFriction": 0
+ }
+]

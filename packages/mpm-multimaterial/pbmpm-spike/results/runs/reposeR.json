@@ -1,0 +1,90 @@
+[
+ {
+  "label": "reposeR-phi15-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 30,
+  "metricsAt": [
+   4.0
+  ],
+  "shotsAt": [
+   1.0,
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.15418527188263695,
+    "relaxVol": 1.0,
+    "viscosity": 0.0
+   }
+  }
+ },
+ {
+  "label": "reposeR-phi25-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 30,
+  "metricsAt": [
+   4.0
+  ],
+  "shotsAt": [
+   1.0,
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.2677650428158532,
+    "relaxVol": 1.0,
+    "viscosity": 0.0
+   }
+  }
+ },
+ {
+  "label": "reposeR-phi35-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 30,
+  "metricsAt": [
+   4.0
+  ],
+  "shotsAt": [
+   1.0,
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.386019330011002,
+    "relaxVol": 1.0,
+    "viscosity": 0.0
+   }
+  }
+ },
+ {
+  "label": "reposeR-phi45-S4K5",
+  "scene": "sandcol",
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 4,
+  "statsEvery": 30,
+  "metricsAt": [
+   4.0
+  ],
+  "shotsAt": [
+   1.0,
+   4.0
+  ],
+  "mats": {
+   "sand": {
+    "dpAlpha": 0.5035997877724094,
+    "relaxVol": 1.0,
+    "viscosity": 0.0
+   }
+  }
+ }
+]

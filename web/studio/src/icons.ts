@@ -52,6 +52,10 @@ const PATHS = {
   release: '<circle cx="7" cy="17" r="2.2"/><path d="M9 15c3-3 4-7 9-9M9.4 16.4c3.6-1.2 6.6-.6 10.6-3M8.6 14.4c.4-4 2.6-7 5.4-9.9"/>',
   ghost: '<path d="M3 17c3-6 6-9 9-9s5 3 9 1"/><path d="M3 19c3-5 6.5-7.6 9.5-7.6S17 13.5 21 13" stroke-dasharray="2.2 2.4"/>',
   orbit: '<ellipse cx="12" cy="12" rx="9" ry="4.2"/><circle cx="12" cy="12" r="2"/><path d="M18.6 9.2l2.2-1.2.4 2.4"/>',
+  // Chaos: a plane cutting through a loop
+  slice: '<path d="M3 14l6-4h12l-6 4z"/><path d="M12 3.5c3.6 0 5.5 2.6 5.5 5.6M12 20.5c-3.6 0-5.5-2.6-5.5-5.6"/>',
+  // Water in Hand: a falling drop over a ripple
+  drop: '<path d="M12 3.5c-2.6 3.4-4.2 5.8-4.2 7.8a4.2 4.2 0 0 0 8.4 0c0-2-1.6-4.4-4.2-7.8z"/><path d="M4 19.5c2.2-1.6 4.4-1.6 6.6 0s4.4 1.6 6.6 0 2.2-1.6 2.8-.9"/>',
 } as const;
 
 export type IconName = keyof typeof PATHS;

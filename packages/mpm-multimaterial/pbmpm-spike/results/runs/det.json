@@ -1,0 +1,12 @@
+{
+ "label": "det-table-T3-S4K5-tiled",
+ "scene": "table",
+ "gridX": 128,
+ "substeps": 4,
+ "iterations": 5,
+ "duration": 2.5,
+ "hammer": true,
+ "hammerAt": 1.0,
+ "tiled": true,
+ "order": "interleave"
+}

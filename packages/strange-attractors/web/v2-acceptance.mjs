@@ -26,6 +26,17 @@
 // drawing a line whose slope gives λ₁ near the f64 value, the link, reduced
 // motion); the live λ₁ instrument in Learn; the ball's captions never two at
 // once. Prints a BP_BENCH line at the end.
+// M2: Prove's three new cards (Road to Chaos column by column, Lorenz's map,
+// the section), each inside its budget and labelled not gated; Road to Chaos
+// (its panel and tools, every column filled, chaotic columns spread and
+// windows narrow, a click on the diagram sets ρ on the link, "Go to ρ" by
+// keyboard, undo, a new σ and its undo restarting the diagram, range presets on
+// the link, a link with a range and ρ 230 booting into both); Lorenz's
+// Map (pairs pile up on a thin curve, the cobweb hops along it, a new ρ
+// re-frames it, undo); Slice (crossings on two thin lines, the Slice tool's
+// drag raises the cut without turning the view, the slider by keyboard, the
+// cut's clamp, a high cut recorded in the same box); each scene at 60 fps.
+// Prints a BP_BENCH_M2 line.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -198,6 +209,29 @@ let bench = null;
   check("Prove: the spectrum sums to −(σ + 1 + β) = −41/3 within its budget", ly && ly.sumRel <= lb.sumRel, ly ? `relative ${ly.sumRel.toExponential(3)} (budget ${lb.sumRel}); Kaplan–Yorke ${ly.ky.toFixed(4)}` : "");
   const im = prove.invariant;
   check("Prove: the forgotten cloud's histogram matches a long f64 run (total variation)", im && im.tv <= lb.invariantTv, im ? `TV ${im.tv.toFixed(4)} (budget ${lb.invariantTv}; two f64 runs ${im.floor.toFixed(4)}), outside ${im.outside}` : "no result");
+  // M2's three cards: reference agreement, not gated (proof/budgets.ts ≡ tolerance.toml, unit-tested)
+  const mb = { roadTv: 0.06, roadOrbitTv: 0.01, mapTv: 0.045, sectionTv: 0.016 };
+  const rd = prove.road;
+  check(
+    "Prove: Road to Chaos, column by column, against f64 (chaos on 64 bins, windows on 1,024)",
+    rd && rd.worstChaos <= mb.roadTv && rd.worstOrbit <= mb.roadOrbitTv,
+    rd ? `${rd.rhos.map((r, i) => `ρ ${r}: ${rd.tv[i].toFixed(4)}/${rd.bins[i]} (f64 ${rd.floor[i].toFixed(4)})`).join("; ")} — budgets ${mb.roadTv} / ${mb.roadOrbitTv}` : "no result",
+  );
+  const mp = prove.map;
+  check("Prove: Lorenz's map against f64 (32 × 32 bins)", mp && mp.tv <= mb.mapTv, mp ? `TV ${mp.tv.toFixed(4)} (budget ${mb.mapTv}; two f64 runs ${mp.floor.toFixed(4)}); ${mp.gpu.toLocaleString()} GPU pairs, ${mp.ref.toLocaleString()} f64` : "no result");
+  const sc = prove.section;
+  check("Prove: the section at z = ρ − 1 against f64 (32 × 32 bins)", sc && sc.tv <= mb.sectionTv, sc ? `TV ${sc.tv.toFixed(4)} (budget ${mb.sectionTv}; two f64 runs ${sc.floor.toFixed(4)}); ${sc.gpu.toLocaleString()} GPU crossings, ${sc.ref.toLocaleString()} f64` : "no result");
+  const labels = await T(page, () =>
+    ["The road, column by column", "Lorenz's map, against f64", "The section, against f64"].map((t) => {
+      // each card's own status line: the one status inside the smallest ancestor that carries the title
+      const s = [...document.querySelectorAll(".bp-proof-status")].find((el) => {
+        for (let c = el.parentElement, i = 0; c && i < 5; c = c.parentElement, i += 1) if (c.querySelectorAll(".bp-proof-status").length === 1 && c.textContent.includes(t)) return true;
+        return false;
+      });
+      return s?.textContent ?? null;
+    }),
+  );
+  check("the three new cards pass, labelled not gated", labels.every((l) => l?.trim().endsWith("reference agreement passed (not gated)")), labels.join(" · "));
   await T(page, () => document.querySelector('.bp-top-actions [aria-label="Prove"]').click());
   await page.waitForTimeout(300);
   await shot(page, "04-prove");
@@ -432,6 +466,246 @@ let bench = null;
   await ctx.close();
 }
 
+// --- M2: Road to Chaos ------------------------------------------------------------------
+const benchM2 = {};
+/** Which panels show, the tools on the rail, what the ensemble observes. */
+const sceneState = (page) =>
+  T(page, () => {
+    const a = globalThis.__chaos;
+    const shown = (label) => { const el = document.querySelector(`.cx-panel[aria-label="${label}"]`); return !!el && !el.hidden && el.getBoundingClientRect().width > 0; };
+    return {
+      scene: a.scene.id,
+      panels: { road: shown("Road to Chaos"), map: shown("Lorenz's Map"), slice: shown("Slice") },
+      tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool[data-tool]")].map((b) => b.dataset.tool),
+      allTools: document.querySelectorAll(".bp-rail-tools .bp-tool").length,
+      active: a.studio.rail.active,
+      observe: { map: a.chaos.observe.map, slice: a.chaos.observe.slice },
+      rho: a.chaos.params.rho,
+    };
+  });
+/** Frames per second and the GPU passes, averaged over a few seconds. */
+const sceneBench = (page) =>
+  T(page, async () => {
+    const a = globalThis.__chaos;
+    await new Promise((r) => setTimeout(r, 4000));
+    return { fps: +a.fps.toFixed(1), gpuMs: a.profiler?.frameAvg ?? null, passes: a.profiler?.timings().map((p) => ({ name: p.name, ms: +p.avg.toFixed(3) })) ?? [] };
+  });
+{
+  const { ctx, page, errors } = await open("/v2/?s=road");
+  const s = await sceneState(page);
+  check(
+    "Road to Chaos boots with its diagram, no observers, the Release tools, at most six tools",
+    s.scene === "road" && s.panels.road && !s.panels.map && !s.panels.slice && !s.observe.map && !s.observe.slice && !s.tools.includes("slice") && s.allTools <= 6,
+    JSON.stringify(s),
+  );
+  check("…and no ball until asked (the diagram is the scene)", !(await dbg(page)).released);
+  await page.waitForFunction(() => !globalThis.__chaos.bif.warming, undefined, { timeout: 60000 });
+  await page.waitForTimeout(3000);
+  const fill = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const b = a.bif;
+    const c = await b.readCounts();
+    const col = (rho) => Math.min(b.cols - 1, Math.max(0, Math.floor(((rho - b.rho0) / (b.rho1 - b.rho0)) * b.cols)));
+    const occupied = (k) => { let n = 0; for (let y = 0; y < b.bins; y += 1) if (c[y * b.cols + k] > 0) n += 1; return n; };
+    let filled = 0;
+    let total = 0;
+    for (let k = 0; k < b.cols; k += 1) {
+      let n = 0;
+      for (let y = 0; y < b.bins; y += 1) n += c[y * b.cols + k];
+      if (n > 0) filled += 1;
+      total += n;
+    }
+    return { cols: b.cols, per: b.per, bins: b.bins, filled, total, t: b.steps * a.chaos.dt, at28: occupied(col(28)), at60: occupied(col(60)), at150: occupied(col(150)), at230: occupied(col(230)), status: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .cx-panel-status').textContent };
+  });
+  check(
+    "the road fills: every column of ρ has peaks once its trajectories settle",
+    fill.filled === fill.cols && fill.total > fill.cols * fill.per,
+    `${fill.cols} columns × ${fill.per} trajectories × ${fill.bins} bins; ${fill.total.toLocaleString()} peaks after ${fill.t.toFixed(0)} time units; “${fill.status}”`,
+  );
+  check(
+    "chaos and order tell apart: a chaotic column spreads over many bins, a window's over a few",
+    fill.at28 > 100 && fill.at60 > 100 && fill.at150 < 24 && fill.at230 < 24,
+    `occupied bins: ρ 28 ${fill.at28}, ρ 60 ${fill.at60}, ρ 150 ${fill.at150}, ρ 230 ${fill.at230}`,
+  );
+  await shot(page, "10-road");
+
+  // a click on the diagram sets ρ — an edit: on the link, undoable
+  const at = await T(page, () => {
+    const o = document.querySelector('.cx-panel[aria-label="Road to Chaos"] .cx-hist-overlay').getBoundingClientRect();
+    const r = globalThis.__chaos.roadRange;
+    return { x: o.left + ((150 - r.rho0) / (r.rho1 - r.rho0)) * o.width, y: o.top + o.height / 2, perPx: (r.rho1 - r.rho0) / o.width };
+  });
+  await page.mouse.click(at.x, at.y);
+  await page.waitForTimeout(500);
+  const picked = await T(page, () => ({ rho: globalThis.__chaos.chaos.params.rho, search: location.search, slider: document.querySelector('.cx-panel[aria-label="Road to Chaos"] input[type="range"]').value }));
+  check("a click on the diagram sets ρ there, and it rides the link", Math.abs(picked.rho - 150) <= at.perPx + 0.01 && picked.search.includes(`rho=${picked.rho}`), `ρ ${picked.rho} (one pixel = ${at.perPx.toFixed(3)}); slider ${picked.slider}; ${picked.search}`);
+  const keyed = await T(page, () => {
+    const i = document.querySelector('.cx-panel[aria-label="Road to Chaos"] input[type="range"]');
+    i.focus();
+    return Number(i.value);
+  });
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("ArrowRight");
+  await page.waitForTimeout(300);
+  const keyedTo = await T(page, () => globalThis.__chaos.chaos.params.rho);
+  check("“Go to ρ” sets ρ by keyboard", Math.abs(keyedTo - (keyed + 0.1)) < 1e-6, `slider at ${keyed} → ρ ${keyedTo}`);
+  const undone = await T(page, async () => {
+    const a = globalThis.__chaos;
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 200));
+    const one = a.chaos.params.rho;
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 200));
+    const two = a.chaos.params.rho;
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 200));
+    return [one, two, a.chaos.params.rho];
+  });
+  check("each pick undoes, back to ρ 28", undone[2] === 28, `ρ ${keyedTo} → ${undone.join(" → ")}`);
+  const sb = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const w = (ms) => new Promise((r) => setTimeout(r, ms));
+    await w(1000);
+    const ran = a.bif.steps;
+    a.setParams({ ...a.chaos.params, sigma: 12 });
+    await w(300);
+    const edited = a.bif.steps;
+    await w(1200);
+    const beforeUndo = a.bif.steps;
+    await a.undo();
+    await w(150);
+    return { ran, edited, beforeUndo, undone: a.bif.steps, sigma: a.chaos.params.sigma };
+  });
+  check("a new σ starts the diagram over, and so does undoing it", sb.edited < sb.ran && sb.undone < sb.beforeUndo && sb.sigma === 10, `steps ${sb.ran} → σ 12: ${sb.edited} → ${sb.beforeUndo} → undo: ${sb.undone}`);
+
+  // the range presets restart the diagram and ride the link
+  const ranBefore = await T(page, () => globalThis.__chaos.bif.steps);
+  await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("99–101.5")');
+  await page.waitForTimeout(150);
+  const rr = await T(page, () => ({ id: globalThis.__chaos.roadRange.id, rho0: globalThis.__chaos.bif.rho0, rho1: globalThis.__chaos.bif.rho1, steps: globalThis.__chaos.bif.steps, pressed: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .bp-seg[aria-checked="true"]')?.textContent }));
+  await page.waitForTimeout(400); // the link is written 250 ms after the last change
+  rr.search = await T(page, () => location.search);
+  check("a range preset narrows the diagram, starts it over, and rides the link", rr.id === "near100" && rr.rho0 === 99 && rr.rho1 === 101.5 && rr.steps < ranBefore && rr.steps < 6000 && rr.search.includes("rr=near100"), `${ranBefore} steps → ${rr.steps} after 150 ms; ${JSON.stringify(rr)}`);
+  await page.waitForFunction(() => !globalThis.__chaos.bif.warming, undefined, { timeout: 60000 });
+  await page.waitForTimeout(2500);
+  await shot(page, "11-road-near100");
+  benchM2.road = await sceneBench(page);
+  check("Road to Chaos runs at 60 fps (headless, this GPU)", benchM2.road.fps > 55, `${benchM2.road.fps} fps; ${benchM2.road.passes.map((p) => `${p.name} ${p.ms} ms`).join(", ")}`);
+  check("no console errors (Road to Chaos)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page, errors } = await open("/v2/?s=road&rr=high&rho=230");
+  const r = await T(page, () => ({ id: globalThis.__chaos.roadRange.id, rho0: globalThis.__chaos.bif.rho0, rho: globalThis.__chaos.chaos.params.rho, pressed: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .bp-seg[aria-checked="true"]')?.textContent }));
+  check("a link with a range and a ρ the diagram reaches (230) boots into both", r.id === "high" && r.rho0 === 140 && r.rho === 230, JSON.stringify(r));
+  check("no console errors (range link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M2: Lorenz's Map ---------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=map");
+  const s = await sceneState(page);
+  check("Lorenz's Map boots with its panel, observing the map only, at most six tools", s.scene === "map" && s.panels.map && !s.panels.road && !s.panels.slice && s.observe.map && !s.observe.slice && !s.tools.includes("slice") && s.allTools <= 6, JSON.stringify(s));
+  const grow = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const t0 = (await a.chaos.readObservation("map")).total;
+    const p0 = globalThis.__chaosPanels.map.peaks().length;
+    await new Promise((r) => setTimeout(r, 3000));
+    const { counts, total } = await a.chaos.readObservation("map");
+    const peaks = globalThis.__chaosPanels.map.peaks();
+    // the mass on the map's curve: few cells of the 256 × 256 carry it
+    let cells = 0;
+    for (const c of counts) if (c > 0) cells += 1;
+    return { t0, t1: total, p0, peaks, box: [a.obsBox.mapLo, a.obsBox.mapHi], cells, status: document.querySelector('.cx-panel[aria-label="Lorenz\'s Map"] .cx-panel-status').textContent };
+  });
+  check("pairs of peaks pile up as the points run", grow.t1 > grow.t0 && grow.t1 > 1e6, `${grow.t0.toLocaleString()} → ${grow.t1.toLocaleString()} pairs in 3 s; “${grow.status}”`);
+  check("they lie on one thin curve (a few percent of the cells)", grow.cells > 300 && grow.cells < 0.08 * 65536, `${grow.cells.toLocaleString()} of 65,536 cells`);
+  check("the cobweb hops along it (its own f64 trajectory)", grow.peaks.length > grow.p0 && grow.peaks.length >= 4 && grow.peaks.every((z) => z > grow.box[0] && z < grow.box[1]), `${grow.p0} → ${grow.peaks.length} peaks, all inside [${grow.box.map((v) => v.toFixed(2)).join(", ")})`);
+  await shot(page, "12-map");
+  const re = await T(page, async () => {
+    const a = globalThis.__chaos;
+    a.setParams({ ...a.chaos.params, rho: 35 });
+    await new Promise((r) => setTimeout(r, 400));
+    const mid = { box: [a.obsBox.mapLo, a.obsBox.mapHi], total: (await a.chaos.readObservation("map")).total, panel: a.chaos.observe.mapHi };
+    await a.undo();
+    await new Promise((r) => setTimeout(r, 300));
+    return { mid, back: [a.obsBox.mapLo, a.obsBox.mapHi], rho: a.chaos.params.rho };
+  });
+  check("a new ρ re-frames the map and starts it afresh; undo brings ρ 28's back", re.mid.box[1] > grow.box[1] + 5 && re.mid.panel === re.mid.box[1] && re.rho === 28 && Math.abs(re.back[1] - grow.box[1]) < 1e-9, `ρ 35: [${re.mid.box.map((v) => v.toFixed(2)).join(", ")}), ${re.mid.total.toLocaleString()} pairs after 0.4 s; undo: [${re.back.map((v) => v.toFixed(2)).join(", ")})`);
+  benchM2.map = await sceneBench(page);
+  check("Lorenz's Map runs at 60 fps (headless, this GPU)", benchM2.map.fps > 55, `${benchM2.map.fps} fps; ${benchM2.map.passes.map((p) => `${p.name} ${p.ms} ms`).join(", ")}`);
+  check("no console errors (Lorenz's Map)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open("/v2/?s=map", { reducedMotion: "reduce" });
+  const r = await T(page, () => ({ turn: globalThis.__chaos.camera.autoRotate, speed: globalThis.__chaos.clock.speed }));
+  check("reduced motion in Lorenz's Map: no turntable, half speed", r.turn === 0 && r.speed === 0.5, JSON.stringify(r));
+  await ctx.close();
+}
+
+// --- M2: Slice -------------------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=slice");
+  const s = await sceneState(page);
+  check("Slice boots with its panel, observing the section only, the Slice tool chosen, at most six tools", s.scene === "slice" && s.panels.slice && !s.panels.road && !s.panels.map && s.observe.slice && !s.observe.map && s.active === "slice" && s.tools.includes("slice") && s.allTools <= 6, JSON.stringify(s));
+  const p0 = await T(page, async () => {
+    const a = globalThis.__chaos;
+    await new Promise((r) => setTimeout(r, 2000));
+    const { counts, total } = await a.chaos.readObservation("slice");
+    let cells = 0;
+    for (const c of counts) if (c > 0) cells += 1;
+    return { plane: a.plane, total, cells, observePlane: a.chaos.observe.plane };
+  });
+  check("the cut starts at z = ρ − 1 and gathers crossings", p0.plane === 27 && p0.observePlane === 27 && p0.total > 1e6, `${p0.total.toLocaleString()} crossings in 2 s`);
+  check("the crossings lie on two thin lines (a few percent of the cells)", p0.cells > 200 && p0.cells < 0.06 * 65536, `${p0.cells.toLocaleString()} of 65,536 cells`);
+  await shot(page, "13-slice");
+  // the Slice tool: dragging up raises the cut and turns nothing
+  const cam0 = await T(page, () => { globalThis.__chaos.camera.autoRotate = 0; return globalThis.__chaos.camera.state().yaw; });
+  await page.mouse.move(640, 420);
+  await page.mouse.down();
+  await page.mouse.move(640, 360, { steps: 6 });
+  await page.mouse.up();
+  await page.waitForTimeout(300);
+  const dragged = await T(page, async () => ({ plane: globalThis.__chaos.plane, yaw: globalThis.__chaos.camera.state().yaw, total: (await globalThis.__chaos.chaos.readObservation("slice")).total, slider: document.querySelector('.cx-panel[aria-label="Slice"] input[type="range"]').value, events: globalThis.__chaos.eventCount }));
+  check("dragging with the Slice tool raises the cut (and does not turn the view or release a ball)", dragged.plane > p0.plane + 1 && Math.abs(dragged.yaw - cam0) < 1e-6 && Math.abs(Number(dragged.slider) - dragged.plane) <= 0.05 + 1e-9 && dragged.events === 0, `z ${p0.plane} → ${dragged.plane.toFixed(2)}; slider ${dragged.slider}; yaw ${cam0.toFixed(3)} → ${dragged.yaw.toFixed(3)}`);
+  check("…and the section starts afresh at the new height", dragged.total < p0.total, `${dragged.total.toLocaleString()} crossings since`);
+  const k0 = await T(page, () => { const i = document.querySelector('.cx-panel[aria-label="Slice"] input[type="range"]'); i.focus(); return Number(i.value); });
+  for (let i = 0; i < 10; i += 1) await page.keyboard.press("ArrowLeft");
+  await page.waitForTimeout(200);
+  const k1 = await T(page, () => globalThis.__chaos.plane);
+  check("“Cut at height” moves the cut by keyboard", Math.abs(k1 - (k0 - 1)) < 1e-6, `slider at ${k0} → z ${k1.toFixed(2)}`);
+  const clamp = await T(page, () => { const a = globalThis.__chaos; a.setPlane(1000); const hi = a.plane; a.setPlane(-5); const lo = a.plane; a.setPlane(27); return { hi, lo }; });
+  check("the cut stays within the attractor's height (0.15ρ … 1.75ρ)", Math.abs(clamp.hi - 49) < 1e-9 && Math.abs(clamp.lo - 4.2) < 1e-9, JSON.stringify(clamp));
+  const high = await T(page, async () => {
+    const a = globalThis.__chaos;
+    const box27 = [...a.obsBox.box];
+    a.setPlane(45);
+    await new Promise((r) => setTimeout(r, 2000));
+    const { total } = await a.chaos.readObservation("slice");
+    const box45 = [...a.obsBox.box];
+    a.setPlane(27);
+    return { total, box27, box45 };
+  });
+  check(
+    "a high cut (z = 45) is recorded too: one box, the attractor's whole footprint, holds every height",
+    high.total > 1000 && high.box45.every((v, i) => v === high.box27[i]),
+    `${high.total.toLocaleString()} crossings in 2 s; box ${high.box45.map((v) => v.toFixed(2)).join(", ")}`,
+  );
+  const rel = await T(page, async () => {
+    const a = globalThis.__chaos;
+    a.studio.rail.select("release");
+    await new Promise((r) => setTimeout(r, 100));
+    return a.studio.rail.active;
+  });
+  check("the Release tool is still there in Slice", rel === "release");
+  benchM2.slice = await sceneBench(page);
+  check("Slice runs at 60 fps (headless, this GPU)", benchM2.slice.fps > 55, `${benchM2.slice.fps} fps; ${benchM2.slice.passes.map((p) => `${p.name} ${p.ms} ms`).join(", ")}`);
+  check("no console errors (Slice)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
 // --- determinism: the same seed gives the same bytes across page loads ------------------
 {
   const run = async () => {
@@ -486,6 +760,7 @@ let bench = null;
 }
 
 console.log(`BP_BENCH ${JSON.stringify(bench)}`);
+console.log(`BP_BENCH_M2 ${JSON.stringify(benchM2)}`);
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 if (out) await writeFile(join(out, "acceptance.json"), JSON.stringify({ results, bench }, null, 2));

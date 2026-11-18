@@ -3,7 +3,23 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "WebGPU Murmuration Lab — topological starling flocking, banked procedural birds, GPU spatial grid, live instruments, and a frozen Reynolds capture gate.",
-  "scripts": { "build": "vite build", "dev": "vite", "preview": "vite preview", "typecheck": "tsc --noEmit" },
-  "devDependencies": { "@webgpu/types": "0.1.70", "typescript": "6.0.3", "vite": "6.4.3" }
+  "description": "WebGPU web build — boids-3d: the v1 Murmuration Lab page (topological starling flocking, banked procedural birds, GPU spatial grid, live instruments) and the v2 Murmuration page (Field Studies shell: the same flock as an optical-depth medium against a dusk sky, F3 3D layer), each with the frozen Reynolds capture gate.",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
+  },
+  "devDependencies": {
+    "@webgpu/types": "0.1.70",
+    "typescript": "6.0.3",
+    "vite": "6.4.3"
+  }
 }

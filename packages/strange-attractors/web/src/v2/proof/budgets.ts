@@ -20,4 +20,11 @@ export const BUDGET = {
   sumRel: 1.5e-5,
   /** Total-variation distance, the ensemble's (x, z) histogram vs a long f64 run. */
   invariantTv: 0.02,
+  /** M2: Road to Chaos's worst chaotic column (64 bins) — a distribution sanity check. */
+  roadTv: 0.06,
+  /** M2: its worst periodic window (the diagram's 1,024 bins) — where small changes of ρ show. */
+  roadOrbitTv: 0.01,
+  /** M2: Lorenz's map and the section at z = ρ − 1 (32 × 32 bins). */
+  mapTv: 0.045,
+  sectionTv: 0.016,
 } as const;

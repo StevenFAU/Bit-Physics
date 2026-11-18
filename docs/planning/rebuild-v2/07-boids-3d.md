@@ -1,7 +1,77 @@
 # 07 — Murmuration (3D starlings)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-3d/web` (Murmuration Lab).
-> Wave B. Status: planning, v0.1, 2026-10-17. Unmeasured targets.
+> Wave B. Status: planning, v0.1, 2026-10-17; M0 built 2026-11-18 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-18): M0 built** as the `v2/` page of `packages/boids-3d/web`
+> (served at `/sims/boids-3d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged). Dusk: v1's
+> starling flock over a reed bed, watched from the ground, drawn as an optical-depth medium against an
+> analytic dusk; the Look, Gust and Startle tools; Tune (flock character, sun, drawn size), Learn and
+> Prove. Measured on the RX 6800 XT (snap Chromium, RADV, headless, 1280×720) unless a line says otherwise.
+>
+> - **The gate, ported verbatim** (`src/v2/proof/gate.ts`): v1's `src/legacy-capture.ts` on its own
+>   buffers — the committed `packages/boids-3d/src/boids.wgsl`, the 32-byte parameter block, the
+>   seed-42 `boids-ic-seed42.bin` (resolved from the bundle, `src/sim-root.ts`; v1's page-relative
+>   path would 404 from `v2/`), 1,000 steps in their own submits, v1's manifest. `pipeline.py validate
+>   --sim boids-3d` passes on both pages, run twice: every capture (v1 and v2, both runs) and two
+>   captures of main's v1 page (built from `git archive origin/main`) are the same file, sha256
+>   `6c6651a2…`. Step 100 within 3.19 × 10⁻³ of the f64 reference (32% of `T_BOIDS_SHORT` 10⁻²),
+>   fastest boid 3.0. The page is ready once the gate kernel compiles (the driver saw 11–27 ms) and
+>   compiles the flock and renderer after (live at ~200 ms).
+> - **The model is v1's** (`src/v2/model/flock.ts` imports `src/grid.wgsl`, `src/starling.wgsl` and
+>   `src/stats.wgsl` unchanged, and v1's presets). Unit tests pin the seeded flock and the uniforms
+>   byte for byte to v1's `reset()` and `writeParams()`. One fix, not a model change: v1 wrote every
+>   step's uniforms into one buffer and submitted two steps at once, so both read the second write;
+>   v2 gives each step its own slot on a dynamic-offset ring. 96 steps give the same bytes in submits
+>   of 32, 1 and 7, and the same seed gives the same bytes across page loads.
+> - **Grid ≡ brute force, in the page** (Prove): the live kernel with its 27-cell loop rewritten, by
+>   text, as a loop over every bird. Selection is lexicographic in (distance², id), so the two give the
+>   same bytes: 8 of 8 steps identical on 2,048 seeded birds and on 2,048 packed beyond a corner of
+>   the grid (clamped cells), 7.00 neighbours each. The scatter checks as an exact permutation on the
+>   live 32,768 (each id once, in its own cell; in one run the fullest of 1,305 occupied cells held 92).
+> - **The look.** Each bird is a flat 3D Gaussian (wingspan, length, thickness as ±2σ, banked), so it
+>   projects to a 2D Gaussian; its coverage, 2π√det of that, shrinks edge-on. The footprint adds a
+>   0.75 px pixel filter and is normalised over the very pixels written, into a u32 fixed-point τ
+>   buffer (`atomicAdd`: exact and order-free; F3's rgba16float `Points` would stop adding faint
+>   splats). The sky shows through as e^(−τ). Dusk, cirrus, tree lines, land, a lake strip and the
+>   reed bed are procedural (`render/dusk.wgsl`, `render/reeds.wgsl`); no bloom, no artwork. The flock's
+>   core reaches τ 2.7–3.1 (transmittance 0.07–0.045), with 18–21% of the frame under some optical
+>   depth (two acceptance runs).
+> - **The flicker risk, measured.** With the flock held still, the eye dollies 0.04 m a frame for 120
+>   frames and Σ τ over the screen is read every frame. The total rises 4.8% (nearer birds), smoothly:
+>   frame-to-frame jitter about the trend 2.7–2.8 × 10⁻⁷ rms, worst residual 3.1–3.3 × 10⁻⁶ (two runs).
+>   The control, analytic normalisation with a 0.3 px filter (a plain small sprite), jitters 2.1 × 10⁻⁵,
+>   74–76× more. The acceptance run holds the shipped splat to 10⁻⁴.
+> - **v1's flock is not a murmuration yet** — a finding. Across all six presets at 32,768 birds it mills
+>   as a loose cloud over the roost: polarization 0.007–0.06 (field flocks: 0.96 ± 0.03, Cavagna et al.
+>   2010), rms axes about 59 × 56 × 14 m, nearest neighbour 2.4 m (field: about a wingspan, Ballerini
+>   et al. 2008). Read at 2 m per model unit (v1's birds cruise at 4–9 units/s). So the medium is
+>   lace-dark in its core rather than black, and birds are drawn 4× a starling's size (Tune, Learn's
+>   limits). Learn labels the observables model behaviour and says the flock mills. Order, the
+>   falcon and its alarm wave are M1's model work.
+> - **Birds per tier, measured then declared:** T3 32,768, T2 16,384, T1 4,096 (v1's software safe
+>   mode). v1's kernel reads every candidate in the 27 cells around a bird, because its alarm rule
+>   takes the most alarmed of all visible neighbours, not only the seven. A step costs about 4.4–5 ms
+>   at 32,768; with the flock spread over the roost, 65,536 ran at 5.9 fps (38 steps/s, GPU 59 ms
+>   p50) and 100,000 at 2.4 fps (18 steps/s, GPU 409 ms). The spec's 100k needs kernel work
+>   (cell-ordered state, or an alarm rule bounded to the selected neighbours) and waits for M1.
+> - **Frame rate** (`?bench=1`, after the flock has spread). T3: 60 fps and 120 steps/s in three runs,
+>   GPU 7.0–10.2 ms p50 / 13.9–16.8 ms p90; in the quietest, sim 8.8 ms a frame (two steps), dusk
+>   0.18, optical depth 0.16, composite and reeds 0.04, exposure 0.02 — the whole picture under half a
+>   millisecond. T2 and T1 held 60 fps; their GPU times are not comparable (with little work
+>   the GPU clocks down: the dusk pass, whose cost is only resolution, took 0.6 ms at T1). Runs taken
+>   while other sessions' browsers used the same GPU dropped T3 to 40 and 4 fps with the page's own GPU
+>   time unchanged; the 60 fps runs had the GPU to themselves. SwiftShader (Playwright's Chromium
+>   with lavapipe's ICD, T1, 4,096 birds): ready 80 ms, live 1.7 s, 9.1 fps — a frame of about 110 ms
+>   (sim 41 ms for two steps, reeds and composite 21, dusk 18, exposure 5) — with the flock slowed to
+>   19 steps/s, as T1's cap of two steps a frame intends (uncapped, it drew 3.9 fps).
+> - **Acceptance and layout:** `v2-acceptance.mjs` 33/33; `web/tools/check-studio.mjs` 0
+>   problems and 0 axe violations at 390, 820, 1440 and 200% zoom; `__bpDebug().space` is `"3d"`.
+> - **Shared code:** `View3D.update` takes any camera with a view, projection, eye and clip planes
+>   (a `Pick` of `OrbitCamera`), so Murmuration's camera stands on the ground (`render/ground-camera.ts`:
+>   a drag turns your head, the wheel zooms the field of view, an idle gaze follows the flock, never
+>   under reduced motion). Nothing else in `web/` changed. The τ splat, the dusk and the ground camera
+>   are sim-local, candidates for `@bp/render` when a second sim needs them.
 
 ## Verdict on the prototype
 

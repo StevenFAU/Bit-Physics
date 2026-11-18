@@ -193,7 +193,17 @@ export function buildLearn(pane: HTMLElement): LearnPane {
   return {
     setScene(scene) {
       seeing.textContent =
-        scene.id === "digits"
+        scene.id === "road"
+          ? "The road from order to chaos, all at once. Every column of the diagram is one value of ρ: thousands of trajectories run there until their start is forgotten, and each time z reaches a peak, the peak is marked. " +
+            "A single dot means the motion settles to a point; a few dots, a repeating orbit; a smear, chaos. Below ρ ≈ 24.74 the wings' centres hold the motion; above it chaos sets in, broken by windows where a periodic orbit takes over again — " +
+            "near ρ = 100 its period doubles and doubles again as ρ falls. Click a column to see that ρ's attractor."
+          : scene.id === "map"
+            ? "Edward Lorenz's own key to his attractor (1963): ignore everything but the peaks of z, and plot each against the one before. Half a million points on the attractor fill in one thin curve, " +
+              "shaped like a tent with a cusp. The next peak is a function of the last. The curve is steeper than the diagonal everywhere, so two nearby peaks are pushed further apart at every turn — the map stretches, and that is the chaos."
+            : scene.id === "slice"
+              ? "A plane cuts through the attractor; every time the flow passes through it going up, a point is marked — a Poincaré section. Each wing crosses as a line, so the attractor is nearly a surface. " +
+                "Nearly: its dimension is about 2.06, and each line is a stack of finer lines — far finer than any picture, because every turn squeezes the layers tens of thousands of times thinner. Drag the plane up and down with the Slice tool."
+              : scene.id === "digits"
           ? "Each ball starts at the same point; each extra digit of precision makes it ten times smaller. Watch how long each one stays a single point, then plot that time against the digits: " +
             "the points fall on a straight line. Its slope — time bought per digit — is ln 10 divided by the largest Lyapunov exponent, so you can measure the exponent by clicking."
           : scene.id === "butterfly"

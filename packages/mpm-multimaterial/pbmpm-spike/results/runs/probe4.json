@@ -1,0 +1,49 @@
+[
+ {
+  "label": "wq-uber",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "tiled": true,
+  "hash": true,
+  "wallFriction": 0
+ },
+ {
+  "label": "wq-water",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "duration": 0.25,
+  "tiled": true,
+  "hash": true,
+  "wallFriction": 0,
+  "waterOnly": true
+ },
+ {
+  "label": "probe-dam-tiled-wateronly",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "tiled": true,
+  "wallFriction": 0,
+  "waterOnly": true
+ },
+ {
+  "label": "probe-dam-morton-wateronly",
+  "scene": "dam",
+  "gridX": 128,
+  "substeps": 4,
+  "iterations": 5,
+  "benchAt": 0.25,
+  "benchFrames": 5,
+  "order": "morton",
+  "wallFriction": 0,
+  "waterOnly": true
+ }
+]

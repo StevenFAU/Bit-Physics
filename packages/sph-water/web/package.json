@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Stack-B WebGPU web build — SPH water (DFSPH). The first browser DFSPH: screen-space-rendered water over a two-tier solver whose gated core (cubic-spline kernel, density, continuity, corrector, counting-sort neighbor search) is a faithful f32 port of the verified NumPy reference, pointwise-matched against the committed 100K canonical capture; the live Bender-Koschier dual solver is labeled beyond-reference (Phase-6 verification-demo track).",
+  "description": "Stack-B WebGPU web build — SPH water (DFSPH): the v1 page (the first browser DFSPH, screen-space rendered, over a two-tier solver whose gated core is pointwise-matched against the committed 100K canonical capture) and the v2 Water in Hand page (Field Studies shell: the shipped live DFSPH in a glass, F4 LiquidSurface), each with the capture-export hook.",
   "scripts": {
     "gen": "node gen-verification.mjs",
     "prebuild": "node gen-verification.mjs",
@@ -12,6 +12,13 @@
     "dev": "vite",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@bp/gpu": "*",
+    "@bp/render": "*",
+    "@bp/runtime": "*",
+    "@bp/studio": "*",
+    "@bp/verify": "*"
   },
   "devDependencies": {
     "@webgpu/types": "0.1.70",
