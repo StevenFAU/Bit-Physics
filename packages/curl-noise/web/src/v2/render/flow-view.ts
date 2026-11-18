@@ -9,6 +9,8 @@
 //              (render/silk.wgsl), drawn into a cleared frame target
 //              (Accumulator "frame": thousands of faint overlapping segments
 //              stay precise in rgba16float), depth-tested, then added in
+//   dust       or: every tracer a point (F3 Points), coloured by its f₂
+//              surface, into a short long exposure (Accumulator "ema")
 //
 // Model coordinates are the gate's unit box (the sphere at its centre);
 // View3D's model transform centres and scales it into the y-up world the
@@ -16,7 +18,7 @@
 
 import { wgsl } from "@bp/gpu";
 import type { GpuProfiler } from "@bp/gpu";
-import type { EnvironmentLook, HdrPipeline, OrbitCamera, Rgb, Vec3 } from "@bp/render";
+import type { EnvironmentLook, HdrPipeline, OrbitCamera, PointDraw, Rgb, Vec3 } from "@bp/render";
 import {
   Accumulator,
   DEPTH_FORMAT,
@@ -24,6 +26,7 @@ import {
   Environment,
   INSTANCE_FLOATS,
   Instances,
+  Points,
   SCENE_FORMAT,
   View3D,
   icosphere,
@@ -31,7 +34,7 @@ import {
   similarity,
   transform4,
 } from "@bp/render";
-import type { Obstacle, V3 } from "../model/flow.js";
+import type { Look, Obstacle, V3 } from "../model/flow.js";
 import { BALL_CENTRE, BALL_RADIUS } from "../model/flow.js";
 import silkSrc from "./silk.wgsl?raw";
 
@@ -89,8 +92,26 @@ export const DEFAULT_SILK: SilkLook = {
   phase: 0.5,
 };
 
+/** Dust: points filling the ball, kept as a short long exposure (06-curl-noise.md, "The look"). */
+export interface DustLook {
+  /** Total light of all the points (px · radiance); split evenly between them. */
+  light: number;
+  /** World radius (model units) and footprint limits, px at 900 px of render height. */
+  radius: number;
+  minPx: number;
+  maxPx: number;
+  /** Long exposure, seconds (shorter while the view is dragged). */
+  tau: number;
+  tauMoving: number;
+}
+
+export const DEFAULT_DUST: DustLook = { light: 2.2e5, radius: 0.0035, minPx: 0.9, maxPx: 3, tau: 0.14, tauMoving: 0.03 };
+
 export interface FrameState {
   camera: OrbitCamera;
+  look: Look;
+  dtSec: number;
+  cameraMoving: boolean;
   ring: { buffer: GPUBuffer; anchors: GPUBuffer; strands: number; slots: number; head: number; valid: number };
   /** Typical step length (model units) of a ribbon segment: |v|·Δt. */
   refStep: number;
@@ -103,6 +124,7 @@ export const MODEL_CENTRE: V3 = [0.5, 0.5, 0.5];
 
 export class FlowView {
   silk: SilkLook = { ...DEFAULT_SILK };
+  dust: DustLook = { ...DEFAULT_DUST };
   readonly view3d: View3D;
   readonly depth: DepthTarget;
   private readonly params: GPUBuffer;
@@ -120,6 +142,8 @@ export class FlowView {
     private readonly light: Accumulator,
     private readonly pipeline: GPURenderPipeline,
     private readonly palette: GPUTextureView,
+    private readonly dustLight: Accumulator,
+    private readonly dustDraw: PointDraw,
   ) {
     this.view3d = view3d;
     this.depth = new DepthTarget(device, DEPTH_FORMAT);
@@ -134,7 +158,7 @@ export class FlowView {
   static async create(device: GPUDevice): Promise<FlowView> {
     const view3d = new View3D(device);
     const module = device.createShaderModule({ code: wgsl(silkSrc), label: "silk" });
-    const [env, sphere, light, pipeline] = await Promise.all([
+    const [env, sphere, light, pipeline, dustLight, dustPoints] = await Promise.all([
       Environment.create(device, view3d, STUDIO_WARM, { depthFormat: DEPTH_FORMAT }),
       Instances.create(device, view3d, { lods: [icosphere(5), icosphere(4), icosphere(3)], lodPx: [90, 30], capacity: 4, label: "obstacle", depthFormat: DEPTH_FORMAT }),
       Accumulator.create(device, { mode: "frame", depthFormat: DEPTH_FORMAT }),
@@ -150,9 +174,11 @@ export class FlowView {
         primitive: { topology: "triangle-strip" },
         depthStencil: { format: DEPTH_FORMAT, depthWriteEnabled: false, depthCompare: "less-equal" },
       }),
+      Accumulator.create(device, { mode: "ema", depthFormat: DEPTH_FORMAT }),
+      Points.create(device, view3d, { label: "dust-points", depthFormat: DEPTH_FORMAT }),
     ]);
     const palette = paletteTexture(device, SILK_STOPS, "silk-palette").createView();
-    return new FlowView(device, view3d, env, sphere, light, pipeline, palette);
+    return new FlowView(device, view3d, env, sphere, light, pipeline, palette, dustLight, dustPoints.createDraw("dust"));
   }
 
   /** World position of a model point. */
@@ -238,6 +264,7 @@ export class FlowView {
     this.view3d.update(f.camera, w, h);
     const depth = this.depth.ensure(w, h);
     this.light.resize(w, h);
+    this.dustLight.resize(w, h);
     this.syncObstacle(f.obstacle);
     // sizes scale with the render target, so a governor step-down keeps the look
     const pxScale = Math.max(0.6, h / 900);
@@ -256,8 +283,38 @@ export class FlowView {
     this.sphere.draw(a);
     a.end();
 
-    // 2. the silk, on its own cleared frame target, depth-tested
     const r = f.ring;
+    if (f.look === "dust") {
+      // 2'. Dust: every particle a splat into a short long exposure, depth-tested
+      const D = this.dust;
+      this.dustDraw.set(
+        { positions: r.buffer, count: r.strands },
+        {
+          energy: D.light / Math.max(r.strands, 1),
+          lut: this.palette,
+          lutGain: 1,
+          radius: D.radius,
+          minPx: D.minPx * pxScale,
+          maxPx: D.maxPx * pxScale,
+        },
+      );
+      const tau = f.cameraMoving ? D.tauMoving : D.tau;
+      const decay = Math.exp(-Math.min(f.dtSec, 0.1) / Math.max(tau, 1e-3));
+      const pd = this.dustLight.begin(enc, { depth, timestampWrites: profiler?.pass("dust") ?? undefined });
+      if (r.valid >= 1) this.dustDraw.draw(pd);
+      this.dustLight.end(enc, pd, decay);
+      const b = enc.beginRenderPass({
+        label: "flow-dust-light",
+        colorAttachments: [{ view: hdr.sceneView, loadOp: "load", storeOp: "store" }],
+        depthStencilAttachment: { view: depth, depthReadOnly: true },
+        timestampWrites: profiler?.pass("light") ?? undefined,
+      });
+      this.dustLight.composite(b, 1);
+      b.end();
+      return;
+    }
+
+    // 2. the silk, on its own cleared frame target, depth-tested
     const segments = r.strands * Math.max(r.slots - 1, 0);
     const p = this.light.begin(enc, { depth, timestampWrites: profiler?.pass("silk") ?? undefined });
     if (r.valid >= 2 && segments > 0) {
@@ -301,6 +358,11 @@ export class FlowView {
     });
     this.light.composite(b, 1);
     b.end();
+  }
+
+  /** Forget Dust's long exposure (a new look, a restart, a restore). */
+  clearExposure(): void {
+    this.dustLight.clear();
   }
 
   /** How many obstacle instances the GPU cull kept at each level of detail (tests). */
