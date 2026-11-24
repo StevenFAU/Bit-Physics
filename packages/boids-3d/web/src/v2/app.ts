@@ -16,8 +16,12 @@ import { History, SimClock } from "@bp/runtime";
 import type { Studio, ToolSpec } from "@bp/studio";
 import { CanvasInput, h, slider } from "@bp/studio";
 import { isCapturing } from "@bp/verify";
-import type { FlockCheckpoint, FlockKernels, FlockStats, MurmurationPreset, ToolInput } from "./model/flock.js";
-import { DT, Flock, MAX_STEPS, NO_TOOL, TOOL, decodeStats, presetById } from "./model/flock.js";
+import { Falcon } from "./model/falcon.js";
+import type { FalconSnapshot } from "./model/falcon.js";
+import type { FlockCheckpoint, FlockKernels, FlockStats, ModelParams, ToolInput, V3 } from "./model/flock.js";
+import { DT, Flock, MAX_STEPS, MURMURATION, NO_TOOL, TOOL, decodeStats } from "./model/flock.js";
+import { measureWave } from "./model/wave.js";
+import type { Wave } from "./model/wave.js";
 import { GroundCamera } from "./render/ground-camera.js";
 import type { MurmurView } from "./render/murmur-view.js";
 import { HOME_EYE, ROOST_Y } from "./render/murmur-view.js";
@@ -36,9 +40,9 @@ export const TICKS_PER_SECOND = 120;
  * kernel work. T1 is v1's software-adapter safe mode.
  */
 export const SIZES: Record<Tier, number> = {
-  T3: 32_768,
-  T2: 16_384,
-  T1: 4_096,
+  T3: 100_000,
+  T2: 32_768,
+  T1: 10_000,
 };
 /** Buffers hold this many birds whatever the tier (?n= may ask for up to it). */
 export const CAPACITY = 131_072;
@@ -46,21 +50,33 @@ const WARM_UP_MS = 2500;
 
 interface Checkpoint extends FlockCheckpoint {
   readonly kind: "flock";
+  falcon: FalconSnapshot;
 }
 
 export interface AppHooks {
   onSceneChange?: (scene: SceneDef) => void;
-  onFlock?: (preset: MurmurationPreset) => void;
+  onModel?: (m: ModelParams) => void;
+  onWave?: (w: Wave) => void;
   onStats?: (s: FlockStats) => void;
   onFrame?: (now: number) => void;
 }
 
-type ToolId = "look" | "gust" | "startle";
+type ToolId = "look" | "falcon" | "gust" | "startle";
 
 export class App {
   readonly clock = new SimClock(TICKS_PER_SECOND, 8);
   readonly camera = new GroundCamera();
   readonly flock: Flock;
+  readonly falcon = new Falcon();
+  private prevFalconHeading: V3 | null = null;
+  private falconRoll = 0;
+  /** The last alarm wave measured (Learn). */
+  wave: Wave | null = null;
+  private waveDue = 0;
+  private waveBusy = false;
+  private falconIdleT = 0;
+  /** Keys held for the falcon: A/D, W/S, Shift. */
+  readonly keys = { yaw: 0, pitch: 0, stoop: false };
   scene: SceneDef = sceneById("dusk");
   hooks: AppHooks = {};
   profiler: GpuProfiler | null = null;
@@ -107,6 +123,11 @@ export class App {
   ) {
     this.flock = new Flock(gpu.device, kernels, Math.max(CAPACITY, birds));
     this.flock.count = birds;
+    // each model step: advance the falcon, then hand the step its falcon and tool
+    this.flock.input = (step) => {
+      this.falcon.advance(DT, step);
+      return { step, falcon: this.falcon.state(), tool: this.toolInput() };
+    };
     if (tier === "T1") {
       // phones and software adapters: real time at 60 fps, and a slower flock rather
       // than a frame that snowballs below it; a thinner reed bed (SwiftShader drew
@@ -117,7 +138,7 @@ export class App {
     this.statsSlot = new ReadbackSlot(gpu.device, 128, "murmur-stats-read");
     this.history = new History<Checkpoint>(
       {
-        capture: () => ({ ...this.flock.capture(), kind: "flock" }),
+        capture: () => ({ ...this.flock.capture(), kind: "flock", falcon: this.falcon.snapshot() }),
         restore: (c) => this.restoreCheckpoint(c),
         release: (c) => this.flock.releaseCheckpoint(c),
       },
@@ -132,11 +153,11 @@ export class App {
       studio.canvas,
       this.camera,
       {
-        paints: () => this.studio.rail.active === "gust" || this.studio.rail.active === "startle",
+        paints: () => this.studio.rail.active !== "look",
         down: (x, y) => this.toolStart(x, y),
         move: (x, y) => this.toolMove(x, y),
         up: () => this.toolEnd(),
-        hover: () => {},
+        hover: (x, y) => this.aimFalcon(x, y),
       },
       () => false,
     );
@@ -161,6 +182,13 @@ export class App {
         label: "Look",
         icon: "eye",
         hint: "Drag to look around, scroll or pinch to zoom, double-click to look back at the flock. Left alone, your gaze follows the flock.",
+      },
+      {
+        id: "falcon",
+        label: "Falcon",
+        icon: "shark",
+        hint: "You are the falcon (F). Point to steer, or A/D to turn and W/S to climb and dive; hold Shift to stoop. Leave it alone and it hunts by itself.",
+        paints: true,
       },
       {
         id: "gust",
@@ -206,6 +234,39 @@ export class App {
 
   selectTool(id: string): void {
     this.studio.rail.select(id, false);
+    // keys held for the falcon must not stay latched when it is put away
+    if (id !== "falcon") {
+      this.keys.yaw = 0;
+      this.keys.pitch = 0;
+      this.keys.stoop = false;
+    }
+    this.setFalcon(id === "falcon");
+  }
+
+  /** Fly the falcon (from a perch above and behind the flock) or ground it. */
+  setFalcon(on: boolean): void {
+    if (on && !this.falcon.flying) {
+      const c = this.stats?.centroid ?? [0, 0, 0];
+      this.falcon.placeNear([c[0], c[1], c[2]]);
+      this.falcon.mode = "pursuit";
+      this.falconIdleT = 0;
+    } else if (!on && this.falcon.mode !== "script") {
+      this.falcon.mode = "off";
+    }
+  }
+
+  /** The pointer over the sky steers the falcon (it takes over from the pursuit). */
+  private aimFalcon(x: number | null, y: number | null): void {
+    if (this.studio.rail.active !== "falcon" || !this.falcon.flying || this.falcon.mode === "script") return;
+    if (x === null || y === null) {
+      this.falcon.input.aim = null;
+      return;
+    }
+    const p = this.pick(x, y);
+    if (!p) return;
+    this.falcon.input.aim = p;
+    this.falcon.mode = "player";
+    this.falconIdleT = performance.now();
   }
 
   /** The point under the pointer on the plane through the flock's centre, facing you (model units). */
@@ -222,6 +283,12 @@ export class App {
   }
 
   private toolStart(x: number, y: number): void {
+    if (this.studio.rail.active === "falcon") {
+      // held until release: the frame update reads it as the stoop (as Shift)
+      this.toolDown = true;
+      this.aimFalcon(x, y);
+      return;
+    }
     const p = this.pick(x, y);
     if (!p) return;
     this.toolDown = true;
@@ -231,6 +298,10 @@ export class App {
   }
 
   private toolMove(x: number, y: number): void {
+    if (this.studio.rail.active === "falcon") {
+      this.aimFalcon(x, y);
+      return;
+    }
     if (!this.toolDown) return;
     const p = this.pick(x, y);
     if (!p) return;
@@ -250,6 +321,7 @@ export class App {
   }
 
   private toolEnd(): void {
+    this.falcon.input.stoop = this.keys.stoop;
     this.toolDown = false;
     this.lastPointer = null;
   }
@@ -257,7 +329,7 @@ export class App {
   /** The tool input this frame's steps see. */
   private toolInput(): ToolInput {
     const id = this.studio.rail.active as ToolId;
-    if (!this.toolDown || (id !== "gust" && id !== "startle")) return { ...NO_TOOL };
+    if (!this.toolDown || (id !== "gust" && id !== "startle")) return NO_TOOL;
     return {
       code: id === "gust" ? TOOL.gust : TOOL.startle,
       position: [...this.toolPoint],
@@ -269,7 +341,7 @@ export class App {
 
   // -------------------------------------------------------------- scene --
 
-  async loadScene(id: SceneId, o: { preset?: string; seed?: number; birds?: number } = {}): Promise<void> {
+  async loadScene(id: SceneId, o: { seed?: number; birds?: number } = {}): Promise<void> {
     this.busy = true;
     try {
       const scene = sceneById(id);
@@ -277,8 +349,13 @@ export class App {
       this.view.dusk = { ...scene.dusk, ...this.view.dusk, cirrus: scene.dusk.cirrus };
       this.clock.reset();
       this.history.clear();
-      this.flock.reset(o.seed ?? scene.seed, presetById(o.preset ?? scene.preset), o.birds ?? this.flock.count);
+      this.flock.reset(o.seed ?? scene.seed, o.birds ?? this.flock.count);
       this.stats = null;
+      this.wave = null;
+      this.falcon.mode = "off";
+      this.falcon.script = null;
+      if (scene.attack) await this.stageAttack(scene.attack);
+      else if (this.studio.rail.active === "falcon") this.setFalcon(true);
       const cw = this.studio.canvas.clientWidth || 1;
       const ch = this.studio.canvas.clientHeight || 1;
       this.camera.setViewport(cw, ch);
@@ -288,7 +365,7 @@ export class App {
       this.studio.heading.setCurrent(scene.id);
       this.syncHistory();
       this.hooks.onSceneChange?.(scene);
-      this.hooks.onFlock?.(this.flock.preset);
+      this.hooks.onModel?.(this.flock.model);
       await this.gpu.device.queue.onSubmittedWorkDone();
     } finally {
       this.busy = false;
@@ -296,25 +373,67 @@ export class App {
   }
 
   async restart(): Promise<void> {
-    await this.loadScene(this.scene.id, { preset: this.flock.preset.label, seed: this.flock.seed });
+    await this.loadScene(this.scene.id, { seed: this.flock.seed });
   }
 
-  /** Change the flock's character (one of v1's presets): reseeds the flock, as v1 does. */
-  async setFlock(label: string): Promise<void> {
-    await this.loadScene(this.scene.id, { preset: label, seed: this.flock.seed });
-    this.writeUrl();
+  /**
+   * The Attack: fly the flock for `warm` steps off screen, read where it is
+   * (a deterministic readback of its own state), and script the falcon's stoop
+   * at it from there. Same seed, same bytes, same attack: a restart replays it.
+   */
+  private async stageAttack(a: { warm: number }): Promise<void> {
+    await this.advance(a.warm);
+    const s = decodeStats(new Float32Array(await this.readStatsNow()));
+    if (!s) return;
+    const c: V3 = s.centroid;
+    const hd: V3 = [s.meanHeading[0], 0, s.meanHeading[2]];
+    const hl = Math.hypot(hd[0], hd[2]) || 1;
+    const f: V3 = [hd[0] / hl, 0, hd[2] / hl];
+    const side: V3 = [-f[2], 0, f[0]];
+    // perch ahead and to the side, high; stoop across the flock's path; climb out beyond
+    const perch: V3 = [c[0] + f[0] * 45 + side[0] * 25, c[1] + 24, c[2] + f[2] * 45 + side[2] * 25];
+    const lead: V3 = [c[0] + f[0] * 16, c[1] + 2, c[2] + f[2] * 16];
+    const out: V3 = [c[0] - f[0] * 10 - side[0] * 40, c[1] - 6, c[2] - f[2] * 10 - side[2] * 40];
+    const up: V3 = [out[0] - side[0] * 30, c[1] + 20, out[2] - side[2] * 30];
+    this.falcon.position = [...perch];
+    this.falcon.heading = [side[0] * -0.6, -0.3, side[2] * -0.6];
+    const l = Math.hypot(...this.falcon.heading);
+    this.falcon.heading = this.falcon.heading.map((x) => x / l) as V3;
+    this.falcon.speed = this.falcon.limits.cruise;
+    this.falcon.script = { start: this.flock.steps, points: [perch, lead, lead, out, up] };
+    this.falcon.mode = "script";
+  }
+
+  /** The stats block of the current state, now (awaited; off the frame loop). */
+  private async readStatsNow(): Promise<ArrayBuffer> {
+    const enc = this.gpu.device.createCommandEncoder({ label: "murmur-stats-now" });
+    this.flock.encodeStats(enc);
+    this.gpu.device.queue.submit([enc.finish()]);
+    return this.flock.readBuffer(this.flock.statsBuffer, 128);
   }
 
   async setSeed(seed: number): Promise<void> {
-    await this.loadScene(this.scene.id, { preset: this.flock.preset.label, seed });
+    await this.loadScene(this.scene.id, { seed });
     this.writeUrl();
+  }
+
+  /** Change a model parameter (reseeds nothing; takes effect at the next step). */
+  setModel(patch: Partial<ModelParams>): void {
+    this.flock.model = { ...this.flock.model, ...patch };
+    this.hooks.onModel?.(this.flock.model);
+    this.writeUrl();
+  }
+
+  /** Back to the model's own parameters. */
+  resetModel(): void {
+    this.setModel({ ...MURMURATION });
   }
 
   // ------------------------------------------------------------- history --
 
-  private restoreCheckpoint(c: FlockCheckpoint): void {
+  private restoreCheckpoint(c: Checkpoint): void {
     this.flock.restore(c);
-    this.hooks.onFlock?.(this.flock.preset);
+    this.falcon.restore(c.falcon);
   }
 
   savePoint(): void {
@@ -411,7 +530,20 @@ export class App {
     const n = Math.min(this.clock.due(dt), MAX_STEPS);
     this.profiler?.begin(n);
     const enc = device.createCommandEncoder({ label: "murmur-frame" });
-    this.flock.tool = this.toolInput();
+    // the falcon's controls this frame; idle for 2 s, it goes back to hunting by itself
+    const fi = this.falcon.input;
+    fi.yaw = this.keys.yaw;
+    fi.pitch = this.keys.pitch;
+    fi.stoop = this.keys.stoop || this.toolDown;
+    if (this.falcon.mode === "player" && (this.keys.yaw !== 0 || this.keys.pitch !== 0)) this.falconIdleT = now;
+    if (this.falcon.mode === "player" && now - this.falconIdleT > 2000) {
+      fi.aim = null;
+      this.falcon.mode = "pursuit";
+    }
+    if (this.stats) {
+      const c = this.stats.centroid;
+      this.falcon.target = { centre: [c[0], c[1], c[2]], heading: [...this.stats.meanHeading] };
+    }
     if (n > 0) this.flock.encodeSteps(enc, n, { timestampWrites: this.profiler?.pass("sim") ?? undefined });
     this.clock.advance(n);
     this.stepsTotal += n;
@@ -422,7 +554,7 @@ export class App {
       this.flock.encodeStats(enc);
       statsQueued = this.statsSlot.record(enc, this.flock.statsBuffer);
     }
-    this.view.encode(enc, this.hdr, { camera: this.camera, agents: this.flock.current, birds: this.flock.count, timeSec: (now - this.t0) / 1000 }, this.profiler);
+    this.view.encode(enc, this.hdr, { camera: this.camera, agents: this.flock.current, birds: this.flock.count, timeSec: (now - this.t0) / 1000, falcon: this.falconDraw() }, this.profiler);
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     this.profiler?.end(enc);
     device.queue.submit([enc.finish()]);
@@ -445,6 +577,7 @@ export class App {
     const t = this.flock.time;
     this.studio.transport.setClock(this.clock.paused ? `t ${t.toFixed(1)} s` : `t ${t.toFixed(1)} s · ${Math.round(this.stepsPerSecond)} steps/s`);
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
+    if (this.waveDue > 0 && now > this.waveDue && !this.waveBusy) void this.measureWaveNow();
     this.hooks.onFrame?.(now);
   }
 
@@ -455,6 +588,27 @@ export class App {
     if (!s) return;
     this.stats = s;
     this.hooks.onStats?.(s);
+    // an alarm wave started: measure it once it has run its course
+    if (s.alertFraction > 5e-4 && this.waveDue === 0 && !this.waveBusy) this.waveDue = performance.now() + 2500;
+    if (s.alertFraction < 1e-5 && this.waveDue < 0) this.waveDue = 0;
+  }
+
+  /** Measure the alarm wave now (one readback of the whole flock). */
+  async measureWaveNow(): Promise<void> {
+    this.waveBusy = true;
+    try {
+      const w = measureWave(await this.flock.readState(), this.flock.steps, DT);
+      if (w) {
+        this.wave = w;
+        this.hooks.onWave?.(w);
+      }
+    } catch {
+      /* a lost readback: the next wave measures again */
+    } finally {
+      this.waveBusy = false;
+      // re-arm once the alarm has died away
+      this.waveDue = -1;
+    }
   }
 
   /**
@@ -483,10 +637,22 @@ export class App {
     this.hdr.resize(rect.width, rect.height, Math.min(window.devicePixelRatio || 1, 2), this.governor?.renderScale ?? 1);
     this.camera.setViewport(rect.width, rect.height);
     const enc = device.createCommandEncoder({ label: "murmur-render-once" });
-    this.view.encode(enc, this.hdr, { camera: this.camera, agents: this.flock.current, birds: this.flock.count, timeSec: 0 });
+    this.view.encode(enc, this.hdr, { camera: this.camera, agents: this.flock.current, birds: this.flock.count, timeSec: 0, falcon: this.falconDraw() });
     this.hdr.encode(enc, 0);
     device.queue.submit([enc.finish()]);
     await device.queue.onSubmittedWorkDone();
+  }
+
+  /** The falcon as the renderer draws it (a peregrine's wingspan ~1 m: 0.5 units, drawn at the birds' scale). */
+  private falconDraw(): { position: V3; heading: V3; roll: number; wingspan: number } | null {
+    if (!this.falcon.flying) return null;
+    const h = this.falcon.heading;
+    // bank into the turn it is making
+    const prev = this.prevFalconHeading;
+    const turn = prev ? h[0] * prev[2] - h[2] * prev[0] : 0;
+    this.prevFalconHeading = [...h];
+    this.falconRoll += (Math.max(-1.1, Math.min(1.1, turn * 40)) - this.falconRoll) * 0.1;
+    return { position: [...this.falcon.position], heading: [...h], roll: this.falconRoll, wingspan: 0.5 * this.view.birds.scale };
   }
 
   /** Model time per step. */

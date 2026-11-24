@@ -28,3 +28,11 @@ fn fs(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
   let T = exp(-t);
   return vec4<f32>(vec3<f32>(T) + (1.0 - T) * C.tint.rgb, 1.0);
 }
+
+// The near birds (render/near-birds.ts): their resolved layer, premultiplied, laid over.
+@group(0) @binding(2) var near_tex: texture_2d<f32>;
+
+@fragment
+fn fs_near(@builtin(position) pos: vec4<f32>) -> @location(0) vec4<f32> {
+  return textureLoad(near_tex, vec2<i32>(pos.xy), 0);
+}

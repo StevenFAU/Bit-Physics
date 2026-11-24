@@ -70,14 +70,13 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     {
       title: "Grid ≡ brute force",
       sentence:
-        "Each bird looks for its seven nearest visible neighbours and its single nearest bird only in the 27 grid cells around it. " +
-        "The same kernel with that search replaced by a look at every bird must give the same bytes, step after step — on a flock like the one on screen, and on birds packed against and beyond the corner of the grid, where outliers are clamped into the edge cells.",
+        "Each bird looks for its seven nearest visible neighbours and its single nearest bird in widening shells of grid cells, and stops as soon as the seventh is nearer than any cell it has not searched. " +
+        "The same kernel with that search replaced by a look at every bird must give the same bytes, step after step — on a flock like the one on screen, on birds packed against and beyond the corner of the grid (where outliers are clamped into the edge cells), and with the falcon flying through, so the alarm spreads.",
       label: "byte-identical",
       action: "Run on this GPU",
       links: [
-        { label: "grid", href: blob("packages/boids-3d/web/src/grid.wgsl") },
-        { label: "flock kernel", href: blob("packages/boids-3d/web/src/starling.wgsl") },
-        { label: "brute-force twin", href: blob("packages/boids-3d/web/src/v2/model/flock.ts") },
+        { label: "flock kernel and its brute-force twin", href: blob("packages/boids-3d/web/src/v2/model/murmur.wgsl") },
+        { label: "grid", href: blob("packages/boids-3d/web/src/v2/model/murmur-grid.wgsl") },
       ],
     },
     () => void runGrid(),
@@ -90,8 +89,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     {
       title: "No bird goes missing",
       sentence:
-        "The grid is rebuilt every step: count the birds in each cell, add the counts up into starting places, then drop each bird's id into its cell's range. " +
-        "On the live flock, every id must appear exactly once, inside the range of the cell it is really in — no cell has a capacity, so none can overflow and lose a neighbour.",
+        "The grid is rebuilt every step: count the birds in each cell, add the counts up into starting places, drop each bird's id into its cell's range, then copy the birds' positions into that order for the search. " +
+        "On the live flock, every id must appear exactly once, inside the range of the cell it is really in, beside its own position — no cell has a capacity, so none can overflow and lose a neighbour.",
       label: "exact",
       action: "Run on this GPU",
     },
@@ -104,8 +103,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     h(
       "p",
       { class: "mm-note" },
-      "In CI the starling model's selection rule is also checked against a double-precision reference with brute-force and grid candidates (packages/boids-3d/tests/test_starling_reference.py). " +
-        "Coming with later milestones: the falcon's alarm wave, measured.",
+      "The alarm wave's speed is measured in Learn (model behaviour, not gated). In CI, v1's selection rule is also checked against a double-precision reference with brute-force and grid candidates (packages/boids-3d/tests/test_starling_reference.py).",
     ),
   );
 
@@ -153,8 +151,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     }
     await guard(async () => {
       gridCard.set({ status: "running" });
-      const preset = d.live()?.flock.preset.label ?? "starling";
-      const r: IdentityResult[] = [await gridVsBrute(d.device, k, "flock", { preset }), await gridVsBrute(d.device, k, "edge", { preset: "starling" })];
+      const r: IdentityResult[] = [await gridVsBrute(d.device, k, "flock"), await gridVsBrute(d.device, k, "edge"), await gridVsBrute(d.device, k, "falcon")];
       results["grid"] = r;
       const ok = r.every((x) => x.identical);
       gridCard.set({
@@ -163,7 +160,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         budget: "0 differing bits",
         ratio: ok ? 0 : 1.2,
         adapter: d.adapter,
-        notes: r.map((x) => `${x.fixture === "flock" ? "a flock" : "the packed corner"}: ${x.birds.toLocaleString("en-US")} birds × ${x.steps} steps, ${x.meanNeighbors.toFixed(2)} neighbours each on average`),
+        notes: r.map((x) => `${x.fixture === "flock" ? "a flock" : x.fixture === "edge" ? "the packed corner" : "the falcon flying through"}: ${x.birds.toLocaleString("en-US")} birds × ${x.steps} steps, ${x.meanNeighbors.toFixed(2)} neighbours each${x.fixture === "falcon" ? `, ${x.alarmed} took fright` : ""}`),
       });
     });
   }
@@ -180,7 +177,7 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       results["scatter"] = r;
       scatterCard.set({
         status: r.passed ? "pass" : "fail",
-        measured: r.passed ? `${r.birds.toLocaleString("en-US")} of ${r.birds.toLocaleString("en-US")} birds, each once, each in its cell` : `count ${r.countOk ? "ok" : "WRONG"}, permutation ${r.permutation ? "ok" : "BROKEN"}, cells ${r.inCell ? "ok" : "WRONG"}, starts ${r.scanOk ? "ok" : "WRONG"}`,
+        measured: r.passed ? `${r.birds.toLocaleString("en-US")} of ${r.birds.toLocaleString("en-US")} birds, each once, each in its cell` : `count ${r.countOk ? "ok" : "WRONG"}, permutation ${r.permutation ? "ok" : "BROKEN"}, cells ${r.inCell ? "ok" : "WRONG"}, starts ${r.scanOk ? "ok" : "WRONG"}, gather ${r.gatherOk ? "ok" : "WRONG"}`,
         budget: "every bird, once",
         ratio: r.passed ? 0 : 1.2,
         adapter: d.adapter,

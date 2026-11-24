@@ -28,11 +28,13 @@ import duskSrc from "./dusk.wgsl?raw";
 import reedsSrc from "./reeds.wgsl?raw";
 import tauSrc from "./tau.wgsl?raw";
 import type { GroundCamera } from "./ground-camera.js";
+import { NearBirds } from "./near-birds.js";
+import type { FalconDraw } from "./near-birds.js";
 
 /** World height of the roost's centre (the model's origin). */
 export const ROOST_Y = 40;
 /** Where you stand, on the ground, south of the roost. */
-export const HOME_EYE: Vec3 = [0, 1.0, 125];
+export const HOME_EYE: Vec3 = [0, 1.0, 95];
 /** Fixed-point scale of the optical-depth buffer. */
 export const TAU_SCALE = 2 ** 20;
 
@@ -59,7 +61,7 @@ export interface BirdLook {
   mode: 0 | 1;
 }
 
-export const DEFAULT_BIRDS: BirdLook = { scale: 4, filterPx: 0.75, maxSigmaPx: 10, planform: 0.9, mode: 0 };
+export const DEFAULT_BIRDS: BirdLook = { scale: 1.6, filterPx: 0.75, maxSigmaPx: 10, planform: 0.9, mode: 0 };
 
 const mix = (a: number, b: number, t: number): number => a + (b - a) * t;
 const mix3 = (a: readonly number[], b: readonly number[], t: number): [number, number, number] => [mix(a[0]!, b[0]!, t), mix(a[1]!, b[1]!, t), mix(a[2]!, b[2]!, t)];
@@ -101,16 +103,19 @@ export class MurmurView {
   private tauH = 0;
   private splatBinds = new Map<GPUBuffer, GPUBindGroup>();
   private compBind: GPUBindGroup | null = null;
+  readonly near: NearBirds;
 
   private constructor(
     private readonly device: GPUDevice,
     view3d: View3D,
+    near: NearBirds,
     private readonly duskPipe: GPURenderPipeline,
     private readonly splatPipe: GPUComputePipeline,
     private readonly compPipe: GPURenderPipeline,
     private readonly reedPipe: GPURenderPipeline,
   ) {
     this.view3d = view3d;
+    this.near = near;
     view3d.setModel(similarity(1, [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, ROOST_Y, 0]), 1);
     const u = GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST;
     this.duskParams = device.createBuffer({ size: 128, usage: u, label: "murmur-dusk" });
@@ -135,7 +140,7 @@ export class MurmurView {
     });
   }
 
-  static async create(device: GPUDevice): Promise<MurmurView> {
+  static async create(device: GPUDevice, capacity: number): Promise<MurmurView> {
     const view3d = new View3D(device);
     const duskModule = device.createShaderModule({ code: wgsl(duskSrc), label: "murmur-dusk" });
     const tauModule = device.createShaderModule({ code: wgsl(tauSrc), label: "murmur-tau" });
@@ -173,7 +178,8 @@ export class MurmurView {
         primitive: { topology: "triangle-strip" },
       }),
     ]);
-    return new MurmurView(device, view3d, duskPipe, splatPipe, compPipe, reedPipe);
+    const near = await NearBirds.create(device, view3d, capacity, compModule);
+    return new MurmurView(device, view3d, near, duskPipe, splatPipe, compPipe, reedPipe);
   }
 
   /** The optical-depth buffer (valid after the first encode). */
@@ -213,6 +219,7 @@ export class MurmurView {
           { binding: 1, resource: { buffer: this.splatParams } },
           { binding: 2, resource: { buffer: agents } },
           { binding: 3, resource: { buffer: this.tau! } },
+          { binding: 4, resource: { buffer: this.near.weights } },
         ],
       });
       this.splatBinds.set(agents, b);
@@ -258,7 +265,7 @@ export class MurmurView {
   encode(
     enc: GPUCommandEncoder,
     hdr: HdrPipeline,
-    f: { camera: GroundCamera; agents: GPUBuffer; birds: number; timeSec: number },
+    f: { camera: GroundCamera; agents: GPUBuffer; birds: number; timeSec: number; falcon?: FalconDraw | null },
     profiler?: GpuProfiler | null,
   ): void {
     const w = hdr.width;
@@ -266,6 +273,7 @@ export class MurmurView {
     this.view3d.update(f.camera, w, h, f.timeSec);
     this.ensureTau(w, h);
     this.writeParams(f.birds, f.timeSec);
+    this.near.writeParams(f.birds, 0.2 * this.birds.scale, f.timeSec, f.falcon ?? null);
 
     // 1. the dusk
     const a = enc.beginRenderPass({
@@ -278,7 +286,8 @@ export class MurmurView {
     a.draw(3);
     a.end();
 
-    // 2. the flock's optical depth
+    // 2. which birds are near enough to draw as birds, then the rest's optical depth
+    this.near.encodeCull(enc, f.agents, f.birds, profiler?.pass("near-cull") ?? undefined);
     enc.clearBuffer(this.tau!);
     if (f.birds > 0) {
       const c = enc.beginComputePass({ label: "murmur-splat", timestampWrites: profiler?.pass("flock") ?? undefined });
@@ -288,7 +297,10 @@ export class MurmurView {
       c.end();
     }
 
-    // 3. the sky through the flock, then the reeds over everything
+    // 3. the near birds and the falcon, multisampled, lit by the sky behind them
+    this.near.encodeDraw(enc, f.agents, hdr.sceneView, w, h, !!f.falcon, profiler?.pass("near") ?? undefined);
+
+    // 4. the sky through the flock, the near birds over it, then the reeds over everything
     const b = enc.beginRenderPass({
       label: "murmur-composite",
       colorAttachments: [{ view: hdr.sceneView, loadOp: "load", storeOp: "store" }],
@@ -297,12 +309,59 @@ export class MurmurView {
     b.setPipeline(this.compPipe);
     b.setBindGroup(0, this.compBind!);
     b.draw(3);
+    this.near.composite(b);
     if (this.reedCount > 0) {
       b.setPipeline(this.reedPipe);
       b.setBindGroup(0, this.reedBind);
       b.draw(16, this.reedCount * 4);
     }
     b.end();
+  }
+
+  /**
+   * The birds' total coverage on screen, px: Σ over pixels of
+   * 1 − e^(−τ)·(1 − α), the medium's and the near meshes' together (tests:
+   * the hand-off flicker check). Reads back the τ buffer and the near layer.
+   */
+  async readCoverage(): Promise<{ total: number; medium: number; meshes: number }> {
+    const tau = this.tau;
+    const tex = this.near.texture;
+    if (!tau || !tex) return { total: 0, medium: 0, meshes: 0 };
+    const w = this.tauW;
+    const h = this.tauH;
+    const row = Math.ceil((w * 8) / 256) * 256;
+    const a = this.device.createBuffer({ size: w * h * 4, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    const b = this.device.createBuffer({ size: row * h, usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ });
+    try {
+      const enc = this.device.createCommandEncoder();
+      enc.copyBufferToBuffer(tau, 0, a, 0, w * h * 4);
+      enc.copyTextureToBuffer({ texture: tex }, { buffer: b, bytesPerRow: row }, [w, h]);
+      this.device.queue.submit([enc.finish()]);
+      await Promise.all([a.mapAsync(GPUMapMode.READ), b.mapAsync(GPUMapMode.READ)]);
+      const t = new Uint32Array(a.getMappedRange());
+      const hv = new Uint16Array(b.getMappedRange());
+      const half = (x: number): number => {
+        const e = (x >> 10) & 31;
+        const m = x & 1023;
+        return e === 0 ? m / 16777216 : e === 31 ? 1 : (1 + m / 1024) * 2 ** (e - 15);
+      };
+      let total = 0;
+      let medium = 0;
+      let meshes = 0;
+      for (let y = 0; y < h; y += 1) {
+        for (let x = 0; x < w; x += 1) {
+          const T = Math.exp(-t[y * w + x]! / TAU_SCALE);
+          const al = Math.min(half(hv[(y * row) / 2 + x * 4 + 3]!), 1);
+          medium += 1 - T;
+          meshes += al;
+          total += 1 - T * (1 - al);
+        }
+      }
+      return { total, medium, meshes };
+    } finally {
+      a.destroy();
+      b.destroy();
+    }
   }
 
   /**
