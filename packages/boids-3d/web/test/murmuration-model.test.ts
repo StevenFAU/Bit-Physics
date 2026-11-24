@@ -133,6 +133,53 @@ describe("the alarm wave's estimator", () => {
     expect(Math.abs(w.speed - v) / v).toBeLessThan(0.05);
   });
 
+  it("bounds its work, and thinning moves the median little", () => {
+    // a falcon path: sightings along a line over 2 s; birds reached at v from the nearest earlier one
+    const build = (hits: number, sources: number): ArrayBuffer => {
+      const state = new ArrayBuffer((hits + sources) * AGENT_BYTES);
+      const f = new Float32Array(state);
+      const u = new Uint32Array(state);
+      const dt = 1 / 120;
+      let seed = 12345;
+      const rnd = (): number => {
+        seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
+        return (seed >>> 0) / 4294967296;
+      };
+      for (let k = 0; k < sources; k += 1) {
+        const b = k * 16;
+        const step = 1000 + Math.floor((k / sources) * 240);
+        f.set([(step - 1000) * 0.12, rnd() * 2, rnd() * 2], b);
+        u[b + 14] = step | 0x80000000;
+      }
+      for (let i = 0; i < hits; i += 1) {
+        const b = (sources + i) * 16;
+        const x = rnd() * 40 - 5, y = rnd() * 20 - 10, z = rnd() * 20 - 10;
+        f.set([x, y, z], b);
+        // earliest arrival from any sighting at 10 units/s
+        let first = Infinity;
+        for (let k = 0; k < sources; k += 97) {
+          const s0 = 1000 + Math.floor((k / sources) * 240);
+          const d = Math.hypot(x - (s0 - 1000) * 0.12, y - 1, z - 1);
+          first = Math.min(first, s0 + d / 10 / dt);
+        }
+        u[b + 14] = Math.round(first);
+      }
+      return state;
+    };
+    const state = build(20000, 3000);
+    const full = measureWave(state, 2000, 1 / 120, { window: 1200, maxHits: Infinity, maxSources: Infinity })!;
+    const thin = measureWave(state, 2000, 1 / 120, { window: 1200, maxHits: 1500, maxSources: 1000 })!;
+    expect(Math.abs(thin.speed - full.speed) / full.speed).toBeLessThan(0.05);
+    // the defaults at The Attack's counts stay a short, bounded job
+    const big = build(75000, 5643);
+    const t0 = performance.now();
+    const w = measureWave(big, 2000, 1 / 120, { window: 1200 })!;
+    const ms = performance.now() - t0;
+    expect(w.alarmed).toBe(80643);
+    expect(ms).toBeLessThan(400);
+    console.info(`wave estimator: thinned ${thin.speed.toFixed(3)} vs full ${full.speed.toFixed(3)} (${((Math.abs(thin.speed - full.speed) / full.speed) * 100).toFixed(2)}%); defaults at 75,000 + 5,643 birds took ${ms.toFixed(0)} ms`);
+  });
+
   it("needs a wave to measure", () => {
     const state = new ArrayBuffer(100 * AGENT_BYTES);
     new Uint32Array(state).fill(0xffffffff);

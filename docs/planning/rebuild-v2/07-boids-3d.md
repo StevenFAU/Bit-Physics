@@ -23,7 +23,11 @@
 >   al. 2014: by contact, never broadcast). Timers are integer steps, so a wave is exact on replay.
 >   Each bird keeps its onset step and whether it saw the falcon itself. The wave's speed, measured
 >   from one readback (`src/v2/model/wave.ts`: for each bird alarmed by contact, distance ÷ delay
->   from the earlier sighting that needs the slowest travel; the median): The Attack reached 75,418 of 100,000 birds in 2.16 s, 5,643 of them alarmed by the falcon itself; median 18.7 m/s bird to bird. In an
+>   from the earlier sighting that needs the slowest travel; the median): The Attack reached 75,418 of 100,000 birds in 2.16 s, 5,643 of them alarmed by the falcon itself; median 19.6 m/s bird to bird. The
+>   estimator runs on the main thread after every wave, so its work is bounded (at most 1,500 contact
+>   birds against 3,000 sightings, ~14 ms at The Attack's counts, where the full search took seconds —
+>   PR #74 review); thinning can only miss a bird's true source, and on the same byte-identical attack
+>   the full search read 18.7 m/s, 4.8% slower. In an
 >   earlier tuning, 8-step reactions (67 ms) measured 9.5 m/s, below the 20–40 m/s Attanasi et al.
 >   measured; the default is 4 steps. With the falcon hunting continuously in Dusk it alarms tens of
 >   thousands of birds directly along its path, and the estimator scatters (6.2 and 19.3 m/s in two 30 s
@@ -69,7 +73,7 @@
 >   jitter more than the medium; the cross-fade stays below both the hard switch and pure meshes —
 >   no popping of its own. Coverage at the start agrees within 2.7% (every bird a mesh: 0.8%) of the medium alone: no
 >   bird is counted twice. The far-field check from M0 still holds: Σ τ over a 0.04 m-a-frame dolly at the home view jitters 4.1 × 10⁻⁷ rms, against the analytic-normalisation control's 8.5 × 10⁻⁵ (208×).
-> - **Acceptance and layout:** `v2-acceptance.mjs` 44/44; `web/tools/check-studio.mjs` 0 problems and 0 axe violations at 390, 820, 1440 and 200% zoom.
+> - **Acceptance and layout:** `v2-acceptance.mjs` 46/46 (with a held pointer stooping the falcon, and no falcon key left latched after leaving the tool — PR #74 review); `web/tools/check-studio.mjs` 0 problems and 0 axe violations at 390, 820, 1440 and 200% zoom.
 >   No shared code changed in M1.
 >
 > **Implementation status (2026-11-18): M0 built** as the `v2/` page of `packages/boids-3d/web`

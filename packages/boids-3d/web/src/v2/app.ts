@@ -234,6 +234,12 @@ export class App {
 
   selectTool(id: string): void {
     this.studio.rail.select(id, false);
+    // keys held for the falcon must not stay latched when it is put away
+    if (id !== "falcon") {
+      this.keys.yaw = 0;
+      this.keys.pitch = 0;
+      this.keys.stoop = false;
+    }
     this.setFalcon(id === "falcon");
   }
 
@@ -278,7 +284,8 @@ export class App {
 
   private toolStart(x: number, y: number): void {
     if (this.studio.rail.active === "falcon") {
-      this.falcon.input.stoop = true;
+      // held until release: the frame update reads it as the stoop (as Shift)
+      this.toolDown = true;
       this.aimFalcon(x, y);
       return;
     }

@@ -508,6 +508,26 @@ let seededHash = "";
   check("the alarm wave is measured", wave && Number.isFinite(wave.speed) && wave.alarmed > 1000 && wave.direct > 0,
     wave ? `${wave.alarmed.toLocaleString("en-US")} birds (${wave.direct} saw the falcon), median ${(wave.speed * 2).toFixed(1)} m/s bird to bird` : "no wave in 30 s");
   measured.falconWave = wave;
+  // a held pointer stoops the falcon (as Shift does), released it flies level
+  await page.mouse.move(640, 260);
+  await page.mouse.down();
+  await wait(300);
+  const stooping = await T(page, () => globalThis.__murmur.falcon.input.stoop);
+  await page.mouse.up();
+  await wait(300);
+  const level = await T(page, () => globalThis.__murmur.falcon.input.stoop);
+  check("holding the pointer stoops the falcon", stooping === true && level === false, `held ${stooping}, released ${level}`);
+  // a key held while the falcon is put away, released after, leaves nothing latched
+  await page.keyboard.down("a");
+  await wait(100);
+  const turning = await T(page, () => globalThis.__murmur.keys.yaw);
+  await page.keyboard.press("1");
+  await page.keyboard.up("a");
+  await wait(100);
+  const after = await T(page, () => globalThis.__murmur.keys);
+  check("no falcon key stays latched after leaving the tool", turning === -1 && after.yaw === 0 && after.pitch === 0 && !after.stoop, `A held: yaw ${turning}; after: ${JSON.stringify(after)}`);
+  await page.keyboard.press("2");
+  await wait(300);
   await page.keyboard.press("f");
   await wait(300);
   check("F again lands it", (await dbg(page)).falcon.mode === "off");

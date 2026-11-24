@@ -297,7 +297,8 @@ async function boot(): Promise<void> {
   });
   // the falcon's keys, held: A/D turn, W/S climb and dive, Shift stoops
   const falconKey = (e: KeyboardEvent, down: boolean): void => {
-    if (studio.rail.active !== "falcon" || (e.target as HTMLElement | null)?.closest?.("input, select, textarea")) return;
+    // a release always counts (whatever tool is active), so no key stays latched
+    if (down && (studio.rail.active !== "falcon" || (e.target as HTMLElement | null)?.closest?.("input, select, textarea"))) return;
     const k = e.key.toLowerCase();
     if (k === "a") a.keys.yaw = down ? -1 : a.keys.yaw === -1 ? 0 : a.keys.yaw;
     else if (k === "d") a.keys.yaw = down ? 1 : a.keys.yaw === 1 ? 0 : a.keys.yaw;
