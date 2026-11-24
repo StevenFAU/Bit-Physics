@@ -1,7 +1,109 @@
 # 05 — Chaos (Lorenz and the strange-attractor family)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/strange-attractors/web`. Wave B.
-> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-04, M1 built 2026-11-13, M2 built 2026-11-18 (below). Elsewhere, targets are unmeasured.
+> Status: planning, v0.1, 2026-10-17; M0 built 2026-11-04, M1 built 2026-11-13, M2 built 2026-11-18, M3 built 2026-11-24 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-24): M3 built — Chaos is complete** (every scene in the table
+> below) and a release-swap candidate. Measured on the RX 6800 XT (snap Chromium, RADV) at T3. The
+> gate kernel, its capture path and both pages' captures are unchanged: `pipeline.py validate --sim
+> strange-attractors` passes on both pages, run twice, and all eight captures hash `dd645f26…`.
+>
+> - **The Family** (`?s=family`; `src/v2/model/family.ts`, `family.wgsl`, `family-gpu.ts`): the nine
+>   systems of v1's registry (`src/attractors.ts`), with its parameters, Δt and starts: Lorenz,
+>   Rössler, Aizawa, Sprott-A, Thomas, Halvorsen, Dadras, Chen and Four-wing. Each has its own
+>   palette: Lorenz cobalt to magnesium white, Rössler amber, Thomas verdigris, Aizawa rose, Sprott-A
+>   violet, Halvorsen ember, Dadras chartreuse, Chen cyan, Four-wing steel.
+>   - One density kernel carries v1's fields. Thomas's sines are a range-reduced Taylor polynomial,
+>     unit-tested within 6 × 10⁻⁸ (the first dropped term is 5.7 × 10⁻⁸), so there is no builtin
+>     trig.
+>   - Seeding: 524,288 points from 4,096 points of one f64 trajectory, spread over up to 2,000 of the
+>     system's time units, each fanned out 10⁻³ of its size and warmed for ~20 time units. The same
+>     run frames and colours the view (centre, RMS size, 95th-percentile speed).
+>   - Each system runs at its own pace (model time a second: Chen 0.9 … Rössler 8).
+>   - Lorenz in the gallery is Lorenz's own population, with its tools. Any other system has only
+>     the camera, since the ball and the ghost are Lorenz's.
+>   - The link carries the system (`fs`). 60 fps (GPU 2.3–3.1 ms a frame).
+> - **Rössler's road** (Road to Chaos; the plan's "Rössler period doubling", deferred from M2): a
+>   Lorenz / Rössler switch.
+>   - `bifurcation-rossler.wgsl` is the Lorenz kernel with Rössler's field: a = b = 0.2, c per
+>     column, v1's Δt 0.02, a warm-up of 200 time units. Positive x maxima are binned by x / c over
+>     [0, 2.1); every one for c 2–18 lies in [0.02, 2.03].
+>   - Measured in f64: the loop doubles at c ≈ 2.82 and again at ≈ 3.83, and more than 16 peak
+>     values appear from c ≈ 4.20.
+>   - Ranges: c 2–6.5 (the doubling), 2–18 and 6.5–10, on the link (`rs`, `rr`).
+>   - A click on the diagram shows Rössler's attractor at that c beside the road. It rides the link
+>     (`rc`) but is not an undoable edit: the undo history is Lorenz's.
+>   - The Lorenz diagram writes exactly the uniforms it did before (`lorenzRoad`), and its M2 check
+>     is unchanged. 60 fps (GPU 5.2 ms a frame, the diagram's own pass 0.44 ms).
+> - **Listen** (`?s=listen`, `src/v2/listen.ts`): a CPU f64 trajectory at the sim's pace drives
+>   WebAudio.
+>   - x sets the pitch: 220 Hz × 2^(0.75x / 12), about ±15 semitones.
+>   - z sets a low-pass cutoff: 300 Hz at z 5, an octave per 8.
+>   - Every sign change of x (a wing switch) is a 30 ms click, panned to the wing it lands on and
+>     scheduled within the frame. A trace of x(t) marks the switches.
+>   - No AudioContext exists until the visitor turns Sound on. It defaults off, reduced motion
+>     never starts it, and leaving the scene silences it. The capture driver never asks for sound
+>     (acceptance checks both).
+>   - 60 fps with sound on.
+> - **Prove: two new cards.**
+>   - *Rössler's road*: six columns × 32 trajectories, 1,200 time units of peaks (~6,600 a column),
+>     GPU against f64 from the same starts, with a floor from f64 at other starts. Budgets are
+>     measured, then declared in `tolerance.toml` and `budgets.ts`:
+>
+>     | Column | Bins | GPU vs f64 | Floor | Budget | What a wrong c reads |
+>     |---|---|---|---|---|---|
+>     | c 3.5 (period 2) | 1,024 | 0.0000 | 0.0001 | 0.03 | +0.01 → 0.500 |
+>     | c 4 (period 4) | 1,024 | 0.0000 | 0.0015 | 0.03 | +0.005 → 0.251 |
+>     | c 5.3 (window) | 1,024 | 0.0118 | 0.0029 | 0.03 | +0.01 → 0.662; +0.005 → 0.012 |
+>     | c 4.6 (chaos) | 64 | 0.0295 | 0.0252 | 0.1 | +0.05 → 0.166 |
+>     | c 5.7 (chaos) | 64 | 0.0506 | 0.0423 | 0.1 | +0.05 → 0.159 |
+>     | c 9 (chaos) | 64 | 0.0406 | 0.0481 | 0.1 | +0.1 → 0.133 |
+>
+>     Unlike Lorenz's, Rössler's chaotic columns see a wrong parameter. A first run at 400 time
+>     units had chaos floors of 0.06–0.08; the longer run brought them to about 0.045.
+>   - *The Family*, illustrative with no budget: each system's 262,144-point GPU cloud after 2,000
+>     of its steps, binned on (x, z) 32 × 32, against one f64 run of 400,000 samples. The floor is
+>     that run's first half against its second:
+>
+>     | System | GPU vs f64 | f64 halves |
+>     |---|---|---|
+>     | Lorenz | 0.024 | 0.030 |
+>     | Rössler | 0.029 | 0.010 |
+>     | Aizawa | 0.073 | 0.023 |
+>     | Sprott-A | 0.086 | 0.076 |
+>     | Thomas | 0.038 | 0.012 |
+>     | Halvorsen | 0.027 | 0.028 |
+>     | Dadras | 0.015 | 0.018 |
+>     | Chen | 0.029 | 0.043 |
+>     | Four-wing | 0.120 | 0.053 |
+>
+>     The first seeding covered only ~290 time units of one trajectory, and Four-wing read 0.315,
+>     Sprott-A 0.18. That was seeding, not precision: slow-mixing systems kept the seed window's
+>     bias, in the picture too. Seeds now span up to 2,000 time units. What remains above the
+>     floors includes the cloud's own sampling noise: it descends from 4,096 seeds, 64 points each,
+>     and slow mixers keep some of that lineage.
+> - **Posters and loops staged** (not on the landing card; that switches at the release swap):
+>   - `strange-attractors-v2.png` (178 KB): The Butterfly 450 frames in, the first ball a folding
+>     thread on the long exposure.
+>   - `strange-attractors-v2.webm` (346 KB, 512 × 512, 5 s): release, thread, spread.
+>   - Both are entries in `STAGED` of `make-posters.mjs` and `make-loops.mjs`, committed plain.
+>     `make-loops.mjs` gains `square` (pin the canvas square), because a full-bleed v2 canvas filmed
+>     at 512 × 256 under `height: auto`.
+> - **Checks.** `v2-acceptance.mjs` 119/119 (M0's 36, M1's 20, M2's 36, M3's 27). `web/tools/check-studio.mjs` is clean (0 problems, 0 axe
+>   violations at 390, 820 and 1440 px and 200% zoom) for `v2/`, `?s=digits`, `?s=road`,
+>   `?s=road&rs=rossler`, `?s=map`, `?s=slice`, `?s=listen` and `?s=family`. The road switch's
+>   extra row first pushed Road to Chaos's panel into the rail at 200% zoom; its figure now shrinks
+>   further there. `npm test` 334/334, `check_registry.py` OK, integrity 0 HARD_FAIL.
+>
+> **Ready for the release swap.**
+> - *Done:* every scene in the plan (The Butterfly, Buy More Digits, Road to Chaos with both roads,
+>   Lorenz's Map, Slice, Listen, The Family); the gate ported verbatim and passing on both pages;
+>   every Prove card measured, with its budget declared or labelled illustrative; acceptance and
+>   check-studio green; the poster and loop staged.
+> - *Left:* a Safari (WebKit) check, which isn't possible on this Linux machine (no Safari;
+>   Playwright WebKit is blocked). Then the swap itself, by the owner, following `web/README.md`'s
+>   recipe: v2 to `/sims/strange-attractors/`, v1 to `v1/`, a `/v2/` forwarder, and the landing card
+>   moved to the staged poster and loop. Firefox was last checked at M1 and not re-run for M2 or M3.
 >
 > **Implementation status (2026-11-18): M2 built** — Road to Chaos, Lorenz's Map and Slice, each
 > with a Prove card. Measured on the RX 6800 XT (snap Chromium 156, RADV) at T3. T1's sizes ran in
