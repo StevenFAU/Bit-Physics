@@ -73,8 +73,8 @@ async function boot(): Promise<void> {
     simName: SIM_NAME,
     eyebrow: "07 / MURMURATION",
     canvasLabel:
-      "Tens of thousands of starlings over a reed bed at dusk, seen from the ground as one dark, shifting cloud against an amber and violet sky. " +
-      "Drag to look around, scroll or pinch to zoom, double-click to look back at the flock.",
+      "A hundred thousand starlings over a reed bed at dusk, seen from the ground as one dark, shifting cloud against an amber and violet sky. " +
+      "Drag to look around, scroll or pinch to zoom, double-click to look back at the flock. Press F to fly the falcon.",
   });
   if (query.get("chrome") === "off") studio.setChrome(false);
   studio.heading.set("Dusk", "Watch them turn. Drag to look around.", "07 / MURMURATION");

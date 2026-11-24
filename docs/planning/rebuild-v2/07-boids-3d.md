@@ -1,7 +1,76 @@
 # 07 — Murmuration (3D starlings)
 
 > Part of [Rebuild v2](README.md). Replaces `packages/boids-3d/web` (Murmuration Lab).
-> Wave B. Status: planning, v0.1, 2026-10-17; M0 built 2026-11-18 (below). Elsewhere, targets are unmeasured.
+> Wave B. Status: planning, v0.1, 2026-10-17; M0 built 2026-11-18, M1 2026-11-24 (below). Elsewhere, targets are unmeasured.
+>
+> **Implementation status (2026-11-24): M1 built** on the `v2/` page: a flock that murmurates, the
+> falcon and its alarm wave, near-field birds, The Attack. Measured on the RX 6800 XT (snap Chromium,
+> RADV, headless, 1280×720, `gpu_busy_percent` 0 before each run) unless a line says otherwise.
+>
+> - **The live model is a fork** (`src/v2/model/murmur.wgsl`; v1's `src/starling.wgsl`, `grid.wgsl`
+>   and `stats.wgsl` are untouched, and v1's page and the gate's bytes with them). Kept: seven
+>   nearest visible neighbours, one to avoid, the rear blind cone, bounded and banked turning, cruise
+>   speed. Changed, from M0's finding that v1's flock mills: the roost turns birds back only once
+>   they fly past its edge (Hildenbrandt et al. 2010), and cohesion grows with a bird's centrality
+>   (how one-sided its neighbours are), so the border stays sharp. Measured at 100,000 birds over
+>   30 s: polarization median 0.90 (0.13–0.92 sampled once a second; 13 of 30 samples ≥ 0.9), nearest neighbour 0.92 m median (0.89–0.95), rms axes 37 × 23 × 10 m median (the smallest 5–17 m as it turns), proportions 1 : 2.2 : 3.6. In straight flight it reaches 0.94–0.96 (field flocks: 0.96 ± 0.03, Cavagna et
+>   al. 2010); it dips while the flock turns back at the roost's edge, because a 50 m flock re-aligns
+>   over seconds. A softer roost turn (radius 65, weight 0.8) was measured against radius 50, weight
+>   1.2: median 0.90 against 0.88, 26 of 40 s at ≥ 0.9 against 13 — adopted. Learn labels all of it
+>   model behaviour.
+> - **The alarm** spreads only through the seven followed neighbours, after a reaction time of 4 steps
+>   (33 ms; a bird that sees the falcon reacts in 3), then the bird is refractory for 1.5 s (Attanasi et
+>   al. 2014: by contact, never broadcast). Timers are integer steps, so a wave is exact on replay.
+>   Each bird keeps its onset step and whether it saw the falcon itself. The wave's speed, measured
+>   from one readback (`src/v2/model/wave.ts`: for each bird alarmed by contact, distance ÷ delay
+>   from the earlier sighting that needs the slowest travel; the median): The Attack reached 75,418 of 100,000 birds in 2.16 s, 5,643 of them alarmed by the falcon itself; median 18.7 m/s bird to bird. In an
+>   earlier tuning, 8-step reactions (67 ms) measured 9.5 m/s, below the 20–40 m/s Attanasi et al.
+>   measured; the default is 4 steps. With the falcon hunting continuously in Dusk it alarms tens of
+>   thousands of birds directly along its path, and the estimator scatters (6.2 and 19.3 m/s in two 30 s
+>   pursuits) — it reads a single stoop best. Tune's "Reaction time" sets the delay.
+> - **100,000 birds**, by bounding the alarm to the selected neighbours. The step's result then
+>   depends only on the k-nearest set, so the search can stop early: an exact shell search over
+>   @bp/gpu's `CountingSort` (cells of 1.25 units, 4× smaller than the 5-unit reach), birds processed
+>   in cell order, candidates read from a gathered, cell-ordered array; it stops when the seventh
+>   visible neighbour is nearer than any unscanned cell. Birds per tier, measured
+>   then declared: T3 100,000, T2 32,768, T1 10,000 — the spec's targets. `?bench=1` after the flock has
+>   flown 9 s: T3 60 fps and 120 steps/s, GPU 8.0 / 8.5 ms p50 / p90 (sim 6.4 ms for two steps, dusk
+>   0.58, near cull 0.03, optical depth 0.99, near meshes 0.07, composite and reeds 0.14, exposure
+>   0.07); T2 60 fps, GPU 5.2 / 5.8 ms; T1 60 fps, GPU 4.4 / 5.2 ms (lighter tiers run the GPU at lower
+>   clocks, so their times do not scale down with the count); 131,072, the buffers' capacity, 60 fps,
+>   GPU 9.2 / 9.7 ms. M0's v1 kernel ran 100,000 at 2.4 fps. SwiftShader (Playwright's Chromium with
+>   lavapipe's ICD, T1, 10,000 birds): ready 124 ms, live 1.7 s, 4.5 fps — 216 ms a frame, the sim 139
+>   ms for two steps, the near pass 15 (its multisampled clear and resolve), composite 20 — the flock
+>   slowed to 9 steps/s.
+> - **Grid ≡ brute force** on the new kernel (`step` and `step_brute` share everything but the
+>   search): 8 of 8 steps byte-identical on 2,048 seeded birds and on 2,048 packed beyond a corner of
+>   the grid, and 24 of 24 with the falcon flying through (1,168 took fright). The sort and gather
+>   check as an exact permutation on the live 100,000 (each id once, in its own cell, beside its own
+>   position). The gate path is unchanged: `pipeline.py validate --sim boids-3d` passes on both pages, run twice, every capture sha256 `6c6651a2…` (v2 ready in 11–26 ms).
+> - **The falcon** (`src/v2/model/falcon.ts`): a kinematic agent — 9 units/s level, 15 in the stoop,
+>   1.9 rad/s turn — advanced on the CPU per model step and handed to that step's uniforms. F flies it:
+>   point to steer, or A/D, W/S, Shift; left alone for 2 s it hunts by itself (climb to a perch above
+>   and behind the flock, stoop through its predicted centre, again). Birds within 12 m see it; within
+>   6 m they dodge it.
+> - **The Attack**: the flock flies 1,200 steps off screen from seed 7, the page reads where it is (a
+>   readback of its own deterministic state) and scripts the stoop from there; a restart replays it
+>   byte for byte (600 steps after the warm-up: identical sha256 in the acceptance run).
+> - **Near birds** (`render/near-birds.ts`): a compute cull gives every bird a weight from its
+>   projected wingspan — 0 below 12 px, 1 above 20 px (about 40 m and 24 m away at the home zoom) — and
+>   lists them; the τ splat takes (1 − w) of a bird's coverage, the mesh is drawn with alpha w: a
+>   procedural low-poly starling with a wingbeat that wanders into glides and its bank, dark, lit only
+>   by a rim of the sky behind it, 4× multisampled. The falcon is the same mesh, falcon-shaped, never
+>   under 14 px. The list holds every bird: with a 16k list, which birds won a slot followed atomic
+>   order and changed each frame — measured as flicker (cross-fade 2.0 × 10⁻⁴ against a hard switch's
+>   1.5 × 10⁻⁴), gone with the full list.
+> - **The hand-off, measured over a slow dolly** (the flock still; the eye at 62 units with a 14° view,
+>   so birds cross 12–20 px; 0.2 m a frame for 120 frames; Σ over pixels of 1 − e^(−τ)·(1 − α) read every
+>   frame): jitter about the trend, rms: the cross-fade 4.2 × 10⁻⁴, a hard switch at 16 px 4.3 × 10⁻⁴, every bird a mesh 5.4 × 10⁻⁴, the medium alone 3.5 × 10⁻⁴ (29,316 birds as meshes mid-dolly; under the earlier roost tuning, 3.4, 3.5, 4.6 and 2.1 × 10⁻⁴). Meshes alias at their edges (WebGPU's most samples is 4), so pure meshes
+>   jitter more than the medium; the cross-fade stays below both the hard switch and pure meshes —
+>   no popping of its own. Coverage at the start agrees within 2.7% (every bird a mesh: 0.8%) of the medium alone: no
+>   bird is counted twice. The far-field check from M0 still holds: Σ τ over a 0.04 m-a-frame dolly at the home view jitters 4.1 × 10⁻⁷ rms, against the analytic-normalisation control's 8.5 × 10⁻⁵ (208×).
+> - **Acceptance and layout:** `v2-acceptance.mjs` 44/44; `web/tools/check-studio.mjs` 0 problems and 0 axe violations at 390, 820, 1440 and 200% zoom.
+>   No shared code changed in M1.
 >
 > **Implementation status (2026-11-18): M0 built** as the `v2/` page of `packages/boids-3d/web`
 > (served at `/sims/boids-3d/v2/`, gated through `pipeline.py` `PAGES`; v1 unchanged). Dusk: v1's
