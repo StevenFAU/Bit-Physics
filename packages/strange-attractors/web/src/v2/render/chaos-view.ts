@@ -117,6 +117,9 @@ export class ChaosView {
   private scale = 1 / 22;
   private goalCentre: V3 = [0, 0, 23.5];
   private goalScale = 1 / 22;
+  private readonly device: GPUDevice;
+  private readonly defaultLut: GPUTextureView;
+  private readonly palettes = new Map<string, GPUTextureView>();
 
   private constructor(
     device: GPUDevice,
@@ -130,11 +133,13 @@ export class ChaosView {
     readonly tracks: Ribbons,
     readonly ghost: Ribbons,
     readonly markers: Instances,
-    private readonly densityLut: GPUTextureView,
+    private densityLut: GPUTextureView,
     private readonly ballLut: GPUTextureView,
     private readonly slicePlane: SlicePlane,
   ) {
     this.view3d = view3d;
+    this.device = device;
+    this.defaultLut = densityLut;
     this.depth = new DepthTarget(device, DEPTH_FORMAT);
     this.applyModel();
   }
@@ -208,6 +213,21 @@ export class ChaosView {
   }
 
   /** The fixed points as small spheres (model coordinates). */
+  /** The density's palette (The Family: each system its own); null = Lorenz's cobalt to magnesium white. */
+  setDensityPalette(stops: readonly Rgb[] | null): void {
+    if (!stops) {
+      this.densityLut = this.defaultLut;
+      return;
+    }
+    const key = stops.map((c) => c.join(",")).join(";");
+    let v = this.palettes.get(key);
+    if (!v) {
+      v = paletteTexture(this.device, stops, "family-palette").createView();
+      this.palettes.set(key, v);
+    }
+    this.densityLut = v;
+  }
+
   setFixedPoints(points: readonly V3[]): void {
     const rec = new Float32Array(points.length * INSTANCE_FLOATS);
     points.forEach((p, i) => {

@@ -196,14 +196,21 @@ export function buildLearn(pane: HTMLElement): LearnPane {
         scene.id === "road"
           ? "The road from order to chaos, all at once. Every column of the diagram is one value of ρ: thousands of trajectories run there until their start is forgotten, and each time z reaches a peak, the peak is marked. " +
             "A single dot means the motion settles to a point; a few dots, a repeating orbit; a smear, chaos. Below ρ ≈ 24.74 the wings' centres hold the motion; above it chaos sets in, broken by windows where a periodic orbit takes over again — " +
-            "near ρ = 100 its period doubles and doubles again as ρ falls. Click a column to see that ρ's attractor."
+            "near ρ = 100 its period doubles and doubles again as ρ falls. Click a column to see that ρ's attractor. " +
+            "Switch to Rössler's road for the textbook route: as c grows its one loop becomes two (c ≈ 2.83), four (3.84), eight, and chaos by about 4.2 — period doubling, with windows of order inside the chaos."
           : scene.id === "map"
             ? "Edward Lorenz's own key to his attractor (1963): ignore everything but the peaks of z, and plot each against the one before. Half a million points on the attractor fill in one thin curve, " +
               "shaped like a tent with a cusp. The next peak is a function of the last. The curve is steeper than the diagonal everywhere, so two nearby peaks are pushed further apart at every turn — the map stretches, and that is the chaos."
             : scene.id === "slice"
               ? "A plane cuts through the attractor; every time the flow passes through it going up, a point is marked — a Poincaré section. Each wing crosses as a line, so the attractor is nearly a surface. " +
                 "Nearly: its dimension is about 2.06, and each line is a stack of finer lines — far finer than any picture, because every turn squeezes the layers tens of thousands of times thinner. Drag the plane up and down with the Slice tool."
-              : scene.id === "digits"
+              : scene.id === "listen"
+                ? "The attractor as sound: one trajectory, computed as you listen, sets the pitch from x — low on the left wing, high on the right — and the brightness from z. " +
+                  "Each switch of wing is a click. Listen for a pattern: there is none. The trajectory circles one wing a few times, then crosses, and how many times it circles before crossing never settles into a rhythm. Sound starts only when you turn it on."
+                : scene.id === "family"
+                  ? "Lorenz's is not the only strange attractor. Each of these nine is three equations, a few parameters, and the same story: stretching apart and folding back, never repeating, never leaving. " +
+                    "The shapes differ — one scroll, two wings, four, a lattice of cells — and so do the details: Sprott-A runs as well backwards as forwards, so it can have no attractor — a chaotic sea instead, round islands of nested tori. Every one is integrated here with the same fourth-order Runge–Kutta at its own time step."
+                  : scene.id === "digits"
           ? "Each ball starts at the same point; each extra digit of precision makes it ten times smaller. Watch how long each one stays a single point, then plot that time against the digits: " +
             "the points fall on a straight line. Its slope — time bought per digit — is ln 10 divided by the largest Lyapunov exponent, so you can measure the exponent by clicking."
           : scene.id === "butterfly"

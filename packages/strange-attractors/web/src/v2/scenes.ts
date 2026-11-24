@@ -1,14 +1,14 @@
 // Chaos's scenes (05-strange-attractors.md, "Scenes"). M0 built The
-// Butterfly, M1 Buy More Digits, M2 Road to Chaos, Lorenz's Map and Slice.
-// Listen and The Family (M3) join the list as they are built.
+// Butterfly, M1 Buy More Digits, M2 Road to Chaos, Lorenz's Map and Slice,
+// M3 Listen and The Family.
 
 import type { LorenzParams, V3 } from "./model/lorenz.js";
 import { CLASSIC } from "./model/lorenz.js";
 
-export type SceneId = "butterfly" | "digits" | "road" | "map" | "slice";
+export type SceneId = "butterfly" | "digits" | "road" | "map" | "slice" | "listen" | "family";
 
 /** The floating panel a scene shows (null: none). */
-export type ScenePanel = "digits" | "road" | "map" | "slice" | null;
+export type ScenePanel = "digits" | "road" | "map" | "slice" | "listen" | "family" | null;
 
 export interface SceneDef {
   id: SceneId;
@@ -33,7 +33,7 @@ export interface SceneDef {
   /** What the attractor population records (Lorenz's map, the section). */
   observe: { map: boolean; slice: boolean };
   /** The tool selected when the scene loads. */
-  tool: "release" | "slice";
+  tool: "release" | "slice" | "camera";
 }
 
 export const SCENES: readonly SceneDef[] = [
@@ -124,6 +124,40 @@ export const SCENES: readonly SceneDef[] = [
     panel: "slice",
     observe: { map: false, slice: true },
     tool: "slice",
+  },
+  {
+    id: "listen",
+    title: "Listen",
+    prompt: "Hear when it switches wings.",
+    eyebrow: "05 / CHAOS",
+    params: { ...CLASSIC },
+    digits: 6,
+    releaseAfter: 2350,
+    releaseDelay: 0,
+    camera: { yaw: 0.3, pitch: 0.12, distance: 2.6 },
+    turntable: 0.03,
+    speed: 1,
+    autoRelease: false,
+    panel: "listen",
+    observe: { map: false, slice: false },
+    tool: "release",
+  },
+  {
+    id: "family",
+    title: "The Family",
+    prompt: "Same idea, different shapes.",
+    eyebrow: "05 / CHAOS",
+    params: { ...CLASSIC },
+    digits: 6,
+    releaseAfter: 2350,
+    releaseDelay: 0,
+    camera: { yaw: 0.5, pitch: 0.3, distance: 2.6 },
+    turntable: 0.06,
+    speed: 1,
+    autoRelease: false,
+    panel: "family",
+    observe: { map: false, slice: false },
+    tool: "camera",
   },
 ];
 

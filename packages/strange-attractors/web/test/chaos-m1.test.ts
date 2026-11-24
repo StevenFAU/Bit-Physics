@@ -114,5 +114,7 @@ describe("Prove budgets ≡ tolerance.toml", () => {
     expect(kv["road_orbit_tv"]).toBe(BUDGET.roadOrbitTv);
     expect(kv["map_tv"]).toBe(BUDGET.mapTv);
     expect(kv["section_tv"]).toBe(BUDGET.sectionTv);
+    expect(kv["rossler_road_chaos_tv"]).toBe(BUDGET.rRoadTv);
+    expect(kv["rossler_road_orbit_tv"]).toBe(BUDGET.rRoadOrbitTv);
   });
 });

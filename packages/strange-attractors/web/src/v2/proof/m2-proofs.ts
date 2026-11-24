@@ -6,7 +6,7 @@
 
 import type { ChaosKernels } from "../model/ensemble.js";
 import { Chaos, OBS_BINS } from "../model/ensemble.js";
-import { BIF_WARM_STEPS, Bifurcation, Y0, Y1, bifStart } from "../model/bifurcation.js";
+import { BIF_WARM_STEPS, Bifurcation, Y0, Y1, bifStart, lorenzRoad } from "../model/bifurcation.js";
 import type { LorenzParams } from "../model/lorenz.js";
 import { CLASSIC } from "../model/lorenz.js";
 import { tvDistance } from "../model/measure.js";
@@ -74,7 +74,7 @@ function columnPeaksF64(p: LorenzParams, rho: number, col: number, seed: number)
 export async function roadCheck(device: GPUDevice, bifPipe: GPUComputePipeline): Promise<RoadCheck> {
   const p = { ...CLASSIC };
   const rhos = [...ROAD_TEST_RHOS];
-  const bif = Bifurcation.create(device, bifPipe, { cols: rhos.length, per: ROAD_TEST_PER, bins: 1024 }, () => p);
+  const bif = Bifurcation.create(device, bifPipe, { cols: rhos.length, per: ROAD_TEST_PER, bins: 1024 }, lorenzRoad(() => p));
   try {
     bif.seed = 1;
     bif.setRhos(new Float32Array(rhos));
