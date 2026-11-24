@@ -611,6 +611,7 @@ const sceneBench = (page) =>
   check("a new σ starts the diagram over, and so does undoing it", sb.edited < sb.ran && sb.undone < sb.beforeUndo && sb.sigma === 10, `steps ${sb.ran} → σ 12: ${sb.edited} → ${sb.beforeUndo} → undo: ${sb.undone}`);
 
   // the range presets restart the diagram and ride the link
+  await page.waitForTimeout(1000); // the σ check above just restarted the diagram: let it run first
   const ranBefore = await T(page, () => globalThis.__chaos.bif.steps);
   await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("99–101.5")');
   await page.waitForTimeout(150);
@@ -776,8 +777,14 @@ const benchM3 = {};
 // --- M3: Rössler's road ----------------------------------------------------------------
 {
   const { ctx, page, errors } = await open("/v2/?s=road");
+  // a Ghost pair on Lorenz's road first: it must not be drawn over Rössler's attractor
+  const g0 = await T(page, async () => { const a = globalThis.__chaos; a.startGhost(a.releasePoint); await new Promise((r) => setTimeout(r, 400)); return a.ghostSeparation; });
   await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("Rössler")');
   await page.waitForTimeout(400);
+  const g1 = await T(page, () => globalThis.__chaos.ghostSeparation);
+  check("Lorenz's ghost pair goes when Rössler comes on show", g0 !== null && g1 === null, `separation ${g0?.toExponential(2)} → ${g1}`);
+  const onScreen = await T(page, () => [...document.querySelectorAll(".bp-drawer p, .bp-drawer div")].map((el) => el.textContent ?? "").find((t) => t.startsWith("On screen:")) ?? "");
+  check("Prove says Rössler is on screen, drawn by the illustrative kernel, not the gated one", /^On screen: Rössler \(a 0\.2, b 0\.2, c 5\.7\)/.test(onScreen) && /not gated/.test(onScreen), onScreen);
   const sw = await T(page, () => ({ sys: globalThis.__chaos.roadSystem, shown: globalThis.__chaos.family.sys?.key, title: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .cx-panel-title').textContent, tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool[data-tool]")].map((b) => b.dataset.tool) }));
   await page.waitForTimeout(400);
   check("the road switches to Rössler's, with its attractor on show and the camera alone", sw.sys === "rossler" && sw.shown === "rossler" && /x peaks against c/.test(sw.title) && sw.tools.join() === "camera" && (await T(page, () => location.search)).includes("rs=rossler"), JSON.stringify(sw));

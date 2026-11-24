@@ -89,7 +89,7 @@
 >   - Both are entries in `STAGED` of `make-posters.mjs` and `make-loops.mjs`, committed plain.
 >     `make-loops.mjs` gains `square` (pin the canvas square), because a full-bleed v2 canvas filmed
 >     at 512 × 256 under `height: auto`.
-> - **Checks.** `v2-acceptance.mjs` 119/119 (M0's 36, M1's 20, M2's 36, M3's 27). `web/tools/check-studio.mjs` is clean (0 problems, 0 axe
+> - **Checks.** `v2-acceptance.mjs` 121/121 (M0's 36, M1's 20, M2's 36, M3's 29). `web/tools/check-studio.mjs` is clean (0 problems, 0 axe
 >   violations at 390, 820 and 1440 px and 200% zoom) for `v2/`, `?s=digits`, `?s=road`,
 >   `?s=road&rs=rossler`, `?s=map`, `?s=slice`, `?s=listen` and `?s=family`. The road switch's
 >   extra row first pushed Road to Chaos's panel into the rail at 200% zoom; its figure now shrinks

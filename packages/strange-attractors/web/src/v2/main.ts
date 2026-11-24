@@ -270,8 +270,11 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
-  const syncProve = (): void =>
-    prove.setOnScreen({ params: a.chaos.params, released: a.chaos.released, eps: a.chaos.eps, members: a.chaos.ensemble.n });
+  const syncProve = (): void => {
+    const f = a.showing;
+    const sys = f && f.sys ? { label: f.sys.label, params: f.params.map((v, i) => `${f.sys!.names[i]} ${Number(v.toFixed(6))}`).join(", ") || "no parameters" } : null;
+    prove.setOnScreen({ params: a.chaos.params, released: a.chaos.released, eps: a.chaos.eps, members: a.chaos.ensemble.n, system: sys });
+  };
 
   // ------------------------------------------------------------ the clock --
   const hud = h("div", { class: "cx-hud bp-surface", role: "status", "aria-live": "off", "data-bp-chrome": "", "data-bp2": "studio-chrome" });
@@ -523,6 +526,8 @@ async function boot(): Promise<void> {
   a.hooks = {
     onEncode: encodePanels,
     onObserve: observePanels,
+    // another system on show (or Lorenz again): Prove says which
+    onSystem: () => syncProve(),
     onSceneChange: (scene) => {
       for (const [id, p] of Object.entries(panelFor)) p.el.hidden = scene.panel !== id;
       road.setSystem(a.roadSystem);

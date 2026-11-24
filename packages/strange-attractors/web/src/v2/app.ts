@@ -448,6 +448,9 @@ export class App {
     const wasOther = this.shownKey !== "" && !force;
     this.shownKey = key;
     if (o) {
+      // Lorenz's ghost pair and the ball's tracks are Lorenz's trajectories: not drawn over another system
+      this.clearGhost();
+      this.view.tracks.clear();
       this.family.set(o.sys, o.params, this.seed);
       this.view.frame(this.family.frame.centre, this.family.frame.rms, true);
       this.view.setDensityPalette(o.sys.palette);
@@ -841,7 +844,7 @@ export class App {
     else this.chaos.encodeSteps(enc, n, n > 0 ? this.profiler?.pass("sim") : undefined);
     this.clock.advance(n);
     this.stepsTotal += n;
-    this.stepGhost(n, true);
+    if (!fam) this.stepGhost(n, true);
     if (this.lyap.averagingT < LYAP_MAX_T && !this.clock.paused) {
       this.lyap.step(LYAP_STEPS_PER_FRAME);
       if (now - this.lyapReported > 500) {
@@ -849,7 +852,7 @@ export class App {
         this.hooks.onLyapunov?.(this.lyap.estimate());
       }
     }
-    if (n > 0 && this.chaos.released) {
+    if (n > 0 && this.chaos.released && !fam) {
       this.view.tracks.pushGpu(enc, this.chaos.trail, { rows: n, stride: TRACK, origins: this.chaos.stepOrigins });
     }
     let spreadQueued = false;

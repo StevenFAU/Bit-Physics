@@ -62,6 +62,8 @@ export interface OnScreen {
   released: boolean;
   eps: number;
   members: number;
+  /** Another system drawn instead of Lorenz (The Family, Rössler's road): its name and parameters. */
+  system?: { label: string; params: string } | null;
 }
 
 export interface ProvePane {
@@ -576,6 +578,12 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       };
     },
     setOnScreen(s) {
+      if (s.system) {
+        onScreen.textContent =
+          `On screen: ${s.system.label} (${s.system.params}), drawn by The Family's kernel — illustrative, not gated. ` +
+          "The release gate always runs Lorenz's classic parameters on Lorenz's own kernel, whatever is on screen.";
+        return;
+      }
       const classic = s.params.sigma === CLASSIC.sigma && s.params.rho === CLASSIC.rho && s.params.beta === CLASSIC.beta;
       onScreen.textContent =
         (classic ? "On screen: Lorenz's own parameters, the gated regime. " : `On screen: σ ${s.params.sigma}, ρ ${s.params.rho}, β ${s.params.beta.toFixed(3)} — outside the gated regime; the release gate always runs the classic parameters. `) +
