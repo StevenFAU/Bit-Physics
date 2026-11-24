@@ -141,9 +141,17 @@ export class GroundCamera {
     this.vPitch = 0;
   }
 
-  /** Double-click / "0": the home view; following resumes at once. */
+  /** Double-click / "0": look back at the flock (the follow target), at the home zoom; following resumes at once. */
   fit(_zoom = 1, _animate = false): void {
     this.goal = copy(this.home);
+    const t = this.followTarget;
+    if (t) {
+      const e = this.goal.eye;
+      const dx = t[0] - e[0], dy = t[1] - e[1], dz = t[2] - e[2];
+      this.goal.yaw = Math.atan2(-dx, -dz);
+      this.goal.pitch = Math.max(Math.atan2(dy, Math.hypot(dx, dz)) + this.followLift, this.followMinPitch);
+      this.goal = this.clampView(this.goal);
+    }
     this.vYaw = 0;
     this.vPitch = 0;
     this.lastInput = -Infinity;

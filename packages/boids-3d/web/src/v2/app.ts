@@ -586,7 +586,8 @@ export class App {
     if (s.alertFraction < 1e-5 && this.waveDue < 0) this.waveDue = 0;
   }
 
-  private async measureWaveNow(): Promise<void> {
+  /** Measure the alarm wave now (one readback of the whole flock). */
+  async measureWaveNow(): Promise<void> {
     this.waveBusy = true;
     try {
       const w = measureWave(await this.flock.readState(), this.flock.steps, DT);
