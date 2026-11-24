@@ -37,6 +37,14 @@
 // drag raises the cut without turning the view, the slider by keyboard, the
 // cut's clamp, a high cut recorded in the same box); each scene at 60 fps.
 // Prints a BP_BENCH_M2 line.
+// M3: Prove's Rössler road card inside its budgets and The Family's card
+// (illustrative, nine rows); The Family (its panel, camera-only tools, each
+// system on show and on the link, a link booting into one); Rössler's road (the
+// switch, every column filled, period doubling against chaos in the counts, a
+// click sets c on the link, a range on the link, back to Lorenz); Listen (no
+// AudioContext until the Sound button, then a running one; the switches
+// counted; leaving the scene silences it; reduced motion never starts sound);
+// each new scene at 60 fps. Prints a BP_BENCH_M3 line.
 
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -232,6 +240,30 @@ let bench = null;
     }),
   );
   check("the three new cards pass, labelled not gated", labels.every((l) => l?.trim().endsWith("reference agreement passed (not gated)")), labels.join(" · "));
+  // M3's cards (proof/budgets.ts ≡ tolerance.toml, unit-tested)
+  const m3b = { rRoadTv: 0.1, rRoadOrbitTv: 0.03 };
+  const rr = prove.rossler;
+  check(
+    "Prove: Rössler's road, column by column, against f64 (chaos on 64 bins, orbits on 1,024)",
+    rr && rr.worstChaos <= m3b.rRoadTv && rr.worstOrbit <= m3b.rRoadOrbitTv,
+    rr ? `${rr.cs.map((c, i) => `c ${c}: ${rr.tv[i].toFixed(4)}/${rr.bins[i]} (f64 ${rr.floor[i].toFixed(4)})`).join("; ")} — budgets ${m3b.rRoadTv} / ${m3b.rRoadOrbitTv}` : "no result",
+  );
+  const fr = prove.family;
+  check(
+    "Prove: The Family against f64 — nine systems, every GPU cloud inside the f64 run's box (illustrative, no budget)",
+    fr && fr.length === 9 && fr.every((r) => Number.isFinite(r.tv) && r.outside < 0.001),
+    fr ? fr.map((r) => `${r.label} ${r.tv.toFixed(3)} (f64 halves ${r.floor.toFixed(3)})`).join(", ") : "no result",
+  );
+  const m3labels = await T(page, () =>
+    [["Rössler's road, column by column", "reference agreement passed (not gated)"], ["The Family, against f64", "illustrative (not gated)"]].map(([t, want]) => {
+      const s = [...document.querySelectorAll(".bp-proof-status")].find((el) => {
+        for (let c = el.parentElement, i = 0; c && i < 5; c = c.parentElement, i += 1) if (c.querySelectorAll(".bp-proof-status").length === 1 && c.textContent.includes(t)) return true;
+        return false;
+      });
+      return { t, got: s?.textContent?.trim() ?? null, want };
+    }),
+  );
+  check("M3's cards say what they are: Rössler's passed, The Family illustrative", m3labels.every((l) => l.got?.endsWith(l.want)), m3labels.map((l) => `${l.t}: ${l.got}`).join(" · "));
   await T(page, () => document.querySelector('.bp-top-actions [aria-label="Prove"]').click());
   await page.waitForTimeout(300);
   await shot(page, "04-prove");
@@ -706,6 +738,117 @@ const sceneBench = (page) =>
   await ctx.close();
 }
 
+// --- M3: The Family -------------------------------------------------------------------
+const benchM3 = {};
+{
+  const { ctx, page, errors } = await open("/v2/?s=family");
+  const s0 = await sceneState(page);
+  const panel = await T(page, () => { const el = document.querySelector('.cx-panel[aria-label="The Family"]'); return !!el && !el.hidden && document.querySelectorAll(".cx-family-btn").length; });
+  check("The Family boots with its gallery of nine, the camera alone on the rail, Rössler on show", s0.scene === "family" && panel === 9 && s0.tools.length === 1 && s0.tools[0] === "camera" && (await T(page, () => globalThis.__chaos.family.sys?.key)) === "rossler", JSON.stringify({ ...s0, buttons: panel }));
+  const seen = [];
+  for (const key of ["aizawa", "sprott_a", "thomas", "halvorsen", "dadras", "chen", "fourwing"]) {
+    await page.click(`.cx-family-btn[data-system="${key}"]`);
+    await page.waitForTimeout(700);
+    seen.push(await T(page, (k) => {
+      const a = globalThis.__chaos;
+      return { k, on: a.family.sys?.key === k, steps: a.family.steps, pressed: document.querySelector(`.cx-family-btn[data-system="${k}"]`).getAttribute("aria-pressed"), link: location.search.includes(`fs=${k}`) };
+    }, key));
+  }
+  check("each system comes on show, runs, and rides the link", seen.every((x) => x.on && x.steps > 0 && x.pressed === "true" && x.link), seen.map((x) => `${x.k} ${x.steps}`).join(", "));
+  await shot(page, "14-family-fourwing");
+  await page.click('.cx-family-btn[data-system="lorenz"]');
+  await page.waitForTimeout(500);
+  const back = await T(page, () => ({ shown: globalThis.__chaos.showing === null, tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool[data-tool]")].map((b) => b.dataset.tool) }));
+  check("Lorenz in the gallery is Lorenz's own population and tools", back.shown && back.tools.includes("release"), JSON.stringify(back));
+  benchM3.family = await sceneBench(page);
+  check("The Family runs at 60 fps (headless, this GPU)", benchM3.family.fps > 55, `${benchM3.family.fps} fps`);
+  check("no console errors (The Family)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page, errors } = await open("/v2/?s=family&fs=thomas");
+  check("a link with a system boots into it", (await T(page, () => globalThis.__chaos.family.sys?.key)) === "thomas" && (await T(page, () => document.querySelector('.cx-family-btn[data-system="thomas"]').getAttribute("aria-pressed"))) === "true");
+  await shot(page, "15-family-thomas");
+  check("no console errors (family link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M3: Rössler's road ----------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=road");
+  await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("Rössler")');
+  await page.waitForTimeout(400);
+  const sw = await T(page, () => ({ sys: globalThis.__chaos.roadSystem, shown: globalThis.__chaos.family.sys?.key, title: document.querySelector('.cx-panel[aria-label="Road to Chaos"] .cx-panel-title').textContent, tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool[data-tool]")].map((b) => b.dataset.tool) }));
+  await page.waitForTimeout(400);
+  check("the road switches to Rössler's, with its attractor on show and the camera alone", sw.sys === "rossler" && sw.shown === "rossler" && /x peaks against c/.test(sw.title) && sw.tools.join() === "camera" && (await T(page, () => location.search)).includes("rs=rossler"), JSON.stringify(sw));
+  await page.waitForFunction(() => !globalThis.__chaos.road.warming, undefined, { timeout: 60000 });
+  await page.waitForTimeout(3000);
+  const fill = await T(page, async () => {
+    const b = globalThis.__chaos.road;
+    const c = await b.readCounts();
+    const col = (v) => Math.min(b.cols - 1, Math.max(0, Math.floor(((v - b.rho0) / (b.rho1 - b.rho0)) * b.cols)));
+    const occupied = (k) => { let n = 0; for (let y = 0; y < b.bins; y += 1) if (c[y * b.cols + k] > 0) n += 1; return n; };
+    let filled = 0;
+    for (let k = 0; k < b.cols; k += 1) { let n = 0; for (let y = 0; y < b.bins; y += 1) n += c[y * b.cols + k]; if (n > 0) filled += 1; }
+    return { cols: b.cols, filled, range: [b.rho0, b.rho1], at25: occupied(col(2.5)), at35: occupied(col(3.5)), at57: occupied(col(5.7)) };
+  });
+  check("Rössler's road fills, every column", fill.filled === fill.cols, `${fill.filled} of ${fill.cols} columns over c ${fill.range.join("–")}`);
+  check("period doubling in the counts: one orbit's peaks at c 2.5 and 3.5, a smear at 5.7", fill.at25 <= 4 && fill.at35 <= 8 && fill.at57 > 100, `occupied bins: c 2.5 ${fill.at25}, c 3.5 ${fill.at35}, c 5.7 ${fill.at57}`);
+  await shot(page, "16-road-rossler");
+  const at = await T(page, () => { const o = document.querySelector('.cx-panel[aria-label="Road to Chaos"] .cx-hist-overlay').getBoundingClientRect(); const r = globalThis.__chaos.rosslerRange; return { x: o.left + ((4 - r.rho0) / (r.rho1 - r.rho0)) * o.width, y: o.top + o.height / 2, perPx: (r.rho1 - r.rho0) / o.width }; });
+  await page.mouse.click(at.x, at.y);
+  await page.waitForTimeout(600);
+  const picked = await T(page, () => ({ c: globalThis.__chaos.rosslerC, shownC: globalThis.__chaos.family.params[2], search: location.search, lorenzRho: globalThis.__chaos.chaos.params.rho }));
+  check("a click on Rössler's diagram shows that c's attractor, on the link (and leaves Lorenz's ρ alone)", Math.abs(picked.c - 4) <= at.perPx + 0.001 && picked.shownC === picked.c && picked.search.includes(`rc=${picked.c}`) && picked.lorenzRho === 28, JSON.stringify(picked));
+  await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("c 2–18")');
+  await page.waitForTimeout(500);
+  check("a Rössler range rides the link", (await T(page, () => location.search)).includes("rr=c-wide") && (await T(page, () => globalThis.__chaos.road.rho1)) === 18);
+  benchM3.roadRossler = await sceneBench(page);
+  check("Rössler's road runs at 60 fps (headless, this GPU)", benchM3.roadRossler.fps > 55, `${benchM3.roadRossler.fps} fps; ${benchM3.roadRossler.passes.map((p) => `${p.name} ${p.ms} ms`).join(", ")}`);
+  await page.click('.cx-panel[aria-label="Road to Chaos"] .bp-seg:has-text("Lorenz")');
+  await page.waitForTimeout(500);
+  const lz = await T(page, () => ({ sys: globalThis.__chaos.roadSystem, shown: globalThis.__chaos.showing === null, tools: [...document.querySelectorAll(".bp-rail-tools .bp-tool[data-tool]")].map((b) => b.dataset.tool) }));
+  check("back to Lorenz's road: Lorenz on show, its tools back", lz.sys === "lorenz" && lz.shown && lz.tools.includes("release"), JSON.stringify(lz));
+  check("no console errors (Rössler's road)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page, errors } = await open("/v2/?s=road&rs=rossler&rr=c-high&rc=8.5");
+  const r = await T(page, () => ({ sys: globalThis.__chaos.roadSystem, c: globalThis.__chaos.rosslerC, rho0: globalThis.__chaos.road.rho0, shownC: globalThis.__chaos.family.params[2] }));
+  check("a link into Rössler's road boots into its range and c", r.sys === "rossler" && r.c === 8.5 && r.rho0 === 6.5 && r.shownC === 8.5, JSON.stringify(r));
+  check("no console errors (Rössler link)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+
+// --- M3: Listen -------------------------------------------------------------------------
+{
+  const { ctx, page, errors } = await open("/v2/?s=listen");
+  const s0 = await sceneState(page);
+  const boot = await T(page, () => ({ ctx: globalThis.__chaosPanels.listen.context(), panel: !document.querySelector('.cx-panel[aria-label="Listen"]').hidden }));
+  check("Listen boots with its panel and no audio at all (no AudioContext before the visitor asks)", s0.scene === "listen" && boot.panel && boot.ctx === null, JSON.stringify(boot));
+  await page.waitForTimeout(4000);
+  const heard = await T(page, () => ({ sw: globalThis.__chaosPanels.listen.trajectory.switches, t: globalThis.__chaosPanels.listen.trajectory.t, status: document.querySelector('.cx-panel[aria-label="Listen"] .cx-panel-status').textContent }));
+  check("the heard trajectory runs at the sim's pace and switches wings", heard.t > 5 && heard.sw > 2, `“${heard.status}”`);
+  await page.click('[data-cx="sound"]');
+  await page.waitForTimeout(800);
+  const on = await T(page, () => ({ state: globalThis.__chaosPanels.listen.context()?.state, pressed: document.querySelector('[data-cx="sound"]').getAttribute("aria-checked") }));
+  check("the Sound button opens a running AudioContext", on.state === "running" && on.pressed === "true", JSON.stringify(on));
+  await shot(page, "17-listen");
+  benchM3.listen = await sceneBench(page);
+  check("Listen runs at 60 fps with sound on (headless, this GPU)", benchM3.listen.fps > 55, `${benchM3.listen.fps} fps`);
+  await T(page, async () => { await globalThis.__chaos.loadScene("butterfly"); });
+  await page.waitForTimeout(300);
+  check("leaving Listen turns the sound off", (await T(page, () => document.querySelector('[data-cx="sound"]').getAttribute("aria-checked"))) === "false");
+  check("no console errors (Listen)", errors.length === 0, errors.join(" | "));
+  await ctx.close();
+}
+{
+  const { ctx, page } = await open("/v2/?s=listen", { reducedMotion: "reduce" });
+  await page.waitForTimeout(1500);
+  check("reduced motion in Listen: still no sound until asked", (await T(page, () => globalThis.__chaosPanels.listen.context())) === null);
+  await ctx.close();
+}
+
 // --- determinism: the same seed gives the same bytes across page loads ------------------
 {
   const run = async () => {
@@ -761,6 +904,7 @@ const sceneBench = (page) =>
 
 console.log(`BP_BENCH ${JSON.stringify(bench)}`);
 console.log(`BP_BENCH_M2 ${JSON.stringify(benchM2)}`);
+console.log(`BP_BENCH_M3 ${JSON.stringify(benchM3)}`);
 const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 if (out) await writeFile(join(out, "acceptance.json"), JSON.stringify({ results, bench }, null, 2));

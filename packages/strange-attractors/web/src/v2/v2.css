@@ -340,6 +340,10 @@
        Road to Chaos's panel is ~165 px plus its figure, from 56 px down */
     height: clamp(48px, calc(100vh - 356px), 104px);
   }
+  /* Road to Chaos also carries the road switch: one more row to clear the rail with */
+  .cx-panel-wide .cx-fig {
+    height: clamp(40px, calc(100vh - 400px), 104px);
+  }
   .cx-panel-title,
   .cx-panel-note,
   .cx-panel-status {

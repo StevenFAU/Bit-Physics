@@ -197,7 +197,7 @@ export function buildLearn(pane: HTMLElement): LearnPane {
           ? "The road from order to chaos, all at once. Every column of the diagram is one value of ρ: thousands of trajectories run there until their start is forgotten, and each time z reaches a peak, the peak is marked. " +
             "A single dot means the motion settles to a point; a few dots, a repeating orbit; a smear, chaos. Below ρ ≈ 24.74 the wings' centres hold the motion; above it chaos sets in, broken by windows where a periodic orbit takes over again — " +
             "near ρ = 100 its period doubles and doubles again as ρ falls. Click a column to see that ρ's attractor. " +
-            "Switch to Rössler's road for the textbook route: as c grows its one loop becomes two (c ≈ 2.83), four (3.84), eight, and chaos by about 4.2 — period doubling, with windows of order inside the chaos."
+            "Switch to Rössler's road for the textbook route: as c grows its one loop becomes two (c ≈ 2.82), four (3.83), eight, and chaos by about 4.2 — period doubling, with windows of order inside the chaos."
           : scene.id === "map"
             ? "Edward Lorenz's own key to his attractor (1963): ignore everything but the peaks of z, and plot each against the one before. Half a million points on the attractor fill in one thin curve, " +
               "shaped like a tent with a cusp. The next peak is a function of the last. The curve is steeper than the diagonal everywhere, so two nearby peaks are pushed further apart at every turn — the map stretches, and that is the chaos."
