@@ -52,6 +52,8 @@ export class GroundCamera {
   followTarget: Vec3 | null = null;
   /** The follow aims this far above the target, in radians of pitch (frames the flock with sky below it). */
   followLift = 0.02;
+  /** The follow never lowers the gaze below this pitch (radians). */
+  followMinPitch = 0.2;
   reducedMotion = false;
   version = 0;
 
@@ -177,7 +179,8 @@ export class GroundCamera {
       const dy = t[1] - e[1];
       const dz = t[2] - e[2];
       const yaw = Math.atan2(-dx, -dz);
-      const pitch = Math.atan2(dy, Math.hypot(dx, dz)) + this.followLift;
+      // keep the horizon low in the frame: never look below `followMinPitch`
+      const pitch = Math.max(Math.atan2(dy, Math.hypot(dx, dz)) + this.followLift, this.followMinPitch);
       const k = 1 - Math.exp(-dt / Math.max(this.followDamping, 1e-3));
       this.goal.yaw += angleDelta(this.goal.yaw, yaw) * k;
       this.goal.pitch += (pitch - this.goal.pitch) * k;

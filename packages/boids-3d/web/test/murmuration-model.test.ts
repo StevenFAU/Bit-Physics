@@ -1,96 +1,142 @@
 // Murmuration v2 — the pure code (packages/boids-3d/web/src/v2): the live
-// model's port of v1 (the seeded flock and the uniforms byte for byte against
-// v1's engine), the brute-force twin's text transform, the observables'
-// eigenvalues, the watcher's camera, and the gate's f64 Reynolds mirror
-// against the committed 3-agent golden. GPU work is exercised in the browser
-// by v2-acceptance.mjs and the release gate.
+// model's uniforms and seeded flock, the brute-force twin sharing everything
+// but the search, the falcon's limits and scripted determinism, the alarm
+// wave's estimator on a synthetic flock, the observables' eigenvalues, the
+// watcher's camera, and the gate's f64 Reynolds mirror against the committed
+// 3-agent golden. GPU work is exercised in the browser by v2-acceptance.mjs
+// and the release gate.
 import { describe, expect, it } from "vitest";
 import golden from "../../../../tools/testkit/golden/tables/agent-based/boids-3agent-step1.json";
-import { MurmurationEngine, PRESETS } from "../src/engine.js";
-import starlingWgsl from "../src/starling.wgsl?raw";
-import { AGENT_BYTES, CELL_COUNT, NO_TOOL, bruteSource, decodeStats, packParams, presetById, seedFlock, symEig3 } from "../src/v2/model/flock.js";
+import stepSrc from "../src/v2/model/murmur.wgsl?raw";
+import { FALCON, Falcon, turnTowards } from "../src/v2/model/falcon.js";
+import { AGENT_BYTES, MURMURATION, NO_TOOL, cellCount, decodeStats, gridFor, packParams, seedFlock, symEig3 } from "../src/v2/model/flock.js";
+import { measureWave } from "../src/v2/model/wave.js";
 import { GroundCamera } from "../src/v2/render/ground-camera.js";
 import { PARAMS, flockStep64 } from "../src/v2/proof/gate.js";
 
-/** Index of the first differing byte, or -1 (toEqual on large typed arrays is slow). */
-function firstDiff(a: ArrayBuffer, b: ArrayBuffer): number {
-  const x = new Uint8Array(a);
-  const y = new Uint8Array(b);
-  if (x.length !== y.length) return Math.min(x.length, y.length);
-  for (let i = 0; i < x.length; i += 1) if (x[i] !== y[i]) return i;
-  return -1;
-}
-
-/** Run one of v1's engine methods on a stand-in `this` that records writeBuffer. */
-function v1Call(method: "reset" | "writeParams", self: Record<string, unknown>, ...args: unknown[]): ArrayBuffer[] {
-  const writes: ArrayBuffer[] = [];
-  const proto = MurmurationEngine.prototype as unknown as Record<string, unknown>;
-  const fake = {
-    ...self,
-    toolCode: proto["toolCode"],
-    queue: { writeBuffer: (_b: unknown, _o: number, data: ArrayBuffer | ArrayBufferView) => writes.push(data instanceof ArrayBuffer ? data.slice(0) : (data.buffer as ArrayBuffer).slice(0)) },
-    agents: [{}, {}],
-    params: {},
-    stats: { centroid: [0, 0, 0] },
-  };
-  (MurmurationEngine.prototype as unknown as Record<string, (...a: unknown[]) => void>)[method]!.apply(fake, args);
-  return writes;
-}
-
-describe("the live model is v1's", () => {
-  it("seedFlock reproduces v1's reset() byte for byte, for every preset", () => {
-    for (const preset of PRESETS) {
-      for (const seed of [1, 42, 123456]) {
-        const v1 = v1Call("reset", { agentCount: 3000, preset }, seed);
-        const v2 = seedFlock(3000, preset, seed);
-        expect(v2.byteLength).toBe(3000 * AGENT_BYTES);
-        expect(firstDiff(v2, v1[0]!)).toBe(-1);
-      }
-    }
+describe("the live model", () => {
+  it("packs each step's own uniforms", () => {
+    const g = gridFor(1.25);
+    const out = new ArrayBuffer(256);
+    packParams(out, 0, 1000, g, MURMURATION, { step: 777, falcon: { position: [1, 2, 3], velocity: [4, 5, 6] }, tool: { ...NO_TOOL, code: 4 } }, 1 / 120);
+    const u = new Uint32Array(out);
+    const f = new Float32Array(out);
+    expect([...u.slice(0, 4)]).toEqual([1000, cellCount(g), g.dims[0], g.dims[1]]);
+    expect(u[4]).toBe(g.dims[2]);
+    expect(u[5]).toBe(Math.ceil(MURMURATION.reach / 1.25) + 1);
+    expect(u[6]).toBe(777);
+    expect(u[7]).toBe(1 | (4 << 8));
+    expect(f[13]).toBeCloseTo(MURMURATION.reach ** 2, 5);
+    expect(f[25]).toBeCloseTo(777 / 120, 4);
+    expect([...f.slice(32, 35)]).toEqual([1, 2, 3]);
+    expect([...u.slice(40, 43)]).toEqual([MURMURATION.directDelay, MURMURATION.contagionDelay, MURMURATION.refractory]);
+    // no falcon: the flag is clear
+    packParams(out, 0, 1000, g, MURMURATION, { step: 1, falcon: null, tool: NO_TOOL });
+    expect(u[7]).toBe(0);
   });
 
-  it("packParams reproduces v1's writeParams byte for byte (its own frame and time)", () => {
-    const tool = { mode: "gust", position: [3, 4, 5], direction: [0.2, 0.9, 0.1], radius: 21, strength: 2.5, active: true };
-    for (const preset of PRESETS) {
-      const v1 = v1Call("writeParams", { agentCount: 32768, tool, preset, frameIndex: 777, simulationTime: 6.475 }, 1 / 120);
-      const out = new ArrayBuffer(176);
-      packParams(out, 0, 32768, preset, { code: 4, position: [3, 4, 5], direction: [0.2, 0.9, 0.1], radius: 21, strength: 2.5 }, 777, 6.475);
-      expect(firstDiff(out, v1[0]!)).toBe(-1);
+  it("seeds a dense, polarized flock, deterministically", () => {
+    const a = seedFlock(4000, MURMURATION, 9);
+    const b = seedFlock(4000, MURMURATION, 9);
+    expect(a.byteLength).toBe(4000 * AGENT_BYTES);
+    const x = new Uint8Array(a);
+    const y = new Uint8Array(b);
+    let same = x.length === y.length;
+    for (let i = 0; same && i < x.length; i += 1) same = x[i] === y[i];
+    expect(same).toBe(true);
+    const f = new Float32Array(a);
+    const u = new Uint32Array(a);
+    let hx = 0, hy = 0, hz = 0;
+    for (let i = 0; i < 4000; i += 1) {
+      expect(u[i * 16 + 12]).toBe(i);
+      expect(u[i * 16 + 14]).toBe(0xffffffff);
+      expect(Math.hypot(f[i * 16 + 4]!, f[i * 16 + 5]!, f[i * 16 + 6]!)).toBeCloseTo(1, 5);
+      hx += f[i * 16 + 4]!; hy += f[i * 16 + 5]!; hz += f[i * 16 + 6]!;
     }
-    // and with no tool held, v1 writes tool code 0
-    const v1 = v1Call("writeParams", { agentCount: 10, tool: { ...tool, active: false }, preset: PRESETS[0], frameIndex: 0, simulationTime: 0 }, 1 / 120);
-    const out = new ArrayBuffer(176);
-    packParams(out, 0, 10, PRESETS[0]!, { ...NO_TOOL, position: [3, 4, 5], direction: [0.2, 0.9, 0.1], radius: 21, strength: 2.5 }, 0, 0);
-    expect(firstDiff(out, v1[0]!)).toBe(-1);
+    expect(Math.hypot(hx, hy, hz) / 4000).toBeGreaterThan(0.95);
   });
 
-  it("the grid is v1's: 24 × 12 × 24 cells", () => {
-    expect(CELL_COUNT).toBe(6912);
-    expect(presetById("nope").label).toBe("starling");
+  it("the brute-force twin shares everything but the search", () => {
+    const grid = stepSrc.slice(stepSrc.indexOf("fn step("));
+    const brute = stepSrc.slice(stepSrc.indexOf("fn step_brute("));
+    expect(grid).toContain("search_grid(i,");
+    expect(brute).toContain("search_brute(i,");
+    for (const body of [grid.slice(0, grid.indexOf("fn step_brute(")), brute]) {
+      expect(body).toContain("reset_selection();");
+      expect(body).toContain("finish(i);");
+    }
+    // both searches select through the same `consider`
+    expect(stepSrc.match(/consider\(i, /g)?.length).toBe(2);
+    // the gated rule: no builtin trig in the selection
+    const consider = stepSrc.slice(stepSrc.indexOf("fn consider("), stepSrc.indexOf("fn search_grid("));
+    expect(consider).not.toMatch(/\b(sin|cos|exp|atan)\(/);
   });
 });
 
-describe("the brute-force twin", () => {
-  const brute = bruteSource(starlingWgsl);
-  it("replaces only the 27-cell candidate loop", () => {
-    expect(brute).not.toContain("sorted_index[begin + slot]");
-    expect(brute).not.toContain("for (var dz = -1");
-    expect(brute).toContain("for (var j = 0u; j < p.counts.x; j += 1u) {");
-    // everything before the loop and after it is unchanged
-    const head = starlingWgsl.indexOf("  for (var dz = -1;");
-    expect(brute.slice(0, head)).toBe(starlingWgsl.slice(0, head));
-    const tail = "  var alignment = vec3<f32>(0.0);";
-    expect(brute.slice(brute.indexOf(tail))).toBe(starlingWgsl.slice(starlingWgsl.indexOf(tail)));
-    // the candidate body is carried over character for character
-    const body = starlingWgsl.slice(starlingWgsl.indexOf("          if (j == i) { continue; }"), starlingWgsl.indexOf("          best_id[insert] = j;"));
-    expect(brute).toContain(body);
-    const opens = (brute.match(/\{/g) ?? []).length;
-    const closes = (brute.match(/\}/g) ?? []).length;
-    expect(opens).toBe(closes);
+describe("the falcon", () => {
+  it("turns no faster than its limit and keeps to its speeds", () => {
+    const t = turnTowards([0, 0, -1], [1, 0, 0], 0.1);
+    expect(Math.acos(-t[2])).toBeCloseTo(0.1, 6);
+    expect(turnTowards([0, 0, -1], [0, 0, -1], 0.1)).toEqual([0, 0, -1]);
+    const f = new Falcon();
+    f.mode = "player";
+    f.input = { aim: [100, 30, 60], yaw: 0, pitch: 0, stoop: true };
+    let h = f.heading;
+    for (let i = 0; i < 600; i += 1) {
+      f.advance(1 / 120, i);
+      const turned = Math.acos(Math.min(1, h[0] * f.heading[0] + h[1] * f.heading[1] + h[2] * f.heading[2]));
+      expect(turned).toBeLessThanOrEqual(FALCON.turn / 120 + 1e-9);
+      expect(f.speed).toBeLessThanOrEqual(FALCON.stoop);
+      expect(f.speed).toBeGreaterThanOrEqual(FALCON.slowest);
+      h = f.heading;
+    }
   });
 
-  it("refuses a kernel whose loop changed shape", () => {
-    expect(() => bruteSource(starlingWgsl.replace("for (var dz = -1;", "for (var dz = -2;"))).toThrow(/changed shape/);
+  it("flies a script the same way every time", () => {
+    const run = (): number[] => {
+      const f = new Falcon();
+      f.mode = "script";
+      f.position = [40, 20, 10];
+      f.script = { start: 100, points: [[40, 20, 10], [0, 0, 0], [0, 0, 0], [-30, -5, -20], [-50, 15, -30]] };
+      for (let s = 100; s < 1300; s += 1) f.advance(1 / 120, s);
+      return [...f.position, ...f.heading, f.speed];
+    };
+    expect(run()).toEqual(run());
+  });
+});
+
+describe("the alarm wave's estimator", () => {
+  it("recovers a known speed from a synthetic wave with two sightings", () => {
+    const n = 2000;
+    const state = new ArrayBuffer(n * AGENT_BYTES);
+    const f = new Float32Array(state);
+    const u = new Uint32Array(state);
+    const v = 10; // units/s
+    const dt = 1 / 120;
+    for (let i = 0; i < n; i += 1) {
+      const b = i * 16;
+      if (i < 2) {
+        // two direct sightings, 6 units apart, the second 0.2 s later
+        f.set([i * 6, 0, 0], b);
+        u[b + 14] = (1000 + i * 24) | 0x80000000;
+        continue;
+      }
+      const ang = (i * 2.399) % (2 * Math.PI);
+      const r = 2 + (i % 40) * 0.5;
+      f.set([Math.cos(ang) * r, Math.sin(ang) * r, 0], b);
+      // reached from the first sighting at speed v
+      u[b + 14] = 1000 + Math.round(r / v / dt);
+    }
+    const w = measureWave(state, 1500, dt)!;
+    expect(w.alarmed).toBe(n);
+    expect(w.direct).toBe(2);
+    expect(Math.abs(w.speed - v) / v).toBeLessThan(0.05);
+  });
+
+  it("needs a wave to measure", () => {
+    const state = new ArrayBuffer(100 * AGENT_BYTES);
+    new Uint32Array(state).fill(0xffffffff);
+    expect(measureWave(state, 100, 1 / 120)).toBeNull();
   });
 });
 
@@ -158,13 +204,16 @@ describe("the watcher's camera", () => {
     for (let i = 0; i < 3; i += 1) expect(r.dir[i]).toBeCloseTo(f[i]!, 10);
   });
 
-  it("follows a target only when idle and never under reduced motion", () => {
+  it("follows a target only when idle, never under reduced motion, never below its least pitch", () => {
     const c = new GroundCamera();
     c.setViewport(800, 600);
     c.setHome({ eye: [0, 1, 0], yaw: 0, pitch: 0.2, fov: 0.9 });
     c.followTarget = [50, 40, -100];
     for (let i = 0; i < 600; i += 1) c.update(1 / 60, 1e9 + i * 16);
     expect(c.yaw).toBeLessThan(-0.3);
+    c.followTarget = [0, 2, -100];
+    for (let i = 0; i < 1200; i += 1) c.update(1 / 60, 2e9 + i * 16);
+    expect(c.pitch).toBeGreaterThanOrEqual(c.followMinPitch - 1e-6);
     const d = new GroundCamera();
     d.reducedMotion = true;
     d.setHome({ eye: [0, 1, 0], yaw: 0, pitch: 0.2, fov: 0.9 });

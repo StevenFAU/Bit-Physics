@@ -49,9 +49,9 @@ fn stroke_point(r: u32, kind: u32, j: u32) -> Pt {
   var height = mix(0.75, 1.55, h1(r * 4u + 3u)) * mix(0.8, 1.0, smoothstep(R.bed.x, R.bed.x * 2.5, rr));
   if (r < NEAR) {
     let side = select(-1.0, 1.0, (r & 1u) == 1u);
-    a = -1.5707963 + side * mix(0.42, 1.1, h1(r * 4u + 1u));
-    rr = mix(1.4, 3.6, h1(r * 4u + 2u));
-    height = mix(1.4, 2.3, h1(r * 4u + 3u));
+    a = -1.5707963 + side * mix(0.6, 1.2, h1(r * 4u + 1u));
+    rr = mix(2.2, 4.4, h1(r * 4u + 2u));
+    height = mix(1.0, 1.6, h1(r * 4u + 3u));
   }
   let base = R.centre.xyz + vec3<f32>(cos(a) * rr, 0.0, sin(a) * rr);
   let lean_a = h1(r * 4u + 4u) * 6.2831853;

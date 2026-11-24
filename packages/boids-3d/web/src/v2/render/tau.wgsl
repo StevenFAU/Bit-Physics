@@ -38,6 +38,8 @@ struct Splat {
 @group(0) @binding(1) var<uniform> S: Splat;
 @group(0) @binding(2) var<storage, read> agents: array<Agent>;
 @group(0) @binding(3) var<storage, read_write> tau: array<atomic<u32>>;
+// the near-bird cull's weight: a bird drawn as a mesh (w = 1) adds no optical depth
+@group(0) @binding(4) var<storage, read> near_w: array<f32>;
 
 fn to_px(p: vec3<f32>) -> vec3<f32> {
   let c = V.mvp * vec4<f32>(p, 1.0);
@@ -76,7 +78,7 @@ fn splat(@builtin(global_invocation_id) gid: vec3<u32>) {
   var sxy = jw.x * jw.y + jf.x * jf.y + ju.x * ju.y;
   // coverage (px²): 2π √det of the bird's own projected Gaussian
   let det0 = max(sxx * syy - sxy * sxy, 0.0);
-  let cover = 6.2831853 * sqrt(det0) * S.shape.w;
+  let cover = 6.2831853 * sqrt(det0) * S.shape.w * (1.0 - near_w[i]);
   if (cover <= 0.0) { return; }
 
   // the footprint: add the pixel filter, cap the size (near birds are M1's meshes)
