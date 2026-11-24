@@ -21,10 +21,13 @@ import { memberAttr } from "./model/ball.js";
 import type { ChaosCheckpoint, ChaosKernels, SpreadSample } from "./model/ensemble.js";
 import { Chaos, MAX_STEPS, OBS_BINS, TRACK } from "./model/ensemble.js";
 import type { Observe } from "./model/ensemble.js";
-import { BIF_SIZES, Bifurcation } from "./model/bifurcation.js";
+import { BIF_SIZES, Bifurcation, ROSSLER_AB, ROSSLER_ROAD, lorenzRoad } from "./model/bifurcation.js";
+import { FamilyDensity } from "./model/family-gpu.js";
+import type { FamilySystem } from "./model/family.js";
+import { familySystem } from "./model/family.js";
 import { observeBoxes } from "./model/observe-f64.js";
 import type { RoadRange } from "./obs-panels.js";
-import { ROAD_RANGES } from "./obs-panels.js";
+import { ROAD_RANGES, ROSSLER_RANGES } from "./obs-panels.js";
 import type { LorenzParams, V3 } from "./model/lorenz.js";
 import { DT, Reference, field, fixedPoints, pickOnAttractor, sampleAttractor, spreadOf } from "./model/lorenz.js";
 import type { LyapunovEstimate } from "./model/lyapunov.js";
@@ -81,6 +84,8 @@ export interface AppHooks {
   onEncode?: (enc: GPUCommandEncoder, steps: number) => void;
   /** The histograms' boxes changed (σ, ρ, β, the plane). */
   onObserve?: (box: Omit<Observe, "map" | "slice"> | null) => void;
+  /** Another system came on show (null: Lorenz again). */
+  onSystem?: (sys: FamilySystem | null) => void;
   onFrame?: (now: number) => void;
 }
 
@@ -98,6 +103,18 @@ export class App {
   /** Road to Chaos's columns of trajectories. */
   readonly bif: Bifurcation;
   roadRange: RoadRange = ROAD_RANGES[0]!;
+  /** Rössler's road (M3): columns of c, a = b = 0.2. */
+  readonly bifR: Bifurcation;
+  /** The road on show in Road to Chaos. */
+  roadSystem: "lorenz" | "rossler" = "lorenz";
+  rosslerRange: RoadRange = ROSSLER_RANGES[0]!;
+  /** Rössler's c on show beside its road (picked on the diagram; on the link, not an undoable edit). */
+  rosslerC = 5.7;
+  /** The Family: the system on show ("lorenz": Lorenz's own population and look). */
+  familyKey = "rossler";
+  /** Another system's density, drawn instead of Lorenz's in The Family and on Rössler's road. */
+  readonly family: FamilyDensity;
+  private shownKey = "";
   /** The histograms' boxes for the current σ, ρ, β (null: no peaks, a fixed point). */
   obsBox: Omit<Observe, "map" | "slice"> | null = null;
   private obsKey = "";
@@ -169,10 +186,14 @@ export class App {
     kernels: ChaosKernels,
     readonly tier: Tier,
     bifPipe: GPUComputePipeline,
+    famPipe: GPUComputePipeline,
+    rossPipe: GPUComputePipeline,
   ) {
     const size = SIZES[tier];
     this.chaos = new Chaos(gpu.device, kernels, size.ensemble, size.density, this.scene.params);
-    this.bif = Bifurcation.create(gpu.device, bifPipe, BIF_SIZES[tier], () => this.chaos.params);
+    this.bif = Bifurcation.create(gpu.device, bifPipe, BIF_SIZES[tier], lorenzRoad(() => this.chaos.params));
+    this.bifR = Bifurcation.create(gpu.device, rossPipe, BIF_SIZES[tier], ROSSLER_ROAD);
+    this.family = new FamilyDensity(gpu.device, famPipe, size.density);
     this.history = new History<Checkpoint>(
       {
         capture: () => ({ ...this.chaos.capture(), ghost: this.ghostState(), ballDigits: this.ballDigits, horizonT: this.horizonT }),
@@ -217,6 +238,8 @@ export class App {
   // -------------------------------------------------------------- tools --
 
   private tools(): ToolSpec[] {
+    // another system on show: the ball and the ghost are Lorenz's, so only the camera
+    if (this.shownKey) return [this.cameraTool()];
     return [
       {
         id: "release",
@@ -243,14 +266,18 @@ export class App {
             },
           ]
         : []),
-      {
-        id: "camera",
-        label: "Camera",
-        icon: "orbit",
-        hint: "Drag to orbit, scroll or pinch to zoom, double-click to reset.",
-        options: () => this.cameraOptions(),
-      },
+      this.cameraTool(),
     ];
+  }
+
+  private cameraTool(): ToolSpec {
+    return {
+      id: "camera",
+      label: "Camera",
+      icon: "orbit",
+      hint: "Drag to orbit, scroll or pinch to zoom, double-click to reset.",
+      options: () => this.cameraOptions(),
+    };
   }
 
   private releaseOptions(): HTMLElement {
@@ -310,7 +337,7 @@ export class App {
 
   private tap(sx: number, sy: number): void {
     const tool = this.studio.rail.active;
-    if (tool === "camera" || tool === "slice") return;
+    if (tool === "camera" || tool === "slice" || this.shownKey) return;
     const ray = this.view.modelRay(this.camera, sx, sy);
     const tol = this.view.unitsPerPx(this.camera) * 14;
     const p = pickOnAttractor(this.attractorSample, ray.origin, ray.dir, tol);
@@ -342,13 +369,17 @@ export class App {
       this.spreadPrev = null;
       this.clearGhost();
       this.view.tracks.clear();
+      this.shownKey = "";
       this.measureAttractor(true);
       this.restartLyapunov();
       this.setSpeed(o.speed ?? scene.speed);
       this.chaos.seedDensity(this.seed);
       this.applyObserve(true);
-      if (scene.panel === "road") this.bif.setRange(this.roadRange.rho0, this.roadRange.rho1);
-      this.studio.rail.setTools(this.tools(), scene.tool);
+      if (scene.panel === "road") {
+        this.bif.setRange(this.roadRange.rho0, this.roadRange.rho1);
+        this.bifR.setRange(this.rosslerRange.rho0, this.rosslerRange.rho1);
+      }
+      this.showSystem(true);
       this.releasePoint = this.pointAlong(scene.releaseAfter);
       this.autoReleaseAt = scene.autoRelease ? performance.now() + scene.releaseDelay * 1000 : Infinity;
       this.view.clearExposure();
@@ -380,7 +411,7 @@ export class App {
     this.attractorSample = sampleAttractor(p, 12000, 2, 1500);
     const sp = spreadOf(this.attractorSample);
     this.attractorRms = Math.max(sp.rms, 1e-3);
-    this.view.frame(sp.mean, this.attractorRms, snap);
+    if (!this.shownKey) this.view.frame(sp.mean, this.attractorRms, snap);
     // the density palette tops out at the 95th percentile of the speed along the attractor
     const speeds: number[] = [];
     for (let i = 0; i < this.attractorSample.length; i += 30) {
@@ -389,7 +420,75 @@ export class App {
     }
     speeds.sort((a, b) => a - b);
     this.chaos.speedScale = Math.max(speeds[Math.floor(speeds.length * 0.95)] ?? 1, 1e-3);
-    this.view.setFixedPoints(fixedPoints(p));
+    if (!this.shownKey) this.view.setFixedPoints(fixedPoints(p));
+  }
+
+  /** What the scene shows instead of Lorenz, if anything: The Family's pick, or Rössler beside its road. */
+  private other(): { sys: FamilySystem; params: number[] } | null {
+    if (this.scene.id === "family" && this.familyKey !== "lorenz") {
+      const sys = familySystem(this.familyKey);
+      return { sys, params: sys.params };
+    }
+    if (this.scene.panel === "road" && this.roadSystem === "rossler") {
+      return { sys: familySystem("rossler"), params: [ROSSLER_AB[0], ROSSLER_AB[1], this.rosslerC] };
+    }
+    return null;
+  }
+
+  /** Another system's population is on show (The Family, Rössler's road). */
+  get showing(): FamilyDensity | null {
+    return this.shownKey ? this.family : null;
+  }
+
+  /** Bring the view to what the scene shows: another system's density and look, or Lorenz's. */
+  showSystem(force = false): void {
+    const o = this.other();
+    const key = o ? `${o.sys.key}:${o.params.join(",")}` : "";
+    if (key === this.shownKey && !force) return;
+    const wasOther = this.shownKey !== "" && !force;
+    this.shownKey = key;
+    if (o) {
+      // Lorenz's ghost pair and the ball's tracks are Lorenz's trajectories: not drawn over another system
+      this.clearGhost();
+      this.view.tracks.clear();
+      this.family.set(o.sys, o.params, this.seed);
+      this.view.frame(this.family.frame.centre, this.family.frame.rms, true);
+      this.view.setDensityPalette(o.sys.palette);
+      this.view.setFixedPoints([]);
+    } else {
+      this.view.setDensityPalette(null);
+      if (wasOther) this.measureAttractor(true);
+    }
+    this.view.clearExposure();
+    this.studio.rail.setTools(this.tools(), o ? "camera" : this.scene.tool);
+    this.hooks.onSystem?.(o ? o.sys : null);
+  }
+
+  /** The Family: show another system. */
+  setFamily(key: string): void {
+    this.familyKey = key;
+    this.showSystem();
+  }
+
+  /** Road to Chaos: Lorenz's road or Rössler's. */
+  setRoadSystem(sys: "lorenz" | "rossler"): void {
+    if (sys === this.roadSystem) return;
+    this.roadSystem = sys;
+    const r = sys === "rossler" ? this.rosslerRange : this.roadRange;
+    (sys === "rossler" ? this.bifR : this.bif).setRange(r.rho0, r.rho1);
+    this.showSystem();
+  }
+
+  /** Rössler's road: show the attractor at c (picked on the diagram). */
+  setRosslerC(c: number): void {
+    this.rosslerC = Math.min(Math.max(c, 1), 45);
+    this.showSystem();
+    this.hooks.onParams?.(this.chaos.params);
+  }
+
+  /** The road on show (its columns, its range). */
+  get road(): Bifurcation {
+    return this.roadSystem === "rossler" ? this.bifR : this.bif;
   }
 
   /**
@@ -425,8 +524,13 @@ export class App {
 
   /** Road to Chaos: a new range of ρ (the diagram starts over). */
   setRoadRange(r: RoadRange): void {
-    this.roadRange = r;
-    this.bif.setRange(r.rho0, r.rho1);
+    if (ROSSLER_RANGES.includes(r)) {
+      this.rosslerRange = r;
+      this.bifR.setRange(r.rho0, r.rho1);
+    } else {
+      this.roadRange = r;
+      this.bif.setRange(r.rho0, r.rho1);
+    }
   }
 
   /** A point `steps` RK4 steps along the attractor from (1, 1, 1). */
@@ -735,10 +839,12 @@ export class App {
     const n = this.clock.due(dt);
     this.profiler?.begin(n);
     const enc = device.createCommandEncoder({ label: "chaos-frame" });
-    this.chaos.encodeSteps(enc, n, n > 0 ? this.profiler?.pass("sim") : undefined);
+    const fam = this.showing;
+    if (fam) fam.encodeSteps(enc, n, n > 0 ? this.profiler?.pass("sim") : undefined);
+    else this.chaos.encodeSteps(enc, n, n > 0 ? this.profiler?.pass("sim") : undefined);
     this.clock.advance(n);
     this.stepsTotal += n;
-    this.stepGhost(n, true);
+    if (!fam) this.stepGhost(n, true);
     if (this.lyap.averagingT < LYAP_MAX_T && !this.clock.paused) {
       this.lyap.step(LYAP_STEPS_PER_FRAME);
       if (now - this.lyapReported > 500) {
@@ -746,7 +852,7 @@ export class App {
         this.hooks.onLyapunov?.(this.lyap.estimate());
       }
     }
-    if (n > 0 && this.chaos.released) {
+    if (n > 0 && this.chaos.released && !fam) {
       this.view.tracks.pushGpu(enc, this.chaos.trail, { rows: n, stride: TRACK, origins: this.chaos.stepOrigins });
     }
     let spreadQueued = false;
@@ -762,22 +868,22 @@ export class App {
         camera: this.camera,
         dtSec: dt,
         cameraMoving: now < this.cameraMovingUntil,
-        density: this.chaos.density,
-        ensemble: this.chaos.released ? this.chaos.ensemble : null,
+        density: fam ? fam.density : this.chaos.density,
+        ensemble: !fam && this.chaos.released ? this.chaos.ensemble : null,
         drawCount: ball.count,
         ballArea: ball.area,
         origin: this.chaos.ref.x,
         prevOrigin: n > 0 ? this.chaos.prevRef : this.chaos.ref.x,
         steps: n,
-        compare: save && save.released ? { state: save.ensemble.state, n: save.ensemble.n, origin: save.ref } : null,
+        compare: !fam && save && save.released ? { state: save.ensemble.state, n: save.ensemble.n, origin: save.ref } : null,
         slice:
-          this.scene.observe.slice && this.obsBox
+          !fam && this.scene.observe.slice && this.obsBox
             ? { counts: this.chaos.sliceCounts, total: this.chaos.sliceTotal, plane: this.plane, box: this.obsBox.box, bins: OBS_BINS }
             : null,
       },
       this.profiler,
     );
-    if (this.scene.panel === "road" && !this.clock.paused) this.bif.encode(enc, BIF_STEPS[this.tier], this.profiler?.pass("bifurcation"));
+    if (this.scene.panel === "road" && !this.clock.paused) this.road.encode(enc, BIF_STEPS[this.tier], this.profiler?.pass("bifurcation"));
     this.hooks.onEncode?.(enc, n);
     this.hdr.encode(enc, dt, this.profiler ?? undefined);
     const exposureQueued = sampleExposure && this.hdr.sampleExposure(enc);
@@ -800,7 +906,8 @@ export class App {
       this.rateT0 = now;
       this.rateSteps = this.stepsTotal;
     }
-    const t = this.chaos.t;
+    // another system on show: its own model time
+    const t = fam && fam.sys ? fam.steps * fam.sys.dt : this.chaos.t;
     this.studio.transport.setClock(this.clock.paused ? `t ${t.toFixed(2)}` : `t ${t.toFixed(2)} · ${Math.round(this.stepsPerSecond)} steps/s`);
     this.studio.callouts.update(this.camera.viewW, this.camera.viewH);
     this.hooks.onFrame?.(now);

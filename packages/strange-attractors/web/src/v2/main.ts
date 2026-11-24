@@ -26,8 +26,13 @@ import { exposeCapture, isCapturing, markReady, resetCapture, runCaptureExclusiv
 import { App, SIZES } from "./app.js";
 import { sci } from "./format.js";
 import { buildDigitsPanel } from "./digits-panel.js";
-import { Bifurcation, BIF_WARM_STEPS } from "./model/bifurcation.js";
-import { ROAD_RANGES, buildMapPanel, buildRoadPanel, buildSlicePanel } from "./obs-panels.js";
+import { Bifurcation } from "./model/bifurcation.js";
+import type { RoadSystem } from "./obs-panels.js";
+import { ROAD_RANGES, ROSSLER_RANGES, buildMapPanel, buildRoadPanel, buildSlicePanel } from "./obs-panels.js";
+import { FamilyDensity } from "./model/family-gpu.js";
+import { FAMILY } from "./model/family.js";
+import { buildFamilyPanel } from "./family-panel.js";
+import { buildListenPanel } from "./listen.js";
 import { HistView } from "./render/hist-view.js";
 import { OBS_BINS } from "./model/ensemble.js";
 import { buildLearn } from "./learn.js";
@@ -58,8 +63,12 @@ const url = new UrlState(
     // clock speed, written only where it differs from the scene's (−1 = the scene's)
     sp: { kind: "num", def: -1, min: -1, max: 8 },
     fol: { kind: "int", def: 0, min: 0, max: 1 },
-    // Road to Chaos's range of ρ
-    rr: { kind: "enum", def: "all", values: ROAD_RANGES.map((r) => r.id) },
+    // Road to Chaos: which road, its range (of ρ or of c), and Rössler's c on show (−1: 5.7)
+    rs: { kind: "enum", def: "lorenz", values: ["lorenz", "rossler"] },
+    rr: { kind: "enum", def: "all", values: [...ROAD_RANGES, ...ROSSLER_RANGES].map((r) => r.id) },
+    rc: { kind: "num", def: -1, min: -1, max: 45, digits: 3 },
+    // The Family: the system on show
+    fs: { kind: "enum", def: "rossler", values: FAMILY.map((f) => f.key) },
     cam: { kind: "nums", def: [-99, -99, -1], n: 3, digits: 3 },
   },
   1,
@@ -161,6 +170,8 @@ async function boot(): Promise<void> {
   // Prove works from the gate alone; the live checks wait for the kernels.
   let kernels: ChaosKernels | null = null;
   let bifPipeline: GPUComputePipeline | null = null;
+  let rossPipeline: GPUComputePipeline | null = null;
+  let famPipeline: GPUComputePipeline | null = null;
   let app: App | null = null;
   const prove = buildProve(studio.drawer.prove, {
     adapter: gpu.adapterId,
@@ -168,6 +179,8 @@ async function boot(): Promise<void> {
     gate,
     kernels: () => kernels,
     bifPipe: () => bifPipeline,
+    rossPipe: () => rossPipeline,
+    famPipe: () => famPipeline,
     hold: (on) => {
       if (held.governor) held.governor.suspended = on;
       if (app) app.busy = on;
@@ -191,18 +204,22 @@ async function boot(): Promise<void> {
   const governor = new QualityGovernor({ budgetMs: tier === "T1" ? 36 : 22, effectLevels: 1 });
   held.governor = governor;
   studio.veil.step("Compiling the ensemble");
-  const [k, view, bifPipe, roadView, mapView, sliceView] = await Promise.all([
+  const [k, view, bifPipe, roadView, mapView, sliceView, famPipe, rossPipe] = await Promise.all([
     ChaosKernels.create(device),
     ChaosView.create(device),
     Bifurcation.pipeline(device),
     HistView.create(device, "inferno", "road"),
     HistView.create(device, "magma", "map"),
     HistView.create(device, "magma", "slice"),
+    FamilyDensity.pipeline(device),
+    Bifurcation.pipeline(device, "rossler"),
   ]);
   kernels = k;
   bifPipeline = bifPipe;
+  rossPipeline = rossPipe;
+  famPipeline = famPipe;
   while (isCapturing()) await wait(50);
-  const a = new App(gpu, studio, hdr, view, k, tier, bifPipe);
+  const a = new App(gpu, studio, hdr, view, k, tier, bifPipe, famPipe, rossPipe);
   app = a;
   a.profiler = profiler;
   a.governor = governor;
@@ -224,7 +241,10 @@ async function boot(): Promise<void> {
       beta: or(p.beta, d.beta),
       sp: a.clock.speed === a.scene.speed ? -1 : a.clock.speed,
       fol: a.follow ? 1 : 0,
-      rr: a.roadRange.id,
+      rs: a.roadSystem,
+      rr: a.roadSystem === "rossler" ? a.rosslerRange.id : a.roadRange.id,
+      rc: a.rosslerC === 5.7 ? -1 : a.rosslerC,
+      fs: a.familyKey,
       cam: [a.camera.yaw, a.camera.pitch, a.camera.distance].map((x) => Number(x.toFixed(3))),
     };
   };
@@ -250,8 +270,11 @@ async function boot(): Promise<void> {
 
   // ------------------------------------------------------------- Learn --
   const learn = buildLearn(studio.drawer.learn);
-  const syncProve = (): void =>
-    prove.setOnScreen({ params: a.chaos.params, released: a.chaos.released, eps: a.chaos.eps, members: a.chaos.ensemble.n });
+  const syncProve = (): void => {
+    const f = a.showing;
+    const sys = f && f.sys ? { label: f.sys.label, params: f.params.map((v, i) => `${f.sys!.names[i]} ${Number(v.toFixed(6))}`).join(", ") || "no parameters" } : null;
+    prove.setOnScreen({ params: a.chaos.params, released: a.chaos.released, eps: a.chaos.eps, members: a.chaos.ensemble.n, system: sys });
+  };
 
   // ------------------------------------------------------------ the clock --
   const hud = h("div", { class: "cx-hud bp-surface", role: "status", "aria-live": "off", "data-bp-chrome": "", "data-bp2": "studio-chrome" });
@@ -339,29 +362,61 @@ async function boot(): Promise<void> {
   studio.stage.append(digits.el);
 
   // ------------------------------------- Road to Chaos, Lorenz's Map, Slice --
-  roadView.setSource({ counts: a.bif.counts, totals: a.bif.totals, w: a.bif.cols, h: a.bif.bins, perColumn: true });
+  const roadSource = (): void => roadView.setSource({ counts: a.road.counts, totals: a.road.totals, w: a.road.cols, h: a.road.bins, perColumn: true });
+  roadSource();
   roadView.look = { scale: 0.08, gamma: 0.85, floor: 0.28 };
   mapView.setSource({ counts: a.chaos.mapCounts, totals: a.chaos.mapTotal, w: OBS_BINS, h: OBS_BINS, perColumn: false });
   sliceView.setSource({ counts: a.chaos.sliceCounts, totals: a.chaos.sliceTotal, w: OBS_BINS, h: OBS_BINS, perColumn: false });
+  const roadValue = (): number => (a.roadSystem === "rossler" ? a.rosslerC : a.chaos.params.rho);
   const road = buildRoadPanel(roadView, {
-    pick: (rho) => a.setParams({ ...a.chaos.params, rho }),
+    // Lorenz's ρ is an undoable edit; Rössler's c (shown beside its road) rides the link only
+    pick: (v) => {
+      if (a.roadSystem === "rossler") {
+        a.setRosslerC(v);
+        a.writeUrl();
+      } else a.setParams({ ...a.chaos.params, rho: v });
+    },
     range: (r) => {
       a.setRoadRange(r);
       road.setRange(r);
       a.writeUrl();
     },
+    system: (sys: RoadSystem) => {
+      a.setRoadSystem(sys);
+      road.setSystem(sys);
+      road.setRange(sys === "rossler" ? a.rosslerRange : a.roadRange);
+      road.setRho(roadValue());
+      roadSource();
+      a.writeUrl();
+    },
   });
+  const family = buildFamilyPanel({
+    pick: (key) => {
+      a.setFamily(key);
+      family.set(key);
+      a.writeUrl();
+    },
+  });
+  const listen = buildListenPanel();
   const map = buildMapPanel(mapView);
   const slice = buildSlicePanel(sliceView, { plane: (z) => a.setPlane(z) });
-  for (const p of [road, map, slice]) {
+  for (const p of [road, map, slice, family, listen]) {
     p.el.hidden = true;
     studio.stage.append(p.el);
   }
-  const panelFor = { road, map, slice } as const;
+  const panelFor = { road, map, slice, family, listen } as const;
+  let lastPanelT = performance.now();
   let obsT0 = 0;
   let lastOverlay = 0;
   const encodePanels = (enc: GPUCommandEncoder, n: number): void => {
     const id = a.scene.panel;
+    const tNow = performance.now();
+    const frameSec = Math.min((tNow - lastPanelT) / 1000, 0.1);
+    lastPanelT = tNow;
+    if (id === "listen") {
+      listen.frame(a.chaos.params, n, frameSec);
+      listen.draw();
+    }
     if (id === "road") roadView.encode(enc);
     if (id === "map") {
       mapView.encode(enc);
@@ -373,11 +428,13 @@ async function boot(): Promise<void> {
     lastOverlay = now;
     const tObs = Math.max(0, (a.chaos.steps - obsT0) * a.chaos.dt);
     if (id === "road") {
-      const t = a.bif.steps * a.chaos.dt;
+      const b = a.road;
+      const t = b.steps * b.system.dt;
+      const warm = b.system.warm * b.system.dt;
       road.setStatus(
-        a.bif.warming
-          ? `Letting ${a.bif.n.toLocaleString()} trajectories settle: ${t.toFixed(0)} of ${(BIF_WARM_STEPS * a.chaos.dt).toFixed(0)} time units`
-          : `${a.bif.cols.toLocaleString()} values of ρ × ${a.bif.per} trajectories, ${(t - BIF_WARM_STEPS * a.chaos.dt).toFixed(0)} time units of peaks`,
+        b.warming
+          ? `Letting ${b.n.toLocaleString()} trajectories settle: ${t.toFixed(0)} of ${warm.toFixed(0)} time units`
+          : `${b.cols.toLocaleString()} values of ${a.roadSystem === "rossler" ? "c" : "ρ"} × ${b.per} trajectories, ${(t - warm).toFixed(0)} time units of peaks`,
       );
       road.draw();
     } else if (id === "map") {
@@ -469,10 +526,17 @@ async function boot(): Promise<void> {
   a.hooks = {
     onEncode: encodePanels,
     onObserve: observePanels,
+    // another system on show (or Lorenz again): Prove says which
+    onSystem: () => syncProve(),
     onSceneChange: (scene) => {
       for (const [id, p] of Object.entries(panelFor)) p.el.hidden = scene.panel !== id;
-      road.setRange(a.roadRange);
-      road.setRho(a.chaos.params.rho);
+      road.setSystem(a.roadSystem);
+      road.setRange(a.roadSystem === "rossler" ? a.rosslerRange : a.roadRange);
+      road.setRho(roadValue());
+      roadSource();
+      family.set(a.familyKey);
+      if (scene.id !== "listen") listen.silence();
+      listen.restart();
       map.restartTracer();
       studio.root.dataset["scene"] = scene.id;
       digits.el.hidden = scene.id !== "digits";
@@ -482,7 +546,7 @@ async function boot(): Promise<void> {
       syncProve();
     },
     onParams: (p) => {
-      road.setRho(p.rho);
+      road.setRho(a.roadSystem === "rossler" ? a.rosslerC : p.rho);
       map.restartTracer();
       learn.setParams(p);
       tune.sync(p, view.look);
@@ -571,6 +635,10 @@ async function boot(): Promise<void> {
   };
   while (isCapturing()) await wait(50);
   a.roadRange = ROAD_RANGES.find((r) => r.id === parsed.rr) ?? ROAD_RANGES[0]!;
+  a.rosslerRange = ROSSLER_RANGES.find((r) => r.id === parsed.rr) ?? ROSSLER_RANGES[0]!;
+  a.roadSystem = parsed.rs === "rossler" ? "rossler" : "lorenz";
+  if (parsed.rc > 0) a.rosslerC = parsed.rc;
+  a.familyKey = parsed.fs;
   await a.loadScene(scene.id, { params, digits: parsed.d >= 0 ? Math.max(DIGITS_MIN, parsed.d) : undefined, seed: parsed.seed });
   if (parsed.cam[2]! > 0) a.camera.set({ yaw: parsed.cam[0]!, pitch: parsed.cam[1]!, distance: parsed.cam[2]!, target: [0, 0, 0] });
   a.follow = parsed.fol === 1;
@@ -608,7 +676,7 @@ async function boot(): Promise<void> {
   (globalThis as { __chaos?: App }).__chaos = a;
   (globalThis as { __chaosProve?: typeof prove }).__chaosProve = prove;
   (globalThis as { __chaosDigits?: typeof digits }).__chaosDigits = digits;
-  (globalThis as { __chaosPanels?: unknown }).__chaosPanels = { road, map, slice };
+  (globalThis as { __chaosPanels?: unknown }).__chaosPanels = { road, map, slice, family, listen };
 
   if (query.get("bench") === "1") void bench(a, profiler, rafTimes);
 }

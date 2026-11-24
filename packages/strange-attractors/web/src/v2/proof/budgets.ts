@@ -27,4 +27,7 @@ export const BUDGET = {
   /** M2: Lorenz's map and the section at z = ρ − 1 (32 × 32 bins). */
   mapTv: 0.045,
   sectionTv: 0.016,
+  /** M3: Rössler's road — its worst chaotic column (64 bins) and worst window (1,024 bins). */
+  rRoadTv: 0.1,
+  rRoadOrbitTv: 0.03,
 } as const;

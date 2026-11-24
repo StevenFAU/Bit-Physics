@@ -144,7 +144,9 @@ Prove cards inside their declared budgets, Buy More Digits live and measured wit
 line's slope, the live λ₁ instrument, captions that never overlap; M2: Road to Chaos filled column
 by column with chaos and windows told apart, ρ picked on the diagram and by keyboard, range presets on
 the link, Lorenz's map and its cobweb, the Slice tool's drag and slider, the three new Prove cards
-inside their budgets, each scene's frame rate) is
+inside their budgets, each scene's frame rate; M3: The Family's nine systems on show and on the link,
+Rössler's road filled with its period doubling in the counts, Listen silent until asked, the two new
+Prove cards) is
 `packages/strange-attractors/web/v2-acceptance.mjs`; Flow Sculpture's (the capture's bytes on v1 and v2,
 ready before the live view compiles, the tier's ribbons and step rate, the in-page gate, the live kernel ≡
 the gated one byte for byte, divergence / confinement / Clebsch / tangency with helicity as the nonzero

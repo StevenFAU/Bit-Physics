@@ -8,7 +8,7 @@ import { h, segmented, slider } from "@bp/studio";
 import type { LorenzParams, V3 } from "./model/lorenz.js";
 import { DT, rk4Step } from "./model/lorenz.js";
 import { peakOf } from "./model/observe-f64.js";
-import { Y0, Y1 } from "./model/bifurcation.js";
+import { RY0, RY1, Y0, Y1 } from "./model/bifurcation.js";
 import type { HistView } from "./render/hist-view.js";
 
 const css = (name: string, fallback: string): string => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
@@ -64,54 +64,86 @@ export const ROAD_RANGES: readonly RoadRange[] = [
   { id: "high", label: "ρ 140–240", rho0: 140, rho1: 240 },
 ];
 
+/** Rössler's road (a = b = 0.2): its period doubling, the whole sweep, and the windows past the first chaos. */
+export const ROSSLER_RANGES: readonly RoadRange[] = [
+  { id: "c-doubling", label: "c 2–6.5", rho0: 2, rho1: 6.5 },
+  { id: "c-wide", label: "c 2–18", rho0: 2, rho1: 18 },
+  { id: "c-high", label: "c 6.5–10", rho0: 6.5, rho1: 10 },
+];
+
+export type RoadSystem = "lorenz" | "rossler";
+
+/** Each road's axis: the swept parameter, the observable and its ticks. */
+const ROAD_AXIS: Record<RoadSystem, { sym: string; y0: number; y1: number; ticks: number[]; label: string }> = {
+  lorenz: { sym: "ρ", y0: Y0, y1: Y1, ticks: [1, 1.25, 1.5], label: "z peak / ρ" },
+  rossler: { sym: "c", y0: RY0, y1: RY1, ticks: [0.5, 1, 1.5, 2], label: "x peak / c" },
+};
+
 export interface RoadPanel {
   el: HTMLElement;
   setRho(rho: number): void;
   setRange(r: RoadRange): void;
+  setSystem(sys: RoadSystem): void;
   setStatus(text: string): void;
   draw(): void;
   range(): RoadRange;
 }
 
-export function buildRoadPanel(view: HistView, hd: { pick: (rho: number) => void; range: (r: RoadRange) => void }): RoadPanel {
+export function buildRoadPanel(
+  view: HistView,
+  hd: { pick: (v: number) => void; range: (r: RoadRange) => void; system: (sys: RoadSystem) => void },
+): RoadPanel {
+  let sys: RoadSystem = "lorenz";
   let range = ROAD_RANGES[0]!;
   let rho = 28;
   let hover: { x: number; y: number } | null = null;
-  const fig = figure(view, "Bifurcation diagram: the z peaks of trajectories against ρ. Click to set ρ.");
+  const fig = figure(view, "Bifurcation diagram: the peaks of trajectories against the swept parameter. Click to go there.");
   const status = h("p", { class: "cx-panel-status", role: "status" }, "");
-  const go = slider({
-    label: "Go to ρ",
-    symbol: "ρ",
-    min: range.rho0,
-    max: range.rho1,
-    step: 0.05,
-    value: rho,
-    format: (v) => v.toFixed(2),
-    onInput: () => {},
-    onCommit: (v) => hd.pick(v),
-  });
-  const seg = segmented(
-    "Range of ρ",
-    ROAD_RANGES.map((r) => ({ value: r.id, label: r.label })),
-    range.id,
-    (id) => hd.range(ROAD_RANGES.find((r) => r.id === id)!),
+  const title = h("h2", { class: "cx-panel-title" }, "z peaks against ρ");
+  const which = segmented(
+    "Which road",
+    [
+      { value: "lorenz", label: "Lorenz" },
+      { value: "rossler", label: "Rössler" },
+    ],
+    sys,
+    (v) => hd.system(v as RoadSystem),
   );
+  // one range control and one "go to" slider per road (their labels and limits differ)
+  const ranges = {
+    lorenz: segmented("Range of ρ", ROAD_RANGES.map((r) => ({ value: r.id, label: r.label })), ROAD_RANGES[0]!.id, (id) => hd.range(ROAD_RANGES.find((r) => r.id === id)!)),
+    rossler: segmented("Range of c", ROSSLER_RANGES.map((r) => ({ value: r.id, label: r.label })), ROSSLER_RANGES[0]!.id, (id) => hd.range(ROSSLER_RANGES.find((r) => r.id === id)!)),
+  };
+  const goes = {
+    lorenz: slider({ label: "Go to ρ", symbol: "ρ", min: 20, max: 250, step: 0.05, value: 28, format: (v) => v.toFixed(2), onInput: () => {}, onCommit: (v) => hd.pick(v) }),
+    rossler: slider({ label: "Go to c", symbol: "c", min: 2, max: 6.5, step: 0.005, value: 5.7, format: (v) => v.toFixed(3), onInput: () => {}, onCommit: (v) => hd.pick(v) }),
+  };
   const el = h(
     "section",
     { class: "cx-panel cx-panel-wide bp-surface", "aria-label": "Road to Chaos", "data-bp-chrome": "", "data-bp2": "studio-chrome" },
-    h("h2", { class: "cx-panel-title" }, "z peaks against ρ"),
+    title,
     status,
     fig.el,
-    h("div", { class: "cx-panel-row" }, seg.el),
-    go.el,
+    h("div", { class: "cx-panel-row" }, which.el, ranges.lorenz.el, ranges.rossler.el),
+    goes.lorenz.el,
+    goes.rossler.el,
   );
+  const showSystem = (): void => {
+    ranges.lorenz.el.hidden = sys !== "lorenz";
+    ranges.rossler.el.hidden = sys !== "rossler";
+    goes.lorenz.el.hidden = sys !== "lorenz";
+    goes.rossler.el.hidden = sys !== "rossler";
+    title.textContent = sys === "lorenz" ? "z peaks against ρ" : "x peaks against c";
+  };
+  showSystem();
   const rhoAt = (x: number): number => {
     const { w } = fig.size();
     return range.rho0 + (Math.min(Math.max(x, 0), w) / Math.max(w, 1)) * (range.rho1 - range.rho0);
   };
+  const digits = (): number => (sys === "rossler" ? 3 : 2);
   fig.overlay.addEventListener("click", (e) => {
     const r = fig.overlay.getBoundingClientRect();
-    hd.pick(Number(rhoAt(e.clientX - r.left).toFixed(2)));
+    hd.pick(Number(rhoAt(e.clientX - r.left).toFixed(digits())));
   });
   fig.overlay.addEventListener("pointermove", (e) => {
     const r = fig.overlay.getBoundingClientRect();
@@ -122,10 +154,11 @@ export function buildRoadPanel(view: HistView, hd: { pick: (rho: number) => void
     const c = fig.ctx();
     if (!c) return;
     const { w, hgt } = fig.size();
-    // ticks: ρ along the bottom, z/ρ up the side
+    const ax = ROAD_AXIS[sys];
+    // ticks: the swept parameter along the bottom, the observable up the side
     const span = range.rho1 - range.rho0;
-    const step = span > 100 ? 50 : span > 20 ? 10 : span > 4 ? 1 : 0.5;
-    for (let v = Math.ceil(range.rho0 / step) * step; v <= range.rho1; v += step) {
+    const step = span > 100 ? 50 : span > 20 ? 10 : span > 8 ? 2 : span > 3 ? 1 : span > 1.2 ? 0.5 : 0.25;
+    for (let v = Math.ceil(range.rho0 / step) * step; v <= range.rho1 + 1e-9; v += step) {
       const x = ((v - range.rho0) / span) * w;
       c.fillStyle = "rgba(255,255,255,0.14)";
       c.fillRect(x, hgt - 4, 1, 4);
@@ -134,37 +167,44 @@ export function buildRoadPanel(view: HistView, hd: { pick: (rho: number) => void
       if (x > w - 16) axisText(c, label, w - 2, hgt - 6, "right");
       else axisText(c, label, Math.max(x, 12), hgt - 6, "center");
     }
-    for (const y of [1, 1.25, 1.5]) {
-      const py = hgt * (1 - (y - Y0) / (Y1 - Y0));
-      // a short figure has no room for a level label above the ρ ticks
-      if (py + 4 < hgt - 18) axisText(c, y.toFixed(2), 3, py + 4);
+    for (const y of ax.ticks) {
+      const py = hgt * (1 - (y - ax.y0) / (ax.y1 - ax.y0));
+      // a short figure has no room for a level label above the parameter's ticks
+      if (py + 4 < hgt - 18 && py > 12) axisText(c, y.toFixed(2), 3, py + 4);
     }
-    axisText(c, "z peak / ρ", w - 4, 12, "right");
-    // the ρ on screen
+    axisText(c, ax.label, w - 4, 12, "right");
+    // the value on screen
     if (rho >= range.rho0 && rho <= range.rho1) {
       const x = ((rho - range.rho0) / span) * w;
       c.fillStyle = css("--bp-accent", "#e8c88f");
       c.fillRect(x - 0.75, 0, 1.5, hgt);
-      axisText(c, `ρ ${rho.toFixed(2)}`, Math.min(Math.max(x, 40), w - 40), 24, "center");
+      axisText(c, `${ax.sym} ${rho.toFixed(digits())}`, Math.min(Math.max(x, 40), w - 40), 24, "center");
     }
     if (hover) {
       c.fillStyle = "rgba(255,255,255,0.35)";
       c.fillRect(hover.x, 0, 1, hgt);
-      axisText(c, `ρ ${rhoAt(hover.x).toFixed(2)} · z/ρ ${(Y0 + (1 - hover.y / hgt) * (Y1 - Y0)).toFixed(3)}`, Math.min(Math.max(hover.x, 70), w - 70), hgt - 20, "center");
+      axisText(c, `${ax.sym} ${rhoAt(hover.x).toFixed(digits())} · ${(ax.y0 + (1 - hover.y / hgt) * (ax.y1 - ax.y0)).toFixed(3)}`, Math.min(Math.max(hover.x, 70), w - 70), hgt - 20, "center");
     }
   };
   return {
     el,
     setRho(r) {
       rho = r;
-      go.set(Math.min(Math.max(r, range.rho0), range.rho1));
+      const g = goes[sys];
+      g.set(Math.min(Math.max(r, range.rho0), range.rho1));
     },
     setRange(r) {
       range = r;
-      seg.set(r.id);
-      go.input.min = String(r.rho0);
-      go.input.max = String(r.rho1);
-      go.set(Math.min(Math.max(rho, r.rho0), r.rho1));
+      ranges[sys].set(r.id);
+      const g = goes[sys];
+      g.input.min = String(r.rho0);
+      g.input.max = String(r.rho1);
+      g.set(Math.min(Math.max(rho, r.rho0), r.rho1));
+    },
+    setSystem(s2) {
+      sys = s2;
+      which.set(s2);
+      showSystem();
     },
     setStatus(t) {
       status.textContent = t;

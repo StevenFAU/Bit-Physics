@@ -8,6 +8,7 @@ import { wgsl } from "@bp/gpu";
 import type { LorenzParams, V3 } from "./lorenz.js";
 import { DT } from "./lorenz.js";
 import src from "./bifurcation.wgsl?raw";
+import rosslerSrc from "./bifurcation-rossler.wgsl?raw";
 
 /** The diagram's vertical axis: z peak ÷ ρ. Fixed points sit at (ρ − 1)/ρ ≈ 0.95; chaos spans ~1.02–1.67. */
 export const Y0 = 0.9;
@@ -29,6 +30,37 @@ export const BIF_SIZES = {
 /** Warm-up before peaks count: 60 time units (transients near the bifurcation points are slow). */
 export const BIF_WARM_STEPS = 6000;
 
+/** Rössler's road (M3): x peak ÷ c over [0, 2.1) — every positive x maximum for c 2–18 lies in [0.02, 2.03]. */
+export const RY0 = 0;
+export const RY1 = 2.1;
+/** Rössler's Δt (v1's registry) and warm-up: 200 time units, about 33 turns of the spiral. */
+export const ROSSLER_DT = 0.02;
+export const ROSSLER_WARM_STEPS = 10000;
+/** Rössler's a and b (v1's canonical values); the diagram sweeps c. */
+export const ROSSLER_AB: readonly [number, number] = [0.2, 0.2];
+
+/** Which road: the kernel, its two fixed parameters, Δt, warm-up and vertical axis. */
+export interface BifSystem {
+  key: "lorenz" | "rossler";
+  /** σ, β (Lorenz) or a, b (Rössler); the swept parameter is each column's own. */
+  fixed: () => readonly [number, number];
+  dt: number;
+  warm: number;
+  y0: number;
+  y1: number;
+}
+
+export const lorenzRoad = (params: () => LorenzParams): BifSystem => ({
+  key: "lorenz",
+  fixed: () => [params().sigma, params().beta],
+  dt: DT,
+  warm: BIF_WARM_STEPS,
+  y0: Y0,
+  y1: Y1,
+});
+
+export const ROSSLER_ROAD: BifSystem = { key: "rossler", fixed: () => ROSSLER_AB, dt: ROSSLER_DT, warm: ROSSLER_WARM_STEPS, y0: RY0, y1: RY1 };
+
 export class Bifurcation {
   readonly counts: GPUBuffer;
   readonly totals: GPUBuffer;
@@ -47,14 +79,14 @@ export class Bifurcation {
   private readonly params: GPUBuffer;
   private readonly bind: GPUBindGroup;
   private needsInit = true;
-  /** σ and β the trajectories were started with: any other σ, β is another system, so the diagram restarts. */
-  private startedWith: { sigma: number; beta: number } | null = null;
+  /** The fixed parameters the trajectories were started with: any others make another system, so the diagram restarts. */
+  private startedWith: readonly [number, number] | null = null;
 
   private constructor(
     private readonly device: GPUDevice,
     private readonly pipe: GPUComputePipeline,
     size: BifSize,
-    private readonly lorenz: () => LorenzParams,
+    readonly system: BifSystem,
   ) {
     this.cols = size.cols;
     this.per = size.per;
@@ -80,14 +112,14 @@ export class Bifurcation {
     });
   }
 
-  static async pipeline(device: GPUDevice): Promise<GPUComputePipeline> {
-    const module = device.createShaderModule({ code: wgsl(src), label: "bifurcation" });
-    return device.createComputePipelineAsync({ label: "bif_step", layout: "auto", compute: { module, entryPoint: "bif_step" } });
+  static async pipeline(device: GPUDevice, key: BifSystem["key"] = "lorenz"): Promise<GPUComputePipeline> {
+    const module = device.createShaderModule({ code: wgsl(key === "rossler" ? rosslerSrc : src), label: `bifurcation-${key}` });
+    return device.createComputePipelineAsync({ label: `bif_step-${key}`, layout: "auto", compute: { module, entryPoint: "bif_step" } });
   }
 
-  /** σ and β come from `params` (ρ is each column's own). */
-  static create(device: GPUDevice, pipe: GPUComputePipeline, size: BifSize, params: () => LorenzParams): Bifurcation {
-    return new Bifurcation(device, pipe, size, params);
+  /** A road: Lorenz's (σ, β from its params; ρ per column) or Rössler's (a, b fixed; c per column). */
+  static create(device: GPUDevice, pipe: GPUComputePipeline, size: BifSize, system: BifSystem): Bifurcation {
+    return new Bifurcation(device, pipe, size, system);
   }
 
   /** ρ of a column (its centre) for a range. */
@@ -118,16 +150,17 @@ export class Bifurcation {
 
   private write(steps: number, mode: 0 | 1): void {
     const b = new ArrayBuffer(64);
-    const p = this.lorenz();
-    new Float32Array(b, 0, 8).set([p.sigma, p.beta, DT, Y0, Y1, 0, 0, 0]);
-    new Uint32Array(b, 32, 8).set([this.n, this.per, this.cols, this.bins, steps, BIF_WARM_STEPS, this.seed >>> 0, mode]);
+    const S = this.system;
+    const [f0, f1] = S.fixed();
+    new Float32Array(b, 0, 8).set([f0, f1, S.dt, S.y0, S.y1, 0, 0, 0]);
+    new Uint32Array(b, 32, 8).set([this.n, this.per, this.cols, this.bins, steps, S.warm, this.seed >>> 0, mode]);
     this.device.queue.writeBuffer(this.params, 0, b);
   }
 
   /** Record `steps` steps of every trajectory (one dispatch; initialises first if needed). */
   encode(enc: GPUCommandEncoder, steps: number, timestampWrites?: GPUComputePassTimestampWrites): void {
-    const now = this.lorenz();
-    if (this.startedWith && (now.sigma !== this.startedWith.sigma || now.beta !== this.startedWith.beta)) this.reset();
+    const now = this.system.fixed();
+    if (this.startedWith && (now[0] !== this.startedWith[0] || now[1] !== this.startedWith[1])) this.reset();
     if (this.needsInit) {
       // one encoder holds one parameter write: initialise in its own submission
       enc.clearBuffer(this.counts);
@@ -141,7 +174,7 @@ export class Bifurcation {
       p.end();
       this.device.queue.submit([init.finish()]);
       this.needsInit = false;
-      this.startedWith = { sigma: now.sigma, beta: now.beta };
+      this.startedWith = [now[0], now[1]];
       return;
     }
     if (steps <= 0) return;
@@ -156,7 +189,7 @@ export class Bifurcation {
 
   /** Warm-up still under way (peaks are not counted yet). */
   get warming(): boolean {
-    return this.steps < BIF_WARM_STEPS;
+    return this.steps < this.system.warm;
   }
 
   /** Read the counts back: [bin * cols + col]. */
@@ -178,6 +211,12 @@ export class Bifurcation {
 }
 
 /** The start of trajectory i (mirror of start_of in bifurcation.wgsl, in f64; rounded to f32 like the GPU's). */
+/** Rössler's start for trajectory i at c (mirrors bifurcation-rossler.wgsl start_of). */
+export function bifStartRossler(seed: number, i: number, c: number): V3 {
+  const u = [0, 1, 2].map((k) => unit(hash3(seed, i, k)) * 2 - 1) as V3;
+  return [Math.fround(u[0] * 0.8 * c), Math.fround(u[1] * 0.8 * c), Math.fround(0.05 * (u[2] + 1))];
+}
+
 export function bifStart(seed: number, i: number, rho: number, beta: number): V3 {
   const u = [0, 1, 2].map((k) => unit(hash3(seed, i, k)) * 2 - 1) as V3;
   const a = Math.sqrt(Math.max(beta * (rho - 1), 1));

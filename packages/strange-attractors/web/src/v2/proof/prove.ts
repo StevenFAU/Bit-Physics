@@ -15,6 +15,8 @@ import { CLASSIC_BOX, histogramXZ, referenceRun, tvDistance } from "../model/mea
 import { BUDGET, LYAP_T, SPROTT } from "./budgets.js";
 import type { PictureCheck, RoadCheck } from "./m2-proofs.js";
 import { ROAD_TEST_RHOS, mapCheck, roadCheck, sectionCheck } from "./m2-proofs.js";
+import type { FamilyRow, RoadCheckR } from "./m3-proofs.js";
+import { FAMILY_CHECK, RROAD_TEST_CS, familyCheck, roadCheckRossler } from "./m3-proofs.js";
 import type { GateCheck, GateRunner } from "./gate.js";
 import { CANONICAL_IC, CAPTURE_INTERVAL, N_STEPS, REPO_BLOB, SEED42_OFFSET, T_STRANGE_MEAN_ABS, T_STRANGE_REL, buildCapture, checkGate } from "./gate.js";
 
@@ -28,6 +30,9 @@ export interface ProveDeps {
   kernels: () => ChaosKernels | null;
   /** Road to Chaos's pipeline, once compiled. */
   bifPipe: () => GPUComputePipeline | null;
+  /** Rössler's road and The Family's density pipelines (M3), once compiled. */
+  rossPipe: () => GPUComputePipeline | null;
+  famPipe: () => GPUComputePipeline | null;
   /** Suspend/resume the governor and the live loop around in-page runs. */
   hold: (on: boolean) => void;
 }
@@ -57,6 +62,8 @@ export interface OnScreen {
   released: boolean;
   eps: number;
   members: number;
+  /** Another system drawn instead of Lorenz (The Family, Rössler's road): its name and parameters. */
+  system?: { label: string; params: string } | null;
 }
 
 export interface ProvePane {
@@ -68,6 +75,8 @@ export interface ProvePane {
   measureInvariant(o?: { members?: number; t0?: number; snapshots?: number; gap?: number }): Promise<InvariantCheck | null>;
   /** M2's checks, run directly (measurement, tests). */
   measureM2(): Promise<{ road: RoadCheck | null; map: PictureCheck | null; section: PictureCheck | null }>;
+  /** M3's checks, run directly (measurement, tests). */
+  measureM3(): Promise<{ rossler: RoadCheckR | null; family: FamilyRow[] | null }>;
 }
 
 /** The live density kernel, one particle from the gate's start, 10,000 steps: the same bytes as the gated trajectory? */
@@ -454,6 +463,79 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
       });
     });
   };
+  // --------------------------------------------------------------- M3 --
+  const m3Link = { label: "checks", href: blob("packages/strange-attractors/web/src/v2/proof/m3-proofs.ts") };
+  const rRoadBudget = `chaos ≤ ${BUDGET.rRoadTv} on 64 bins; windows ≤ ${BUDGET.rRoadOrbitTv} on 1,024`;
+  const rRoadCard = proofCard(
+    {
+      title: "Rössler's road, column by column",
+      sentence:
+        `Six columns of Rössler's diagram (c ${RROAD_TEST_CS.join(", ")}; a = b = 0.2): period 2, period 4, chaos, the window near 5.3, chaos. ` +
+        "32 trajectories each, 200 time units to settle, then 1,200 of x peaks — on the GPU and in f64 from the same starts. Chaotic columns are compared as distributions; an orbit's few peaks on the diagram's own fine bins.",
+      label: "reference agreement passed (not gated)",
+      action: "Run on this GPU",
+      links: [m3Link, tol],
+    },
+    () => void runRRoad(),
+  );
+  const familyCard = proofCard(
+    {
+      title: "The Family, against f64",
+      sentence:
+        `Each of the nine systems: ${FAMILY_CHECK.n.toLocaleString()} points on the GPU (f32), seeded on the attractor and run ${FAMILY_CHECK.steps.toLocaleString()} of its own steps, binned on (x, z) ${FAMILY_CHECK.bins} × ${FAMILY_CHECK.bins} against one f64 run of ${(FAMILY_CHECK.samples * 2).toLocaleString()} samples. ` +
+        "The floor is that run's first half against its second. No budget is declared: this is a picture of agreement, not a check anything depends on.",
+      label: "illustrative (not gated)",
+      action: "Run on this GPU",
+      links: [m3Link],
+    },
+    () => void runFamily(),
+  );
+  rRoadCard.set({ status: "idle", measured: "run it to measure", budget: rRoadBudget, adapter: d.adapter });
+  familyCard.set({ status: "idle", measured: "run it to measure", budget: "none declared", adapter: d.adapter });
+  pane.append(rRoadCard.el, familyCard.el);
+
+  async function runRRoad(): Promise<void> {
+    const pipe = d.rossPipe();
+    if (!pipe) {
+      rRoadCard.set({ status: "info", measured: "the diagram's kernel is still compiling" });
+      return;
+    }
+    await guard(async () => {
+      rRoadCard.set({ status: "running" });
+      const r = await roadCheckRossler(d.device, pipe);
+      results["rossler"] = r;
+      const ok = r.worstChaos <= BUDGET.rRoadTv && r.worstOrbit <= BUDGET.rRoadOrbitTv;
+      rRoadCard.set({
+        status: ok ? "pass" : "fail",
+        measured: `chaos ${r.worstChaos.toFixed(4)}, windows ${r.worstOrbit.toFixed(4)} (worst columns)`,
+        budget: rRoadBudget,
+        ratio: Math.max(r.worstChaos / BUDGET.rRoadTv, r.worstOrbit / BUDGET.rRoadOrbitTv),
+        adapter: d.adapter,
+        notes: r.cs.map((c, i) => `c ${c}: ${r.tv[i]!.toFixed(4)} on ${r.bins[i]} bins (two f64: ${r.floor[i]!.toFixed(4)}), ${r.peaks[i]!.toLocaleString()} peaks`),
+      });
+    });
+  }
+  async function runFamily(): Promise<void> {
+    const pipe = d.famPipe();
+    if (!pipe) {
+      familyCard.set({ status: "info", measured: "the family's kernel is still compiling" });
+      return;
+    }
+    await guard(async () => {
+      familyCard.set({ status: "running" });
+      const rows = await familyCheck(d.device, pipe);
+      results["family"] = rows;
+      const worst = rows.reduce((m, r) => (r.tv > m.tv ? r : m), rows[0]!);
+      familyCard.set({
+        status: "info",
+        measured: `largest: ${worst.label} ${worst.tv.toFixed(4)} (its floor ${worst.floor.toFixed(4)})`,
+        budget: "none declared",
+        adapter: d.adapter,
+        notes: rows.map((r) => `${r.label}: ${r.tv.toFixed(4)} (f64 halves ${r.floor.toFixed(4)})${r.outside > 0 ? `, ${(r.outside * 100).toFixed(2)}% outside` : ""}`),
+      });
+    });
+  }
+
   const runMap = (): Promise<void> => runPicture(mapCard, "map", BUDGET.mapTv);
   const runSection = (): Promise<void> => runPicture(sectionCard, "section", BUDGET.sectionTv);
 
@@ -467,6 +549,8 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
     await runRoad();
     await runMap();
     await runSection();
+    await runRRoad();
+    await runFamily();
   }
 
   return {
@@ -485,7 +569,21 @@ export function buildProve(pane: HTMLElement, d: ProveDeps): ProvePane {
         section: k ? await sectionCheck(d.device, k) : null,
       };
     },
+    async measureM3() {
+      const rp = d.rossPipe();
+      const fp = d.famPipe();
+      return {
+        rossler: rp ? await roadCheckRossler(d.device, rp) : null,
+        family: fp ? await familyCheck(d.device, fp) : null,
+      };
+    },
     setOnScreen(s) {
+      if (s.system) {
+        onScreen.textContent =
+          `On screen: ${s.system.label} (${s.system.params}), drawn by The Family's kernel — illustrative, not gated. ` +
+          "The release gate always runs Lorenz's classic parameters on Lorenz's own kernel, whatever is on screen.";
+        return;
+      }
       const classic = s.params.sigma === CLASSIC.sigma && s.params.rho === CLASSIC.rho && s.params.beta === CLASSIC.beta;
       onScreen.textContent =
         (classic ? "On screen: Lorenz's own parameters, the gated regime. " : `On screen: σ ${s.params.sigma}, ρ ${s.params.rho}, β ${s.params.beta.toFixed(3)} — outside the gated regime; the release gate always runs the classic parameters. `) +
