@@ -144,7 +144,10 @@ const SIMS = {
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
 const STAGED = {
-
+  // Chaos v2 (rebuild-v2 05-strange-attractors.md M3): The Butterfly — the
+  // long-exposure attractor with its first ball (a million starts, 10⁻⁶ wide)
+  // stretched into a folding thread, ~7 s after the auto-release.
+  "strange-attractors-v2": { sim: "strange-attractors", page: "v2/", query: "?chrome=off", canvas: ".bp-canvas", frames: 450, px: 512 },
 };
 
 // Registry guard (2026-10 review): every sim in the single registry

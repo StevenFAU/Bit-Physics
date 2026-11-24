@@ -161,7 +161,10 @@ const SIMS = {
 // dist is filmed. Not in SIMS, so check_registry.py's one-key-per-sim rule
 // holds; filmed only when named on the command line.
 const STAGED = {
-
+  // Chaos v2 (rebuild-v2 05-strange-attractors.md M3): The Butterfly — the first
+  // ball released (frame ~96) as a point, stretched into a thread, folding and
+  // starting to spread; the wrap cuts back to the release.
+  "strange-attractors-v2": { sim: "strange-attractors", page: "v2/", query: "?chrome=off", canvas: ".bp-canvas", square: true, start: 90, shots: 150, gap: 2, fps: 30, px: 512, crf: 32 },
 };
 // Registry guard (2026-10 review): every sim in the single registry
 // (tools/productization/web-deploy/sims.json) needs a config above, and every
@@ -247,7 +250,8 @@ async function loop(browser, sim, cfg) {
         document.querySelectorAll(sel).forEach((el) => el.style.setProperty("display", "none", "important"));
       const canvas = document.querySelector(cfg.canvas ?? "canvas");
       canvas.style.width = `${cfg.px}px`;
-      canvas.style.height = "auto";
+      // cfg.square: a full-bleed canvas (inset 0) does not keep its aspect under height:auto — pin it square
+      canvas.style.height = cfg.square ? `${cfg.px}px` : "auto";
       if (cfg.boost) canvas.style.filter = cfg.boost; // exposure, not physics
     }, cfg);
 
